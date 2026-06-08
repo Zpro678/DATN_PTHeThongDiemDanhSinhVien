@@ -7,6 +7,10 @@ Route::get('/', function () {
     return view('welcome');
 });
 
+Route::get('/preview/{variant}', function (string $variant) {
+    return view('preview.layout', ['variant' => $variant]);
+})->where('variant', 'admin|lecturer|student')->name('preview.layout');
+
 Route::get('/dashboard', function () {
     return view('dashboard');
 })->middleware(['auth', 'verified'])->name('dashboard');
