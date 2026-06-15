@@ -1,5 +1,8 @@
 <?php
 
+use App\Http\Controllers\ClassController;
+use App\Http\Controllers\ClassMemberController;
+use App\Http\Controllers\ImportStudentController;
 use App\Http\Controllers\ProfileController;
 use Illuminate\Support\Facades\Route;
 
@@ -21,4 +24,37 @@ Route::middleware('auth')->group(function () {
     Route::delete('/profile', [ProfileController::class, 'destroy'])->name('profile.destroy');
 });
 
+// ============================================================
+// TV2 — Lớp học, Sinh viên, Import
+// Nguyễn Tuấn Khanh | feature/khanh-class-student
+// ============================================================
+Route::middleware(['auth'])->group(function () {
+
+    // ---- Lớp học (CRUD) ----
+    Route::resource('classes', ClassController::class);
+
+    // Lưu trữ lớp (chuyển sang archived)
+    Route::patch('classes/{class}/archive', [ClassController::class, 'archive'])
+        ->name('classes.archive');
+
+    // Tạo lại mã lớp mới
+    Route::patch('classes/{class}/regenerate-code', [ClassController::class, 'regenerateCode'])
+        ->name('classes.regenerate-code');
+
+    // ---- Sinh viên trong lớp ----
+    Route::resource('classes.members', ClassMemberController::class);
+
+    // ---- Import sinh viên từ Excel/CSV ----
+    Route::get('classes/{class}/import', [ImportStudentController::class, 'form'])
+        ->name('classes.import.form');
+
+    Route::post('classes/{class}/import', [ImportStudentController::class, 'store'])
+        ->name('classes.import.store');
+
+    // Tải file mẫu import
+    Route::get('import/template', [ImportStudentController::class, 'downloadTemplate'])
+        ->name('import.template');
+});
+
 require __DIR__.'/auth.php';
+

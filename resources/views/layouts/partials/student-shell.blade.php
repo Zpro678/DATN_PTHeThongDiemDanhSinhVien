@@ -93,8 +93,10 @@
                 </div>
             </header>
 
-            <main class="sams-scrollbar relative flex-1 overflow-y-auto bg-slate-50/50 pb-24 dark:bg-slate-950 lg:pb-0">
-                {{ $slot }}
+            <main class="sams-scrollbar relative flex-1 overflow-y-auto bg-slate-50/50 dark:bg-slate-950 flex flex-col justify-between">
+                <div class="w-full flex-1 pb-24 lg:pb-0">
+                    {{ $slot }}
+                </div>
 
                 <div class="hidden lg:block">
                     @include('layouts.partials.portal-footer')
