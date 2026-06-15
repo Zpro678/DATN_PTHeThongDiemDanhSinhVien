@@ -79,8 +79,8 @@
             </div>
         </header>
 
-        <main class="sams-scrollbar flex-1 overflow-y-auto pb-20 md:pb-6">
-            <div class="mx-auto max-w-7xl p-4 md:p-8">
+        <main class="sams-scrollbar flex-1 overflow-y-auto flex flex-col justify-between">
+            <div class="mx-auto max-w-7xl p-4 md:p-8 w-full flex-1 pb-20 md:pb-6">
                 {{ $slot }}
             </div>
 

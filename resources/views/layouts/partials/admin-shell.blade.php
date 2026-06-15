@@ -171,10 +171,12 @@
             </div>
         </header>
 
-        <main class="sams-scrollbar flex-1 overflow-y-auto p-4 md:p-8">
-            {{ $slot }}
-        </main>
+        <main class="sams-scrollbar flex-1 overflow-y-auto p-4 md:p-8 flex flex-col justify-between">
+            <div class="w-full flex-1">
+                {{ $slot }}
+            </div>
 
-        @include('layouts.partials.portal-footer')
+            @include('layouts.partials.portal-footer')
+        </main>
     </div>
 </div>
