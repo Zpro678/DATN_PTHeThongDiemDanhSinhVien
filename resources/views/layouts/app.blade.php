@@ -31,7 +31,7 @@
     $pathVariant = match (true) {
         request()->is('admin', 'admin/*') => 'admin',
         request()->is('student', 'student/*', 'students1', 'sinh-vien', 'sinh-vien/*') => 'student',
-        request()->is('lecturer', 'lecturer/*', 'teacher', 'teacher/*', 'giang-vien', 'giang-vien/*') => 'lecturer',
+        request()->is('lecturer', 'lecturer/*', 'teacher', 'teacher/*', 'giang-vien', 'giang-vien/*', 'preview/lecturer', 'preview/lecturer/*') => 'lecturer',
         default => null,
     };
 
@@ -103,8 +103,12 @@
         ],
     ];
 
+    $lecturerDashboardHref = request()->is('preview/lecturer', 'preview/lecturer/*')
+        ? '/preview/lecturer/dashboard'
+        : '/dashboard';
+
     $lecturerNavigation = [
-        ['name' => 'Bảng điều khiển', 'href' => '/dashboard', 'icon' => 'layout-dashboard', 'active' => ['dashboard']],
+        ['name' => 'Bảng điều khiển', 'href' => $lecturerDashboardHref, 'icon' => 'layout-dashboard', 'active' => ['dashboard', 'lecturer', 'giang-vien', 'preview/lecturer/dashboard', 'lecturer.dashboard', 'lecturer.dashboard.alias', 'preview.lecturer.dashboard']],
         ['name' => 'Sinh viên', 'href' => '/students', 'icon' => 'users', 'active' => ['students', 'students/*']],
         ['name' => 'Điểm danh', 'href' => '/attendance', 'icon' => 'calendar-check', 'active' => ['attendance', 'attendance/*']],
         ['name' => 'Lớp học của tôi', 'href' => '/courses', 'icon' => 'book-open', 'active' => ['courses', 'courses/*', 'classes', 'classes/*']],
@@ -113,7 +117,7 @@
     ];
 
     $lecturerMobileNavigation = [
-        ['name' => 'Dashboard', 'href' => '/dashboard', 'icon' => 'layout-dashboard', 'active' => ['dashboard']],
+        ['name' => 'Dashboard', 'href' => $lecturerDashboardHref, 'icon' => 'layout-dashboard', 'active' => ['dashboard', 'lecturer', 'giang-vien', 'preview/lecturer/dashboard', 'lecturer.dashboard', 'lecturer.dashboard.alias', 'preview.lecturer.dashboard']],
         ['name' => 'Lớp học', 'href' => '/courses', 'icon' => 'book-open', 'active' => ['courses', 'courses/*', 'classes', 'classes/*']],
         ['name' => 'Điểm danh', 'href' => '/attendance', 'icon' => 'calendar-check', 'active' => ['attendance', 'attendance/*']],
         ['name' => 'Báo cáo', 'href' => '/analytics', 'icon' => 'bar-chart', 'active' => ['analytics', 'analytics/*']],
