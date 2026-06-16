@@ -3,6 +3,7 @@
 use App\Http\Controllers\ClassController;
 use App\Http\Controllers\ClassMemberController;
 use App\Http\Controllers\ImportStudentController;
+use App\Http\Controllers\LecturerDashboardController;
 use App\Http\Controllers\ProfileController;
 use Illuminate\Support\Facades\Route;
 
@@ -14,9 +15,17 @@ Route::get('/preview/{variant}', function (string $variant) {
     return view('preview.layout', ['variant' => $variant]);
 })->where('variant', 'admin|lecturer|student')->name('preview.layout');
 
-Route::get('/dashboard', function () {
-    return view('dashboard');
-})->middleware(['auth', 'verified'])->name('dashboard');
+Route::get('/preview/lecturer/dashboard', LecturerDashboardController::class)
+    ->name('preview.lecturer.dashboard');
+
+Route::get('/dashboard', LecturerDashboardController::class)
+    // ->middleware(['auth', 'verified'])
+    ->name('dashboard');
+
+Route::middleware(['auth', 'verified'])->group(function () {
+    Route::get('/lecturer', LecturerDashboardController::class)->name('lecturer.dashboard');
+    Route::get('/giang-vien', LecturerDashboardController::class)->name('lecturer.dashboard.alias');
+});
 
 Route::middleware('auth')->group(function () {
     Route::get('/profile', [ProfileController::class, 'edit'])->name('profile.edit');
@@ -57,4 +66,3 @@ Route::middleware(['auth'])->group(function () {
 });
 
 require __DIR__.'/auth.php';
-
