@@ -7,11 +7,10 @@ use App\Http\Controllers\ImportStudentController;
 use App\Http\Controllers\Lecture\AttendanceSessionController;
 use App\Http\Controllers\Lecture\DashboardLectureController;
 use App\Http\Controllers\ProfileController;
-<<<<<<< HEAD
 use App\Http\Controllers\Student\DashboardController as StudentDashboardController;
-=======
+
 use App\Http\Controllers\StudentClassController;
->>>>>>> feature/khanh-view-student
+
 use Illuminate\Support\Facades\Route;
 
 /*
@@ -129,7 +128,7 @@ Route::get('/lecturer/students', function () {
     return view('lecture.students.index');
 });
 
-<<<<<<< HEAD
+
 Route::get('/lecturer/students/warning', function () {
     return view('lecture.students.warning');
 });
@@ -139,7 +138,7 @@ Route::get('/lecturer/students/archived', function () {
 });
 
 require __DIR__ . '/auth.php';
-=======
+
 // ============================================================
 // TV2 — Giao diện Sinh viên (Student Portal)
 // Nguyễn Tuấn Khanh | feature/khanh-class-student
@@ -180,4 +179,4 @@ Route::middleware(['auth'])->prefix('student')->name('student.')->group(function
 });
 
 
->>>>>>> feature/khanh-view-student
+
