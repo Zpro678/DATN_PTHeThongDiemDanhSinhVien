@@ -24,6 +24,21 @@ services:
     volumes:
       - redis_data:/data
 
+  phpmyadmin:
+    image: phpmyadmin:5.2
+    container_name: attendance_phpmyadmin
+
+    ports:
+      - "8080:80"
+
+    environment:
+      PMA_HOST: mysql
+      PMA_PORT: 3306
+      MYSQL_ROOT_PASSWORD: root
+
+    depends_on:
+      - mysql
+
 volumes:
   mysql_data:
   redis_data:
