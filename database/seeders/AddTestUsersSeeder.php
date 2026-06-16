@@ -12,22 +12,34 @@ class AddTestUsersSeeder extends Seeder
     {
         $this->call(RolesAndPermissionsSeeder::class);
 
-        $admin = User::firstOrCreate(
+        $admin = User::updateOrCreate(
             ['email' => 'admin@example.com'],
-            ['name' => 'Quản trị viên (Admin)', 'password' => Hash::make('password123')]
+            [
+                'name' => 'Quản trị viên (Admin)',
+                'password' => Hash::make('password123'),
+                'email_verified_at' => now(),
+            ]
         );
-        $admin->assignRole('admin');
+        $admin->syncRoles(['admin']);
 
-        $teacher = User::firstOrCreate(
+        $teacher = User::updateOrCreate(
             ['email' => 'teacher@example.com'],
-            ['name' => 'Giảng viên (Teacher)', 'password' => Hash::make('password123')]
+            [
+                'name' => 'Giảng viên (Teacher)',
+                'password' => Hash::make('password123'),
+                'email_verified_at' => now(),
+            ]
         );
-        $teacher->assignRole('teacher');
+        $teacher->syncRoles(['teacher']);
 
-        $student = User::firstOrCreate(
+        $student = User::updateOrCreate(
             ['email' => 'student@example.com'],
-            ['name' => 'Sinh viên (Student)', 'password' => Hash::make('password123')]
+            [
+                'name' => 'Sinh viên (Student)',
+                'password' => Hash::make('password123'),
+                'email_verified_at' => now(),
+            ]
         );
-        $student->assignRole('student');
+        $student->syncRoles(['student']);
     }
 }
