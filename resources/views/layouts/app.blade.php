@@ -108,20 +108,19 @@
         : '/dashboard';
 
     $lecturerNavigation = [
-        ['name' => 'Bảng điều khiển', 'href' => '/lecturer/dashboard', 'icon' => 'layout-dashboard', 'active' => ['lecturer.dashboard', 'lecturer/dashboard']],
-        ['name' => 'Sinh viên', 'href' => '/lecturer/students', 'icon' => 'users', 'active' => ['students', 'students/*']],
-        ['name' => 'Điểm danh', 'href' => '/lecturer/attendance', 'icon' => 'calendar-check', 'active' => ['lecturer.attendance', 'lecturer/attendance', 'lecturer/attendance/*']],
+        ['name' => 'Bảng điều khiển', 'href' => '/lecturer/dashboard', 'icon' => 'layout-dashboard', 'active' => ['dashboard']],
+        ['name' => 'Sinh viên', 'href' => '/lecturer/students', 'icon' => 'users', 'active' => ['lecturer/students', 'lecturer/students/*', 'students', 'students/*']],
+        ['name' => 'Điểm danh', 'href' => '/lecturer/attendance', 'icon' => 'calendar-check', 'active' => ['attendance', 'attendance/*']],
         ['name' => 'Lớp học của tôi', 'href' => '/lecturer/courses', 'icon' => 'book-open', 'active' => ['lecturer/courses', 'lecturer/courses/*', 'lecturer/classes', 'lecturer/classes/*']],
-        ['name' => 'Báo cáo', 'href' => '/lecturer/analytics', 'icon' => 'bar-chart', 'active' => ['lecturer.analytics', 'lecturer/analytics', 'lecturer/analytics/*']],
-        ['name' => 'Giao diện sinh viên', 'href' => '/students1', 'icon' => 'graduation-cap', 'active' => ['students1']],
+        ['name' => 'Báo cáo', 'href' => '/lecturer/analytics', 'icon' => 'bar-chart', 'active' => ['lecturer/analytics', 'lecturer/analytics/*', 'analytics']],
     ];
 
     $lecturerMobileNavigation = [
         ['name' => 'Dashboard', 'href' => '/lecturer/dashboard', 'icon' => 'layout-dashboard', 'active' => ['lecturer.dashboard', 'lecturer/dashboard']],
         ['name' => 'Lớp học', 'href' => '/lecturer/courses', 'icon' => 'book-open', 'active' => ['lecturer/courses', 'lecturer/courses/*', 'lecturer/classes', 'lecturer/classes/*']],
-        ['name' => 'Điểm danh', 'href' => '/lecturer/attendance', 'icon' => 'calendar-check', 'active' => ['lecturer.attendance', 'lecturer/attendance', 'lecturer/attendance/*']],
-        ['name' => 'Báo cáo', 'href' => '/lecturer/analytics', 'icon' => 'bar-chart', 'active' => ['lecturer.analytics', 'lecturer/analytics', 'lecturer/analytics/*']],
-        ['name' => 'Sinh viên', 'href' => '/lecturer/students', 'icon' => 'user', 'active' => ['students', 'students/*']],
+        ['name' => 'Điểm danh', 'href' => '/lecturer/attendance', 'icon' => 'calendar-check', 'active' => ['attendance', 'attendance/*']],
+        ['name' => 'Báo cáo', 'href' => '/lecturer/analytics', 'icon' => 'bar-chart', 'active' => ['lecturer/analytics', 'lecturer/analytics/*', 'analytics']],
+        ['name' => 'Sinh viên', 'href' => '/lecturer/students', 'icon' => 'user', 'active' => ['lecturer/students', 'lecturer/students/*', 'students', 'students/*']],
     ];
 
     $studentNavigation = [

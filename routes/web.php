@@ -5,7 +5,7 @@ use App\Http\Controllers\ClassController;
 use App\Http\Controllers\ClassMemberController;
 use App\Http\Controllers\ImportStudentController;
 use App\Http\Controllers\Lecture\AttendanceSessionController;
-use App\Http\Controllers\LecturerDashboardController;
+use App\Http\Controllers\Lecture\DashboardLectureController;
 use App\Http\Controllers\ProfileController;
 use App\Http\Controllers\Student\DashboardController as StudentDashboardController;
 use Illuminate\Support\Facades\Route;
@@ -23,8 +23,6 @@ Route::prefix('preview')->name('preview.')->group(function () {
         return view('preview.layout', ['variant' => $variant]);
     })->where('variant', 'admin|lecturer|student')->name('layout');
 
-    Route::get('/lecturer/dashboard', LecturerDashboardController::class)
-        ->name('lecturer.dashboard');
 });
 
 /*
@@ -83,7 +81,6 @@ Route::middleware(['auth', 'verified', 'role:admin'])
 Route::middleware(['auth', 'verified', 'role:teacher'])
     ->prefix('lecturer')
     ->group(function () {
-        Route::get('/dashboard', LecturerDashboardController::class)->name('lecturer.dashboard');
         Route::redirect('/courses', '/lecturer/classes')->name('lecturer.courses');
         Route::get('/attendance', [AttendanceSessionController::class, 'index'])->name('lecturer.attendance');
         Route::view('/analytics', 'lecture.analytics.main')->name('lecturer.analytics');
@@ -108,23 +105,32 @@ Route::middleware(['auth', 'verified', 'role:teacher'])
             ->name('import.template');
     });
 
-Route::middleware(['auth', 'verified', 'role:teacher'])->group(function () {
-    Route::redirect('/lecturer', '/lecturer/dashboard')->name('lecturer.home');
-    Route::redirect('/giang-vien', '/lecturer/dashboard')->name('lecturer.dashboard.alias');
+
+
+// =============================================================================================== //
+
+// lecturer
+Route::get('/lecturer/dashboard', [DashboardLectureController::class, 'index'])->name('dashboard');
+
+Route::get('/lecturer/attendance', [AttendanceSessionController::class, 'index'])->name('attendance');
+
+Route::get('/lecturer/courses', function () {
+    return view('lecture.class.index');
 });
 
-/*
-|--------------------------------------------------------------------------
-| Student routes
-|--------------------------------------------------------------------------
-*/
+Route::get('/lecturer/analytics', function () {
+    return view('lecture.analytics.main');
+});
+Route::get('/lecturer/students', function () {
+    return view('lecture.students.index');
+});
 
-Route::middleware(['auth', 'verified', 'role:student'])
-    ->prefix('student')
-    ->name('student.')
-    ->group(function () {
-        Route::get('/', [StudentDashboardController::class, 'index'])->name('dashboard');
-        Route::redirect('/dashboard', '/student')->name('dashboard.alias');
-    });
+Route::get('/lecturer/students/warning', function () {
+    return view('lecture.students.warning');
+});
+
+Route::get('/lecturer/students/archived', function () {
+    return view('lecture.students.archived');
+});
 
 require __DIR__ . '/auth.php';

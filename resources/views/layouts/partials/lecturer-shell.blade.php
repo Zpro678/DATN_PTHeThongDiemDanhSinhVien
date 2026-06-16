@@ -13,12 +13,12 @@
             </button>
         </div>
 
-        <nav class="sams-scrollbar flex-1 space-y-1 overflow-y-auto px-4">
+        <nav class="sams-scrollbar flex-1 space-y-2 overflow-y-auto px-4 py-2">
             @foreach ($lecturerNavigation as $item)
                 @php($active = $isActive($item['active']))
 
-                <a href="{{ url($item['href']) }}" class="{{ $active ? 'bg-blue-50 text-blue-700 dark:bg-blue-950/40 dark:text-blue-300' : 'text-slate-600 hover:bg-slate-50 hover:text-slate-900 dark:text-slate-300 dark:hover:bg-slate-800 dark:hover:text-white' }} group flex items-center rounded-lg px-4 py-3 text-sm font-medium transition-colors" @click="sidebarOpen = false">
-                    <x-sams.icon name="{{ $item['icon'] }}" class="{{ $active ? 'text-blue-700 dark:text-blue-300' : 'text-slate-400 group-hover:text-slate-600 dark:group-hover:text-slate-300' }} mr-3 h-5 w-5" />
+                <a href="{{ url($item['href']) }}" class="{{ $active ? 'bg-blue-50 text-blue-700 dark:bg-blue-950/40 dark:text-blue-300' : 'text-slate-600 hover:bg-slate-50 hover:text-slate-900 dark:text-slate-300 dark:hover:bg-slate-800 dark:hover:text-white' }} group flex items-center rounded-xl px-4 py-3.5 text-[15px] font-medium transition-all" @click="sidebarOpen = false">
+                    <x-sams.icon name="{{ $item['icon'] }}" class="{{ $active ? 'text-blue-700 dark:text-blue-300' : 'text-slate-500 group-hover:text-slate-700 dark:group-hover:text-slate-300' }} mr-4 h-5 w-5" />
                     <span>{{ $item['name'] }}</span>
                 </a>
             @endforeach
@@ -27,15 +27,15 @@
         <div class="mb-16 space-y-2 border-t border-slate-200 p-4 dark:border-slate-800 lg:mb-0">
             @php($settingsActive = $isActive(['settings', 'settings/*', 'profile', 'profile/*']))
 
-            <a href="{{ route('profile.edit') }}" class="{{ $settingsActive ? 'bg-slate-100 text-slate-900 dark:bg-slate-800 dark:text-white' : 'text-slate-600 hover:bg-slate-50 dark:text-slate-300 dark:hover:bg-slate-800' }} flex items-center rounded-lg px-4 py-3 text-sm font-medium transition-colors" @click="sidebarOpen = false">
-                <x-sams.icon name="settings" class="mr-3 h-5 w-5 text-slate-400" />
+            <a href="{{ route('profile.edit') }}" class="{{ $settingsActive ? 'bg-slate-100 text-slate-900 dark:bg-slate-800 dark:text-white' : 'text-slate-600 hover:bg-slate-50 dark:text-slate-300 dark:hover:bg-slate-800' }} flex items-center rounded-xl px-4 py-3.5 text-[15px] font-medium transition-all" @click="sidebarOpen = false">
+                <x-sams.icon name="settings" class="mr-4 h-5 w-5 text-slate-500" />
                 <span>Cài đặt</span>
             </a>
 
             <form method="POST" action="{{ route('logout') }}">
                 @csrf
-                <button type="submit" class="flex w-full items-center rounded-lg border-none bg-transparent px-4 py-3 text-left text-sm font-medium text-red-600 transition-colors hover:bg-red-50 dark:hover:bg-red-950/20">
-                    <x-sams.icon name="log-out" class="mr-3 h-5 w-5 text-red-500" />
+                <button type="submit" class="flex w-full items-center rounded-xl border-none bg-transparent px-4 py-3.5 text-left text-[15px] font-medium text-red-600 transition-all hover:bg-red-50 dark:hover:bg-red-950/20">
+                    <x-sams.icon name="log-out" class="mr-4 h-5 w-5 text-red-500" />
                     <span>Đăng xuất</span>
                 </button>
             </form>
@@ -92,7 +92,7 @@
         @foreach ($lecturerMobileNavigation as $item)
             @php($active = $isActive($item['active']))
 
-            <a href="{{ url($item['href']) }}" class="{{ $active ? 'text-blue-600 dark:text-blue-400' : 'text-slate-400 hover:text-slate-600 dark:hover:text-slate-300' }} flex h-full flex-1 flex-col items-center justify-center py-1.5 transition-colors">
+            <a href="{{ url($item['href']) }}" class="{{ $active ? 'text-blue-600 dark:text-blue-400' : 'text-slate-500 hover:text-slate-700 dark:hover:text-slate-300' }} flex h-full flex-1 flex-col items-center justify-center py-1.5 transition-colors">
                 <x-sams.icon name="{{ $item['icon'] }}" class="mb-1 h-5 w-5" />
                 <span class="text-[10px] font-semibold tracking-tight">{{ $item['name'] }}</span>
             </a>
