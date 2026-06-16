@@ -157,6 +157,9 @@
                         </div>
 
                         <a href="{{ route('profile.edit') }}" class="mt-2 flex items-center gap-2 rounded-xl px-3 py-2 text-xs font-bold text-slate-600 transition-colors hover:bg-slate-50 dark:text-slate-300 dark:hover:bg-slate-800">
+                            Thông tin cá nhân
+                        </a>
+                        <a href="{{ route('profile.edit') }}" class="mt-1 flex items-center gap-2 rounded-xl px-3 py-2 text-xs font-bold text-slate-600 transition-colors hover:bg-slate-50 dark:text-slate-300 dark:hover:bg-slate-800">
                             Bảo mật hệ thống
                         </a>
 

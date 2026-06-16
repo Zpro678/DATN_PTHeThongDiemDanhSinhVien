@@ -390,8 +390,7 @@ npm install
 ### Tạo file môi trường
 
 ```bash
-cp .env.example .env
-php artisan key:generate
+wsl --update
 ```
 
 Trên Windows PowerShell có thể dùng:
@@ -506,11 +505,11 @@ start-dev.bat
 
 Script này chạy:
 
-- `docker compose up -d`
-- `php artisan serve`
-- `php artisan queue:work redis`
-- `npm run dev`
-- `node server.cjs`
+docker compose up -d
+php artisan serve
+php artisan queue:work redis
+npm run dev
+node server.cjs
 
 Dừng bằng:
 
