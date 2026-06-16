@@ -1,5 +1,7 @@
 <?php
 
+use App\Http\Controllers\Lecture\AttendanceSessionController;
+use App\Http\Controllers\Lecture\DashboardLectureController;
 use App\Http\Controllers\ClassController;
 use App\Http\Controllers\ClassMemberController;
 use App\Http\Controllers\ImportStudentController;
@@ -56,5 +58,27 @@ Route::middleware(['auth'])->group(function () {
         ->name('import.template');
 });
 
+
+
+// =============================================================================================== //
+
+// lecturer
+Route::get('/lecturer/dashboard', [DashboardLectureController::class, 'index'])->name('dashboard');
+
+Route::get('/lecturer/attendance', [AttendanceSessionController::class, 'index'])->name('attendance');
+
+Route::get('/lecturer/courses', function () {
+    return view('lecture.class.index');
+});
+
+Route::get('/lecturer/analytics', function () {
+    return view('lecture.analytics.main');
+});
+
+
+
+
+
+require __DIR__ . '/auth.php';
 require __DIR__.'/auth.php';
 
