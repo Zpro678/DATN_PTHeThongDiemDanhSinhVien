@@ -4,6 +4,7 @@ use App\Http\Controllers\ClassController;
 use App\Http\Controllers\ClassMemberController;
 use App\Http\Controllers\ImportStudentController;
 use App\Http\Controllers\ProfileController;
+use App\Http\Controllers\StudentClassController;
 use Illuminate\Support\Facades\Route;
 
 Route::get('/', function () {
@@ -57,4 +58,44 @@ Route::middleware(['auth'])->group(function () {
 });
 
 require __DIR__.'/auth.php';
+
+// ============================================================
+// TV2 — Giao diện Sinh viên (Student Portal)
+// Nguyễn Tuấn Khanh | feature/khanh-class-student
+// Đường dẫn gốc: /student/*
+// ============================================================
+Route::middleware(['auth'])->prefix('student')->name('student.')->group(function () {
+
+    // --- Dashboard tổng quan ---
+    Route::get('/', [StudentClassController::class, 'dashboard'])
+        ->name('dashboard');                          // /student
+
+    // --- Lớp học ---
+    Route::get('/classes', [StudentClassController::class, 'index'])
+        ->name('classes.list');                       // /student/classes
+
+    Route::get('/classes/{class}', [StudentClassController::class, 'show'])
+        ->name('classes.detail');                     // /student/classes/{id}
+
+    // --- Lịch sử điểm danh ---
+    Route::get('/history', function () {
+        return view('student.attendance.studentAttendanceHistory');
+    })->name('history');                              // /student/history
+
+    // --- Thống kê chuyên cần ---
+    Route::get('/stats', function () {
+        return view('student.attendance.studentAttendanceStat');
+    })->name('stats');                                // /student/stats
+
+    // --- Thông báo ---
+    Route::get('/notifications', function () {
+        return view('student.notification.studentNotificationList');
+    })->name('notifications');                        // /student/notifications
+
+    // --- Hồ sơ cá nhân ---
+    Route::get('/profile', function () {
+        return view('student.profile.studentProfile');
+    })->name('profile');                              // /student/profile
+});
+
 

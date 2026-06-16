@@ -98,8 +98,7 @@
                     {{ $slot }}
                 </div>
 
-                <div class="hidden lg:block">
-                    @include('layouts.partials.portal-footer')
+                <div class="hidden lg:blo                    @include('layouts.partials.portal-footer')
                 </div>
             </main>
 
