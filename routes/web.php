@@ -1,92 +1,130 @@
 <?php
 
-use App\Http\Controllers\Lecture\AttendanceSessionController;
-use App\Http\Controllers\Lecture\DashboardLectureController;
+use App\Http\Controllers\Admin\DashboardController as AdminDashboardController;
 use App\Http\Controllers\ClassController;
 use App\Http\Controllers\ClassMemberController;
 use App\Http\Controllers\ImportStudentController;
+use App\Http\Controllers\Lecture\AttendanceSessionController;
 use App\Http\Controllers\LecturerDashboardController;
 use App\Http\Controllers\ProfileController;
+use App\Http\Controllers\Student\DashboardController as StudentDashboardController;
 use Illuminate\Support\Facades\Route;
 
-Route::get('/', function () {
-    return view('welcome');
+/*
+|--------------------------------------------------------------------------
+| Public routes
+|--------------------------------------------------------------------------
+*/
+
+Route::view('/', 'welcome')->name('home');
+
+Route::prefix('preview')->name('preview.')->group(function () {
+    Route::get('/{variant}', function (string $variant) {
+        return view('preview.layout', ['variant' => $variant]);
+    })->where('variant', 'admin|lecturer|student')->name('layout');
+
+    Route::get('/lecturer/dashboard', LecturerDashboardController::class)
+        ->name('lecturer.dashboard');
 });
 
-Route::get('/preview/{variant}', function (string $variant) {
-    return view('preview.layout', ['variant' => $variant]);
-})->where('variant', 'admin|lecturer|student')->name('preview.layout');
-
-Route::get('/preview/lecturer/dashboard', LecturerDashboardController::class)
-    ->name('preview.lecturer.dashboard');
-
-Route::get('/dashboard', LecturerDashboardController::class)
-    // ->middleware(['auth', 'verified'])
-    ->name('dashboard');
-
-Route::middleware(['auth', 'verified'])->group(function () {
-    Route::get('/lecturer', LecturerDashboardController::class)->name('lecturer.dashboard');
-    Route::get('/giang-vien', LecturerDashboardController::class)->name('lecturer.dashboard.alias');
-});
+/*
+|--------------------------------------------------------------------------
+| Authenticated common routes
+|--------------------------------------------------------------------------
+*/
 
 Route::middleware('auth')->group(function () {
+    Route::get('/dashboard', function () {
+        $user = auth()->user();
+
+        if ($user->hasRole('admin')) {
+            return redirect()->route('admin.dashboard');
+        }
+
+        if ($user->hasRole('teacher')) {
+            return redirect()->route('lecturer.dashboard');
+        }
+
+        if ($user->hasRole('student')) {
+            return redirect()->route('student.dashboard');
+        }
+
+        return view('dashboard');
+    })->middleware('verified')->name('dashboard');
+
     Route::get('/profile', [ProfileController::class, 'edit'])->name('profile.edit');
     Route::patch('/profile', [ProfileController::class, 'update'])->name('profile.update');
     Route::delete('/profile', [ProfileController::class, 'destroy'])->name('profile.destroy');
 });
 
-// ============================================================
-// TV2 — Lớp học, Sinh viên, Import
-// Nguyễn Tuấn Khanh | feature/khanh-class-student
-// ============================================================
-Route::middleware(['auth'])->group(function () {
+/*
+|--------------------------------------------------------------------------
+| Admin routes
+|--------------------------------------------------------------------------
+*/
 
-    // ---- Lớp học (CRUD) ----
-    Route::resource('classes', ClassController::class);
+Route::middleware(['auth', 'verified', 'role:admin'])
+    ->prefix('admin')
+    ->name('admin.')
+    ->group(function () {
+        Route::get('/', [AdminDashboardController::class, 'index'])->name('dashboard');
+        Route::redirect('/dashboard', '/admin')->name('dashboard.alias');
+    });
 
-    // Lưu trữ lớp (chuyển sang archived)
-    Route::patch('classes/{class}/archive', [ClassController::class, 'archive'])
-        ->name('classes.archive');
+/*
+|--------------------------------------------------------------------------
+| Lecturer routes
+|--------------------------------------------------------------------------
+|
+| The database role for lecturers is still named "teacher".
+|
+*/
 
-    // Tạo lại mã lớp mới
-    Route::patch('classes/{class}/regenerate-code', [ClassController::class, 'regenerateCode'])
-        ->name('classes.regenerate-code');
+Route::middleware(['auth', 'verified', 'role:teacher'])
+    ->prefix('lecturer')
+    ->group(function () {
+        Route::get('/dashboard', LecturerDashboardController::class)->name('lecturer.dashboard');
+        Route::redirect('/courses', '/lecturer/classes')->name('lecturer.courses');
+        Route::get('/attendance', [AttendanceSessionController::class, 'index'])->name('lecturer.attendance');
+        Route::view('/analytics', 'lecture.analytics.main')->name('lecturer.analytics');
 
-    // ---- Sinh viên trong lớp ----
-    Route::resource('classes.members', ClassMemberController::class);
+        Route::resource('classes', ClassController::class);
 
-    // ---- Import sinh viên từ Excel/CSV ----
-    Route::get('classes/{class}/import', [ImportStudentController::class, 'form'])
-        ->name('classes.import.form');
+        Route::patch('classes/{class}/archive', [ClassController::class, 'archive'])
+            ->name('classes.archive');
 
-    Route::post('classes/{class}/import', [ImportStudentController::class, 'store'])
-        ->name('classes.import.store');
+        Route::patch('classes/{class}/regenerate-code', [ClassController::class, 'regenerateCode'])
+            ->name('classes.regenerate-code');
 
-    // Tải file mẫu import
-    Route::get('import/template', [ImportStudentController::class, 'downloadTemplate'])
-        ->name('import.template');
+        Route::resource('classes.members', ClassMemberController::class);
+
+        Route::get('classes/{class}/import', [ImportStudentController::class, 'form'])
+            ->name('classes.import.form');
+
+        Route::post('classes/{class}/import', [ImportStudentController::class, 'store'])
+            ->name('classes.import.store');
+
+        Route::get('import/template', [ImportStudentController::class, 'downloadTemplate'])
+            ->name('import.template');
+    });
+
+Route::middleware(['auth', 'verified', 'role:teacher'])->group(function () {
+    Route::redirect('/lecturer', '/lecturer/dashboard')->name('lecturer.home');
+    Route::redirect('/giang-vien', '/lecturer/dashboard')->name('lecturer.dashboard.alias');
 });
 
+/*
+|--------------------------------------------------------------------------
+| Student routes
+|--------------------------------------------------------------------------
+*/
 
-
-// =============================================================================================== //
-
-// lecturer
-Route::get('/lecturer/dashboard', [DashboardLectureController::class, 'index'])->name('dashboard');
-
-Route::get('/lecturer/attendance', [AttendanceSessionController::class, 'index'])->name('attendance');
-
-Route::get('/lecturer/courses', function () {
-    return view('lecture.class.index');
-});
-
-Route::get('/lecturer/analytics', function () {
-    return view('lecture.analytics.main');
-});
-
-
-
-
+Route::middleware(['auth', 'verified', 'role:student'])
+    ->prefix('student')
+    ->name('student.')
+    ->group(function () {
+        Route::get('/', [StudentDashboardController::class, 'index'])->name('dashboard');
+        Route::redirect('/dashboard', '/student')->name('dashboard.alias');
+    });
 
 require __DIR__ . '/auth.php';
-require __DIR__.'/auth.php';
