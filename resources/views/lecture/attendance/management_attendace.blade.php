@@ -9,7 +9,7 @@
                 Quản lý điểm danh
             </h1>
             <div class="flex flex-wrap items-center gap-3 w-full md:w-auto mt-4 md:mt-0">
-                <button class="flex-1 md:flex-none relative px-5 py-2.5 bg-white border border-slate-200 text-slate-700 rounded-xl text-sm font-semibold hover:bg-slate-50 hover:text-slate-900 hover:border-slate-300 hover:shadow-md flex justify-center items-center gap-2.5 shadow-sm transition-all duration-200 overflow-visible">
+                <button class="flex-1 md:flex-none relative px-5 py-2 bg-white border border-slate-200 text-slate-700 rounded-xl text-sm font-semibold hover:bg-slate-50 hover:text-slate-900 hover:border-slate-300 hover:shadow-md flex justify-center items-center gap-2.5 shadow-sm transition-all duration-200 overflow-visible">
                     <span class="absolute -top-2.5 -right-2.5 inline-flex items-center gap-0.5 bg-gradient-to-r from-amber-400 to-yellow-500 text-white text-[8px] font-bold px-1.5 py-0.5 rounded-full uppercase tracking-wider shadow-md z-10 animate-pulse">
                         <svg class="w-2.5 h-2.5" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M10 1l2.928 6.856L20 8.59l-5.072 4.574L16.18 20 10 16.146 3.82 20l1.252-6.836L0 8.59l7.072-.734L10 1z" clip-rule="evenodd" /></svg>
                         PRO
@@ -19,7 +19,7 @@
                     </svg>
                     Xuất dữ liệu
                 </button>
-                <button class="flex-1 md:flex-none px-4 py-2.5 bg-emerald-600 text-white rounded-lg text-sm font-semibold hover:bg-emerald-700 flex justify-center items-center gap-2 shadow-sm shadow-emerald-500/30 transition">
+                <button class="flex-1 md:flex-none px-4 py-2 bg-emerald-600 text-white rounded-lg text-sm font-semibold hover:bg-emerald-700 flex justify-center items-center gap-2 shadow-sm shadow-emerald-500/30 transition">
                     <svg class="w-4 h-4 text-white/90" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path>
                     </svg>

@@ -14,7 +14,7 @@
                 <p class="text-slate-500 text-sm">Quản lý lịch học và điểm danh sinh viên của tất cả các khoa.</p>
             </div>
             <div class="flex flex-wrap items-center gap-3 w-full md:w-auto mt-4 md:mt-0">
-                <button class="flex-1 md:flex-none relative px-5 py-2.5 bg-white border border-slate-200 text-slate-700 rounded-xl text-sm font-semibold hover:bg-slate-50 hover:text-slate-900 hover:border-slate-300 hover:shadow-md flex justify-center items-center gap-2.5 shadow-sm transition-all duration-200 overflow-visible">
+                <button class="flex-1 md:flex-none relative px-5 py-2 bg-white border border-slate-200 text-slate-700 rounded-xl text-sm font-semibold hover:bg-slate-50 hover:text-slate-900 hover:border-slate-300 hover:shadow-md flex justify-center items-center gap-2.5 shadow-sm transition-all duration-200 overflow-visible">
                     <span class="absolute -top-2.5 -right-2.5 inline-flex items-center gap-0.5 bg-gradient-to-r from-amber-400 to-yellow-500 text-white text-[8px] font-bold px-1.5 py-0.5 rounded-full uppercase tracking-wider shadow-md z-10 animate-pulse">
                         <svg class="w-2.5 h-2.5" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M10 1l2.928 6.856L20 8.59l-5.072 4.574L16.18 20 10 16.146 3.82 20l1.252-6.836L0 8.59l7.072-.734L10 1z" clip-rule="evenodd" /></svg>
                         PRO
@@ -24,7 +24,7 @@
                     </svg>
                     Xuất báo cáo
                 </button>
-                <button onclick="document.getElementById('filterModalClass').classList.remove('hidden')" class="flex-1 md:flex-none px-5 py-2.5 bg-gradient-to-r from-blue-600 to-blue-700 text-white rounded-xl text-sm font-semibold hover:from-blue-700 hover:to-blue-800 flex justify-center items-center gap-2.5 shadow-sm shadow-blue-500/30 transition-all duration-200">
+                <button onclick="document.getElementById('filterModalClass').classList.remove('hidden')" class="flex-1 md:flex-none px-5 py-2 bg-gradient-to-r from-blue-600 to-blue-700 text-white rounded-xl text-sm font-semibold hover:from-blue-700 hover:to-blue-800 flex justify-center items-center gap-2.5 shadow-sm shadow-blue-500/30 transition-all duration-200">
                     <svg class="w-4 h-4 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 4a1 1 0 011-1h16a1 1 0 011 1v2.586a1 1 0 01-.293.707l-6.414 6.414a1 1 0 00-.293.707V17l-4 4v-6.586a1 1 0 00-.293-.707L3.293 7.293A1 1 0 013 6.586V4z"></path>
                     </svg>
@@ -38,7 +38,7 @@
         <div class="grid grid-cols-1 md:grid-cols-3 gap-6 items-stretch">
 
             {{-- Nút thêm lớp học mới --}}
-            <button class="group bg-white/60 rounded-2xl border-2 border-dashed border-slate-300 shadow-sm flex flex-col justify-center items-center h-full min-h-[320px] hover:bg-blue-50/40 hover:border-blue-300 hover:shadow-md transition-all duration-500 ease-out cursor-pointer overflow-hidden focus:outline-none focus:ring-4 focus:ring-blue-100">
+            <a href="/lecturer/class/create" class="group bg-white/60 rounded-2xl border-2 border-dashed border-slate-300 shadow-sm flex flex-col justify-center items-center h-full min-h-[320px] hover:bg-blue-50/40 hover:border-blue-300 hover:shadow-md transition-all duration-500 ease-out cursor-pointer overflow-hidden focus:outline-none focus:ring-4 focus:ring-blue-100">
                 <div class="w-16 h-16 bg-blue-600 rounded-2xl shadow-md shadow-blue-500/25 border border-blue-600 flex justify-center items-center mb-5 group-hover:scale-105 group-hover:shadow-blue-500/40 transition-all duration-500 ease-out">
                     <svg class="w-7 h-7 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"></path>
@@ -46,7 +46,7 @@
                 </div>
                 <h3 class="text-base font-bold text-slate-600 group-hover:text-blue-600 transition-colors duration-500 ease-out">Thêm lớp học mới</h3>
                 <p class="text-sm text-slate-400 mt-1.5 group-hover:text-slate-500 transition-colors duration-500 ease-out">Tạo một lớp học hoặc import</p>
-            </button>
+            </a>
 
             {{-- Card lớp học 1 --}}
             <div class="group bg-white rounded-2xl border border-slate-200 shadow-sm flex flex-col h-full overflow-hidden hover:shadow-lg transition-all duration-300">
@@ -99,10 +99,10 @@
                 </div>
 
                 <div class="px-6 pb-6 pt-2 flex flex-col 2xl:flex-row gap-3">
-                    <button class="w-full 2xl:w-[45%] py-2.5 bg-white border border-slate-200 text-slate-700 rounded-xl text-sm font-semibold hover:bg-slate-50 hover:border-slate-300 transition-all truncate px-2">
+                    <a href="/lecturer/class/show" class="w-full 2xl:w-[45%] py-2 bg-white border border-slate-200 text-slate-700 rounded-xl text-sm font-semibold hover:bg-slate-50 hover:border-slate-300 transition-all truncate px-2 text-center">
                         Xem chi tiết
-                    </button>
-                    <button class="w-full 2xl:w-[55%] py-2.5 bg-gradient-to-r from-blue-600 to-blue-700 text-white rounded-xl text-sm font-semibold hover:from-blue-700 hover:to-blue-800 transition-all flex justify-center items-center gap-2 shadow-sm shadow-blue-500/30 px-2">
+                    </a>
+                    <button class="w-full 2xl:w-[55%] py-2 bg-gradient-to-r from-blue-600 to-blue-700 text-white rounded-xl text-sm font-semibold hover:from-blue-700 hover:to-blue-800 transition-all flex justify-center items-center gap-2 shadow-sm shadow-blue-500/30 px-2">
                         <svg class="w-4 h-4 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"></path>
                         </svg>
@@ -161,15 +161,15 @@
                     </div>
                 </div>
 
-                <div class="px-6 pb-6 pt-2 flex gap-3">
-                    <button class="w-[45%] py-2.5 bg-white border border-slate-200 text-slate-700 rounded-xl text-sm font-semibold hover:bg-slate-50 hover:border-slate-300 transition-all">
+                <div class="px-6 pb-6 pt-2 flex flex-col 2xl:flex-row gap-3">
+                    <a href="/lecturer/class/show" class="w-full 2xl:w-[45%] py-2 bg-white border border-slate-200 text-slate-700 rounded-xl text-sm font-semibold hover:bg-slate-50 hover:border-slate-300 transition-all truncate px-2 text-center">
                         Xem chi tiết
-                    </button>
-                    <button class="w-[55%] py-2.5 bg-gradient-to-r from-blue-600 to-blue-700 text-white rounded-xl text-sm font-semibold hover:from-blue-700 hover:to-blue-800 transition-all flex justify-center items-center gap-2 shadow-sm shadow-blue-500/30">
-                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    </a>
+                    <button class="w-full 2xl:w-[55%] py-2 bg-gradient-to-r from-blue-600 to-blue-700 text-white rounded-xl text-sm font-semibold hover:from-blue-700 hover:to-blue-800 transition-all flex justify-center items-center gap-2 shadow-sm shadow-blue-500/30 px-2">
+                        <svg class="w-4 h-4 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"></path>
                         </svg>
-                        Bắt đầu điểm danh
+                        <span class="truncate">Bắt đầu điểm danh</span>
                     </button>
                 </div>
             </div>

@@ -53,10 +53,6 @@
                     {{ $currentPageTitle }}
                 </h2>
 
-                <div class="relative hidden w-full max-w-md sm:block">
-                    <x-sams.icon name="search" class="absolute left-3 top-1/2 h-5 w-5 -translate-y-1/2 text-slate-400" />
-                    <input type="text" placeholder="Tìm kiếm sinh viên, lớp học, hoặc phiên điểm danh..." class="w-full rounded-lg border border-slate-200 bg-slate-50 py-2 pl-10 pr-4 text-sm outline-none transition-colors focus:border-blue-500 focus:bg-white focus:ring-2 focus:ring-blue-500 dark:border-slate-800 dark:bg-slate-950/50 dark:text-slate-100 dark:focus:bg-slate-900" />
-                </div>
             </div>
 
             <div class="flex shrink-0 items-center gap-2 sm:gap-4">

@@ -154,6 +154,21 @@ Route::get('/lecturer/students/leave/{id}', function ($id) {
     return view('lecture.students.leaveRequest.leaveDetail', ['id' => $id]);
 })->where('id', '[0-9]+');
 
+
+Route::get('/lecturer/students/{id}/detail', function ($id) {
+    return view('lecture.students.show', ['id' => $id]);
+})->where('id', '[0-9]+');
+
+Route::get('/lecturer/class/create', function () {
+    return view('lecture.class.create');
+});
+
+Route::get('/lecturer/class/show', function () {
+    return view('lecture.class.show');
+});
+
+
+
 require __DIR__ . '/auth.php';
 
 // ============================================================
