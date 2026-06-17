@@ -18,10 +18,10 @@
                 </div>
             </div>
             <div class="flex flex-wrap items-center gap-2">
-                <a href="{{ route('classes.edit', $class) }}" class="inline-flex items-center gap-2 rounded-lg border border-slate-200 bg-white px-4 py-2.5 text-sm font-semibold text-slate-700 shadow-sm transition-all hover:bg-slate-50 dark:border-slate-800 dark:bg-slate-900 dark:text-slate-350 dark:hover:bg-slate-800">
+                <button @click="$dispatch('open-edit-modal')" class="inline-flex items-center gap-2 rounded-lg border border-slate-200 bg-white px-4 py-2.5 text-sm font-semibold text-slate-700 shadow-sm transition-all hover:bg-slate-50 dark:border-slate-800 dark:bg-slate-900 dark:text-slate-350 dark:hover:bg-slate-800">
                     <x-sams.icon name="edit" class="h-4 w-4" />
                     Sửa lớp học
-                </a>
+                </button>
                 
                 <form action="{{ route('classes.archive', $class) }}" method="POST" onsubmit="return confirm('Bạn có chắc muốn lưu trữ lớp học này?')" class="inline">
                     @csrf
@@ -289,5 +289,125 @@
                 </div>
             </div>
         </div>
+    </div>
+
+    <!-- Edit Class Modal -->
+    <div x-data="{ open: {{ $errors->any() ? 'true' : 'false' }} }" 
+         @open-edit-modal.window="open = true"
+         @keydown.escape.window="open = false"
+         x-show="open" 
+         class="relative z-50" 
+         aria-labelledby="modal-title" 
+         role="dialog" 
+         aria-modal="true"
+         x-cloak>
+         
+         <!-- Background backdrop -->
+         <div x-show="open" 
+              x-transition:enter="ease-out duration-300" 
+              x-transition:enter-start="opacity-0" 
+              x-transition:enter-end="opacity-100" 
+              x-transition:leave="ease-in duration-200" 
+              x-transition:leave-start="opacity-100" 
+              x-transition:leave-end="opacity-0" 
+              class="fixed inset-0 bg-slate-900/50 backdrop-blur-sm transition-opacity"></div>
+
+         <div class="fixed inset-0 z-10 w-screen overflow-y-auto">
+            <div class="flex min-h-full items-end justify-center p-4 text-center sm:items-center sm:p-0">
+                <!-- Modal panel -->
+                <div x-show="open" @click.away="open = false"
+                     x-transition:enter="ease-out duration-300" 
+                     x-transition:enter-start="opacity-0 translate-y-4 sm:translate-y-0 sm:scale-95" 
+                     x-transition:enter-end="opacity-100 translate-y-0 sm:scale-100" 
+                     x-transition:leave="ease-in duration-200" 
+                     x-transition:leave-start="opacity-100 translate-y-0 sm:scale-100" 
+                     x-transition:leave-end="opacity-0 translate-y-4 sm:translate-y-0 sm:scale-95" 
+                     class="relative transform overflow-hidden rounded-xl bg-white text-left shadow-xl transition-all sm:my-8 sm:w-full sm:max-w-2xl dark:bg-slate-900 border border-slate-200 dark:border-slate-800">
+                    
+                    <form action="{{ route('classes.update', $class) }}" method="POST">
+                        @csrf
+                        @method('PATCH')
+                        
+                        <div class="border-b border-slate-200 bg-slate-50 px-6 py-4 dark:border-slate-800 dark:bg-slate-950/50 flex items-center justify-between">
+                            <h3 class="text-lg font-bold text-slate-900 dark:text-white" id="modal-title">Cập nhật thông tin lớp học</h3>
+                            <button type="button" @click="open = false" class="text-slate-400 hover:text-slate-500 dark:hover:text-slate-300">
+                                <span class="sr-only">Đóng</span>
+                                <x-sams.icon name="x" class="h-5 w-5" />
+                            </button>
+                        </div>
+
+                        <div class="px-6 py-6 space-y-5">
+                            <div class="grid grid-cols-1 gap-5 md:grid-cols-2">
+                                <!-- Tên lớp -->
+                                <div class="md:col-span-2">
+                                    <label for="name" class="block text-sm font-semibold text-slate-700 dark:text-slate-300">Tên lớp / Môn học <span class="text-red-500">*</span></label>
+                                    <input type="text" name="name" id="name" value="{{ old('name', $class->name) }}" required
+                                        class="mt-1.5 block w-full rounded-lg border-slate-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 sm:text-sm dark:border-slate-700 dark:bg-slate-900 dark:text-white placeholder-slate-400">
+                                    @error('name') <p class="mt-1 text-sm text-red-500">{{ $message }}</p> @enderror
+                                </div>
+
+                                <!-- Mã môn học -->
+                                <div>
+                                    <label for="subject_code" class="block text-sm font-semibold text-slate-700 dark:text-slate-300">Mã môn học</label>
+                                    <input type="text" name="subject_code" id="subject_code" value="{{ old('subject_code', $class->subject_code) }}"
+                                        class="mt-1.5 block w-full rounded-lg border-slate-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 sm:text-sm dark:border-slate-700 dark:bg-slate-900 dark:text-white">
+                                    @error('subject_code') <p class="mt-1 text-sm text-red-500">{{ $message }}</p> @enderror
+                                </div>
+
+                                <!-- Học kỳ -->
+                                <div>
+                                    <label for="semester" class="block text-sm font-semibold text-slate-700 dark:text-slate-300">Học kỳ</label>
+                                    <input type="text" name="semester" id="semester" value="{{ old('semester', $class->semester) }}" placeholder="VD: Học kỳ 1 2024-2025"
+                                        class="mt-1.5 block w-full rounded-lg border-slate-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 sm:text-sm dark:border-slate-700 dark:bg-slate-900 dark:text-white">
+                                    @error('semester') <p class="mt-1 text-sm text-red-500">{{ $message }}</p> @enderror
+                                </div>
+
+                                <!-- Tổng số buổi -->
+                                <div>
+                                    <label for="total_sessions" class="block text-sm font-semibold text-slate-700 dark:text-slate-300">Tổng số buổi <span class="text-red-500">*</span></label>
+                                    <input type="number" name="total_sessions" id="total_sessions" value="{{ old('total_sessions', $class->total_sessions) }}" required min="1" max="100"
+                                        class="mt-1.5 block w-full rounded-lg border-slate-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 sm:text-sm dark:border-slate-700 dark:bg-slate-900 dark:text-white">
+                                    @error('total_sessions') <p class="mt-1 text-sm text-red-500">{{ $message }}</p> @enderror
+                                </div>
+
+                                <!-- Số tiết mỗi buổi -->
+                                <div>
+                                    <label for="lessons_per_session" class="block text-sm font-semibold text-slate-700 dark:text-slate-300">Số tiết mỗi buổi <span class="text-red-500">*</span></label>
+                                    <input type="number" name="lessons_per_session" id="lessons_per_session" value="{{ old('lessons_per_session', $class->lessons_per_session) }}" required min="1" max="10"
+                                        class="mt-1.5 block w-full rounded-lg border-slate-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 sm:text-sm dark:border-slate-700 dark:bg-slate-900 dark:text-white">
+                                    @error('lessons_per_session') <p class="mt-1 text-sm text-red-500">{{ $message }}</p> @enderror
+                                </div>
+
+                                <!-- Mô tả -->
+                                <div class="md:col-span-2">
+                                    <label for="description" class="block text-sm font-semibold text-slate-700 dark:text-slate-300">Mô tả thêm</label>
+                                    <textarea name="description" id="description" rows="3"
+                                        class="mt-1.5 block w-full rounded-lg border-slate-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 sm:text-sm dark:border-slate-700 dark:bg-slate-900 dark:text-white">{{ old('description', $class->description) }}</textarea>
+                                    @error('description') <p class="mt-1 text-sm text-red-500">{{ $message }}</p> @enderror
+                                </div>
+
+                                <!-- Yêu cầu duyệt -->
+                                <div class="md:col-span-2 mt-2">
+                                    <label class="flex items-center gap-3 cursor-pointer">
+                                        <input type="checkbox" name="require_approval" value="1" {{ old('require_approval', $class->require_approval) ? 'checked' : '' }}
+                                            class="h-5 w-5 rounded border-slate-300 text-blue-600 focus:ring-blue-500 dark:border-slate-700 dark:bg-slate-900 dark:checked:bg-blue-500">
+                                        <span class="text-sm font-semibold text-slate-700 dark:text-slate-300">Yêu cầu duyệt khi sinh viên tham gia bằng mã lớp</span>
+                                    </label>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="border-t border-slate-200 bg-slate-50 px-6 py-4 flex items-center justify-end gap-3 dark:border-slate-800 dark:bg-slate-950/50">
+                            <button type="button" @click="open = false" class="rounded-lg border border-slate-300 bg-white px-4 py-2 text-sm font-semibold text-slate-700 shadow-sm hover:bg-slate-50 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-300 dark:hover:bg-slate-700">
+                                Hủy bỏ
+                            </button>
+                            <button type="submit" class="rounded-lg bg-blue-600 px-4 py-2 text-sm font-semibold text-white shadow-sm hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2">
+                                Lưu thay đổi
+                            </button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+         </div>
     </div>
 </x-app-layout>

@@ -151,13 +151,13 @@
 
         {{-- ===== THANH TÌM KIẾM & LỌC ===== --}}
         <div class="bg-white border border-slate-200 rounded-3xl p-5 shadow-sm
-                    flex flex-col md:flex-row md:items-center justify-between gap-4
+                    flex flex-col lg:flex-row lg:items-center justify-between gap-4
                     dark:bg-slate-900 dark:border-slate-800">
 
             {{-- Ô tìm kiếm --}}
             <form method="GET" action="{{ route('student.classes.list') }}"
                   class="flex items-center gap-2.5 bg-slate-50 border border-slate-200 rounded-xl px-4 py-2
-                         text-xs font-semibold text-slate-700 w-full md:max-w-md
+                         text-xs font-semibold text-slate-700 w-full lg:max-w-md
                          focus-within:border-blue-400 focus-within:ring-1 focus-within:ring-blue-200 transition-all
                          dark:bg-slate-800 dark:border-slate-700 dark:focus-within:border-blue-500 dark:focus-within:ring-blue-900/30">
                 <x-sams.icon name="search" class="w-[18px] h-[18px] text-slate-400 shrink-0" />
@@ -174,23 +174,23 @@
             </form>
 
             {{-- Nút lọc trạng thái --}}
-            <div class="flex gap-2 shrink-0">
+            <div class="grid grid-cols-3 gap-2 w-full lg:flex lg:w-auto shrink-0">
                 <a href="{{ route('student.classes.list') }}"
-                   class="px-4 py-2.5 border rounded-xl text-xs font-bold cursor-pointer transition-all
+                   class="px-4 py-2.5 border rounded-xl text-xs font-bold cursor-pointer transition-all text-center
                           {{ $displayFilter === ''
                               ? 'bg-blue-600 text-white border-blue-600 shadow-sm'
                               : 'bg-white text-slate-500 border-slate-200 hover:text-slate-700 hover:bg-slate-50 dark:bg-slate-800 dark:text-slate-300 dark:border-slate-700 dark:hover:bg-slate-700' }}">
                     Tất cả
                 </a>
                 <a href="{{ route('student.classes.list', ['status' => 'active']) }}"
-                   class="px-4 py-2.5 border rounded-xl text-xs font-bold cursor-pointer transition-all
+                   class="px-4 py-2.5 border rounded-xl text-xs font-bold cursor-pointer transition-all text-center
                           {{ $displayFilter === 'active'
                               ? 'bg-blue-600 text-white border-blue-600 shadow-sm'
                               : 'bg-white text-slate-500 border-slate-200 hover:text-slate-700 hover:bg-slate-50 dark:bg-slate-800 dark:text-slate-300 dark:border-slate-700 dark:hover:bg-slate-700' }}">
                     Đang học
                 </a>
                 <a href="{{ route('student.classes.list', ['status' => 'archived']) }}"
-                   class="px-4 py-2.5 border rounded-xl text-xs font-bold cursor-pointer transition-all
+                   class="px-4 py-2.5 border rounded-xl text-xs font-bold cursor-pointer transition-all text-center
                           {{ $displayFilter === 'archived'
                               ? 'bg-blue-600 text-white border-blue-600 shadow-sm'
                               : 'bg-white text-slate-500 border-slate-200 hover:text-slate-700 hover:bg-slate-50 dark:bg-slate-800 dark:text-slate-300 dark:border-slate-700 dark:hover:bg-slate-700' }}">
@@ -221,7 +221,7 @@
                 </a>
             </div>
         @else
-            <div class="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-5">
+            <div class="grid grid-cols-1 lg:grid-cols-3 gap-5">
                 @foreach ($displayClasses as $item)
                     @php
                         // Hỗ trợ cả array (mock) và object (Eloquent)

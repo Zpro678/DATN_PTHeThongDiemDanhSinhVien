@@ -13,12 +13,6 @@ use App\Http\Controllers\StudentClassController;
 
 use Illuminate\Support\Facades\Route;
 
-/*
-|--------------------------------------------------------------------------
-| Public routes
-|--------------------------------------------------------------------------
-*/
-
 Route::view('/', 'welcome')->name('home');
 
 Route::prefix('preview')->name('preview.')->group(function () {
@@ -28,11 +22,6 @@ Route::prefix('preview')->name('preview.')->group(function () {
 
 });
 
-/*
-|--------------------------------------------------------------------------
-| Authenticated common routes
-|--------------------------------------------------------------------------
-*/
 
 Route::middleware('auth')->group(function () {
     Route::get('/dashboard', function () {
@@ -203,11 +192,8 @@ Route::get('/lecturer/class/show', function () {
 
 require __DIR__ . '/auth.php';
 
-// ============================================================
-// TV2 — Giao diện Sinh viên (Student Portal)
-// Nguyễn Tuấn Khanh | feature/khanh-class-student
-// Đường dẫn gốc: /student/*
-// ============================================================
+use App\Http\Controllers\StudentLeaveRequestController;
+
 Route::middleware(['auth'])->prefix('student')->name('student.')->group(function () {
 
     // --- Dashboard tổng quan ---
@@ -217,6 +203,14 @@ Route::middleware(['auth'])->prefix('student')->name('student.')->group(function
     // --- Lớp học ---
     Route::get('/classes', [StudentClassController::class, 'index'])
         ->name('classes.list');                       // /student/classes
+
+    // --- Đơn xin nghỉ phép ---
+    Route::get('/leaves', [StudentLeaveRequestController::class, 'index'])
+        ->name('leaves.index');                       // /student/leaves
+    Route::post('/leaves', [StudentLeaveRequestController::class, 'store'])
+        ->name('leaves.store');                       // /student/leaves
+    Route::get('/classes/{class}/sessions-json', [StudentLeaveRequestController::class, 'getSessions'])
+        ->name('classes.sessions-json');              // /student/classes/{id}/sessions-json
 
     Route::get('/classes/{class}', [StudentClassController::class, 'show'])
         ->name('classes.detail');                     // /student/classes/{id}
@@ -236,9 +230,17 @@ Route::middleware(['auth'])->prefix('student')->name('student.')->group(function
         return view('student.notification.studentNotificationList');
     })->name('notifications');                        // /student/notifications
 
-    // --- Hồ sơ cá nhân ---
+// --- Hồ sơ cá nhân ---
     Route::get('/profile', function () {
         return view('student.profile.studentProfile');
     })->name('profile');                              // /student/profile
+});
+
+// ROUTE TẠM THỜI ĐỂ TEST UI THÊM SINH VIÊN (Không cần đăng nhập Giảng viên)
+Route::get('/preview-add-student', function () {
+    $class = new \App\Models\CourseClass();
+    $class->id = 1;
+    $class->code = 'CS402 - Thuật toán Nâng cao';
+    return view('classes.members.create', compact('class'));
 });
 

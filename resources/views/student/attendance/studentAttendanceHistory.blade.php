@@ -35,7 +35,7 @@
             </div>
             
             <div class="grid grid-cols-1 lg:grid-cols-12 gap-6 items-start">
-                <div class="bg-white border border-slate-200 rounded-3xl p-6 shadow-sm overflow-hidden col-span-12">
+                <div id="table-container" class="bg-white border border-slate-200 rounded-3xl p-6 shadow-sm overflow-hidden col-span-12 transition-all duration-300">
                     <div class="border-b border-slate-100 pb-3 mb-4 flex justify-between items-center select-none">
                         <h4 class="text-xs font-black text-slate-900 uppercase">Nhật ký bạ điểm danh tích luỹ</h4>
                         <span class="text-[9px] text-slate-400 font-mono tracking-widest">SAMS SECURE LEDGER PRO</span>
@@ -53,7 +53,7 @@
                                 </tr>
                             </thead>
                             <tbody class="divide-y divide-slate-50 text-[11px] font-medium text-slate-600">
-                                <tr class="hover:bg-blue-50/15 transition-all cursor-pointer "><td class="py-3.5 pr-4 pl-1 font-mono text-slate-950 font-bold whitespace-nowrap"><span class="flex items-center gap-1.5"><svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-clock w-3.5 h-3.5 text-slate-400 shrink-0" aria-hidden="true"><path d="M12 6v6l4 2"></path><circle cx="12" cy="12" r="10"></circle></svg>04/06/2026</span></td><td class="py-3.5 px-4 text-slate-800 font-extrabold max-w-[170px] truncate" title="DB101: Thiết kế &amp; Quản trị SQL">Thiết kế &amp; Quản trị SQL</td><td class="py-3.5 px-4 font-mono text-slate-650 font-bold leading-none uppercase">DB101</td><td class="py-3.5 px-4 font-sans text-xs"><span class="inline-flex items-center gap-1 bg-emerald-50 text-emerald-700 border border-emerald-100 text-[10px] font-bold px-2 py-0.5 rounded-lg uppercase whitespace-nowrap">Có mặt</span></td><td class="py-3.5 px-4 font-mono text-slate-600 font-bold text-[10px] whitespace-nowrap"><span class="bg-slate-100 text-slate-700 px-2 py-0.5 rounded-md text-[9.5px]">QR + GPS</span></td><td class="py-3.5 px-2 text-right"><button class="inline-flex items-center gap-1 bg-blue-50 hover:bg-blue-100 text-blue-700 font-extrabold px-2.5 py-1 rounded-lg text-[9.5px] border-none tracking-tight transition-all active:scale-95 cursor-pointer"><span>Xem chi tiết</span><svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-chevron-right w-3.5 h-3.5 text-blue-600 shrink-0" aria-hidden="true"><path d="m9 18 6-6-6-6"></path></svg></button></td></tr>
+                                <tr onclick="showDetail()" id="row-1" class="hover:bg-blue-50/15 transition-all cursor-pointer "><td class="py-3.5 pr-4 pl-1 font-mono text-slate-950 font-bold whitespace-nowrap"><span class="flex items-center gap-1.5"><svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-clock w-3.5 h-3.5 text-slate-400 shrink-0" aria-hidden="true"><path d="M12 6v6l4 2"></path><circle cx="12" cy="12" r="10"></circle></svg>04/06/2026</span></td><td class="py-3.5 px-4 text-slate-800 font-extrabold max-w-[170px] truncate" title="DB101: Thiết kế &amp; Quản trị SQL">Thiết kế &amp; Quản trị SQL</td><td class="py-3.5 px-4 font-mono text-slate-650 font-bold leading-none uppercase">DB101</td><td class="py-3.5 px-4 font-sans text-xs"><span class="inline-flex items-center gap-1 bg-emerald-50 text-emerald-700 border border-emerald-100 text-[10px] font-bold px-2 py-0.5 rounded-lg uppercase whitespace-nowrap">Có mặt</span></td><td class="py-3.5 px-4 font-mono text-slate-600 font-bold text-[10px] whitespace-nowrap"><span class="bg-slate-100 text-slate-700 px-2 py-0.5 rounded-md text-[9.5px]">QR + GPS</span></td><td class="py-3.5 px-2 text-right"><button class="inline-flex items-center gap-1 bg-blue-50 hover:bg-blue-100 text-blue-700 font-extrabold px-2.5 py-1 rounded-lg text-[9.5px] border-none tracking-tight transition-all active:scale-95 cursor-pointer"><span>Xem chi tiết</span><svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-chevron-right w-3.5 h-3.5 text-blue-600 shrink-0" aria-hidden="true"><path d="m9 18 6-6-6-6"></path></svg></button></td></tr>
                                 <tr class="hover:bg-blue-50/15 transition-all cursor-pointer "><td class="py-3.5 pr-4 pl-1 font-mono text-slate-950 font-bold whitespace-nowrap"><span class="flex items-center gap-1.5"><svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-clock w-3.5 h-3.5 text-slate-400 shrink-0" aria-hidden="true"><path d="M12 6v6l4 2"></path><circle cx="12" cy="12" r="10"></circle></svg>03/06/2026</span></td><td class="py-3.5 px-4 text-slate-800 font-extrabold max-w-[170px] truncate" title="PY201: Phát triển Web Python">Phát triển Web Python</td><td class="py-3.5 px-4 font-mono text-slate-650 font-bold leading-none uppercase">PY201</td><td class="py-3.5 px-4 font-sans text-xs"><span class="inline-flex items-center gap-1 bg-amber-50 text-amber-700 border border-amber-100 text-[10px] font-bold px-2 py-0.5 rounded-lg uppercase whitespace-nowrap">Muộn</span></td><td class="py-3.5 px-4 font-mono text-slate-600 font-bold text-[10px] whitespace-nowrap"><span class="bg-slate-100 text-slate-700 px-2 py-0.5 rounded-md text-[9.5px]">QR + GPS</span></td><td class="py-3.5 px-2 text-right"><button class="inline-flex items-center gap-1 bg-blue-50 hover:bg-blue-100 text-blue-700 font-extrabold px-2.5 py-1 rounded-lg text-[9.5px] border-none tracking-tight transition-all active:scale-95 cursor-pointer"><span>Xem chi tiết</span><svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-chevron-right w-3.5 h-3.5 text-blue-600 shrink-0" aria-hidden="true"><path d="m9 18 6-6-6-6"></path></svg></button></td></tr>
                                 <tr class="hover:bg-blue-50/15 transition-all cursor-pointer "><td class="py-3.5 pr-4 pl-1 font-mono text-slate-950 font-bold whitespace-nowrap"><span class="flex items-center gap-1.5"><svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-clock w-3.5 h-3.5 text-slate-400 shrink-0" aria-hidden="true"><path d="M12 6v6l4 2"></path><circle cx="12" cy="12" r="10"></circle></svg>02/06/2026</span></td><td class="py-3.5 px-4 text-slate-800 font-extrabold max-w-[170px] truncate" title="PH102: Vật lý đại cương 2">Vật lý đại cương 2</td><td class="py-3.5 px-4 font-mono text-slate-650 font-bold leading-none uppercase">PH102</td><td class="py-3.5 px-4 font-sans text-xs"><span class="inline-flex items-center gap-1 bg-rose-50 text-rose-700 border border-rose-100 text-[10px] font-bold px-2 py-0.5 rounded-lg uppercase whitespace-nowrap">Vắng</span></td><td class="py-3.5 px-4 font-mono text-slate-600 font-bold text-[10px] whitespace-nowrap"><span class="bg-slate-100 text-slate-700 px-2 py-0.5 rounded-md text-[9.5px]">Thủ công</span></td><td class="py-3.5 px-2 text-right"><button class="inline-flex items-center gap-1 bg-blue-50 hover:bg-blue-100 text-blue-700 font-extrabold px-2.5 py-1 rounded-lg text-[9.5px] border-none tracking-tight transition-all active:scale-95 cursor-pointer"><span>Xem chi tiết</span><svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-chevron-right w-3.5 h-3.5 text-blue-600 shrink-0" aria-hidden="true"><path d="m9 18 6-6-6-6"></path></svg></button></td></tr>
                                 <tr class="hover:bg-blue-50/15 transition-all cursor-pointer "><td class="py-3.5 pr-4 pl-1 font-mono text-slate-950 font-bold whitespace-nowrap"><span class="flex items-center gap-1.5"><svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-clock w-3.5 h-3.5 text-slate-400 shrink-0" aria-hidden="true"><path d="M12 6v6l4 2"></path><circle cx="12" cy="12" r="10"></circle></svg>29/05/2026</span></td><td class="py-3.5 px-4 text-slate-800 font-extrabold max-w-[170px] truncate" title="NET301: Lý thuyết Mạng Máy Tính">Lý thuyết Mạng Máy Tính</td><td class="py-3.5 px-4 font-mono text-slate-650 font-bold leading-none uppercase">NET301</td><td class="py-3.5 px-4 font-sans text-xs"><span class="inline-flex items-center gap-1 bg-blue-50 text-blue-700 border border-blue-105 text-[10px] font-bold px-2 py-0.5 rounded-lg uppercase whitespace-nowrap">Có phép</span></td><td class="py-3.5 px-4 font-mono text-slate-600 font-bold text-[10px] whitespace-nowrap"><span class="bg-slate-100 text-slate-700 px-2 py-0.5 rounded-md text-[9.5px]">Thủ công</span></td><td class="py-3.5 px-2 text-right"><button class="inline-flex items-center gap-1 bg-blue-50 hover:bg-blue-100 text-blue-700 font-extrabold px-2.5 py-1 rounded-lg text-[9.5px] border-none tracking-tight transition-all active:scale-95 cursor-pointer"><span>Xem chi tiết</span><svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-chevron-right w-3.5 h-3.5 text-blue-600 shrink-0" aria-hidden="true"><path d="m9 18 6-6-6-6"></path></svg></button></td></tr>
@@ -63,10 +63,65 @@
                         </table>
                     </div>
                 </div>
-                <div class="hidden lg:flex lg:col-span-4 bg-slate-100/50 border border-dashed border-slate-350 rounded-3xl p-8 text-center flex-col justify-center items-center h-[340px] text-slate-400 space-y-2 select-none">
-                    <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-history w-8 h-8 text-slate-300 animate-pulse" aria-hidden="true"><path d="M3 12a9 9 0 1 0 9-9 9.75 9.75 0 0 0-6.74 2.74L3 8"></path><path d="M3 3v5h5"></path><path d="M12 7v5l4 2"></path></svg>
-                    <h5 class="text-xs font-black uppercase text-slate-500">Xem chi tiết lần điểm danh</h5>
-                    <p class="text-[10px] max-w-[180px] font-semibold leading-relaxed">Nhấp chuột chọn một dòng nhật ký để xem chi tiết thông số toạ độ địa lý, trạng thái bảo mật của buổi học.</p>
+
+                <div id="detail-panel" class="hidden lg:col-span-4 bg-white border border-slate-200 rounded-3xl p-6 shadow-lg shadow-slate-200/50 relative transition-all duration-300">
+                    <div class="flex items-center justify-between border-b border-slate-100 pb-4 mb-5">
+                        <div class="flex items-center gap-2">
+                            <span class="bg-blue-50 border border-blue-100 p-1.5 rounded-full text-blue-600">
+                                <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-circle-alert w-4 h-4 shrink-0" aria-hidden="true"><circle cx="12" cy="12" r="10"></circle><line x1="12" y1="8" x2="12" y2="12"></line><line x1="12" y1="16" x2="12.01" y2="16"></line></svg>
+                            </span>
+                            <h4 class="text-xs font-black text-slate-900 uppercase tracking-widest">Chi tiết lần điểm danh</h4>
+                        </div>
+                        <button onclick="hideDetail()" class="w-7 h-7 rounded-full bg-slate-50 border border-slate-100 flex items-center justify-center hover:bg-red-50 transition-colors cursor-pointer group">
+                            <x-sams.icon name="x" class="w-3.5 h-3.5 text-red-500 group-hover:text-red-600 transition-colors" />
+                        </button>
+                    </div>
+
+                    <div class="bg-slate-50 border border-slate-100 rounded-2xl p-4 mb-6">
+                        <span class="px-2 py-0.5 text-[10px] font-mono font-black bg-slate-200 text-slate-500 rounded mb-2 inline-block">DB101</span>
+                        <h5 class="text-sm font-black text-slate-900 leading-snug mb-1">DB101: Thiết kế &amp; Quản trị SQL</h5>
+                        <p class="text-[10px] text-slate-500 font-medium">Học phần: Học kỳ I (2025-2026)</p>
+                    </div>
+
+                    <div class="space-y-6">
+                        <div class="flex justify-between items-start">
+                            <div class="space-y-1">
+                                <h6 class="text-[10px] font-black text-slate-400 uppercase tracking-widest">Thời điểm điểm danh</h6>
+                                <p class="text-xs font-bold text-slate-800">Thời gian check-in</p>
+                            </div>
+                            <div class="text-right space-y-0.5">
+                                <span class="block text-sm font-black text-blue-600">08:15</span>
+                                <span class="block text-[9px] font-mono text-slate-400 font-bold">04/06/2026</span>
+                            </div>
+                        </div>
+
+                        <div class="space-y-1.5">
+                            <h6 class="text-[10px] font-black text-slate-400 uppercase tracking-widest">Vị trí GPS</h6>
+                            <p class="text-[11px] font-bold text-slate-700 bg-slate-50 p-2.5 rounded-xl border border-slate-100 font-mono">10.7712° N, 106.6901° E (Giảng đường A)</p>
+                        </div>
+
+                        <div class="space-y-1.5">
+                            <h6 class="text-[10px] font-black text-slate-400 uppercase tracking-widest">Trạng thái xác thực</h6>
+                            <div class="bg-emerald-50 border border-emerald-100/50 rounded-xl p-2.5 flex items-center gap-2">
+                                <x-sams.icon name="shield-check" class="w-4 h-4 text-emerald-500 shrink-0" />
+                                <span class="text-[11px] font-bold text-emerald-700">Đã xác minh (SAMS GPS &amp; Device Signature)</span>
+                            </div>
+                        </div>
+
+                        <div class="space-y-1.5 pt-4 border-t border-slate-100">
+                            <div class="flex justify-between items-end mb-4">
+                                <div>
+                                    <h6 class="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-1">Thiết bị sử dụng</h6>
+                                    <p class="text-[11px] font-bold text-slate-800">iOS - iPhone 15 Pro Max</p>
+                                </div>
+                                <span class="px-2 py-1 bg-slate-100 text-slate-500 text-[8px] font-mono font-black uppercase rounded tracking-widest shadow-xs">SAMS DEVICE LOGS</span>
+                            </div>
+                            <div class="text-center pt-2">
+                                <span class="block text-[8px] text-slate-400 font-medium tracking-wide uppercase">Khóa bạ SHA:</span>
+                                <span class="block text-[9px] text-slate-400 font-mono font-bold mt-0.5">SAMS_DEVICE_OK_MD5_7C55E8D8</span>
+                            </div>
+                        </div>
+                    </div>
                 </div>
             </div>
         </div>
@@ -75,7 +130,7 @@
     {{-- MOBILE HISTORY --}}
     <div class="lg:hidden w-full h-full font-sans">
         <div class="p-4 space-y-4 animate-in fade-in slide-in-from-bottom-2 duration-300">
-            <div class="bg-gradient-to-br from-blue-600 via-indigo-650 to-indigo-800 text-white rounded-2xl p-4.5 relative overflow-hidden shadow-md border border-blue-500/30">
+            <div class="bg-gradient-to-br from-blue-600 via-indigo-650 to-indigo-800 text-white rounded-2xl p-6 relative overflow-hidden shadow-md border border-blue-500/30">
                 <div class="absolute right-[-10px] bottom-[-10px] w-36 h-36 bg-white/10 rounded-full blur-3xl pointer-events-none"></div>
                 <div class="absolute right-4 top-4 flex flex-col items-end opacity-40 font-mono text-[8px] select-none text-white/85"><div class="w-8 h-1 bg-white/60 mb-0.5 rounded-xs"></div><div class="w-6 h-1 bg-white/60 mb-0.5 rounded-xs"></div><div class="w-7 h-1 bg-white/60 rounded-xs"></div></div>
                 <span class="inline-flex items-center gap-1.5 px-2.5 py-1 bg-white/10 backdrop-blur-md rounded-full text-[9px] font-extrabold uppercase tracking-widest mb-3.5 border border-white/15">
@@ -132,10 +187,52 @@
             </div>
 
             <div class="space-y-2.5">
-                <div class="flex items-center justify-between"><h3 class="text-xs font-black text-slate-800 uppercase tracking-widest">Thời Khóa Biểu Hôm Nay</h3><span class="text-[10px] font-bold text-slate-400">Thứ sáu, 05/06</span></div>
+                <div class="flex items-center justify-between"><h3 class="text-xs font-black text-slate-800 uppercase tracking-widest">Thời Khóa Biểu Hôm Nay</h3><span class="text-[10px] font-bold text-slate-404">Thứ sáu, 05/06</span></div>
                 <div class="space-y-2">
                     <div class="bg-white border-l-4 border-blue-500 rounded-xl p-3 border-r border-y border-slate-100 flex items-center justify-between gap-2 shadow-xs"><div class="space-y-1"><h4 class="text-xs font-black text-slate-800">NET301: Lý thuyết Mạng Máy Tính</h4><p class="text-[10px] text-slate-500 flex items-center gap-1 font-medium"><svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-clock w-3 h-3 text-slate-400" aria-hidden="true"><path d="M12 6v6l4 2"></path><circle cx="12" cy="12" r="10"></circle></svg> Tiết 4-6 (08:00) • TS. Lê Quang Linh • A.205</p></div><span class="shrink-0 text-[10px] font-black text-blue-600 px-2 py-1 rounded-md bg-blue-50">Đang học</span></div>
                     <div class="bg-white border-l-4 border-slate-300 rounded-xl p-3 border-r border-y border-slate-100 flex items-center justify-between gap-2 shadow-xs"><div class="space-y-1"><h4 class="text-xs font-black text-slate-800">DB101: Thiết kế &amp; Quản trị SQL</h4><p class="text-[10px] text-slate-500 flex items-center gap-1 font-medium"><svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-clock w-3 h-3 text-slate-400" aria-hidden="true"><path d="M12 6v6l4 2"></path><circle cx="12" cy="12" r="10"></circle></svg> Tiết 7-9 (13:15) • Thầy Lê Hoàng Đạt • A.201</p></div><span class="shrink-0 text-[10px] font-black text-slate-400 px-2 py-1 rounded-md bg-slate-50">Chưa học</span></div>
+                </div>
+            </div>
+
+            <div class="space-y-2.5">
+                <h3 class="text-xs font-black text-slate-800 uppercase tracking-widest pl-1">Nhật Ký Điểm Danh Gần Đây</h3>
+                <div class="space-y-2">
+                    {{-- Log 1 --}}
+                    <div class="bg-white rounded-xl p-3.5 border border-slate-100 flex items-center justify-between gap-3 shadow-xs">
+                        <div class="space-y-1">
+                            <span class="text-[9px] font-mono font-bold bg-blue-50 text-blue-600 px-1.5 py-0.5 rounded uppercase">DB101</span>
+                            <h4 class="text-xs font-black text-slate-800 leading-tight">Thiết kế &amp; Quản trị SQL</h4>
+                            <p class="text-[10px] text-slate-500 font-medium">04/06/2026 • QR + GPS</p>
+                        </div>
+                        <span class="shrink-0 text-[9px] font-bold bg-emerald-50 text-emerald-700 border border-emerald-100 px-2 py-0.5 rounded-lg uppercase">Có mặt</span>
+                    </div>
+                    {{-- Log 2 --}}
+                    <div class="bg-white rounded-xl p-3.5 border border-slate-100 flex items-center justify-between gap-3 shadow-xs">
+                        <div class="space-y-1">
+                            <span class="text-[9px] font-mono font-bold bg-blue-50 text-blue-600 px-1.5 py-0.5 rounded uppercase">PY201</span>
+                            <h4 class="text-xs font-black text-slate-800 leading-tight">Phát triển Web Python</h4>
+                            <p class="text-[10px] text-slate-550 font-medium">03/06/2026 • QR + GPS</p>
+                        </div>
+                        <span class="shrink-0 text-[9px] font-bold bg-amber-50 text-amber-700 border border-amber-100 px-2 py-0.5 rounded-lg uppercase">Muộn</span>
+                    </div>
+                    {{-- Log 3 --}}
+                    <div class="bg-white rounded-xl p-3.5 border border-rose-200 flex items-center justify-between gap-3 shadow-xs">
+                        <div class="space-y-1">
+                            <span class="text-[9px] font-mono font-bold bg-rose-50 text-rose-600 px-1.5 py-0.5 rounded uppercase">PH102</span>
+                            <h4 class="text-xs font-black text-slate-800 leading-tight">Vật lý đại cương 2</h4>
+                            <p class="text-[10px] text-rose-600 font-bold">02/06/2026 • Thủ công</p>
+                        </div>
+                        <span class="shrink-0 text-[9px] font-bold bg-rose-50 text-rose-700 border border-rose-100 px-2 py-0.5 rounded-lg uppercase">Vắng</span>
+                    </div>
+                    {{-- Log 4 --}}
+                    <div class="bg-white rounded-xl p-3.5 border border-slate-100 flex items-center justify-between gap-3 shadow-xs">
+                        <div class="space-y-1">
+                            <span class="text-[9px] font-mono font-bold bg-blue-50 text-blue-600 px-1.5 py-0.5 rounded uppercase">NET301</span>
+                            <h4 class="text-xs font-black text-slate-800 leading-tight">Lý thuyết Mạng Máy Tính</h4>
+                            <p class="text-[10px] text-slate-550 font-medium">29/05/2026 • Thủ công</p>
+                        </div>
+                        <span class="shrink-0 text-[9px] font-bold bg-blue-50 text-blue-700 border border-blue-105 px-2 py-0.5 rounded-lg uppercase">Có phép</span>
+                    </div>
                 </div>
             </div>
 
@@ -150,3 +247,35 @@
         </div>
     </div>
 </x-app-layout>
+
+<script>
+    function showDetail() {
+        // Thu nhỏ table
+        const table = document.getElementById('table-container');
+        table.classList.remove('col-span-12');
+        table.classList.add('lg:col-span-8');
+
+        // Hiện panel
+        const panel = document.getElementById('detail-panel');
+        panel.classList.remove('hidden');
+        panel.classList.add('lg:block');
+        
+        // Làm nổi bật dòng vừa click
+        document.getElementById('row-1').classList.add('bg-blue-50/15');
+    }
+
+    function hideDetail() {
+        // Ẩn panel
+        const panel = document.getElementById('detail-panel');
+        panel.classList.add('hidden');
+        panel.classList.remove('lg:block');
+
+        // Phóng to table
+        const table = document.getElementById('table-container');
+        table.classList.remove('lg:col-span-8');
+        table.classList.add('col-span-12');
+        
+        // Hủy nổi bật
+        document.getElementById('row-1').classList.remove('bg-blue-50/15');
+    }
+</script>
