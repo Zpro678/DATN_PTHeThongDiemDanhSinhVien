@@ -86,6 +86,10 @@ Route::middleware(['auth', 'verified', 'role:teacher'])
     ->group(function () {
         Route::redirect('/courses', '/lecturer/classes')->name('lecturer.courses');
         Route::get('/attendance', [AttendanceSessionController::class, 'index'])->name('lecturer.attendance');
+        
+        Route::get('/attendance/qr/setup',[AttendanceSessionController::class, 'setupQr'])->name('attendance.qr.setup');
+        Route::post('/attendance/qr/setup/start-qr-attendance',[AttendanceSessionController::class, 'startQrAttendance'])->name('attendance.qr.setup.start-qr-attendance');
+        
         Route::view('/analytics', 'lecture.analytics.main')->name('lecturer.analytics');
 
         Route::resource('classes', ClassController::class);

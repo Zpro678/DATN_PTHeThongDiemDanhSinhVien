@@ -122,7 +122,7 @@
                 </button>
 
                 {{-- Link / QR + GPS --}}
-                <button class="group relative flex items-start gap-6 text-left p-7 bg-white border-2 border-blue-200 rounded-2xl shadow-sm hover:border-blue-400 hover:shadow-xl hover:-translate-y-1 transition-all duration-300 focus:outline-none focus:ring-4 focus:ring-blue-500/20 overflow-hidden">
+                <a href="{{ route('attendance.qr.setup') }}" class="group relative flex items-start gap-6 text-left p-7 bg-white border-2 border-blue-200 rounded-2xl shadow-sm hover:border-blue-400 hover:shadow-xl hover:-translate-y-1 transition-all duration-300 focus:outline-none focus:ring-4 focus:ring-blue-500/20 overflow-hidden">
 
                     <div class="absolute top-0 right-0 w-40 h-40 bg-gradient-to-bl from-blue-100/40 to-transparent rounded-bl-full opacity-0 group-hover:opacity-100 transition-opacity duration-500"></div>
 
@@ -161,7 +161,7 @@
                     <svg class="w-5 h-5 text-slate-300 flex-shrink-0 mt-1 group-hover:text-blue-500 group-hover:translate-x-1 transition-all duration-300" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor">
                         <path stroke-linecap="round" stroke-linejoin="round" d="M8.25 4.5l7.5 7.5-7.5 7.5" />
                     </svg>
-                </button>
+                </a>
 
             </div>
         </div>
