@@ -1,0 +1,557 @@
+@php
+    $adminStats = [
+        ['label' => 'Lớp quản lý', 'value' => '4', 'icon' => 'book-open', 'color' => 'text-primary', 'bg' => 'bg-primary/10'],
+        ['label' => 'Tổng sinh viên', 'value' => '156', 'icon' => 'users', 'color' => 'text-tertiary', 'bg' => 'bg-tertiary/10'],
+        ['label' => 'Buổi điểm danh nay', 'value' => '2', 'icon' => 'calendar-check', 'color' => 'text-secondary', 'bg' => 'bg-secondary/10'],
+        ['label' => 'Buổi chưa chốt sổ', 'value' => '1', 'icon' => 'clock', 'color' => 'text-error', 'bg' => 'bg-error/10'],
+        ['label' => 'SV vắng vượt ngưỡng', 'value' => '3', 'icon' => 'alert-triangle', 'color' => 'text-error', 'bg' => 'bg-error/10'],
+        ['label' => 'Đơn nghỉ chờ duyệt', 'value' => '5', 'icon' => 'file-text', 'color' => 'text-secondary', 'bg' => 'bg-secondary/10'],
+    ];
+
+    $adminActions = [
+        ['label' => 'Tạo lớp học', 'icon' => 'plus-circle', 'color' => 'text-primary', 'href' => route('create-class')],
+        ['label' => 'Quản lý SV', 'icon' => 'users', 'color' => 'text-tertiary', 'href' => '#'],
+        ['label' => 'Import SV', 'icon' => 'upload', 'color' => 'text-secondary', 'href' => '#'],
+        ['label' => 'Tạo buổi DD', 'icon' => 'calendar-plus', 'color' => 'text-primary', 'href' => '#'],
+        ['label' => 'Điểm danh tay', 'icon' => 'edit', 'color' => 'text-secondary', 'href' => '#'],
+        ['label' => 'Tạo QR DD', 'icon' => 'qr-code', 'color' => 'text-tertiary', 'href' => '#'],
+        ['label' => 'DD Realtime', 'icon' => 'activity', 'color' => 'text-primary', 'href' => '#'],
+        ['label' => 'Đơn xin nghỉ', 'icon' => 'file-text', 'color' => 'text-error', 'href' => '#'],
+        ['label' => 'Thống kê', 'icon' => 'check-circle', 'color' => 'text-secondary', 'href' => '#'],
+        ['label' => 'Xuất báo cáo', 'icon' => 'upload', 'color' => 'text-tertiary', 'href' => '#'],
+        ['label' => 'Cài đặt lớp', 'icon' => 'settings', 'color' => 'text-on-surface-variant', 'href' => '#'],
+        ['label' => 'Chia sẻ mã', 'icon' => 'send', 'color' => 'text-primary', 'href' => '#'],
+    ];
+
+    $managedCards = [
+        ['title' => 'Lập trình Web', 'code' => 'WEB301', 'join' => 'QR-123', 'students' => '45', 'sessions' => '8/15', 'attendance' => '86', 'icon' => 'code', 'gradient' => 'from-[#004ac6] to-[#003ea8]', 'color' => 'text-primary', 'bar' => 'bg-primary'],
+        ['title' => 'Cơ sở dữ liệu', 'code' => 'DB202', 'join' => 'QR-124', 'students' => '38', 'sessions' => '4/15', 'attendance' => '94', 'icon' => 'database', 'gradient' => 'from-[#007d55] to-[#006242]', 'color' => 'text-tertiary', 'bar' => 'bg-tertiary'],
+    ];
+
+    $alerts = [
+        ['title' => 'Có 3 sinh viên vắng vượt 20%', 'meta' => 'Lớp Lập trình Web', 'icon' => 'user-check', 'color' => 'text-error', 'bg' => 'bg-error/10', 'border' => 'border-error/20', 'button' => 'bg-error text-white', 'action' => 'Xử lý'],
+        ['title' => '1 buổi điểm danh chưa chốt sổ', 'meta' => 'Lớp Cơ sở dữ liệu - Hôm qua', 'icon' => 'clock', 'color' => 'text-secondary', 'bg' => 'bg-secondary/10', 'border' => 'border-secondary/30', 'button' => 'border border-secondary text-secondary', 'action' => 'Xử lý'],
+        ['title' => 'Phát hiện 1 thiết bị điểm danh nhiều MSSV', 'meta' => 'Lớp Lập trình Web', 'icon' => 'alert-triangle', 'color' => 'text-error', 'bg' => 'bg-error/10', 'border' => 'border-error/20', 'button' => 'bg-error text-white', 'action' => 'Kiểm tra'],
+    ];
+
+    $activities = [
+        ['text' => 'Bạn vừa tạo buổi điểm danh cho lớp Lập trình Web', 'time' => '10 phút trước', 'icon' => 'check-square', 'bg' => 'bg-primary'],
+        ['text' => 'SV001 Nguyễn Văn A vừa điểm danh thành công', 'time' => '15 phút trước', 'icon' => 'user', 'bg' => 'bg-tertiary'],
+        ['text' => 'Có sinh viên vắng vượt ngưỡng cảnh báo', 'time' => '1 giờ trước', 'icon' => 'alert-triangle', 'bg' => 'bg-error'],
+        ['text' => 'File báo cáo chuyên cần đã xuất xong', 'time' => 'Hôm qua', 'icon' => 'file-text', 'bg' => 'bg-secondary'],
+    ];
+
+    $studentStats = [
+        ['label' => 'Lớp đang tham gia', 'value' => '3', 'icon' => 'users', 'color' => 'text-tertiary', 'bg' => 'bg-tertiary/10'],
+        ['label' => 'Chuyên cần trung bình', 'value' => '86%', 'icon' => 'check-circle', 'color' => 'text-primary', 'bg' => 'bg-primary/10'],
+        ['label' => 'Tổng tiết vắng', 'value' => '5', 'icon' => 'clock', 'color' => 'text-error', 'bg' => 'bg-error/10'],
+        ['label' => 'Cảnh báo chuyên cần', 'value' => '1', 'icon' => 'alert-triangle', 'color' => 'text-error', 'bg' => 'bg-error/10'],
+        ['label' => 'Đơn nghỉ đang chờ', 'value' => '2', 'icon' => 'file-text', 'color' => 'text-secondary', 'bg' => 'bg-secondary/10'],
+        ['label' => 'Buổi điểm danh gần nhất', 'value' => 'Hôm qua', 'icon' => 'calendar-check', 'color' => 'text-primary', 'bg' => 'bg-primary/10'],
+    ];
+
+    $studentActions = [
+        ['label' => 'Tham gia lớp', 'icon' => 'log-in', 'color' => 'text-primary'],
+        ['label' => 'Quét QR', 'icon' => 'qr-code', 'color' => 'text-tertiary'],
+        ['label' => 'Lịch sử điểm danh', 'icon' => 'history', 'color' => 'text-secondary'],
+        ['label' => 'Xem chuyên cần', 'icon' => 'check-circle', 'color' => 'text-primary'],
+        ['label' => 'Gửi đơn nghỉ', 'icon' => 'send', 'color' => 'text-secondary'],
+        ['label' => 'Theo dõi đơn', 'icon' => 'file-text', 'color' => 'text-tertiary'],
+        ['label' => 'Thông báo', 'icon' => 'bell', 'color' => 'text-primary'],
+        ['label' => 'Hồ sơ cá nhân', 'icon' => 'user', 'color' => 'text-on-surface-variant'],
+    ];
+
+    $joinedCards = [
+        ['title' => 'Cơ sở dữ liệu', 'teacher' => 'Nguyễn Văn A', 'code' => 'QR-123', 'status' => 'Bình thường', 'statusClass' => 'bg-tertiary/10 text-tertiary', 'attendance' => '92', 'absent' => '3/45 tiết', 'bar' => 'bg-tertiary', 'color' => 'text-tertiary'],
+        ['title' => 'Thiết kế UI/UX', 'teacher' => 'Lê Thị B', 'code' => 'UI-401', 'status' => 'Cảnh báo nhẹ', 'statusClass' => 'bg-[#F59E0B]/10 text-[#F59E0B]', 'attendance' => '82', 'absent' => '8/45 tiết', 'bar' => 'bg-[#F59E0B]', 'color' => 'text-[#F59E0B]'],
+    ];
+@endphp
+
+<div class="mx-auto max-w-[1400px] p-4 pb-24 md:p-8 md:pb-12">
+    <section class="mb-8 grid grid-cols-12 items-center gap-6">
+        <div class="relative col-span-12 overflow-hidden rounded-[2rem] border border-outline-variant/10 bg-white p-6 shadow-sm md:p-10 xl:col-span-7">
+            <div class="absolute -left-24 -top-24 h-64 w-64 rounded-full bg-primary/5 blur-3xl transition-all duration-700"></div>
+            <div class="relative z-10">
+                <h2 class="mb-4 text-2xl font-bold leading-tight tracking-normal text-on-background md:text-[32px]">
+                    Xin chào, hôm nay bạn muốn quản lý hay tham gia lớp học?
+                </h2>
+                <p class="mb-8 max-w-xl text-body-lg leading-relaxed text-on-surface-variant">
+                    Quản lý lớp học, tổ chức điểm danh, theo dõi chuyên cần và tham gia lớp học trong một dashboard duy nhất.
+                </p>
+                <div class="mb-8 flex flex-wrap gap-4">
+                    <button
+                        type="button"
+                        wire:click="setWorkspace('admin')"
+                        @class([
+                            'flex items-center gap-3 rounded-2xl border px-6 py-3.5 font-bold transition-all active:scale-95',
+                            'border-primary bg-primary text-white shadow-lg shadow-primary/20' => $workspace === 'admin',
+                            'border-outline-variant/30 bg-white text-on-surface hover:bg-surface-container-low' => $workspace !== 'admin',
+                        ])
+                    >
+                        <x-user.icon name="shield" :size="20" />
+                        Vào không gian Chủ lớp
+                    </button>
+                    <button
+                        type="button"
+                        wire:click="setWorkspace('student')"
+                        @class([
+                            'flex items-center gap-3 rounded-2xl border px-6 py-3.5 font-bold transition-all active:scale-95',
+                            'border-tertiary bg-tertiary text-white shadow-lg shadow-tertiary/20' => $workspace === 'student',
+                            'border-outline-variant/30 bg-white text-on-surface hover:bg-surface-container-low' => $workspace !== 'student',
+                        ])
+                    >
+                        <x-user.icon name="user" :size="20" />
+                        Vào không gian Học viên
+                    </button>
+                </div>
+                <div class="flex flex-wrap gap-6 border-t border-outline-variant/20 pt-6">
+                    <button type="button" wire:click="openCreateModal" class="flex items-center gap-2 text-sm font-bold text-primary underline-offset-4 hover:underline">
+                        <x-user.icon name="plus" :size="18" />
+                        Tạo lớp mới
+                    </button>
+                    <button type="button" wire:click="openJoinModal" class="flex items-center gap-2 text-sm font-bold text-on-surface-variant transition-colors hover:text-primary">
+                        <x-user.icon name="key" :size="18" />
+                        Tham gia lớp bằng mã
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-span-12 hidden h-[350px] md:block xl:col-span-5 xl:h-full">
+            <div class="relative flex h-full min-h-[350px] items-center justify-center overflow-hidden rounded-[2rem] border border-white bg-white/60 p-8 shadow-sm backdrop-blur-xl">
+                <div class="relative mt-4 flex h-64 w-64 items-center justify-center">
+                    <div class="z-20 flex h-28 w-28 flex-col items-center justify-center rounded-full border-4 border-primary-container/20 bg-white shadow-xl">
+                        <span class="font-stat-lg text-3xl text-primary">86%</span>
+                        <span class="mt-1 px-4 text-center text-[9px] font-bold uppercase leading-none text-outline">Chuyên cần TB</span>
+                    </div>
+                    <div class="orbit-animation absolute h-full w-full rounded-full border border-dashed border-outline-variant/40">
+                        <div class="orbit-item absolute -top-5 left-1/2 -translate-x-1/2">
+                            <div class="flex flex-col items-center rounded-2xl border border-outline-variant/10 bg-white px-4 py-2 shadow-md">
+                                <span class="text-lg font-bold leading-none text-primary">4</span>
+                                <span class="mt-1 text-[9px] font-bold uppercase text-on-surface-variant">Lớp quản lý</span>
+                            </div>
+                        </div>
+                        <div class="orbit-item absolute -right-8 top-1/2 -translate-y-1/2">
+                            <div class="flex flex-col items-center rounded-2xl bg-primary px-4 py-2 text-white shadow-md">
+                                <span class="text-lg font-bold leading-none">1</span>
+                                <span class="mt-1 text-[9px] font-bold uppercase opacity-90">Đang mở</span>
+                            </div>
+                        </div>
+                        <div class="orbit-item absolute -bottom-5 left-1/2 -translate-x-1/2">
+                            <div class="flex flex-col items-center rounded-2xl border border-error/20 bg-error/10 px-4 py-2 text-error shadow-md">
+                                <span class="text-lg font-bold leading-none">5</span>
+                                <span class="mt-1 text-[9px] font-bold uppercase">Cần xử lý</span>
+                            </div>
+                        </div>
+                        <div class="orbit-item absolute -left-8 top-1/2 -translate-y-1/2">
+                            <div class="flex flex-col items-center rounded-2xl border border-outline-variant/10 bg-white px-4 py-2 shadow-md">
+                                <span class="text-lg font-bold leading-none text-tertiary">3</span>
+                                <span class="mt-1 text-[9px] font-bold uppercase text-on-surface-variant">Lớp tham gia</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <div id="admin" class="relative">
+        @if ($workspace === 'admin')
+            <section class="mt-8 space-y-8 animate-in fade-in slide-in-from-bottom-4 duration-500">
+                <div class="mb-6">
+                    <h3 class="flex items-center gap-2 font-headline-sm text-headline-sm text-on-surface">
+                        <x-user.icon name="book-open" class="text-primary" />
+                        Không gian Chủ lớp
+                    </h3>
+                    <p class="mt-1 text-body-md text-on-surface-variant">Quản lý lớp học, sinh viên, buổi điểm danh, báo cáo và cảnh báo chuyên cần.</p>
+                </div>
+
+                <div class="grid grid-cols-1 gap-4 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-6">
+                    @foreach ($adminStats as $stat)
+                        <div class="flex flex-col items-start gap-4 rounded-3xl border border-outline-variant/10 bg-white p-4 shadow-sm transition-shadow hover:shadow-md">
+                            <div class="{{ $stat['bg'] }} {{ $stat['color'] }} flex h-10 w-10 items-center justify-center rounded-2xl">
+                                <x-user.icon :name="$stat['icon']" :size="20" />
+                            </div>
+                            <div>
+                                <h3 class="font-stat-lg text-[28px] font-bold leading-tight text-on-surface">{{ $stat['value'] }}</h3>
+                                <p class="mt-1 text-[10px] font-bold uppercase tracking-wider text-outline">{{ $stat['label'] }}</p>
+                            </div>
+                        </div>
+                    @endforeach
+                </div>
+
+                <div>
+                    <h4 class="mb-4 text-[16px] font-bold text-on-surface">Thao tác nhanh</h4>
+                    <div class="grid grid-cols-2 gap-3 md:grid-cols-4 lg:grid-cols-6">
+                        @foreach ($adminActions as $action)
+                            <a href="{{ $action['href'] }}" class="group flex flex-col items-center justify-center rounded-2xl border border-outline-variant/10 bg-white p-4 shadow-sm transition-all hover:border-primary/30 hover:bg-surface-container-low hover:shadow-md">
+                                <x-user.icon :name="$action['icon']" :size="24" class="{{ $action['color'] }} mb-2 transition-transform group-hover:scale-110" />
+                                <span class="line-clamp-1 text-center font-label-md text-on-surface">{{ $action['label'] }}</span>
+                            </a>
+                        @endforeach
+                    </div>
+                </div>
+
+                <div>
+                    <h4 class="mb-4 text-[16px] font-bold text-on-surface">Lớp tôi quản lý</h4>
+                    <div class="grid grid-cols-1 gap-6 md:grid-cols-2 lg:grid-cols-3">
+                        @foreach ($managedCards as $class)
+                            <article class="group flex flex-col overflow-hidden rounded-3xl border border-outline-variant/10 bg-white shadow-sm transition-all duration-300 hover:shadow-xl">
+                                <div class="relative h-32 bg-gradient-to-br {{ $class['gradient'] }} p-6">
+                                    <div class="pointer-events-none absolute inset-0 opacity-20 [background-image:radial-gradient(circle_at_2px_2px,white_1px,transparent_0)] [background-size:24px_24px]"></div>
+                                    <div class="relative z-10 flex items-start justify-between">
+                                        <div class="rounded-2xl border border-white/30 bg-white/20 p-2.5 text-white backdrop-blur-md">
+                                            <x-user.icon :name="$class['icon']" :size="24" />
+                                        </div>
+                                        <span class="rounded-full bg-white/20 px-3 py-1 text-[10px] font-bold uppercase tracking-wider text-white backdrop-blur-md">Đang học</span>
+                                    </div>
+                                </div>
+                                <div class="relative z-20 -mt-6 flex flex-1 flex-col rounded-t-3xl bg-white p-6 shadow-[0_-8px_20px_rgba(0,0,0,0.02)]">
+                                    <div class="mb-1 flex items-start justify-between">
+                                        <h4 class="line-clamp-1 font-headline-sm text-headline-sm text-on-surface transition-colors group-hover:text-primary">{{ $class['title'] }}</h4>
+                                        <button type="button" class="rounded-full p-1 text-on-surface-variant hover:bg-surface-container hover:text-on-surface">
+                                            <x-user.icon name="more-vertical" :size="20" />
+                                        </button>
+                                    </div>
+                                    <p class="mb-4 flex items-center gap-2 text-sm text-on-surface-variant">
+                                        <span class="font-bold">{{ $class['join'] }}</span>
+                                        <span class="h-1 w-1 rounded-full bg-outline-variant"></span>
+                                        <span>{{ $class['code'] }}</span>
+                                        <span class="h-1 w-1 rounded-full bg-outline-variant"></span>
+                                        <span>HK2 2025-2026</span>
+                                    </p>
+                                    <div class="mb-6 space-y-3 rounded-2xl border border-outline-variant/20 bg-surface-container-low p-4">
+                                        <div class="flex justify-between text-sm text-on-surface">
+                                            <span class="flex items-center gap-2 font-bold">
+                                                <x-user.icon name="users" :size="16" class="text-on-surface-variant" />
+                                                {{ $class['students'] }} sinh viên
+                                            </span>
+                                            <span class="font-bold text-on-surface-variant">{{ $class['sessions'] }} buổi</span>
+                                        </div>
+                                        <div>
+                                            <div class="mb-1 flex justify-between text-sm">
+                                                <span class="text-on-surface-variant">Chuyên cần trung bình</span>
+                                                <span class="{{ $class['color'] }} font-bold">{{ $class['attendance'] }}%</span>
+                                            </div>
+                                            <div class="h-2 w-full overflow-hidden rounded-full bg-surface-container-highest">
+                                                <div class="{{ $class['bar'] }} h-full rounded-full" style="width: {{ $class['attendance'] }}%"></div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <div class="mt-auto grid grid-cols-2 gap-3">
+                                        <button type="button" class="flex items-center justify-center gap-2 rounded-xl bg-primary py-3 text-sm font-bold text-white shadow-sm transition-colors hover:bg-primary/90">
+                                            <x-user.icon name="check-square" :size="18" />
+                                            Điểm danh
+                                        </button>
+                                        <button type="button" class="flex items-center justify-center gap-2 rounded-xl border border-outline-variant py-3 text-sm font-bold text-on-surface-variant transition-colors hover:bg-surface-container">
+                                            <x-user.icon name="eye" :size="18" />
+                                            Chi tiết
+                                        </button>
+                                    </div>
+                                </div>
+                            </article>
+                        @endforeach
+                    </div>
+                </div>
+
+                <div class="grid grid-cols-1 gap-6 lg:grid-cols-2">
+                    <div>
+                        <h4 class="mb-4 flex items-center gap-2 text-[16px] font-bold text-on-surface">
+                            <x-user.icon name="alert-triangle" class="text-error" />
+                            Cảnh báo cần xử lý
+                        </h4>
+                        <div class="space-y-3">
+                            @foreach ($alerts as $alert)
+                                <div class="{{ $alert['border'] }} flex items-start gap-4 rounded-2xl border bg-white p-4">
+                                    <div class="{{ $alert['bg'] }} {{ $alert['color'] }} flex h-10 w-10 shrink-0 items-center justify-center rounded-full">
+                                        <x-user.icon :name="$alert['icon']" />
+                                    </div>
+                                    <div class="flex-1">
+                                        <p class="text-sm font-bold text-on-surface">{{ $alert['title'] }}</p>
+                                        <p class="mt-1 text-xs text-on-surface-variant">{{ $alert['meta'] }}</p>
+                                    </div>
+                                    <button type="button" class="{{ $alert['button'] }} rounded-lg px-3 py-1.5 text-xs font-bold">{{ $alert['action'] }}</button>
+                                </div>
+                            @endforeach
+                        </div>
+                    </div>
+
+                    <div>
+                        <h4 class="mb-4 flex items-center gap-2 text-[16px] font-bold text-on-surface">
+                            <x-user.icon name="activity" class="text-tertiary" />
+                            Hoạt động gần đây
+                        </h4>
+                        <div class="relative rounded-3xl border border-outline-variant/10 bg-white p-6">
+                            <div class="absolute bottom-8 left-10 top-8 w-[2px] bg-surface-container-high"></div>
+                            <div class="relative z-10 space-y-6">
+                                @foreach ($activities as $activity)
+                                    <div class="flex items-start gap-4">
+                                        <div class="{{ $activity['bg'] }} flex h-8 w-8 shrink-0 items-center justify-center rounded-full border-4 border-white text-white shadow-sm">
+                                            <x-user.icon :name="$activity['icon']" :size="12" />
+                                        </div>
+                                        <div>
+                                            <p class="text-sm font-medium text-on-surface">{{ $activity['text'] }}</p>
+                                            <p class="mt-0.5 text-xs text-on-surface-variant">{{ $activity['time'] }}</p>
+                                        </div>
+                                    </div>
+                                @endforeach
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </section>
+        @else
+            <section id="student" class="mt-8 space-y-8 animate-in fade-in slide-in-from-bottom-4 duration-500">
+                <div class="mb-6">
+                    <h3 class="flex items-center gap-2 font-headline-sm text-headline-sm text-on-surface">
+                        <x-user.icon name="user" class="text-tertiary" />
+                        Không gian Học viên
+                    </h3>
+                    <p class="mt-1 text-body-md text-on-surface-variant">Theo dõi lớp đã tham gia, lịch sử điểm danh cá nhân, chuyên cần và đơn xin nghỉ.</p>
+                </div>
+
+                <div class="grid grid-cols-1 gap-4 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-6">
+                    @foreach ($studentStats as $stat)
+                        <div class="flex flex-col items-start gap-4 rounded-3xl border border-outline-variant/10 bg-white p-4 shadow-sm transition-shadow hover:shadow-md">
+                            <div class="{{ $stat['bg'] }} {{ $stat['color'] }} flex h-10 w-10 items-center justify-center rounded-2xl">
+                                <x-user.icon :name="$stat['icon']" :size="20" />
+                            </div>
+                            <div>
+                                <h3 class="font-stat-lg text-[28px] font-bold leading-tight text-on-surface">{{ $stat['value'] }}</h3>
+                                <p class="mt-1 text-[10px] font-bold uppercase tracking-wider text-outline">{{ $stat['label'] }}</p>
+                            </div>
+                        </div>
+                    @endforeach
+                </div>
+
+                <div>
+                    <h4 class="mb-4 text-[16px] font-bold text-on-surface">Thao tác nhanh</h4>
+                    <div class="grid grid-cols-2 gap-3 md:grid-cols-4 lg:grid-cols-8">
+                        @foreach ($studentActions as $action)
+                            <button type="button" class="group flex flex-col items-center justify-center rounded-2xl border border-outline-variant/10 bg-white p-4 shadow-sm transition-all hover:border-primary/30 hover:bg-surface-container-low hover:shadow-md">
+                                <x-user.icon :name="$action['icon']" :size="24" class="{{ $action['color'] }} mb-2 transition-transform group-hover:scale-110" />
+                                <span class="line-clamp-1 text-center font-label-md text-on-surface">{{ $action['label'] }}</span>
+                            </button>
+                        @endforeach
+                    </div>
+                </div>
+
+                <div>
+                    <h4 class="mb-4 text-[16px] font-bold text-on-surface">Lớp tôi tham gia</h4>
+                    <div class="grid grid-cols-1 gap-6 md:grid-cols-2 lg:grid-cols-3">
+                        @foreach ($joinedCards as $class)
+                            <article class="group flex flex-col overflow-hidden rounded-3xl border border-outline-variant/10 bg-white shadow-sm transition-all duration-300 hover:shadow-xl">
+                                <div class="relative z-20 p-6">
+                                    <div class="mb-1 flex items-start justify-between gap-3">
+                                        <h4 class="line-clamp-1 font-headline-sm text-headline-sm text-on-surface transition-colors group-hover:text-tertiary">{{ $class['title'] }}</h4>
+                                        <span class="{{ $class['statusClass'] }} rounded-full px-3 py-1 text-[10px] font-bold uppercase tracking-wider">{{ $class['status'] }}</span>
+                                    </div>
+                                    <p class="mb-4 mt-1 text-sm text-on-surface-variant">Giảng viên: <span class="font-bold">{{ $class['teacher'] }}</span></p>
+                                    <p class="mb-4 flex items-center gap-2 text-sm text-on-surface-variant">
+                                        <span class="font-bold">{{ $class['code'] }}</span>
+                                        <span class="h-1 w-1 rounded-full bg-outline-variant"></span>
+                                        <span>HK2 2025-2026</span>
+                                    </p>
+                                    <div class="mb-6 space-y-3 rounded-2xl border border-outline-variant/20 bg-surface-container-low p-4">
+                                        <div class="flex justify-between text-sm text-on-surface">
+                                            <span class="text-on-surface-variant">Tổng tiết vắng</span>
+                                            <span class="font-bold text-on-surface-variant">{{ $class['absent'] }}</span>
+                                        </div>
+                                        <div>
+                                            <div class="mb-1 flex justify-between text-sm">
+                                                <span class="text-on-surface-variant">Chuyên cần cá nhân</span>
+                                                <span class="{{ $class['color'] }} font-bold">{{ $class['attendance'] }}%</span>
+                                            </div>
+                                            <div class="h-2 w-full overflow-hidden rounded-full bg-surface-container-highest">
+                                                <div class="{{ $class['bar'] }} h-full rounded-full" style="width: {{ $class['attendance'] }}%"></div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <div class="mt-auto grid grid-cols-2 gap-3">
+                                        <button type="button" class="flex items-center justify-center gap-2 rounded-xl bg-tertiary py-3 text-sm font-bold text-white shadow-sm transition-colors hover:bg-tertiary/90">
+                                            <x-user.icon name="history" :size="18" />
+                                            Xem lịch sử
+                                        </button>
+                                        <button type="button" class="flex items-center justify-center gap-2 rounded-xl border border-outline-variant py-3 text-sm font-bold text-on-surface-variant transition-colors hover:bg-surface-container">
+                                            <x-user.icon name="eye" :size="18" />
+                                            Chi tiết
+                                        </button>
+                                    </div>
+                                </div>
+                            </article>
+                        @endforeach
+                    </div>
+                </div>
+
+                <div class="grid grid-cols-1 gap-6 lg:grid-cols-2">
+                    <div>
+                        <h4 class="mb-4 flex items-center gap-2 text-[16px] font-bold text-on-surface">
+                            <x-user.icon name="activity" class="text-tertiary" />
+                            Chuyên cần cá nhân
+                        </h4>
+                        <div class="flex flex-col items-center gap-8 rounded-3xl border border-outline-variant/10 bg-white p-6 md:flex-row">
+                            <div class="relative flex h-32 w-32 shrink-0 items-center justify-center">
+                                <svg class="h-full w-full -rotate-90" viewBox="0 0 100 100">
+                                    <circle cx="50" cy="50" r="40" fill="transparent" stroke="#e5eeff" stroke-width="12" />
+                                    <circle cx="50" cy="50" r="40" fill="transparent" stroke="#007d55" stroke-width="12" stroke-dasharray="251.2" stroke-dashoffset="35.168" stroke-linecap="round" />
+                                </svg>
+                                <div class="absolute inset-0 flex flex-col items-center justify-center">
+                                    <span class="font-stat-lg text-2xl text-on-surface">86%</span>
+                                </div>
+                            </div>
+                            <div class="w-full flex-1 space-y-4">
+                                <p class="flex items-center justify-between text-sm"><span class="flex items-center gap-2 text-on-surface-variant"><span class="h-2 w-2 rounded-full bg-surface-container-high"></span>Tổng tiết học</span><span class="font-bold">135 tiết</span></p>
+                                <p class="flex items-center justify-between text-sm"><span class="flex items-center gap-2 text-on-surface-variant"><span class="h-2 w-2 rounded-full bg-tertiary"></span>Có mặt</span><span class="font-bold text-tertiary">116 tiết</span></p>
+                                <p class="flex items-center justify-between text-sm"><span class="flex items-center gap-2 text-on-surface-variant"><span class="h-2 w-2 rounded-full bg-error"></span>Vắng mặt</span><span class="font-bold text-error">19 tiết</span></p>
+                                <div class="mt-2 rounded-xl border border-outline-variant/20 bg-surface-container-low p-3">
+                                    <p class="text-xs leading-relaxed text-on-surface-variant"><span class="font-bold text-on-surface">Thông báo:</span> Bạn đã vắng 19/135 tiết. Tình trạng chuyên cần hiện tại vẫn an toàn.</p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div>
+                        <h4 class="mb-4 flex items-center gap-2 text-[16px] font-bold text-on-surface">
+                            <x-user.icon name="bell" class="text-primary" />
+                            Thông báo gần đây
+                        </h4>
+                        <div class="space-y-2 rounded-3xl border border-outline-variant/10 bg-white p-4">
+                            @foreach ([
+                                ['icon' => 'check-circle', 'color' => 'text-tertiary', 'bg' => 'bg-tertiary/10', 'text' => 'Bạn đã điểm danh thành công lớp Cơ sở dữ liệu', 'time' => '10 phút trước'],
+                                ['icon' => 'file-text', 'color' => 'text-primary', 'bg' => 'bg-primary/10', 'text' => 'Đơn xin nghỉ của bạn đã được duyệt', 'time' => 'Hôm qua'],
+                                ['icon' => 'alert-triangle', 'color' => 'text-[#F59E0B]', 'bg' => 'bg-[#F59E0B]/10', 'text' => 'Bạn đang tiến gần ngưỡng cảnh báo vắng học lớp UI/UX', 'time' => '2 ngày trước'],
+                                ['icon' => 'log-in', 'color' => 'text-secondary', 'bg' => 'bg-secondary/10', 'text' => 'Bạn vừa tham gia lớp Lập trình Web', 'time' => 'Tuần trước'],
+                            ] as $notice)
+                                <div class="flex cursor-pointer gap-3 rounded-2xl p-3 transition-colors hover:bg-surface-container-low">
+                                    <div class="{{ $notice['bg'] }} {{ $notice['color'] }} flex h-8 w-8 shrink-0 items-center justify-center rounded-full">
+                                        <x-user.icon :name="$notice['icon']" :size="16" />
+                                    </div>
+                                    <div>
+                                        <p class="text-sm font-medium text-on-surface">{{ $notice['text'] }}</p>
+                                        <p class="mt-1 text-xs text-on-surface-variant">{{ $notice['time'] }}</p>
+                                    </div>
+                                </div>
+                            @endforeach
+                        </div>
+                    </div>
+                </div>
+            </section>
+        @endif
+    </div>
+
+    @if ($showCreateModal)
+        <div class="fixed inset-0 z-[100] flex items-center justify-center bg-on-background/40 p-4 backdrop-blur-sm" wire:click.self="closeCreateModal">
+            <div class="flex max-h-[90vh] w-full max-w-2xl animate-in zoom-in-95 flex-col overflow-y-auto rounded-[2rem] bg-white shadow-2xl duration-200">
+                <div class="sticky top-0 z-10 flex items-center justify-between border-b border-outline-variant/20 bg-white/90 p-6 backdrop-blur">
+                    <h3 class="flex items-center gap-2 text-xl font-bold text-on-surface">
+                        <x-user.icon name="plus" class="text-primary" />
+                        Tạo lớp học mới
+                    </h3>
+                    <button type="button" wire:click="closeCreateModal" class="rounded-full p-2 transition-colors hover:bg-surface-container">
+                        <x-user.icon name="x" :size="20" class="text-on-surface-variant" />
+                    </button>
+                </div>
+                <div class="space-y-6 p-6">
+                    <div class="grid grid-cols-2 gap-4">
+                        <label class="col-span-2 block">
+                            <span class="mb-2 block text-sm font-bold text-on-surface">Tên lớp / môn học *</span>
+                            <input type="text" class="w-full rounded-xl border border-outline-variant/30 bg-surface-container-lowest px-4 py-3 outline-none transition-all focus:border-primary focus:ring-2 focus:ring-primary/20" placeholder="Nhập tên môn học">
+                        </label>
+                        <label class="block">
+                            <span class="mb-2 block text-sm font-bold text-on-surface">Mã môn học</span>
+                            <input type="text" class="w-full rounded-xl border border-outline-variant/30 bg-surface-container-lowest px-4 py-3 outline-none transition-all focus:border-primary focus:ring-2 focus:ring-primary/20" placeholder="WEB301">
+                        </label>
+                        <label class="block">
+                            <span class="mb-2 block text-sm font-bold text-on-surface">Học kỳ</span>
+                            <input type="text" class="w-full rounded-xl border border-outline-variant/30 bg-surface-container-lowest px-4 py-3 outline-none transition-all focus:border-primary focus:ring-2 focus:ring-primary/20" placeholder="HK2 2025-2026">
+                        </label>
+                        <label class="col-span-2 block">
+                            <span class="mb-2 block text-sm font-bold text-on-surface">Mô tả lớp học</span>
+                            <textarea class="h-24 w-full resize-none rounded-xl border border-outline-variant/30 bg-surface-container-lowest px-4 py-3 outline-none transition-all focus:border-primary focus:ring-2 focus:ring-primary/20" placeholder="Nhập mô tả..."></textarea>
+                        </label>
+                        <label class="block">
+                            <span class="mb-2 block text-sm font-bold text-on-surface">Tổng số buổi</span>
+                            <input type="number" value="15" class="w-full rounded-xl border border-outline-variant/30 bg-surface-container-lowest px-4 py-3 outline-none transition-all focus:border-primary focus:ring-2 focus:ring-primary/20">
+                        </label>
+                        <label class="block">
+                            <span class="mb-2 block text-sm font-bold text-on-surface">Số tiết mỗi buổi</span>
+                            <input type="number" value="3" class="w-full rounded-xl border border-outline-variant/30 bg-surface-container-lowest px-4 py-3 outline-none transition-all focus:border-primary focus:ring-2 focus:ring-primary/20">
+                        </label>
+                        <label class="block">
+                            <span class="mb-2 block text-sm font-bold text-on-surface">Ngưỡng cảnh báo vắng (%)</span>
+                            <input type="number" value="20" class="w-full rounded-xl border border-outline-variant/30 bg-surface-container-lowest px-4 py-3 outline-none transition-all focus:border-primary focus:ring-2 focus:ring-primary/20">
+                        </label>
+                        <label class="block">
+                            <span class="mb-2 block text-sm font-bold text-on-surface">Bán kính GPS mặc định (m)</span>
+                            <input type="number" value="50" class="w-full rounded-xl border border-outline-variant/30 bg-surface-container-lowest px-4 py-3 outline-none transition-all focus:border-primary focus:ring-2 focus:ring-primary/20">
+                        </label>
+                        <div class="col-span-2 flex items-center justify-between rounded-xl border border-outline-variant/10 bg-surface-container-low p-4">
+                            <span class="text-sm font-bold text-on-surface">Yêu cầu duyệt khi tham gia lớp</span>
+                            <span class="relative h-6 w-12 rounded-full bg-primary">
+                                <span class="absolute right-1 top-1 h-4 w-4 rounded-full bg-white"></span>
+                            </span>
+                        </div>
+                    </div>
+                </div>
+                <div class="sticky bottom-0 flex justify-end gap-3 border-t border-outline-variant/20 bg-surface-container-lowest p-6">
+                    <button type="button" wire:click="closeCreateModal" class="rounded-xl px-6 py-2.5 text-sm font-bold text-on-surface-variant transition-colors hover:bg-surface-container">Hủy</button>
+                    <button type="button" wire:click="closeCreateModal" class="rounded-xl bg-primary px-6 py-2.5 text-sm font-bold text-white shadow-md shadow-primary/20 transition-colors hover:bg-primary-container">
+                        Tạo lớp học
+                    </button>
+                </div>
+            </div>
+        </div>
+    @endif
+
+    @if ($showJoinModal)
+        <div class="fixed inset-0 z-[100] flex items-center justify-center bg-on-background/40 p-4 backdrop-blur-sm" wire:click.self="closeJoinModal">
+            <div class="flex w-full max-w-md animate-in zoom-in-95 flex-col overflow-hidden rounded-[2rem] bg-white shadow-2xl duration-200">
+                <div class="z-10 flex items-center justify-between border-b border-outline-variant/20 bg-white/90 p-6 backdrop-blur">
+                    <h3 class="flex items-center gap-2 text-xl font-bold text-on-surface">
+                        <x-user.icon name="key" class="text-tertiary" />
+                        Tham gia lớp học
+                    </h3>
+                    <button type="button" wire:click="closeJoinModal" class="rounded-full p-2 transition-colors hover:bg-surface-container">
+                        <x-user.icon name="x" :size="20" class="text-on-surface-variant" />
+                    </button>
+                </div>
+                <div class="p-6">
+                    @if ($joinStep === 'input')
+                        <div class="space-y-6">
+                            <label class="block">
+                                <span class="mb-2 block text-sm font-bold text-on-surface">Nhập mã lớp</span>
+                                <span class="relative block">
+                                    <x-user.icon name="search" :size="20" class="absolute left-4 top-1/2 -translate-y-1/2 text-outline" />
+                                    <input type="text" class="w-full rounded-xl border border-outline-variant/30 bg-surface-container-lowest py-4 pl-12 pr-4 font-mono text-lg font-bold uppercase outline-none transition-all focus:border-tertiary focus:ring-2 focus:ring-tertiary/20" placeholder="QR-123" maxlength="8">
+                                </span>
+                            </label>
+                            <button type="button" wire:click="previewJoinClass" class="w-full rounded-xl bg-tertiary py-4 font-bold text-white shadow-md shadow-tertiary/20 transition-all hover:bg-tertiary/90 active:scale-[0.98]">
+                                Kiểm tra mã lớp
+                            </button>
+                        </div>
+                    @else
+                        <div class="space-y-6">
+                            <div class="rounded-2xl border border-tertiary/20 bg-tertiary/5 p-5">
+                                <p class="mb-3 text-xs font-bold uppercase tracking-wider text-tertiary">Thông tin lớp học</p>
+                                <h4 class="mb-2 text-xl font-bold text-on-surface">Lập trình Web - Nhóm 2</h4>
+                                <div class="space-y-2 text-sm text-on-surface-variant">
+                                    <p class="flex justify-between"><span>Giảng viên:</span> <span class="font-bold text-on-surface">TS. Nguyễn Văn A</span></p>
+                                    <p class="flex justify-between"><span>Học kỳ:</span> <span class="font-bold text-on-surface">HK2 2025-2026</span></p>
+                                    <p class="flex justify-between"><span>Sỉ số hiện tại:</span> <span class="font-bold text-on-surface">45 sinh viên</span></p>
+                                </div>
+                            </div>
+                            <div class="flex items-center gap-2 rounded-xl border border-secondary/20 bg-secondary-container/20 p-3 text-sm text-secondary">
+                                <x-user.icon name="user" :size="16" />
+                                <span>Yêu cầu tham gia của bạn sẽ được gửi tới Chủ lớp để phê duyệt.</span>
+                            </div>
+                            <div class="flex justify-end gap-3">
+                                <button type="button" wire:click="backToJoinInput" class="w-full rounded-xl px-6 py-3 text-sm font-bold text-on-surface-variant transition-colors hover:bg-surface-container">Quay lại</button>
+                                <button type="button" wire:click="closeJoinModal" class="w-full rounded-xl bg-tertiary px-6 py-3 text-sm font-bold text-white shadow-md transition-colors hover:bg-tertiary/90">Xác nhận tham gia</button>
+                            </div>
+                        </div>
+                    @endif
+                </div>
+            </div>
+        </div>
+    @endif
+</div>
