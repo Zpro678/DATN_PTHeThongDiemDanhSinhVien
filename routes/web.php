@@ -128,6 +128,8 @@ Route::get('/lecturer/students/archived', function () {
 
 require __DIR__ . '/auth.php';
 
+use App\Http\Controllers\StudentLeaveRequestController;
+
 Route::middleware(['auth'])->prefix('student')->name('student.')->group(function () {
 
     // --- Dashboard tổng quan ---
@@ -137,6 +139,14 @@ Route::middleware(['auth'])->prefix('student')->name('student.')->group(function
     // --- Lớp học ---
     Route::get('/classes', [StudentClassController::class, 'index'])
         ->name('classes.list');                       // /student/classes
+
+    // --- Đơn xin nghỉ phép ---
+    Route::get('/leaves', [StudentLeaveRequestController::class, 'index'])
+        ->name('leaves.index');                       // /student/leaves
+    Route::post('/leaves', [StudentLeaveRequestController::class, 'store'])
+        ->name('leaves.store');                       // /student/leaves
+    Route::get('/classes/{class}/sessions-json', [StudentLeaveRequestController::class, 'getSessions'])
+        ->name('classes.sessions-json');              // /student/classes/{id}/sessions-json
 
     Route::get('/classes/{class}', [StudentClassController::class, 'show'])
         ->name('classes.detail');                     // /student/classes/{id}

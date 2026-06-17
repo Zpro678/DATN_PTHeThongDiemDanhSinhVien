@@ -130,7 +130,7 @@
     {{-- MOBILE HISTORY --}}
     <div class="lg:hidden w-full h-full font-sans">
         <div class="p-4 space-y-4 animate-in fade-in slide-in-from-bottom-2 duration-300">
-            <div class="bg-gradient-to-br from-blue-600 via-indigo-650 to-indigo-800 text-white rounded-2xl p-4.5 relative overflow-hidden shadow-md border border-blue-500/30">
+            <div class="bg-gradient-to-br from-blue-600 via-indigo-650 to-indigo-800 text-white rounded-2xl p-6 relative overflow-hidden shadow-md border border-blue-500/30">
                 <div class="absolute right-[-10px] bottom-[-10px] w-36 h-36 bg-white/10 rounded-full blur-3xl pointer-events-none"></div>
                 <div class="absolute right-4 top-4 flex flex-col items-end opacity-40 font-mono text-[8px] select-none text-white/85"><div class="w-8 h-1 bg-white/60 mb-0.5 rounded-xs"></div><div class="w-6 h-1 bg-white/60 mb-0.5 rounded-xs"></div><div class="w-7 h-1 bg-white/60 rounded-xs"></div></div>
                 <span class="inline-flex items-center gap-1.5 px-2.5 py-1 bg-white/10 backdrop-blur-md rounded-full text-[9px] font-extrabold uppercase tracking-widest mb-3.5 border border-white/15">
@@ -187,10 +187,52 @@
             </div>
 
             <div class="space-y-2.5">
-                <div class="flex items-center justify-between"><h3 class="text-xs font-black text-slate-800 uppercase tracking-widest">Thời Khóa Biểu Hôm Nay</h3><span class="text-[10px] font-bold text-slate-400">Thứ sáu, 05/06</span></div>
+                <div class="flex items-center justify-between"><h3 class="text-xs font-black text-slate-800 uppercase tracking-widest">Thời Khóa Biểu Hôm Nay</h3><span class="text-[10px] font-bold text-slate-404">Thứ sáu, 05/06</span></div>
                 <div class="space-y-2">
                     <div class="bg-white border-l-4 border-blue-500 rounded-xl p-3 border-r border-y border-slate-100 flex items-center justify-between gap-2 shadow-xs"><div class="space-y-1"><h4 class="text-xs font-black text-slate-800">NET301: Lý thuyết Mạng Máy Tính</h4><p class="text-[10px] text-slate-500 flex items-center gap-1 font-medium"><svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-clock w-3 h-3 text-slate-400" aria-hidden="true"><path d="M12 6v6l4 2"></path><circle cx="12" cy="12" r="10"></circle></svg> Tiết 4-6 (08:00) • TS. Lê Quang Linh • A.205</p></div><span class="shrink-0 text-[10px] font-black text-blue-600 px-2 py-1 rounded-md bg-blue-50">Đang học</span></div>
                     <div class="bg-white border-l-4 border-slate-300 rounded-xl p-3 border-r border-y border-slate-100 flex items-center justify-between gap-2 shadow-xs"><div class="space-y-1"><h4 class="text-xs font-black text-slate-800">DB101: Thiết kế &amp; Quản trị SQL</h4><p class="text-[10px] text-slate-500 flex items-center gap-1 font-medium"><svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-clock w-3 h-3 text-slate-400" aria-hidden="true"><path d="M12 6v6l4 2"></path><circle cx="12" cy="12" r="10"></circle></svg> Tiết 7-9 (13:15) • Thầy Lê Hoàng Đạt • A.201</p></div><span class="shrink-0 text-[10px] font-black text-slate-400 px-2 py-1 rounded-md bg-slate-50">Chưa học</span></div>
+                </div>
+            </div>
+
+            <div class="space-y-2.5">
+                <h3 class="text-xs font-black text-slate-800 uppercase tracking-widest pl-1">Nhật Ký Điểm Danh Gần Đây</h3>
+                <div class="space-y-2">
+                    {{-- Log 1 --}}
+                    <div class="bg-white rounded-xl p-3.5 border border-slate-100 flex items-center justify-between gap-3 shadow-xs">
+                        <div class="space-y-1">
+                            <span class="text-[9px] font-mono font-bold bg-blue-50 text-blue-600 px-1.5 py-0.5 rounded uppercase">DB101</span>
+                            <h4 class="text-xs font-black text-slate-800 leading-tight">Thiết kế &amp; Quản trị SQL</h4>
+                            <p class="text-[10px] text-slate-500 font-medium">04/06/2026 • QR + GPS</p>
+                        </div>
+                        <span class="shrink-0 text-[9px] font-bold bg-emerald-50 text-emerald-700 border border-emerald-100 px-2 py-0.5 rounded-lg uppercase">Có mặt</span>
+                    </div>
+                    {{-- Log 2 --}}
+                    <div class="bg-white rounded-xl p-3.5 border border-slate-100 flex items-center justify-between gap-3 shadow-xs">
+                        <div class="space-y-1">
+                            <span class="text-[9px] font-mono font-bold bg-blue-50 text-blue-600 px-1.5 py-0.5 rounded uppercase">PY201</span>
+                            <h4 class="text-xs font-black text-slate-800 leading-tight">Phát triển Web Python</h4>
+                            <p class="text-[10px] text-slate-550 font-medium">03/06/2026 • QR + GPS</p>
+                        </div>
+                        <span class="shrink-0 text-[9px] font-bold bg-amber-50 text-amber-700 border border-amber-100 px-2 py-0.5 rounded-lg uppercase">Muộn</span>
+                    </div>
+                    {{-- Log 3 --}}
+                    <div class="bg-white rounded-xl p-3.5 border border-rose-200 flex items-center justify-between gap-3 shadow-xs">
+                        <div class="space-y-1">
+                            <span class="text-[9px] font-mono font-bold bg-rose-50 text-rose-600 px-1.5 py-0.5 rounded uppercase">PH102</span>
+                            <h4 class="text-xs font-black text-slate-800 leading-tight">Vật lý đại cương 2</h4>
+                            <p class="text-[10px] text-rose-600 font-bold">02/06/2026 • Thủ công</p>
+                        </div>
+                        <span class="shrink-0 text-[9px] font-bold bg-rose-50 text-rose-700 border border-rose-100 px-2 py-0.5 rounded-lg uppercase">Vắng</span>
+                    </div>
+                    {{-- Log 4 --}}
+                    <div class="bg-white rounded-xl p-3.5 border border-slate-100 flex items-center justify-between gap-3 shadow-xs">
+                        <div class="space-y-1">
+                            <span class="text-[9px] font-mono font-bold bg-blue-50 text-blue-600 px-1.5 py-0.5 rounded uppercase">NET301</span>
+                            <h4 class="text-xs font-black text-slate-800 leading-tight">Lý thuyết Mạng Máy Tính</h4>
+                            <p class="text-[10px] text-slate-550 font-medium">29/05/2026 • Thủ công</p>
+                        </div>
+                        <span class="shrink-0 text-[9px] font-bold bg-blue-50 text-blue-700 border border-blue-105 px-2 py-0.5 rounded-lg uppercase">Có phép</span>
+                    </div>
                 </div>
             </div>
 

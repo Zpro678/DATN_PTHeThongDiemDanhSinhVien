@@ -2,6 +2,23 @@
     {{-- DESKTOP DASHBOARD --}}
     <div class="hidden lg:block w-full h-full p-6 lg:p-8 max-w-7xl mx-auto">
         <div class="space-y-6 animate-in fade-in duration-350">
+            {{-- Alert --}}
+            <div class="bg-amber-50 border border-amber-200 rounded-3xl p-5 flex items-start gap-4">
+                <div class="w-10 h-10 rounded-xl bg-amber-500/10 flex items-center justify-center text-amber-500 shrink-0 select-none">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-triangle-alert w-5.5 h-5.5 text-amber-500" aria-hidden="true"><path d="m21.73 18-8-14a2 2 0 0 0-3.48 0l-8 14A2 2 0 0 0 4 21h16a2 2 0 0 0 1.73-3"></path><path d="M12 9v4"></path><path d="M12 17h.01"></path></svg>
+                </div>
+                <div class="space-y-1.5 flex-1">
+                    <span class="text-[10px] font-black uppercase text-amber-800 tracking-wider">Cảnh báo chuyên cần yếu tích lũy</span>
+                    <h4 class="text-sm font-bold text-slate-900 leading-tight">Bạn có học phần <span class="font-extrabold text-red-650 font-mono">PH102: Vật lý đại cương 2</span> đang ở tỉ lệ chuyên cần <strong class="text-red-500 font-bold">72%</strong> (dưới mức sàn tối thiểu 80%).</h4>
+                    <div class="flex flex-wrap items-center gap-x-6 gap-y-2 pt-1.5 text-xs text-slate-550 font-medium">
+                        <span>Mức cảnh báo: <strong class="text-red-500 font-bold">Mức 2 (Nguy cơ đình chỉ thi)</strong></span>
+                        <span>Số buổi đã vắng: <strong class="text-slate-800 font-bold">4 Buổi</strong></span>
+                        <span>Số tiết đã vắng: <strong class="text-slate-800 font-bold">8 Tiết học</strong></span>
+                    </div>
+                </div>
+                <button class="shrink-0 bg-amber-500 hover:bg-amber-600 text-white font-bold text-xs px-4 py-2.5 rounded-xl border-none cursor-pointer transition-all active:scale-95 select-none">Gửi đơn giải trình phép</button>
+            </div>
+
             {{-- Welcome & Stats --}}
             <div class="grid grid-cols-1 xl:grid-cols-12 gap-6">
                 <div class="xl:col-span-8 bg-white border border-slate-200/90 rounded-3xl p-6 shadow-sm flex flex-col justify-between min-h-[220px] relative overflow-hidden transition-colors">
@@ -57,22 +74,6 @@
                 </div>
             </div>
 
-            {{-- Alert --}}
-            <div class="bg-amber-50 border border-amber-200 rounded-3xl p-5 flex items-start gap-4">
-                <div class="w-10 h-10 rounded-xl bg-amber-500/10 flex items-center justify-center text-amber-500 shrink-0 select-none">
-                    <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-triangle-alert w-5.5 h-5.5 text-amber-500" aria-hidden="true"><path d="m21.73 18-8-14a2 2 0 0 0-3.48 0l-8 14A2 2 0 0 0 4 21h16a2 2 0 0 0 1.73-3"></path><path d="M12 9v4"></path><path d="M12 17h.01"></path></svg>
-                </div>
-                <div class="space-y-1.5 flex-1">
-                    <span class="text-[10px] font-black uppercase text-amber-800 tracking-wider">Cảnh báo chuyên cần yếu tích lũy</span>
-                    <h4 class="text-sm font-bold text-slate-900 leading-tight">Bạn có học phần <span class="font-extrabold text-red-650 font-mono">PH102: Vật lý đại cương 2</span> đang ở tỉ lệ chuyên cần <strong class="text-red-500 font-bold">72%</strong> (dưới mức sàn tối thiểu 80%).</h4>
-                    <div class="flex flex-wrap items-center gap-x-6 gap-y-2 pt-1.5 text-xs text-slate-550 font-medium">
-                        <span>Mức cảnh báo: <strong class="text-red-500 font-bold">Mức 2 (Nguy cơ đình chỉ thi)</strong></span>
-                        <span>Số buổi đã vắng: <strong class="text-slate-800 font-bold">4 Buổi</strong></span>
-                        <span>Số tiết đã vắng: <strong class="text-slate-800 font-bold">8 Tiết học</strong></span>
-                    </div>
-                </div>
-                <button class="shrink-0 bg-amber-500 hover:bg-amber-600 text-white font-bold text-xs px-4 py-2.5 rounded-xl border-none cursor-pointer transition-all active:scale-95 select-none">Gửi đơn giải trình phép</button>
-            </div>
 
             {{-- Recent Classes --}}
             <div class="space-y-3.5">
@@ -147,8 +148,18 @@
     {{-- MOBILE DASHBOARD --}}
     <div class="lg:hidden w-full h-full font-sans">
         <div class="p-4 space-y-4 animate-in fade-in slide-in-from-bottom-2 duration-300">
+            {{-- Warning --}}
+            <div class="bg-amber-50 border border-amber-200 rounded-xl p-3 flex items-start gap-2.5">
+                <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-triangle-alert w-5 h-5 text-amber-500 shrink-0 mt-0.5" aria-hidden="true"><path d="m21.73 18-8-14a2 2 0 0 0-3.48 0l-8 14A2 2 0 0 0 4 21h16a2 2 0 0 0 1.73-3"></path><path d="M12 9v4"></path><path d="M12 17h.01"></path></svg>
+                <div class="space-y-1 flex-1">
+                    <h4 class="text-[10px] font-black text-amber-800 uppercase tracking-widest leading-none">Rủi ro chuyên cần học phần</h4>
+                    <p class="text-xs text-amber-800 font-semibold leading-relaxed">Môn <strong class="text-amber-950">PH102: Vật lý đại cương 2</strong> của bạn vắng mặt 4 buổi, tỉ lệ còn <span class="text-red-650 font-black">72%</span>.</p>
+                    <button class="mt-2 text-[10px] font-black bg-amber-500 text-white rounded-lg px-2.5 py-1 hover:bg-amber-600 cursor-pointer border-none" id="warning-class-action-btn">Gửi chứng từ giải trình xin nghỉ phép</button>
+                </div>
+            </div>
+
             {{-- Welcome --}}
-            <div class="bg-gradient-to-br from-blue-600 via-indigo-650 to-indigo-800 text-white rounded-2xl p-4.5 relative overflow-hidden shadow-md border border-blue-500/30">
+            <div class="bg-gradient-to-br from-blue-600 via-indigo-650 to-indigo-800 text-white rounded-2xl p-6 relative overflow-hidden shadow-md border border-blue-500/30">
                 <div class="absolute right-[-10px] bottom-[-10px] w-36 h-36 bg-white/10 rounded-full blur-3xl pointer-events-none"></div>
                 <div class="absolute right-4 top-4 flex flex-col items-end opacity-40 font-mono text-[8px] select-none text-white/85"><div class="w-8 h-1 bg-white/60 mb-0.5 rounded-xs"></div><div class="w-6 h-1 bg-white/60 mb-0.5 rounded-xs"></div><div class="w-7 h-1 bg-white/60 rounded-xs"></div></div>
                 <span class="inline-flex items-center gap-1.5 px-2.5 py-1 bg-white/10 backdrop-blur-md rounded-full text-[9px] font-extrabold uppercase tracking-widest mb-3.5 border border-white/15">
@@ -215,15 +226,6 @@
                 </div>
             </div>
 
-            {{-- Warning --}}
-            <div class="bg-amber-50 border border-amber-200 rounded-xl p-3 flex items-start gap-2.5">
-                <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-triangle-alert w-5 h-5 text-amber-500 shrink-0 mt-0.5" aria-hidden="true"><path d="m21.73 18-8-14a2 2 0 0 0-3.48 0l-8 14A2 2 0 0 0 4 21h16a2 2 0 0 0 1.73-3"></path><path d="M12 9v4"></path><path d="M12 17h.01"></path></svg>
-                <div class="space-y-1 flex-1">
-                    <h4 class="text-[10px] font-black text-amber-800 uppercase tracking-widest leading-none">Rủi ro chuyên cần học phần</h4>
-                    <p class="text-xs text-amber-800 font-semibold leading-relaxed">Môn <strong class="text-amber-950">PH102: Vật lý đại cương 2</strong> của bạn vắng mặt 4 buổi, tỉ lệ còn <span class="text-red-650 font-black">72%</span>.</p>
-                    <button class="mt-2 text-[10px] font-black bg-amber-500 text-white rounded-lg px-2.5 py-1 hover:bg-amber-600 cursor-pointer border-none" id="warning-class-action-btn">Gửi chứng từ giải trình xin nghỉ phép</button>
-                </div>
-            </div>
         </div>
     </div>
 </x-app-layout>

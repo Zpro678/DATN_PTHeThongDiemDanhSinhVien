@@ -1,16 +1,8 @@
-<x-app-layout>
-    <x-slot name="header">
-        <h2 class="font-semibold text-xl text-gray-800 leading-tight">
-            {{ __('Student Dashboard') }}
-        </h2>
-    </x-slot>
-
-    <div class="py-12">
-        <div class="max-w-7xl mx-auto sm:px-6 lg:px-8">
-            <div class="bg-white overflow-hidden shadow-sm sm:rounded-lg">
-                <div class="p-6 text-gray-900">
-                    {{ __("Welcome to Student Dashboard!") }}
-                </div>
+<x-app-layout variant="student" pageTitle="Bảng điều khiển">
+    <div class="w-full h-full p-6 lg:p-8 max-w-7xl mx-auto">
+        <div class="bg-white overflow-hidden shadow-sm sm:rounded-3xl border border-slate-200">
+            <div class="p-6 text-slate-800 font-semibold text-lg">
+                {{ __("Welcome to Student Dashboard!") }}
             </div>
         </div>
     </div>

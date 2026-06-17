@@ -128,8 +128,7 @@
         ['name' => 'Lớp học của tôi', 'href' => '/student/classes', 'icon' => 'book-open', 'active' => ['student/classes', 'student/classes/*']],
         ['name' => 'Lịch sử điểm danh', 'href' => '/student/history', 'icon' => 'history', 'active' => ['student/history', 'student/history/*']],
         ['name' => 'Thống kê chuyên cần', 'href' => '/student/stats', 'icon' => 'bar-chart', 'active' => ['student/stats', 'student/stats/*']],
-        ['name' => 'Thông báo', 'href' => '/student/notifications', 'icon' => 'bell', 'badgeCount' => $studentUnreadCount, 'active' => ['student/notifications', 'student/notifications/*']],
-        ['name' => 'Hồ sơ cá nhân', 'href' => '/student/profile', 'icon' => 'user-check', 'active' => ['student/profile', 'student/profile/*']],
+        ['name' => 'Đơn xin nghỉ học', 'href' => '/student/leaves', 'icon' => 'shield-alert', 'active' => ['student/leaves', 'student/leaves/*']],
     ];
 
     $studentMobileNavigation = [
