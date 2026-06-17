@@ -75,23 +75,8 @@
             'items' => [
                 ['name' => 'Dashboard', 'href' => '/admin', 'icon' => 'layout-dashboard', 'active' => ['admin']],
                 ['name' => 'Quản lý tài khoản', 'href' => '/admin/accounts', 'icon' => 'user-square', 'badge' => '99+', 'active' => ['admin/accounts', 'admin/accounts/*']],
+                ['name' => 'Quản lý gói dịch vụ', 'href' => '/admin/packages', 'icon' => 'star', 'active' => ['admin/packages', 'admin/packages/*']],
                 ['name' => 'Nhật ký hệ thống', 'href' => '/admin/logs', 'icon' => 'activity', 'active' => ['admin/logs', 'admin/logs/*']],
-            ],
-        ],
-        [
-            'title' => 'Quản lý đào tạo',
-            'items' => [
-                ['name' => 'Quản lý khoa', 'href' => '/admin/faculties', 'icon' => 'school', 'active' => ['admin/faculties', 'admin/faculties/*']],
-                ['name' => 'Quản lý ngành & môn', 'href' => '/admin/subjects', 'icon' => 'folder', 'active' => ['admin/subjects', 'admin/subjects/*']],
-                ['name' => 'Quản lý học kỳ', 'href' => '/admin/semesters', 'icon' => 'calendar', 'active' => ['admin/semesters', 'admin/semesters/*']],
-                ['name' => 'Quản lý lớp học', 'href' => '/admin/classes', 'icon' => 'book-open', 'active' => ['admin/classes', 'admin/classes/*']],
-            ],
-        ],
-        [
-            'title' => 'Nhân sự & học viên',
-            'items' => [
-                ['name' => 'Quản lý giảng viên', 'href' => '/admin/instructors', 'icon' => 'users', 'active' => ['admin/instructors', 'admin/instructors/*']],
-                ['name' => 'Quản lý sinh viên', 'href' => '/admin/students', 'icon' => 'users', 'active' => ['admin/students', 'admin/students/*']],
             ],
         ],
         [
@@ -179,12 +164,28 @@
         <link href="https://fonts.bunny.net/css?family=inter:400,500,600,700,800&display=swap" rel="stylesheet" />
 
         @vite(['resources/css/app.css', 'resources/js/app.js'])
+        
+        <!-- Prevent FOUC for Dark Mode -->
+        <script>
+            if (localStorage.getItem('sams-dark-mode') === '1') {
+                document.documentElement.classList.add('dark');
+            } else {
+                document.documentElement.classList.remove('dark');
+            }
+        </script>
     </head>
     <body
-        class="font-sans antialiased"
+        class="font-sans antialiased bg-slate-50 text-slate-900 dark:bg-slate-950 dark:text-slate-100 transition-colors duration-200"
         x-data="{ sidebarOpen: false, userMenuOpen: false, darkMode: localStorage.getItem('sams-dark-mode') === '1' }"
-        x-init="$watch('darkMode', value => localStorage.setItem('sams-dark-mode', value ? '1' : '0'))"
-        :class="{ 'dark': darkMode }"
+        x-init="$watch('darkMode', value => {
+            localStorage.setItem('sams-dark-mode', value ? '1' : '0');
+            if (value) {
+                document.documentElement.classList.add('dark');
+            } else {
+                document.documentElement.classList.remove('dark');
+            }
+        })"
+        :class="{ 'overflow-hidden': sidebarOpen }"
         @keydown.escape.window="sidebarOpen = false; userMenuOpen = false"
     >
         @include('layouts.partials.' . $resolvedVariant . '-shell')
