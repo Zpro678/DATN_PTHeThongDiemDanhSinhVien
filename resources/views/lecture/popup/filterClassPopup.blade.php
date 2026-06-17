@@ -34,7 +34,7 @@
                     <div class="grid grid-cols-1 sm:grid-cols-2 gap-5">
                         <div>
                             <label class="block text-xs font-semibold text-slate-500 mb-1.5 uppercase tracking-wide">Học kỳ</label>
-                            <select class="w-full px-3 py-2.5 bg-slate-50 border border-slate-200 rounded-lg text-sm text-slate-800 outline-none focus:border-[#2563eb] focus:ring-1 focus:ring-[#2563eb] hover:bg-slate-100 transition cursor-pointer">
+                            <select class="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-lg text-sm text-slate-800 outline-none focus:border-[#2563eb] focus:ring-1 focus:ring-[#2563eb] hover:bg-slate-100 transition cursor-pointer">
                                 <option>Tất cả học kỳ</option>
                                 <option>Học kỳ 1</option>
                                 <option>Học kỳ 2</option>
@@ -44,7 +44,7 @@
 
                         <div>
                             <label class="block text-xs font-semibold text-slate-500 mb-1.5 uppercase tracking-wide">Năm học</label>
-                            <select class="w-full px-3 py-2.5 bg-slate-50 border border-slate-200 rounded-lg text-sm text-slate-800 outline-none focus:border-[#2563eb] focus:ring-1 focus:ring-[#2563eb] hover:bg-slate-100 transition cursor-pointer">
+                            <select class="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-lg text-sm text-slate-800 outline-none focus:border-[#2563eb] focus:ring-1 focus:ring-[#2563eb] hover:bg-slate-100 transition cursor-pointer">
                                 <option>Tất cả năm học</option>
                                 <option>2023 - 2024</option>
                                 <option selected>2024 - 2025</option>
@@ -54,7 +54,7 @@
 
                     <div>
                         <label class="block text-xs font-semibold text-slate-500 mb-1.5 uppercase tracking-wide">Môn học</label>
-                        <select class="w-full px-3 py-2.5 bg-slate-50 border border-slate-200 rounded-lg text-sm text-slate-800 outline-none focus:border-[#2563eb] focus:ring-1 focus:ring-[#2563eb] hover:bg-slate-100 transition cursor-pointer">
+                        <select class="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-lg text-sm text-slate-800 outline-none focus:border-[#2563eb] focus:ring-1 focus:ring-[#2563eb] hover:bg-slate-100 transition cursor-pointer">
                             <option>Tất cả môn học</option>
                             <option>Advanced Neural Networks</option>
                             <option>Data Structures</option>
@@ -87,10 +87,10 @@
                 </div>
 
                 <div class="bg-slate-50 px-6 py-4 border-t border-slate-100 flex flex-col-reverse sm:flex-row sm:justify-end gap-3">
-                    <button onclick="document.getElementById('filterModalClass').classList.add('hidden')" type="button" class="w-full sm:w-auto px-5 py-2.5 text-sm font-bold text-slate-600 bg-white border border-slate-200 hover:bg-slate-50 rounded-lg transition shadow-sm">
+                    <button onclick="document.getElementById('filterModalClass').classList.add('hidden')" type="button" class="w-full sm:w-auto px-5 py-2 text-sm font-bold text-slate-600 bg-white border border-slate-200 hover:bg-slate-50 rounded-lg transition shadow-sm">
                         Hủy
                     </button>
-                    <button onclick="document.getElementById('filterModalClass').classList.add('hidden')" type="button" class="w-full sm:w-auto px-5 py-2.5 bg-[#2563eb] text-white rounded-lg text-sm font-bold hover:bg-blue-700 transition shadow-sm shadow-blue-500/30 flex justify-center items-center gap-2">
+                    <button onclick="document.getElementById('filterModalClass').classList.add('hidden')" type="button" class="w-full sm:w-auto px-5 py-2 bg-[#2563eb] text-white rounded-lg text-sm font-bold hover:bg-blue-700 transition shadow-sm shadow-blue-500/30 flex justify-center items-center gap-2">
                         <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 4a1 1 0 011-1h16a1 1 0 011 1v2.586a1 1 0 01-.293.707l-6.414 6.414a1 1 0 00-.293.707V17l-4 4v-6.586a1 1 0 00-.293-.707L3.293 7.293A1 1 0 013 6.586V4z"></path>
                         </svg>

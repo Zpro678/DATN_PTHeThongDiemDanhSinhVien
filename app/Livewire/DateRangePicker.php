@@ -3,6 +3,7 @@
 namespace App\Livewire;
 
 use Livewire\Component;
+use Carbon\Carbon;
 
 class DateRangePicker extends Component
 {
@@ -11,8 +12,9 @@ class DateRangePicker extends Component
 
     public function mount()
     {
-        $this->startDate = '01/06/2026';
-        $this->endDate = '15/06/2026';
+        $now = Carbon::now();
+    $this->startDate = $now->copy()->startOfMonth()->format('d/m/Y');
+    $this->endDate = $now->copy()->endOfMonth()->format('d/m/Y');
     }
 
     public function updated($propertyName)

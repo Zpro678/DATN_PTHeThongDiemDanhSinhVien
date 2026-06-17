@@ -85,7 +85,7 @@ Route::middleware(['auth', 'verified', 'role:teacher'])
     ->prefix('lecturer')
     ->group(function () {
         Route::redirect('/courses', '/lecturer/classes')->name('lecturer.courses');
-        Route::get('/attendance', [AttendanceSessionController::class, 'index'])->name('lecturer.attendance');
+        Route::get('/attendance', [AttendanceSessionController::class, 'index'])->name('attendance');
         Route::get('/attendance/qr/setup',[AttendanceSessionController::class, 'setupQr'])->name('attendance.qr.setup');
         Route::post('/attendance/qr/setup/start-qr-attendance',[AttendanceSessionController::class, 'startQrAttendance'])->name('attendance.qr.setup.start-qr-attendance');
         
@@ -122,8 +122,6 @@ Route::middleware(['auth', 'verified', 'role:teacher'])
 // lecturer
 Route::get('/lecturer/dashboard', [DashboardLectureController::class, 'index'])->name('dashboard');
 
-Route::get('/lecturer/attendance', [AttendanceSessionController::class, 'index'])->name('attendance');
-
 Route::get('/lecturer/courses', function () {
     return view('lecture.class.index');
 });
@@ -143,6 +141,38 @@ Route::get('/lecturer/students/warning', function () {
 Route::get('/lecturer/students/archived', function () {
     return view('lecture.students.archived');
 });
+
+// Leave Request Routes
+Route::get('/lecturer/students/leave', function () {
+    return view('lecture.students.leaveRequest.leaveRequest');
+});
+
+Route::get('/lecturer/students/leave/reject', function () {
+    return view('lecture.students.leaveRequest.leaveReject');
+});
+
+Route::get('/lecturer/students/leave/approve', function () {
+    return view('lecture.students.leaveRequest.leaveApprove');
+});
+
+Route::get('/lecturer/students/leave/{id}', function ($id) {
+    return view('lecture.students.leaveRequest.leaveDetail', ['id' => $id]);
+})->where('id', '[0-9]+');
+
+
+Route::get('/lecturer/students/{id}/detail', function ($id) {
+    return view('lecture.students.show', ['id' => $id]);
+})->where('id', '[0-9]+');
+
+Route::get('/lecturer/class/create', function () {
+    return view('lecture.class.create');
+});
+
+Route::get('/lecturer/class/show', function () {
+    return view('lecture.class.show');
+});
+
+
 
 require __DIR__ . '/auth.php';
 
@@ -184,5 +214,4 @@ Route::middleware(['auth'])->prefix('student')->name('student.')->group(function
         return view('student.profile.studentProfile');
     })->name('profile');                              // /student/profile
 });
-
 

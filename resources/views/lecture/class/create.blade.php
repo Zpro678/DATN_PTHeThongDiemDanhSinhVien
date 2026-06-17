@@ -1,18 +1,15 @@
 <x-app-layout variant="lecturer" page-title="Thêm lớp học">
-    <div class="max-w-[800px] mx-auto font-sans" x-data="{
+    <div class="font-sans" x-data="{
         name: '{{ old('name') }}',
         code: '{{ old('code') }}',
         semester: '{{ old('semester') }}',
         total_sessions: {{ old('total_sessions', 15) }},
-        sessions_per_lesson: {{ old('sessions_per_lesson', 1) }},
+        total_lessons: {{ old('total_lessons', 45) }},
         gps_radius: {{ old('gps_radius', 100) }},
         absence_threshold: {{ old('absence_threshold', 20) }},
         require_join_approval: {{ old('require_join_approval', 0) }}
     }">
         <div class="mb-6 flex items-center gap-3">
-            <a href="{{ route('classes.index') }}" class="p-2 bg-white border border-slate-200 text-slate-500 hover:text-blue-600 rounded-xl shadow-sm transition-colors">
-                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 19l-7-7m0 0l7-7m-7 7h18"></path></svg>
-            </a>
             <div>
                 <h1 class="text-[24px] font-extrabold text-slate-900 leading-none uppercase tracking-tight">Thêm lớp học mới</h1>
                 <p class="text-[14px] text-slate-500 mt-1">Khởi tạo thông tin lớp học và các cấu hình điểm danh.</p>
@@ -82,8 +79,8 @@
                         </div>
 
                         <div class="space-y-2">
-                            <label class="text-[13px] font-semibold text-slate-700 block">Số tiết / buổi <span class="text-red-500">*</span></label>
-                            <input x-model="sessions_per_lesson" type="number" name="sessions_per_lesson" min="1" class="w-full bg-white border border-slate-200 hover:border-slate-300 rounded-xl px-4 py-2.5 text-[14px] font-medium text-slate-700 focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 outline-none transition-all" required>
+                            <label class="text-[13px] font-semibold text-slate-700 block">Tổng số tiết <span class="text-red-500">*</span></label>
+                            <input x-model="total_lessons" type="number" name="total_lessons" min="1" class="w-full bg-white border border-slate-200 hover:border-slate-300 rounded-xl px-4 py-2.5 text-[14px] font-medium text-slate-700 focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 outline-none transition-all" required>
                         </div>
 
                         <div class="space-y-2">
@@ -110,7 +107,7 @@
 
                 <!-- Thao tác -->
                 <div class="flex items-center justify-end gap-3 pt-2">
-                    <a href="{{ route('classes.index') }}" class="px-6 py-2.5 rounded-xl border border-slate-200 text-slate-700 text-[14px] font-semibold hover:bg-slate-50 transition-colors">
+                    <a href="/lecturer/courses" class="px-6 py-2.5 rounded-xl border border-slate-200 text-slate-700 text-[14px] font-semibold hover:bg-slate-50 transition-colors">
                         Hủy
                     </a>
                     <button type="submit" class="px-6 py-2.5 rounded-xl bg-blue-600 text-white text-[14px] font-semibold hover:bg-blue-700 transition-colors shadow-sm shadow-blue-600/20">

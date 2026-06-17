@@ -6,10 +6,12 @@ use App\Models\CourseClass;
 use App\Http\Controllers\Controller;
 use Illuminate\Http\Request;
 use Illuminate\Support\Carbon;
+use Illuminate\Support\Str;
+
 class AttendanceSessionController extends Controller
 {
     public function index() {
-        return view('lecture.attendance.management_attendace');
+        return view('lecture.attendance.management_attendance');
     }
 
     public function setupQr(Request $request)
