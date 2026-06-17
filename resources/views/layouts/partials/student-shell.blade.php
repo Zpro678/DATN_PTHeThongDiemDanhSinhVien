@@ -1,6 +1,6 @@
-<div class="flex min-h-screen justify-center overflow-x-hidden bg-slate-100 font-sans text-slate-800 dark:bg-slate-950 dark:text-slate-100 lg:block">
-    <div class="relative flex h-screen w-full max-w-md flex-col overflow-hidden rounded-none border-0 bg-slate-50 shadow-none transition-all duration-300 dark:bg-slate-950 md:my-6 md:h-[840px] md:max-h-[95vh] md:rounded-[48px] md:border-[10px] md:border-slate-800 md:shadow-2xl lg:my-0 lg:h-screen lg:max-h-none lg:max-w-none lg:flex-row lg:rounded-none lg:border-0 lg:shadow-none">
-        <aside class="hidden w-64 shrink-0 flex-col justify-between border-r border-slate-200 bg-white shadow-sm dark:border-slate-800 dark:bg-slate-900 lg:flex">
+<div class="flex min-h-screen">
+    <div class="relative flex h-screen w-full max-w-md flex-col overflow-hidden rounded-none border-0 shadow-none transition-all duration-300 md:my-6 md:h-[840px] md:max-h-[95vh] md:rounded-[48px] md:border-[10px] md:border-slate-800 md:shadow-2xl lg:my-0 lg:h-screen lg:max-h-none lg:max-w-none lg:flex-row lg:rounded-none lg:border-0 lg:shadow-none">
+        <aside class="hidden w-64 shrink-0 flex-col justify-between border-r border-slate-200 shadow-sm dark:border-slate-800 lg:flex">
             <div>
                 <div class="flex h-16 items-center gap-3 border-b border-slate-100 px-5 dark:border-slate-800">
                     <div class="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-blue-600 text-white shadow-md shadow-blue-500/10">
@@ -98,8 +98,7 @@
                     {{ $slot }}
                 </div>
 
-                <div class="hidden lg:block">
-                    @include('layouts.partials.portal-footer')
+                <div class="hidden lg:blo                    @include('layouts.partials.portal-footer')
                 </div>
             </main>
 

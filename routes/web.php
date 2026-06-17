@@ -8,6 +8,9 @@ use App\Http\Controllers\Lecture\AttendanceSessionController;
 use App\Http\Controllers\Lecture\DashboardLectureController;
 use App\Http\Controllers\ProfileController;
 use App\Http\Controllers\Student\DashboardController as StudentDashboardController;
+
+use App\Http\Controllers\StudentClassController;
+
 use Illuminate\Support\Facades\Route;
 
 /*
@@ -67,6 +70,33 @@ Route::middleware(['auth', 'verified', 'role:admin'])
     ->group(function () {
         Route::get('/', [AdminDashboardController::class, 'index'])->name('dashboard');
         Route::redirect('/dashboard', '/admin')->name('dashboard.alias');
+
+        // Account Management
+        Route::get('/accounts', [\App\Http\Controllers\Admin\AccountController::class, 'index'])->name('accounts.index');
+        Route::get('/accounts/{user}', [\App\Http\Controllers\Admin\AccountController::class, 'show'])->name('accounts.show');
+        Route::get('/accounts/{user}/edit', [\App\Http\Controllers\Admin\AccountController::class, 'edit'])->name('accounts.edit');
+        Route::put('/accounts/{user}', [\App\Http\Controllers\Admin\AccountController::class, 'update'])->name('accounts.update');
+        Route::patch('/accounts/{user}/toggle-status', [\App\Http\Controllers\Admin\AccountController::class, 'toggleStatus'])->name('accounts.toggle-status');
+
+        // Packages Management
+        Route::get('/packages', [\App\Http\Controllers\Admin\PackageController::class, 'index'])->name('packages.index');
+        Route::get('/packages/create-mock', function () {
+            return view('admin.packages.create');
+        })->name('packages.create-mock');
+        Route::get('/packages/show-mock', function () {
+            return view('admin.packages.show');
+        })->name('packages.show-mock');
+        Route::get('/packages/edit-mock', function () {
+            return view('admin.packages.edit');
+        })->name('packages.edit-mock');
+
+        // System Logs
+        Route::get('/logs', [\App\Http\Controllers\Admin\LogController::class, 'index'])->name('logs.index');
+
+        // System Settings
+        Route::get('/settings', function () {
+            return view('admin.settings.index');
+        })->name('settings.index');
     });
 
 /*
@@ -125,6 +155,7 @@ Route::get('/lecturer/students', function () {
     return view('lecture.students.index');
 });
 
+
 Route::get('/lecturer/students/warning', function () {
     return view('lecture.students.warning');
 });
@@ -134,3 +165,45 @@ Route::get('/lecturer/students/archived', function () {
 });
 
 require __DIR__ . '/auth.php';
+
+// ============================================================
+// TV2 — Giao diện Sinh viên (Student Portal)
+// Nguyễn Tuấn Khanh | feature/khanh-class-student
+// Đường dẫn gốc: /student/*
+// ============================================================
+Route::middleware(['auth'])->prefix('student')->name('student.')->group(function () {
+
+    // --- Dashboard tổng quan ---
+    Route::get('/', [StudentClassController::class, 'dashboard'])
+        ->name('dashboard');                          // /student
+
+    // --- Lớp học ---
+    Route::get('/classes', [StudentClassController::class, 'index'])
+        ->name('classes.list');                       // /student/classes
+
+    Route::get('/classes/{class}', [StudentClassController::class, 'show'])
+        ->name('classes.detail');                     // /student/classes/{id}
+
+    // --- Lịch sử điểm danh ---
+    Route::get('/history', function () {
+        return view('student.attendance.studentAttendanceHistory');
+    })->name('history');                              // /student/history
+
+    // --- Thống kê chuyên cần ---
+    Route::get('/stats', function () {
+        return view('student.attendance.studentAttendanceStat');
+    })->name('stats');                                // /student/stats
+
+    // --- Thông báo ---
+    Route::get('/notifications', function () {
+        return view('student.notification.studentNotificationList');
+    })->name('notifications');                        // /student/notifications
+
+    // --- Hồ sơ cá nhân ---
+    Route::get('/profile', function () {
+        return view('student.profile.studentProfile');
+    })->name('profile');                              // /student/profile
+});
+
+
+
