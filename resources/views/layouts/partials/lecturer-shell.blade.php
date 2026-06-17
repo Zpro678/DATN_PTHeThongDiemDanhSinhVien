@@ -17,7 +17,7 @@
             @foreach ($lecturerNavigation as $item)
                 @php($active = $isActive($item['active']))
 
-                <a href="{{ url($item['href']) }}" class="{{ $active ? 'bg-blue-50 text-blue-700 dark:bg-blue-950/40 dark:text-blue-300' : 'text-slate-600 hover:bg-slate-50 hover:text-slate-900 dark:text-slate-300 dark:hover:bg-slate-800 dark:hover:text-white' }} group flex items-center rounded-xl px-4 py-3.5 text-[15px] font-medium transition-all" @click="sidebarOpen = false">
+                <a href="{{ url($item['href']) }}" class="{{ $active ? 'bg-blue-50 text-blue-700 dark:bg-blue-950/40 dark:text-blue-300' : 'text-slate-600 hover:bg-slate-50 hover:text-slate-900 dark:text-slate-300 dark:hover:bg-slate-800 dark:hover:text-white' }} group flex items-center rounded-xl px-4 py-3.5 text-sm font-medium transition-all" @click="sidebarOpen = false">
                     <x-sams.icon name="{{ $item['icon'] }}" class="{{ $active ? 'text-blue-700 dark:text-blue-300' : 'text-slate-500 group-hover:text-slate-700 dark:group-hover:text-slate-300' }} mr-4 h-5 w-5" />
                     <span>{{ $item['name'] }}</span>
                 </a>
@@ -27,14 +27,14 @@
         <div class="mb-16 space-y-2 border-t border-slate-200 p-4 dark:border-slate-800 lg:mb-0">
             @php($settingsActive = $isActive(['settings', 'settings/*', 'profile', 'profile/*']))
 
-            <a href="{{ route('profile.edit') }}" class="{{ $settingsActive ? 'bg-slate-100 text-slate-900 dark:bg-slate-800 dark:text-white' : 'text-slate-600 hover:bg-slate-50 dark:text-slate-300 dark:hover:bg-slate-800' }} flex items-center rounded-xl px-4 py-3.5 text-[15px] font-medium transition-all" @click="sidebarOpen = false">
+            <a href="{{ route('profile.edit') }}" class="{{ $settingsActive ? 'bg-slate-100 text-slate-900 dark:bg-slate-800 dark:text-white' : 'text-slate-600 hover:bg-slate-50 dark:text-slate-300 dark:hover:bg-slate-800' }} flex items-center rounded-xl px-4 py-3.5 text-sm font-medium transition-all" @click="sidebarOpen = false">
                 <x-sams.icon name="settings" class="mr-4 h-5 w-5 text-slate-500" />
                 <span>Cài đặt</span>
             </a>
 
             <form method="POST" action="{{ route('logout') }}">
                 @csrf
-                <button type="submit" class="flex w-full items-center rounded-xl border-none bg-transparent px-4 py-3.5 text-left text-[15px] font-medium text-red-600 transition-all hover:bg-red-50 dark:hover:bg-red-950/20">
+                <button type="submit" class="flex w-full items-center rounded-xl border-none bg-transparent px-4 py-3.5 text-left text-sm font-medium text-red-600 transition-all hover:bg-red-50 dark:hover:bg-red-950/20">
                     <x-sams.icon name="log-out" class="mr-4 h-5 w-5 text-red-500" />
                     <span>Đăng xuất</span>
                 </button>

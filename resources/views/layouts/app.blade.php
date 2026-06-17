@@ -109,8 +109,9 @@
 
     $lecturerNavigation = [
         ['name' => 'Bảng điều khiển', 'href' => '/lecturer/dashboard', 'icon' => 'layout-dashboard', 'active' => ['dashboard']],
-        ['name' => 'Sinh viên', 'href' => '/lecturer/students', 'icon' => 'users', 'active' => ['lecturer/students', 'lecturer/students/*', 'students', 'students/*']],
+        ['name' => 'Sinh viên', 'href' => '/lecturer/students', 'icon' => 'users', 'active' => ['lecturer/students', 'lecturer/students/warning', 'lecturer/students/archived', 'students']],
         ['name' => 'Điểm danh', 'href' => '/lecturer/attendance', 'icon' => 'calendar-check', 'active' => ['attendance', 'attendance/*']],
+        ['name' => 'Đơn xin nghỉ', 'href' => '/lecturer/students/leave', 'icon' => 'file-text', 'active' => ['lecturer/students/leave', 'lecturer/students/leave/*']],
         ['name' => 'Lớp học của tôi', 'href' => '/lecturer/courses', 'icon' => 'book-open', 'active' => ['lecturer/courses', 'lecturer/courses/*', 'lecturer/classes', 'lecturer/classes/*']],
         ['name' => 'Báo cáo', 'href' => '/lecturer/analytics', 'icon' => 'bar-chart', 'active' => ['lecturer/analytics', 'lecturer/analytics/*', 'analytics']],
     ];
@@ -119,8 +120,9 @@
         ['name' => 'Dashboard', 'href' => '/lecturer/dashboard', 'icon' => 'layout-dashboard', 'active' => ['lecturer.dashboard', 'lecturer/dashboard']],
         ['name' => 'Lớp học', 'href' => '/lecturer/courses', 'icon' => 'book-open', 'active' => ['lecturer/courses', 'lecturer/courses/*', 'lecturer/classes', 'lecturer/classes/*']],
         ['name' => 'Điểm danh', 'href' => '/lecturer/attendance', 'icon' => 'calendar-check', 'active' => ['attendance', 'attendance/*']],
+        ['name' => 'Đơn xin nghỉ', 'href' => '/lecturer/students/leave', 'icon' => 'file-text', 'active' => ['lecturer/students/leave', 'lecturer/students/leave/*']],
         ['name' => 'Báo cáo', 'href' => '/lecturer/analytics', 'icon' => 'bar-chart', 'active' => ['lecturer/analytics', 'lecturer/analytics/*', 'analytics']],
-        ['name' => 'Sinh viên', 'href' => '/lecturer/students', 'icon' => 'user', 'active' => ['lecturer/students', 'lecturer/students/*', 'students', 'students/*']],
+        ['name' => 'Sinh viên', 'href' => '/lecturer/students', 'icon' => 'user', 'active' => ['lecturer/students', 'lecturer/students/warning', 'lecturer/students/archived', 'students']],
     ];
 
     $studentNavigation = [

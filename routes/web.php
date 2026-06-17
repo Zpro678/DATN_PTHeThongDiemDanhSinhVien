@@ -137,6 +137,23 @@ Route::get('/lecturer/students/archived', function () {
     return view('lecture.students.archived');
 });
 
+// Leave Request Routes
+Route::get('/lecturer/students/leave', function () {
+    return view('lecture.students.leaveRequest.leaveRequest');
+});
+
+Route::get('/lecturer/students/leave/reject', function () {
+    return view('lecture.students.leaveRequest.leaveReject');
+});
+
+Route::get('/lecturer/students/leave/approve', function () {
+    return view('lecture.students.leaveRequest.leaveApprove');
+});
+
+Route::get('/lecturer/students/leave/{id}', function ($id) {
+    return view('lecture.students.leaveRequest.leaveDetail', ['id' => $id]);
+})->where('id', '[0-9]+');
+
 require __DIR__ . '/auth.php';
 
 // ============================================================
