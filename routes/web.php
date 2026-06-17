@@ -86,10 +86,13 @@ Route::middleware(['auth', 'verified', 'role:teacher'])
     ->group(function () {
         Route::redirect('/courses', '/lecturer/classes')->name('lecturer.courses');
         Route::get('/attendance', [AttendanceSessionController::class, 'index'])->name('lecturer.attendance');
-        
         Route::get('/attendance/qr/setup',[AttendanceSessionController::class, 'setupQr'])->name('attendance.qr.setup');
         Route::post('/attendance/qr/setup/start-qr-attendance',[AttendanceSessionController::class, 'startQrAttendance'])->name('attendance.qr.setup.start-qr-attendance');
         
+        Route::get('/manual',[AttendanceSessionController::class,'manualAttendance'])->name('lecturer.attendance.manual');
+        
+        Route::match(['get', 'post'], '/manual-active',[AttendanceSessionController::class,'activeManualAttendance'])->name('lecturer.attendance.manual.manual-active');
+
         Route::view('/analytics', 'lecture.analytics.main')->name('lecturer.analytics');
 
         Route::resource('classes', ClassController::class);
@@ -181,6 +184,5 @@ Route::middleware(['auth'])->prefix('student')->name('student.')->group(function
         return view('student.profile.studentProfile');
     })->name('profile');                              // /student/profile
 });
-
 
 

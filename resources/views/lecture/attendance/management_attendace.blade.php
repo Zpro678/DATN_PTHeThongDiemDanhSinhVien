@@ -97,7 +97,8 @@
                         </svg>
                     </div>
 
-                    <div class="flex-1 relative z-10">
+                   <a href="{{ route('lecturer.attendance.manual') }}" class ="block">
+                     <div class="flex-1 relative z-10" >
                         <h3 class="text-lg font-bold text-slate-900 mb-1.5 group-hover:text-amber-700 transition-colors">Điểm danh thủ công</h3>
                         <p class="text-sm text-slate-500 leading-relaxed mb-4">Giảng viên gọi tên và đánh dấu trạng thái có mặt, vắng, muộn cho từng sinh viên.</p>
                         <div class="flex flex-wrap gap-2">
@@ -115,6 +116,7 @@
                             </span>
                         </div>
                     </div>
+                   </a>
 
                     <svg class="w-5 h-5 text-slate-300 flex-shrink-0 mt-1 group-hover:text-amber-500 group-hover:translate-x-1 transition-all duration-300" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor">
                         <path stroke-linecap="round" stroke-linejoin="round" d="M8.25 4.5l7.5 7.5-7.5 7.5" />

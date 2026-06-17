@@ -33,8 +33,40 @@
             <rect width="18" height="18" x="3" y="4" rx="2" />
             <path d="m8 16 2 2 5-5" />
             @break
+        @case('arrow-right')
+            <path d="M5 12h14" />
+            <path d="m12 5 7 7-7 7" />
+            @break
+        @case('check-circle-2')
+            <circle cx="12" cy="12" r="10" />
+            <path d="m9 12 2 2 4-4" />
+            @break
         @case('chevron-down')
             <path d="m6 9 6 6 6-6" />
+            @break
+        @case('chevron-right')
+            <path d="m9 18 6-6-6-6" />
+            @break
+        @case('clock')
+            <circle cx="12" cy="12" r="10" />
+            <path d="M12 6v6l4 2" />
+            @break
+        @case('clipboard-check')
+            <rect width="8" height="4" x="8" y="2" rx="1" />
+            <path d="M16 4h2a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h2" />
+            <path d="m9 14 2 2 4-4" />
+            @break
+        @case('download')
+            <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" />
+            <path d="M7 10l5 5 5-5" />
+            <path d="M12 15V3" />
+            @break
+        @case('edit-3')
+            <path d="M12 20h9" />
+            <path d="M16.5 3.5a2.1 2.1 0 0 1 3 3L7 19l-4 1 1-4 12.5-12.5Z" />
+            @break
+        @case('filter')
+            <path d="M22 3H2l8 9.5V20l4 2v-9.5L22 3Z" />
             @break
         @case('folder')
             <path d="M3 7a2 2 0 0 1 2-2h5l2 2h7a2 2 0 0 1 2 2v9a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V7Z" />
@@ -64,10 +96,19 @@
             <path d="M16 17l5-5-5-5" />
             <path d="M21 12H9" />
             @break
+        @case('lock')
+            <rect width="18" height="11" x="3" y="11" rx="2" />
+            <path d="M7 11V7a5 5 0 0 1 10 0v4" />
+            @break
         @case('menu')
             <path d="M4 6h16" />
             <path d="M4 12h16" />
             <path d="M4 18h16" />
+            @break
+        @case('more-horizontal')
+            <circle cx="12" cy="12" r="1" />
+            <circle cx="19" cy="12" r="1" />
+            <circle cx="5" cy="12" r="1" />
             @break
         @case('moon')
             <path d="M20.8 13.2A8 8 0 1 1 10.8 3.2 6 6 0 0 0 20.8 13.2Z" />
@@ -88,6 +129,11 @@
             <path d="M9 21v-6h6v6" />
             <path d="M9 10h.01" />
             <path d="M15 10h.01" />
+            @break
+        @case('save')
+            <path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2Z" />
+            <path d="M17 21v-8H7v8" />
+            <path d="M7 3v5h8" />
             @break
         @case('search')
             <circle cx="11" cy="11" r="7" />
@@ -144,6 +190,11 @@
         @case('x')
             <path d="M18 6 6 18" />
             <path d="m6 6 12 12" />
+            @break
+        @case('x-circle')
+            <circle cx="12" cy="12" r="10" />
+            <path d="m15 9-6 6" />
+            <path d="m9 9 6 6" />
             @break
         @default
             <circle cx="12" cy="12" r="9" />
