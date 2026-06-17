@@ -158,40 +158,40 @@
 
     {{-- Button --}}
     <button @click="open = !open" type="button"
-        class="group inline-flex items-center gap-3 px-5 py-3 bg-white border border-slate-200 rounded-xl shadow-sm text-[14.5px] font-bold text-slate-700 hover:bg-slate-50 hover:border-blue-300 hover:text-blue-600 transition-all focus:outline-none focus:ring-2 focus:ring-blue-500/20">
-        <svg class="w-5 h-5 text-slate-400 group-hover:text-blue-500 transition-colors" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor">
+        class="group inline-flex items-center gap-2.5 px-4 py-2.5 bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-lg shadow-sm text-sm font-semibold text-slate-700 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-700 hover:border-blue-300 dark:hover:border-blue-500/50 hover:text-blue-600 dark:hover:text-blue-400 transition-all focus:outline-none focus:ring-2 focus:ring-blue-500/20">
+        <svg class="w-4 h-4 text-slate-400 dark:text-slate-500 group-hover:text-blue-500 dark:group-hover:text-blue-400 transition-colors" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor">
             <path stroke-linecap="round" stroke-linejoin="round" d="M6.75 3v2.25M17.25 3v2.25M3 18.75V7.5a2.25 2.25 0 012.25-2.25h13.5A2.25 2.25 0 0121 7.5v11.25m-18 0A2.25 2.25 0 005.25 21h13.5A2.25 2.25 0 0021 18.75m-18 0v-7.5A2.25 2.25 0 015.25 9h13.5A2.25 2.25 0 0121 11.25v7.5" />
         </svg>
-        <span x-text="displayText" class="tracking-wide">{{ $startDate }} - {{ $endDate }}</span>
-        <svg class="w-5 h-5 text-slate-400 ml-1.5 transition-transform duration-200 group-hover:text-blue-500" :class="{ 'rotate-180': open }" fill="none" viewBox="0 0 24 24" stroke-width="2.5" stroke="currentColor">
+        <span x-text="displayText">{{ $startDate }} - {{ $endDate }}</span>
+        <svg class="w-4 h-4 text-slate-400 dark:text-slate-500 ml-1 transition-transform duration-200 group-hover:text-blue-500 dark:group-hover:text-blue-400" :class="{ 'rotate-180': open }" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor">
             <path stroke-linecap="round" stroke-linejoin="round" d="M19.5 8.25l-7.5 7.5-7.5-7.5" />
         </svg>
     </button>
 
     {{-- Dropdown --}}
-    <div x-show="open"
+    <div x-cloak x-show="open"
         x-transition:enter="transition ease-out duration-200" x-transition:enter-start="opacity-0 scale-95" x-transition:enter-end="opacity-100 scale-100"
         x-transition:leave="transition ease-in duration-100" x-transition:leave-start="opacity-100 scale-100" x-transition:leave-end="opacity-0 scale-95"
-        class="absolute right-0 mt-2 z-50 bg-white rounded-xl shadow-2xl border border-slate-200/80 overflow-hidden" style="min-width: 380px;">
+        class="absolute right-0 mt-2 z-50 bg-white dark:bg-slate-900 rounded-xl shadow-2xl border border-slate-200/80 dark:border-slate-700 overflow-hidden" style="min-width: 380px;">
 
         <div class="flex">
             {{-- Sidebar chọn nhanh --}}
-            <div class="w-[130px] bg-slate-50 border-r border-slate-100 py-3 px-2 flex flex-col gap-1">
-                <p class="text-[10px] font-bold text-slate-400 uppercase tracking-wider px-2 mb-1">Chọn nhanh</p>
+            <div class="w-[130px] bg-slate-50 dark:bg-slate-800/50 border-r border-slate-100 dark:border-slate-800 py-3 px-2 flex flex-col gap-1">
+                <p class="text-[10px] font-bold text-slate-400 dark:text-slate-500 uppercase tracking-wider px-2 mb-1">Chọn nhanh</p>
                 <button @click="preset7()" type="button"
-                    class="text-left px-3 py-2 text-xs font-medium text-slate-600 hover:bg-blue-50 hover:text-blue-700 rounded-lg transition-colors">
+                    class="text-left px-3 py-2 text-xs font-medium text-slate-600 dark:text-slate-300 hover:bg-blue-50 dark:hover:bg-blue-500/10 hover:text-blue-700 dark:hover:text-blue-400 rounded-lg transition-colors">
                     7 ngày qua
                 </button>
                 <button @click="preset30()" type="button"
-                    class="text-left px-3 py-2 text-xs font-medium text-slate-600 hover:bg-blue-50 hover:text-blue-700 rounded-lg transition-colors">
+                    class="text-left px-3 py-2 text-xs font-medium text-slate-600 dark:text-slate-300 hover:bg-blue-50 dark:hover:bg-blue-500/10 hover:text-blue-700 dark:hover:text-blue-400 rounded-lg transition-colors">
                     30 ngày qua
                 </button>
                 <button @click="presetThisMonth()" type="button"
-                    class="text-left px-3 py-2 text-xs font-medium text-slate-600 hover:bg-blue-50 hover:text-blue-700 rounded-lg transition-colors">
+                    class="text-left px-3 py-2 text-xs font-medium text-slate-600 dark:text-slate-300 hover:bg-blue-50 dark:hover:bg-blue-500/10 hover:text-blue-700 dark:hover:text-blue-400 rounded-lg transition-colors">
                     Tháng này
                 </button>
                 <button @click="presetLastMonth()" type="button"
-                    class="text-left px-3 py-2 text-xs font-medium text-slate-600 hover:bg-blue-50 hover:text-blue-700 rounded-lg transition-colors">
+                    class="text-left px-3 py-2 text-xs font-medium text-slate-600 dark:text-slate-300 hover:bg-blue-50 dark:hover:bg-blue-500/10 hover:text-blue-700 dark:hover:text-blue-400 rounded-lg transition-colors">
                     Tháng trước
                 </button>
             </div>
@@ -200,11 +200,11 @@
             <div class="flex-1 p-4">
                 {{-- Header tháng --}}
                 <div class="flex items-center justify-between mb-3">
-                    <button @click="prevMonth()" type="button" class="w-8 h-8 flex items-center justify-center rounded-lg hover:bg-slate-100 text-slate-400 hover:text-slate-700 transition-colors">
+                    <button @click="prevMonth()" type="button" class="w-8 h-8 flex items-center justify-center rounded-lg hover:bg-slate-100 dark:hover:bg-slate-800 text-slate-400 dark:text-slate-500 hover:text-slate-700 dark:hover:text-slate-300 transition-colors">
                         <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke-width="2.5" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M15.75 19.5L8.25 12l7.5-7.5" /></svg>
                     </button>
-                    <span class="text-sm font-bold text-slate-800" x-text="monthNames[currentMonth] + ' ' + currentYear"></span>
-                    <button @click="nextMonth()" type="button" class="w-8 h-8 flex items-center justify-center rounded-lg hover:bg-slate-100 text-slate-400 hover:text-slate-700 transition-colors">
+                    <span class="text-sm font-bold text-slate-800 dark:text-white" x-text="monthNames[currentMonth] + ' ' + currentYear"></span>
+                    <button @click="nextMonth()" type="button" class="w-8 h-8 flex items-center justify-center rounded-lg hover:bg-slate-100 dark:hover:bg-slate-800 text-slate-400 dark:text-slate-500 hover:text-slate-700 dark:hover:text-slate-300 transition-colors">
                         <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke-width="2.5" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M8.25 4.5l7.5 7.5-7.5 7.5" /></svg>
                     </button>
                 </div>
@@ -212,7 +212,7 @@
                 {{-- Tên ngày --}}
                 <div class="grid grid-cols-7 mb-1">
                     <template x-for="dn in dayNames" :key="dn">
-                        <div class="text-center text-[11px] font-bold text-slate-400 py-1.5" x-text="dn"></div>
+                        <div class="text-center text-[11px] font-bold text-slate-400 dark:text-slate-500 py-1.5" x-text="dn"></div>
                     </template>
                 </div>
 
@@ -225,11 +225,11 @@
                             :disabled="!day.ok"
                             class="w-9 h-9 text-[13px] rounded-lg flex items-center justify-center mx-auto transition-all duration-75"
                             :class="{
-                                'text-slate-300 cursor-default': !day.ok,
-                                'text-slate-700 hover:bg-blue-50 hover:text-blue-600 cursor-pointer': day.ok && !isSel(day.k),
+                                'text-slate-300 dark:text-slate-600 cursor-default': !day.ok,
+                                'text-slate-700 dark:text-slate-300 hover:bg-blue-50 dark:hover:bg-blue-500/10 hover:text-blue-600 dark:hover:text-blue-400 cursor-pointer': day.ok && !isSel(day.k) && !inRange(day.k),
                                 'bg-blue-600 text-white font-bold shadow-sm': isSel(day.k),
-                                'bg-blue-50/80 text-blue-700': inRange(day.k) && day.ok && !isSel(day.k),
-                                'ring-2 ring-blue-400 ring-inset': isToday(day.k) && !isSel(day.k)
+                                'bg-blue-50/80 dark:bg-blue-500/20 text-blue-700 dark:text-blue-400 cursor-pointer': inRange(day.k) && day.ok && !isSel(day.k),
+                                'ring-2 ring-blue-400 dark:ring-blue-500 ring-inset': isToday(day.k) && !isSel(day.k)
                             }"
                             x-text="day.d">
                         </button>
@@ -237,22 +237,22 @@
                 </div>
 
                 {{-- Footer --}}
-                <div class="flex items-center justify-between mt-4 pt-3 border-t border-slate-100 gap-4">
-                    <div class="text-xs text-slate-500 font-medium whitespace-nowrap min-w-0">
-                        <template x-if="!tempStart"><span class="text-slate-400 italic">Chọn ngày bắt đầu...</span></template>
-                        <template x-if="tempStart && !tempEnd"><span class="text-blue-600 font-semibold">Chọn ngày kết thúc...</span></template>
+                <div class="flex items-center justify-between mt-4 pt-3 border-t border-slate-100 dark:border-slate-800 gap-4">
+                    <div class="text-xs text-slate-500 dark:text-slate-400 font-medium whitespace-nowrap min-w-0">
+                        <template x-if="!tempStart"><span class="text-slate-400 dark:text-slate-500 italic">Chọn ngày bắt đầu...</span></template>
+                        <template x-if="tempStart && !tempEnd"><span class="text-blue-600 dark:text-blue-400 font-semibold">Chọn ngày kết thúc...</span></template>
                         <template x-if="tempStart && tempEnd">
                             <span>
-                                <span class="font-bold text-slate-800" x-text="keyToDisplay(tempStart)"></span>
-                                <span class="mx-1 text-slate-400">→</span>
-                                <span class="font-bold text-slate-800" x-text="keyToDisplay(tempEnd)"></span>
+                                <span class="font-bold text-slate-800 dark:text-slate-200" x-text="keyToDisplay(tempStart)"></span>
+                                <span class="mx-1 text-slate-400 dark:text-slate-500">→</span>
+                                <span class="font-bold text-slate-800 dark:text-slate-200" x-text="keyToDisplay(tempEnd)"></span>
                             </span>
                         </template>
                     </div>
                     <div class="flex gap-2 shrink-0">
-                        <button @click="cancel()" type="button" class="px-3 py-1.5 text-xs font-semibold text-slate-600 hover:bg-slate-100 rounded-lg transition-colors whitespace-nowrap">Hủy</button>
+                        <button @click="cancel()" type="button" class="px-3 py-1.5 text-xs font-semibold text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-lg transition-colors whitespace-nowrap">Hủy</button>
                         <button @click="apply()" type="button" :disabled="!tempStart || !tempEnd"
-                            class="px-4 py-1.5 text-xs font-bold text-white bg-blue-600 hover:bg-blue-700 rounded-lg shadow-sm transition-all disabled:opacity-40 disabled:cursor-not-allowed whitespace-nowrap">
+                            class="px-4 py-1.5 text-xs font-bold text-white bg-blue-600 hover:bg-blue-700 dark:hover:bg-blue-500 rounded-lg shadow-sm transition-all disabled:opacity-40 disabled:cursor-not-allowed whitespace-nowrap">
                             Áp dụng
                         </button>
                     </div>

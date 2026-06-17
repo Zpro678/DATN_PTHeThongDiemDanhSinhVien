@@ -70,6 +70,33 @@ Route::middleware(['auth', 'verified', 'role:admin'])
     ->group(function () {
         Route::get('/', [AdminDashboardController::class, 'index'])->name('dashboard');
         Route::redirect('/dashboard', '/admin')->name('dashboard.alias');
+
+        // Account Management
+        Route::get('/accounts', [\App\Http\Controllers\Admin\AccountController::class, 'index'])->name('accounts.index');
+        Route::get('/accounts/{user}', [\App\Http\Controllers\Admin\AccountController::class, 'show'])->name('accounts.show');
+        Route::get('/accounts/{user}/edit', [\App\Http\Controllers\Admin\AccountController::class, 'edit'])->name('accounts.edit');
+        Route::put('/accounts/{user}', [\App\Http\Controllers\Admin\AccountController::class, 'update'])->name('accounts.update');
+        Route::patch('/accounts/{user}/toggle-status', [\App\Http\Controllers\Admin\AccountController::class, 'toggleStatus'])->name('accounts.toggle-status');
+
+        // Packages Management
+        Route::get('/packages', [\App\Http\Controllers\Admin\PackageController::class, 'index'])->name('packages.index');
+        Route::get('/packages/create-mock', function () {
+            return view('admin.packages.create');
+        })->name('packages.create-mock');
+        Route::get('/packages/show-mock', function () {
+            return view('admin.packages.show');
+        })->name('packages.show-mock');
+        Route::get('/packages/edit-mock', function () {
+            return view('admin.packages.edit');
+        })->name('packages.edit-mock');
+
+        // System Logs
+        Route::get('/logs', [\App\Http\Controllers\Admin\LogController::class, 'index'])->name('logs.index');
+
+        // System Settings
+        Route::get('/settings', function () {
+            return view('admin.settings.index');
+        })->name('settings.index');
     });
 
 /*
