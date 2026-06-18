@@ -11,6 +11,8 @@ use App\Livewire\Lecturer\Students\LeaveRequestIndex;
 use App\Livewire\Lecturer\Students\LeaveRequestShow;
 use App\Livewire\Lecturer\Students\StudentIndex;
 use App\Livewire\Lecturer\Students\StudentShow;
+use App\Livewire\Student\AttendanceHistory as StudentAttendanceHistory;
+use App\Livewire\Student\AttendanceStats as StudentAttendanceStats;
 use App\Livewire\User\Classes as UserClasses;
 use App\Livewire\User\CreateClass;
 use App\Livewire\User\Dashboard as UserDashboard;
@@ -28,6 +30,8 @@ Route::middleware(['auth', 'verified'])->group(function () {
     Route::get('/managed-classes', ManagedClasses::class)->name('managed-classes');
     Route::get('/joined-classes', JoinedClasses::class)->name('joined-classes');
     Route::get('/create-class', CreateClass::class)->name('create-class');
+    Route::get('/student/attendance/history', StudentAttendanceHistory::class)->name('student.attendance.history');
+    Route::get('/student/attendance/stats', StudentAttendanceStats::class)->name('student.attendance.stats');
     Route::get('/lecturer/attendance', AttendanceIndex::class)->name('lecturer.attendance.index');
     Route::get('/lecturer/attendance/create', AttendanceCreate::class)->name('lecturer.attendance.create');
     Route::get('/lecturer/attendance/manual/create', ManualAttendanceCreate::class)->name('lecturer.attendance.manual.create');

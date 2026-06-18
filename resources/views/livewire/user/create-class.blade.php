@@ -1,122 +1,229 @@
-<div class="mx-auto max-w-[1100px] p-4 pb-24 sm:p-8">
-    <div class="mb-6 flex items-center justify-between gap-4">
-        <div>
-            <h1 class="text-2xl font-extrabold uppercase leading-none tracking-tight text-slate-900">Thêm lớp học mới</h1>
-            <p class="mt-2 text-sm text-slate-500">Khởi tạo thông tin lớp học và các cấu hình điểm danh.</p>
-        </div>
-        <a href="{{ route('managed-classes') }}" class="hidden items-center gap-2 rounded-xl border border-slate-200 bg-white px-4 py-2.5 text-sm font-semibold text-slate-700 transition-colors hover:bg-slate-50 sm:flex">
-            <x-user.icon name="book-open" :size="18" />
-            Danh sách lớp
-        </a>
-    </div>
+<div class="min-h-full bg-slate-50/60 px-4 py-6 pb-24 sm:px-6 xl:px-8">
+    @php
+        $previewName = filled($name) ? $name : 'Tên lớp học';
+        $previewCode = filled($code) ? strtoupper($code) : 'Mã lớp';
+        $previewSubject = filled($subjectCode) ? strtoupper($subjectCode) : 'Mã môn';
+        $previewSemester = filled($semester) ? $semester : 'Học kỳ';
+    @endphp
 
-    @if ($errors->any())
-        <div class="mb-6 rounded-2xl border border-red-200 bg-red-50 p-4 text-red-800">
-            <div class="mb-2 flex items-center gap-2">
-                <x-user.icon name="alert-triangle" :size="20" class="text-red-500" />
-                <span class="text-sm font-bold">Vui lòng kiểm tra lại các thông tin bên dưới:</span>
-            </div>
-            <ul class="list-disc space-y-1 pl-5 text-[13px]">
-                @foreach ($errors->all() as $error)
-                    <li>{{ $error }}</li>
-                @endforeach
-            </ul>
-        </div>
-    @endif
-
-    <form wire:submit="save" class="space-y-6">
-        <section class="rounded-[20px] border border-slate-200/80 bg-white p-6 shadow-sm sm:p-8">
-            <h2 class="mb-6 flex items-center gap-2 text-lg font-bold text-slate-900">
-                <x-user.icon name="book-open" :size="20" class="text-blue-500" />
-                Thông tin cơ bản
-            </h2>
-
-            <div class="grid grid-cols-1 gap-6 sm:grid-cols-2">
-                <label class="space-y-2">
-                    <span class="block text-[13px] font-semibold text-slate-700">Tên lớp <span class="text-red-500">*</span></span>
-                    <input wire:model.blur="name" type="text" placeholder="Ví dụ: Công nghệ phần mềm 1" class="w-full rounded-xl border border-slate-200 bg-white px-4 py-2.5 text-sm font-medium text-slate-700 outline-none transition-all hover:border-slate-300 focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20" autofocus>
-                    @error('name') <span class="block text-xs font-medium text-red-600">{{ $message }}</span> @enderror
-                </label>
-
-                <label class="space-y-2">
-                    <span class="block text-[13px] font-semibold text-slate-700">Mã lớp <span class="text-red-500">*</span></span>
-                    <input wire:model.blur="code" type="text" placeholder="Ví dụ: WEB-2026-01" class="w-full rounded-xl border border-slate-200 bg-white px-4 py-2.5 text-sm font-medium uppercase text-slate-700 outline-none transition-all hover:border-slate-300 focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20">
-                    @error('code') <span class="block text-xs font-medium text-red-600">{{ $message }}</span> @enderror
-                </label>
-
-                <label class="space-y-2">
-                    <span class="block text-[13px] font-semibold text-slate-700">Mã môn học</span>
-                    <input wire:model.blur="subjectCode" type="text" placeholder="Ví dụ: INT3110" class="w-full rounded-xl border border-slate-200 bg-white px-4 py-2.5 text-sm font-medium uppercase text-slate-700 outline-none transition-all hover:border-slate-300 focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20">
-                    @error('subjectCode') <span class="block text-xs font-medium text-red-600">{{ $message }}</span> @enderror
-                </label>
-
-                <label class="space-y-2">
-                    <span class="block text-[13px] font-semibold text-slate-700">Học kỳ</span>
-                    <input wire:model.blur="semester" type="text" placeholder="Ví dụ: HK1 2026-2027" class="w-full rounded-xl border border-slate-200 bg-white px-4 py-2.5 text-sm font-medium text-slate-700 outline-none transition-all hover:border-slate-300 focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20">
-                    @error('semester') <span class="block text-xs font-medium text-red-600">{{ $message }}</span> @enderror
-                </label>
-
-                <label class="space-y-2 sm:col-span-2">
-                    <span class="block text-[13px] font-semibold text-slate-700">Mô tả</span>
-                    <textarea wire:model.blur="description" placeholder="Nhập mô tả thêm về lớp học..." rows="4" class="w-full rounded-xl border border-slate-200 bg-white px-4 py-3 text-sm font-medium text-slate-700 outline-none transition-all hover:border-slate-300 focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20"></textarea>
-                    @error('description') <span class="block text-xs font-medium text-red-600">{{ $message }}</span> @enderror
-                </label>
-            </div>
-        </section>
-
-        <section class="rounded-[20px] border border-slate-200/80 bg-white p-6 shadow-sm sm:p-8">
-            <h2 class="mb-6 flex items-center gap-2 text-lg font-bold text-slate-900">
-                <x-user.icon name="settings" :size="20" class="text-blue-500" />
-                Cấu hình lớp học
-            </h2>
-
-            <div class="grid grid-cols-1 gap-6 sm:grid-cols-2">
-                <label class="space-y-2">
-                    <span class="block text-[13px] font-semibold text-slate-700">Tổng số buổi <span class="text-red-500">*</span></span>
-                    <input wire:model.blur="totalSessions" type="number" min="1" max="100" class="w-full rounded-xl border border-slate-200 bg-white px-4 py-2.5 text-sm font-medium text-slate-700 outline-none transition-all hover:border-slate-300 focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20">
-                    @error('totalSessions') <span class="block text-xs font-medium text-red-600">{{ $message }}</span> @enderror
-                </label>
-
-                <label class="space-y-2">
-                    <span class="block text-[13px] font-semibold text-slate-700">Số tiết mỗi buổi <span class="text-red-500">*</span></span>
-                    <input wire:model.blur="lessonsPerSession" type="number" min="1" max="20" class="w-full rounded-xl border border-slate-200 bg-white px-4 py-2.5 text-sm font-medium text-slate-700 outline-none transition-all hover:border-slate-300 focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20">
-                    @error('lessonsPerSession') <span class="block text-xs font-medium text-red-600">{{ $message }}</span> @enderror
-                </label>
-            </div>
-
-            <div class="mt-6 flex items-center justify-between gap-6 border-t border-slate-100 pt-6">
-                <div>
-                    <span class="block text-sm font-bold text-slate-900">Yêu cầu duyệt tham gia</span>
-                    <p class="mt-1 text-[13px] text-slate-500">Học viên tham gia bằng mã lớp cần được duyệt trước khi vào danh sách.</p>
+    <div class="w-full max-w-none space-y-6">
+        <div class="flex flex-col gap-4 rounded-[28px] border border-white/80 bg-white/80 p-5 shadow-sm shadow-slate-200/70 backdrop-blur sm:p-6 lg:flex-row lg:items-center lg:justify-between">
+            <div class="flex items-start gap-4">
+                <div class="flex h-12 w-12 items-center justify-center rounded-2xl bg-blue-600 text-white shadow-lg shadow-blue-600/20">
+                    <x-user.icon name="book-open" :size="24" />
                 </div>
-                <button
-                    type="button"
-                    wire:click="$toggle('requireApproval')"
-                    role="switch"
-                    aria-label="Yêu cầu duyệt tham gia"
-                    aria-checked="{{ $requireApproval ? 'true' : 'false' }}"
-                    @class([
-                        'relative inline-flex h-6 w-11 shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 focus:outline-none focus:ring-2 focus:ring-blue-500/30',
-                        'bg-blue-600' => $requireApproval,
-                        'bg-slate-200' => ! $requireApproval,
-                    ])
-                >
-                    <span @class([
-                        'pointer-events-none inline-block h-5 w-5 transform rounded-full bg-white shadow ring-0 transition duration-200',
-                        'translate-x-5' => $requireApproval,
-                        'translate-x-0' => ! $requireApproval,
-                    ])></span>
-                </button>
+                <div>
+                    <p class="text-xs font-bold uppercase tracking-[0.28em] text-blue-600">Quản lý lớp học</p>
+                    <h1 class="mt-2 text-2xl font-extrabold uppercase leading-tight tracking-tight text-slate-950 sm:text-3xl">Thêm lớp học mới</h1>
+                    <p class="mt-2 max-w-3xl text-sm text-slate-500">Khởi tạo thông tin lớp học và các cấu hình điểm danh. Bố cục được mở rộng để dùng trọn không gian làm việc của hệ thống.</p>
+                </div>
             </div>
-        </section>
 
-        <div class="flex items-center justify-end gap-3 pt-2">
-            <a href="{{ route('managed-classes') }}" class="rounded-xl border border-slate-200 px-6 py-2.5 text-sm font-semibold text-slate-700 transition-colors hover:bg-slate-50">Hủy</a>
-            <button type="submit" wire:loading.attr="disabled" wire:target="save" class="flex items-center gap-2 rounded-xl bg-blue-600 px-6 py-2.5 text-sm font-semibold text-white shadow-sm shadow-blue-600/20 transition-colors hover:bg-blue-700 disabled:cursor-wait disabled:opacity-60">
-                <x-user.icon name="save" :size="18" wire:loading.remove wire:target="save" />
-                <span wire:loading.remove wire:target="save">Lưu lớp học</span>
-                <span wire:loading wire:target="save">Đang lưu...</span>
-            </button>
+            <a href="{{ route('managed-classes') }}" class="inline-flex items-center justify-center gap-2 rounded-2xl border border-slate-200 bg-white px-5 py-3 text-sm font-bold text-slate-700 shadow-sm transition-colors hover:bg-slate-50">
+                <x-user.icon name="book-open" :size="18" />
+                Danh sách lớp
+            </a>
         </div>
-    </form>
+
+        @if ($errors->any())
+            <div class="rounded-2xl border border-red-200 bg-red-50 p-4 text-red-800">
+                <div class="mb-2 flex items-center gap-2">
+                    <x-user.icon name="alert-triangle" :size="20" class="text-red-500" />
+                    <span class="text-sm font-bold">Vui lòng kiểm tra lại các thông tin bên dưới:</span>
+                </div>
+                <ul class="list-disc space-y-1 pl-5 text-[13px]">
+                    @foreach ($errors->all() as $error)
+                        <li>{{ $error }}</li>
+                    @endforeach
+                </ul>
+            </div>
+        @endif
+
+        <form wire:submit="save" class="grid grid-cols-1 gap-6 xl:grid-cols-12">
+            <div class="space-y-6 xl:col-span-8 2xl:col-span-9">
+                <section class="rounded-[26px] border border-slate-200/80 bg-white p-5 shadow-sm sm:p-8">
+                    <div class="mb-7 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+                        <h2 class="flex items-center gap-3 text-xl font-extrabold text-slate-950">
+                            <span class="flex h-10 w-10 items-center justify-center rounded-2xl bg-blue-50 text-blue-600">
+                                <x-user.icon name="book-open" :size="20" />
+                            </span>
+                            Thông tin cơ bản
+                        </h2>
+                        <span class="rounded-full bg-slate-100 px-3 py-1 text-xs font-bold uppercase tracking-wide text-slate-500">Bắt buộc nhập tên và mã lớp</span>
+                    </div>
+
+                    <div class="grid grid-cols-1 gap-6 lg:grid-cols-2">
+                        <label class="space-y-2">
+                            <span class="block text-[13px] font-semibold text-slate-700">Tên lớp <span class="text-red-500">*</span></span>
+                            <input wire:model.live.debounce.300ms="name" type="text" placeholder="Ví dụ: Công nghệ phần mềm 1" class="h-12 w-full rounded-2xl border border-slate-200 bg-white px-4 text-sm font-semibold text-slate-800 outline-none transition-all placeholder:text-slate-400 hover:border-slate-300 focus:border-blue-500 focus:ring-4 focus:ring-blue-500/10" autofocus>
+                            @error('name') <span class="block text-xs font-medium text-red-600">{{ $message }}</span> @enderror
+                        </label>
+
+                        <label class="space-y-2">
+                            <span class="block text-[13px] font-semibold text-slate-700">Mã lớp <span class="text-red-500">*</span></span>
+                            <input wire:model.live.debounce.300ms="code" type="text" placeholder="Ví dụ: WEB-2026-01" class="h-12 w-full rounded-2xl border border-slate-200 bg-white px-4 text-sm font-semibold uppercase text-slate-800 outline-none transition-all placeholder:text-slate-400 hover:border-slate-300 focus:border-blue-500 focus:ring-4 focus:ring-blue-500/10">
+                            @error('code') <span class="block text-xs font-medium text-red-600">{{ $message }}</span> @enderror
+                        </label>
+
+                        <label class="space-y-2">
+                            <span class="block text-[13px] font-semibold text-slate-700">Mã môn học</span>
+                            <input wire:model.live.debounce.300ms="subjectCode" type="text" placeholder="Ví dụ: INT3110" class="h-12 w-full rounded-2xl border border-slate-200 bg-white px-4 text-sm font-semibold uppercase text-slate-800 outline-none transition-all placeholder:text-slate-400 hover:border-slate-300 focus:border-blue-500 focus:ring-4 focus:ring-blue-500/10">
+                            @error('subjectCode') <span class="block text-xs font-medium text-red-600">{{ $message }}</span> @enderror
+                        </label>
+
+                        <label class="space-y-2">
+                            <span class="block text-[13px] font-semibold text-slate-700">Học kỳ</span>
+                            <input wire:model.live.debounce.300ms="semester" type="text" placeholder="Ví dụ: HK1 2026-2027" class="h-12 w-full rounded-2xl border border-slate-200 bg-white px-4 text-sm font-semibold text-slate-800 outline-none transition-all placeholder:text-slate-400 hover:border-slate-300 focus:border-blue-500 focus:ring-4 focus:ring-blue-500/10">
+                            @error('semester') <span class="block text-xs font-medium text-red-600">{{ $message }}</span> @enderror
+                        </label>
+
+                        <label class="space-y-2 lg:col-span-2">
+                            <span class="block text-[13px] font-semibold text-slate-700">Mô tả</span>
+                            <textarea wire:model.blur="description" placeholder="Nhập mô tả thêm về lớp học..." rows="5" class="w-full rounded-2xl border border-slate-200 bg-white px-4 py-3 text-sm font-semibold text-slate-800 outline-none transition-all placeholder:text-slate-400 hover:border-slate-300 focus:border-blue-500 focus:ring-4 focus:ring-blue-500/10"></textarea>
+                            @error('description') <span class="block text-xs font-medium text-red-600">{{ $message }}</span> @enderror
+                        </label>
+                    </div>
+                </section>
+
+                <section class="rounded-[26px] border border-slate-200/80 bg-white p-5 shadow-sm sm:p-8">
+                    <div class="mb-7 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+                        <h2 class="flex items-center gap-3 text-xl font-extrabold text-slate-950">
+                            <span class="flex h-10 w-10 items-center justify-center rounded-2xl bg-blue-50 text-blue-600">
+                                <x-user.icon name="settings" :size="20" />
+                            </span>
+                            Cấu hình lớp học
+                        </h2>
+                        <span class="rounded-full bg-blue-50 px-3 py-1 text-xs font-bold uppercase tracking-wide text-blue-600">Theo dữ liệu hiện tại</span>
+                    </div>
+
+                    <div class="grid grid-cols-1 gap-6 lg:grid-cols-2">
+                        <label class="space-y-2">
+                            <span class="block text-[13px] font-semibold text-slate-700">Tổng số buổi <span class="text-red-500">*</span></span>
+                            <input wire:model.live.debounce.300ms="totalSessions" type="number" min="1" max="100" class="h-12 w-full rounded-2xl border border-slate-200 bg-white px-4 text-sm font-semibold text-slate-800 outline-none transition-all hover:border-slate-300 focus:border-blue-500 focus:ring-4 focus:ring-blue-500/10">
+                            @error('totalSessions') <span class="block text-xs font-medium text-red-600">{{ $message }}</span> @enderror
+                        </label>
+
+                        <label class="space-y-2">
+                            <span class="block text-[13px] font-semibold text-slate-700">Số tiết mỗi buổi <span class="text-red-500">*</span></span>
+                            <input wire:model.live.debounce.300ms="lessonsPerSession" type="number" min="1" max="20" class="h-12 w-full rounded-2xl border border-slate-200 bg-white px-4 text-sm font-semibold text-slate-800 outline-none transition-all hover:border-slate-300 focus:border-blue-500 focus:ring-4 focus:ring-blue-500/10">
+                            @error('lessonsPerSession') <span class="block text-xs font-medium text-red-600">{{ $message }}</span> @enderror
+                        </label>
+                    </div>
+
+                    <div class="mt-7 rounded-2xl border border-slate-200 bg-slate-50/70 p-5">
+                        <div class="flex flex-col gap-5 sm:flex-row sm:items-center sm:justify-between">
+                            <div class="flex gap-3">
+                                <div class="flex h-10 w-10 items-center justify-center rounded-2xl bg-white text-blue-600 shadow-sm">
+                                    <x-user.icon name="shield-check" :size="20" />
+                                </div>
+                                <div>
+                                    <span class="block text-sm font-extrabold text-slate-950">Yêu cầu duyệt tham gia</span>
+                                    <p class="mt-1 max-w-2xl text-[13px] leading-5 text-slate-500">Học viên tham gia bằng mã lớp cần được chủ lớp duyệt trước khi xuất hiện trong danh sách chính thức.</p>
+                                </div>
+                            </div>
+
+                            <button
+                                type="button"
+                                wire:click="$toggle('requireApproval')"
+                                role="switch"
+                                aria-label="Yêu cầu duyệt tham gia"
+                                aria-checked="{{ $requireApproval ? 'true' : 'false' }}"
+                                @class([
+                                    'relative inline-flex h-8 w-14 shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 focus:outline-none focus:ring-4 focus:ring-blue-500/20',
+                                    'bg-blue-600' => $requireApproval,
+                                    'bg-slate-300' => ! $requireApproval,
+                                ])
+                            >
+                                <span @class([
+                                    'pointer-events-none inline-block h-7 w-7 transform rounded-full bg-white shadow ring-0 transition duration-200',
+                                    'translate-x-6' => $requireApproval,
+                                    'translate-x-0' => ! $requireApproval,
+                                ])></span>
+                            </button>
+                        </div>
+                    </div>
+                </section>
+
+                <div class="flex flex-col-reverse gap-3 rounded-[24px] border border-slate-200/80 bg-white p-4 shadow-sm sm:flex-row sm:items-center sm:justify-end">
+                    <a href="{{ route('managed-classes') }}" class="inline-flex items-center justify-center rounded-2xl border border-slate-200 px-6 py-3 text-sm font-bold text-slate-700 transition-colors hover:bg-slate-50">Hủy</a>
+                    <button type="submit" wire:loading.attr="disabled" wire:target="save" class="inline-flex items-center justify-center gap-2 rounded-2xl bg-blue-600 px-6 py-3 text-sm font-bold text-white shadow-lg shadow-blue-600/20 transition-colors hover:bg-blue-700 disabled:cursor-wait disabled:opacity-60">
+                        <x-user.icon name="save" :size="18" wire:loading.remove wire:target="save" />
+                        <span wire:loading.remove wire:target="save">Lưu lớp học</span>
+                        <span wire:loading wire:target="save">Đang lưu...</span>
+                    </button>
+                </div>
+            </div>
+
+            <aside class="space-y-6 xl:col-span-4 2xl:col-span-3">
+                <div class="sticky top-6 space-y-6">
+                    <section class="overflow-hidden rounded-[28px] border border-blue-100 bg-white shadow-sm">
+                        <div class="bg-gradient-to-br from-blue-600 to-indigo-600 p-6 text-white">
+                            <div class="flex items-center justify-between gap-4">
+                                <span class="rounded-full bg-white/15 px-3 py-1 text-xs font-bold uppercase tracking-wide">Xem trước</span>
+                                <x-user.icon name="eye" :size="22" class="text-white/90" />
+                            </div>
+                            <h3 class="mt-5 text-2xl font-extrabold leading-tight">{{ $previewName }}</h3>
+                            <p class="mt-2 text-sm font-medium text-blue-100">{{ $previewCode }} · {{ $previewSubject }} · {{ $previewSemester }}</p>
+                        </div>
+
+                        <div class="space-y-4 p-6">
+                            <div class="grid grid-cols-2 gap-3">
+                                <div class="rounded-2xl bg-slate-50 p-4">
+                                    <p class="text-xs font-bold uppercase tracking-wide text-slate-400">Số buổi</p>
+                                    <p class="mt-2 text-2xl font-extrabold text-slate-950">{{ $totalSessions ?: 0 }}</p>
+                                </div>
+                                <div class="rounded-2xl bg-slate-50 p-4">
+                                    <p class="text-xs font-bold uppercase tracking-wide text-slate-400">Tiết/buổi</p>
+                                    <p class="mt-2 text-2xl font-extrabold text-slate-950">{{ $lessonsPerSession ?: 0 }}</p>
+                                </div>
+                            </div>
+
+                            <div class="rounded-2xl border border-slate-200 p-4">
+                                <div class="flex items-center gap-3">
+                                    <div @class([
+                                        'flex h-10 w-10 items-center justify-center rounded-2xl',
+                                        'bg-blue-50 text-blue-600' => $requireApproval,
+                                        'bg-slate-100 text-slate-500' => ! $requireApproval,
+                                    ])>
+                                        <x-user.icon name="shield-check" :size="20" />
+                                    </div>
+                                    <div>
+                                        <p class="text-sm font-extrabold text-slate-950">{{ $requireApproval ? 'Có duyệt tham gia' : 'Tham gia trực tiếp' }}</p>
+                                        <p class="mt-0.5 text-xs text-slate-500">{{ $requireApproval ? 'Sinh viên cần được chủ lớp xác nhận.' : 'Sinh viên vào lớp ngay sau khi dùng mã lớp.' }}</p>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <button type="submit" wire:loading.attr="disabled" wire:target="save" class="flex w-full items-center justify-center gap-2 rounded-2xl bg-blue-600 px-5 py-3 text-sm font-bold text-white shadow-lg shadow-blue-600/20 transition-colors hover:bg-blue-700 disabled:cursor-wait disabled:opacity-60">
+                                <x-user.icon name="save" :size="18" wire:loading.remove wire:target="save" />
+                                <span wire:loading.remove wire:target="save">Lưu lớp học</span>
+                                <span wire:loading wire:target="save">Đang lưu...</span>
+                            </button>
+                        </div>
+                    </section>
+
+                    <section class="rounded-[28px] border border-slate-200/80 bg-white p-6 shadow-sm">
+                        <h3 class="flex items-center gap-2 text-base font-extrabold text-slate-950">
+                            <x-user.icon name="sparkles" :size="19" class="text-amber-500" />
+                            Gợi ý nhập liệu
+                        </h3>
+                        <div class="mt-5 space-y-4">
+                            <div class="flex gap-3">
+                                <span class="mt-0.5 flex h-6 w-6 items-center justify-center rounded-full bg-blue-50 text-xs font-extrabold text-blue-600">1</span>
+                                <p class="text-sm leading-6 text-slate-600">Mã lớp nên ngắn, dễ nhận diện và không trùng với lớp đã có.</p>
+                            </div>
+                            <div class="flex gap-3">
+                                <span class="mt-0.5 flex h-6 w-6 items-center justify-center rounded-full bg-blue-50 text-xs font-extrabold text-blue-600">2</span>
+                                <p class="text-sm leading-6 text-slate-600">Số buổi và số tiết sẽ được dùng khi tạo buổi điểm danh sau này.</p>
+                            </div>
+                            <div class="flex gap-3">
+                                <span class="mt-0.5 flex h-6 w-6 items-center justify-center rounded-full bg-blue-50 text-xs font-extrabold text-blue-600">3</span>
+                                <p class="text-sm leading-6 text-slate-600">Bật duyệt tham gia nếu lớp cần kiểm soát danh sách sinh viên trước.</p>
+                            </div>
+                        </div>
+                    </section>
+                </div>
+            </aside>
+        </form>
+    </div>
 </div>
