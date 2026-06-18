@@ -21,15 +21,15 @@ class AttendanceDataModelTest extends TestCase
         $student = User::query()->where('email', 'student1@example.com')->firstOrFail();
         $courseClass = CourseClass::query()->where('code', 'WEB-2026-01')->firstOrFail();
 
-        $this->assertCount(2, $teacher->ownedClasses);
-        $this->assertCount(12, $courseClass->members);
-        $this->assertCount(12, $courseClass->users);
-        $this->assertCount(3, $courseClass->sessions);
+        $this->assertCount(3, $teacher->ownedClasses);
+        $this->assertCount(11, $courseClass->members);
+        $this->assertCount(11, $courseClass->users);
+        $this->assertCount(4, $courseClass->sessions);
         $this->assertCount(12, $courseClass->attendanceSummaries);
         $this->assertTrue($student->joinedClasses->contains($courseClass));
         $this->assertSame($teacher->id, $courseClass->owner->id);
         $this->assertSame(12, $courseClass->sessions->first()->attendanceRecords()->count());
-        $this->assertDatabaseCount('attendance_records', 36);
+        $this->assertDatabaseCount('attendance_records', 48);
         $this->assertDatabaseCount('attendance_summaries', 12);
         $this->assertDatabaseHas('attendance_records', [
             'status' => 'excused',
@@ -38,7 +38,7 @@ class AttendanceDataModelTest extends TestCase
 
         $courseClass->members->first()->delete();
 
-        $this->assertCount(11, $courseClass->users()->get());
+        $this->assertCount(10, $courseClass->users()->get());
     }
 
     public function test_seeded_billing_notifications_and_audit_data_are_accessible(): void
@@ -52,6 +52,6 @@ class AttendanceDataModelTest extends TestCase
         $this->assertCount(1, $teacher->notifications);
         $this->assertGreaterThan(0, $teacher->auditLogs()->count());
         $this->assertSame(2, Plan::query()->count());
-        $this->assertSame(36, AttendanceRecord::query()->count());
+        $this->assertSame(48, AttendanceRecord::query()->count());
     }
 }

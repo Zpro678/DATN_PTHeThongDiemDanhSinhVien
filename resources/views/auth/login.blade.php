@@ -2,6 +2,13 @@
     <!-- Session Status -->
     <x-auth-session-status class="mb-4" :status="session('status')" />
 
+    <div class="mb-5 rounded-lg border border-indigo-100 bg-indigo-50 p-4 text-sm text-indigo-900">
+        <p class="font-semibold">Tài khoản test</p>
+        <p class="mt-1">Chủ lớp: <span class="font-mono">teacher@example.com</span> / <span class="font-mono">password</span></p>
+        <p>Admin: <span class="font-mono">admin@example.com</span> / <span class="font-mono">password</span></p>
+        <p>Sinh viên: <span class="font-mono">student1@example.com</span> / <span class="font-mono">password</span></p>
+    </div>
+
     <form method="POST" action="{{ route('login') }}">
         @csrf
 

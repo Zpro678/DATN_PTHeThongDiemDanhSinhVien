@@ -7,7 +7,7 @@ services:
       - "3306:3306"
     environment:
       MYSQL_ROOT_PASSWORD: root
-      MYSQL_DATABASE: db_quan_ly_diem_danh
+      MYSQL_DATABASE: db_quan_ly_diem_danh_v2
     volumes:
       - mysql_model_data:/var/lib/mysql
     healthcheck:

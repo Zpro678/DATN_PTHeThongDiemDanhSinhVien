@@ -10,13 +10,13 @@
 
     $adminActions = [
         ['label' => 'Tạo lớp học', 'icon' => 'plus-circle', 'color' => 'text-primary', 'href' => route('create-class')],
-        ['label' => 'Quản lý SV', 'icon' => 'users', 'color' => 'text-tertiary', 'href' => '#'],
+        ['label' => 'Quản lý SV', 'icon' => 'users', 'color' => 'text-tertiary', 'href' => route('lecturer.students.index')],
         ['label' => 'Import SV', 'icon' => 'upload', 'color' => 'text-secondary', 'href' => '#'],
-        ['label' => 'Tạo buổi DD', 'icon' => 'calendar-plus', 'color' => 'text-primary', 'href' => '#'],
-        ['label' => 'Điểm danh tay', 'icon' => 'edit', 'color' => 'text-secondary', 'href' => '#'],
-        ['label' => 'Tạo QR DD', 'icon' => 'qr-code', 'color' => 'text-tertiary', 'href' => '#'],
+        ['label' => 'Tạo buổi DD', 'icon' => 'calendar-plus', 'color' => 'text-primary', 'href' => route('lecturer.attendance.create')],
+        ['label' => 'Điểm danh thủ công', 'icon' => 'edit', 'color' => 'text-secondary', 'href' => route('lecturer.attendance.manual.create')],
+        ['label' => 'Điểm danh QR', 'icon' => 'qr-code', 'color' => 'text-tertiary', 'href' => route('lecturer.attendance.qr.create')],
         ['label' => 'DD Realtime', 'icon' => 'activity', 'color' => 'text-primary', 'href' => '#'],
-        ['label' => 'Đơn xin nghỉ', 'icon' => 'file-text', 'color' => 'text-error', 'href' => '#'],
+        ['label' => 'Đơn xin nghỉ', 'icon' => 'file-text', 'color' => 'text-error', 'href' => route('lecturer.leave-requests.index')],
         ['label' => 'Thống kê', 'icon' => 'check-circle', 'color' => 'text-secondary', 'href' => '#'],
         ['label' => 'Xuất báo cáo', 'icon' => 'upload', 'color' => 'text-tertiary', 'href' => '#'],
         ['label' => 'Cài đặt lớp', 'icon' => 'settings', 'color' => 'text-on-surface-variant', 'href' => '#'],
@@ -105,10 +105,10 @@
                     </button>
                 </div>
                 <div class="flex flex-wrap gap-6 border-t border-outline-variant/20 pt-6">
-                    <button type="button" wire:click="openCreateModal" class="flex items-center gap-2 text-sm font-bold text-primary underline-offset-4 hover:underline">
+                    <a href="{{ route('create-class') }}" class="flex items-center gap-2 text-sm font-bold text-primary underline-offset-4 hover:underline">
                         <x-user.icon name="plus" :size="18" />
                         Tạo lớp mới
-                    </button>
+                    </a>
                     <button type="button" wire:click="openJoinModal" class="flex items-center gap-2 text-sm font-bold text-on-surface-variant transition-colors hover:text-primary">
                         <x-user.icon name="key" :size="18" />
                         Tham gia lớp bằng mã
@@ -495,9 +495,9 @@
                 </div>
                 <div class="sticky bottom-0 flex justify-end gap-3 border-t border-outline-variant/20 bg-surface-container-lowest p-6">
                     <button type="button" wire:click="closeCreateModal" class="rounded-xl px-6 py-2.5 text-sm font-bold text-on-surface-variant transition-colors hover:bg-surface-container">Hủy</button>
-                    <button type="button" wire:click="closeCreateModal" class="rounded-xl bg-primary px-6 py-2.5 text-sm font-bold text-white shadow-md shadow-primary/20 transition-colors hover:bg-primary-container">
+                    <a href="{{ route('create-class') }}" class="rounded-xl bg-primary px-6 py-2.5 text-sm font-bold text-white shadow-md shadow-primary/20 transition-colors hover:bg-primary-container">
                         Tạo lớp học
-                    </button>
+                    </a>
                 </div>
             </div>
         </div>

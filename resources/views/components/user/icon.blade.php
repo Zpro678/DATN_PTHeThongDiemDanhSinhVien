@@ -28,6 +28,11 @@
             <path d="M12 17h.01" />
             @break
 
+        @case('arrow-right')
+            <path d="M5 12h14" />
+            <path d="m12 5 7 7-7 7" />
+            @break
+
         @case('bar-chart')
             <path d="M3 3v18h18" />
             <path d="M7 16V8" />
@@ -67,6 +72,13 @@
             @endif
             @break
 
+        @case('calendar')
+            <path d="M8 2v4" />
+            <path d="M16 2v4" />
+            <rect width="18" height="18" x="3" y="4" rx="2" />
+            <path d="M3 10h18" />
+            @break
+
         @case('check-circle')
         @case('check-circle-2')
             <circle cx="12" cy="12" r="10" />
@@ -82,9 +94,19 @@
             <path d="m6 9 6 6 6-6" />
             @break
 
+        @case('chevron-right')
+            <path d="m9 18 6-6-6-6" />
+            @break
+
         @case('clock')
             <circle cx="12" cy="12" r="10" />
             <path d="M12 6v6l4 2" />
+            @break
+
+        @case('clipboard-check')
+            <rect width="8" height="4" x="8" y="2" rx="1" />
+            <path d="M16 4h2a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h2" />
+            <path d="m9 14 2 2 4-4" />
             @break
 
         @case('code')
@@ -96,6 +118,12 @@
             <ellipse cx="12" cy="5" rx="9" ry="3" />
             <path d="M3 5v14c0 1.7 4 3 9 3s9-1.3 9-3V5" />
             <path d="M3 12c0 1.7 4 3 9 3s9-1.3 9-3" />
+            @break
+
+        @case('download')
+            <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" />
+            <path d="M7 10l5 5 5-5" />
+            <path d="M12 15V3" />
             @break
 
         @case('edit')
@@ -162,10 +190,22 @@
             <rect width="7" height="5" x="3" y="16" rx="1" />
             @break
 
+        @case('laptop')
+            <rect width="14" height="10" x="5" y="4" rx="2" />
+            <path d="M2 20h20" />
+            <path d="m6 14-2 6" />
+            <path d="m18 14 2 6" />
+            @break
+
         @case('log-in')
             <path d="M15 3h4a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2h-4" />
             <path d="m10 17 5-5-5-5" />
             <path d="M15 12H3" />
+            @break
+
+        @case('lock')
+            <rect width="18" height="11" x="3" y="11" rx="2" />
+            <path d="M7 11V7a5 5 0 0 1 10 0v4" />
             @break
 
         @case('log-out')
@@ -183,6 +223,12 @@
             <circle cx="12" cy="5" r="1" />
             <circle cx="12" cy="12" r="1" />
             <circle cx="12" cy="19" r="1" />
+            @break
+
+        @case('more-horizontal')
+            <circle cx="5" cy="12" r="1" />
+            <circle cx="12" cy="12" r="1" />
+            <circle cx="19" cy="12" r="1" />
             @break
 
         @case('package')
@@ -250,6 +296,19 @@
             <path d="M12 16h.01" />
             @break
 
+        @case('shield-check')
+            <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10Z" />
+            <path d="m9 12 2 2 4-4" />
+            @break
+
+        @case('sparkles')
+            <path d="m12 3-1.9 5.8L4 11l6.1 2.2L12 19l1.9-5.8L20 11l-6.1-2.2Z" />
+            <path d="M5 3v4" />
+            <path d="M3 5h4" />
+            <path d="M19 17v4" />
+            <path d="M17 19h4" />
+            @break
+
         @case('upload')
             <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" />
             <path d="m17 8-5-5-5 5" />
@@ -283,6 +342,12 @@
         @case('x')
             <path d="M18 6 6 18" />
             <path d="m6 6 12 12" />
+            @break
+
+        @case('x-circle')
+            <circle cx="12" cy="12" r="10" />
+            <path d="m15 9-6 6" />
+            <path d="m9 9 6 6" />
             @break
 
         @case('zap')

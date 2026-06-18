@@ -44,10 +44,24 @@ if errorlevel 1 (
     )
 )
 
+docker exec attendance_mysql mysql -uroot -proot -e "CREATE DATABASE IF NOT EXISTS db_quan_ly_diem_danh_v2 CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;"
+if errorlevel 1 (
+    echo Could not ensure the MySQL database exists.
+    pause
+    exit /b 1
+)
+
 php artisan migrate --force --no-interaction
 if errorlevel 1 (
     echo Database migration failed.
     echo Run php artisan migrate:fresh --seed only when old data may be deleted.
+    pause
+    exit /b 1
+)
+
+php artisan db:seed --force --no-interaction
+if errorlevel 1 (
+    echo Demo data seeding failed.
     pause
     exit /b 1
 )
@@ -71,8 +85,9 @@ echo ==================================
 echo ALL SERVICES STARTED
 echo ==================================
 echo phpMyAdmin: http://localhost:8080
-echo Database:   db_quan_ly_diem_danh
+echo Database:   db_quan_ly_diem_danh_v2
 echo Username:   root
 echo Password:   root
+echo Demo login: teacher@example.com / password
 
 pause

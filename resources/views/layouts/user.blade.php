@@ -7,6 +7,9 @@
     $navItems = [
         ['label' => 'Tổng quan', 'icon' => 'layout-dashboard', 'route' => 'dashboard'],
         ['label' => 'Lớp tôi quản lý', 'icon' => 'book-open', 'route' => 'managed-classes'],
+        ['label' => 'Điểm danh', 'icon' => 'calendar-check', 'route' => 'lecturer.attendance.index', 'active' => 'lecturer.attendance.*'],
+        ['label' => 'Quản lý sinh viên', 'icon' => 'users', 'route' => 'lecturer.students.index', 'active' => 'lecturer.students.*'],
+        ['label' => 'Đơn xin nghỉ', 'icon' => 'file-text', 'route' => 'lecturer.leave-requests.index', 'active' => 'lecturer.leave-requests.*'],
         ['label' => 'Lớp tôi tham gia', 'icon' => 'log-in', 'route' => 'joined-classes'],
         ['label' => 'Không gian Chủ lớp', 'icon' => 'shield', 'href' => route('dashboard').'#admin', 'active' => 'dashboard'],
         ['label' => 'Không gian Học viên', 'icon' => 'user', 'href' => route('dashboard').'#student', 'active' => 'dashboard'],
@@ -206,7 +209,7 @@
                         <x-user.icon name="send" :size="16" class="text-secondary" />
                         Gửi đơn xin nghỉ
                     </a>
-                    <a href="{{ route('managed-classes') }}" class="flex w-full items-center justify-center gap-2 rounded-full bg-white px-4 py-2 text-sm font-bold text-on-surface shadow-md transition-colors hover:bg-surface-container">
+                    <a href="{{ route('lecturer.attendance.create') }}" class="flex w-full items-center justify-center gap-2 rounded-full bg-white px-4 py-2 text-sm font-bold text-on-surface shadow-md transition-colors hover:bg-surface-container">
                         <x-user.icon name="check-square" :size="16" class="text-tertiary" />
                         Tạo điểm danh
                     </a>

@@ -196,13 +196,13 @@
                                 ['label' => 'Quản lý SV', 'icon' => 'users'],
                                 ['label' => 'Thống kê', 'icon' => 'bar-chart'],
                             ] as $action)
-                                <button type="button" @class([
+                                <a href="{{ match ($action['label']) { 'Điểm danh QR' => route('lecturer.attendance.qr.create'), 'Thủ công' => route('lecturer.attendance.manual.create'), 'Quản lý SV' => route('lecturer.students.index'), default => '#' } }}" @class([
                                     'flex h-full flex-col items-center justify-start rounded-xl p-2 text-on-surface-variant transition-colors hover:bg-primary-container hover:text-on-primary-container sm:p-3',
                                     'cursor-not-allowed opacity-50 hover:bg-surface-container-high hover:text-on-surface-variant' => $class['ended'] && in_array($action['icon'], ['qr-code', 'check-square'], true),
                                 ])>
                                     <x-user.icon :name="$action['icon']" class="mb-2 transition-transform group-hover:scale-110" />
                                     <span class="text-center text-[10px] font-bold leading-[1.15] sm:text-xs">{{ $action['label'] }}</span>
-                                </button>
+                                </a>
                             @endforeach
                         </div>
                     </div>

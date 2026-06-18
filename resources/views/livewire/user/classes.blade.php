@@ -9,9 +9,9 @@
     $actions = [
         ['label' => 'Tạo lớp học mới', 'icon' => 'plus-circle', 'href' => route('create-class')],
         ['label' => 'Import sinh viên', 'icon' => 'upload', 'href' => '#'],
-        ['label' => 'Tạo buổi điểm danh', 'icon' => 'calendar-plus', 'href' => '#'],
-        ['label' => 'Điểm danh thủ công', 'icon' => 'edit', 'href' => '#'],
-        ['label' => 'Tạo QR điểm danh', 'icon' => 'qr-code', 'href' => '#'],
+        ['label' => 'Tạo buổi điểm danh', 'icon' => 'calendar-plus', 'href' => route('lecturer.attendance.create')],
+        ['label' => 'Điểm danh thủ công', 'icon' => 'edit', 'href' => route('lecturer.attendance.manual.create')],
+        ['label' => 'Tạo QR điểm danh', 'icon' => 'qr-code', 'href' => route('lecturer.attendance.qr.create')],
         ['label' => 'Xuất báo cáo', 'icon' => 'file-text', 'href' => '#'],
     ];
 
