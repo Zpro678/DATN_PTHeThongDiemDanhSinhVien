@@ -30,13 +30,12 @@ Route::get('/', function () {
 });
 
 
-Route::middleware(['auth', 'verified', 'user.route'])->prefix('user/{ma_user}')->group(function () {
+Route::middleware(['auth', 'verified', 'user.route'])->group(function () {
     $ensureAdmin = function (): void {
         abort_unless(auth()->user()?->is_admin, 403);
     };
 
-    Route::get('/dashboard', UserDashboard::class)->name('dashboard');
-    Route::prefix('admin')->name('admin.')->group(function () use ($ensureAdmin) {
+    Route::prefix('admin/{ma_user}')->name('admin.')->group(function () use ($ensureAdmin) {
         Route::get('/', function () use ($ensureAdmin) {
             $ensureAdmin();
 
@@ -185,7 +184,10 @@ Route::middleware(['auth', 'verified', 'user.route'])->prefix('user/{ma_user}')-
             return view('admin.settings.index', compact('system'));
         })->name('settings.index');
     });
-    Route::get('/classes', UserClasses::class)->name('classes');
+
+    Route::prefix('user/{ma_user}')->group(function () {
+        Route::get('/dashboard', UserDashboard::class)->name('dashboard');
+        Route::get('/classes', UserClasses::class)->name('classes');
     Route::get('/managed-classes', ManagedClasses::class)->name('managed-classes');
     Route::get('/joined-classes', JoinedClasses::class)->name('joined-classes');
     Route::get('/managed-classes/create-class', CreateClass::class)->name('create-class');
@@ -225,6 +227,7 @@ Route::middleware(['auth', 'verified', 'user.route'])->prefix('user/{ma_user}')-
     Route::get('/lecturer/students/{member}', StudentShow::class)
         ->whereNumber('member')
         ->name('lecturer.students.show');
+    });
 });
 
 Route::middleware('auth')->group(function () {
