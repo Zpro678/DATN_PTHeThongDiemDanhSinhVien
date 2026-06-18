@@ -6,12 +6,14 @@ use App\Models\AttendanceRecord;
 use App\Models\ClassMember;
 use Illuminate\Contracts\View\View;
 use Illuminate\Database\Eloquent\Collection;
+use Livewire\Attributes\Url;
 use Livewire\Component;
 
 class AttendanceHistory extends Component
 {
     public string $statusFilter = 'all';
 
+    #[Url]
     public string $classFilter = 'all';
 
     public string $search = '';

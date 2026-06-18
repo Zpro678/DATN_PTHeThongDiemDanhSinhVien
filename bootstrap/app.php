@@ -11,7 +11,12 @@ return Application::configure(basePath: dirname(__DIR__))
         health: '/up',
     )
     ->withMiddleware(function (Middleware $middleware) {
-        //
+        $middleware->alias([
+            'user.route' => \App\Http\Middleware\SetUserRouteDefaults::class,
+        ]);
+        $middleware->web(append: [
+            \App\Http\Middleware\SetUserRouteDefaults::class,
+        ]);
     })
     ->withExceptions(function (Exceptions $exceptions) {
         //

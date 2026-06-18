@@ -15,13 +15,6 @@ class Dashboard extends Component
 
     public string $joinStep = 'input';
 
-    public function mount(): void
-    {
-        if (auth()->user()?->is_admin) {
-            $this->redirectRoute('admin.dashboard', navigate: true);
-        }
-    }
-
     public function setWorkspace(string $workspace): void
     {
         if (in_array($workspace, ['admin', 'student'], true)) {

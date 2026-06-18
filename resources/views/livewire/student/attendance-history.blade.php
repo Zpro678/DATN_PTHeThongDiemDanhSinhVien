@@ -1,192 +1,212 @@
 @php
     $statusMeta = [
-        'present' => ['label' => 'Có mặt', 'badge' => 'bg-emerald-50 text-emerald-700 border-emerald-100', 'dot' => 'bg-emerald-500'],
-        'late' => ['label' => 'Muộn', 'badge' => 'bg-amber-50 text-amber-700 border-amber-100', 'dot' => 'bg-amber-500'],
-        'excused' => ['label' => 'Có phép', 'badge' => 'bg-blue-50 text-blue-700 border-blue-100', 'dot' => 'bg-blue-500'],
-        'absent' => ['label' => 'Vắng', 'badge' => 'bg-rose-50 text-rose-700 border-rose-100', 'dot' => 'bg-rose-500'],
-        'pending' => ['label' => 'Chưa ĐD', 'badge' => 'bg-slate-100 text-slate-600 border-slate-200', 'dot' => 'bg-slate-400'],
+        'present' => ['label' => 'Có mặt', 'badge' => 'bg-emerald-50 text-emerald-700 border-emerald-200/60', 'dot' => 'bg-emerald-500'],
+        'late' => ['label' => 'Muộn', 'badge' => 'bg-amber-50 text-amber-700 border-amber-200/60', 'dot' => 'bg-amber-500'],
+        'excused' => ['label' => 'Có phép', 'badge' => 'bg-blue-50 text-blue-700 border-blue-200/60', 'dot' => 'bg-blue-500'],
+        'absent' => ['label' => 'Vắng', 'badge' => 'bg-rose-50 text-rose-700 border-rose-200/60', 'dot' => 'bg-rose-500'],
+        'pending' => ['label' => 'Chưa ĐD', 'badge' => 'bg-surface-container border-outline-variant/30 text-on-surface-variant', 'dot' => 'bg-outline'],
     ];
 @endphp
 
-<div class="min-h-full bg-slate-50/60 px-4 py-6 pb-24 sm:px-6 xl:px-8">
-    <div class="w-full max-w-none space-y-6">
-        <section class="overflow-hidden rounded-[2rem] border border-blue-100 bg-white shadow-sm">
-            <div class="grid gap-6 bg-gradient-to-br from-blue-600 via-indigo-600 to-slate-900 p-6 text-white lg:grid-cols-[1fr_auto] lg:items-end lg:p-8">
-                <div>
-                    <div class="mb-4 inline-flex items-center gap-2 rounded-full border border-white/15 bg-white/10 px-3 py-1 text-xs font-extrabold uppercase tracking-[0.2em] text-blue-100">
-                        <x-user.icon name="history" :size="16" />
-                        Không gian học viên
-                    </div>
-                    <h1 class="text-3xl font-black tracking-tight sm:text-4xl">Lịch sử điểm danh</h1>
-                    <p class="mt-3 max-w-3xl text-sm font-medium leading-6 text-blue-100">Theo dõi nhật ký điểm danh, hình thức xác thực và trạng thái từng buổi học giống giao diện học viên của `develop_v1`.</p>
+<div class="mx-auto max-w-[1400px] space-y-6 p-4 pb-24 sm:p-8 animate-in fade-in slide-in-from-bottom-4 duration-500">
+    <!-- Header & Stats Card -->
+    <section class="overflow-hidden rounded-[2.5rem] border border-outline-variant/10 bg-white shadow-sm">
+        <!-- Top Header -->
+        <div class="flex flex-col justify-between gap-3 border-b border-outline-variant/10 p-4 md:flex-row md:items-center">
+            <div>
+                <div class="mb-2 inline-flex items-center gap-1.5 rounded-full border border-primary/20 bg-primary/10 px-3 py-1 text-[11px] font-bold uppercase tracking-widest text-primary">
+                    <x-user.icon name="history" :size="14" />
+                    Lịch sử
                 </div>
+                <h1 class="text-2xl font-extrabold uppercase tracking-tight text-slate-900">Nhật ký điểm danh</h1>
+            </div>
 
-                <div class="grid grid-cols-3 gap-3 rounded-3xl border border-white/15 bg-white/10 p-3 backdrop-blur sm:min-w-[420px]">
-                    <div class="rounded-2xl bg-white/10 p-4 text-center">
-                        <p class="text-[10px] font-bold uppercase tracking-widest text-blue-100">Đã ghi nhận</p>
-                        <p class="mt-2 text-2xl font-black">{{ $summary['total'] }}</p>
-                    </div>
-                    <div class="rounded-2xl bg-white/10 p-4 text-center">
-                        <p class="text-[10px] font-bold uppercase tracking-widest text-blue-100">Có mặt</p>
-                        <p class="mt-2 text-2xl font-black">{{ $summary['present'] + $summary['late'] + $summary['excused'] }}</p>
-                    </div>
-                    <div class="rounded-2xl bg-white/10 p-4 text-center">
-                        <p class="text-[10px] font-bold uppercase tracking-widest text-blue-100">Vắng</p>
-                        <p class="mt-2 text-2xl font-black">{{ $summary['absent'] }}</p>
-                    </div>
+            <div class="flex gap-2 sm:gap-3 overflow-x-auto pb-2 md:pb-0 hide-scrollbar">
+                <div class="flex flex-col items-center justify-center rounded-2xl border border-outline-variant/20 bg-surface-container-lowest px-3 py-2 min-w-[90px] shrink-0">
+                    <span class="text-[11px] font-bold uppercase tracking-wider text-on-surface-variant">Tổng buổi</span>
+                    <span class="text-2xl font-black text-primary">{{ $summary['total'] }}</span>
+                </div>
+                <div class="flex flex-col items-center justify-center rounded-2xl border border-emerald-100 bg-emerald-50 px-3 py-2 min-w-[90px] shrink-0">
+                    <span class="text-[11px] font-bold uppercase tracking-wider text-emerald-700">Có mặt</span>
+                    <span class="text-2xl font-black text-emerald-600">{{ $summary['present'] + $summary['late'] + $summary['excused'] }}</span>
+                </div>
+                <div class="flex flex-col items-center justify-center rounded-2xl border border-rose-100 bg-rose-50 px-3 py-2 min-w-[90px] shrink-0">
+                    <span class="text-[11px] font-bold uppercase tracking-wider text-rose-700">Vắng</span>
+                    <span class="text-2xl font-black text-rose-600">{{ $summary['absent'] }}</span>
+                </div>
+            </div>
+        </div>
+
+        <!-- Bottom Stats & Reminders -->
+        <div class="grid grid-cols-1 lg:grid-cols-2 items-stretch">
+            <!-- Xác thực hệ thống -->
+            <div class="flex flex-col p-4">
+                <h3 class="flex items-center gap-2 text-base font-bold text-on-surface">
+                    <span class="flex h-8 w-8 items-center justify-center rounded-full bg-emerald-50 text-emerald-600">
+                        <x-user.icon name="shield-check" :size="18" />
+                    </span>
+                    Xác thực hệ thống
+                </h3>
+                <div class="mt-3 flex flex-1 flex-col justify-center space-y-2">
+                    @foreach ([
+                        ['label' => 'QR/GPS hợp lệ', 'value' => $records->where('verified', true)->count(), 'color' => 'text-emerald-700 bg-emerald-50 border-emerald-100'],
+                        ['label' => 'Cần kiểm tra', 'value' => $records->where('verified', false)->count(), 'color' => 'text-amber-700 bg-amber-50 border-amber-100'],
+                        ['label' => 'Vắng không phép', 'value' => $summary['absent'], 'color' => 'text-rose-700 bg-rose-50 border-rose-100'],
+                    ] as $item)
+                        <div class="flex items-center justify-between rounded-2xl border border-outline-variant/20 bg-surface-container-lowest px-3 py-2 transition-colors hover:bg-surface-container-low">
+                            <span class="text-[15px] font-bold text-on-surface-variant">{{ $item['label'] }}</span>
+                            <span class="rounded-xl border px-3 py-1 text-[15px] font-black {{ $item['color'] }}">{{ $item['value'] }}</span>
+                        </div>
+                    @endforeach
                 </div>
             </div>
 
-            @if ($isDemo)
-                <div class="border-t border-amber-200 bg-amber-50 px-6 py-3 text-sm font-semibold text-amber-800">
-                    Đang hiển thị dữ liệu mẫu để bạn có thể test giao diện khi tài khoản chưa được gắn lớp học.
+            <!-- Nhắc nhở -->
+            <div class="flex flex-col border-t border-amber-200/60 bg-gradient-to-br from-amber-50 to-amber-100/50 p-4 relative overflow-hidden lg:border-l lg:border-t-0">
+                <div class="absolute -right-2 -top-2 text-amber-200 opacity-50 rotate-12 pointer-events-none">
+                    <x-user.icon name="bell" :size="80" />
                 </div>
-            @endif
-        </section>
-
-        <section class="rounded-[2rem] border border-slate-200 bg-white p-5 shadow-sm">
-            <div class="mb-4 flex items-center gap-2 border-b border-slate-100 pb-4">
-                <span class="rounded-xl bg-blue-50 p-2 text-blue-600">
-                    <x-user.icon name="filter" :size="18" />
-                </span>
-                <div>
-                    <h2 class="text-base font-black text-slate-950">Bộ lọc tìm kiếm chuyên cần</h2>
-                    <p class="text-xs font-medium text-slate-500">Lọc theo lớp, trạng thái hoặc từ khóa môn học.</p>
+                <div class="relative z-10 flex h-full flex-col justify-center">
+                    <h3 class="flex items-center gap-2 text-base font-bold text-amber-900">
+                        <x-user.icon name="alert-circle" :size="20" class="text-amber-600" />
+                        Nhắc nhở chuyên cần
+                    </h3>
+                    <p class="mt-2 text-[15px] font-medium leading-relaxed text-amber-800/90">
+                        Nếu có buổi vắng, hãy gửi đơn xin nghỉ kèm minh chứng sớm để giảng viên duyệt trước khi chốt điểm danh.
+                    </p>
+                    <div class="mt-4">
+                        <a href="{{ route('student.leave-requests.create') }}" class="inline-flex items-center gap-2 rounded-2xl bg-amber-500 px-4 py-2 text-[13px] font-bold text-white shadow-sm transition hover:bg-amber-600 active:scale-95 w-fit">
+                            <x-user.icon name="plus" :size="16" />
+                            Tạo đơn
+                        </a>
+                    </div>
                 </div>
             </div>
+        </div>
+    </section>
 
-            <div class="grid grid-cols-1 gap-4 lg:grid-cols-12">
-                <label class="space-y-1.5 lg:col-span-4">
-                    <span class="block text-[11px] font-black uppercase tracking-wider text-slate-500">Theo lớp học</span>
-                    <select wire:model.live="classFilter" class="w-full rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3 text-sm font-bold text-slate-700 outline-none transition focus:border-blue-500 focus:bg-white focus:ring-4 focus:ring-blue-500/10">
+    <!-- Main Content: Table + Filters in one Card -->
+    <section class="overflow-hidden rounded-[2rem] border border-outline-variant/10 bg-white shadow-sm w-full">
+        <!-- Table Header -->
+        <div class="flex items-center justify-between border-b border-outline-variant/10 p-5 sm:px-8 sm:py-5 bg-surface-container-lowest/30">
+            <div>
+                <h2 class="text-2xl font-bold text-on-surface">Bảng lịch sử điểm danh ({{ $records->count() }})</h2>
+            </div>
+            <a href="{{ route('student.attendance.stats') }}" class="hidden items-center gap-2 rounded-xl bg-primary/10 px-5 py-2.5 text-sm font-bold text-primary transition hover:bg-primary/20 sm:inline-flex">
+                <x-user.icon name="bar-chart" :size="18" />
+                Xem thống kê
+            </a>
+        </div>
+
+        <!-- Filters (Below Header) -->
+        <div class="p-4 sm:px-8 sm:py-5 border-b border-outline-variant/10 bg-surface-container-lowest/10">
+            <div class="grid grid-cols-1 gap-4 lg:grid-cols-12 items-center">
+                <div class="lg:col-span-4">
+                    <select wire:model.live="classFilter" class="w-full rounded-xl border border-outline-variant/30 bg-surface-container-lowest px-3 py-2.5 text-[15px] font-medium text-on-surface-variant shadow-sm outline-none transition focus:border-primary focus:ring-2 focus:ring-primary/20">
                         <option value="all">Tất cả lớp học</option>
                         @foreach ($classes as $class)
                             <option value="{{ $class->id }}">{{ $class->code }} - {{ $class->name }}</option>
                         @endforeach
                     </select>
-                </label>
+                </div>
 
-                <label class="space-y-1.5 lg:col-span-3">
-                    <span class="block text-[11px] font-black uppercase tracking-wider text-slate-500">Theo trạng thái</span>
-                    <select wire:model.live="statusFilter" class="w-full rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3 text-sm font-bold text-slate-700 outline-none transition focus:border-blue-500 focus:bg-white focus:ring-4 focus:ring-blue-500/10">
+                <div class="lg:col-span-3">
+                    <select wire:model.live="statusFilter" class="w-full rounded-xl border border-outline-variant/30 bg-surface-container-lowest px-3 py-2.5 text-[15px] font-medium text-on-surface-variant shadow-sm outline-none transition focus:border-primary focus:ring-2 focus:ring-primary/20">
                         <option value="all">Tất cả trạng thái</option>
                         @foreach ($statusMeta as $status => $meta)
                             <option value="{{ $status }}">{{ $meta['label'] }}</option>
                         @endforeach
                     </select>
-                </label>
+                </div>
 
-                <label class="space-y-1.5 lg:col-span-4">
-                    <span class="block text-[11px] font-black uppercase tracking-wider text-slate-500">Từ khóa</span>
+                <div class="lg:col-span-4">
                     <div class="relative">
-                        <x-user.icon name="search" :size="18" class="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400" />
-                        <input wire:model.live.debounce.300ms="search" type="text" placeholder="Tìm môn học, mã lớp..." class="w-full rounded-2xl border border-slate-200 bg-slate-50 py-3 pl-11 pr-4 text-sm font-bold text-slate-700 outline-none transition focus:border-blue-500 focus:bg-white focus:ring-4 focus:ring-blue-500/10">
+                        <x-user.icon name="search" :size="18" class="absolute left-3 top-1/2 -translate-y-1/2 text-outline" />
+                        <input wire:model.live.debounce.300ms="search" type="text" placeholder="Tìm môn học, mã lớp..." class="w-full rounded-xl border border-outline-variant/30 bg-surface-container-lowest py-2.5 pl-10 pr-3 text-[15px] font-medium text-on-surface-variant shadow-sm outline-none transition focus:border-primary focus:ring-2 focus:ring-primary/20">
                     </div>
-                </label>
+                </div>
 
-                <div class="flex items-end lg:col-span-1">
-                    <button type="button" wire:click="clearFilters" class="w-full rounded-2xl border border-slate-200 bg-white px-4 py-3 text-sm font-black text-slate-600 transition hover:bg-slate-50">Xóa</button>
+                <div class="lg:col-span-1">
+                    <button type="button" wire:click="clearFilters" class="w-full rounded-xl border border-outline-variant/30 bg-white px-3 py-2.5 text-[15px] font-medium text-on-surface-variant transition hover:bg-surface-container-low hover:text-on-surface shadow-sm">Bỏ lọc</button>
                 </div>
             </div>
-        </section>
+        </div>
 
-        <section class="grid grid-cols-1 gap-6 xl:grid-cols-12">
-            <div class="overflow-hidden rounded-[2rem] border border-slate-200 bg-white shadow-sm xl:col-span-8 2xl:col-span-9">
-                <div class="flex items-center justify-between border-b border-slate-100 p-5">
-                    <div>
-                        <h2 class="text-base font-black uppercase tracking-wide text-slate-950">Nhật ký điểm danh tích lũy</h2>
-                        <p class="mt-1 text-xs font-semibold text-slate-500">Hiển thị {{ $records->count() }} kết quả</p>
-                    </div>
-                    <a href="{{ route('student.attendance.stats') }}" class="hidden items-center gap-2 rounded-2xl bg-blue-50 px-4 py-2 text-sm font-black text-blue-700 transition hover:bg-blue-100 sm:inline-flex">
-                        <x-user.icon name="bar-chart" :size="16" />
-                        Xem thống kê
-                    </a>
-                </div>
-
-                <div class="overflow-x-auto">
-                    <table class="w-full min-w-[980px] border-collapse text-left">
-                        <thead class="bg-slate-50 text-[11px] font-black uppercase tracking-wider text-slate-500">
-                            <tr>
-                                <th class="px-5 py-4">Ngày</th>
-                                <th class="px-5 py-4">Môn học</th>
-                                <th class="px-5 py-4">Lớp</th>
-                                <th class="px-5 py-4">Trạng thái</th>
-                                <th class="px-5 py-4">Hình thức</th>
-                                <th class="px-5 py-4">Chi tiết</th>
-                            </tr>
-                        </thead>
-                        <tbody class="divide-y divide-slate-100 text-sm">
-                            @forelse ($records as $record)
-                                @php($meta = $statusMeta[$record['status']] ?? $statusMeta['pending'])
-                                <tr class="transition hover:bg-blue-50/40">
-                                    <td class="whitespace-nowrap px-5 py-4 font-mono font-black text-slate-900">
-                                        {{ $record['date']?->format('d/m/Y') ?? '--/--/----' }}
-                                    </td>
-                                    <td class="px-5 py-4">
-                                        <p class="font-black text-slate-950">{{ $record['class_name'] }}</p>
-                                        <p class="mt-1 text-xs font-semibold text-slate-400">{{ $record['session'] }} · {{ $record['semester'] ?? 'Chưa cập nhật' }}</p>
-                                    </td>
-                                    <td class="px-5 py-4">
-                                        <span class="rounded-xl bg-slate-100 px-3 py-1 text-xs font-black uppercase text-slate-700">{{ $record['class_code'] }}</span>
-                                    </td>
-                                    <td class="px-5 py-4">
-                                        <span class="inline-flex items-center gap-2 rounded-xl border px-3 py-1.5 text-xs font-black uppercase {{ $meta['badge'] }}">
-                                            <span class="h-2 w-2 rounded-full {{ $meta['dot'] }}"></span>
-                                            {{ $meta['label'] }}
+        <!-- History Table -->
+        <div class="overflow-x-auto">
+                <table class="w-full min-w-[980px] border-collapse text-left">
+                    <thead class="bg-surface-container-lowest text-base font-bold uppercase tracking-wider text-on-surface">
+                        <tr>
+                            <th class="pl-[44px] pr-8 py-5">Ngày</th>
+                            <th class="px-8 py-5">Môn học & Buổi</th>
+                            <th class="px-8 py-5">Lớp</th>
+                            <th class="px-8 py-5">Trạng thái</th>
+                            <th class="px-8 py-5">Hình thức</th>
+                            <th class="px-8 py-5">Chi tiết</th>
+                        </tr>
+                    </thead>
+                    <tbody class="divide-y divide-outline-variant/10 text-base">
+                        @forelse ($records as $record)
+                            @php($meta = $statusMeta[$record['status']] ?? $statusMeta['pending'])
+                            <tr class="transition-all duration-200 hover:bg-surface-container-lowest/80 hover:shadow-sm group">
+                                <td class="whitespace-nowrap pl-[44px] pr-8 py-5 font-medium text-[15px] text-on-surface">
+                                    {{ $record['date']?->format('d/m/Y') ?? '--/--/----' }}
+                                </td>
+                                <td class="px-8 py-5">
+                                    <p class="text-base font-bold text-on-surface group-hover:text-primary transition-colors">{{ $record['class_name'] }}</p>
+                                    <p class="mt-1.5 flex items-center gap-2 text-sm font-medium text-on-surface-variant">
+                                        <span class="rounded-md bg-surface-container px-2.5 py-0.5">{{ $record['session'] }}</span>
+                                        <span>{{ $record['semester'] ?? 'Chưa cập nhật' }}</span>
+                                    </p>
+                                </td>
+                                <td class="px-8 py-5">
+                                    <span class="rounded-xl border border-outline-variant/20 bg-surface-container-lowest px-3 py-1.5 text-[13px] font-bold tracking-wider text-on-surface-variant">
+                                        {{ $record['class_code'] }}
+                                    </span>
+                                </td>
+                                <td class="px-8 py-5">
+                                    <span class="inline-flex items-center gap-1.5 rounded-xl border px-3 py-1.5 text-[13px] font-bold uppercase tracking-wider {{ $meta['badge'] }}">
+                                        <span class="h-2 w-2 rounded-full {{ $meta['dot'] }}"></span>
+                                        {{ $meta['label'] }}
+                                    </span>
+                                </td>
+                                <td class="px-8 py-5">
+                                    <span class="inline-flex items-center gap-1.5 rounded-xl bg-surface-container px-3 py-1.5 text-[13px] font-bold text-on-surface-variant">
+                                        <x-user.icon :name="$record['method'] === 'QR + GPS' ? 'qr-code' : 'clipboard-check'" :size="16" />
+                                        {{ $record['method'] }}
+                                    </span>
+                                </td>
+                                <td class="px-8 py-5 text-on-surface-variant">
+                                    <div class="flex flex-col gap-1.5">
+                                        <span class="text-[14px] font-semibold">
+                                            <x-user.icon name="clock" :size="14" class="inline mr-1 text-outline" />
+                                            {{ $record['check_in_time'] ? $record['check_in_time']->format('H:i') : 'Chưa check-in' }}
                                         </span>
-                                    </td>
-                                    <td class="px-5 py-4">
-                                        <span class="inline-flex items-center gap-2 rounded-xl bg-slate-100 px-3 py-1.5 text-xs font-black text-slate-700">
-                                            <x-user.icon :name="$record['method'] === 'QR + GPS' ? 'qr-code' : 'clipboard-check'" :size="14" />
-                                            {{ $record['method'] }}
-                                        </span>
-                                    </td>
-                                    <td class="px-5 py-4 text-sm font-semibold text-slate-500">
-                                        {{ $record['check_in_time'] ? $record['check_in_time']->format('H:i') : 'Chưa check-in' }}
                                         @if ($record['distance'])
-                                            · {{ $record['distance'] }}m
+                                            <span class="text-xs font-bold text-primary/80">
+                                                <x-user.icon name="map-pin" :size="12" class="inline mr-1 text-primary/60" />
+                                                Khoảng cách: {{ $record['distance'] }}m
+                                            </span>
                                         @endif
-                                    </td>
-                                </tr>
-                            @empty
-                                <tr>
-                                    <td colspan="6" class="px-5 py-12 text-center text-sm font-bold text-slate-500">Chưa có lịch sử điểm danh phù hợp.</td>
-                                </tr>
-                            @endforelse
-                        </tbody>
-                    </table>
-                </div>
+                                    </div>
+                                </td>
+                            </tr>
+                        @empty
+                            <tr>
+                                <td colspan="6" class="px-8 py-20 text-center">
+                                    <div class="flex flex-col items-center justify-center text-on-surface-variant">
+                                        <div class="mb-5 rounded-full bg-surface-container p-5 text-outline">
+                                            <x-user.icon name="search-x" :size="40" />
+                                        </div>
+                                        <p class="text-lg font-bold text-on-surface">Không tìm thấy dữ liệu</p>
+                                        <p class="mt-2 text-base">Chưa có lịch sử điểm danh phù hợp với bộ lọc hiện tại.</p>
+                                    </div>
+                                </td>
+                            </tr>
+                        @endforelse
+                    </tbody>
+                </table>
             </div>
-
-            <aside class="space-y-6 xl:col-span-4 2xl:col-span-3">
-                <div class="rounded-[2rem] border border-slate-200 bg-white p-6 shadow-sm">
-                    <h3 class="flex items-center gap-2 text-base font-black text-slate-950">
-                        <x-user.icon name="shield-check" :size="19" class="text-emerald-600" />
-                        Trạng thái xác thực
-                    </h3>
-                    <div class="mt-5 space-y-3">
-                        @foreach ([
-                            ['label' => 'QR/GPS hợp lệ', 'value' => $records->where('verified', true)->count(), 'color' => 'text-emerald-600 bg-emerald-50'],
-                            ['label' => 'Cần kiểm tra', 'value' => $records->where('verified', false)->count(), 'color' => 'text-amber-600 bg-amber-50'],
-                            ['label' => 'Vắng không phép', 'value' => $summary['absent'], 'color' => 'text-rose-600 bg-rose-50'],
-                        ] as $item)
-                            <div class="flex items-center justify-between rounded-2xl border border-slate-100 p-4">
-                                <span class="text-sm font-bold text-slate-600">{{ $item['label'] }}</span>
-                                <span class="{{ $item['color'] }} rounded-xl px-3 py-1 text-sm font-black">{{ $item['value'] }}</span>
-                            </div>
-                        @endforeach
-                    </div>
-                </div>
-
-                <div class="rounded-[2rem] border border-amber-200 bg-amber-50 p-6 text-amber-900 shadow-sm">
-                    <h3 class="flex items-center gap-2 text-base font-black">
-                        <x-user.icon name="alert-triangle" :size="19" />
-                        Nhắc nhở chuyên cần
-                    </h3>
-                    <p class="mt-3 text-sm font-semibold leading-6">Nếu có buổi vắng, hãy gửi đơn xin nghỉ kèm minh chứng sớm để chủ lớp duyệt trước khi tổng kết điểm danh.</p>
-                    <a href="{{ route('lecturer.leave-requests.index') }}" class="mt-4 inline-flex rounded-2xl bg-amber-500 px-4 py-2 text-sm font-black text-white transition hover:bg-amber-600">Xem đơn xin nghỉ</a>
-                </div>
-            </aside>
-        </section>
-    </div>
+        </div>
+    </section>
 </div>

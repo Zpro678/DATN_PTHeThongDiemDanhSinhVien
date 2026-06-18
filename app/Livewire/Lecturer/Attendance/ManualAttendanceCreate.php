@@ -82,7 +82,7 @@ class ManualAttendanceCreate extends Component
             'is_verified' => $member->user_id !== null,
         ]));
 
-        $this->redirectRoute('lecturer.attendance.manual.session', ['session' => $session->id], navigate: true);
+        $this->redirectRoute('lecturer.attendance.manual.session', ['ma_user' => auth()->id(), 'session' => $session->id], navigate: true);
     }
 
     public function render(): View

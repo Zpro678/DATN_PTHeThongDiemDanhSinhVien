@@ -29,7 +29,8 @@ Route::get('/', function () {
     return view('welcome');
 });
 
-Route::middleware(['auth', 'verified'])->group(function () {
+
+Route::middleware(['auth', 'verified', 'user.route'])->prefix('user/{ma_user}')->group(function () {
     $ensureAdmin = function (): void {
         abort_unless(auth()->user()?->is_admin, 403);
     };
@@ -187,9 +188,17 @@ Route::middleware(['auth', 'verified'])->group(function () {
     Route::get('/classes', UserClasses::class)->name('classes');
     Route::get('/managed-classes', ManagedClasses::class)->name('managed-classes');
     Route::get('/joined-classes', JoinedClasses::class)->name('joined-classes');
-    Route::get('/create-class', CreateClass::class)->name('create-class');
+    Route::get('/managed-classes/create-class', CreateClass::class)->name('create-class');
     Route::get('/student/attendance/history', StudentAttendanceHistory::class)->name('student.attendance.history');
     Route::get('/student/attendance/stats', StudentAttendanceStats::class)->name('student.attendance.stats');
+    Route::get('/student/leave-requests/create', \App\Livewire\Student\LeaveRequestCreate::class)->name('student.leave-requests.create');
+    Route::get('/student/leave-requests/history', \App\Livewire\Student\LeaveRequestHistory::class)->name('student.leave-requests.history');
+    Route::get('/student/warnings', \App\Livewire\Student\Warnings::class)->name('student.warnings');
+    Route::get('/student/join-class', \App\Livewire\Student\JoinClass::class)->name('student.classes.join');
+    Route::get('/student/classes/{courseClass}', \App\Livewire\Student\ClassShow::class)->name('student.classes.show');
+    Route::get('/lecturer/classes/{courseClass}/settings', \App\Livewire\Lecturer\ClassSettings::class)->name('lecturer.classes.settings');
+    Route::get('/lecturer/classes/{courseClass}', \App\Livewire\Lecturer\ClassShow::class)->name('lecturer.classes.show');
+    Route::get('/lecturer/classes/{class_id}/statistics', \App\Livewire\Lecturer\ClassStatistics::class)->name('lecturer.class.statistics');
     Route::get('/lecturer/attendance', AttendanceIndex::class)->name('lecturer.attendance.index');
     Route::get('/lecturer/attendance/create', AttendanceCreate::class)->name('lecturer.attendance.create');
     Route::get('/lecturer/attendance/manual/create', ManualAttendanceCreate::class)->name('lecturer.attendance.manual.create');
@@ -219,9 +228,7 @@ Route::middleware(['auth', 'verified'])->group(function () {
 });
 
 Route::middleware('auth')->group(function () {
-    Route::get('/profile', [ProfileController::class, 'edit'])->name('profile.edit');
-    Route::patch('/profile', [ProfileController::class, 'update'])->name('profile.update');
-    Route::delete('/profile', [ProfileController::class, 'destroy'])->name('profile.destroy');
+    Route::get('/profile', \App\Livewire\Profile\EditProfile::class)->name('profile.edit');
 });
 
 require __DIR__.'/auth.php';

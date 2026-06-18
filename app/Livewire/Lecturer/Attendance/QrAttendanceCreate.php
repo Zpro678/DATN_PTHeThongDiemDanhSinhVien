@@ -96,7 +96,7 @@ class QrAttendanceCreate extends Component
             'is_verified' => $member->user_id !== null,
         ]));
 
-        $this->redirectRoute('lecturer.attendance.qr.session', ['session' => $session->id], navigate: true);
+        $this->redirectRoute('lecturer.attendance.qr.session', ['ma_user' => auth()->id(), 'session' => $session->id], navigate: true);
     }
 
     public function render(): View

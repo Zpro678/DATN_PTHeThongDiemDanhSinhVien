@@ -13,12 +13,6 @@
 <div class="mx-auto max-w-[1400px] p-4 pb-24 sm:p-8" x-data="{ modalOpen: false, confirmChecked: false }">
     <div class="mb-8 flex flex-col gap-4 md:flex-row md:items-end md:justify-between">
         <div>
-            <nav class="mb-3 flex items-center gap-2 text-sm font-medium text-slate-500">
-                <a href="{{ route('lecturer.attendance.index') }}" class="hover:text-slate-900">Điểm danh</a>
-                <x-user.icon name="chevron-right" :size="16" />
-                <span class="font-bold text-orange-500">Điểm danh thủ công</span>
-            </nav>
-
             <div class="mb-3 flex flex-wrap items-center gap-3">
                 <h1 class="text-3xl font-extrabold tracking-tight text-slate-900">Điểm danh thủ công</h1>
                 <span @class([
@@ -78,9 +72,9 @@
     <div class="mb-8 grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-5">
         @foreach ([
             ['key' => 'present', 'icon' => 'check-circle-2'],
+            ['key' => 'absent', 'icon' => 'x-circle'],
             ['key' => 'late', 'icon' => 'clock'],
             ['key' => 'excused', 'icon' => 'clipboard-check'],
-            ['key' => 'absent', 'icon' => 'x-circle'],
             ['key' => 'pending', 'icon' => 'more-horizontal'],
         ] as $card)
             <button
@@ -139,9 +133,9 @@
                         'all' => 'Tất cả',
                         'pending' => 'Chưa ĐD',
                         'present' => 'Có mặt',
+                        'absent' => 'Vắng KP',
                         'late' => 'Đi trễ',
                         'excused' => 'Vắng phép',
-                        'absent' => 'Vắng KP',
                     ] as $status => $label)
                         <button
                             type="button"
@@ -188,7 +182,7 @@
                             </td>
                             <td class="px-5 py-4">
                                 <div class="flex flex-wrap justify-center gap-3">
-                                    @foreach (['present', 'late', 'excused', 'absent'] as $option)
+                                    @foreach (['present', 'absent', 'late', 'excused'] as $option)
                                         <button
                                             type="button"
                                             wire:click="updateStatus({{ $record->id }}, '{{ $option }}')"
@@ -276,7 +270,7 @@
 
             <div class="space-y-6 p-6">
                 <div class="grid grid-cols-2 overflow-hidden rounded-xl border border-slate-200 sm:grid-cols-5">
-                    @foreach (['present', 'late', 'excused', 'absent', 'pending'] as $status)
+                    @foreach (['present', 'absent', 'late', 'excused', 'pending'] as $status)
                         <div class="border-b border-r border-slate-200 p-4 text-center last:border-r-0 sm:border-b-0">
                             <p class="mb-1 text-xs font-bold uppercase text-slate-500">{{ $statusMeta[$status]['label'] }}</p>
                             <p class="text-2xl font-extrabold text-slate-900">{{ $summary[$status] }}</p>

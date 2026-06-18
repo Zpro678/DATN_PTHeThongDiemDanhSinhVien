@@ -32,6 +32,18 @@ class LeaveRequest extends Model
         ];
     }
 
+    protected function proofImage(): \Illuminate\Database\Eloquent\Casts\Attribute
+    {
+        return \Illuminate\Database\Eloquent\Casts\Attribute::make(
+            get: function ($value) {
+                if (empty($value)) return [];
+                $decoded = json_decode($value, true);
+                return (json_last_error() === JSON_ERROR_NONE && is_array($decoded)) ? $decoded : [$value];
+            },
+            set: fn ($value) => json_encode(is_array($value) ? array_values($value) : [$value])
+        );
+    }
+
     public function classMember(): BelongsTo
     {
         return $this->belongsTo(ClassMember::class);

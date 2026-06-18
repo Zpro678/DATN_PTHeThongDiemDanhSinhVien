@@ -10,17 +10,13 @@
 
     $adminActions = [
         ['label' => 'Tạo lớp học', 'icon' => 'plus-circle', 'color' => 'text-primary', 'href' => route('create-class')],
-        ['label' => 'Quản lý SV', 'icon' => 'users', 'color' => 'text-tertiary', 'href' => route('lecturer.students.index')],
-        ['label' => 'Import SV', 'icon' => 'upload', 'color' => 'text-secondary', 'href' => '#'],
         ['label' => 'Tạo buổi DD', 'icon' => 'calendar-plus', 'color' => 'text-primary', 'href' => route('lecturer.attendance.create')],
-        ['label' => 'Điểm danh thủ công', 'icon' => 'edit', 'color' => 'text-secondary', 'href' => route('lecturer.attendance.manual.create')],
         ['label' => 'Điểm danh QR', 'icon' => 'qr-code', 'color' => 'text-tertiary', 'href' => route('lecturer.attendance.qr.create')],
-        ['label' => 'DD Realtime', 'icon' => 'activity', 'color' => 'text-primary', 'href' => '#'],
+        ['label' => 'Điểm danh thủ công', 'icon' => 'edit', 'color' => 'text-secondary', 'href' => route('lecturer.attendance.manual.create')],
         ['label' => 'Đơn xin nghỉ', 'icon' => 'file-text', 'color' => 'text-error', 'href' => route('lecturer.leave-requests.index')],
+        ['label' => 'Quản lý SV', 'icon' => 'users', 'color' => 'text-tertiary', 'href' => route('lecturer.students.index')],
         ['label' => 'Thống kê', 'icon' => 'check-circle', 'color' => 'text-secondary', 'href' => '#'],
         ['label' => 'Xuất báo cáo', 'icon' => 'upload', 'color' => 'text-tertiary', 'href' => '#'],
-        ['label' => 'Cài đặt lớp', 'icon' => 'settings', 'color' => 'text-on-surface-variant', 'href' => '#'],
-        ['label' => 'Chia sẻ mã', 'icon' => 'send', 'color' => 'text-primary', 'href' => '#'],
     ];
 
     $managedCards = [
@@ -51,14 +47,14 @@
     ];
 
     $studentActions = [
-        ['label' => 'Tham gia lớp', 'icon' => 'log-in', 'color' => 'text-primary'],
-        ['label' => 'Quét QR', 'icon' => 'qr-code', 'color' => 'text-tertiary'],
-        ['label' => 'Lịch sử điểm danh', 'icon' => 'history', 'color' => 'text-secondary'],
-        ['label' => 'Xem chuyên cần', 'icon' => 'check-circle', 'color' => 'text-primary'],
-        ['label' => 'Gửi đơn nghỉ', 'icon' => 'send', 'color' => 'text-secondary'],
-        ['label' => 'Theo dõi đơn', 'icon' => 'file-text', 'color' => 'text-tertiary'],
-        ['label' => 'Thông báo', 'icon' => 'bell', 'color' => 'text-primary'],
-        ['label' => 'Hồ sơ cá nhân', 'icon' => 'user', 'color' => 'text-on-surface-variant'],
+        ['label' => 'Tham gia lớp', 'icon' => 'log-in', 'color' => 'text-primary', 'href' => route('student.classes.join')],
+        ['label' => 'Quét QR', 'icon' => 'qr-code', 'color' => 'text-tertiary', 'href' => '#'],
+        ['label' => 'Lịch sử điểm danh', 'icon' => 'history', 'color' => 'text-secondary', 'href' => route('student.attendance.history')],
+        ['label' => 'Xem chuyên cần', 'icon' => 'check-circle', 'color' => 'text-primary', 'href' => route('student.attendance.stats')],
+        ['label' => 'Gửi đơn nghỉ', 'icon' => 'send', 'color' => 'text-secondary', 'href' => route('student.leave-requests.create')],
+        ['label' => 'Theo dõi đơn', 'icon' => 'file-text', 'color' => 'text-tertiary', 'href' => '#'],
+        ['label' => 'Thông báo', 'icon' => 'bell', 'color' => 'text-primary', 'href' => '#'],
+        ['label' => 'Hồ sơ cá nhân', 'icon' => 'user', 'color' => 'text-on-surface-variant', 'href' => route('profile.edit')],
     ];
 
     $joinedCards = [
@@ -78,30 +74,30 @@
                 <p class="mb-8 max-w-xl text-body-lg leading-relaxed text-on-surface-variant">
                     Quản lý lớp học, tổ chức điểm danh, theo dõi chuyên cần và tham gia lớp học trong một dashboard duy nhất.
                 </p>
-                <div class="mb-8 flex flex-wrap gap-4">
+                <div class="mb-8 inline-flex rounded-full bg-surface-container-low p-1.5 shadow-inner">
                     <button
                         type="button"
                         wire:click="setWorkspace('admin')"
                         @class([
-                            'flex items-center gap-3 rounded-2xl border px-6 py-3.5 font-bold transition-all active:scale-95',
-                            'border-primary bg-primary text-white shadow-lg shadow-primary/20' => $workspace === 'admin',
-                            'border-outline-variant/30 bg-white text-on-surface hover:bg-surface-container-low' => $workspace !== 'admin',
+                            'flex items-center gap-2 rounded-full px-6 py-2.5 text-sm font-bold transition-all',
+                            'bg-white text-primary shadow' => $workspace === 'admin',
+                            'text-on-surface-variant hover:text-on-surface' => $workspace !== 'admin',
                         ])
                     >
-                        <x-user.icon name="shield" :size="20" />
-                        Vào không gian Chủ lớp
+                        <x-user.icon name="shield" :size="18" />
+                        Không gian Chủ lớp
                     </button>
                     <button
                         type="button"
                         wire:click="setWorkspace('student')"
                         @class([
-                            'flex items-center gap-3 rounded-2xl border px-6 py-3.5 font-bold transition-all active:scale-95',
-                            'border-tertiary bg-tertiary text-white shadow-lg shadow-tertiary/20' => $workspace === 'student',
-                            'border-outline-variant/30 bg-white text-on-surface hover:bg-surface-container-low' => $workspace !== 'student',
+                            'flex items-center gap-2 rounded-full px-6 py-2.5 text-sm font-bold transition-all',
+                            'bg-white text-tertiary shadow' => $workspace === 'student',
+                            'text-on-surface-variant hover:text-on-surface' => $workspace !== 'student',
                         ])
                     >
-                        <x-user.icon name="user" :size="20" />
-                        Vào không gian Học viên
+                        <x-user.icon name="user" :size="18" />
+                        Không gian Học viên
                     </button>
                 </div>
                 <div class="flex flex-wrap gap-6 border-t border-outline-variant/20 pt-6">
@@ -109,10 +105,10 @@
                         <x-user.icon name="plus" :size="18" />
                         Tạo lớp mới
                     </a>
-                    <button type="button" wire:click="openJoinModal" class="flex items-center gap-2 text-sm font-bold text-on-surface-variant transition-colors hover:text-primary">
+                    <a href="{{ route('student.classes.join') }}" class="flex items-center gap-2 text-sm font-bold text-on-surface-variant transition-colors hover:text-primary">
                         <x-user.icon name="key" :size="18" />
                         Tham gia lớp bằng mã
-                    </button>
+                    </a>
                 </div>
             </div>
         </div>
@@ -168,13 +164,13 @@
 
                 <div class="grid grid-cols-1 gap-4 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-6">
                     @foreach ($adminStats as $stat)
-                        <div class="flex flex-col items-start gap-4 rounded-3xl border border-outline-variant/10 bg-white p-4 shadow-sm transition-shadow hover:shadow-md">
-                            <div class="{{ $stat['bg'] }} {{ $stat['color'] }} flex h-10 w-10 items-center justify-center rounded-2xl">
-                                <x-user.icon :name="$stat['icon']" :size="20" />
+                        <div class="flex items-center gap-4 rounded-2xl bg-white p-4 shadow-sm ring-1 ring-outline-variant/10 transition-shadow hover:shadow-md">
+                            <div class="{{ $stat['bg'] }} {{ $stat['color'] }} flex h-12 w-12 shrink-0 items-center justify-center rounded-full">
+                                <x-user.icon :name="$stat['icon']" :size="24" />
                             </div>
                             <div>
-                                <h3 class="font-stat-lg text-[28px] font-bold leading-tight text-on-surface">{{ $stat['value'] }}</h3>
-                                <p class="mt-1 text-[10px] font-bold uppercase tracking-wider text-outline">{{ $stat['label'] }}</p>
+                                <p class="text-xs font-semibold text-on-surface-variant">{{ $stat['label'] }}</p>
+                                <h3 class="text-2xl font-bold text-on-surface leading-tight">{{ $stat['value'] }}</h3>
                             </div>
                         </div>
                     @endforeach
@@ -182,11 +178,13 @@
 
                 <div>
                     <h4 class="mb-4 text-[16px] font-bold text-on-surface">Thao tác nhanh</h4>
-                    <div class="grid grid-cols-2 gap-3 md:grid-cols-4 lg:grid-cols-6">
+                    <div class="grid grid-cols-2 gap-3 md:grid-cols-4 lg:grid-cols-4 xl:grid-cols-8">
                         @foreach ($adminActions as $action)
-                            <a href="{{ $action['href'] }}" class="group flex flex-col items-center justify-center rounded-2xl border border-outline-variant/10 bg-white p-4 shadow-sm transition-all hover:border-primary/30 hover:bg-surface-container-low hover:shadow-md">
-                                <x-user.icon :name="$action['icon']" :size="24" class="{{ $action['color'] }} mb-2 transition-transform group-hover:scale-110" />
-                                <span class="line-clamp-1 text-center font-label-md text-on-surface">{{ $action['label'] }}</span>
+                            <a href="{{ $action['href'] }}" class="group flex flex-col items-center justify-center rounded-2xl p-3 transition-all hover:bg-surface-container-lowest hover:shadow-sm">
+                                <div class="mb-3 flex h-12 w-12 items-center justify-center rounded-full bg-white text-on-surface-variant shadow-sm ring-1 ring-outline-variant/20 group-hover:text-primary transition-all group-hover:scale-105">
+                                    <x-user.icon :name="$action['icon']" :size="20" />
+                                </div>
+                                <span class="line-clamp-1 text-center text-xs font-semibold text-on-surface-variant group-hover:text-on-surface">{{ $action['label'] }}</span>
                             </a>
                         @endforeach
                     </div>
@@ -194,21 +192,19 @@
 
                 <div>
                     <h4 class="mb-4 text-[16px] font-bold text-on-surface">Lớp tôi quản lý</h4>
-                    <div class="grid grid-cols-1 gap-6 md:grid-cols-2 lg:grid-cols-3">
+                    <div class="grid grid-cols-1 gap-6 md:grid-cols-2 lg:grid-cols-2">
                         @foreach ($managedCards as $class)
-                            <article class="group flex flex-col overflow-hidden rounded-3xl border border-outline-variant/10 bg-white shadow-sm transition-all duration-300 hover:shadow-xl">
-                                <div class="relative h-32 bg-gradient-to-br {{ $class['gradient'] }} p-6">
-                                    <div class="pointer-events-none absolute inset-0 opacity-20 [background-image:radial-gradient(circle_at_2px_2px,white_1px,transparent_0)] [background-size:24px_24px]"></div>
-                                    <div class="relative z-10 flex items-start justify-between">
-                                        <div class="rounded-2xl border border-white/30 bg-white/20 p-2.5 text-white backdrop-blur-md">
-                                            <x-user.icon :name="$class['icon']" :size="24" />
-                                        </div>
-                                        <span class="rounded-full bg-white/20 px-3 py-1 text-[10px] font-bold uppercase tracking-wider text-white backdrop-blur-md">Đang học</span>
+                            <article class="group relative flex flex-col overflow-hidden rounded-2xl bg-white p-5 shadow-sm ring-1 ring-outline-variant/20 transition-all duration-300 hover:-translate-y-1 hover:shadow-lg hover:ring-outline-variant/40">
+                                <div class="absolute inset-x-0 top-0 h-1 {{ $class['bar'] }}"></div>
+                                <div class="mb-4 flex items-start justify-between">
+                                    <div class="flex h-12 w-12 items-center justify-center rounded-xl bg-surface-container-lowest shadow-sm ring-1 ring-outline-variant/20 {{ $class['color'] }}">
+                                        <x-user.icon :name="$class['icon']" :size="24" />
                                     </div>
+                                    <span class="rounded-full bg-surface-container-lowest px-3 py-1 text-[10px] font-bold uppercase tracking-wider text-on-surface-variant ring-1 ring-outline-variant/20">Đang học</span>
                                 </div>
-                                <div class="relative z-20 -mt-6 flex flex-1 flex-col rounded-t-3xl bg-white p-6 shadow-[0_-8px_20px_rgba(0,0,0,0.02)]">
+                                <div class="flex flex-1 flex-col">
                                     <div class="mb-1 flex items-start justify-between">
-                                        <h4 class="line-clamp-1 font-headline-sm text-headline-sm text-on-surface transition-colors group-hover:text-primary">{{ $class['title'] }}</h4>
+                                        <h4 class="line-clamp-1 text-lg font-bold text-on-surface transition-colors group-hover:{{ $class['color'] }}">{{ $class['title'] }}</h4>
                                         <button type="button" class="rounded-full p-1 text-on-surface-variant hover:bg-surface-container hover:text-on-surface">
                                             <x-user.icon name="more-vertical" :size="20" />
                                         </button>
@@ -239,11 +235,11 @@
                                         </div>
                                     </div>
                                     <div class="mt-auto grid grid-cols-2 gap-3">
-                                        <button type="button" class="flex items-center justify-center gap-2 rounded-xl bg-primary py-3 text-sm font-bold text-white shadow-sm transition-colors hover:bg-primary/90">
+                                        <button type="button" class="flex items-center justify-center gap-2 rounded-xl bg-primary py-2.5 text-sm font-bold text-white shadow-sm transition-colors hover:bg-primary/90">
                                             <x-user.icon name="check-square" :size="18" />
                                             Điểm danh
                                         </button>
-                                        <button type="button" class="flex items-center justify-center gap-2 rounded-xl border border-outline-variant py-3 text-sm font-bold text-on-surface-variant transition-colors hover:bg-surface-container">
+                                        <button type="button" class="flex items-center justify-center gap-2 rounded-xl border border-outline-variant py-2.5 text-sm font-bold text-on-surface-variant transition-colors hover:bg-surface-container">
                                             <x-user.icon name="eye" :size="18" />
                                             Chi tiết
                                         </button>
@@ -312,13 +308,13 @@
 
                 <div class="grid grid-cols-1 gap-4 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-6">
                     @foreach ($studentStats as $stat)
-                        <div class="flex flex-col items-start gap-4 rounded-3xl border border-outline-variant/10 bg-white p-4 shadow-sm transition-shadow hover:shadow-md">
-                            <div class="{{ $stat['bg'] }} {{ $stat['color'] }} flex h-10 w-10 items-center justify-center rounded-2xl">
-                                <x-user.icon :name="$stat['icon']" :size="20" />
+                        <div class="flex items-center gap-4 rounded-2xl bg-white p-4 shadow-sm ring-1 ring-outline-variant/10 transition-shadow hover:shadow-md">
+                            <div class="{{ $stat['bg'] }} {{ $stat['color'] }} flex h-12 w-12 shrink-0 items-center justify-center rounded-full">
+                                <x-user.icon :name="$stat['icon']" :size="24" />
                             </div>
                             <div>
-                                <h3 class="font-stat-lg text-[28px] font-bold leading-tight text-on-surface">{{ $stat['value'] }}</h3>
-                                <p class="mt-1 text-[10px] font-bold uppercase tracking-wider text-outline">{{ $stat['label'] }}</p>
+                                <p class="text-xs font-semibold text-on-surface-variant">{{ $stat['label'] }}</p>
+                                <h3 class="text-2xl font-bold text-on-surface leading-tight">{{ $stat['value'] }}</h3>
                             </div>
                         </div>
                     @endforeach
@@ -328,10 +324,12 @@
                     <h4 class="mb-4 text-[16px] font-bold text-on-surface">Thao tác nhanh</h4>
                     <div class="grid grid-cols-2 gap-3 md:grid-cols-4 lg:grid-cols-8">
                         @foreach ($studentActions as $action)
-                            <button type="button" class="group flex flex-col items-center justify-center rounded-2xl border border-outline-variant/10 bg-white p-4 shadow-sm transition-all hover:border-primary/30 hover:bg-surface-container-low hover:shadow-md">
-                                <x-user.icon :name="$action['icon']" :size="24" class="{{ $action['color'] }} mb-2 transition-transform group-hover:scale-110" />
-                                <span class="line-clamp-1 text-center font-label-md text-on-surface">{{ $action['label'] }}</span>
-                            </button>
+                            <a href="{{ $action['href'] }}" class="group flex flex-col items-center justify-center rounded-2xl p-3 transition-all hover:bg-surface-container-lowest hover:shadow-sm">
+                                <div class="mb-3 flex h-12 w-12 items-center justify-center rounded-full bg-white text-on-surface-variant shadow-sm ring-1 ring-outline-variant/20 group-hover:text-tertiary transition-all group-hover:scale-105">
+                                    <x-user.icon :name="$action['icon']" :size="20" />
+                                </div>
+                                <span class="line-clamp-1 text-center text-xs font-semibold text-on-surface-variant group-hover:text-on-surface">{{ $action['label'] }}</span>
+                            </a>
                         @endforeach
                     </div>
                 </div>
@@ -340,13 +338,17 @@
                     <h4 class="mb-4 text-[16px] font-bold text-on-surface">Lớp tôi tham gia</h4>
                     <div class="grid grid-cols-1 gap-6 md:grid-cols-2 lg:grid-cols-3">
                         @foreach ($joinedCards as $class)
-                            <article class="group flex flex-col overflow-hidden rounded-3xl border border-outline-variant/10 bg-white shadow-sm transition-all duration-300 hover:shadow-xl">
-                                <div class="relative z-20 p-6">
-                                    <div class="mb-1 flex items-start justify-between gap-3">
-                                        <h4 class="line-clamp-1 font-headline-sm text-headline-sm text-on-surface transition-colors group-hover:text-tertiary">{{ $class['title'] }}</h4>
-                                        <span class="{{ $class['statusClass'] }} rounded-full px-3 py-1 text-[10px] font-bold uppercase tracking-wider">{{ $class['status'] }}</span>
+                            <article class="group relative flex flex-col overflow-hidden rounded-2xl bg-white p-5 shadow-sm ring-1 ring-outline-variant/20 transition-all duration-300 hover:-translate-y-1 hover:shadow-lg hover:ring-outline-variant/40">
+                                <div class="absolute inset-x-0 top-0 h-1 {{ $class['bar'] }}"></div>
+                                <div class="mb-4 flex items-start justify-between">
+                                    <div class="flex h-12 w-12 items-center justify-center rounded-xl bg-surface-container-lowest shadow-sm ring-1 ring-outline-variant/20 {{ $class['color'] }}">
+                                        <span class="text-xl font-bold uppercase">{{ substr($class['title'], 0, 1) }}</span>
                                     </div>
-                                    <p class="mb-4 mt-1 text-sm text-on-surface-variant">Giảng viên: <span class="font-bold">{{ $class['teacher'] }}</span></p>
+                                    <span class="{{ $class['statusClass'] }} rounded-full px-3 py-1 text-[10px] font-bold uppercase tracking-wider ring-1 ring-outline-variant/20">{{ $class['status'] }}</span>
+                                </div>
+                                <div class="flex flex-1 flex-col">
+                                    <h4 class="line-clamp-1 mb-1 text-lg font-bold text-on-surface transition-colors group-hover:{{ $class['color'] }}">{{ $class['title'] }}</h4>
+                                    <p class="mb-4 text-sm text-on-surface-variant">Giảng viên: <span class="font-bold">{{ $class['teacher'] }}</span></p>
                                     <p class="mb-4 flex items-center gap-2 text-sm text-on-surface-variant">
                                         <span class="font-bold">{{ $class['code'] }}</span>
                                         <span class="h-1 w-1 rounded-full bg-outline-variant"></span>
@@ -368,11 +370,11 @@
                                         </div>
                                     </div>
                                     <div class="mt-auto grid grid-cols-2 gap-3">
-                                        <button type="button" class="flex items-center justify-center gap-2 rounded-xl bg-tertiary py-3 text-sm font-bold text-white shadow-sm transition-colors hover:bg-tertiary/90">
+                                        <button type="button" class="flex items-center justify-center gap-2 rounded-xl bg-tertiary py-2.5 text-sm font-bold text-white shadow-sm transition-colors hover:bg-tertiary/90">
                                             <x-user.icon name="history" :size="18" />
                                             Xem lịch sử
                                         </button>
-                                        <button type="button" class="flex items-center justify-center gap-2 rounded-xl border border-outline-variant py-3 text-sm font-bold text-on-surface-variant transition-colors hover:bg-surface-container">
+                                        <button type="button" class="flex items-center justify-center gap-2 rounded-xl border border-outline-variant py-2.5 text-sm font-bold text-on-surface-variant transition-colors hover:bg-surface-container">
                                             <x-user.icon name="eye" :size="18" />
                                             Chi tiết
                                         </button>
@@ -383,58 +385,7 @@
                     </div>
                 </div>
 
-                <div class="grid grid-cols-1 gap-6 lg:grid-cols-2">
-                    <div>
-                        <h4 class="mb-4 flex items-center gap-2 text-[16px] font-bold text-on-surface">
-                            <x-user.icon name="activity" class="text-tertiary" />
-                            Chuyên cần cá nhân
-                        </h4>
-                        <div class="flex flex-col items-center gap-8 rounded-3xl border border-outline-variant/10 bg-white p-6 md:flex-row">
-                            <div class="relative flex h-32 w-32 shrink-0 items-center justify-center">
-                                <svg class="h-full w-full -rotate-90" viewBox="0 0 100 100">
-                                    <circle cx="50" cy="50" r="40" fill="transparent" stroke="#e5eeff" stroke-width="12" />
-                                    <circle cx="50" cy="50" r="40" fill="transparent" stroke="#007d55" stroke-width="12" stroke-dasharray="251.2" stroke-dashoffset="35.168" stroke-linecap="round" />
-                                </svg>
-                                <div class="absolute inset-0 flex flex-col items-center justify-center">
-                                    <span class="font-stat-lg text-2xl text-on-surface">86%</span>
-                                </div>
-                            </div>
-                            <div class="w-full flex-1 space-y-4">
-                                <p class="flex items-center justify-between text-sm"><span class="flex items-center gap-2 text-on-surface-variant"><span class="h-2 w-2 rounded-full bg-surface-container-high"></span>Tổng tiết học</span><span class="font-bold">135 tiết</span></p>
-                                <p class="flex items-center justify-between text-sm"><span class="flex items-center gap-2 text-on-surface-variant"><span class="h-2 w-2 rounded-full bg-tertiary"></span>Có mặt</span><span class="font-bold text-tertiary">116 tiết</span></p>
-                                <p class="flex items-center justify-between text-sm"><span class="flex items-center gap-2 text-on-surface-variant"><span class="h-2 w-2 rounded-full bg-error"></span>Vắng mặt</span><span class="font-bold text-error">19 tiết</span></p>
-                                <div class="mt-2 rounded-xl border border-outline-variant/20 bg-surface-container-low p-3">
-                                    <p class="text-xs leading-relaxed text-on-surface-variant"><span class="font-bold text-on-surface">Thông báo:</span> Bạn đã vắng 19/135 tiết. Tình trạng chuyên cần hiện tại vẫn an toàn.</p>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
 
-                    <div>
-                        <h4 class="mb-4 flex items-center gap-2 text-[16px] font-bold text-on-surface">
-                            <x-user.icon name="bell" class="text-primary" />
-                            Thông báo gần đây
-                        </h4>
-                        <div class="space-y-2 rounded-3xl border border-outline-variant/10 bg-white p-4">
-                            @foreach ([
-                                ['icon' => 'check-circle', 'color' => 'text-tertiary', 'bg' => 'bg-tertiary/10', 'text' => 'Bạn đã điểm danh thành công lớp Cơ sở dữ liệu', 'time' => '10 phút trước'],
-                                ['icon' => 'file-text', 'color' => 'text-primary', 'bg' => 'bg-primary/10', 'text' => 'Đơn xin nghỉ của bạn đã được duyệt', 'time' => 'Hôm qua'],
-                                ['icon' => 'alert-triangle', 'color' => 'text-[#F59E0B]', 'bg' => 'bg-[#F59E0B]/10', 'text' => 'Bạn đang tiến gần ngưỡng cảnh báo vắng học lớp UI/UX', 'time' => '2 ngày trước'],
-                                ['icon' => 'log-in', 'color' => 'text-secondary', 'bg' => 'bg-secondary/10', 'text' => 'Bạn vừa tham gia lớp Lập trình Web', 'time' => 'Tuần trước'],
-                            ] as $notice)
-                                <div class="flex cursor-pointer gap-3 rounded-2xl p-3 transition-colors hover:bg-surface-container-low">
-                                    <div class="{{ $notice['bg'] }} {{ $notice['color'] }} flex h-8 w-8 shrink-0 items-center justify-center rounded-full">
-                                        <x-user.icon :name="$notice['icon']" :size="16" />
-                                    </div>
-                                    <div>
-                                        <p class="text-sm font-medium text-on-surface">{{ $notice['text'] }}</p>
-                                        <p class="mt-1 text-xs text-on-surface-variant">{{ $notice['time'] }}</p>
-                                    </div>
-                                </div>
-                            @endforeach
-                        </div>
-                    </div>
-                </div>
             </section>
         @endif
     </div>
