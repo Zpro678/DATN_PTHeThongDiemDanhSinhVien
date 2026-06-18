@@ -3,14 +3,19 @@
 namespace App\Models;
 
 // use Illuminate\Contracts\Auth\MustVerifyEmail;
+use Database\Factories\UserFactory;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
+use Illuminate\Database\Eloquent\Relations\BelongsToMany;
+use Illuminate\Database\Eloquent\Relations\HasMany;
+use Illuminate\Database\Eloquent\Relations\MorphMany;
+use Illuminate\Database\Eloquent\SoftDeletes;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
 
 class User extends Authenticatable
 {
-    /** @use HasFactory<\Database\Factories\UserFactory> */
-    use HasFactory, Notifiable;
+    /** @use HasFactory<UserFactory> */
+    use HasFactory, Notifiable, SoftDeletes;
 
     /**
      * The attributes that are mass assignable.
@@ -18,9 +23,14 @@ class User extends Authenticatable
      * @var list<string>
      */
     protected $fillable = [
+        'is_admin',
+        'google_id',
+        'code',
         'name',
         'email',
         'password',
+        'avatar',
+        'status',
     ];
 
     /**
@@ -42,7 +52,71 @@ class User extends Authenticatable
     {
         return [
             'email_verified_at' => 'datetime',
+            'is_admin' => 'boolean',
             'password' => 'hashed',
         ];
+    }
+
+    public function ownedClasses(): HasMany
+    {
+        return $this->hasMany(CourseClass::class, 'owner_user_id');
+    }
+
+    public function classMemberships(): HasMany
+    {
+        return $this->hasMany(ClassMember::class);
+    }
+
+    public function joinedClasses(): BelongsToMany
+    {
+        return $this->belongsToMany(CourseClass::class, 'class_members', 'user_id', 'class_id')
+            ->withPivot(['id', 'student_code', 'full_name', 'status', 'deleted_at'])
+            ->wherePivotNull('deleted_at')
+            ->withTimestamps();
+    }
+
+    public function classJoinRequests(): HasMany
+    {
+        return $this->hasMany(ClassJoinRequest::class);
+    }
+
+    public function createdClassSessions(): HasMany
+    {
+        return $this->hasMany(ClassSession::class, 'created_by');
+    }
+
+    public function auditLogs(): HasMany
+    {
+        return $this->hasMany(AuditLog::class);
+    }
+
+    public function checkInScans(): HasMany
+    {
+        return $this->hasMany(CheckInScan::class);
+    }
+
+    public function subscriptions(): HasMany
+    {
+        return $this->hasMany(Subscription::class);
+    }
+
+    public function transactions(): HasMany
+    {
+        return $this->hasMany(Transaction::class);
+    }
+
+    public function devices(): HasMany
+    {
+        return $this->hasMany(UserDevice::class);
+    }
+
+    public function reviewedLeaveRequests(): HasMany
+    {
+        return $this->hasMany(LeaveRequest::class, 'reviewed_by');
+    }
+
+    public function notifications(): MorphMany
+    {
+        return $this->morphMany(Notification::class, 'notifiable')->latest();
     }
 }
