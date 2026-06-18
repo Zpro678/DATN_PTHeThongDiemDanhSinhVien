@@ -1,5 +1,10 @@
 <?php
 
+use App\Models\AuditLog;
+use App\Models\CourseClass;
+use App\Models\Plan;
+use App\Models\Subscription;
+use App\Models\User;
 use App\Http\Controllers\ProfileController;
 use App\Livewire\Lecturer\Attendance\AttendanceCreate;
 use App\Livewire\Lecturer\Attendance\AttendanceIndex;
@@ -25,7 +30,160 @@ Route::get('/', function () {
 });
 
 Route::middleware(['auth', 'verified'])->group(function () {
+    $ensureAdmin = function (): void {
+        abort_unless(auth()->user()?->is_admin, 403);
+    };
+
     Route::get('/dashboard', UserDashboard::class)->name('dashboard');
+    Route::prefix('admin')->name('admin.')->group(function () use ($ensureAdmin) {
+        Route::get('/', function () use ($ensureAdmin) {
+            $ensureAdmin();
+
+            return view('admin.dashboard');
+        })->name('dashboard');
+
+        Route::redirect('/dashboard', '/admin')->name('dashboard.alias');
+
+        Route::get('/users', function () use ($ensureAdmin) {
+            $ensureAdmin();
+
+            $users = User::query()
+                ->withCount(['ownedClasses', 'joinedClasses', 'subscriptions', 'classJoinRequests'])
+                ->when(request('search'), function ($query, string $search) {
+                    $query->where(function ($query) use ($search) {
+                        $query
+                            ->where('name', 'like', "%{$search}%")
+                            ->orWhere('email', 'like', "%{$search}%")
+                            ->orWhere('code', 'like', "%{$search}%");
+                    });
+                })
+                ->when(request('role'), function ($query, string $role) {
+                    if ($role === 'admin') {
+                        $query->where('is_admin', true);
+                    } elseif (in_array($role, ['teacher', 'student'], true)) {
+                        $query->where('is_admin', false);
+                    }
+                })
+                ->when(request('status'), fn ($query, string $status) => $query->where('status', $status))
+                ->orderBy('name')
+                ->paginate(10)
+                ->withQueryString();
+
+            return view('admin.users.index', compact('users'));
+        })->name('users.index');
+
+        Route::redirect('/accounts', '/admin/users')->name('accounts.index');
+
+        Route::get('/users/{user}', function (User $user) use ($ensureAdmin) {
+            $ensureAdmin();
+
+            $user->loadCount(['ownedClasses', 'joinedClasses', 'subscriptions', 'classJoinRequests']);
+            $recentClasses = $user->ownedClasses()
+                ->withCount(['users', 'sessions'])
+                ->latest()
+                ->take(4)
+                ->get();
+            $recentLogs = $user->auditLogs()->latest('created_at')->take(6)->get();
+
+            return view('admin.users.show', compact('user', 'recentClasses', 'recentLogs'));
+        })->whereNumber('user')->name('users.show');
+
+        Route::get('/users/{user}/edit', function (User $user) use ($ensureAdmin) {
+            $ensureAdmin();
+
+            return view('admin.users.edit', compact('user'));
+        })->whereNumber('user')->name('users.edit');
+
+        Route::get('/packages', function () use ($ensureAdmin) {
+            $ensureAdmin();
+
+            $packages = Plan::query()
+                ->withCount('subscriptions')
+                ->orderByDesc('price')
+                ->get();
+
+            return view('admin.packages.index', compact('packages'));
+        })->name('packages.index');
+
+        Route::get('/packages/create', function () use ($ensureAdmin) {
+            $ensureAdmin();
+
+            return view('admin.packages.create');
+        })->name('packages.create');
+
+        Route::get('/packages/{package}', function (Plan $package) use ($ensureAdmin) {
+            $ensureAdmin();
+
+            $package->loadCount('subscriptions');
+            $subscriptions = $package->subscriptions()->with('user')->latest()->take(8)->get();
+
+            return view('admin.packages.show', compact('package', 'subscriptions'));
+        })->whereNumber('package')->name('packages.show');
+
+        Route::get('/packages/{package}/edit', function (Plan $package) use ($ensureAdmin) {
+            $ensureAdmin();
+
+            return view('admin.packages.edit', compact('package'));
+        })->whereNumber('package')->name('packages.edit');
+
+        Route::get('/attendance', function () use ($ensureAdmin) {
+            $ensureAdmin();
+
+            $sessions = CourseClass::query()
+                ->with(['owner', 'sessions'])
+                ->latest()
+                ->take(6)
+                ->get();
+
+            return view('admin.attendance.index', compact('sessions'));
+        })->name('attendance.index');
+
+        Route::get('/reports', function () use ($ensureAdmin) {
+            $ensureAdmin();
+
+            $overview = [
+                'users' => User::count(),
+                'classes' => CourseClass::count(),
+                'plans' => Plan::count(),
+                'subscriptions' => Subscription::count(),
+                'logs' => AuditLog::count(),
+            ];
+
+            $recentActivity = AuditLog::query()
+                ->with(['user', 'courseClass'])
+                ->latest('created_at')
+                ->take(8)
+                ->get();
+
+            return view('admin.reports.index', compact('overview', 'recentActivity'));
+        })->name('reports.index');
+
+        Route::get('/logs', function () use ($ensureAdmin) {
+            $ensureAdmin();
+
+            $logs = AuditLog::query()
+                ->with(['user', 'courseClass'])
+                ->latest('created_at')
+                ->take(20)
+                ->get();
+
+            return view('admin.logs.index', compact('logs'));
+        })->name('logs.index');
+
+        Route::get('/settings', function () use ($ensureAdmin) {
+            $ensureAdmin();
+
+            $system = [
+                'app_name' => config('app.name'),
+                'environment' => app()->environment(),
+                'timezone' => config('app.timezone'),
+                'locale' => config('app.locale'),
+                'admin_email' => auth()->user()?->email,
+            ];
+
+            return view('admin.settings.index', compact('system'));
+        })->name('settings.index');
+    });
     Route::get('/classes', UserClasses::class)->name('classes');
     Route::get('/managed-classes', ManagedClasses::class)->name('managed-classes');
     Route::get('/joined-classes', JoinedClasses::class)->name('joined-classes');

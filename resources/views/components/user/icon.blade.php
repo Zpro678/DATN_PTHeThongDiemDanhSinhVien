@@ -28,9 +28,25 @@
             <path d="M12 17h.01" />
             @break
 
+        @case('alert-circle')
+            <circle cx="12" cy="12" r="10" />
+            <path d="M12 8v4" />
+            <path d="M12 16h.01" />
+            @break
+
         @case('arrow-right')
             <path d="M5 12h14" />
             <path d="m12 5 7 7-7 7" />
+            @break
+
+        @case('arrow-up-right')
+            <path d="M7 17 17 7" />
+            <path d="M7 7h10v10" />
+            @break
+
+        @case('arrow-down-right')
+            <path d="M7 7 17 17" />
+            <path d="M17 7v10H7" />
             @break
 
         @case('bar-chart')
@@ -114,6 +130,11 @@
             <path d="m8 6-6 6 6 6" />
             @break
 
+        @case('credit-card')
+            <rect width="20" height="14" x="2" y="5" rx="2" />
+            <path d="M2 10h20" />
+            @break
+
         @case('database')
             <ellipse cx="12" cy="5" rx="9" ry="3" />
             <path d="M3 5v14c0 1.7 4 3 9 3s9-1.3 9-3V5" />
@@ -144,6 +165,13 @@
             <path d="M10 9H8" />
             @break
 
+        @case('file-down')
+            <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8Z" />
+            <path d="M14 2v6h6" />
+            <path d="M12 12v6" />
+            <path d="m9 15 3 3 3-3" />
+            @break
+
         @case('filter')
             <path d="M22 3H2l8 9.5V20l4 2v-9.5Z" />
             @break
@@ -157,6 +185,12 @@
             <circle cx="12" cy="12" r="10" />
             <path d="M9.1 9a3 3 0 1 1 5.8 1c-.6 1.2-1.9 1.6-2.4 2.7" />
             <path d="M12 17h.01" />
+            @break
+
+        @case('menu')
+            <path d="M4 6h16" />
+            <path d="M4 12h16" />
+            <path d="M4 18h16" />
             @break
 
         @case('history')
@@ -219,6 +253,11 @@
             <circle cx="12" cy="10" r="3" />
             @break
 
+        @case('mail')
+            <rect width="20" height="16" x="2" y="4" rx="2" />
+            <path d="m22 7-8.97 5.7a2 2 0 0 1-2.06 0L2 7" />
+            @break
+
         @case('more-vertical')
             <circle cx="12" cy="5" r="1" />
             <circle cx="12" cy="12" r="1" />
@@ -247,6 +286,13 @@
             <circle cx="12" cy="12" r="10" />
             <path d="M12 8v8" />
             <path d="M8 12h8" />
+            @break
+
+        @case('refresh-cw')
+            <path d="M21 12a9 9 0 0 0-15.5-6.36L3 8" />
+            <path d="M3 3v5h5" />
+            <path d="M3 12a9 9 0 0 0 15.5 6.36L21 16" />
+            <path d="M16 16h5v5" />
             @break
 
         @case('qr-code')
@@ -284,6 +330,10 @@
         @case('settings')
             <path d="M12.2 2h-.4l-1 2.6a8 8 0 0 0-1.8.8L6.4 4.3l-2.1 2.1L5.4 9a8 8 0 0 0-.8 1.8L2 11.8v.4l2.6 1a8 8 0 0 0 .8 1.8l-1.1 2.6 2.1 2.1L9 18.6a8 8 0 0 0 1.8.8l1 2.6h.4l1-2.6a8 8 0 0 0 1.8-.8l2.6 1.1 2.1-2.1-1.1-2.6a8 8 0 0 0 .8-1.8l2.6-1v-.4l-2.6-1a8 8 0 0 0-.8-1.8l1.1-2.6-2.1-2.1L15 5.4a8 8 0 0 0-1.8-.8Z" />
             <circle cx="12" cy="12" r="3" />
+            @break
+
+        @case('star')
+            <path d="m12 2 2.9 6.9 7.1.6-5.4 4.7 1.6 6.8-6.2-3.6L5.8 21l1.6-6.8L2 9.5l7.1-.6Z" />
             @break
 
         @case('shield')
@@ -330,6 +380,12 @@
             <circle cx="12" cy="12" r="10" />
             <circle cx="12" cy="10" r="3" />
             <path d="M7 20a5 5 0 0 1 10 0" />
+            @break
+
+        @case('user-square')
+            <rect width="18" height="18" x="3" y="3" rx="3" />
+            <circle cx="12" cy="10" r="3" />
+            <path d="M7 19a5 5 0 0 1 10 0" />
             @break
 
         @case('users')
