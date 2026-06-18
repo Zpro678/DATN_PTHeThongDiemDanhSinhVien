@@ -88,7 +88,7 @@
         </div>
     </section>
 
-    <section class="grid grid-cols-1 gap-6 md:grid-cols-2 xl:grid-cols-3">
+    <section class="grid auto-rows-fr grid-cols-1 items-stretch gap-6 md:grid-cols-2 xl:grid-cols-3">
         @foreach ($classes as $class)
             @php
                 $attendanceColor = $class['warning'] ? 'text-error' : ($class['ended'] ? 'text-on-surface-variant' : 'text-secondary');
@@ -96,13 +96,13 @@
             @endphp
 
             <article @class([
-                'group flex flex-col rounded-3xl border shadow-sm transition-all hover:shadow-xl',
+                'group flex h-full min-h-[580px] flex-col overflow-hidden rounded-3xl border shadow-sm transition-all hover:shadow-xl',
                 'border-outline-variant/20 bg-white' => ! $class['warning'],
                 'border-error/30 bg-alert-container/30' => $class['warning'],
                 'opacity-80 hover:opacity-100' => $class['ended'],
             ])>
                 <div @class([
-                    'relative overflow-hidden rounded-t-3xl border-b p-5 sm:p-6',
+                    'relative min-h-[250px] overflow-hidden border-b p-5 sm:p-6',
                     'border-outline-variant/10 bg-surface-container-lowest' => ! $class['warning'],
                     'border-error/10 bg-white/50' => $class['warning'],
                     'bg-white' => $class['ended'],
@@ -128,19 +128,19 @@
                                 Học viên
                             </span>
                         </div>
-                        <span class="rounded bg-surface-container-high px-2 py-0.5 text-xs font-bold text-on-surface">{{ $class['code'] }}</span>
+                        <span class="shrink-0 rounded bg-surface-container-high px-2 py-0.5 text-xs font-bold text-on-surface">{{ $class['code'] }}</span>
                     </div>
 
-                    <div class="relative z-10">
-                        <h4 class="line-clamp-2 mb-2 text-xl font-bold text-on-surface transition-colors group-hover:text-secondary sm:text-2xl">{{ $class['title'] }}</h4>
+                    <div class="relative z-10 min-w-0">
+                        <h4 class="mb-2 truncate text-xl font-bold text-on-surface transition-colors group-hover:text-secondary sm:text-2xl" title="{{ $class['title'] }}">{{ $class['title'] }}</h4>
                         <div class="mb-2 space-y-1.5">
-                            <p class="flex items-center gap-2 text-sm font-medium text-on-surface">
-                                <x-user.icon name="user" :size="16" class="text-on-surface-variant" />
-                                {{ $class['teacher'] }}
+                            <p class="flex min-w-0 items-center gap-2 text-sm font-medium text-on-surface">
+                                <x-user.icon name="user" :size="16" class="shrink-0 text-on-surface-variant" />
+                                <span class="truncate" title="{{ $class['teacher'] }}">{{ $class['teacher'] }}</span>
                             </p>
-                            <p class="flex items-center gap-2 text-sm font-medium text-on-surface">
-                                <x-user.icon name="clock" :size="16" class="text-on-surface-variant" />
-                                {{ $class['schedule'] }}
+                            <p class="flex min-w-0 items-center gap-2 text-sm font-medium text-on-surface">
+                                <x-user.icon name="clock" :size="16" class="shrink-0 text-on-surface-variant" />
+                                <span class="truncate" title="{{ $class['schedule'] }}">{{ $class['schedule'] }}</span>
                             </p>
                         </div>
                         <p class="text-sm font-medium text-on-surface-variant">Mã lớp: <span class="font-mono text-base font-bold text-on-surface">{{ $class['join_code'] }}</span></p>
@@ -148,7 +148,7 @@
                 </div>
 
                 <div @class([
-                    'flex flex-1 flex-col space-y-5 rounded-b-3xl p-5 sm:p-6',
+                    'flex min-h-0 flex-1 flex-col space-y-5 p-5 sm:p-6',
                     'bg-white' => ! $class['warning'] && ! $class['ended'],
                     'bg-white/40' => $class['warning'],
                     'bg-white/50 grayscale transition-all duration-300 group-hover:grayscale-0' => $class['ended'],
@@ -174,12 +174,12 @@
                     </div>
 
                     <div class="flex justify-between gap-2 overflow-x-auto pb-1 hide-scrollbar">
-                        <div class="min-w-[90px] flex-1 shrink-0 rounded-2xl border border-outline-variant/20 bg-surface-container-lowest p-3 text-center">
+                        <div class="min-h-[82px] min-w-[90px] flex-1 shrink-0 rounded-2xl border border-outline-variant/20 bg-surface-container-lowest p-3 text-center">
                             <p class="mb-1 text-[10px] font-bold uppercase text-on-surface-variant sm:text-xs">Có mặt</p>
                             <span class="text-lg font-bold text-secondary">{{ $class['present'] }}</span>
                         </div>
                         <div @class([
-                            'min-w-[90px] flex-1 shrink-0 rounded-2xl border p-3 text-center',
+                            'min-h-[82px] min-w-[90px] flex-1 shrink-0 rounded-2xl border p-3 text-center',
                             'border-error/20 bg-error/5' => $class['warning'],
                             'border-outline-variant/20 bg-surface-container-lowest' => ! $class['warning'],
                         ])>
@@ -194,7 +194,7 @@
                                 'text-on-surface' => ! $class['warning'],
                             ])>{{ $class['absent'] }}</span>
                         </div>
-                        <div class="min-w-[90px] flex-1 shrink-0 rounded-2xl border border-outline-variant/20 bg-surface-container-lowest p-3 text-center">
+                        <div class="min-h-[82px] min-w-[90px] flex-1 shrink-0 rounded-2xl border border-outline-variant/20 bg-surface-container-lowest p-3 text-center">
                             <p class="mb-1 text-[10px] font-bold uppercase text-on-surface-variant sm:text-xs">Đi trễ</p>
                             <span class="text-lg font-bold text-[#F59E0B]">{{ $class['late'] }}</span>
                         </div>
@@ -202,22 +202,22 @@
 
                     <div class="mt-auto space-y-3 border-t border-outline-variant/20 pt-5">
                         @if ($class['ended'])
-                            <button type="button" class="flex w-full cursor-not-allowed items-center justify-center gap-2 rounded-xl bg-surface-container-high py-3.5 font-bold text-on-surface-variant">
+                            <button type="button" class="flex min-h-[52px] w-full cursor-not-allowed items-center justify-center gap-2 rounded-xl bg-surface-container-high py-3.5 font-bold text-on-surface-variant">
                                 <x-user.icon name="check-square" />
                                 Lớp đã kết thúc
                             </button>
                             <div class="grid grid-cols-2 gap-2">
-                                <button type="button" class="flex flex-col items-center justify-center rounded-xl border border-outline-variant/30 bg-white p-2 text-on-surface-variant transition-colors hover:bg-surface-container-low hover:text-on-surface">
+                                <button type="button" class="flex min-h-[68px] flex-col items-center justify-center rounded-xl border border-outline-variant/30 bg-white p-2 text-on-surface-variant transition-colors hover:bg-surface-container-low hover:text-on-surface">
                                     <x-user.icon name="log-in" :size="18" class="mb-1.5" />
                                     <span class="text-center text-[10px] font-bold leading-tight">Vào thông tin</span>
                                 </button>
-                                <button type="button" class="flex flex-col items-center justify-center rounded-xl border border-outline-variant/30 bg-white p-2 text-on-surface-variant transition-colors hover:bg-surface-container-low hover:text-on-surface">
+                                <button type="button" class="flex min-h-[68px] flex-col items-center justify-center rounded-xl border border-outline-variant/30 bg-white p-2 text-on-surface-variant transition-colors hover:bg-surface-container-low hover:text-on-surface">
                                     <x-user.icon name="history" :size="18" class="mb-1.5" />
                                     <span class="text-center text-[10px] font-bold leading-tight">Lịch sử</span>
                                 </button>
                             </div>
                         @else
-                            <button type="button" class="flex w-full items-center justify-center gap-2 rounded-xl bg-secondary py-3.5 font-bold text-white shadow-sm transition-colors hover:bg-secondary/90 active:scale-[0.98]">
+                            <button type="button" class="flex min-h-[52px] w-full items-center justify-center gap-2 rounded-xl bg-secondary py-3.5 font-bold text-white shadow-sm transition-colors hover:bg-secondary/90 active:scale-[0.98]">
                                 <x-user.icon name="qr-code" />
                                 Quét QR Điểm danh
                             </button>
@@ -227,7 +227,7 @@
                                     ['label' => 'Lịch sử', 'icon' => 'history'],
                                     ['label' => 'Xin nghỉ', 'icon' => 'file-text'],
                                 ] as $action)
-                                    <button type="button" class="flex cursor-pointer flex-col items-center justify-center rounded-xl border border-outline-variant/30 p-2 text-on-surface-variant transition-colors hover:bg-surface-container-low hover:text-on-surface">
+                                    <button type="button" class="flex min-h-[68px] cursor-pointer flex-col items-center justify-center rounded-xl border border-outline-variant/30 p-2 text-on-surface-variant transition-colors hover:bg-surface-container-low hover:text-on-surface">
                                         <x-user.icon :name="$action['icon']" :size="18" class="mb-1.5" />
                                         <span class="text-center text-[10px] font-bold leading-tight">{{ $action['label'] }}</span>
                                     </button>

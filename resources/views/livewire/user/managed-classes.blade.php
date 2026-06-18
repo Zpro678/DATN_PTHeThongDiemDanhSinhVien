@@ -97,7 +97,7 @@
         </div>
     </section>
 
-    <section class="grid grid-cols-1 gap-6 md:grid-cols-2 lg:grid-cols-3">
+    <section class="grid auto-rows-fr grid-cols-1 items-stretch gap-6 md:grid-cols-2 lg:grid-cols-3">
         @foreach ($classes as $class)
             @php
                 $isPrimary = $class['tone'] === 'primary';
@@ -106,10 +106,10 @@
                 $textClass = $isTertiary ? 'text-tertiary' : ($isPrimary ? 'text-primary' : 'text-on-surface-variant');
             @endphp
             <article @class([
-                'group flex flex-col rounded-3xl border border-outline-variant/20 bg-white shadow-sm transition-all hover:shadow-xl',
+                'group flex h-full min-h-[520px] flex-col overflow-hidden rounded-3xl border border-outline-variant/20 bg-white shadow-sm transition-all hover:shadow-xl',
                 'opacity-80 hover:opacity-100' => $class['ended'],
             ])>
-                <div class="relative overflow-hidden rounded-t-3xl border-b border-outline-variant/10 bg-surface-container-lowest p-6">
+                <div class="relative min-h-[210px] overflow-hidden border-b border-outline-variant/10 bg-surface-container-lowest p-6">
                     <div @class([
                         'pointer-events-none absolute right-0 top-0 h-32 w-32 rounded-bl-full',
                         'bg-primary/5' => $isPrimary,
@@ -146,30 +146,30 @@
                         </div>
                     </div>
 
-                    <div class="relative z-10">
-                        <h4 class="line-clamp-2 mb-2 text-2xl font-bold text-on-surface transition-colors group-hover:text-primary">{{ $class['title'] }}</h4>
-                        <div class="mb-1 flex items-center gap-3 text-sm font-medium text-on-surface-variant">
-                            <span class="rounded bg-surface-container-high px-2 py-0.5 text-on-surface">{{ $class['code'] }}</span>
+                    <div class="relative z-10 min-w-0">
+                        <h4 class="mb-2 truncate text-2xl font-bold text-on-surface transition-colors group-hover:text-primary" title="{{ $class['title'] }}">{{ $class['title'] }}</h4>
+                        <div class="mb-1 flex min-w-0 items-center gap-3 text-sm font-medium text-on-surface-variant">
+                            <span class="shrink-0 rounded bg-surface-container-high px-2 py-0.5 text-on-surface">{{ $class['code'] }}</span>
                             <span class="h-1 w-1 rounded-full bg-outline-variant/50"></span>
-                            <span>{{ $class['semester'] }}</span>
+                            <span class="truncate">{{ $class['semester'] }}</span>
                         </div>
                         <p class="text-sm font-medium text-on-surface-variant">Mã lớp: <span class="font-mono text-base font-bold text-on-surface">{{ $class['join_code'] }}</span></p>
                     </div>
                 </div>
 
                 <div @class([
-                    'flex flex-1 flex-col space-y-5 p-6',
+                    'flex min-h-0 flex-1 flex-col space-y-5 p-6',
                     'grayscale transition-all duration-300 group-hover:grayscale-0' => $class['ended'],
                 ])>
                     <div class="grid grid-cols-2 gap-4">
-                        <div class="rounded-2xl border border-outline-variant/20 bg-surface-container-lowest p-4">
+                        <div class="min-h-[94px] rounded-2xl border border-outline-variant/20 bg-surface-container-lowest p-4">
                             <p class="mb-1 text-xs font-bold uppercase text-on-surface-variant">Sinh viên</p>
                             <div class="flex items-center gap-2 text-on-surface">
                                 <x-user.icon name="users" :size="18" class="text-primary" />
                                 <span class="text-xl font-bold">{{ $class['students'] }}</span>
                             </div>
                         </div>
-                        <div class="rounded-2xl border border-outline-variant/20 bg-surface-container-lowest p-4">
+                        <div class="min-h-[94px] rounded-2xl border border-outline-variant/20 bg-surface-container-lowest p-4">
                             <p class="mb-1 text-xs font-bold uppercase text-on-surface-variant">Đã điểm danh</p>
                             <div class="flex items-center gap-2 text-on-surface">
                                 <x-user.icon name="check-square" :size="18" class="text-tertiary" />
@@ -197,7 +197,7 @@
                                 ['label' => 'Thống kê', 'icon' => 'bar-chart'],
                             ] as $action)
                                 <a href="{{ match ($action['label']) { 'Điểm danh QR' => route('lecturer.attendance.qr.create'), 'Thủ công' => route('lecturer.attendance.manual.create'), 'Quản lý SV' => route('lecturer.students.index'), default => '#' } }}" @class([
-                                    'flex h-full flex-col items-center justify-start rounded-xl p-2 text-on-surface-variant transition-colors hover:bg-primary-container hover:text-on-primary-container sm:p-3',
+                                    'flex h-full min-h-[74px] flex-col items-center justify-start rounded-xl p-2 text-on-surface-variant transition-colors hover:bg-primary-container hover:text-on-primary-container sm:p-3',
                                     'cursor-not-allowed opacity-50 hover:bg-surface-container-high hover:text-on-surface-variant' => $class['ended'] && in_array($action['icon'], ['qr-code', 'check-square'], true),
                                 ])>
                                     <x-user.icon :name="$action['icon']" class="mb-2 transition-transform group-hover:scale-110" />
