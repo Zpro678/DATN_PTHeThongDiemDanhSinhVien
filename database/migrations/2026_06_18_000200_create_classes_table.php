@@ -18,8 +18,7 @@ return new class extends Migration
             $table->string('semester', 50)->nullable();
             $table->boolean('require_approval')->default(false);
             $table->string('status', 50)->default('active')->index();
-            $table->unsignedInteger('total_sessions')->default(15);
-            $table->unsignedInteger('lessons_per_session')->nullable()->default(3);
+            $table->unsignedInteger('total_lessons')->default(45);
             $table->timestamps();
             $table->softDeletes();
         });

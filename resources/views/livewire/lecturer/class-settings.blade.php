@@ -73,16 +73,10 @@
                 <div>
                     <h3 class="mb-4 text-lg font-bold text-on-surface border-b border-outline-variant/10 pb-2">Cấu hình điểm danh</h3>
                     <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
-                        <label class="block">
-                            <span class="mb-2 block text-sm font-bold text-on-surface">Tổng số buổi <span class="text-error">*</span></span>
-                            <input type="number" wire:model="totalSessions" class="w-full rounded-xl border border-outline-variant/30 bg-surface-container-lowest px-4 py-3 outline-none transition-all focus:border-primary focus:ring-2 focus:ring-primary/20">
-                            @error('totalSessions') <span class="text-error text-xs mt-1 block">{{ $message }}</span> @enderror
-                        </label>
-                        
-                        <label class="block">
-                            <span class="mb-2 block text-sm font-bold text-on-surface">Số tiết mỗi buổi <span class="text-error">*</span></span>
-                            <input type="number" wire:model="lessonsPerSession" class="w-full rounded-xl border border-outline-variant/30 bg-surface-container-lowest px-4 py-3 outline-none transition-all focus:border-primary focus:ring-2 focus:ring-primary/20">
-                            @error('lessonsPerSession') <span class="text-error text-xs mt-1 block">{{ $message }}</span> @enderror
+                        <label class="block md:col-span-2">
+                            <span class="mb-2 block text-sm font-bold text-on-surface">Tổng số tiết <span class="text-error">*</span></span>
+                            <input type="number" wire:model="totalLessons" class="w-full rounded-xl border border-outline-variant/30 bg-surface-container-lowest px-4 py-3 outline-none transition-all focus:border-primary focus:ring-2 focus:ring-primary/20">
+                            @error('totalLessons') <span class="text-error text-xs mt-1 block">{{ $message }}</span> @enderror
                         </label>
                     </div>
                 </div>

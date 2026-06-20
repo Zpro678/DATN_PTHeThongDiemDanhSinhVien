@@ -4,6 +4,7 @@ namespace App\Livewire\Lecturer\Students;
 
 use App\Models\ClassMember;
 use App\Models\CourseClass;
+use App\Services\LectureManageStudentService;
 use Illuminate\Contracts\View\View;
 use Illuminate\Database\Eloquent\Builder;
 use Livewire\Component;
@@ -123,10 +124,12 @@ class StudentIndex extends Component
 
     public function render(): View
     {
+        $studentService = app(LectureManageStudentService::class); // Gọi service xử lý thống kê chuyên cần sinh viên.
+
         $classes = CourseClass::query()
-            ->where('owner_user_id', auth()->id())
-            ->orderBy('name')
-            ->get(['id', 'name', 'code']);
+            ->where('owner_user_id', auth()->id()) // Chỉ lấy các lớp do giảng viên hiện tại quản lý.
+            ->orderBy('name') // Sắp xếp lớp theo tên để dropdown dễ nhìn.
+            ->get(['id', 'name', 'code']); // Chỉ lấy cột cần dùng cho bộ lọc lớp.
 
         $members = ClassMember::query()
             ->with(['courseClass:id,name,code', 'user:id,email,avatar', 'attendanceSummary'])
@@ -147,7 +150,16 @@ class StudentIndex extends Component
             ->orderBy('full_name')
             ->paginate(12);
 
-        return view('livewire.lecturer.students.index', compact('classes', 'members'))
+        $attendanceStats = $studentService->getStudentsAttendanceStats( // Tính chuyên cần cho từng sinh viên đang hiển thị trên trang hiện tại.
+            $members->getCollection()->pluck('id') // Lấy id sinh viên trong page hiện tại sau khi phân trang.
+        );
+
+        $attendanceOverview = $studentService->getTotalAttendanceStats( // Tính tổng chuyên cần theo toàn bộ bộ lọc hiện tại.
+            auth()->id(), // Giới hạn dữ liệu theo giảng viên đang đăng nhập.
+            $this->classFilter !== 'all' ? (int) $this->classFilter : null // Nếu chọn một lớp thì chỉ thống kê lớp đó.
+        );
+
+        return view('livewire.lecturer.students.index', compact('classes', 'members', 'attendanceStats', 'attendanceOverview')) // Truyền dữ liệu lớp, sinh viên và chuyên cần sang Blade.
             ->layout('layouts.user', ['title' => 'Quản lý sinh viên']);
     }
 }

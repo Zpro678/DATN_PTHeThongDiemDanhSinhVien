@@ -5,7 +5,7 @@
     $openMinutes = max(1, (int) now()->diffInMinutes($session->token_expires_at ?? now()->addMinutes(15), false));
     $qrRefreshRate = 10;
     $startLesson = 1;
-    $endLesson = max(1, (int) $session->courseClass->lessons_per_session);
+    $endLesson = max(1, (int) $session->lesson_count);
     $statusMeta = [
         'pending' => ['label' => 'Chưa điểm danh', 'pill' => 'border-slate-200 bg-slate-100 text-slate-600'],
         'present' => ['label' => 'Có mặt', 'pill' => 'border-emerald-200 bg-emerald-100 text-emerald-700'],

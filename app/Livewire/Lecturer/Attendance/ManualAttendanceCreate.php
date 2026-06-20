@@ -71,6 +71,7 @@ class ManualAttendanceCreate extends Component
             'date' => $validated['date'],
             'start_time' => $validated['startTime'] ?: null,
             'end_time' => $validated['endTime'] ?: null,
+            'lesson_count' => $validated['endPeriod'] - $validated['startPeriod'] + 1,
             'status' => 'active',
         ]);
 
@@ -122,8 +123,7 @@ class ManualAttendanceCreate extends Component
                 'semester' => 'HK2 2025-2026',
                 'require_approval' => false,
                 'status' => 'active',
-                'total_sessions' => 15,
-                'lessons_per_session' => 3,
+                'total_lessons' => 45,
             ],
         );
 

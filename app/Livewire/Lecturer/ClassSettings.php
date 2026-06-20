@@ -16,8 +16,7 @@ class ClassSettings extends Component
     public string $subjectCode = '';
     public string $semester = '';
     public string $description = '';
-    public int $totalSessions = 15;
-    public int $lessonsPerSession = 3;
+    public int $totalLessons = 45;
     public bool $requireApproval = false;
     public string $status = 'active';
 
@@ -34,8 +33,7 @@ class ClassSettings extends Component
         $this->subjectCode = $courseClass->subject_code ?? '';
         $this->semester = $courseClass->semester ?? '';
         $this->description = $courseClass->description ?? '';
-        $this->totalSessions = $courseClass->total_sessions;
-        $this->lessonsPerSession = $courseClass->lessons_per_session;
+        $this->totalLessons = $courseClass->total_lessons;
         $this->requireApproval = $courseClass->require_approval;
         $this->status = $courseClass->status;
     }
@@ -48,16 +46,14 @@ class ClassSettings extends Component
             'subjectCode' => ['nullable', 'string', 'max:50'],
             'semester' => ['nullable', 'string', 'max:50'],
             'description' => ['nullable', 'string', 'max:5000'],
-            'totalSessions' => ['required', 'integer', 'min:1', 'max:100'],
-            'lessonsPerSession' => ['required', 'integer', 'min:1', 'max:20'],
+            'totalLessons' => ['required', 'integer', 'min:1', 'max:300'],
             'requireApproval' => ['boolean'],
             'status' => ['required', 'string', Rule::in(['active', 'archived', 'ended'])],
         ], [
             'name.required' => 'Vui lòng nhập tên lớp.',
             'code.required' => 'Vui lòng nhập mã lớp.',
             'code.unique' => 'Mã lớp đã tồn tại trên hệ thống.',
-            'totalSessions.min' => 'Tổng số buổi phải lớn hơn 0.',
-            'lessonsPerSession.min' => 'Số tiết mỗi buổi phải lớn hơn 0.',
+            'totalLessons.min' => 'Tổng số tiết phải lớn hơn 0.',
         ]);
 
         $this->courseClass->update([
@@ -66,8 +62,7 @@ class ClassSettings extends Component
             'subject_code' => filled($validated['subjectCode']) ? strtoupper($validated['subjectCode']) : null,
             'semester' => $validated['semester'] ?: null,
             'description' => $validated['description'] ?: null,
-            'total_sessions' => $validated['totalSessions'],
-            'lessons_per_session' => $validated['lessonsPerSession'],
+            'total_lessons' => $validated['totalLessons'],
             'require_approval' => $validated['requireApproval'],
             'status' => $validated['status'],
         ]);

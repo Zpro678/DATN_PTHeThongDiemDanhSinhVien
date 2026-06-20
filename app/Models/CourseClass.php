@@ -25,15 +25,13 @@ class CourseClass extends Model
         'require_approval', // Bật/tắt yêu cầu duyệt khi xin vào lớp.
         'status', // Trạng thái lớp active/archived.
         'total_lessons', // Tổng số tiết của môn học.
-       
     ];
 
     protected function casts(): array
     {
         return [
             'require_approval' => 'boolean', // Ép kiểu cờ yêu cầu duyệt.
-            'total_sessions' => 'integer', // Ép kiểu tổng số buổi.
-            'lessons_per_session' => 'integer', // Ép kiểu số tiết mỗi buổi.
+            'total_lessons' => 'integer', // Ép kiểu tổng số tiết.
         ];
     }
 

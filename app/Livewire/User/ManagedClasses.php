@@ -21,7 +21,8 @@ class ManagedClasses extends Component
     public function render(): View
     {
         $query = \App\Models\CourseClass::where('owner_user_id', auth()->id())
-            ->withCount(['members as students_count']);
+            ->withCount(['members as students_count'])
+            ->withSum(['sessions as studied_lessons' => fn ($query) => $query->where('status', 'closed')], 'lesson_count');
 
         if ($this->statusFilter === 'Đang hoạt động') {
             $query->where('status', 'active');

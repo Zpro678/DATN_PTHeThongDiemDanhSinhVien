@@ -84,7 +84,7 @@
                 $textClass = $isTertiary ? 'text-tertiary' : ($isPrimary ? 'text-primary' : 'text-on-surface-variant');
                 // Mock attendance percentage for now, ideally this would be calculated from relations
                 $attendancePct = 100;
-                $sessionsCompleted = 0; // Mock completed sessions
+                $studiedLessons = (int) ($class->studied_lessons ?? 0);
             @endphp
             <article @class([
                 'group relative flex flex-col overflow-hidden rounded-3xl bg-white transition-all duration-300 hover:-translate-y-1',
@@ -158,10 +158,10 @@
                             </p>
                         </div>
                         <div>
-                            <p class="text-[9px] font-bold uppercase tracking-wider text-on-surface-variant">Đã điểm danh</p>
+                            <p class="text-[9px] font-bold uppercase tracking-wider text-on-surface-variant">Đã học</p>
                             <p class="mt-1 flex items-center gap-1.5">
                                 <x-user.icon name="check-square" class="text-tertiary" :size="16"/>
-                                <span class="text-xl font-black leading-none text-on-surface">{{ $sessionsCompleted }}/{{ $class->total_sessions }}</span>
+                                <span class="text-xl font-black leading-none text-on-surface">{{ $studiedLessons }}/{{ $class->total_lessons }}</span>
                             </p>
                         </div>
                     </div>

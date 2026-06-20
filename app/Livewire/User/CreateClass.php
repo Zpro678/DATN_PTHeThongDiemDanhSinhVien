@@ -19,9 +19,7 @@ class CreateClass extends Component
 
     public string $description = '';
 
-    public int $totalSessions = 15;
-
-    public int $lessonsPerSession = 3;
+    public int $totalLessons = 45;
 
     public bool $requireApproval = false;
 
@@ -33,15 +31,13 @@ class CreateClass extends Component
             'subjectCode' => ['nullable', 'string', 'max:50'],
             'semester' => ['nullable', 'string', 'max:50'],
             'description' => ['nullable', 'string', 'max:5000'],
-            'totalSessions' => ['required', 'integer', 'min:1', 'max:100'],
-            'lessonsPerSession' => ['required', 'integer', 'min:1', 'max:20'],
+            'totalLessons' => ['required', 'integer', 'min:1', 'max:300'],
             'requireApproval' => ['boolean'],
         ], [
             'name.required' => 'Vui lòng nhập tên lớp.',
             'code.required' => 'Vui lòng nhập mã lớp.',
             'code.unique' => 'Mã lớp đã tồn tại trên hệ thống.',
-            'totalSessions.min' => 'Tổng số buổi phải lớn hơn 0.',
-            'lessonsPerSession.min' => 'Số tiết mỗi buổi phải lớn hơn 0.',
+            'totalLessons.min' => 'Tổng số tiết phải lớn hơn 0.',
         ]);
 
         CourseClass::query()->create([
@@ -51,8 +47,7 @@ class CreateClass extends Component
             'subject_code' => filled($validated['subjectCode']) ? strtoupper($validated['subjectCode']) : null,
             'semester' => $validated['semester'] ?: null,
             'description' => $validated['description'] ?: null,
-            'total_sessions' => $validated['totalSessions'],
-            'lessons_per_session' => $validated['lessonsPerSession'],
+            'total_lessons' => $validated['totalLessons'],
             'require_approval' => $validated['requireApproval'],
             'status' => 'active',
         ]);

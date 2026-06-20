@@ -17,6 +17,21 @@
         <div class="rounded-2xl border border-emerald-200 bg-emerald-50 px-5 py-3 text-sm font-semibold text-emerald-700">{{ session('status') }}</div>
     @endif
 
+    <section class="grid gap-4 sm:grid-cols-2 lg:grid-cols-5">
+        @foreach ([
+            ['label' => 'Tổng sinh viên', 'value' => $attendanceOverview['total_students'], 'color' => 'text-primary'],
+            ['label' => 'Có mặt', 'value' => $attendanceOverview['present_lessons'], 'color' => 'text-emerald-600'],
+            ['label' => 'Muộn', 'value' => $attendanceOverview['late_lessons'], 'color' => 'text-amber-600'],
+            ['label' => 'Vắng', 'value' => $attendanceOverview['absent_lessons'], 'color' => 'text-red-600'],
+            ['label' => 'Chuyên cần tổng', 'value' => $attendanceOverview['attendance_percent'].'%', 'color' => 'text-primary'],
+        ] as $overviewItem)
+            <div class="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm">
+                <p class="text-xs font-bold uppercase tracking-wider text-slate-500">{{ $overviewItem['label'] }}</p>
+                <p class="mt-2 text-3xl font-extrabold {{ $overviewItem['color'] }}">{{ $overviewItem['value'] }}</p>
+            </div>
+        @endforeach
+    </section>
+
     <section class="grid gap-3 rounded-2xl border border-slate-200 bg-white p-4 shadow-sm lg:grid-cols-[1fr_260px_auto]">
         <label class="relative">
             <x-user.icon name="search" :size="18" class="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400" />
@@ -51,9 +66,13 @@
                 <tbody class="divide-y divide-slate-100">
                     @forelse ($members as $member)
                         @php
-                            $summary = $member->attendanceSummary;
-                            $total = ($summary?->total_present ?? 0) + ($summary?->total_late ?? 0) + ($summary?->total_absent ?? 0) + ($summary?->total_excused ?? 0);
-                            $rate = $total > 0 ? (int) round((($summary?->total_present ?? 0) + ($summary?->total_late ?? 0)) / $total * 100) : 0;
+                            $stats = $attendanceStats[$member->id] ?? [
+                                'present_lessons' => 0,
+                                'late_lessons' => 0,
+                                'absent_lessons' => 0,
+                                'attendance_percent' => 0,
+                            ];
+                            $rate = (float) $stats['attendance_percent'];
                         @endphp
                         <tr class="transition-colors hover:bg-slate-50/70">
                             <td class="px-6 py-4">
@@ -69,9 +88,9 @@
                                 <span class="block text-sm font-semibold text-slate-700">{{ $member->courseClass->name }}</span>
                                 <span class="text-xs text-slate-500">{{ $member->courseClass->code }}</span>
                             </td>
-                            <td class="px-4 py-4 text-center text-sm font-bold text-emerald-600">{{ $summary?->total_present ?? 0 }}</td>
-                            <td class="px-4 py-4 text-center text-sm font-bold text-amber-600">{{ $summary?->total_late ?? 0 }}</td>
-                            <td class="px-4 py-4 text-center text-sm font-bold text-red-600">{{ $summary?->total_absent ?? 0 }}</td>
+                            <td class="px-4 py-4 text-center text-sm font-bold text-emerald-600">{{ $stats['present_lessons'] }}</td>
+                            <td class="px-4 py-4 text-center text-sm font-bold text-amber-600">{{ $stats['late_lessons'] }}</td>
+                            <td class="px-4 py-4 text-center text-sm font-bold text-red-600">{{ $stats['absent_lessons'] }}</td>
                             <td class="px-4 py-4 text-center">
                                 <span @class(['inline-flex rounded-full px-3 py-1 text-xs font-bold', 'bg-emerald-50 text-emerald-700' => $rate >= 80, 'bg-amber-50 text-amber-700' => $rate >= 60 && $rate < 80, 'bg-red-50 text-red-700' => $rate < 60])>{{ $rate }}%</span>
                             </td>

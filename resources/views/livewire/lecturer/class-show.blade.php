@@ -64,8 +64,8 @@
                         <span class="font-semibold text-on-surface">{{ $class->subject_code ?? 'N/A' }}</span>
                     </div>
                     <div class="flex justify-between">
-                        <span class="text-on-surface-variant">Số buổi học</span>
-                        <span class="font-semibold text-on-surface">{{ $class->total_sessions }} buổi</span>
+                        <span class="text-on-surface-variant">Tổng số tiết</span>
+                        <span class="font-semibold text-on-surface">{{ $class->total_lessons }} tiết</span>
                     </div>
                 </div>
             </div>

@@ -85,6 +85,7 @@ class QrAttendanceCreate extends Component
             'qr_token' => Str::upper(Str::random(24)),
             'token_expires_at' => now()->addMinutes($validated['durationMinutes']),
             'gps_radius' => $validated['gpsEnabled'] ? $validated['gpsRadius'] : null,
+            'lesson_count' => $validated['endLesson'] - $validated['startLesson'] + 1,
             'status' => 'active',
         ]);
 
@@ -140,8 +141,7 @@ class QrAttendanceCreate extends Component
                 'semester' => 'HK2 2025-2026',
                 'require_approval' => false,
                 'status' => 'active',
-                'total_sessions' => 15,
-                'lessons_per_session' => 3,
+                'total_lessons' => 45,
             ],
         );
 
