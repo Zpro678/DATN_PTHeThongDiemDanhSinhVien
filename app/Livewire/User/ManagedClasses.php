@@ -18,10 +18,26 @@ class ManagedClasses extends Component
         $this->statusFilter = $status;
     }
 
+    public function toggleArchive(int $classId): void
+    {
+        $class = \App\Models\CourseClass::where('owner_user_id', auth()->id())->findOrFail($classId);
+        
+        if ($class->status === 'archived') {
+            $class->update(['status' => 'active']);
+        } else {
+            $class->update(['status' => 'archived']);
+        }
+    }
+
     public function render(): View
     {
         $query = \App\Models\CourseClass::where('owner_user_id', auth()->id())
-            ->withCount(['members as students_count']);
+            ->withCount([
+                'members as students_count',
+                'sessions as sessions_completed' => function ($q) {
+                    $q->whereIn('status', ['closed', 'active']);
+                },
+            ]);
 
         if ($this->statusFilter === 'Đang hoạt động') {
             $query->where('status', 'active');

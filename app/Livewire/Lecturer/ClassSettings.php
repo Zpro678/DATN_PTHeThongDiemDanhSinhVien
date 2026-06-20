@@ -21,6 +21,8 @@ class ClassSettings extends Component
     public bool $requireApproval = false;
     public string $status = 'active';
 
+    public bool $isConfirmingDelete = false;
+
     public function mount(CourseClass $courseClass): void
     {
         if ($courseClass->owner_user_id !== auth()->id()) {
@@ -44,7 +46,6 @@ class ClassSettings extends Component
     {
         $validated = $this->validate([
             'name' => ['required', 'string', 'max:255'],
-            'code' => ['required', 'string', 'max:50', Rule::unique('classes', 'code')->ignore($this->courseClass->id)],
             'subjectCode' => ['nullable', 'string', 'max:50'],
             'semester' => ['nullable', 'string', 'max:50'],
             'description' => ['nullable', 'string', 'max:5000'],
@@ -54,15 +55,12 @@ class ClassSettings extends Component
             'status' => ['required', 'string', Rule::in(['active', 'archived', 'ended'])],
         ], [
             'name.required' => 'Vui lòng nhập tên lớp.',
-            'code.required' => 'Vui lòng nhập mã lớp.',
-            'code.unique' => 'Mã lớp đã tồn tại trên hệ thống.',
             'totalSessions.min' => 'Tổng số buổi phải lớn hơn 0.',
             'lessonsPerSession.min' => 'Số tiết mỗi buổi phải lớn hơn 0.',
         ]);
 
         $this->courseClass->update([
             'name' => $validated['name'],
-            'code' => strtoupper($validated['code']),
             'subject_code' => filled($validated['subjectCode']) ? strtoupper($validated['subjectCode']) : null,
             'semester' => $validated['semester'] ?: null,
             'description' => $validated['description'] ?: null,
@@ -76,6 +74,27 @@ class ClassSettings extends Component
         
         // Refresh the model properties just in case
         $this->courseClass->refresh();
+    }
+
+    public function confirmDelete(): void
+    {
+        $this->isConfirmingDelete = true;
+    }
+
+    public function closeDeleteConfirm(): void
+    {
+        $this->isConfirmingDelete = false;
+    }
+
+    public function deleteClass(): void
+    {
+        if (!$this->isConfirmingDelete) {
+            return;
+        }
+
+        $this->courseClass->delete();
+        session()->flash('status', 'Đã xóa lớp học thành công.');
+        $this->redirectRoute('managed-classes', navigate: true);
     }
 
     public function render(): View

@@ -73,32 +73,38 @@
     <section class="grid grid-cols-1 gap-5 lg:grid-cols-3 xl:grid-cols-3">
         @forelse ($classes as $index => $class)
             @php
-                $isEnded = in_array($class->status, ['ended', 'archived']);
+                $isEnded = $class->status === 'ended';
+                $isArchived = $class->status === 'archived';
                 $isPrimary = $index % 2 === 0;
                 $isTertiary = ! $isPrimary;
-                if ($isEnded) {
+                if ($isEnded || $isArchived) {
                     $isPrimary = false;
                     $isTertiary = false;
                 }
                 $barClass = $isTertiary ? 'bg-tertiary' : ($isPrimary ? 'bg-primary' : 'bg-outline-variant');
                 $textClass = $isTertiary ? 'text-tertiary' : ($isPrimary ? 'text-primary' : 'text-on-surface-variant');
-                // Mock attendance percentage for now, ideally this would be calculated from relations
-                $attendancePct = 100;
-                $sessionsCompleted = 0; // Mock completed sessions
+                $sessionsCompleted = $class->sessions_completed ?? 0;
+                $attendancePct = $class->total_sessions > 0
+                    ? round(($sessionsCompleted / $class->total_sessions) * 100)
+                    : 0;
             @endphp
             <article @class([
-                'group relative flex flex-col overflow-hidden rounded-3xl bg-white transition-all duration-300 hover:-translate-y-1',
+                'group relative flex flex-col overflow-hidden rounded-3xl bg-white transition-all duration-300 hover:-translate-y-1 cursor-pointer',
                 'ring-1 ring-primary/20 shadow-lg shadow-primary/5 hover:shadow-xl hover:shadow-primary/10' => $isPrimary,
                 'ring-1 ring-tertiary/20 shadow-lg shadow-tertiary/5 hover:shadow-xl hover:shadow-tertiary/10' => $isTertiary,
                 'ring-1 ring-outline-variant/20 shadow-md hover:shadow-xl' => ! $isPrimary && ! $isTertiary,
-                'opacity-80 hover:opacity-100' => $isEnded,
+                'opacity-80 hover:opacity-100' => $isEnded || $isArchived,
             ])>
+                {{-- Phủ 1 link tàng hình lên toàn bộ thẻ để click được cả thẻ --}}
+                <a href="{{ route('lecturer.classes.show', $class->id) }}" class="absolute inset-0 z-0"><span class="sr-only">Xem chi tiết lớp</span></a>
+
                 <!-- Classroom-style Header -->
                 <div @class([
                     'relative flex h-28 flex-col justify-between p-5',
                     'bg-primary/95' => $isPrimary,
                     'bg-tertiary/95' => $isTertiary,
-                    'bg-slate-600/95' => ! $isPrimary && ! $isTertiary,
+                    'bg-orange-400/95' => $isArchived,
+                    'bg-slate-600/95' => ! $isPrimary && ! $isTertiary && ! $isArchived,
                 ])>
                     <div class="flex items-start justify-between">
                         <div class="pr-6">
@@ -113,8 +119,8 @@
                         </div>
 
                         <!-- Dropdown Menu -->
-                        <div class="absolute right-2 top-2" x-data="{ open: false }">
-                            <button type="button" x-on:click="open = ! open" class="rounded-full p-2 text-white transition-colors hover:bg-white/20">
+                        <div class="absolute right-2 top-2 z-10" x-data="{ open: false }">
+                            <button type="button" x-on:click="open = ! open" class="rounded-full p-2 text-white transition-colors hover:bg-white/20 relative z-10">
                                 <x-user.icon name="more-vertical" :size="20" />
                             </button>
                             <div x-cloak x-show="open" x-on:click.outside="open = false" class="absolute right-0 top-full z-50 mt-1 w-44 rounded-xl border border-outline-variant/20 bg-white py-2 shadow-lg">
@@ -122,7 +128,11 @@
                                 @if (! $isEnded)
                                     <a href="{{ route('lecturer.classes.settings', $class->id) }}" class="block w-full px-4 py-2 text-left text-sm font-medium hover:bg-surface-container">Cài đặt lớp</a>
                                 @endif
-                                <button type="button" class="w-full px-4 py-2 text-left text-sm font-medium text-error hover:bg-error/10">Lưu trữ lớp học</button>
+                                @if ($isArchived)
+                                    <button type="button" wire:click="toggleArchive({{ $class->id }})" class="w-full px-4 py-2 text-left text-sm font-medium text-primary hover:bg-primary/10">Khôi phục lớp học</button>
+                                @else
+                                    <button type="button" wire:click="toggleArchive({{ $class->id }})" class="w-full px-4 py-2 text-left text-sm font-medium text-error hover:bg-error/10">Lưu trữ lớp học</button>
+                                @endif
                             </div>
                         </div>
                     </div>
@@ -134,11 +144,12 @@
                         <div class="flex items-center gap-2">
                             <span @class([
                                 'rounded-full px-2.5 py-0.5 text-[10px] font-bold uppercase tracking-wider',
-                                'bg-primary/10 text-primary' => ! $isEnded && $isPrimary,
-                                'bg-tertiary/10 text-tertiary' => ! $isEnded && $isTertiary,
+                                'bg-primary/10 text-primary' => ! $isEnded && ! $isArchived && $isPrimary,
+                                'bg-tertiary/10 text-tertiary' => ! $isEnded && ! $isArchived && $isTertiary,
+                                'bg-orange-100 text-orange-700' => $isArchived,
                                 'bg-surface-container text-on-surface-variant' => $isEnded,
                             ])>
-                                {{ $isEnded ? 'Đã kết thúc' : 'Đang hoạt động' }}
+                                @if($isArchived) LƯU TRỮ @elseif($isEnded) ĐÃ KẾT THÚC @else ĐANG HOẠT ĐỘNG @endif
                             </span>
                             <span class="flex items-center gap-1 rounded-full bg-[#F59E0B]/10 px-2.5 py-0.5 text-[10px] font-bold uppercase tracking-wider text-[#F59E0B]">
                                 <x-user.icon name="shield" :size="10" />

@@ -1,24 +1,11 @@
 @php
-    $stats = [
-        ['label' => 'Tổng lớp', 'value' => '4', 'icon' => 'book-open', 'color' => 'text-primary', 'bg' => 'bg-primary/10'],
-        ['label' => 'Tổng sinh viên', 'value' => '156', 'icon' => 'users', 'color' => 'text-tertiary', 'bg' => 'bg-tertiary/10'],
-        ['label' => 'Buổi điểm danh nay', 'value' => '2', 'icon' => 'user-check', 'color' => 'text-secondary', 'bg' => 'bg-secondary/10'],
-        ['label' => 'Đơn nghỉ chờ duyệt', 'value' => '5', 'icon' => 'clock', 'color' => 'text-error', 'bg' => 'bg-error/10'],
-    ];
-
     $actions = [
         ['label' => 'Tạo lớp học mới', 'icon' => 'plus-circle', 'href' => route('create-class')],
-        ['label' => 'Import sinh viên', 'icon' => 'upload', 'href' => '#'],
+        ['label' => 'Import sinh viên', 'icon' => 'upload', 'href' => route('lecturer.students.index')],
         ['label' => 'Tạo buổi điểm danh', 'icon' => 'calendar-plus', 'href' => route('lecturer.attendance.create')],
         ['label' => 'Điểm danh thủ công', 'icon' => 'edit', 'href' => route('lecturer.attendance.manual.create')],
         ['label' => 'Tạo QR điểm danh', 'icon' => 'qr-code', 'href' => route('lecturer.attendance.qr.create')],
-        ['label' => 'Xuất báo cáo', 'icon' => 'file-text', 'href' => '#'],
-    ];
-
-    $classes = [
-        ['title' => 'Lập trình Web', 'code' => 'WEB2024', 'semester' => 'Học kỳ I - 2024', 'students' => 45, 'attendance' => 92, 'icon' => 'code', 'bg' => 'bg-primary', 'bar' => 'bg-primary', 'hover' => 'group-hover:text-primary'],
-        ['title' => 'Cơ sở dữ liệu', 'code' => 'DB2024_02', 'semester' => 'Học kỳ I - 2024', 'students' => 38, 'attendance' => 85, 'icon' => 'database', 'bg' => 'bg-tertiary', 'bar' => 'bg-tertiary', 'hover' => 'group-hover:text-tertiary'],
-        ['title' => 'Kiến trúc phần mềm', 'code' => 'SA301', 'semester' => 'Học kỳ I - 2024', 'students' => 33, 'attendance' => 78, 'icon' => 'blocks', 'bg' => 'bg-secondary', 'bar' => 'bg-secondary', 'hover' => 'group-hover:text-secondary'],
+        ['label' => 'Quản lý sinh viên', 'icon' => 'users', 'href' => route('lecturer.students.index')],
     ];
 @endphp
 
@@ -107,14 +94,14 @@
                             <p class="text-[11px] italic text-on-surface-variant/70">Tỷ lệ chuyên cần trung bình</p>
                         </div>
                         <div class="mt-auto grid grid-cols-2 gap-3">
-                            <button type="button" class="flex items-center justify-center gap-2 rounded-xl bg-primary py-2.5 font-body-md font-bold text-white transition-colors hover:bg-on-primary-fixed-variant">
+                            <a href="{{ route('lecturer.attendance.create', ['class_id' => $class['id']]) }}" class="flex items-center justify-center gap-2 rounded-xl bg-primary py-2.5 font-body-md font-bold text-white transition-colors hover:bg-on-primary-fixed-variant">
                                 <x-user.icon name="check-square" :size="16" />
                                 Điểm danh
-                            </button>
-                            <button type="button" class="flex items-center justify-center gap-2 rounded-xl border border-outline-variant/30 py-2.5 font-body-md font-bold text-on-surface-variant transition-colors hover:bg-surface-container">
+                            </a>
+                            <a href="{{ route('lecturer.classes.show', $class['id']) }}" class="flex items-center justify-center gap-2 rounded-xl border border-outline-variant/30 py-2.5 font-body-md font-bold text-on-surface-variant transition-colors hover:bg-surface-container">
                                 <x-user.icon name="eye" :size="16" />
                                 Chi tiết
-                            </button>
+                            </a>
                         </div>
                     </div>
                 </article>

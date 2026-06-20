@@ -1,11 +1,11 @@
 <div class="space-y-6 animate-in fade-in slide-in-from-bottom-4 duration-500">
     <div class="flex items-center gap-4">
-        <a href="{{ route('dashboard') }}" class="flex h-10 w-10 items-center justify-center rounded-full bg-surface-container-low text-on-surface-variant transition-colors hover:bg-surface-container hover:text-on-surface">
+        <a href="{{ route('lecturer.classes.show', $courseClass->id) }}" class="flex h-10 w-10 items-center justify-center rounded-full bg-surface-container-low text-on-surface-variant transition-colors hover:bg-surface-container hover:text-on-surface">
             <x-user.icon name="arrow-left" :size="20" />
         </a>
         <div>
-            <h1 class="text-2xl font-bold text-on-surface">Thống kê lớp: {{ $courseClass->course_name }}</h1>
-            <p class="text-sm text-on-surface-variant">{{ $courseClass->course_code }} • Học kỳ 2 2025-2026</p>
+            <h1 class="text-2xl font-bold text-on-surface">Thống kê lớp: {{ $courseClass->name }}</h1>
+            <p class="text-sm text-on-surface-variant">{{ $courseClass->code }} • {{ $courseClass->semester ?? 'Chưa xác định' }}</p>
         </div>
     </div>
 

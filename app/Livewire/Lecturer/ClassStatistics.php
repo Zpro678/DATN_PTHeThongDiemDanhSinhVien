@@ -2,9 +2,8 @@
 
 namespace App\Livewire\Lecturer;
 
+use App\Models\AttendanceRecord;
 use App\Models\CourseClass;
-use App\Models\AttendanceSession;
-use App\Models\Student;
 use Livewire\Component;
 
 class ClassStatistics extends Component
@@ -57,6 +56,7 @@ class ClassStatistics extends Component
 
     public function render()
     {
-        return view('livewire.lecturer.class-statistics')->layout('layouts.user');
+        return view('livewire.lecturer.class-statistics')
+            ->layout('layouts.user', ['title' => 'Thống kê — ' . ($this->courseClass->name ?? '')]);
     }
 }
