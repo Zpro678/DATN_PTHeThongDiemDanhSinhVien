@@ -34,7 +34,6 @@ class ManualAttendanceCreate extends Component
     public function mount(): void
     {
         $this->date = now()->toDateString();
-        $this->name = 'Buổi '.now()->format('d/m');
         $this->classId = (string) ($this->availableClasses()->first()?->id ?? '');
     }
 

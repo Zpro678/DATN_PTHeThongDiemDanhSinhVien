@@ -93,8 +93,6 @@
     </style>
 </head>
 <body class="antialiased text-slate-900 bg-[#fafbff] min-h-[100dvh] flex flex-col overflow-x-hidden md:h-screen md:overflow-hidden" x-data="globalParallax()" :style="`--mouse-x: ${cursorX}px; --mouse-y: ${cursorY}px`">
-    <!-- Background cố định chống vỡ giao diện -->
-    <!-- Grid nền mặc định mờ -->
     <div class="fixed inset-0 dot-grid opacity-40 -z-20 pointer-events-none"></div>
 
     <!-- Grid bắt sáng khi rê chuột (Interactive Mask Grid) -->
@@ -105,7 +103,6 @@
                 -webkit-mask-image: radial-gradient(400px circle at var(--mouse-x) var(--mouse-y), black, transparent);">
     </div>
 
-    <!-- Vùng sáng xanh di chuyển bám sát chuột (Soft Glow Follower) -->
     <div class="fixed top-0 left-0 w-[500px] h-[500px] bg-blue-500/15 rounded-full blur-[80px] pointer-events-none -z-15 transition-transform duration-100 ease-out will-change-transform"
          :style="`transform: translate(calc(var(--mouse-x) - 250px), calc(var(--mouse-y) - 250px))`">
     </div>

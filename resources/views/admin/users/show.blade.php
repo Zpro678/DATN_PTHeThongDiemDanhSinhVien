@@ -34,9 +34,13 @@
                 <div class="h-24 bg-gradient-to-r from-blue-600 via-cyan-500 to-emerald-500"></div>
                 <div class="px-6 pb-6">
                     <div class="-mt-12 flex justify-center">
-                        <div class="flex h-24 w-24 items-center justify-center rounded-3xl border-4 border-white bg-blue-100 text-3xl font-black text-blue-700 shadow-sm">
-                            {{ $initial }}
-                        </div>
+                        @if($user->avatar)
+                            <img src="{{ asset('storage/'.$user->avatar) }}" alt="{{ $user->name }}" class="h-24 w-24 rounded-3xl border-4 border-white object-cover bg-blue-100 shadow-sm">
+                        @else
+                            <div class="flex h-24 w-24 items-center justify-center rounded-3xl border-4 border-white bg-blue-100 text-3xl font-black text-blue-700 shadow-sm">
+                                {{ $initial }}
+                            </div>
+                        @endif
                     </div>
 
                     <div class="mt-4 text-center">
@@ -142,10 +146,6 @@
                                 <dt class="text-[10px] font-bold uppercase tracking-widest text-slate-400">Email</dt>
                                 <dd class="mt-1 rounded-xl border border-slate-200 bg-white/75 px-4 py-3 font-bold text-slate-900">{{ $user->email }}</dd>
                             </div>
-                            <div>
-                                <dt class="text-[10px] font-bold uppercase tracking-widest text-slate-400">Mã định danh</dt>
-                                <dd class="mt-1 rounded-xl border border-slate-200 bg-white/75 px-4 py-3 font-bold text-slate-900">{{ $user->code ?: 'Chưa cập nhật' }}</dd>
-                            </div>
                         </dl>
 
                         <dl class="space-y-5 text-sm">
@@ -157,62 +157,11 @@
                                 <dt class="text-[10px] font-bold uppercase tracking-widest text-slate-400">Quyền hệ thống</dt>
                                 <dd class="mt-1 rounded-xl border border-slate-200 bg-white/75 px-4 py-3 font-bold text-slate-900">{{ $roleLabel }}</dd>
                             </div>
-                            <div>
-                                <dt class="text-[10px] font-bold uppercase tracking-widest text-slate-400">Email xác thực</dt>
-                                <dd class="mt-1 rounded-xl border border-slate-200 bg-white/75 px-4 py-3 font-bold text-slate-900">{{ $user->email_verified_at ? $user->email_verified_at->format('d/m/Y H:i') : 'Chưa xác thực' }}</dd>
-                            </div>
                         </dl>
                     </div>
                 </section>
 
-                <section class="admin-grid-equal grid grid-cols-1 gap-6 xl:grid-cols-2">
-                    <div class="admin-card admin-card-hover flex h-full flex-col overflow-hidden rounded-2xl border">
-                        <div class="border-b border-slate-100 p-6">
-                            <h2 class="text-xl font-black text-slate-900">Lớp đã tạo gần đây</h2>
-                            <p class="mt-1 text-sm font-medium text-slate-500">Danh sách lớp mà người dùng đang sở hữu.</p>
-                        </div>
 
-                        <div class="divide-y divide-slate-100">
-                            @forelse ($recentClasses as $class)
-                                <div class="flex items-center justify-between gap-4 p-6 transition-colors hover:bg-blue-50/40">
-                                    <div class="min-w-0">
-                                        <p class="truncate text-sm font-black text-slate-900">{{ $class->name }}</p>
-                                        <p class="mt-1 text-xs font-medium text-slate-400">{{ $class->code }} / {{ $class->subject_code ?: 'Chưa có mã môn' }}</p>
-                                    </div>
-                                    <div class="flex shrink-0 items-center gap-2">
-                                        <span class="rounded-lg bg-slate-100 px-2.5 py-1 text-[10px] font-bold uppercase tracking-wider text-slate-600">{{ $class->users_count }} SV</span>
-                                        <span class="rounded-lg bg-blue-50 px-2.5 py-1 text-[10px] font-bold uppercase tracking-wider text-blue-700">{{ $class->sessions_count }} buổi</span>
-                                    </div>
-                                </div>
-                            @empty
-                                <div class="p-6 text-sm font-medium text-slate-500">Chưa có lớp nào được tạo.</div>
-                            @endforelse
-                        </div>
-                    </div>
-
-                    <div class="admin-card admin-card-hover flex h-full flex-col overflow-hidden rounded-2xl border">
-                        <div class="border-b border-slate-100 p-6">
-                            <h2 class="text-xl font-black text-slate-900">Nhật ký gần đây</h2>
-                            <p class="mt-1 text-sm font-medium text-slate-500">Các thao tác gần nhất của tài khoản này.</p>
-                        </div>
-
-                        <div class="divide-y divide-slate-100">
-                            @forelse ($recentLogs as $log)
-                                <div class="flex flex-col gap-2 p-6 transition-colors hover:bg-blue-50/40">
-                                    <div class="flex items-center justify-between gap-3">
-                                        <p class="text-sm font-black text-slate-900">{{ $log->action }}</p>
-                                        <p class="text-[10px] font-bold uppercase tracking-wider text-slate-400">{{ $log->created_at?->format('d/m/Y H:i') }}</p>
-                                    </div>
-                                    <p class="text-xs font-medium text-slate-500">
-                                        Bảng {{ $log->table_name ?: 'n/a' }} @if($log->row_id) #{{ $log->row_id }} @endif
-                                    </p>
-                                </div>
-                            @empty
-                                <div class="p-6 text-sm font-medium text-slate-500">Chưa có nhật ký nào.</div>
-                            @endforelse
-                        </div>
-                    </div>
-                </section>
             </div>
         </div>
     </div>

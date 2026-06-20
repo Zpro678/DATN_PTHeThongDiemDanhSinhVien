@@ -34,9 +34,11 @@
                         </label>
                         
                         <label class="block">
-                            <span class="mb-2 block text-sm font-bold text-on-surface">Mã lớp <span class="text-error">*</span></span>
-                            <input type="text" wire:model="code" class="w-full rounded-xl border border-outline-variant/30 bg-surface-container-lowest px-4 py-3 outline-none uppercase transition-all focus:border-primary focus:ring-2 focus:ring-primary/20" placeholder="VD: WEB301">
-                            @error('code') <span class="text-error text-xs mt-1 block">{{ $message }}</span> @enderror
+                            <span class="mb-2 block text-sm font-bold text-on-surface">Mã lớp</span>
+                            <div class="flex items-center gap-3">
+                                <input type="text" wire:model="code" class="w-full rounded-xl border border-outline-variant/30 bg-surface-container-lowest px-4 py-3 outline-none uppercase opacity-60 cursor-not-allowed" disabled>
+                                <span class="shrink-0 rounded-full bg-surface-container px-3 py-1 text-xs font-bold text-on-surface-variant">Tự động sinh</span>
+                            </div>
                         </label>
                         
                         <label class="block">
@@ -114,4 +116,41 @@
             </div>
         </form>
     </div>
+    <div class="mt-8 rounded-[2rem] border border-error/20 bg-error/5 p-6 md:p-10 shadow-sm">
+
+        <div class="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between rounded-2xl border border-error/10 bg-white p-5">
+            <div>
+                <h4 class="font-bold text-on-surface">Xóa lớp học</h4>
+                <p class="text-xs text-on-surface-variant mt-1">Xóa lớp học khỏi hệ thống quản lý của bạn.</p>
+            </div>
+            <button 
+                type="button" 
+                wire:click="confirmDelete"
+                class="inline-flex shrink-0 items-center gap-2 rounded-xl border border-error/20 bg-error/10 px-5 py-2.5 font-bold text-error transition-colors hover:bg-error hover:text-white"
+            >
+                <x-user.icon name="trash-2" :size="18" />
+                Xóa lớp học
+            </button>
+        </div>
+    </div>
+
+    @if ($isConfirmingDelete)
+        <template x-teleport="body">
+            <div class="fixed inset-0 z-[100] flex items-center justify-center bg-slate-900/50 p-4 backdrop-blur-sm">
+                <div class="w-full max-w-md rounded-2xl bg-white p-6 shadow-2xl">
+                    <div class="mb-4 flex items-center gap-3 text-error">
+                        <div class="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-error/10">
+                            <x-user.icon name="alert-triangle" :size="20" />
+                        </div>
+                        <h3 class="text-lg font-bold text-on-surface">Xác nhận xóa lớp học</h3>
+                    </div>
+                    <p class="text-sm text-on-surface-variant">Bạn có chắc chắn muốn xóa lớp học này không? Mọi thông tin điểm danh có thể sẽ bị vô hiệu hóa.</p>
+                    <div class="mt-6 flex justify-end gap-3">
+                        <button type="button" wire:click="closeDeleteConfirm" class="rounded-xl px-5 py-2.5 text-sm font-bold text-on-surface-variant hover:bg-surface-container-low transition-colors">Hủy</button>
+                        <button type="button" wire:click="deleteClass" class="rounded-xl bg-error px-5 py-2.5 text-sm font-bold text-white hover:bg-error/90 transition-colors">Xóa lớp học</button>
+                    </div>
+                </div>
+            </div>
+        </template>
+    @endif
 </div>

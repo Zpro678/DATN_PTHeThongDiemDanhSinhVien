@@ -23,6 +23,7 @@ class ClassSession extends Model
         'end_time', // Thời gian kết thúc.
         'qr_token', // Chuỗi token mã QR.
         'token_expires_at', // Thời điểm hết hạn của mã QR.
+        'qr_refresh_rate', // Tốc độ làm mới mã QR.
         'gps_latitude', // Vĩ độ vị trí điểm danh.
         'gps_longitude', // Kinh độ vị trí điểm danh.
         'gps_radius', // Bán kính GPS cho phép.

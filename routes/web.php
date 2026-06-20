@@ -30,6 +30,13 @@ Route::get('/', function () {
 });
 
 
+// Google OAuth Routes
+Route::get('/auth/google', [\App\Http\Controllers\Auth\GoogleController::class, 'redirect'])->name('google.login');
+Route::get('/auth/google/callback', [\App\Http\Controllers\Auth\GoogleController::class, 'callback'])->name('google.callback');
+
+// Route::get('/attendance/check-in/{token}', \App\Livewire\Student\AttendanceCheckIn::class)
+//     ->name('attendance.check-in.guest');
+
 Route::middleware(['auth', 'verified', 'user.route'])->group(function () {
     $ensureAdmin = function (): void {
         abort_unless(auth()->user()?->is_admin, 403);
@@ -44,35 +51,37 @@ Route::middleware(['auth', 'verified', 'user.route'])->group(function () {
 
         Route::redirect('/dashboard', '/admin')->name('dashboard.alias');
 
-        Route::get('/users', function () use ($ensureAdmin) {
-            $ensureAdmin();
-
-            $users = User::query()
-                ->withCount(['ownedClasses', 'joinedClasses', 'subscriptions', 'classJoinRequests'])
-                ->when(request('search'), function ($query, string $search) {
-                    $query->where(function ($query) use ($search) {
-                        $query
-                            ->where('name', 'like', "%{$search}%")
-                            ->orWhere('email', 'like', "%{$search}%")
-                            ->orWhere('code', 'like', "%{$search}%");
-                    });
-                })
-                ->when(request('role'), function ($query, string $role) {
-                    if ($role === 'admin') {
-                        $query->where('is_admin', true);
-                    } elseif (in_array($role, ['teacher', 'student'], true)) {
-                        $query->where('is_admin', false);
-                    }
-                })
-                ->when(request('status'), fn ($query, string $status) => $query->where('status', $status))
-                ->orderBy('name')
-                ->paginate(10)
-                ->withQueryString();
-
-            return view('admin.users.index', compact('users'));
-        })->name('users.index');
+        Route::get('/users', \App\Livewire\Admin\Users\UserIndex::class)->name('users.index');
 
         Route::redirect('/accounts', '/admin/users')->name('accounts.index');
+
+        Route::get('/users/create', function () use ($ensureAdmin) {
+            $ensureAdmin();
+            return view('admin.users.create');
+        })->name('users.create');
+
+        Route::post('/users', function (\Illuminate\Http\Request $request) use ($ensureAdmin) {
+            $ensureAdmin();
+
+            $data = $request->validate([
+                'name' => ['required', 'string', 'max:255'],
+                'email' => ['required', 'string', 'email', 'max:255', 'unique:users'],
+                'password' => ['required', 'string', 'min:8'],
+                'is_admin' => ['required', 'boolean'],
+                'status' => ['required', 'in:active,blocked'],
+                'avatar' => ['nullable', 'image', 'max:2048'],
+            ]);
+
+            if ($request->hasFile('avatar')) {
+                $data['avatar'] = $request->file('avatar')->store('avatars', 'public');
+            }
+
+            $data['password'] = \Illuminate\Support\Facades\Hash::make($data['password']);
+
+            User::create($data);
+
+            return redirect()->route('admin.users.index')->with('success', 'Thêm tài khoản người dùng thành công.');
+        })->name('users.store');
 
         Route::get('/users/{user}', function (User $user) use ($ensureAdmin) {
             $ensureAdmin();
@@ -93,6 +102,23 @@ Route::middleware(['auth', 'verified', 'user.route'])->group(function () {
 
             return view('admin.users.edit', compact('user'));
         })->whereNumber('user')->name('users.edit');
+
+        Route::put('/users/{user}', function (\Illuminate\Http\Request $request, User $user) use ($ensureAdmin) {
+            $ensureAdmin();
+            
+            $data = $request->validate([
+                'is_admin' => ['required', 'boolean'],
+                'status' => ['required', 'in:active,blocked'],
+            ]);
+
+            if ($user->id === auth()->id()) {
+                return back()->with('error', 'Bạn không thể tự thay đổi quyền hoặc trạng thái của chính mình.');
+            }
+
+            $user->update($data);
+
+            return back()->with('success', 'Cập nhật thông tin người dùng thành công.');
+        })->whereNumber('user')->name('users.update');
 
         Route::get('/packages', function () use ($ensureAdmin) {
             $ensureAdmin();
@@ -200,6 +226,7 @@ Route::middleware(['auth', 'verified', 'user.route'])->group(function () {
     Route::get('/student/classes/{courseClass}', \App\Livewire\Student\ClassShow::class)->name('student.classes.show');
     Route::get('/lecturer/classes/{courseClass}/settings', \App\Livewire\Lecturer\ClassSettings::class)->name('lecturer.classes.settings');
     Route::get('/lecturer/classes/{courseClass}', \App\Livewire\Lecturer\ClassShow::class)->name('lecturer.classes.show');
+    Route::get('/lecturer/classes/{courseClass}/attendance', \App\Livewire\Lecturer\ClassAttendanceHistory::class)->name('lecturer.classes.attendance');
     Route::get('/lecturer/classes/{class_id}/statistics', \App\Livewire\Lecturer\ClassStatistics::class)->name('lecturer.class.statistics');
     Route::get('/lecturer/attendance', AttendanceIndex::class)->name('lecturer.attendance.index');
     Route::get('/lecturer/attendance/create', AttendanceCreate::class)->name('lecturer.attendance.create');

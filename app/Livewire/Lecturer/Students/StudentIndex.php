@@ -9,14 +9,22 @@ use Illuminate\Contracts\View\View;
 use Illuminate\Database\Eloquent\Builder;
 use Livewire\Component;
 use Livewire\WithPagination;
+use Livewire\WithFileUploads;
+use Maatwebsite\Excel\Facades\Excel;
+use App\Imports\StudentsImport;
+use Illuminate\Support\Facades\Storage;
 
 class StudentIndex extends Component
 {
-    use WithPagination;
+    use WithPagination, WithFileUploads;
 
     public string $search = '';
 
+    #[\Livewire\Attributes\Url(as: 'class_id')]
     public string $classFilter = 'all';
+
+    #[\Livewire\Attributes\Url(as: 'action')]
+    public string $action = '';
 
     public string $statusFilter = 'active';
 
@@ -27,6 +35,28 @@ class StudentIndex extends Component
     public string $editingStudentCode = '';
 
     public string $editingStatus = 'active';
+
+    // Add Student state
+    public bool $isAdding = false;
+    public string $newName = '';
+    public string $newStudentCode = '';
+    public string $newClassId = '';
+
+    public ?int $archivingMemberId = null;
+
+    // Import state
+    public bool $isImporting = false;
+    public string $importClassId = '';
+    public $importFile;
+    public array $importErrors = [];
+    public int $importSuccess = 0;
+
+    public function mount(): void
+    {
+        if ($this->action === 'import') {
+            $this->openImport();
+        }
+    }
 
     public function updatedSearch(): void
     {
@@ -63,6 +93,106 @@ class StudentIndex extends Component
         $this->resetValidation();
     }
 
+    public function openAdd(): void
+    {
+        $this->isAdding = true;
+        $this->newClassId = $this->classFilter !== 'all' ? $this->classFilter : '';
+    }
+
+    public function closeAdd(): void
+    {
+        $this->isAdding = false;
+        $this->reset(['newName', 'newStudentCode', 'newClassId']);
+        $this->resetValidation();
+    }
+
+    public function addMember(): void
+    {
+        $validated = $this->validate([
+            'newClassId' => ['required', 'exists:classes,id'],
+            'newName' => ['required', 'string', 'max:255'],
+            'newStudentCode' => ['required', 'string', 'max:50'],
+        ], [
+            'newClassId.required' => 'Vui lòng chọn lớp học.',
+            'newName.required' => 'Vui lòng nhập họ tên.',
+            'newStudentCode.required' => 'Vui lòng nhập mã sinh viên.',
+        ]);
+
+        // Ensure the class belongs to the lecturer
+        $courseClass = CourseClass::where('owner_user_id', auth()->id())->findOrFail($validated['newClassId']);
+
+        $duplicateExists = ClassMember::query()
+            ->where('class_id', $courseClass->id)
+            ->where('student_code', $validated['newStudentCode'])
+            ->exists();
+
+        if ($duplicateExists) {
+            $this->addError('newStudentCode', 'Mã sinh viên đã tồn tại trong lớp này.');
+            return;
+        }
+
+        ClassMember::create([
+            'class_id' => $courseClass->id,
+            'full_name' => $validated['newName'],
+            'student_code' => strtoupper($validated['newStudentCode']),
+            'status' => 'active',
+        ]);
+
+        $this->closeAdd();
+        session()->flash('status', 'Sinh viên đã được thêm vào lớp thành công.');
+    }
+
+    public function openImport(): void
+    {
+        $this->isImporting = true;
+        $this->importClassId = $this->classFilter !== 'all' ? $this->classFilter : '';
+        $this->reset(['importFile', 'importErrors', 'importSuccess']);
+    }
+
+    public function closeImport(): void
+    {
+        $this->isImporting = false;
+        $this->reset(['importFile', 'importErrors', 'importSuccess', 'importClassId']);
+    }
+
+    public function downloadTemplate()
+    {
+        $csvContent = "Mã sinh viên,Họ và tên\nSV001,Nguyễn Văn A\nSV002,Trần Thị B";
+        return response()->streamDownload(function () use ($csvContent) {
+            echo "\xEF\xBB\xBF" . $csvContent; // UTF-8 BOM cho Excel
+        }, 'Danh_sach_sinh_vien_mau.csv');
+    }
+
+    public function processImport(): void
+    {
+        $this->validate([
+            'importClassId' => ['required', 'exists:classes,id'],
+            'importFile' => ['required', 'file', 'mimes:xlsx,xls,csv', 'max:5120'], // Max 5MB
+        ], [
+            'importClassId.required' => 'Vui lòng chọn lớp học.',
+            'importFile.required' => 'Vui lòng chọn file Excel hoặc CSV.',
+            'importFile.mimes' => 'Định dạng file không hỗ trợ. Vui lòng dùng .xlsx, .xls, .csv',
+        ]);
+
+        $courseClass = CourseClass::where('owner_user_id', auth()->id())->findOrFail($this->importClassId);
+
+        $import = new StudentsImport($courseClass->id);
+
+        try {
+            Excel::import($import, $this->importFile);
+            
+            $this->importSuccess = $import->successCount;
+            $this->importErrors = $import->errors;
+
+            if (empty($this->importErrors)) {
+                $this->closeImport();
+                session()->flash('status', "Đã nhập thành công {$this->importSuccess} sinh viên vào lớp.");
+            }
+        } catch (\Exception $e) {
+            $this->addError('importFile', 'Có lỗi khi đọc file: ' . $e->getMessage());
+        }
+    }
+
     public function saveMember(): void
     {
         $member = $this->ownedMember((int) $this->editingMemberId);
@@ -91,16 +221,36 @@ class StudentIndex extends Component
             'status' => $validated['editingStatus'],
         ]);
 
+        // Nếu chuyển sang trạng thái "thôi học", tự động đưa vào mục lưu trữ
+        if ($validated['editingStatus'] === 'dropped') {
+            $member->delete();
+        }
+
         $this->closeEdit();
         session()->flash('status', 'Thông tin sinh viên đã được cập nhật.');
     }
 
-    public function archiveMember(int $memberId): void
+    public function confirmArchive(int $memberId): void
     {
-        $member = $this->ownedMember($memberId);
+        $this->archivingMemberId = $memberId;
+    }
+
+    public function closeArchiveConfirm(): void
+    {
+        $this->archivingMemberId = null;
+    }
+
+    public function archiveMember(): void
+    {
+        if (!$this->archivingMemberId) {
+            return;
+        }
+
+        $member = $this->ownedMember($this->archivingMemberId);
         $member->update(['status' => 'dropped']);
         $member->delete();
 
+        $this->closeArchiveConfirm();
         session()->flash('status', 'Sinh viên đã được chuyển vào lưu trữ.');
     }
 

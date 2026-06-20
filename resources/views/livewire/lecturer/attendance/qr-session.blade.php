@@ -3,9 +3,10 @@
     $selectedSubject = $session->courseClass->subject_code ?: $session->courseClass->code;
     $sessionDateLabel = $session->date->format('d/m/Y');
     $openMinutes = max(1, (int) now()->diffInMinutes($session->token_expires_at ?? now()->addMinutes(15), false));
-    $qrRefreshRate = 10;
-    $startLesson = 1;
-    $endLesson = max(1, (int) $session->lesson_count);
+    $qrRefreshRate = $session->qr_refresh_rate ?? 10;
+    $config = cache()->get('qr_config_class_' . $session->class_id);
+    $startLesson = $config['startLesson'] ?? 1;
+    $endLesson = $config['endLesson'] ?? max(1, (int) $session->courseClass->lessons_per_session);
     $statusMeta = [
         'pending' => ['label' => 'Chưa điểm danh', 'pill' => 'border-slate-200 bg-slate-100 text-slate-600'],
         'present' => ['label' => 'Có mặt', 'pill' => 'border-emerald-200 bg-emerald-100 text-emerald-700'],
@@ -18,20 +19,42 @@
 <div
     class="mx-auto max-w-[1400px] space-y-8 p-4 pb-24 sm:p-8"
     x-data="{
+        isClosed: @entangle('isClosed').live,
         timeLeft: {{ $qrRefreshRate }},
         refreshRate: {{ $qrRefreshRate }},
+        sessionTimeLeft: {{ max(0, (int) now()->diffInSeconds($session->token_expires_at ?? now()->addMinutes($session->open_minutes ?? 15), false)) }},
         showEndModal: false,
         showQrModal: false,
         showClassSettingsModal: false,
         showShareCodeModal: false,
+        deleteModalOpen: false,
         shareCopied: false,
         copyShareCode() {
+            if (this.isClosed) return;
             navigator.clipboard?.writeText(@js($attendanceLink));
             this.shareCopied = true;
             setTimeout(() => this.shareCopied = false, 1800);
         },
         tick() {
-            this.timeLeft = this.timeLeft <= 1 ? this.refreshRate : this.timeLeft - 1;
+            if (this.isClosed) return;
+            if (this.timeLeft <= 1) {
+                this.timeLeft = this.refreshRate;
+                $wire.refreshToken();
+            } else {
+                this.timeLeft--;
+            }
+            if (this.sessionTimeLeft > 0) {
+                this.sessionTimeLeft--;
+            }
+        },
+        formatSessionTime() {
+            if (this.sessionTimeLeft <= 0) return '0 phút';
+            let m = Math.floor(this.sessionTimeLeft / 60);
+            let s = this.sessionTimeLeft % 60;
+            if (m > 0) {
+                return m + 'p ' + s + 's';
+            }
+            return s + 's';
         }
     }"
     x-init="setInterval(() => tick(), 1000)"
@@ -39,7 +62,7 @@
     <div class="flex flex-col gap-5 lg:flex-row lg:items-end lg:justify-between">
         <div>
             <div class="flex flex-wrap items-center gap-3">
-                <h1 class="text-[30px] font-black leading-tight tracking-tight text-slate-900">Trạm chờ điểm danh</h1>
+                <h1 class="text-[30px] font-black leading-tight tracking-tight text-slate-900" title="{{ $session->name }}">{{ Str::limit($session->name, 40) }}</h1>
                 <span @class([
                     'inline-flex items-center gap-2 rounded-full border px-3 py-1 text-[11px] font-extrabold uppercase tracking-wider',
                     'border-slate-200 bg-slate-100 text-slate-600' => $isClosed,
@@ -71,18 +94,21 @@
         </div>
 
         <div class="flex flex-col gap-3 sm:flex-row">
-            <a href="{{ route('lecturer.attendance.qr.create') }}" class="inline-flex items-center justify-center rounded-xl border border-slate-200 bg-white px-5 py-2.5 text-sm font-semibold text-slate-700 shadow-sm transition hover:bg-slate-50">
-                Quay lại thiết lập
+            @if(!$isClosed)
+                <button type="button" @click="deleteModalOpen = true" class="inline-flex items-center justify-center gap-2 rounded-xl border border-rose-200 bg-white px-5 py-2.5 text-sm font-semibold text-rose-600 shadow-sm transition hover:bg-rose-50">
+                    <x-user.icon name="trash" :size="16" />
+                    Xóa phiên
+                </button>
+            @endif
+
+            <a href="{{ route('lecturer.attendance.qr.create', ['edit_session' => $session->id]) }}" class="inline-flex items-center justify-center gap-2 rounded-xl border border-slate-200 bg-white px-5 py-2.5 text-sm font-semibold text-slate-700 shadow-sm transition hover:bg-slate-50 {{ $isClosed ? 'pointer-events-none opacity-60' : '' }}">
+                <x-user.icon name="settings" :size="16" />
+                Chỉnh sửa thiết lập
             </a>
 
             <button type="button" wire:click="refreshToken" @disabled($isClosed) class="inline-flex items-center justify-center gap-2 rounded-xl border border-blue-200 bg-white px-5 py-2.5 text-sm font-bold text-blue-700 shadow-sm transition hover:bg-blue-50 disabled:cursor-not-allowed disabled:opacity-60">
                 <x-user.icon name="qr-code" :size="16" />
                 Làm mới mã
-            </button>
-
-            <button type="button" @click="showEndModal = true" @disabled($isClosed) class="inline-flex items-center justify-center gap-2 rounded-xl bg-amber-500 px-5 py-2.5 text-sm font-bold text-white shadow-sm shadow-amber-500/30 transition hover:bg-amber-600 disabled:cursor-not-allowed disabled:opacity-60">
-                <x-user.icon name="calendar-check" :size="16" />
-                Chốt phiên này
             </button>
         </div>
     </div>
@@ -93,189 +119,183 @@
         </div>
     @endif
 
-    <section class="grid gap-4 sm:grid-cols-2">
-        <button
-            type="button"
-            @click="showClassSettingsModal = true"
-            class="group flex min-h-[112px] flex-col items-center justify-center gap-3 rounded-[1.5rem] border border-slate-100 bg-white px-5 py-6 text-center shadow-sm shadow-slate-900/5 transition hover:-translate-y-0.5 hover:border-blue-100 hover:shadow-lg focus:outline-none focus:ring-4 focus:ring-blue-500/10"
-        >
-            <x-user.icon name="settings" :size="32" class="text-slate-600 transition group-hover:text-blue-600" />
-            <span class="text-lg font-bold text-slate-800">Cài đặt lớp</span>
-        </button>
 
-        <button
-            type="button"
-            @click="showShareCodeModal = true"
-            class="group flex min-h-[112px] flex-col items-center justify-center gap-3 rounded-[1.5rem] border border-slate-100 bg-white px-5 py-6 text-center shadow-sm shadow-slate-900/5 transition hover:-translate-y-0.5 hover:border-blue-100 hover:shadow-lg focus:outline-none focus:ring-4 focus:ring-blue-500/10"
-        >
-            <x-user.icon name="send" :size="34" class="text-blue-600 transition group-hover:-translate-y-0.5 group-hover:translate-x-0.5" />
-            <span class="text-lg font-bold text-slate-800">Chia sẻ mã</span>
-        </button>
-    </section>
 
     <div class="grid gap-6 xl:grid-cols-12">
         <section class="rounded-2xl border border-slate-200 bg-white p-6 shadow-sm xl:col-span-4">
             <div class="flex h-full flex-col items-center">
-                <div class="mb-6 flex w-full items-center justify-between gap-3 rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3">
-                    <div class="min-w-0">
-                        <p class="text-[11px] font-black uppercase tracking-wider text-slate-400">Liên kết</p>
-                        <p class="mt-1 truncate text-sm font-bold text-blue-700">{{ $attendanceLink }}</p>
-                    </div>
-                    <span class="shrink-0 rounded-xl bg-blue-50 px-3 py-2 text-xs font-black text-blue-700 ring-1 ring-blue-100">{{ \Illuminate\Support\Str::limit($session->qr_token, 8, '') }}</span>
-                </div>
-
-                <button type="button" @click="showQrModal = true" class="group relative my-4 flex h-64 w-64 items-center justify-center rounded-[28px] border border-slate-200 bg-white p-5 shadow-xl shadow-slate-900/10 transition hover:scale-[1.02]">
-                    <span class="absolute -inset-4 rounded-[36px] bg-blue-500/10 blur-2xl transition group-hover:bg-blue-500/20"></span>
-                    @if ($qrSvg)
-                        <span class="relative flex h-full w-full items-center justify-center rounded-2xl bg-white p-2 [&>svg]:h-full [&>svg]:w-full">
-                            {!! $qrSvg !!}
-                        </span>
-                    @else
-                        <span class="relative grid h-full w-full gap-[3px] rounded-2xl bg-white p-3" style="grid-template-columns: repeat(29, minmax(0, 1fr));">
-                            @foreach ($qrCells as $isDark)
-                                <span class="{{ $isDark ? 'bg-slate-900' : 'bg-white' }} aspect-square rounded-[1px]"></span>
-                            @endforeach
-                        </span>
-                    @endif
-                    <span class="absolute -bottom-3 -right-3 flex h-11 w-11 items-center justify-center rounded-2xl border-4 border-white bg-blue-600 text-white shadow-lg">
-                        <x-user.icon name="qr-code" :size="20" />
-                    </span>
-                </button>
-
-                <div class="mt-auto w-full space-y-3 pt-7">
-                    <div class="flex items-end justify-between">
-                        <span class="text-sm font-extrabold text-slate-500">Mã mới sau</span>
-                        <span class="text-3xl font-black leading-none text-blue-600" x-text="String(timeLeft).padStart(2, '0') + 's'"></span>
-                    </div>
-                    <div class="h-2.5 overflow-hidden rounded-full bg-slate-100">
-                        <div class="h-full rounded-full bg-blue-600 transition-all duration-1000 ease-linear" :style="'width: ' + ((timeLeft / refreshRate) * 100) + '%'"></div>
-                    </div>
-                    <div class="grid grid-cols-2 gap-3 pt-3 text-sm">
-                        <div class="rounded-xl border border-slate-200 bg-slate-50 p-3">
-                            <p class="text-[11px] font-bold uppercase tracking-wider text-slate-400">Thời lượng</p>
-                            <p class="mt-1 font-black text-slate-900">{{ $openMinutes }} phút</p>
+                @if(!$isClosed)
+                    <div class="mb-6 flex w-full items-center justify-between gap-3 rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3">
+                        <div class="min-w-0">
+                            <p class="text-[11px] font-black uppercase tracking-wider text-slate-400">Liên kết</p>
+                            <p class="mt-1 truncate text-sm font-bold text-blue-700">{{ $attendanceLink }}</p>
                         </div>
-                        <div class="rounded-xl border border-slate-200 bg-slate-50 p-3">
-                            <p class="text-[11px] font-bold uppercase tracking-wider text-slate-400">Làm mới QR</p>
-                            <p class="mt-1 font-black text-slate-900">{{ $qrRefreshRate }} giây</p>
+                        <span class="shrink-0 rounded-xl bg-blue-50 px-3 py-2 text-xs font-black text-blue-700 ring-1 ring-blue-100">{{ \Illuminate\Support\Str::limit($session->qr_token, 8, '') }}</span>
+                    </div>
+
+                    <button type="button" @click="showQrModal = true" class="group relative my-4 flex h-64 w-64 items-center justify-center rounded-[28px] border border-slate-200 bg-white p-5 shadow-xl shadow-slate-900/10 transition hover:scale-[1.02]">
+                        <span class="absolute -inset-4 rounded-[36px] bg-blue-500/10 blur-2xl transition group-hover:bg-blue-500/20"></span>
+                        @if ($qrSvg)
+                            <span class="relative flex h-full w-full items-center justify-center rounded-2xl bg-white p-2 [&>svg]:h-full [&>svg]:w-full">
+                                {!! $qrSvg !!}
+                            </span>
+                        @else
+                            <span class="relative grid h-full w-full gap-[3px] rounded-2xl bg-white p-3" style="grid-template-columns: repeat(29, minmax(0, 1fr));">
+                                @foreach ($qrCells as $isDark)
+                                    <span class="{{ $isDark ? 'bg-slate-900' : 'bg-white' }} aspect-square rounded-[1px]"></span>
+                                @endforeach
+                            </span>
+                        @endif
+                        <span class="absolute -bottom-3 -right-3 flex h-11 w-11 items-center justify-center rounded-2xl border-4 border-white bg-blue-600 text-white shadow-lg">
+                            <x-user.icon name="qr-code" :size="20" />
+                        </span>
+                    </button>
+                @else
+                    <div class="my-auto flex flex-col items-center justify-center text-center">
+                        <div class="flex h-20 w-20 items-center justify-center rounded-full bg-slate-100 text-slate-400">
+                            <x-user.icon name="lock" :size="36" />
+                        </div>
+                        <h3 class="mt-4 text-xl font-black text-slate-800">Phiên đã chốt</h3>
+                        <p class="mt-2 max-w-xs text-sm font-semibold text-slate-500">Mã QR và Liên kết đã bị vô hiệu hóa. Học viên không thể tiếp tục điểm danh.</p>
+                    </div>
+                @endif
+
+                @if(!$isClosed)
+                    <div class="mt-auto w-full space-y-3 pt-7">
+                        <div class="flex items-end justify-between">
+                            <span class="text-sm font-extrabold text-slate-500">Mã mới sau</span>
+                            <span class="text-3xl font-black leading-none text-blue-600" x-text="String(timeLeft).padStart(2, '0') + 's'"></span>
+                        </div>
+                        <div class="h-2.5 overflow-hidden rounded-full bg-slate-100">
+                            <div class="h-full rounded-full bg-blue-600 transition-all duration-1000 ease-linear" :style="'width: ' + ((timeLeft / refreshRate) * 100) + '%'"></div>
+                        </div>
+                        <div class="grid grid-cols-2 gap-3 pt-3 text-sm">
+                            <div class="rounded-xl border border-slate-200 bg-slate-50 p-3">
+                                <p class="text-[11px] font-bold uppercase tracking-wider text-slate-400">Thời lượng</p>
+                                <p class="mt-1 font-black text-slate-900" x-text="formatSessionTime()">{{ $openMinutes }} phút</p>
+                            </div>
+                            <div class="rounded-xl border border-slate-200 bg-slate-50 p-3">
+                                <p class="text-[11px] font-bold uppercase tracking-wider text-slate-400">Làm mới QR</p>
+                                <p class="mt-1 font-black text-slate-900">{{ $qrRefreshRate }} giây</p>
+                            </div>
                         </div>
                     </div>
-                </div>
+                @endif
             </div>
         </section>
 
         <section class="space-y-6 xl:col-span-8">
+            <div class="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm">
+                <div class="flex flex-col gap-5 md:flex-row md:items-center">
+                    <div class="shrink-0 md:border-r md:border-slate-200 md:pr-6">
+                        <div class="flex items-center gap-3">
+                            <x-user.icon name="shield-alert" :size="24" class="text-amber-500" />
+                            <h2 class="text-base font-black text-slate-900">Rủi ro báo cáo</h2>
+                        </div>
+                        <p class="mt-1.5 text-sm font-semibold text-slate-400">Hệ thống ghi nhận tức thời</p>
+                    </div>
+
+                    <div class="grid flex-1 gap-4 sm:grid-cols-2">
+                        <div class="flex items-center gap-4 rounded-xl border border-rose-100 bg-rose-50 p-4">
+                            <span class="flex h-12 w-12 items-center justify-center rounded-xl bg-white text-rose-600 shadow-sm">
+                                <x-user.icon name="shield-alert" :size="24" />
+                            </span>
+                            <div>
+                                <p class="text-base font-black text-rose-700">Sai GPS (0)</p>
+                                <p class="text-sm font-bold text-rose-500">Cần xem xét</p>
+                            </div>
+                        </div>
+
+                        <div class="flex items-center gap-4 rounded-xl border border-amber-100 bg-amber-50 p-4">
+                            <span class="flex h-12 w-12 items-center justify-center rounded-xl bg-white text-amber-600 shadow-sm">
+                                <x-user.icon name="laptop" :size="24" />
+                            </span>
+                            <div>
+                                <p class="text-base font-black text-amber-700">Trùng máy (0)</p>
+                                <p class="text-sm font-bold text-amber-500">Điểm danh hộ</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="rounded-[2rem] bg-gradient-to-br from-blue-600 to-blue-700 p-8 text-white shadow-xl shadow-blue-900/10 ring-1 ring-blue-800/50">
+                <div class="grid gap-8 lg:grid-cols-[minmax(0,1.2fr)_minmax(340px,0.8fr)] lg:items-end">
+                    <div>
+                        <div class="flex flex-wrap items-center gap-3">
+                            <span class="text-[11px] font-bold uppercase tracking-widest text-blue-200">Sĩ số hiện diện</span>
+                            <span class="rounded-full bg-white px-3 py-1 text-[10px] font-bold uppercase tracking-widest text-blue-700 shadow-sm">{{ $summary['checked_in_percent'] }}% lớp</span>
+                        </div>
+
+                        <div class="mt-4 flex items-baseline gap-2">
+                            <span class="text-[4.5rem] font-black leading-none tracking-tighter text-white drop-shadow-sm lg:text-7xl">{{ number_format($summary['checked_in']) }}</span>
+                            <span class="text-2xl font-bold text-blue-300 drop-shadow-sm">/ {{ number_format($summary['total']) }}</span>
+                        </div>
+
+                        <div class="mt-6 max-w-xl">
+                            <div class="mb-2 flex items-center justify-between text-[11px] font-bold uppercase tracking-widest text-blue-200">
+                                <span>Tiến độ điểm danh</span>
+                                <span class="text-white">{{ number_format($summary['checked_in']) }} đã xác nhận</span>
+                            </div>
+                            <div class="h-2 overflow-hidden rounded-full bg-blue-800/50 ring-1 ring-inset ring-blue-900/30">
+                                <div class="h-full rounded-full bg-white transition-all duration-500 shadow-[0_0_10px_rgba(255,255,255,0.5)]" style="width: {{ $summary['checked_in_percent'] }}%"></div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="grid gap-4 sm:grid-cols-2">
+                        <div class="rounded-2xl bg-white/10 p-5 backdrop-blur-md ring-1 ring-inset ring-white/20 sm:col-span-2 shadow-sm">
+                            <p class="mb-4 text-[11px] font-bold uppercase tracking-widest text-blue-200">Thông tin phiên</p>
+                            <div class="grid gap-3 lg:grid-cols-[minmax(0,1.35fr)_minmax(0,0.9fr)]">
+                                <div class="min-w-0 rounded-xl bg-white/10 px-4 py-3 ring-1 ring-inset ring-white/10 transition-colors hover:bg-white/20">
+                                    <p class="text-[10px] font-bold uppercase tracking-widest text-blue-200">Buổi học</p>
+                                    <p class="mt-1 text-sm font-bold leading-snug text-white">{{ $session->name }}</p>
+                                </div>
+
+                                <div class="min-w-0 rounded-xl bg-white/10 px-4 py-3 ring-1 ring-inset ring-white/10 transition-colors hover:bg-white/20">
+                                    <p class="text-[10px] font-bold uppercase tracking-widest text-blue-200">Lớp / Tiết</p>
+                                    <p class="mt-1 text-sm font-bold leading-snug text-white">{{ $selectedSubject }} - Tiết {{ $startLesson }}-{{ $endLesson }}</p>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="rounded-2xl bg-white/10 p-5 backdrop-blur-md ring-1 ring-inset ring-white/20 shadow-sm">
+                            <p class="text-[11px] font-bold uppercase tracking-widest text-blue-200">Mở phiên</p>
+                            <p class="mt-1.5 text-lg font-bold text-white drop-shadow-sm" x-text="formatSessionTime()">{{ $openMinutes }} phút</p>
+                        </div>
+
+                        <div class="rounded-2xl bg-white/10 p-5 backdrop-blur-md ring-1 ring-inset ring-white/20 shadow-sm">
+                            <p class="text-[11px] font-bold uppercase tracking-widest text-blue-200">Làm mới mã</p>
+                            <p class="mt-1.5 text-lg font-bold text-white drop-shadow-sm">{{ $qrRefreshRate }}s / lần</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
             <div class="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
                 <button type="button" wire:click="setStatusFilter('pending')" @class(['rounded-2xl border border-slate-200 bg-white p-5 text-left shadow-sm transition hover:-translate-y-0.5', 'ring-2 ring-primary/30' => $statusFilter === 'pending'])>
-                    <p class="text-[11px] font-black uppercase tracking-wider text-slate-400">Đang chờ</p>
+                    <p class="text-[11px] font-black uppercase tracking-wider text-slate-500">Đang chờ</p>
                     <p class="mt-2 text-4xl font-black text-slate-900">{{ number_format($summary['pending']) }}</p>
-                    <p class="mt-1 text-xs font-semibold text-slate-400">Chưa quét QR</p>
+                    <p class="mt-1 text-xs font-semibold text-slate-500">Chưa quét QR</p>
                 </button>
 
                 <button type="button" wire:click="setStatusFilter('late')" @class(['rounded-2xl border border-amber-100 bg-amber-50 p-5 text-left transition hover:-translate-y-0.5', 'ring-2 ring-amber-300' => $statusFilter === 'late'])>
-                    <p class="text-[11px] font-black uppercase tracking-wider text-amber-600">Đi muộn</p>
-                    <p class="mt-2 text-4xl font-black text-amber-600">{{ number_format($summary['late']) }}</p>
-                    <p class="mt-1 text-xs font-semibold text-amber-500">Cần ghi chú</p>
+                    <p class="text-[11px] font-black uppercase tracking-wider text-amber-700">Đi muộn</p>
+                    <p class="mt-2 text-4xl font-black text-amber-700">{{ number_format($summary['late']) }}</p>
+                    <p class="mt-1 text-xs font-semibold text-amber-600">Cần ghi chú</p>
                 </button>
 
                 <button type="button" wire:click="setStatusFilter('absent')" @class(['rounded-2xl border border-rose-100 bg-rose-50 p-5 text-left transition hover:-translate-y-0.5', 'ring-2 ring-rose-300' => $statusFilter === 'absent'])>
-                    <p class="text-[11px] font-black uppercase tracking-wider text-rose-600">Vắng</p>
-                    <p class="mt-2 text-4xl font-black text-rose-600">{{ number_format($summary['absent']) }}</p>
-                    <p class="mt-1 text-xs font-semibold text-rose-500">Chưa xác nhận</p>
+                    <p class="text-[11px] font-black uppercase tracking-wider text-rose-700">Vắng</p>
+                    <p class="mt-2 text-4xl font-black text-rose-700">{{ number_format($summary['absent']) }}</p>
+                    <p class="mt-1 text-xs font-semibold text-rose-600">Chưa xác nhận</p>
                 </button>
 
                 <button type="button" wire:click="setStatusFilter('excused')" @class(['rounded-2xl border border-sky-100 bg-sky-50 p-5 text-left transition hover:-translate-y-0.5', 'ring-2 ring-sky-300' => $statusFilter === 'excused'])>
-                    <p class="text-[11px] font-black uppercase tracking-wider text-sky-700">Có phép</p>
-                    <p class="mt-2 text-4xl font-black text-sky-700">{{ number_format($summary['excused']) }}</p>
-                    <p class="mt-1 text-xs font-semibold text-sky-600">Đã gửi lý do</p>
+                    <p class="text-[11px] font-black uppercase tracking-wider text-sky-800">Có phép</p>
+                    <p class="mt-2 text-4xl font-black text-sky-800">{{ number_format($summary['excused']) }}</p>
+                    <p class="mt-1 text-xs font-semibold text-sky-700">Đã gửi lý do</p>
                 </button>
-            </div>
-
-            <div class="relative overflow-hidden rounded-2xl bg-blue-600 p-6 text-white shadow-sm shadow-blue-500/30">
-                <div class="relative z-10 grid gap-6 lg:grid-cols-[minmax(0,1.1fr)_minmax(320px,0.9fr)] lg:items-end">
-                    <div>
-                        <div class="flex flex-wrap items-center gap-2">
-                            <span class="inline-flex rounded-full bg-white/15 px-3 py-1 text-[11px] font-black uppercase tracking-wider text-blue-50 ring-1 ring-white/20">Sĩ số hiện diện</span>
-                            <span class="inline-flex rounded-full bg-white px-3 py-1 text-[11px] font-black uppercase tracking-wider text-blue-700">{{ $summary['checked_in_percent'] }}% lớp</span>
-                        </div>
-
-                        <div class="mt-5 flex flex-wrap items-end gap-3">
-                            <span class="text-7xl font-black leading-none tracking-tight">{{ number_format($summary['checked_in']) }}</span>
-                            <span class="mb-2 text-2xl font-bold text-blue-100">/ {{ number_format($summary['total']) }}</span>
-                        </div>
-
-                        <div class="mt-5 max-w-xl">
-                            <div class="mb-2 flex items-center justify-between text-xs font-bold uppercase tracking-wider text-blue-100">
-                                <span>Tiến độ điểm danh</span>
-                                <span>{{ number_format($summary['checked_in']) }} đã xác nhận</span>
-                            </div>
-                            <div class="h-2.5 overflow-hidden rounded-full bg-white/20">
-                                <div class="h-full rounded-full bg-white" style="width: {{ $summary['checked_in_percent'] }}%"></div>
-                            </div>
-                        </div>
-                    </div>
-
-                    <div class="grid gap-3 sm:grid-cols-2">
-                        <div class="rounded-2xl bg-white/12 p-4 ring-1 ring-white/15 sm:col-span-2">
-                            <p class="text-[11px] font-black uppercase tracking-wider text-blue-100">Thông tin phiên</p>
-                            <div class="mt-3 grid gap-3 lg:grid-cols-[minmax(0,1.35fr)_minmax(0,0.9fr)]">
-                                <div class="min-w-0 rounded-xl bg-white/10 px-3 py-2.5">
-                                    <p class="text-[10px] font-black uppercase tracking-wider text-blue-100/80">Buổi học</p>
-                                    <p class="mt-1 break-words text-sm font-bold leading-5 text-white">{{ $session->name }}</p>
-                                </div>
-
-                                <div class="min-w-0 rounded-xl bg-white/10 px-3 py-2.5">
-                                    <p class="text-[10px] font-black uppercase tracking-wider text-blue-100/80">Lớp / Tiết</p>
-                                    <p class="mt-1 break-words text-sm font-bold leading-5 text-white">{{ $selectedSubject }} - Tiết {{ $startLesson }}-{{ $endLesson }}</p>
-                                </div>
-                            </div>
-                        </div>
-
-                        <div class="rounded-2xl bg-white/12 p-4 ring-1 ring-white/15">
-                            <p class="text-[11px] font-black uppercase tracking-wider text-blue-100">Mở phiên</p>
-                            <p class="mt-1 text-sm font-bold text-white">{{ $openMinutes }} phút</p>
-                        </div>
-
-                        <div class="rounded-2xl bg-white/12 p-4 ring-1 ring-white/15">
-                            <p class="text-[11px] font-black uppercase tracking-wider text-blue-100">QR refresh</p>
-                            <p class="mt-1 text-sm font-bold text-white">{{ $qrRefreshRate }} giây/lần</p>
-                        </div>
-                    </div>
-                </div>
-            </div>
-
-            <div class="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm">
-                <div class="flex flex-col gap-4 md:flex-row md:items-center">
-                    <div class="shrink-0 md:border-r md:border-slate-200 md:pr-5">
-                        <div class="flex items-center gap-2">
-                            <x-user.icon name="shield-alert" :size="20" class="text-amber-500" />
-                            <h2 class="text-sm font-black text-slate-900">Rủi ro báo cáo</h2>
-                        </div>
-                        <p class="mt-1 text-xs font-semibold text-slate-400">Hệ thống ghi nhận tức thời</p>
-                    </div>
-
-                    <div class="grid flex-1 gap-3 sm:grid-cols-2">
-                        <div class="flex items-center gap-3 rounded-xl border border-rose-100 bg-rose-50 p-3">
-                            <span class="flex h-10 w-10 items-center justify-center rounded-xl bg-white text-rose-600">
-                                <x-user.icon name="shield-alert" :size="20" />
-                            </span>
-                            <div>
-                                <p class="text-sm font-black text-rose-700">Sai GPS (0)</p>
-                                <p class="text-xs font-bold text-rose-500">Cần xem xét</p>
-                            </div>
-                        </div>
-
-                        <div class="flex items-center gap-3 rounded-xl border border-amber-100 bg-amber-50 p-3">
-                            <span class="flex h-10 w-10 items-center justify-center rounded-xl bg-white text-amber-600">
-                                <x-user.icon name="laptop" :size="20" />
-                            </span>
-                            <div>
-                                <p class="text-sm font-black text-amber-700">Trùng máy (0)</p>
-                                <p class="text-xs font-bold text-amber-500">Điểm danh hộ</p>
-                            </div>
-                        </div>
-                    </div>
-                </div>
             </div>
         </section>
     </div>
@@ -283,8 +303,7 @@
     <section class="overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm">
         <div class="flex flex-col gap-4 border-b border-slate-200 p-5 sm:flex-row sm:items-center sm:justify-between">
             <div>
-                <h2 class="text-lg font-extrabold text-slate-900">Danh sách quản lý</h2>
-                <p class="text-xs font-medium text-slate-500">Sinh viên của phiên điểm danh đang mở</p>
+                <h2 class="text-xl font-black text-slate-900">Danh sách quản lý</h2>
             </div>
 
             <div class="flex w-full flex-col gap-2 sm:w-auto sm:min-w-[520px] sm:flex-row">
@@ -295,15 +314,25 @@
                 @if ($search !== '' || $statusFilter !== 'all')
                     <button type="button" wire:click="clearSearch" class="rounded-xl border border-slate-200 bg-white px-4 py-2.5 text-sm font-bold text-slate-600 transition hover:bg-slate-50">Xóa lọc</button>
                 @endif
+                <button type="button" wire:click="exportExcel" class="group relative inline-flex items-center justify-center gap-2 rounded-xl border border-slate-200 bg-white px-5 py-2.5 text-sm font-bold text-slate-700 shadow-sm transition-all hover:-translate-y-0.5 hover:border-blue-200 hover:bg-blue-50 hover:text-blue-700 hover:shadow-md">
+                    <x-user.icon name="download" :size="16" class="text-slate-400 transition-colors group-hover:text-blue-600" />
+                    <span>Xuất Excel</span>
+                    <span class="absolute -right-2 -top-2.5 flex items-center justify-center">
+                        <span class="absolute inline-flex h-full w-full animate-ping rounded-full bg-amber-200 opacity-30"></span>
+                        <span class="relative flex h-7 w-7 items-center justify-center rounded-full border border-amber-200 bg-white shadow-sm">
+                            <span class="text-base leading-none">👑</span>
+                        </span>
+                    </span>
+                </button>
             </div>
         </div>
 
         <div class="overflow-x-auto">
             <table class="w-full min-w-[760px] text-left">
-                <thead class="bg-slate-50 text-[11px] font-black uppercase tracking-wider text-slate-500">
+                <thead class="bg-slate-50 text-sm font-black uppercase tracking-wider text-slate-900">
                     <tr>
-                        <th class="px-5 py-3">MSSV</th>
-                        <th class="px-5 py-3">Học viên</th>
+                        <th class="py-3 pl-14 pr-5">MSSV</th>
+                        <th class="py-3 pl-14 pr-5">Học viên</th>
                         <th class="px-5 py-3 text-center">Trạng thái</th>
                         <th class="px-5 py-3 text-center">Thao tác</th>
                     </tr>
@@ -323,8 +352,8 @@
                         @endphp
 
                         <tr class="transition hover:bg-slate-50/70">
-                            <td class="px-5 py-4 font-mono text-sm font-extrabold text-slate-600">{{ $record->classMember->student_code }}</td>
-                            <td class="px-5 py-4">
+                            <td class="py-4 pl-14 pr-5 font-mono text-sm font-extrabold text-slate-600">{{ $record->classMember->student_code }}</td>
+                            <td class="py-4 pl-14 pr-5">
                                 <div class="flex items-center gap-3">
                                     <span class="flex h-10 w-10 shrink-0 items-center justify-center rounded-full border border-blue-100 bg-blue-50 text-xs font-black text-blue-700">
                                         {{ $initials }}
@@ -360,131 +389,186 @@
                 </tbody>
             </table>
         </div>
+
+        @if ($records->hasPages())
+            <div class="border-t border-slate-200 bg-white p-4">
+                {{ $records->links() }}
+            </div>
+        @endif
     </section>
 
-    <div x-cloak x-show="showClassSettingsModal" x-transition.opacity class="fixed inset-0 z-[100] flex items-center justify-center bg-slate-900/40 p-4">
-        <div @click.outside="showClassSettingsModal = false" x-transition.scale class="w-full max-w-2xl overflow-hidden rounded-[1.75rem] bg-white shadow-2xl">
-            <div class="flex items-start justify-between gap-4 border-b border-slate-100 p-6">
-                <div class="flex gap-4">
-                    <span class="flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl bg-blue-50 text-blue-600">
-                        <x-user.icon name="settings" :size="24" />
-                    </span>
-                    <div>
-                        <h2 class="text-xl font-black text-slate-900">Cài đặt lớp</h2>
-                        <p class="mt-1 text-sm font-medium text-slate-500">Thông tin lớp và quy tắc đang áp dụng cho phiên điểm danh này.</p>
-                    </div>
-                </div>
-                <button type="button" @click="showClassSettingsModal = false" class="flex h-10 w-10 items-center justify-center rounded-xl bg-slate-100 text-slate-500 transition hover:bg-slate-200 hover:text-slate-900" title="Đóng">
-                    <x-user.icon name="x" :size="20" />
-                </button>
-            </div>
-
-            <div class="grid gap-4 p-6 sm:grid-cols-2">
-                <div class="rounded-2xl border border-slate-200 bg-slate-50 p-4">
-                    <p class="text-[11px] font-black uppercase tracking-wider text-slate-400">Lớp học</p>
-                    <p class="mt-2 text-base font-black text-slate-900">{{ $session->courseClass->name }}</p>
-                    <p class="mt-1 text-sm font-semibold text-slate-500">{{ $session->courseClass->code }} - {{ $selectedSubject }}</p>
-                </div>
-
-                <div class="rounded-2xl border border-slate-200 bg-slate-50 p-4">
-                    <p class="text-[11px] font-black uppercase tracking-wider text-slate-400">Buổi học</p>
-                    <p class="mt-2 text-base font-black text-slate-900">{{ $session->name }}</p>
-                    <p class="mt-1 text-sm font-semibold text-slate-500">{{ $sessionDateLabel }} · Tiết {{ $startLesson }}-{{ $endLesson }}</p>
-                </div>
-
-                <div class="rounded-2xl border border-blue-100 bg-blue-50 p-4">
-                    <p class="flex items-center gap-2 text-sm font-black text-blue-700">
-                        <x-user.icon name="qr-code" :size="18" />
-                        Làm mới mã
-                    </p>
-                    <p class="mt-2 text-sm font-semibold text-blue-800/80">QR tự đổi sau {{ $qrRefreshRate }} giây, phiên còn khoảng {{ $openMinutes }} phút.</p>
-                </div>
-
-                <div class="rounded-2xl border border-emerald-100 bg-emerald-50 p-4">
-                    <p class="flex items-center gap-2 text-sm font-black text-emerald-700">
-                        <x-user.icon name="shield-check" :size="18" />
-                        Trạng thái phiên
-                    </p>
-                    <p class="mt-2 text-sm font-semibold text-emerald-800/80">{{ $isClosed ? 'Đã chốt, sinh viên không thể quét thêm mã.' : 'Đang mở, sinh viên có thể quét mã để điểm danh.' }}</p>
-                </div>
-            </div>
-
-            <div class="flex justify-end gap-3 border-t border-slate-100 bg-slate-50 px-6 py-4">
-                <a href="{{ route('lecturer.attendance.qr.create') }}" class="inline-flex items-center justify-center rounded-xl border border-slate-200 bg-white px-4 py-2.5 text-sm font-bold text-slate-700 transition hover:bg-slate-50">
-                    Chỉnh thiết lập
-                </a>
-                <button type="button" @click="showClassSettingsModal = false" class="rounded-xl bg-blue-600 px-4 py-2.5 text-sm font-bold text-white transition hover:bg-blue-700">Hoàn tất</button>
-            </div>
-        </div>
-    </div>
-
-    <div x-cloak x-show="showShareCodeModal" x-transition.opacity class="fixed inset-0 z-[100] flex items-center justify-center bg-slate-900/40 p-4">
-        <div @click.outside="showShareCodeModal = false" x-transition.scale class="w-full max-w-xl overflow-hidden rounded-[1.75rem] bg-white shadow-2xl">
-            <div class="flex items-start justify-between gap-4 border-b border-slate-100 p-6">
-                <div class="flex gap-4">
-                    <span class="flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl bg-blue-50 text-blue-600">
-                        <x-user.icon name="send" :size="24" />
-                    </span>
-                    <div>
-                        <h2 class="text-xl font-black text-slate-900">Chia sẻ mã điểm danh</h2>
-                        <p class="mt-1 text-sm font-medium text-slate-500">Gửi mã hoặc liên kết này cho sinh viên trong lớp.</p>
-                    </div>
-                </div>
-                <button type="button" @click="showShareCodeModal = false" class="flex h-10 w-10 items-center justify-center rounded-xl bg-slate-100 text-slate-500 transition hover:bg-slate-200 hover:text-slate-900" title="Đóng">
-                    <x-user.icon name="x" :size="20" />
-                </button>
-            </div>
-
-            <div class="space-y-4 p-6">
-                <div class="rounded-2xl border border-blue-100 bg-blue-50 p-5 text-center">
-                    <p class="text-[11px] font-black uppercase tracking-wider text-blue-500">Mã điểm danh</p>
-                    <p class="mt-3 break-all font-mono text-2xl font-black text-blue-700">{{ $session->qr_token }}</p>
-                </div>
-
-                <div class="rounded-2xl border border-slate-200 bg-slate-50 p-4">
-                    <p class="text-[11px] font-black uppercase tracking-wider text-slate-400">Liên kết sinh viên</p>
-                    <p class="mt-2 break-all text-sm font-bold text-slate-700">{{ $attendanceLink }}</p>
-                </div>
-
-                <button type="button" @click="copyShareCode()" class="inline-flex w-full items-center justify-center gap-2 rounded-2xl bg-blue-600 px-5 py-3 text-sm font-black text-white shadow-sm shadow-blue-500/20 transition hover:bg-blue-700">
-                    <x-user.icon name="clipboard-check" :size="18" />
-                    <span x-text="shareCopied ? 'Đã sao chép liên kết' : 'Sao chép liên kết'"></span>
-                </button>
-            </div>
-        </div>
-    </div>
-
-    <div x-cloak x-show="showEndModal" x-transition.opacity class="fixed inset-0 z-[100] flex items-center justify-center bg-slate-900/40 p-4">
-        <div @click.outside="showEndModal = false" x-transition.scale class="w-full max-w-md rounded-2xl bg-white p-6 shadow-2xl">
-            <div class="flex h-12 w-12 items-center justify-center rounded-2xl bg-amber-50 text-amber-600">
-                <x-user.icon name="calendar-check" :size="24" />
-            </div>
-            <h2 class="mt-4 text-lg font-black text-slate-900">Chốt phiên điểm danh?</h2>
-            <p class="mt-2 text-sm font-medium leading-6 text-slate-500">
-                Phiên {{ $session->name }} sẽ dừng nhận QR mới. Bạn vẫn có thể rà soát lại trạng thái sinh viên trước khi lưu báo cáo.
-            </p>
-            <div class="mt-6 flex justify-end gap-3">
-                <button type="button" @click="showEndModal = false" class="rounded-xl border border-slate-200 bg-white px-4 py-2.5 text-sm font-bold text-slate-600 transition hover:bg-slate-50">Hủy</button>
-                <button type="button" wire:click="closeSession" @click="showEndModal = false" class="rounded-xl bg-amber-500 px-4 py-2.5 text-sm font-bold text-white transition hover:bg-amber-600">Chốt phiên</button>
-            </div>
-        </div>
-    </div>
-
-    <div x-cloak x-show="showQrModal" x-transition.opacity class="fixed inset-0 z-[100] flex flex-col items-center justify-center bg-white p-6">
-        <button type="button" @click="showQrModal = false" class="absolute right-6 top-6 flex h-12 w-12 items-center justify-center rounded-2xl bg-slate-100 text-slate-500 transition hover:bg-slate-200 hover:text-slate-900" title="Đóng">
-            <x-user.icon name="x" :size="24" />
+    <div class="mt-6 flex items-center justify-between gap-3">
+        <a href="{{ route('lecturer.classes.show', $session->class_id) }}" class="inline-flex items-center justify-center gap-2 rounded-xl border border-slate-200 bg-white px-6 py-2.5 text-sm font-bold text-slate-700 shadow-sm transition hover:bg-slate-50">
+            <x-user.icon name="arrow-left" :size="18" />
+            Quay lại
+        </a>
+        <button type="button" @click="showEndModal = true" @disabled($isClosed) class="inline-flex items-center justify-center gap-2 rounded-xl bg-amber-500 px-6 py-2.5 text-sm font-bold text-white shadow-sm shadow-amber-500/30 transition hover:bg-amber-600 disabled:cursor-not-allowed disabled:opacity-60">
+            <x-user.icon name="calendar-check" :size="18" />
+            Chốt phiên
         </button>
+    </div>
 
-        <div class="flex w-[min(82vw,520px)] items-center justify-center rounded-[32px] bg-white p-6 shadow-2xl shadow-slate-900/10 ring-1 ring-slate-200 [&>svg]:h-full [&>svg]:w-full">
-            @if ($qrSvg)
-                {!! $qrSvg !!}
-            @else
-                <div class="grid w-full gap-[5px]" style="grid-template-columns: repeat(29, minmax(0, 1fr));">
-                    @foreach ($qrCells as $isDark)
-                        <span class="{{ $isDark ? 'bg-slate-900' : 'bg-white' }} aspect-square rounded-[2px]"></span>
-                    @endforeach
+    <template x-teleport="body">
+        <div x-cloak x-show="showClassSettingsModal" x-transition.opacity class="fixed inset-0 z-[9999] flex items-center justify-center bg-slate-900/40 p-4">
+            <div @click.outside="showClassSettingsModal = false" x-transition.scale class="w-full max-w-2xl overflow-hidden rounded-[1.75rem] bg-white shadow-2xl">
+                <div class="flex items-start justify-between gap-4 border-b border-slate-100 p-6">
+                    <div class="flex gap-4">
+                        <span class="flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl bg-blue-50 text-blue-600">
+                            <x-user.icon name="settings" :size="24" />
+                        </span>
+                        <div>
+                            <h2 class="text-xl font-black text-slate-900">Cài đặt lớp</h2>
+                            <p class="mt-1 text-sm font-medium text-slate-500">Thông tin lớp và quy tắc đang áp dụng cho phiên điểm danh này.</p>
+                        </div>
+                    </div>
+                    <button type="button" @click="showClassSettingsModal = false" class="flex h-10 w-10 items-center justify-center rounded-xl bg-slate-100 text-slate-500 transition hover:bg-slate-200 hover:text-slate-900" title="Đóng">
+                        <x-user.icon name="x" :size="20" />
+                    </button>
                 </div>
-            @endif
+
+                <div class="grid gap-4 p-6 sm:grid-cols-2">
+                    <div class="rounded-2xl border border-slate-200 bg-slate-50 p-4">
+                        <p class="text-[11px] font-black uppercase tracking-wider text-slate-400">Lớp học</p>
+                        <p class="mt-2 text-base font-black text-slate-900">{{ $session->courseClass->name }}</p>
+                        <p class="mt-1 text-sm font-semibold text-slate-500">{{ $session->courseClass->code }} - {{ $selectedSubject }}</p>
+                    </div>
+
+                    <div class="rounded-2xl border border-slate-200 bg-slate-50 p-4">
+                        <p class="text-[11px] font-black uppercase tracking-wider text-slate-400">Buổi học</p>
+                        <p class="mt-2 text-base font-black text-slate-900">{{ $session->name }}</p>
+                        <p class="mt-1 text-sm font-semibold text-slate-500">{{ $sessionDateLabel }} · Tiết {{ $startLesson }}-{{ $endLesson }}</p>
+                    </div>
+
+                    <div class="rounded-2xl border border-blue-100 bg-blue-50 p-4">
+                        <p class="flex items-center gap-2 text-sm font-black text-blue-700">
+                            <x-user.icon name="qr-code" :size="18" />
+                            Làm mới mã
+                        </p>
+                        <p class="mt-2 text-sm font-semibold text-blue-800/80">QR tự đổi sau {{ $qrRefreshRate }} giây, phiên còn khoảng {{ $openMinutes }} phút.</p>
+                    </div>
+
+                    <div class="rounded-2xl border border-emerald-100 bg-emerald-50 p-4">
+                        <p class="flex items-center gap-2 text-sm font-black text-emerald-700">
+                            <x-user.icon name="shield-check" :size="18" />
+                            Trạng thái phiên
+                        </p>
+                        <p class="mt-2 text-sm font-semibold text-emerald-800/80">{{ $isClosed ? 'Đã chốt, sinh viên không thể quét thêm mã.' : 'Đang mở, sinh viên có thể quét mã để điểm danh.' }}</p>
+                    </div>
+                </div>
+
+                <div class="flex justify-end gap-3 border-t border-slate-100 bg-slate-50 px-6 py-4">
+                    <a href="{{ route('lecturer.attendance.qr.create') }}" class="inline-flex items-center justify-center rounded-xl border border-slate-200 bg-white px-4 py-2.5 text-sm font-bold text-slate-700 transition hover:bg-slate-50">
+                        Chỉnh thiết lập
+                    </a>
+                    <button type="button" @click="showClassSettingsModal = false" class="rounded-xl bg-blue-600 px-4 py-2.5 text-sm font-bold text-white transition hover:bg-blue-700">Hoàn tất</button>
+                </div>
+            </div>
+        </div>
+    </template>
+
+    <template x-teleport="body">
+        <div x-cloak x-show="showShareCodeModal" x-transition.opacity class="fixed inset-0 z-[9999] flex items-center justify-center bg-slate-900/40 p-4">
+            <div @click.outside="showShareCodeModal = false" x-transition.scale class="w-full max-w-xl overflow-hidden rounded-[1.75rem] bg-white shadow-2xl">
+                <div class="flex items-start justify-between gap-4 border-b border-slate-100 p-6">
+                    <div class="flex gap-4">
+                        <span class="flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl bg-blue-50 text-blue-600">
+                            <x-user.icon name="send" :size="24" />
+                        </span>
+                        <div>
+                            <h2 class="text-xl font-black text-slate-900">Chia sẻ mã điểm danh</h2>
+                            <p class="mt-1 text-sm font-medium text-slate-500">Gửi mã hoặc liên kết này cho sinh viên trong lớp.</p>
+                        </div>
+                    </div>
+                    <button type="button" @click="showShareCodeModal = false" class="flex h-10 w-10 items-center justify-center rounded-xl bg-slate-100 text-slate-500 transition hover:bg-slate-200 hover:text-slate-900" title="Đóng">
+                        <x-user.icon name="x" :size="20" />
+                    </button>
+                </div>
+
+                <div class="space-y-4 p-6">
+                    @if(!$isClosed)
+                        <div class="rounded-2xl border border-slate-200 bg-slate-50 p-4">
+                            <p class="text-[11px] font-black uppercase tracking-wider text-slate-400">Liên kết điểm danh</p>
+                            <p class="mt-2 break-all text-sm font-bold text-slate-700">{{ $attendanceLink }}</p>
+                        </div>
+
+                        <button type="button" @click="copyShareCode()" class="inline-flex w-full items-center justify-center gap-2 rounded-2xl bg-blue-600 px-5 py-3 text-sm font-black text-white shadow-sm shadow-blue-500/20 transition hover:bg-blue-700">
+                            <x-user.icon name="clipboard-check" :size="18" />
+                            <span x-text="shareCopied ? 'Đã sao chép liên kết' : 'Sao chép liên kết'"></span>
+                        </button>
+                    @else
+                        <div class="rounded-2xl border border-slate-200 bg-slate-50 p-5 text-center">
+                            <div class="mx-auto flex h-12 w-12 items-center justify-center rounded-full bg-slate-200 text-slate-500">
+                                <x-user.icon name="lock" :size="24" />
+                            </div>
+                            <p class="mt-3 text-sm font-bold text-slate-600">Phiên đã đóng. Không thể chia sẻ liên kết mới.</p>
+                        </div>
+                    @endif
+                </div>
+            </div>
+        </div>
+    </template>
+
+    <template x-teleport="body">
+        <div x-cloak x-show="showEndModal" x-transition.opacity class="fixed inset-0 z-[9999] flex items-center justify-center bg-slate-900/40 p-4">
+            <div @click.outside="showEndModal = false" x-transition.scale class="w-full max-w-md rounded-2xl bg-white p-6 shadow-2xl">
+                <div class="flex h-12 w-12 items-center justify-center rounded-2xl bg-amber-50 text-amber-600">
+                    <x-user.icon name="calendar-check" :size="24" />
+                </div>
+                <h2 class="mt-4 text-lg font-black text-slate-900">Chốt phiên điểm danh?</h2>
+                <p class="mt-2 text-sm font-medium leading-6 text-slate-500">
+                    Phiên {{ $session->name }} sẽ dừng nhận QR mới. Bạn vẫn có thể rà soát lại trạng thái sinh viên trước khi lưu báo cáo.
+                </p>
+                <div class="mt-6 flex justify-end gap-3">
+                    <button type="button" @click="showEndModal = false" class="rounded-xl border border-slate-200 bg-white px-4 py-2.5 text-sm font-bold text-slate-600 transition hover:bg-slate-50">Hủy</button>
+                    <button type="button" wire:click="closeSession" @click="showEndModal = false" class="rounded-xl bg-amber-500 px-4 py-2.5 text-sm font-bold text-white transition hover:bg-amber-600">Chốt phiên</button>
+                </div>
+            </div>
+        </div>
+    </template>
+
+    <template x-teleport="body">
+        <div x-cloak x-show="showQrModal" x-transition.opacity class="fixed inset-0 z-[9999] flex flex-col items-center justify-center bg-white p-6">
+            <button type="button" @click="showQrModal = false" class="absolute right-6 top-6 flex h-16 w-16 items-center justify-center rounded-full bg-slate-100 text-slate-500 transition hover:bg-slate-200 hover:text-slate-900" title="Đóng">
+                <x-user.icon name="x" :size="32" />
+            </button>
+
+            <div class="flex w-[min(90vw,600px)] items-center justify-center rounded-[36px] bg-white p-8 shadow-2xl shadow-slate-900/10 ring-1 ring-slate-200 [&>svg]:h-full [&>svg]:w-full">
+                @if ($qrSvg)
+                    {!! $qrSvg !!}
+                @else
+                    <div class="grid w-full gap-[6px]" style="grid-template-columns: repeat(29, minmax(0, 1fr));">
+                        @foreach ($qrCells as $isDark)
+                            <span class="{{ $isDark ? 'bg-slate-900' : 'bg-white' }} aspect-square rounded-[3px]"></span>
+                        @endforeach
+                    </div>
+                @endif
+            </div>
+        </div>
+    </template>
+
+    <div x-cloak x-show="deleteModalOpen" class="fixed inset-0 z-[100] flex items-center justify-center p-4">
+        <div x-show="deleteModalOpen" x-transition.opacity.duration.200ms class="absolute inset-0 bg-slate-950/45 backdrop-blur-sm" @click="deleteModalOpen = false" aria-label="Đóng"></div>
+        <div x-show="deleteModalOpen" x-transition.scale.origin.center.duration.200ms class="relative w-full max-w-md overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-2xl">
+            <button type="button" @click="deleteModalOpen = false" class="absolute right-4 top-4 flex h-8 w-8 items-center justify-center rounded-full text-slate-400 transition hover:bg-slate-100 hover:text-slate-600">
+                <x-user.icon name="x" :size="20" />
+            </button>
+            <div class="p-6 pb-2 text-center">
+                <div class="mx-auto mb-4 flex h-16 w-16 items-center justify-center rounded-full bg-rose-50 text-rose-600">
+                    <x-user.icon name="alert-triangle" :size="32" />
+                </div>
+                <h3 class="mb-2 text-xl font-extrabold text-slate-900">Xóa phiên điểm danh?</h3>
+                <p class="text-sm font-medium leading-relaxed text-slate-500">
+                    Bạn có chắc chắn muốn xóa phiên điểm danh này không? Kết quả điểm danh của sinh viên trong phiên này sẽ bị mất.
+                </p>
+            </div>
+            <div class="flex flex-col gap-3 px-6 pb-6 pt-4 sm:flex-row">
+                <button type="button" class="rounded-xl border border-slate-200 bg-white px-5 py-2.5 text-sm font-bold text-slate-700 transition hover:bg-slate-50 sm:flex-1" @click="deleteModalOpen = false">
+                    Hủy
+                </button>
+                <button type="button" wire:click="deleteSession" @click="deleteModalOpen = false" class="rounded-xl bg-rose-600 px-5 py-2.5 text-sm font-bold text-white shadow-sm shadow-rose-600/20 transition hover:bg-rose-700 sm:flex-1">
+                    Xóa phiên
+                </button>
+            </div>
         </div>
     </div>
 </div>

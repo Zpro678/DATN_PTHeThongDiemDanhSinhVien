@@ -7,10 +7,20 @@
             </h1>
             <p class="mt-2 text-sm text-slate-500">Quản lý danh sách sinh viên trong các lớp bạn đang phụ trách.</p>
         </div>
-        <a href="{{ route('lecturer.leave-requests.index') }}" class="inline-flex items-center justify-center gap-2 rounded-full border border-primary/20 bg-primary/5 px-5 py-2.5 text-sm font-bold text-primary transition-colors hover:bg-primary/10">
-            <x-user.icon name="file-text" :size="18" />
-            Đơn xin nghỉ
-        </a>
+        <div class="flex items-center gap-3">
+            <button type="button" wire:click="openImport" class="inline-flex items-center justify-center gap-2 rounded-full border border-primary/20 bg-primary/5 px-5 py-2.5 text-sm font-bold text-primary transition-colors hover:bg-primary/10">
+                <x-user.icon name="upload" :size="18" />
+                Import danh sách
+            </button>
+            <button type="button" wire:click="openAdd" class="inline-flex items-center justify-center gap-2 rounded-full bg-primary px-5 py-2.5 text-sm font-bold text-white transition-colors hover:bg-primary/90">
+                <x-user.icon name="plus" :size="18" />
+                Thêm thành viên
+            </button>
+            <a href="{{ route('lecturer.leave-requests.index') }}" class="inline-flex items-center justify-center gap-2 rounded-full border border-primary/20 bg-primary/5 px-5 py-2.5 text-sm font-bold text-primary transition-colors hover:bg-primary/10">
+                <x-user.icon name="file-text" :size="18" />
+                Đơn xin nghỉ
+            </a>
+        </div>
     </section>
 
     @if (session('status'))
@@ -99,7 +109,7 @@
                                     <a href="{{ route('lecturer.students.show', $member) }}" class="rounded-lg p-2 text-slate-500 transition-colors hover:bg-primary/10 hover:text-primary" title="Xem chi tiết"><x-user.icon name="eye" :size="18" /></a>
                                     @if ($statusFilter === 'active')
                                         <button type="button" wire:click="openEdit({{ $member->id }})" class="rounded-lg p-2 text-slate-500 transition-colors hover:bg-slate-100 hover:text-slate-800" title="Sửa"><x-user.icon name="edit" :size="18" /></button>
-                                        <button type="button" wire:click="archiveMember({{ $member->id }})" wire:confirm="Chuyển sinh viên này vào lưu trữ?" class="rounded-lg p-2 text-red-500 transition-colors hover:bg-red-50" title="Lưu trữ"><x-user.icon name="x" :size="18" /></button>
+                                        <button type="button" wire:click="confirmArchive({{ $member->id }})" class="rounded-lg p-2 text-red-500 transition-colors hover:bg-red-50" title="Lưu trữ"><x-user.icon name="x" :size="18" /></button>
                                     @else
                                         <button type="button" wire:click="restoreMember({{ $member->id }})" class="rounded-lg px-3 py-2 text-xs font-bold text-primary transition-colors hover:bg-primary/10">Khôi phục</button>
                                     @endif
@@ -118,19 +128,163 @@
     </section>
 
     @if ($editingMemberId)
-        <div class="fixed inset-0 z-[100] flex items-center justify-center bg-slate-900/50 p-4 backdrop-blur-sm">
-            <form wire:submit="saveMember" class="w-full max-w-lg rounded-2xl bg-white p-6 shadow-2xl">
-                <div class="mb-6 flex items-center justify-between">
-                    <h3 class="text-lg font-bold text-slate-900">Sửa thông tin sinh viên</h3>
-                    <button type="button" wire:click="closeEdit" class="rounded-full p-2 text-slate-400 hover:bg-slate-100"><x-user.icon name="x" :size="18" /></button>
+        <template x-teleport="body">
+            <div class="fixed inset-0 z-[100] flex items-center justify-center bg-slate-900/50 p-4 backdrop-blur-sm">
+                <form wire:submit="saveMember" class="w-full max-w-lg rounded-2xl bg-white p-6 shadow-2xl">
+                    <div class="mb-6 flex items-center justify-between">
+                        <h3 class="text-lg font-bold text-slate-900">Sửa thông tin sinh viên</h3>
+                        <button type="button" wire:click="closeEdit" class="rounded-full p-2 text-slate-400 hover:bg-slate-100"><x-user.icon name="x" :size="18" /></button>
+                    </div>
+                    <div class="space-y-4">
+                        <label class="block space-y-2"><span class="text-sm font-semibold text-slate-700">Họ và tên</span><input wire:model="editingName" class="w-full rounded-xl border-slate-200 focus:border-primary focus:ring-primary/20">@error('editingName')<span class="text-xs text-red-600">{{ $message }}</span>@enderror</label>
+                        <label class="block space-y-2"><span class="text-sm font-semibold text-slate-700">Mã sinh viên</span><input wire:model="editingStudentCode" class="w-full rounded-xl border-slate-200 uppercase focus:border-primary focus:ring-primary/20">@error('editingStudentCode')<span class="text-xs text-red-600">{{ $message }}</span>@enderror</label>
+                        <label class="block space-y-2"><span class="text-sm font-semibold text-slate-700">Trạng thái</span><select wire:model="editingStatus" class="w-full rounded-xl border-slate-200 focus:border-primary focus:ring-primary/20"><option value="active">Đang học</option><option value="dropped">Đã thôi học</option></select></label>
+                    </div>
+                    <div class="mt-6 flex justify-end gap-3"><button type="button" wire:click="closeEdit" class="rounded-xl px-5 py-2.5 text-sm font-bold text-slate-600 hover:bg-slate-100">Hủy</button><button type="submit" class="rounded-xl bg-primary px-5 py-2.5 text-sm font-bold text-white">Lưu thay đổi</button></div>
+                </form>
+            </div>
+        </template>
+    @endif
+
+    @if ($isAdding)
+        <template x-teleport="body">
+            <div class="fixed inset-0 z-[100] flex items-center justify-center bg-slate-900/50 p-4 backdrop-blur-sm">
+                <form wire:submit="addMember" class="w-full max-w-lg rounded-2xl bg-white p-6 shadow-2xl">
+                    <div class="mb-6 flex items-center justify-between">
+                        <h3 class="text-lg font-bold text-slate-900">Thêm thành viên mới</h3>
+                        <button type="button" wire:click="closeAdd" class="rounded-full p-2 text-slate-400 hover:bg-slate-100"><x-user.icon name="x" :size="18" /></button>
+                    </div>
+                    <div class="space-y-4">
+                        <label class="block space-y-2">
+                            <span class="text-sm font-semibold text-slate-700">Lớp học</span>
+                            <select wire:model="newClassId" class="w-full rounded-xl border-slate-200 focus:border-primary focus:ring-primary/20">
+                                <option value="">-- Chọn lớp học --</option>
+                                @foreach ($classes as $class)
+                                    <option value="{{ $class->id }}">{{ $class->code }} - {{ $class->name }}</option>
+                                @endforeach
+                            </select>
+                            @error('newClassId')<span class="text-xs text-red-600">{{ $message }}</span>@enderror
+                        </label>
+                        <label class="block space-y-2"><span class="text-sm font-semibold text-slate-700">Họ và tên</span><input wire:model="newName" class="w-full rounded-xl border-slate-200 focus:border-primary focus:ring-primary/20" placeholder="Nguyễn Văn A">@error('newName')<span class="text-xs text-red-600">{{ $message }}</span>@enderror</label>
+                        <label class="block space-y-2"><span class="text-sm font-semibold text-slate-700">Mã sinh viên</span><input wire:model="newStudentCode" class="w-full rounded-xl border-slate-200 uppercase focus:border-primary focus:ring-primary/20" placeholder="SV001">@error('newStudentCode')<span class="text-xs text-red-600">{{ $message }}</span>@enderror</label>
+                    </div>
+                    <div class="mt-6 flex justify-end gap-3"><button type="button" wire:click="closeAdd" class="rounded-xl px-5 py-2.5 text-sm font-bold text-slate-600 hover:bg-slate-100">Hủy</button><button type="submit" class="rounded-xl bg-primary px-5 py-2.5 text-sm font-bold text-white">Thêm sinh viên</button></div>
+                </form>
+            </div>
+        </template>
+    @endif
+
+    @if ($isImporting)
+        <template x-teleport="body">
+            <div class="fixed inset-0 z-[100] flex items-center justify-center bg-slate-900/50 p-4 backdrop-blur-sm transition-all">
+                <form wire:submit="processImport" class="w-full max-w-[560px] rounded-[24px] bg-white p-8 shadow-2xl">
+                
+                {{-- Header --}}
+                <div class="mb-8 flex items-start justify-between">
+                    <div class="flex gap-4">
+                        <div class="flex h-12 w-12 shrink-0 items-center justify-center rounded-full bg-blue-100 text-blue-700">
+                            <x-user.icon name="upload" :size="24" />
+                        </div>
+                        <div>
+                            <h3 class="text-[22px] font-bold text-slate-900">Import danh sách sinh viên</h3>
+                            <p class="mt-1.5 text-[15px] text-slate-600">
+                                Tải lên tệp Excel hoặc CSV chứa danh sách sinh viên. 
+                                <button type="button" wire:click="downloadTemplate" class="font-bold text-blue-700 hover:underline">Tải mẫu file.</button>
+                            </p>
+                        </div>
+                    </div>
+                    <button type="button" wire:click="closeImport" class="mt-1 shrink-0 rounded-full p-2 text-slate-400 transition-colors hover:bg-slate-100 hover:text-slate-600">
+                        <x-user.icon name="x" :size="20" />
+                    </button>
                 </div>
-                <div class="space-y-4">
-                    <label class="block space-y-2"><span class="text-sm font-semibold text-slate-700">Họ và tên</span><input wire:model="editingName" class="w-full rounded-xl border-slate-200 focus:border-primary focus:ring-primary/20">@error('editingName')<span class="text-xs text-red-600">{{ $message }}</span>@enderror</label>
-                    <label class="block space-y-2"><span class="text-sm font-semibold text-slate-700">Mã sinh viên</span><input wire:model="editingStudentCode" class="w-full rounded-xl border-slate-200 uppercase focus:border-primary focus:ring-primary/20">@error('editingStudentCode')<span class="text-xs text-red-600">{{ $message }}</span>@enderror</label>
-                    <label class="block space-y-2"><span class="text-sm font-semibold text-slate-700">Trạng thái</span><select wire:model="editingStatus" class="w-full rounded-xl border-slate-200 focus:border-primary focus:ring-primary/20"><option value="active">Đang học</option><option value="dropped">Đã thôi học</option></select></label>
+
+                {{-- Form Content --}}
+                <div class="space-y-6">
+                    
+                    {{-- Class Selection --}}
+                    <div>
+                        <select wire:model="importClassId" class="w-full rounded-xl border-slate-200 bg-slate-50 py-3 text-[15px] font-medium text-slate-700 focus:border-blue-500 focus:ring-blue-500/20">
+                            <option value="">-- Chọn lớp học để import --</option>
+                            @foreach ($classes as $class)
+                                <option value="{{ $class->id }}">{{ $class->code }} - {{ $class->name }}</option>
+                            @endforeach
+                        </select>
+                        @error('importClassId')<span class="mt-1 block text-sm text-red-500">{{ $message }}</span>@enderror
+                    </div>
+
+                    {{-- File Dropzone --}}
+                    <label class="group relative flex cursor-pointer flex-col items-center justify-center rounded-[20px] border-2 border-dashed border-slate-200 bg-slate-50/50 py-12 transition-colors hover:border-blue-400 hover:bg-blue-50/50">
+                        <input type="file" wire:model="importFile" accept=".xlsx,.xls,.csv" class="peer absolute inset-0 h-full w-full cursor-pointer opacity-0">
+                        
+                        <div class="flex flex-col items-center justify-center gap-4">
+                            <div class="flex h-10 w-10 items-center justify-center rounded-full border-[2.5px] border-slate-700 text-slate-700 transition-colors group-hover:border-blue-600 group-hover:text-blue-600">
+                                <div wire:loading wire:target="importFile">
+                                    <x-user.icon name="loader" class="animate-spin" :size="20" />
+                                </div>
+                            </div>
+                            
+                            <div class="text-center">
+                                <span class="text-[17px] font-bold text-slate-800 transition-colors group-hover:text-blue-700" wire:loading.remove wire:target="importFile">
+                                    @if($importFile)
+                                        {{ $importFile->getClientOriginalName() }}
+                                    @else
+                                        Nhấn để chọn file
+                                    @endif
+                                </span>
+                                <span class="text-[17px] font-bold text-blue-700" wire:loading wire:target="importFile">
+                                    Đang tải file...
+                                </span>
+                                <p class="mt-1.5 text-[15px] text-slate-500" wire:loading.remove wire:target="importFile">.xlsx, .xls, .csv</p>
+                            </div>
+                        </div>
+                    </label>
+                    @error('importFile')<span class="mt-1 block text-center text-sm text-red-500">{{ $message }}</span>@enderror
+
+                    {{-- Error Summary --}}
+                    @if(!empty($importErrors))
+                        <div class="rounded-xl border border-red-200 bg-red-50 p-4">
+                            <h4 class="mb-2 text-sm font-bold text-red-800">Đã nhập {{ $importSuccess }} sinh viên. Có {{ count($importErrors) }} lỗi:</h4>
+                            <ul class="list-disc space-y-1 pl-5 text-[13px] text-red-700 max-h-32 overflow-y-auto">
+                                @foreach($importErrors as $err)
+                                    <li>{{ $err }}</li>
+                                @endforeach
+                            </ul>
+                        </div>
+                    @endif
                 </div>
-                <div class="mt-6 flex justify-end gap-3"><button type="button" wire:click="closeEdit" class="rounded-xl px-5 py-2.5 text-sm font-bold text-slate-600 hover:bg-slate-100">Hủy</button><button type="submit" class="rounded-xl bg-primary px-5 py-2.5 text-sm font-bold text-white">Lưu thay đổi</button></div>
+
+                {{-- Footer Buttons --}}
+                <div class="mt-8 flex justify-end gap-4">
+                    <button type="button" wire:click="closeImport" class="rounded-full border border-slate-300 bg-white px-8 py-2.5 text-[15px] font-bold text-slate-700 transition-colors hover:bg-slate-50 hover:text-slate-900">
+                        Hủy bỏ
+                    </button>
+                    <button type="submit" class="flex items-center gap-2 rounded-full bg-[#0a46d1] px-10 py-2.5 text-[15px] font-bold text-white transition-colors hover:bg-blue-800">
+                        <span wire:loading.remove wire:target="processImport">Import</span>
+                        <span wire:loading wire:target="processImport">Đang xử lý...</span>
+                    </button>
+                </div>
             </form>
-        </div>
+            </div>
+        </template>
+    @endif
+
+    @if ($archivingMemberId)
+        <template x-teleport="body">
+            <div class="fixed inset-0 z-[100] flex items-center justify-center bg-slate-900/50 p-4 backdrop-blur-sm">
+                <div class="w-full max-w-md rounded-2xl bg-white p-6 shadow-2xl">
+                    <div class="mb-4 flex items-center gap-3 text-red-600">
+                        <div class="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-red-100">
+                            <x-user.icon name="alert-triangle" :size="20" />
+                        </div>
+                        <h3 class="text-lg font-bold text-slate-900">Xác nhận lưu trữ</h3>
+                    </div>
+                    <p class="text-sm text-slate-600">Bạn có chắc chắn muốn chuyển sinh viên này vào danh sách lưu trữ? Bạn có thể khôi phục lại sau nếu cần.</p>
+                    <div class="mt-6 flex justify-end gap-3">
+                        <button type="button" wire:click="closeArchiveConfirm" class="rounded-xl px-5 py-2.5 text-sm font-bold text-slate-600 hover:bg-slate-100 transition-colors">Hủy</button>
+                        <button type="button" wire:click="archiveMember" class="rounded-xl bg-red-600 px-5 py-2.5 text-sm font-bold text-white hover:bg-red-700 transition-colors">Lưu trữ</button>
+                    </div>
+                </div>
+            </div>
+        </template>
     @endif
 </div>

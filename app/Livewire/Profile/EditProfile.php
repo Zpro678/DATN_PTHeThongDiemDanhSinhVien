@@ -75,6 +75,7 @@ class EditProfile extends Component
 
     public function render()
     {
-        return view('livewire.profile.edit-profile')->layout('layouts.user', ['title' => 'Thông tin cá nhân']);
+        $layout = Auth::user()->is_admin ? 'components.admin-layout' : 'layouts.user';
+        return view('livewire.profile.edit-profile')->layout($layout, ['title' => 'Thông tin cá nhân']);
     }
 }

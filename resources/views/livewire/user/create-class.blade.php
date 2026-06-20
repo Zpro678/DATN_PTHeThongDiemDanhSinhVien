@@ -1,7 +1,20 @@
 <div class="min-h-full bg-slate-50/60 px-4 py-6 pb-24 sm:px-6 xl:px-8">
+    <script>
+    function removeDiacritics(str) {
+        return str
+            .normalize('NFD')
+            .replace(/[\u0300-\u036f]/g, '')
+            .replace(/\u0111/g, 'd').replace(/\u0110/g, 'D')
+            .replace(/[^A-Za-z0-9\s\-_]/g, '');
+    }
+    function cleanInput(el) {
+        const pos = el.selectionStart;
+        el.value = removeDiacritics(el.value).toUpperCase();
+        el.setSelectionRange(pos, pos);
+    }
+    </script>
     @php
-        $previewName = filled($name) ? $name : 'Tên lớp học';
-        $previewCode = filled($code) ? strtoupper($code) : 'Mã lớp';
+        $previewName    = filled($name) ? $name : 'Tên lớp học';
         $previewSubject = filled($subjectCode) ? strtoupper($subjectCode) : 'Mã môn';
         $previewSemester = filled($semester) ? $semester : 'Học kỳ';
     @endphp
@@ -49,37 +62,61 @@
                             </span>
                             Thông tin cơ bản
                         </h2>
-                        <span class="rounded-full bg-slate-100 px-3 py-1 text-xs font-bold uppercase tracking-wide text-slate-500">Bắt buộc nhập tên và mã lớp</span>
+                        <span class="rounded-full bg-slate-100 px-3 py-1 text-xs font-bold uppercase tracking-wide text-slate-500">không được để trống các trường</span>
                     </div>
 
                     <div class="grid grid-cols-1 gap-6 lg:grid-cols-2">
-                        <label class="space-y-2">
+                        {{-- Tên lớp --}}
+                        <label class="space-y-2 lg:col-span-2">
                             <span class="block text-[13px] font-semibold text-slate-700">Tên lớp <span class="text-red-500">*</span></span>
                             <input wire:model.live.debounce.300ms="name" type="text" placeholder="Ví dụ: Công nghệ phần mềm 1" class="h-12 w-full rounded-2xl border border-slate-200 bg-white px-4 text-sm font-semibold text-slate-800 outline-none transition-all placeholder:text-slate-400 hover:border-slate-300 focus:border-blue-500 focus:ring-4 focus:ring-blue-500/10" autofocus>
                             @error('name') <span class="block text-xs font-medium text-red-600">{{ $message }}</span> @enderror
                         </label>
 
-                        <label class="space-y-2">
-                            <span class="block text-[13px] font-semibold text-slate-700">Mã lớp <span class="text-red-500">*</span></span>
-                            <input wire:model.live.debounce.300ms="code" type="text" placeholder="Ví dụ: WEB-2026-01" class="h-12 w-full rounded-2xl border border-slate-200 bg-white px-4 text-sm font-semibold uppercase text-slate-800 outline-none transition-all placeholder:text-slate-400 hover:border-slate-300 focus:border-blue-500 focus:ring-4 focus:ring-blue-500/10">
-                            @error('code') <span class="block text-xs font-medium text-red-600">{{ $message }}</span> @enderror
-                        </label>
-
+                        {{-- Mã môn học --}}
                         <label class="space-y-2">
                             <span class="block text-[13px] font-semibold text-slate-700">Mã môn học</span>
-                            <input wire:model.live.debounce.300ms="subjectCode" type="text" placeholder="Ví dụ: INT3110" class="h-12 w-full rounded-2xl border border-slate-200 bg-white px-4 text-sm font-semibold uppercase text-slate-800 outline-none transition-all placeholder:text-slate-400 hover:border-slate-300 focus:border-blue-500 focus:ring-4 focus:ring-blue-500/10">
+                            <input
+                                wire:model.live.debounce.300ms="subjectCode"
+                                type="text"
+                                placeholder="Ví dụ: INT3110"
+                                oninput="cleanInput(this)"
+                                class="h-12 w-full rounded-2xl border border-slate-200 bg-white px-4 text-sm font-semibold uppercase text-slate-800 outline-none transition-all placeholder:text-slate-400 hover:border-slate-300 focus:border-blue-500 focus:ring-4 focus:ring-blue-500/10"
+                            >
                             @error('subjectCode') <span class="block text-xs font-medium text-red-600">{{ $message }}</span> @enderror
                         </label>
 
+                        {{-- Học kỳ --}}
                         <label class="space-y-2">
                             <span class="block text-[13px] font-semibold text-slate-700">Học kỳ</span>
-                            <input wire:model.live.debounce.300ms="semester" type="text" placeholder="Ví dụ: HK1 2026-2027" class="h-12 w-full rounded-2xl border border-slate-200 bg-white px-4 text-sm font-semibold text-slate-800 outline-none transition-all placeholder:text-slate-400 hover:border-slate-300 focus:border-blue-500 focus:ring-4 focus:ring-blue-500/10">
+                            <input
+                                wire:model.live.debounce.300ms="semester"
+                                type="text"
+                                placeholder="Ví dụ: HK1 2026-2027"
+                                oninput="cleanInput(this)"
+                                class="h-12 w-full rounded-2xl border border-slate-200 bg-white px-4 text-sm font-semibold uppercase text-slate-800 outline-none transition-all placeholder:text-slate-400 hover:border-slate-300 focus:border-blue-500 focus:ring-4 focus:ring-blue-500/10"
+                            >
                             @error('semester') <span class="block text-xs font-medium text-red-600">{{ $message }}</span> @enderror
                         </label>
 
+                        {{-- Mã lớp: ẩn input, hiển thị preview sinh tự động --}}
+                        <div class="space-y-2 lg:col-span-2">
+                            <span class="block text-[13px] font-semibold text-slate-700">Mã lớp học <span class="ml-1.5 rounded-full bg-blue-50 px-2 py-0.5 text-[11px] font-bold text-blue-600">Tự động sinh</span></span>
+                            <div class="flex h-12 w-full items-center gap-3 rounded-2xl border border-dashed border-slate-300 bg-slate-50 px-4">
+                                <x-user.icon name="key" :size="16" class="shrink-0 text-slate-400" />
+                                @if($generatedCode)
+                                    <span class="font-mono text-base font-black tracking-widest text-blue-600">{{ $generatedCode }}</span>
+                                    <span class="ml-auto text-xs text-slate-400">Mã sẽ được xác nhận khi lưu</span>
+                                @else
+                                    <span class="text-sm text-slate-400">Nhập mã môn học và học kỳ để xem trước mã lớp...</span>
+                                @endif
+                            </div>
+                        </div>
+
+                        {{-- Mô tả --}}
                         <label class="space-y-2 lg:col-span-2">
                             <span class="block text-[13px] font-semibold text-slate-700">Mô tả</span>
-                            <textarea wire:model.blur="description" placeholder="Nhập mô tả thêm về lớp học..." rows="5" class="w-full rounded-2xl border border-slate-200 bg-white px-4 py-3 text-sm font-semibold text-slate-800 outline-none transition-all placeholder:text-slate-400 hover:border-slate-300 focus:border-blue-500 focus:ring-4 focus:ring-blue-500/10"></textarea>
+                            <textarea wire:model.blur="description" placeholder="Nhập mô tả thêm về lớp học..." rows="4" class="w-full rounded-2xl border border-slate-200 bg-white px-4 py-3 text-sm font-semibold text-slate-800 outline-none transition-all placeholder:text-slate-400 hover:border-slate-300 focus:border-blue-500 focus:ring-4 focus:ring-blue-500/10"></textarea>
                             @error('description') <span class="block text-xs font-medium text-red-600">{{ $message }}</span> @enderror
                         </label>
                     </div>
@@ -157,7 +194,13 @@
                                 <x-user.icon name="eye" :size="22" class="text-white/90" />
                             </div>
                             <h3 class="mt-5 text-2xl font-extrabold leading-tight">{{ $previewName }}</h3>
-                            <p class="mt-2 text-sm font-medium text-blue-100">{{ $previewCode }} · {{ $previewSubject }} · {{ $previewSemester }}</p>
+                            <p class="mt-2 text-sm font-medium text-blue-100">{{ $previewSubject }} · {{ $previewSemester }}</p>
+                            @if($generatedCode)
+                                <div class="mt-3 inline-flex items-center gap-2 rounded-xl bg-white/15 px-3 py-1.5">
+                                    <x-user.icon name="key" :size="14" class="text-white/80" />
+                                    <span class="font-mono text-sm font-black tracking-widest text-white">{{ $generatedCode }}</span>
+                                </div>
+                            @endif
                         </div>
 
                         <div class="space-y-4 p-6">
