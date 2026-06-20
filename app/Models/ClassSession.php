@@ -27,6 +27,7 @@ class ClassSession extends Model
         'gps_longitude', // Kinh độ vị trí điểm danh.
         'gps_radius', // Bán kính GPS cho phép.
         'status', // Trạng thái phiên pending/active/closed.
+        'lesson_count', // Tổng số tiết học của buổi học này.
     ];
 
     protected function casts(): array
@@ -37,6 +38,7 @@ class ClassSession extends Model
             'gps_latitude' => 'decimal:8', // Ép kiểu vĩ độ GPS.
             'gps_longitude' => 'decimal:8', // Ép kiểu kinh độ GPS.
             'gps_radius' => 'integer', // Ép kiểu bán kính GPS.
+            'lesson_count' => 'integer', // Ép kiểu tổng số tiết của buổi học.
         ];
     }
 

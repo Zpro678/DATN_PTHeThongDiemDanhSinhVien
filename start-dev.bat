@@ -51,17 +51,46 @@ if errorlevel 1 (
     exit /b 1
 )
 
-php artisan migrate --force --no-interaction
-if errorlevel 1 (
-    echo Database migration failed.
-    echo Run php artisan migrate:fresh --seed only when old data may be deleted.
-    pause
-    exit /b 1
+set "RESET_DATABASE=0"
+if /I "%~1"=="fresh" set "RESET_DATABASE=1"
+if /I "%~1"=="reset" set "RESET_DATABASE=1"
+
+if "%RESET_DATABASE%"=="1" (
+    echo.
+    echo Rebuilding database with php artisan migrate:fresh --seed...
+    echo Warning: all existing local data will be deleted.
+    php artisan migrate:fresh --seed --force --no-interaction
+    if errorlevel 1 (
+        echo Database rebuild failed.
+        pause
+        exit /b 1
+    )
+) else (
+    echo.
+    echo Running database migrations...
+    php artisan migrate --force --no-interaction
+    if errorlevel 1 (
+        echo Database migration failed.
+        echo If you edited an old migration file, run: start-dev.bat fresh
+        pause
+        exit /b 1
+    )
+
+    echo.
+    echo Running database seeders...
+    php artisan db:seed --force --no-interaction
+    if errorlevel 1 (
+        echo Demo data seeding failed.
+        pause
+        exit /b 1
+    )
 )
 
-php artisan db:seed --force --no-interaction
+echo.
+echo Clearing Laravel cache...
+php artisan optimize:clear
 if errorlevel 1 (
-    echo Demo data seeding failed.
+    echo Laravel cache clear failed.
     pause
     exit /b 1
 )
