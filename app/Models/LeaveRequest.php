@@ -10,25 +10,27 @@ class LeaveRequest extends Model
 {
     use HasFactory;
 
+    protected $table = 'leave_requests';
+
     public $timestamps = false;
 
     protected $fillable = [
-        'class_member_id',
-        'class_session_id',
-        'reason',
-        'proof_image',
-        'status',
-        'rejected_reason',
-        'reviewed_by',
-        'reviewed_at',
-        'created_at',
+        'class_member_id', // ID thành viên lớp xin nghỉ.
+        'class_session_id', // ID buổi học xin nghỉ.
+        'reason', // Lý do vắng mặt.
+        'proof_image', // Hình ảnh minh chứng.
+        'status', // Trạng thái đơn pending/approved/rejected.
+        'rejected_reason', // Lý do từ chối đơn.
+        'reviewed_by', // ID chủ lớp hoặc người duyệt.
+        'reviewed_at', // Thời điểm duyệt đơn.
+        'created_at', // Thời điểm tạo đơn xin nghỉ.
     ];
 
     protected function casts(): array
     {
         return [
-            'reviewed_at' => 'datetime',
-            'created_at' => 'datetime',
+            'reviewed_at' => 'datetime', // Ép kiểu thời điểm duyệt.
+            'created_at' => 'datetime', // Ép kiểu thời điểm tạo.
         ];
     }
 

@@ -19,7 +19,7 @@ return new class extends Migration
             $table->boolean('require_approval')->default(false);
             $table->string('status', 50)->default('active')->index();
             $table->unsignedInteger('total_sessions')->default(15);
-            $table->unsignedInteger('lessons_per_session')->default(3);
+            $table->unsignedInteger('lessons_per_session')->nullable()->default(3);
             $table->timestamps();
             $table->softDeletes();
         });

@@ -16,24 +16,24 @@ class CourseClass extends Model
     protected $table = 'classes';
 
     protected $fillable = [
-        'owner_user_id',
-        'code',
-        'name',
-        'description',
-        'subject_code',
-        'semester',
-        'require_approval',
-        'status',
-        'total_sessions',
-        'lessons_per_session',
+        'owner_user_id', // ID của chủ lớp tạo lớp học.
+        'code', // Mã lớp học duy nhất.
+        'name', // Tên lớp học.
+        'description', // Mô tả môn học.
+        'subject_code', // Mã môn học.
+        'semester', // Học kỳ.
+        'require_approval', // Bật/tắt yêu cầu duyệt khi xin vào lớp.
+        'status', // Trạng thái lớp active/archived.
+        'total_sessions', // Tổng số tiết của môn học.
+        'lessons_per_session', // Số tiết trong mỗi buổi học.
     ];
 
     protected function casts(): array
     {
         return [
-            'require_approval' => 'boolean',
-            'total_sessions' => 'integer',
-            'lessons_per_session' => 'integer',
+            'require_approval' => 'boolean', // Ép kiểu cờ yêu cầu duyệt.
+            'total_sessions' => 'integer', // Ép kiểu tổng số buổi.
+            'lessons_per_session' => 'integer', // Ép kiểu số tiết mỗi buổi.
         ];
     }
 

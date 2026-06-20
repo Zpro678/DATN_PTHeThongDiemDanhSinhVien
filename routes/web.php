@@ -29,7 +29,6 @@ Route::get('/', function () {
     return view('welcome');
 });
 
-
 Route::middleware(['auth', 'verified', 'user.route'])->group(function () {
     $ensureAdmin = function (): void {
         abort_unless(auth()->user()?->is_admin, 403);

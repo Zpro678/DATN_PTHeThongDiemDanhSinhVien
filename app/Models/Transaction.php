@@ -10,23 +10,25 @@ class Transaction extends Model
 {
     use HasFactory;
 
+    protected $table = 'transactions';
+
     public $timestamps = false;
 
     protected $fillable = [
-        'user_id',
-        'amount',
-        'payment_method',
-        'transaction_code',
-        'partner_reference_id',
-        'status',
-        'created_at',
+        'user_id', // ID người thực hiện giao dịch.
+        'amount', // Số tiền thanh toán.
+        'payment_method', // Phương thức thanh toán.
+        'transaction_code', // Mã giao dịch nội bộ duy nhất.
+        'partner_reference_id', // Mã tham chiếu từ cổng thanh toán.
+        'status', // Trạng thái giao dịch pending/success/failed/canceled.
+        'created_at', // Thời điểm tạo giao dịch.
     ];
 
     protected function casts(): array
     {
         return [
-            'amount' => 'decimal:2',
-            'created_at' => 'datetime',
+            'amount' => 'decimal:2', // Ép kiểu số tiền thanh toán.
+            'created_at' => 'datetime', // Ép kiểu thời điểm tạo.
         ];
     }
 

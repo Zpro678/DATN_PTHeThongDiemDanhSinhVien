@@ -10,12 +10,14 @@ class ClassJoinRequest extends Model
 {
     use HasFactory;
 
+    protected $table = 'class_join_requests';
+
     protected $fillable = [
-        'class_id',
-        'user_id',
-        'student_code',
-        'full_name',
-        'status',
+        'class_id', // ID của lớp xin tham gia.
+        'user_id', // ID tài khoản gửi yêu cầu.
+        'student_code', // MSSV sinh viên khai báo.
+        'full_name', // Họ tên sinh viên khai báo.
+        'status', // Trạng thái yêu cầu pending/approved/rejected.
     ];
 
     public function courseClass(): BelongsTo

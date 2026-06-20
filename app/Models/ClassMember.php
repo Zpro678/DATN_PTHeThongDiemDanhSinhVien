@@ -13,12 +13,14 @@ class ClassMember extends Model
 {
     use HasFactory, SoftDeletes;
 
+    protected $table = 'class_members';
+
     protected $fillable = [
-        'class_id',
-        'student_code',
-        'full_name',
-        'user_id',
-        'status',
+        'class_id', // ID của lớp học.
+        'student_code', // MSSV thực tế do chủ lớp import.
+        'full_name', // Họ tên sinh viên trong lớp.
+        'user_id', // ID tài khoản liên kết khi sinh viên đăng nhập.
+        'status', // Trạng thái thành viên active/dropped.
     ];
 
     public function courseClass(): BelongsTo

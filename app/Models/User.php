@@ -17,20 +17,22 @@ class User extends Authenticatable
     /** @use HasFactory<UserFactory> */
     use HasFactory, Notifiable, SoftDeletes;
 
+    protected $table = 'users';
+
     /**
      * The attributes that are mass assignable.
      *
      * @var list<string>
      */
     protected $fillable = [
-        'is_admin',
-        'google_id',
-        'code',
-        'name',
-        'email',
-        'password',
-        'avatar',
-        'status',
+        'is_admin', // Lọc nhanh quyền quản trị tối cao.
+        'google_id', // ID Google phục vụ đăng nhập OAuth.
+        'code', // Mã số cá nhân tùy chọn.
+        'name', // Họ và tên.
+        'email', // Email đăng nhập duy nhất.
+        'password', // Mật khẩu đã hash.
+        'avatar', // URL ảnh đại diện.
+        'status', // Trạng thái tài khoản active/blocked.
     ];
 
     /**
@@ -39,8 +41,8 @@ class User extends Authenticatable
      * @var list<string>
      */
     protected $hidden = [
-        'password',
-        'remember_token',
+        'password', // Ẩn mật khẩu khi serialize.
+        'remember_token', // Token ghi nhớ đăng nhập.
     ];
 
     /**
@@ -51,9 +53,9 @@ class User extends Authenticatable
     protected function casts(): array
     {
         return [
-            'email_verified_at' => 'datetime',
-            'is_admin' => 'boolean',
-            'password' => 'hashed',
+            'email_verified_at' => 'datetime', // Thời gian xác thực email.
+            'is_admin' => 'boolean', // Ép kiểu quyền quản trị.
+            'password' => 'hashed', // Tự động hash mật khẩu.
         ];
     }
 

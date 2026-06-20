@@ -10,28 +10,30 @@ class AttendanceSummary extends Model
 {
     use HasFactory;
 
+    protected $table = 'attendance_summaries';
+
     public $timestamps = false;
 
     protected $fillable = [
-        'class_id',
-        'class_member_id',
-        'total_present',
-        'total_late',
-        'total_absent',
-        'total_excused',
-        'is_banned_from_exam',
-        'updated_at',
+        'class_id', // ID của lớp học.
+        'class_member_id', // ID thành viên lớp được tổng hợp chuyên cần.
+        'total_present', // Tổng số tiết có mặt.
+        'total_late', // Tổng số tiết đi trễ.
+        'total_absent', // Tổng số tiết vắng.
+        'total_excused', // Tổng số tiết vắng có phép.
+        'is_banned_from_exam', // Cờ bị cấm thi do vắng quá số tiết quy định.
+        'updated_at', // Lần cập nhật tổng hợp gần nhất.
     ];
 
     protected function casts(): array
     {
         return [
-            'total_present' => 'integer',
-            'total_late' => 'integer',
-            'total_absent' => 'integer',
-            'total_excused' => 'integer',
-            'is_banned_from_exam' => 'boolean',
-            'updated_at' => 'datetime',
+            'total_present' => 'integer', // Ép kiểu tổng số tiết có mặt.
+            'total_late' => 'integer', // Ép kiểu tổng số tiết đi trễ.
+            'total_absent' => 'integer', // Ép kiểu tổng số tiết vắng.
+            'total_excused' => 'integer', // Ép kiểu tổng số tiết vắng có phép.
+            'is_banned_from_exam' => 'boolean', // Ép kiểu trạng thái cấm thi.
+            'updated_at' => 'datetime', // Ép kiểu thời điểm cập nhật.
         ];
     }
 
