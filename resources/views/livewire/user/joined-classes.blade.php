@@ -46,7 +46,7 @@
     ];
 @endphp
 
-<div x-data="{ showJoinModal: false }" class="mx-auto max-w-[1400px] space-y-6 p-4 pb-24 sm:p-8 animate-in fade-in slide-in-from-bottom-4 duration-500">
+<div class="mx-auto max-w-[1400px] space-y-6 p-4 pb-24 sm:p-8 animate-in fade-in slide-in-from-bottom-4 duration-500">
     <section class="flex flex-col justify-between gap-4 rounded-[2rem] border border-outline-variant/10 bg-white p-6 shadow-sm md:flex-row md:items-center">
         <div>
             <h1 class="flex items-center gap-3 text-2xl font-extrabold uppercase tracking-tight text-slate-900">
@@ -55,10 +55,10 @@
             </h1>
             <p class="mt-2 text-sm text-slate-500">Danh sách các lớp bạn đang học và theo dõi điểm danh</p>
         </div>
-        <button @click="showJoinModal = true" type="button" class="flex w-full items-center justify-center gap-2 rounded-xl bg-secondary px-6 py-3 font-bold text-white transition-all hover:bg-secondary/90 active:scale-95 md:w-auto">
+        <a href="{{ route('student.classes.join') }}" class="flex w-full items-center justify-center gap-2 rounded-xl bg-secondary px-6 py-3 font-bold text-white transition-all hover:bg-secondary/90 active:scale-95 md:w-auto">
             <x-user.icon name="plus" />
             Tham gia lớp bằng mã
-        </button>
+        </a>
     </section>
 
     <section class="flex flex-col gap-4 lg:flex-row">
@@ -247,53 +247,4 @@
             </article>
         @endforeach
     </section>
-    <!-- Join Class Modal -->
-    <template x-teleport="body">
-        <div x-show="showJoinModal" style="display: none;" class="relative z-[100]" aria-labelledby="modal-title" role="dialog" aria-modal="true">
-            <!-- Backdrop -->
-            <div x-show="showJoinModal" x-transition:enter="ease-out duration-300" x-transition:enter-start="opacity-0" x-transition:enter-end="opacity-100" x-transition:leave="ease-in duration-200" x-transition:leave-start="opacity-100" x-transition:leave-end="opacity-0" class="fixed inset-0 bg-black/30 backdrop-blur-sm transition-opacity"></div>
-
-            <div class="fixed inset-0 z-10 w-screen overflow-y-auto">
-                <div class="flex min-h-full items-center justify-center p-4 text-center">
-                    <div x-show="showJoinModal" @click.away="showJoinModal = false" x-transition:enter="ease-out duration-300" x-transition:enter-start="opacity-0 scale-95" x-transition:enter-end="opacity-100 scale-100" x-transition:leave="ease-in duration-200" x-transition:leave-start="opacity-100 scale-100" x-transition:leave-end="opacity-0 scale-95" class="relative overflow-hidden rounded-3xl bg-white px-4 pb-4 pt-5 text-left shadow-2xl transition-all sm:w-full sm:max-w-md sm:p-6">
-                        <div class="absolute right-0 top-0 hidden pr-4 pt-4 sm:block">
-                            <button type="button" @click="showJoinModal = false" class="rounded-full p-2 text-on-surface-variant hover:bg-surface-container hover:text-on-surface focus:outline-none focus:ring-2 focus:ring-primary">
-                                <span class="sr-only">Đóng</span>
-                                <x-user.icon name="x" :size="20" />
-                            </button>
-                        </div>
-                        <div class="sm:flex sm:items-start">
-                            <div class="mx-auto flex h-12 w-12 shrink-0 items-center justify-center rounded-full bg-primary/10 sm:mx-0 sm:h-10 sm:w-10">
-                                <x-user.icon name="log-in" :size="20" class="text-primary" />
-                            </div>
-                            <div class="mt-3 text-center sm:ml-4 sm:mt-0 sm:text-left w-full">
-                                <h3 class="text-xl font-bold leading-6 text-on-surface" id="modal-title">Tham gia lớp học</h3>
-                                <div class="mt-2">
-                                    <p class="text-sm text-on-surface-variant">
-                                        Nhập mã tham gia hoặc đường link do giảng viên cung cấp để tham gia vào lớp học.
-                                    </p>
-                                </div>
-                            </div>
-                        </div>
-                        
-                        <div class="mt-6 w-full">
-                            <div>
-                                <label for="join_code" class="mb-1.5 block text-sm font-bold text-on-surface">Mã lớp / Link tham gia</label>
-                                <input type="text" id="join_code" placeholder="VD: WEB-2025-01 hoặc https://..." class="w-full rounded-xl border border-outline-variant/30 bg-surface-container-lowest px-4 py-3 text-on-surface shadow-sm transition-all focus:border-primary focus:outline-none focus:ring-2 focus:ring-primary/20">
-                            </div>
-                        </div>
-
-                        <div class="mt-6 sm:mt-8 sm:flex sm:flex-row-reverse">
-                            <button type="button" class="inline-flex w-full justify-center rounded-full bg-primary px-6 py-2.5 text-sm font-bold text-white shadow-sm hover:bg-primary/90 focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-2 sm:ml-3 sm:w-auto transition-colors">
-                                Tham gia
-                            </button>
-                            <button type="button" @click="showJoinModal = false" class="mt-3 inline-flex w-full justify-center rounded-full bg-white px-6 py-2.5 text-sm font-bold text-on-surface shadow-sm ring-1 ring-inset ring-outline-variant hover:bg-surface-container focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-2 sm:mt-0 sm:w-auto transition-colors">
-                                Hủy bỏ
-                            </button>
-                        </div>
-                    </div>
-                </div>
-            </div>
-        </div>
-    </template>
 </div>

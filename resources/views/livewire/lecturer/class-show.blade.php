@@ -124,8 +124,16 @@
                         <span x-show="copied" x-cloak>Đã sao chép</span>
                     </div>
                 </div>
-                <p class="mt-4 text-center text-xs text-on-surface-variant">Gửi mã này cho sinh viên để tham gia lớp học.</p>
+                <p class="mt-3 text-center text-xs text-on-surface-variant">Gửi mã này cho sinh viên để tham gia lớp học.</p>
+                <a
+                    href="{{ route('lecturer.classes.settings', $class->id) }}"
+                    class="mt-3 flex items-center justify-center gap-1.5 rounded-xl border border-orange-200 bg-orange-50 px-4 py-2 text-xs font-bold text-orange-700 transition-colors hover:bg-orange-100"
+                >
+                    <x-user.icon name="refresh-cw" :size="13" />
+                    Đổi mã lớp
+                </a>
             </div>
+
 
             {{-- Thông tin lớp --}}
             <div class="rounded-3xl bg-white p-6 shadow-sm ring-1 ring-outline-variant/20">

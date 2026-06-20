@@ -22,6 +22,7 @@ class ClassSettings extends Component
     public string $status = 'active';
 
     public bool $isConfirmingDelete = false;
+    public bool $isConfirmingRegenCode = false;
 
     public function mount(CourseClass $courseClass): void
     {
@@ -75,6 +76,41 @@ class ClassSettings extends Component
         // Refresh the model properties just in case
         $this->courseClass->refresh();
     }
+
+    // ─── Đổi mã lớp ────────────────────────────────────────────────────────────
+
+    public function confirmRegenCode(): void
+    {
+        $this->isConfirmingRegenCode = true;
+    }
+
+    public function closeRegenCodeConfirm(): void
+    {
+        $this->isConfirmingRegenCode = false;
+    }
+
+    public function regenerateCode(): void
+    {
+        if (! $this->isConfirmingRegenCode) {
+            return;
+        }
+
+        $newCode = CourseClass::generateUniqueCode(
+            $this->courseClass->subject_code ?? '',
+            $this->courseClass->semester ?? '',
+            $this->courseClass->id,
+        );
+
+        $this->courseClass->update(['code' => $newCode]);
+        $this->courseClass->refresh();
+
+        $this->code = $this->courseClass->code;
+        $this->isConfirmingRegenCode = false;
+
+        session()->flash('status', 'Mã lớp đã được đổi thành công. Vui lòng thông báo mã mới cho sinh viên.');
+    }
+
+    // ─── Xoá lớp ────────────────────────────────────────────────────────────────
 
     public function confirmDelete(): void
     {

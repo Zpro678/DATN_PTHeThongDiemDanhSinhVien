@@ -2,7 +2,6 @@
 
 namespace App\Livewire\Student;
 
-use App\Models\ClassJoinRequest;
 use App\Models\ClassMember;
 use App\Models\CourseClass;
 use Illuminate\Contracts\View\View;
@@ -49,40 +48,16 @@ class JoinClass extends Component
             return;
         }
 
-        // Check if there is a pending request
-        $hasPendingRequest = ClassJoinRequest::where('class_id', $courseClass->id)
-            ->where(function ($query) use ($userId) {
-                $query->where('user_id', $userId)
-                      ->orWhere('student_code', $this->student_code);
-            })
-            ->where('status', 'pending')
-            ->exists();
+        // Luôn thêm sinh viên vào lớp ngay lập tức (không cần chờ duyệt)
+        ClassMember::create([
+            'class_id'     => $courseClass->id,
+            'user_id'      => $userId,
+            'student_code' => $this->student_code,
+            'full_name'    => $this->full_name,
+            'status'       => 'active',
+        ]);
 
-        if ($hasPendingRequest) {
-            $this->addError('class_code', 'Bạn đã gửi yêu cầu tham gia lớp này và đang chờ duyệt.');
-            return;
-        }
-
-        if ($courseClass->require_approval) {
-            ClassJoinRequest::create([
-                'class_id' => $courseClass->id,
-                'user_id' => $userId,
-                'student_code' => $this->student_code,
-                'full_name' => $this->full_name,
-                'status' => 'pending',
-            ]);
-            session()->flash('status', 'Đã gửi yêu cầu tham gia lớp. Vui lòng chờ giảng viên duyệt.');
-        } else {
-            ClassMember::create([
-                'class_id' => $courseClass->id,
-                'user_id' => $userId,
-                'student_code' => $this->student_code,
-                'full_name' => $this->full_name,
-                'status' => 'active',
-            ]);
-            session()->flash('status', 'Bạn đã tham gia lớp học thành công!');
-        }
-
+        session()->flash('status', 'Bạn đã tham gia lớp học thành công!');
         $this->reset(['class_code', 'student_code']);
     }
 

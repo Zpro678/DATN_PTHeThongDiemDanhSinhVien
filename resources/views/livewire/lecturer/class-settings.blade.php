@@ -20,6 +20,51 @@
         </div>
     @endif
 
+    {{-- ── Mã lớp nổi bật ───────────────────────────────────────────────── --}}
+    <div x-data="{ copied: false }" class="mb-6 overflow-hidden rounded-[2rem] border border-primary/20 bg-gradient-to-br from-primary/5 to-primary/10 shadow-sm">
+        <div class="flex flex-col items-center gap-4 p-6 sm:flex-row sm:justify-between">
+            <div>
+                <p class="text-xs font-bold uppercase tracking-widest text-primary/70">Mã tham gia lớp</p>
+                <div class="mt-2 flex items-center gap-3">
+                    <span
+                        :class="copied ? 'text-green-600' : 'text-primary'"
+                        class="font-mono text-3xl font-black tracking-wider transition-colors sm:text-4xl"
+                    >{{ $code }}</span>
+                </div>
+                <p class="mt-1 text-xs text-on-surface-variant">Gửi mã này cho sinh viên để họ tham gia lớp học.</p>
+            </div>
+            <div class="flex shrink-0 flex-col gap-2 sm:items-end">
+                {{-- Nút Copy mã --}}
+                <button
+                    type="button"
+                    id="copy-class-code-btn"
+                    :class="copied ? 'bg-green-100 text-green-700 border-green-300' : 'bg-white text-on-surface border-outline-variant/30 hover:bg-surface-container-low hover:border-primary/40 hover:text-primary'"
+                    class="flex items-center gap-2 rounded-xl border px-4 py-2.5 text-sm font-bold shadow-sm transition-all"
+                    x-on:click="navigator.clipboard.writeText('{{ $code }}'); copied = true; setTimeout(() => copied = false, 2500)"
+                >
+                    <template x-if="!copied">
+                        <x-user.icon name="copy" :size="16" />
+                    </template>
+                    <template x-if="copied">
+                        <x-user.icon name="check-circle" :size="16" />
+                    </template>
+                    <span x-text="copied ? 'Đã sao chép!' : 'Sao chép mã'"></span>
+                </button>
+
+                {{-- Nút Đổi mã lớp --}}
+                <button
+                    type="button"
+                    id="regen-class-code-btn"
+                    wire:click="confirmRegenCode"
+                    class="flex items-center gap-2 rounded-xl border border-orange-200 bg-orange-50 px-4 py-2.5 text-sm font-bold text-orange-700 shadow-sm transition-all hover:bg-orange-100"
+                >
+                    <x-user.icon name="refresh-cw" :size="16" />
+                    Đổi mã lớp
+                </button>
+            </div>
+        </div>
+    </div>
+
     <div class="rounded-[2rem] border border-outline-variant/10 bg-white shadow-sm overflow-hidden">
         <form wire:submit="save">
             <div class="p-6 md:p-10 space-y-8">
@@ -31,14 +76,6 @@
                             <span class="mb-2 block text-sm font-bold text-on-surface">Tên lớp / môn học <span class="text-error">*</span></span>
                             <input type="text" wire:model="name" class="w-full rounded-xl border border-outline-variant/30 bg-surface-container-lowest px-4 py-3 outline-none transition-all focus:border-primary focus:ring-2 focus:ring-primary/20" placeholder="Nhập tên môn học">
                             @error('name') <span class="text-error text-xs mt-1 block">{{ $message }}</span> @enderror
-                        </label>
-                        
-                        <label class="block">
-                            <span class="mb-2 block text-sm font-bold text-on-surface">Mã lớp</span>
-                            <div class="flex items-center gap-3">
-                                <input type="text" wire:model="code" class="w-full rounded-xl border border-outline-variant/30 bg-surface-container-lowest px-4 py-3 outline-none uppercase opacity-60 cursor-not-allowed" disabled>
-                                <span class="shrink-0 rounded-full bg-surface-container px-3 py-1 text-xs font-bold text-on-surface-variant">Tự động sinh</span>
-                            </div>
                         </label>
                         
                         <label class="block">
@@ -122,8 +159,9 @@
             </div>
         </form>
     </div>
-    <div class="mt-8 rounded-[2rem] border border-error/20 bg-error/5 p-6 md:p-10 shadow-sm">
 
+    {{-- Vùng nguy hiểm --}}
+    <div class="mt-8 rounded-[2rem] border border-error/20 bg-error/5 p-6 md:p-10 shadow-sm">
         <div class="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between rounded-2xl border border-error/10 bg-white p-5">
             <div>
                 <h4 class="font-bold text-on-surface">Xóa lớp học</h4>
@@ -140,6 +178,35 @@
         </div>
     </div>
 
+    {{-- Modal xác nhận ĐỔI MÃ LỚP --}}
+    @if ($isConfirmingRegenCode)
+        <template x-teleport="body">
+            <div class="fixed inset-0 z-[100] flex items-center justify-center bg-slate-900/50 p-4 backdrop-blur-sm">
+                <div class="w-full max-w-md rounded-2xl bg-white p-6 shadow-2xl" x-data x-on:click.away="$wire.closeRegenCodeConfirm()">
+                    <div class="mb-4 flex items-center gap-3 text-orange-600">
+                        <div class="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-orange-100">
+                            <x-user.icon name="refresh-cw" :size="20" />
+                        </div>
+                        <h3 class="text-lg font-bold text-on-surface">Đổi mã lớp học?</h3>
+                    </div>
+                    <div class="rounded-xl border border-orange-200 bg-orange-50 p-4 mb-4">
+                        <p class="text-sm font-bold text-orange-800">⚠️ Lưu ý quan trọng</p>
+                        <p class="mt-1 text-sm text-orange-700">Mã lớp hiện tại <span class="font-mono font-black">{{ $code }}</span> sẽ bị vô hiệu hóa. Sinh viên đang giữ mã cũ sẽ không thể dùng để tham gia lớp nữa.</p>
+                    </div>
+                    <p class="text-sm text-on-surface-variant">Hệ thống sẽ tự động sinh một mã lớp mới duy nhất. Bạn cần thông báo mã mới cho sinh viên chưa tham gia.</p>
+                    <div class="mt-6 flex justify-end gap-3">
+                        <button type="button" wire:click="closeRegenCodeConfirm" class="rounded-xl px-5 py-2.5 text-sm font-bold text-on-surface-variant hover:bg-surface-container-low transition-colors">Hủy</button>
+                        <button type="button" wire:click="regenerateCode" class="flex items-center gap-2 rounded-xl bg-orange-600 px-5 py-2.5 text-sm font-bold text-white hover:bg-orange-700 transition-colors">
+                            <x-user.icon name="refresh-cw" :size="16" />
+                            Xác nhận đổi mã
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </template>
+    @endif
+
+    {{-- Modal xác nhận XÓA --}}
     @if ($isConfirmingDelete)
         <template x-teleport="body">
             <div class="fixed inset-0 z-[100] flex items-center justify-center bg-slate-900/50 p-4 backdrop-blur-sm">

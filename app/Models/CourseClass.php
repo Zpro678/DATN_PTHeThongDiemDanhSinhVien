@@ -74,4 +74,34 @@ class CourseClass extends Model
     {
         return $this->hasMany(AuditLog::class, 'class_id');
     }
+
+    /**
+     * Sinh mã lớp duy nhất dựa trên subject_code và semester.
+     * Tái dùng ở CreateClass và ClassSettings.
+     *
+     * @param  string  $subjectCode  Mã môn học (có thể rỗng)
+     * @param  string  $semester     Học kỳ (có thể rỗng)
+     * @param  int|null  $excludeId  ID lớp cần loại trừ khi kiểm tra unique (dùng khi đổi mã)
+     * @return string  Mã lớp duy nhất đã được kiểm tra
+     */
+    public static function generateUniqueCode(string $subjectCode = '', string $semester = '', ?int $excludeId = null): string
+    {
+        $subPart = strtoupper(substr(preg_replace('/[^A-Za-z0-9]/', '', $subjectCode), 0, 3));
+        $semPart = strtoupper(substr(preg_replace('/[^A-Za-z0-9]/', '', $semester), 0, 3));
+        $prefix  = ($subPart ?: 'CLS') . ($semPart ?: 'SEM');
+
+        $attempts = 0;
+        do {
+            $suffix = str_pad((string) random_int(0, 9999), 4, '0', STR_PAD_LEFT);
+            $code   = $prefix . $suffix;
+            $query  = self::withTrashed()->where('code', $code);
+            if ($excludeId) {
+                $query->where('id', '!=', $excludeId);
+            }
+            $exists = $query->exists();
+            $attempts++;
+        } while ($exists && $attempts < 20);
+
+        return $code;
+    }
 }

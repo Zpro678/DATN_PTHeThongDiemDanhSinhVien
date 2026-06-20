@@ -191,6 +191,30 @@
 
                 <!-- Footer Actions -->
                 <div class="flex items-center justify-end gap-1 px-4 py-3 bg-surface-container-lowest/50">
+                    {{-- Nút Copy mã lớp --}}
+                    <div x-data="{ copied: false }" class="relative">
+                        <button
+                            type="button"
+                            title="Sao chép mã lớp: {{ $class->code }}"
+                            class="group/action relative rounded-full p-2.5 transition-colors hover:bg-surface-container-low"
+                            x-on:click="navigator.clipboard.writeText('{{ $class->code }}'); copied = true; setTimeout(() => copied = false, 2000); $event.stopPropagation()"
+                        >
+                            <template x-if="!copied">
+                                <x-user.icon name="copy" :size="18" class="text-on-surface-variant transition-colors group-hover/action:text-primary" />
+                            </template>
+                            <template x-if="copied">
+                                <x-user.icon name="check-circle" :size="18" class="text-green-600" />
+                            </template>
+                        </button>
+                        <span
+                            x-show="copied"
+                            x-cloak
+                            x-transition:enter="transition ease-out duration-200"
+                            x-transition:enter-start="opacity-0 -translate-y-1"
+                            x-transition:enter-end="opacity-100 translate-y-0"
+                            class="pointer-events-none absolute -top-8 left-1/2 -translate-x-1/2 whitespace-nowrap rounded-lg bg-slate-800 px-2 py-1 text-[10px] font-bold text-white"
+                        >Đã copy!</span>
+                    </div>
                     @foreach ([
                         ['label' => 'Điểm danh QR', 'icon' => 'qr-code'],
                         ['label' => 'Thủ công', 'icon' => 'check-square'],
