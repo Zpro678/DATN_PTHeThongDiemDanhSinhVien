@@ -8,11 +8,12 @@ use Illuminate\Contracts\View\View;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Support\Str;
 use Livewire\Component;
+use Livewire\WithPagination;
 use SimpleSoftwareIO\QrCode\Facades\QrCode;
 
 class QrAttendanceSession extends Component
 {
-    use OwnsAttendanceSessions;
+    use OwnsAttendanceSessions, WithPagination;
 
     public int $sessionId;
 
@@ -20,9 +21,13 @@ class QrAttendanceSession extends Component
 
     public string $statusFilter = 'all';
 
+    public bool $isClosed = false;
+
     public function mount(int $session): void
     {
-        $this->sessionId = $this->ownedSession($session)->id;
+        $model = $this->ownedSession($session);
+        $this->sessionId = $model->id;
+        $this->isClosed = $model->status === 'closed';
     }
 
     public function setStatusFilter(string $status): void
@@ -45,8 +50,6 @@ class QrAttendanceSession extends Component
             'qr_token' => Str::upper(Str::random(24)),
             'token_expires_at' => now()->addMinutes(15),
         ]);
-
-        session()->flash('status', 'Mã QR đã được làm mới.');
     }
 
     public function updateStatus(int $recordId, string $status): void
@@ -70,14 +73,46 @@ class QrAttendanceSession extends Component
     {
         $session = $this->ownedSession($this->sessionId);
         $session->update(['status' => 'closed']);
+        $this->isClosed = true;
 
         session()->flash('status', 'Phiên QR đã được chốt.');
+    }
+
+    public function deleteSession()
+    {
+        $session = $this->ownedSession($this->sessionId);
+        
+        abort_if($session->status === 'closed', 403, 'Không thể xóa phiên điểm danh đã chốt.');
+
+        $classId = $session->class_id;
+        $session->delete();
+
+        session()->flash('status', 'Buổi điểm danh đã được xóa thành công.');
+        return redirect()->route('lecturer.classes.show', $classId);
+    }
+
+    public function exportExcel()
+    {
+        $session = $this->ownedSession($this->sessionId)->load('courseClass');
+        
+        $date = $session->date->format('Y-m-d');
+        $className = \Illuminate\Support\Str::slug($session->courseClass->name);
+        $startLesson = 1;
+        $endLesson = max(1, $session->courseClass->lessons_per_session);
+        $tiet = "Tiet_{$startLesson}-{$endLesson}";
+
+        $fileName = "{$date}_{$className}_{$tiet}.xlsx";
+
+        return \Maatwebsite\Excel\Facades\Excel::download(
+            new \App\Exports\ClassSessionExport($this->sessionId),
+            $fileName
+        );
     }
 
     public function render(): View
     {
         $session = $this->ownedSession($this->sessionId)->load('courseClass');
-        $attendanceLink = url('/student/attendance/check-in/'.$session->qr_token);
+        $attendanceLink = route('attendance.check-in.guest', ['token' => $session->qr_token]);
         $records = $session->attendanceRecords()
             ->with('classMember.user')
             ->when($this->statusFilter !== 'all', fn (Builder $query) => $query->where('status', $this->statusFilter))
@@ -88,7 +123,7 @@ class QrAttendanceSession extends Component
                 });
             })
             ->orderBy('id')
-            ->get();
+            ->paginate(10);
 
         $stats = $session->attendanceRecords()
             ->selectRaw('status, COUNT(*) as aggregate')

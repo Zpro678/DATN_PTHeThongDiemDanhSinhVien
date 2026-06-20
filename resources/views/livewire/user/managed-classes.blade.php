@@ -83,10 +83,17 @@
                 }
                 $barClass = $isTertiary ? 'bg-tertiary' : ($isPrimary ? 'bg-primary' : 'bg-outline-variant');
                 $textClass = $isTertiary ? 'text-tertiary' : ($isPrimary ? 'text-primary' : 'text-on-surface-variant');
-                $sessionsCompleted = $class->sessions_completed ?? 0;
-                $attendancePct = $class->total_sessions > 0
-                    ? round(($sessionsCompleted / $class->total_sessions) * 100)
-                    : 0;
+                
+                $sessionsCompleted = $class->completed_sessions_count ?? 0;
+                $present = $class->sum_present ?? 0;
+                $late = $class->sum_late ?? 0;
+                $absent = $class->sum_absent ?? 0;
+                $excused = $class->sum_excused ?? 0;
+                
+                $totalRecords = $present + $late + $absent + $excused;
+                $attendedRecords = $present + $late + $excused;
+                
+                $attendancePct = $totalRecords > 0 ? round(($attendedRecords / $totalRecords) * 100) : 100;
             @endphp
             <article @class([
                 'group relative flex flex-col overflow-hidden rounded-3xl bg-white transition-all duration-300 hover:-translate-y-1 cursor-pointer',

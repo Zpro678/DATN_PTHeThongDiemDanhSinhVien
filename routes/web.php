@@ -33,6 +33,9 @@ Route::get('/', function () {
 Route::get('/auth/google', [\App\Http\Controllers\Auth\GoogleController::class, 'redirect'])->name('google.login');
 Route::get('/auth/google/callback', [\App\Http\Controllers\Auth\GoogleController::class, 'callback'])->name('google.callback');
 
+Route::get('/attendance/check-in/{token}', \App\Livewire\Student\AttendanceCheckIn::class)
+    ->name('attendance.check-in.guest');
+
 Route::middleware(['auth', 'verified', 'user.route'])->group(function () {
     $ensureAdmin = function (): void {
         abort_unless(auth()->user()?->is_admin, 403);
@@ -222,6 +225,7 @@ Route::middleware(['auth', 'verified', 'user.route'])->group(function () {
     Route::get('/student/classes/{courseClass}', \App\Livewire\Student\ClassShow::class)->name('student.classes.show');
     Route::get('/lecturer/classes/{courseClass}/settings', \App\Livewire\Lecturer\ClassSettings::class)->name('lecturer.classes.settings');
     Route::get('/lecturer/classes/{courseClass}', \App\Livewire\Lecturer\ClassShow::class)->name('lecturer.classes.show');
+    Route::get('/lecturer/classes/{courseClass}/attendance', \App\Livewire\Lecturer\ClassAttendanceHistory::class)->name('lecturer.classes.attendance');
     Route::get('/lecturer/classes/{class_id}/statistics', \App\Livewire\Lecturer\ClassStatistics::class)->name('lecturer.class.statistics');
     Route::get('/lecturer/attendance', AttendanceIndex::class)->name('lecturer.attendance.index');
     Route::get('/lecturer/attendance/create', AttendanceCreate::class)->name('lecturer.attendance.create');
