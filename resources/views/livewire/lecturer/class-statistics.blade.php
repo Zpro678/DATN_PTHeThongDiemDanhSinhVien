@@ -27,7 +27,7 @@
             </div>
             <div>
                 <p class="text-sm font-semibold text-on-surface-variant">Buổi đã điểm danh</p>
-                <h3 class="text-3xl font-bold text-on-surface leading-tight">{{ $totalSessions }}</h3>
+                <h3 class="text-3xl font-bold text-on-surface leading-tight">{{ $sessionCount }}</h3>
             </div>
         </div>
 

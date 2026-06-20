@@ -12,6 +12,8 @@ class AttendanceIndex extends Component
 {
     use WithPagination;
 
+    public $perPage = 10;
+
     public function closeSession(int $sessionId): void
     {
         $session = ClassSession::query()
@@ -34,7 +36,7 @@ class AttendanceIndex extends Component
             ->whereHas('courseClass', fn (Builder $query) => $query->where('owner_user_id', auth()->id()))
             ->orderByDesc('date')
             ->orderByDesc('created_at')
-            ->paginate(10);
+            ->paginate($this->perPage);
 
         return view('livewire.lecturer.attendance.index', compact('sessions'))
             ->layout('layouts.user', ['title' => 'Quản lý điểm danh']);

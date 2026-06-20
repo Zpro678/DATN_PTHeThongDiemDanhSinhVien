@@ -134,16 +134,10 @@
                     </div>
 
                     <div class="grid grid-cols-1 gap-6 lg:grid-cols-2">
-                        <label class="space-y-2">
-                            <span class="block text-[13px] font-semibold text-slate-700">Tổng số buổi <span class="text-red-500">*</span></span>
-                            <input wire:model.live.debounce.300ms="totalSessions" type="number" min="1" max="100" class="h-12 w-full rounded-2xl border border-slate-200 bg-white px-4 text-sm font-semibold text-slate-800 outline-none transition-all hover:border-slate-300 focus:border-blue-500 focus:ring-4 focus:ring-blue-500/10">
-                            @error('totalSessions') <span class="block text-xs font-medium text-red-600">{{ $message }}</span> @enderror
-                        </label>
-
-                        <label class="space-y-2">
-                            <span class="block text-[13px] font-semibold text-slate-700">Số tiết mỗi buổi <span class="text-red-500">*</span></span>
-                            <input wire:model.live.debounce.300ms="lessonsPerSession" type="number" min="1" max="20" class="h-12 w-full rounded-2xl border border-slate-200 bg-white px-4 text-sm font-semibold text-slate-800 outline-none transition-all hover:border-slate-300 focus:border-blue-500 focus:ring-4 focus:ring-blue-500/10">
-                            @error('lessonsPerSession') <span class="block text-xs font-medium text-red-600">{{ $message }}</span> @enderror
+                        <label class="space-y-2 lg:col-span-2">
+                            <span class="block text-[13px] font-semibold text-slate-700">Tổng số tiết <span class="text-red-500">*</span></span>
+                            <input wire:model.live.debounce.300ms="totalLessons" type="number" min="1" max="300" class="h-12 w-full rounded-2xl border border-slate-200 bg-white px-4 text-sm font-semibold text-slate-800 outline-none transition-all hover:border-slate-300 focus:border-blue-500 focus:ring-4 focus:ring-blue-500/10">
+                            @error('totalLessons') <span class="block text-xs font-medium text-red-600">{{ $message }}</span> @enderror
                         </label>
                     </div>
 
@@ -210,14 +204,10 @@
                         </div>
 
                         <div class="space-y-4 p-6">
-                            <div class="grid grid-cols-2 gap-3">
+                            <div class="grid grid-cols-1 gap-3">
                                 <div class="rounded-2xl bg-slate-50 p-4">
-                                    <p class="text-xs font-bold uppercase tracking-wide text-slate-400">Số buổi</p>
-                                    <p class="mt-2 text-2xl font-extrabold text-slate-950">{{ $totalSessions ?: 0 }}</p>
-                                </div>
-                                <div class="rounded-2xl bg-slate-50 p-4">
-                                    <p class="text-xs font-bold uppercase tracking-wide text-slate-400">Tiết/buổi</p>
-                                    <p class="mt-2 text-2xl font-extrabold text-slate-950">{{ $lessonsPerSession ?: 0 }}</p>
+                                    <p class="text-xs font-bold uppercase tracking-wide text-slate-400">Tổng số tiết</p>
+                                    <p class="mt-2 text-2xl font-extrabold text-slate-950">{{ $totalLessons ?: 0 }}</p>
                                 </div>
                             </div>
 
@@ -257,7 +247,7 @@
                             </div>
                             <div class="flex gap-3">
                                 <span class="mt-0.5 flex h-6 w-6 items-center justify-center rounded-full bg-blue-50 text-xs font-extrabold text-blue-600">2</span>
-                                <p class="text-sm leading-6 text-slate-600">Số buổi và số tiết sẽ được dùng khi tạo buổi điểm danh sau này.</p>
+                                <p class="text-sm leading-6 text-slate-600">Tổng số tiết sẽ được dùng để tính tiến độ học trên dashboard.</p>
                             </div>
                             <div class="flex gap-3">
                                 <span class="mt-0.5 flex h-6 w-6 items-center justify-center rounded-full bg-blue-50 text-xs font-extrabold text-blue-600">3</span>

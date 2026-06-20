@@ -11,7 +11,7 @@ class ClassStatistics extends Component
     public $class_id;
     public $courseClass;
     public $totalStudents;
-    public $totalSessions;
+    public $sessionCount;
     public $averageAttendance;
     public $warningStudents = [];
 
@@ -31,17 +31,17 @@ class ClassStatistics extends Component
         $this->totalStudents = $this->courseClass->members()->count();
 
         // Total sessions
-        $this->totalSessions = $this->courseClass->sessions()->count();
+        $this->sessionCount = $this->courseClass->sessions()->count();
 
         // Average attendance
         // Assuming we calculate it as (total present records) / (total students * total sessions)
         // For simplicity, we can mock or do a basic calculation. 
         // Here we do a mocked basic calculation if records are sparse, or real if we have relationships.
-        if ($this->totalStudents > 0 && $this->totalSessions > 0) {
+        if ($this->totalStudents > 0 && $this->sessionCount > 0) {
             $totalPresent = \App\Models\AttendanceRecord::whereIn('class_session_id', $this->courseClass->sessions->pluck('id'))
                                 ->where('status', 'present')
                                 ->count();
-            $this->averageAttendance = round(($totalPresent / ($this->totalStudents * $this->totalSessions)) * 100);
+            $this->averageAttendance = round(($totalPresent / ($this->totalStudents * $this->sessionCount)) * 100);
         } else {
             $this->averageAttendance = 0;
         }

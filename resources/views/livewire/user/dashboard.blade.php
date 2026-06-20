@@ -1,11 +1,17 @@
 @php
+    $totalClasses = $overview['total_classes'] ?? 0;
+    $todayAttendanceSessions = $overview['today_attendance_sessions'] ?? 0;
+    $unclosedAttendanceSessions = $overview['unclosed_attendance_sessions'] ?? 0;
+    $attendanceWarningStudentsCount = $overview['attendance_warning_students_count'] ?? 0;
+    $pendingLeaveRequestsCount = $overview['pending_leave_requests_count'] ?? 0;
+
     $adminStats = [
-        ['label' => 'Lớp quản lý', 'value' => '4', 'icon' => 'book-open', 'color' => 'text-primary', 'bg' => 'bg-primary/10'],
-        ['label' => 'Tổng sinh viên', 'value' => '156', 'icon' => 'users', 'color' => 'text-tertiary', 'bg' => 'bg-tertiary/10'],
-        ['label' => 'Buổi điểm danh nay', 'value' => '2', 'icon' => 'calendar-check', 'color' => 'text-secondary', 'bg' => 'bg-secondary/10'],
-        ['label' => 'Buổi chưa chốt sổ', 'value' => '1', 'icon' => 'clock', 'color' => 'text-error', 'bg' => 'bg-error/10'],
-        ['label' => 'SV vắng vượt ngưỡng', 'value' => '3', 'icon' => 'alert-triangle', 'color' => 'text-error', 'bg' => 'bg-error/10'],
-        ['label' => 'Đơn nghỉ chờ duyệt', 'value' => '5', 'icon' => 'file-text', 'color' => 'text-secondary', 'bg' => 'bg-secondary/10'],
+        ['label' => 'Lớp quản lý', 'value' => $totalClasses, 'icon' => 'book-open', 'color' => 'text-primary', 'bg' => 'bg-primary/10'],
+        ['label' => 'Tổng sinh viên', 'value' => $overview['total_students'] ?? 0, 'icon' => 'users', 'color' => 'text-tertiary', 'bg' => 'bg-tertiary/10'],
+        ['label' => 'Buổi điểm danh hôm nay', 'value' => $todayAttendanceSessions, 'icon' => 'calendar-check', 'color' => 'text-secondary', 'bg' => 'bg-secondary/10'],
+        ['label' => 'Buổi chưa chốt sổ', 'value' => $unclosedAttendanceSessions, 'icon' => 'clock', 'color' => 'text-error', 'bg' => 'bg-error/10'],
+        ['label' => 'SV gần/vượt ngưỡng', 'value' => $attendanceWarningStudentsCount, 'icon' => 'alert-triangle', 'color' => 'text-error', 'bg' => 'bg-error/10'],
+        ['label' => 'Đơn nghỉ chờ duyệt', 'value' => $pendingLeaveRequestsCount, 'icon' => 'file-text', 'color' => 'text-secondary', 'bg' => 'bg-secondary/10'],
     ];
 
     $adminActions = [
@@ -123,19 +129,19 @@
                     <div class="orbit-animation absolute h-full w-full rounded-full border border-dashed border-outline-variant/40">
                         <div class="orbit-item absolute -top-5 left-1/2 -translate-x-1/2">
                             <div class="flex flex-col items-center rounded-2xl border border-outline-variant/10 bg-white px-4 py-2 shadow-md">
-                                <span class="text-lg font-bold leading-none text-primary">4</span>
+                                <span class="text-lg font-bold leading-none text-primary">{{ $totalClasses }}</span>
                                 <span class="mt-1 text-[9px] font-bold uppercase text-on-surface-variant">Lớp quản lý</span>
                             </div>
                         </div>
                         <div class="orbit-item absolute -right-8 top-1/2 -translate-y-1/2">
                             <div class="flex flex-col items-center rounded-2xl bg-primary px-4 py-2 text-white shadow-md">
-                                <span class="text-lg font-bold leading-none">1</span>
+                                <span class="text-lg font-bold leading-none">{{ $unclosedAttendanceSessions }}</span>
                                 <span class="mt-1 text-[9px] font-bold uppercase opacity-90">Đang mở</span>
                             </div>
                         </div>
                         <div class="orbit-item absolute -bottom-5 left-1/2 -translate-x-1/2">
                             <div class="flex flex-col items-center rounded-2xl border border-error/20 bg-error/10 px-4 py-2 text-error shadow-md">
-                                <span class="text-lg font-bold leading-none">5</span>
+                                <span class="text-lg font-bold leading-none">{{ $attendanceWarningStudentsCount }}</span>
                                 <span class="mt-1 text-[9px] font-bold uppercase">Cần xử lý</span>
                             </div>
                         </div>

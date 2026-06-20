@@ -22,9 +22,7 @@ class CreateClass extends Component
 
     public string $description = '';
 
-    public int $totalSessions = 15;
-
-    public int $lessonsPerSession = 3;
+    public int $totalLessons = 45;
 
     public bool $requireApproval = false;
 
@@ -92,7 +90,9 @@ class CreateClass extends Component
 
     public function save(): void
     {
-        $this->validate([
+
+       
+         $validated =  $this->validate([
             'name'              => ['required', 'string', 'max:255'],
             'subjectCode'       => ['nullable', 'string', 'max:50'],
             'semester'          => ['nullable', 'string', 'max:50'],
@@ -104,6 +104,7 @@ class CreateClass extends Component
             'name.required'          => 'Vui lòng nhập tên lớp.',
             'totalSessions.min'      => 'Tổng số buổi phải lớn hơn 0.',
             'lessonsPerSession.min'  => 'Số tiết mỗi buổi phải lớn hơn 0.',
+
         ]);
 
         $code = $this->generateUniqueCode();

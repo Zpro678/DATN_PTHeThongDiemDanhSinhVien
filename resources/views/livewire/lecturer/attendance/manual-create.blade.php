@@ -54,14 +54,21 @@
         },
     }"
 >
-    <div class="mb-10 flex flex-col gap-4 sm:flex-row sm:items-center sm:gap-5">
-        <div class="flex h-16 w-16 shrink-0 rotate-3 items-center justify-center rounded-[20px] border border-amber-300 bg-gradient-to-br from-amber-100 to-amber-200 text-amber-600 shadow-md transition-transform hover:rotate-6">
-            <x-user.icon name="edit" :size="30" />
+    <div class="mb-10 flex flex-col items-start justify-between gap-4 sm:flex-row sm:items-center sm:gap-5">
+        <div class="flex items-center gap-5">
+            <div class="flex h-16 w-16 shrink-0 items-center justify-center rounded-[20px] border border-amber-300 bg-gradient-to-br from-amber-100 to-amber-200 text-amber-600 shadow-md transition-transform hover:-translate-y-1">
+                <x-user.icon name="edit" :size="30" />
+            </div>
+            <div>
+                <h1 class="mb-1 text-3xl font-extrabold tracking-tight text-slate-900">Tạo buổi điểm danh</h1>
+                <p class="text-base text-slate-500">Chuẩn bị thông tin cho buổi học để bắt đầu ghi nhận sĩ số thủ công.</p>
+            </div>
         </div>
-        <div>
-            <h1 class="mb-1 text-3xl font-extrabold tracking-tight text-slate-900">Tạo buổi điểm danh</h1>
-            <p class="text-base text-slate-500">Chuẩn bị thông tin cho buổi học để bắt đầu ghi nhận sĩ số thủ công.</p>
-        </div>
+        
+        <a href="{{ route('lecturer.attendance.create') }}" class="inline-flex shrink-0 items-center gap-2 rounded-xl border border-slate-200 bg-white px-5 py-2.5 text-sm font-bold text-slate-700 shadow-sm transition hover:border-slate-300 hover:bg-slate-50 hover:text-slate-900">
+            <x-user.icon name="arrow-left" :size="18" />
+            Quay lại
+        </a>
     </div>
 
     @if (session('status'))
@@ -72,7 +79,7 @@
 
     <div class="grid grid-cols-1 gap-8 lg:grid-cols-12">
         <div class="lg:col-span-8">
-            <div class="relative overflow-visible rounded-[2rem] border border-slate-100 bg-white p-8 shadow-[0_8px_30px_rgb(0,0,0,0.04)] sm:p-10">
+            <div class="relative h-full overflow-visible rounded-[2rem] border border-slate-100 bg-white p-8 shadow-[0_8px_30px_rgb(0,0,0,0.04)] sm:p-10">
                 <div class="pointer-events-none absolute inset-0 overflow-hidden rounded-[2rem]">
                     <div class="absolute right-0 top-0 h-64 w-64 -translate-y-1/2 translate-x-1/3 rounded-full bg-gradient-to-bl from-sky-50 to-transparent opacity-70"></div>
                 </div>
@@ -141,6 +148,7 @@
                                     id="session_name"
                                     wire:model.blur="name"
                                     type="text"
+                                    placeholder="Ví dụ: Buổi 1 - Lý thuyết..."
                                     class="w-full rounded-2xl border-2 border-transparent bg-slate-50 py-4 pl-12 pr-4 font-semibold text-slate-900 shadow-sm outline-none transition-all hover:border-slate-200 focus:border-blue-500 focus:bg-white focus:ring-4 focus:ring-blue-500/10"
                                     required
                                 >
@@ -163,7 +171,8 @@
                                     id="session_date"
                                     wire:model="date"
                                     type="date"
-                                    class="w-full cursor-pointer rounded-2xl border-2 border-transparent bg-slate-50 py-4 pl-12 pr-4 font-semibold text-slate-900 shadow-sm outline-none transition-all hover:border-slate-200 focus:border-blue-500 focus:bg-white focus:ring-4 focus:ring-blue-500/10"
+                                    readonly
+                                    class="w-full rounded-2xl border-2 border-transparent bg-slate-50 py-4 pl-12 pr-4 font-semibold text-slate-900 shadow-sm outline-none transition-all focus:border-blue-500 focus:bg-white focus:ring-4 focus:ring-blue-500/10"
                                     required
                                 >
                             </div>
@@ -184,15 +193,27 @@
                             <div class="grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-4">
                                 <div class="space-y-2">
                                     <label for="start_period" class="block text-[11px] font-bold uppercase tracking-wider text-slate-500">Tiết bắt đầu</label>
-                                    <div class="relative" @click.outside="startPeriodDropdownOpen = false">
+                                    <div class="relative" x-data="{ position: 'bottom' }" @click.outside="startPeriodDropdownOpen = false">
                                         <input id="start_period" type="hidden" wire:model="startPeriod">
                                         <div class="pointer-events-none absolute inset-y-0 left-0 flex items-center pl-4">
                                             <x-user.icon name="clock" :size="20" class="text-slate-400 transition-colors group-focus-within:text-blue-500" />
                                         </div>
                                         <button
                                             type="button"
+                                            x-ref="btnStart"
                                             class="flex w-full items-center justify-between gap-3 rounded-2xl border-2 border-transparent bg-slate-50 py-4 pl-12 pr-4 text-left font-semibold text-slate-900 shadow-sm outline-none transition-all hover:border-slate-200 focus:border-blue-500 focus:bg-white focus:ring-4 focus:ring-blue-500/10"
-                                            @click="startPeriodDropdownOpen = ! startPeriodDropdownOpen"
+                                            @click="
+                                                startPeriodDropdownOpen = ! startPeriodDropdownOpen;
+                                                if (startPeriodDropdownOpen) {
+                                                    $nextTick(() => {
+                                                        let rect = $refs.btnStart.getBoundingClientRect();
+                                                        let menuRect = $refs.menuStart.getBoundingClientRect();
+                                                        let spaceBelow = window.innerHeight - rect.bottom;
+                                                        let spaceAbove = rect.top;
+                                                        position = (spaceBelow < menuRect.height && spaceAbove > spaceBelow) ? 'top' : 'bottom';
+                                                    });
+                                                }
+                                            "
                                             :aria-expanded="startPeriodDropdownOpen.toString()"
                                         >
                                             <span x-text="'Tiết ' + startPeriod"></span>
@@ -201,9 +222,11 @@
 
                                         <div
                                             x-cloak
+                                            x-ref="menuStart"
                                             x-show="startPeriodDropdownOpen"
                                             x-transition.origin.top.duration.150ms
-                                            class="absolute left-0 right-0 z-30 mt-2 grid max-h-64 grid-cols-3 gap-1 overflow-y-auto rounded-2xl border border-slate-200 bg-white p-2 shadow-xl shadow-slate-900/10"
+                                            :class="position === 'top' ? 'bottom-full mb-2 origin-bottom' : 'top-full mt-2 origin-top'"
+                                            class="absolute left-0 right-0 z-50 grid max-h-64 grid-cols-3 gap-1 overflow-y-auto rounded-2xl border border-slate-200 bg-white p-2 shadow-xl shadow-slate-900/10"
                                         >
                                             @for ($lesson = 1; $lesson <= 12; $lesson++)
                                                 <button
@@ -221,15 +244,27 @@
 
                                 <div class="space-y-2">
                                     <label for="end_period" class="block text-[11px] font-bold uppercase tracking-wider text-slate-500">Tiết kết thúc</label>
-                                    <div class="relative" @click.outside="endPeriodDropdownOpen = false">
+                                    <div class="relative" x-data="{ position: 'bottom' }" @click.outside="endPeriodDropdownOpen = false">
                                         <input id="end_period" type="hidden" wire:model="endPeriod">
                                         <div class="pointer-events-none absolute inset-y-0 left-0 flex items-center pl-4">
                                             <x-user.icon name="clock" :size="20" class="text-slate-400 transition-colors group-focus-within:text-blue-500" />
                                         </div>
                                         <button
                                             type="button"
+                                            x-ref="btnEnd"
                                             class="flex w-full items-center justify-between gap-3 rounded-2xl border-2 border-transparent bg-slate-50 py-4 pl-12 pr-4 text-left font-semibold text-slate-900 shadow-sm outline-none transition-all hover:border-slate-200 focus:border-blue-500 focus:bg-white focus:ring-4 focus:ring-blue-500/10"
-                                            @click="endPeriodDropdownOpen = ! endPeriodDropdownOpen"
+                                            @click="
+                                                endPeriodDropdownOpen = ! endPeriodDropdownOpen;
+                                                if (endPeriodDropdownOpen) {
+                                                    $nextTick(() => {
+                                                        let rect = $refs.btnEnd.getBoundingClientRect();
+                                                        let menuRect = $refs.menuEnd.getBoundingClientRect();
+                                                        let spaceBelow = window.innerHeight - rect.bottom;
+                                                        let spaceAbove = rect.top;
+                                                        position = (spaceBelow < menuRect.height && spaceAbove > spaceBelow) ? 'top' : 'bottom';
+                                                    });
+                                                }
+                                            "
                                             :aria-expanded="endPeriodDropdownOpen.toString()"
                                         >
                                             <span x-text="'Tiết ' + endPeriod"></span>
@@ -238,9 +273,11 @@
 
                                         <div
                                             x-cloak
+                                            x-ref="menuEnd"
                                             x-show="endPeriodDropdownOpen"
                                             x-transition.origin.top.duration.150ms
-                                            class="absolute left-0 right-0 z-30 mt-2 grid max-h-64 grid-cols-3 gap-1 overflow-y-auto rounded-2xl border border-slate-200 bg-white p-2 shadow-xl shadow-slate-900/10"
+                                            :class="position === 'top' ? 'bottom-full mb-2 origin-bottom' : 'top-full mt-2 origin-top'"
+                                            class="absolute left-0 right-0 z-50 grid max-h-64 grid-cols-3 gap-1 overflow-y-auto rounded-2xl border border-slate-200 bg-white p-2 shadow-xl shadow-slate-900/10"
                                         >
                                             @for ($lesson = 1; $lesson <= 12; $lesson++)
                                                 <button
@@ -292,25 +329,34 @@
                         </div>
                     </div>
 
-                    <div class="group space-y-3 pt-4">
-                        <label for="note" class="flex items-center justify-between text-[13px] font-bold uppercase tracking-wider text-slate-600">
-                            <span>Lời nhắn / Ghi chú</span>
-                            <span class="text-[11px] font-medium normal-case text-slate-400">Không bắt buộc</span>
-                        </label>
-                        <textarea
-                            id="note"
-                            wire:model.blur="note"
-                            rows="4"
-                            placeholder="Ghi chú thêm về buổi học cho sinh viên hoặc giảng viên khác..."
-                            class="w-full resize-none rounded-2xl border-2 border-transparent bg-slate-50 px-5 py-4 font-medium leading-relaxed text-slate-900 shadow-sm outline-none transition-all placeholder:text-slate-400 hover:border-slate-200 focus:border-blue-500 focus:bg-white focus:ring-4 focus:ring-blue-500/10"
-                        ></textarea>
+                    <div class="group relative mt-8 cursor-default overflow-hidden rounded-2xl border-2 border-dashed border-amber-300 bg-amber-50 p-4 shadow-sm transition-colors hover:bg-amber-100">
+                        <div class="relative z-10 flex items-center justify-between gap-4">
+                            <div class="flex items-center gap-4">
+                                <div class="shrink-0">
+                                    <div class="flex h-10 w-10 items-center justify-center rounded-full bg-white text-amber-600 shadow-sm transition-transform duration-300 group-hover:rotate-12">
+                                        <x-user.icon name="sparkles" :size="20" />
+                                    </div>
+                                </div>
+                                <div>
+                                    <h3 class="text-base font-bold text-amber-700">Mẹo rảnh tay!</h3>
+                                    <p class="text-sm font-medium text-amber-800/90">
+                                        Sử dụng <strong class="font-bold text-amber-950">Điểm danh QR</strong> để sinh viên tự động điểm danh.
+                                    </p>
+                                </div>
+                            </div>
+                            <a href="{{ route('lecturer.attendance.qr.create') }}" class="shrink-0 inline-flex items-center gap-2 rounded-xl bg-amber-200 px-4 py-2 text-sm font-bold text-amber-800 transition hover:bg-amber-300 hover:text-amber-900">
+                                Tạo QR điểm danh
+                                <x-user.icon name="arrow-right" :size="16" />
+                            </a>
+                        </div>
+                        <div class="absolute -bottom-4 -right-4 h-24 w-24 rounded-full bg-amber-200 opacity-50 blur-xl transition-transform duration-700 group-hover:scale-125"></div>
                     </div>
                 </form>
             </div>
         </div>
 
-        <div class="space-y-6 lg:col-span-4">
-            <div class="relative overflow-hidden rounded-[2rem] border border-slate-100 bg-white p-7 shadow-[0_8px_30px_rgb(0,0,0,0.04)]">
+        <div class="lg:col-span-4">
+            <div class="relative flex h-full flex-col overflow-hidden rounded-[2rem] border border-slate-100 bg-white p-7 shadow-[0_8px_30px_rgb(0,0,0,0.04)]">
                 <div class="mb-8 flex items-center justify-between gap-3">
                     <h2 class="text-xl font-bold text-slate-900">Tổng quan</h2>
                     <div class="flex items-center gap-2 rounded-full border border-emerald-200 bg-emerald-50 px-3 py-1.5 text-xs font-bold text-emerald-600">
@@ -319,7 +365,7 @@
                     </div>
                 </div>
 
-                <div class="relative z-10 mb-8 space-y-5">
+                <div class="relative z-10 mb-8 flex flex-1 flex-col justify-center gap-6">
                     <div class="flex items-center justify-between rounded-2xl border border-slate-200 bg-slate-50 p-5 transition-colors hover:border-slate-300">
                         <div class="flex min-w-0 items-center gap-4">
                             <div class="flex h-12 w-12 shrink-0 items-center justify-center rounded-xl bg-white text-blue-500 shadow-sm">
@@ -358,7 +404,7 @@
                     type="submit"
                     form="manual-attendance-form"
                     wire:loading.attr="disabled"
-                    class="group relative flex w-full items-center justify-center gap-3 overflow-hidden rounded-2xl bg-gradient-to-r from-orange-500 to-orange-600 px-6 py-4 text-lg font-bold text-white shadow-[0_8px_20px_rgba(249,115,22,0.25)] transition-all hover:from-orange-600 hover:to-orange-700 active:scale-[0.98] disabled:cursor-wait disabled:opacity-70"
+                    class="group relative mt-auto flex w-full items-center justify-center gap-3 overflow-hidden rounded-2xl bg-gradient-to-r from-orange-500 to-orange-600 px-6 py-4 text-lg font-bold text-white shadow-[0_8px_20px_rgba(249,115,22,0.25)] transition-all hover:from-orange-600 hover:to-orange-700 active:scale-[0.98] disabled:cursor-wait disabled:opacity-70"
                 >
                     <span class="relative z-10 flex items-center gap-2">
                         Bắt đầu điểm danh
@@ -368,30 +414,9 @@
                 </button>
             </div>
 
-            <div class="group relative cursor-default overflow-hidden rounded-[2rem] border-2 border-dashed border-amber-300 bg-amber-50 p-7 shadow-sm transition-colors hover:bg-amber-100">
-                <div class="relative z-10 flex gap-4">
-                    <div class="shrink-0">
-                        <div class="flex h-12 w-12 items-center justify-center rounded-full bg-white text-amber-600 shadow-sm transition-transform duration-300 group-hover:rotate-12">
-                            <x-user.icon name="sparkles" :size="24" />
-                        </div>
-                    </div>
-                    <div>
-                        <h3 class="mb-2 text-base font-bold text-amber-700">Mẹo rảnh tay!</h3>
-                        <p class="text-[13px] font-medium leading-relaxed text-amber-800/90">
-                            Sử dụng tính năng <strong class="font-bold text-amber-950">Điểm danh QR</strong> trên bảng điều khiển để sinh viên có thể tự động điểm danh dễ dàng bằng điện thoại cá nhân.
-                        </p>
-                        <a href="{{ route('lecturer.attendance.qr.create') }}" class="mt-4 inline-flex items-center gap-2 text-sm font-bold text-amber-700 hover:text-amber-900">
-                            Tạo QR điểm danh
-                            <x-user.icon name="arrow-right" :size="16" />
-                        </a>
-                    </div>
-                </div>
-                <div class="absolute -bottom-4 -right-4 h-24 w-24 rounded-full bg-amber-200 opacity-50 blur-xl transition-transform duration-700 group-hover:scale-125"></div>
-            </div>
 
-            <a href="{{ route('lecturer.attendance.create') }}" class="inline-flex w-full items-center justify-center rounded-2xl border border-slate-200 bg-white px-6 py-3 text-sm font-bold text-slate-700 transition hover:bg-slate-50">
-                Quay lại chọn hình thức điểm danh
-            </a>
+
+
         </div>
     </div>
 </div>

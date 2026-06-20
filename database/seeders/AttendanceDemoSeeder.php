@@ -57,8 +57,7 @@ class AttendanceDemoSeeder extends Seeder
             'semester' => 'HK2 2025-2026',
             'require_approval' => true,
             'status' => 'active',
-            'total_sessions' => 15,
-            'lessons_per_session' => 3,
+            'total_lessons' => 45,
         ]);
 
         $databaseClass = $this->demoClass($teacher, 'DB-2026-01', [
@@ -68,8 +67,7 @@ class AttendanceDemoSeeder extends Seeder
             'semester' => 'HK2 2025-2026',
             'require_approval' => false,
             'status' => 'active',
-            'total_sessions' => 12,
-            'lessons_per_session' => 3,
+            'total_lessons' => 36,
         ]);
 
         $this->demoClass($teacher, 'UI-2025-01', [
@@ -79,8 +77,7 @@ class AttendanceDemoSeeder extends Seeder
             'semester' => 'HK1 2025-2026',
             'require_approval' => false,
             'status' => 'archived',
-            'total_sessions' => 10,
-            'lessons_per_session' => 3,
+            'total_lessons' => 30,
         ]);
 
         $webMembers = $students->map(fn (User $student) => $this->demoMember($webClass, $student));
