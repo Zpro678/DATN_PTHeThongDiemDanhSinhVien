@@ -50,6 +50,16 @@ class LoginRequest extends FormRequest
             ]);
         }
 
+        if (Auth::user()->status === 'blocked') {
+            Auth::logout();
+            
+            RateLimiter::hit($this->throttleKey());
+
+            throw ValidationException::withMessages([
+                'email' => 'Tài khoản của bạn đã bị khóa. Vui lòng liên hệ quản trị viên.',
+            ]);
+        }
+
         RateLimiter::clear($this->throttleKey());
     }
 

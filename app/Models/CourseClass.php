@@ -24,8 +24,8 @@ class CourseClass extends Model
         'semester', // Học kỳ.
         'require_approval', // Bật/tắt yêu cầu duyệt khi xin vào lớp.
         'status', // Trạng thái lớp active/archived.
-        'total_sessions', // Tổng số tiết của môn học.
-        'lessons_per_session', // Số tiết trong mỗi buổi học.
+        'total_lessons', // Tổng số tiết của môn học.
+       
     ];
 
     protected function casts(): array

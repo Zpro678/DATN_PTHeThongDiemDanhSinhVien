@@ -1,139 +1,191 @@
-<div class="mx-auto max-w-[1400px] space-y-6 p-4 pb-24 sm:p-8">
-    <section class="flex flex-col justify-between gap-4 rounded-[2rem] border border-outline-variant/10 bg-white p-6 shadow-sm md:flex-row md:items-center">
+@php
+    $user = auth()->user();
+    $initial = function_exists('mb_substr')
+        ? mb_strtoupper(mb_substr($user->name ?? 'U', 0, 1, 'UTF-8'), 'UTF-8')
+        : strtoupper(substr($user->name ?? 'U', 0, 1));
+    $roleLabel = $user->is_admin ? 'Admin' : 'Người dùng';
+    $statusLabel = $user->status === 'active' ? 'Đang hoạt động' : 'Bị khóa';
+    $statusColor = $user->status === 'active'
+        ? 'bg-emerald-50 text-emerald-700 border-emerald-100'
+        : 'bg-rose-50 text-rose-700 border-rose-100';
+@endphp
+
+<div x-data="{ showPasswordModal: false }" class="mx-auto max-w-[1500px] space-y-6">
+    <section class="admin-card flex flex-col justify-between gap-4 overflow-hidden rounded-3xl border p-6 lg:flex-row lg:items-end lg:p-7">
         <div>
-            <h1 class="flex items-center gap-3 text-2xl font-extrabold uppercase tracking-tight text-slate-900">
-                <x-user.icon name="user" class="text-primary" />Hồ sơ cá nhân
-            </h1>
-            <p class="mt-2 text-sm text-slate-500">
-                Quản lý thông tin hồ sơ và bảo mật tài khoản của bạn.
-            </p>
+            <p class="text-[10px] font-bold uppercase tracking-[0.3em] text-slate-400">Tài khoản cá nhân</p>
+            <h1 class="mt-1 text-3xl font-black tracking-tight text-slate-900">Hồ sơ của bạn</h1>
+            <p class="mt-1 text-sm font-medium text-slate-500">Quản lý thông tin hồ sơ và bảo mật tài khoản của bạn.</p>
         </div>
     </section>
-    <div class="grid grid-cols-1 lg:grid-cols-2 gap-8 items-stretch">
-        <!-- Profile Info Column -->
-        <div class="bg-white shadow-sm overflow-hidden rounded-2xl border border-slate-200 flex flex-col">
-            <div class="border-b border-slate-100 bg-slate-50/50 px-6 py-3">
-                <h3 class="text-lg font-bold text-slate-900">Hồ sơ của bạn</h3>
-                <p class="mt-1 text-sm text-slate-500">
-                    Cập nhật thông tin tài khoản và địa chỉ email của bạn.
-                </p>
-            </div>
-            <form wire:submit="updateProfileInformation" class="flex flex-col flex-1">
-                <div class="px-6 py-4 sm:px-8 sm:py-5 flex-1 space-y-4">
-                    @if (session('status'))
-                        <div class="font-medium text-sm text-green-600 bg-green-50 p-4 rounded-xl border border-green-200">
-                            {{ session('status') }}
-                        </div>
-                    @endif
 
-                    <!-- Avatar Upload -->
-                    <div class="flex flex-col items-center justify-center">
-                        <label for="avatar-upload" class="relative group cursor-pointer block">
-                            @if ($avatar)
-                                <img src="{{ $avatar->temporaryUrl() }}" class="h-14 w-14 rounded-full object-cover ring-4 ring-primary/20 transition-all group-hover:opacity-90">
-                            @elseif(auth()->user()->avatar)
-                                <img src="{{ asset('storage/'.auth()->user()->avatar) }}" class="h-14 w-14 rounded-full object-cover ring-4 ring-primary/20 transition-all group-hover:opacity-90">
-                            @else
-                                <img src="https://api.dicebear.com/7.x/avataaars/svg?seed={{ urlencode(auth()->user()->name) }}&backgroundColor=e5eeff" class="h-14 w-14 rounded-full object-cover ring-4 ring-primary/20 transition-all group-hover:opacity-90">
-                            @endif
-                            
-                            <!-- Hover overlay -->
-                            <div class="absolute inset-0 rounded-full bg-slate-900/40 flex flex-col items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity">
-                                <x-user.icon name="edit" class="text-white" :size="18" />
+    <div class="grid grid-cols-1 gap-6 xl:grid-cols-[380px_minmax(0,1fr)]">
+        <section class="admin-card admin-card-hover overflow-hidden rounded-2xl border bg-white">
+            <div class="h-24 bg-gradient-to-r from-blue-600 via-cyan-500 to-emerald-500"></div>
+            <div class="px-6 pb-6">
+                <div class="-mt-12 flex justify-center relative">
+                    <label for="avatar-upload" class="group relative cursor-pointer block">
+                        @if ($avatar)
+                            <img src="{{ $avatar->temporaryUrl() }}" class="flex h-24 w-24 items-center justify-center rounded-3xl border-4 border-white object-cover bg-blue-100 shadow-sm transition-all group-hover:opacity-90">
+                        @elseif(auth()->user()->avatar)
+                            <img src="{{ asset('storage/'.auth()->user()->avatar) }}" class="flex h-24 w-24 items-center justify-center rounded-3xl border-4 border-white object-cover bg-blue-100 shadow-sm transition-all group-hover:opacity-90">
+                        @else
+                            <div class="flex h-24 w-24 items-center justify-center rounded-3xl border-4 border-white bg-blue-100 text-3xl font-black text-blue-700 shadow-sm transition-all group-hover:opacity-90">
+                                {{ $initial }}
                             </div>
-                            
-                            <input id="avatar-upload" type="file" wire:model="avatar" class="sr-only" accept="image/*">
-                        </label>
-                        <span class="mt-1.5 block text-sm font-bold text-slate-700">Ảnh đại diện</span>
-                        @error('avatar') <span class="text-red-500 text-xs mt-1 block">{{ $message }}</span> @enderror
-                    </div>
+                        @endif
+                        
+                        <!-- Hover overlay -->
+                        <div class="absolute inset-0 rounded-3xl bg-slate-900/40 flex flex-col items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity">
+                            <x-user.icon name="edit" class="text-white" :size="24" />
+                        </div>
+                        
+                        <input id="avatar-upload" type="file" wire:model.live="avatar" class="sr-only" accept="image/*">
+                    </label>
+                </div>
+                <div class="text-center mt-2">
+                    <div wire:loading wire:target="avatar" class="text-xs text-blue-600 font-bold mb-1">Đang tải ảnh lên...</div>
+                    @error('avatar') <span class="text-red-500 text-xs font-bold block">{{ $message }}</span> @enderror
+                </div>
 
-                    <!-- Name -->
-                    <div>
-                        <label for="name" class="block text-sm font-bold text-slate-700 mb-2">Họ và tên</label>
-                        <input type="text" wire:model="name" id="name" autocomplete="name" class="block w-full text-base border-slate-300 focus:outline-none focus:ring-primary focus:border-primary rounded-xl transition">
-                        @error('name') <span class="text-red-500 text-xs mt-1 block">{{ $message }}</span> @enderror
-                    </div>
-
-                    <!-- Email -->
-                    <div>
-                        <label for="email" class="block text-sm font-bold text-slate-700 mb-2">Địa chỉ Email</label>
-                        <input type="email" wire:model="email" id="email" autocomplete="email" class="block w-full text-base border-slate-300 focus:outline-none focus:ring-primary focus:border-primary rounded-xl transition">
-                        @error('email') <span class="text-red-500 text-xs mt-1 block">{{ $message }}</span> @enderror
+                <div class="mt-4 text-center">
+                    <h2 class="text-xl font-black text-slate-900">{{ $user->name }}</h2>
+                    <p class="text-sm font-medium text-slate-500">{{ $user->email }}</p>
+                    <div class="mt-4 flex flex-wrap justify-center gap-2">
+                        <span class="rounded-lg border px-3 py-1 text-[10px] font-bold uppercase tracking-wider {{ $user->is_admin ? 'border-blue-100 bg-blue-50 text-blue-700' : 'border-slate-100 bg-slate-50 text-slate-600' }}">
+                            {{ $roleLabel }}
+                        </span>
+                        <span class="rounded-lg border px-3 py-1 text-[10px] font-bold uppercase tracking-wider {{ $statusColor }}">
+                            {{ $statusLabel }}
+                        </span>
                     </div>
                 </div>
-                <div class="px-6 py-3 bg-slate-50 border-t border-slate-200 text-right flex items-center justify-end gap-3">
-                    <div wire:loading wire:target="updateProfileInformation" class="text-sm text-slate-500">
-                        Đang lưu...
-                    </div>
-                    <button type="submit" wire:loading.attr="disabled" class="inline-flex justify-center py-2.5 px-6 border border-transparent shadow-sm text-sm font-bold rounded-xl text-white bg-primary hover:bg-primary/90 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary transition disabled:opacity-50">
-                        Lưu thông tin
-                    </button>
-                </div>
-            </form>
-        </div>
 
-        <!-- Password Column -->
-        <div class="bg-white shadow-sm overflow-hidden rounded-2xl border border-slate-200 flex flex-col">
-            <div class="border-b border-slate-100 bg-slate-50/50 px-6 py-3">
-                <h3 class="text-lg font-bold text-slate-900">Đổi mật khẩu</h3>
-                <p class="mt-1 text-sm text-slate-500 truncate" title="Đảm bảo tài khoản của bạn đang sử dụng một mật khẩu dài, ngẫu nhiên để an toàn hơn.">
-                    Sử dụng mật khẩu dài, ngẫu nhiên để bảo mật tài khoản.
-                </p>
+                <dl class="mt-6 space-y-3 border-t border-slate-100 pt-5 text-sm">
+                    <div class="flex items-center justify-between gap-4">
+                        <dt class="font-medium text-slate-500">Ngày tham gia</dt>
+                        <dd class="font-bold text-slate-900">{{ $user->created_at?->format('d/m/Y') ?? 'N/A' }}</dd>
+                    </div>
+                </dl>
             </div>
-            <form wire:submit="updatePassword" class="flex flex-col flex-1">
-                <div class="px-6 py-4 sm:px-8 sm:py-5 flex-1 space-y-4">
+        </section>
+
+        <div class="space-y-6">
+            <section class="admin-card admin-card-hover overflow-hidden rounded-2xl border bg-white">
+                <div class="flex flex-col gap-4 border-b border-slate-100 p-6 lg:flex-row lg:items-end lg:justify-between">
+                    <div>
+                        <h2 class="text-xl font-black text-slate-900">Chỉnh sửa hồ sơ</h2>
+                        <p class="mt-1 text-sm font-medium text-slate-500">Cập nhật thông tin tài khoản của bạn.</p>
+                    </div>
+                    <div class="flex gap-2">
+                        <button type="button" @click="showPasswordModal = true" class="admin-soft-button rounded-xl border border-slate-200 bg-white px-4 py-2.5 text-xs font-bold text-slate-600 hover:bg-slate-50">
+                            Đổi mật khẩu
+                        </button>
+                    </div>
+                </div>
+
+                <form wire:submit.prevent="updateProfileInformation">
+                    <div class="p-6">
+                        @if (session('status'))
+                            <div class="font-medium text-sm text-emerald-600 bg-emerald-50 p-4 rounded-xl border border-emerald-200 mb-6">
+                                {{ session('status') }}
+                            </div>
+                        @endif
+
+                        <div class="space-y-5">
+                            <div>
+                                <label class="mb-2 block text-[10px] font-bold uppercase tracking-widest text-slate-400">Họ và tên</label>
+                                <input type="text" wire:model="name" class="w-full rounded-xl border border-slate-200 bg-white px-4 py-3 text-sm font-bold text-slate-900 focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-500">
+                                @error('name') <span class="text-red-500 text-xs mt-1 block">{{ $message }}</span> @enderror
+                            </div>
+
+                            <div>
+                                <label class="mb-2 block text-[10px] font-bold uppercase tracking-widest text-slate-400">Email</label>
+                                <input type="email" wire:model="email" class="w-full rounded-xl border border-slate-200 bg-white px-4 py-3 text-sm font-bold text-slate-900 focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-500">
+                                @error('email') <span class="text-red-500 text-xs mt-1 block">{{ $message }}</span> @enderror
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="border-t border-slate-100 bg-slate-50 p-6 flex justify-end gap-3">
+                        <div wire:loading wire:target="updateProfileInformation" class="text-sm text-slate-500 self-center">
+                            Đang lưu...
+                        </div>
+                        <button type="submit" wire:loading.attr="disabled" class="rounded-xl bg-gradient-to-r from-blue-600 to-cyan-600 px-6 py-2.5 text-sm font-bold text-white shadow-sm shadow-blue-500/25 transition-all hover:-translate-y-0.5 hover:from-blue-700 hover:to-cyan-700">
+                            Lưu thông tin
+                        </button>
+                    </div>
+                </form>
+            </section>
+        </div>
+    </div>
+
+    <!-- Password Modal -->
+    <!-- Password Modal -->
+    <div x-cloak x-show="showPasswordModal" class="fixed inset-0 z-[100] flex items-center justify-center overflow-y-auto overflow-x-hidden p-4 sm:p-0">
+        <!-- Backdrop -->
+        <div class="fixed inset-0 bg-slate-900/50 backdrop-blur-sm transition-opacity" @click="showPasswordModal = false" x-show="showPasswordModal" x-transition.opacity></div>
+
+        <!-- Modal Panel -->
+        <div x-show="showPasswordModal" class="relative w-full max-w-md overflow-hidden rounded-3xl bg-white shadow-2xl sm:my-8" x-transition:enter="ease-out duration-300" x-transition:enter-start="opacity-0 translate-y-4 sm:translate-y-0 sm:scale-95" x-transition:enter-end="opacity-100 translate-y-0 sm:scale-100" x-transition:leave="ease-in duration-200" x-transition:leave-start="opacity-100 translate-y-0 sm:scale-100" x-transition:leave-end="opacity-0 translate-y-4 sm:translate-y-0 sm:scale-95">
+            <div class="border-b border-slate-100 px-6 py-4 flex items-center justify-between bg-white relative z-10">
+                <h3 class="text-lg font-bold text-slate-900">Đổi mật khẩu</h3>
+                <button type="button" @click="showPasswordModal = false" class="text-slate-400 hover:text-slate-500">
+                    <x-user.icon name="x" :size="20" />
+                </button>
+            </div>
+            
+            <form wire:submit.prevent="updatePassword" class="relative z-10 bg-white">
+                <div class="px-6 py-5 space-y-4">
                     @if (session('password_status'))
-                        <div class="font-medium text-sm text-green-600 bg-green-50 p-4 rounded-xl border border-green-200">
+                        <div class="font-medium text-sm text-emerald-600 bg-emerald-50 p-4 rounded-xl border border-emerald-200">
                             {{ session('password_status') }}
                         </div>
                     @endif
 
-                    <!-- Current Password -->
-                    <div x-data="{ show: false }" class="pt-3">
-                        <label for="current_password" class="block text-sm font-bold text-slate-700 mb-2">Mật khẩu hiện tại</label>
+                    <div x-data="{ showPass1: false }">
+                        <label class="mb-2 block text-[10px] font-bold uppercase tracking-widest text-slate-400">Mật khẩu hiện tại</label>
                         <div class="relative">
-                            <input :type="show ? 'text' : 'password'" wire:model="current_password" id="current_password" class="block w-full text-base border-slate-300 focus:outline-none focus:ring-primary focus:border-primary rounded-xl transition pr-10">
-                            <button type="button" @click="show = !show" class="absolute inset-y-0 right-0 pr-3 flex items-center text-slate-400 hover:text-slate-600 focus:outline-none">
-                                <x-user.icon name="eye" x-show="!show" class="w-5 h-5" />
-                                <x-user.icon name="eye-off" x-show="show" class="w-5 h-5" style="display: none;" />
+                            <input :type="showPass1 ? 'text' : 'password'" wire:model="current_password" class="block w-full rounded-xl border border-slate-200 bg-white px-4 py-3 text-sm font-bold text-slate-900 focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-500 pr-10">
+                            <button type="button" @click="showPass1 = !showPass1" class="absolute inset-y-0 right-0 pr-3 flex items-center text-slate-400 hover:text-slate-600 focus:outline-none">
+                                <x-user.icon name="eye" x-show="!showPass1" class="w-5 h-5" />
+                                <x-user.icon name="eye-off" x-show="showPass1" class="w-5 h-5" style="display: none;" />
                             </button>
                         </div>
                         @error('current_password') <span class="text-red-500 text-xs mt-1 block">{{ $message }}</span> @enderror
                     </div>
 
-                    <!-- New Password -->
-                    <div x-data="{ show: false }">
-                        <label for="password" class="block text-sm font-bold text-slate-700 mb-2">Mật khẩu mới</label>
+                    <div x-data="{ showPass2: false }">
+                        <label class="mb-2 block text-[10px] font-bold uppercase tracking-widest text-slate-400">Mật khẩu mới</label>
                         <div class="relative">
-                            <input :type="show ? 'text' : 'password'" wire:model="password" id="password" class="block w-full text-base border-slate-300 focus:outline-none focus:ring-primary focus:border-primary rounded-xl transition pr-10">
-                            <button type="button" @click="show = !show" class="absolute inset-y-0 right-0 pr-3 flex items-center text-slate-400 hover:text-slate-600 focus:outline-none">
-                                <x-user.icon name="eye" x-show="!show" class="w-5 h-5" />
-                                <x-user.icon name="eye-off" x-show="show" class="w-5 h-5" style="display: none;" />
+                            <input :type="showPass2 ? 'text' : 'password'" wire:model="password" class="block w-full rounded-xl border border-slate-200 bg-white px-4 py-3 text-sm font-bold text-slate-900 focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-500 pr-10">
+                            <button type="button" @click="showPass2 = !showPass2" class="absolute inset-y-0 right-0 pr-3 flex items-center text-slate-400 hover:text-slate-600 focus:outline-none">
+                                <x-user.icon name="eye" x-show="!showPass2" class="w-5 h-5" />
+                                <x-user.icon name="eye-off" x-show="showPass2" class="w-5 h-5" style="display: none;" />
                             </button>
                         </div>
                         @error('password') <span class="text-red-500 text-xs mt-1 block">{{ $message }}</span> @enderror
                     </div>
 
-                    <!-- Confirm Password -->
-                    <div x-data="{ show: false }">
-                        <label for="password_confirmation" class="block text-sm font-bold text-slate-700 mb-2">Xác nhận mật khẩu mới</label>
+                    <div x-data="{ showPass3: false }">
+                        <label class="mb-2 block text-[10px] font-bold uppercase tracking-widest text-slate-400">Xác nhận mật khẩu mới</label>
                         <div class="relative">
-                            <input :type="show ? 'text' : 'password'" wire:model="password_confirmation" id="password_confirmation" class="block w-full text-base border-slate-300 focus:outline-none focus:ring-primary focus:border-primary rounded-xl transition pr-10">
-                            <button type="button" @click="show = !show" class="absolute inset-y-0 right-0 pr-3 flex items-center text-slate-400 hover:text-slate-600 focus:outline-none">
-                                <x-user.icon name="eye" x-show="!show" class="w-5 h-5" />
-                                <x-user.icon name="eye-off" x-show="show" class="w-5 h-5" style="display: none;" />
+                            <input :type="showPass3 ? 'text' : 'password'" wire:model="password_confirmation" class="block w-full rounded-xl border border-slate-200 bg-white px-4 py-3 text-sm font-bold text-slate-900 focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-500 pr-10">
+                            <button type="button" @click="showPass3 = !showPass3" class="absolute inset-y-0 right-0 pr-3 flex items-center text-slate-400 hover:text-slate-600 focus:outline-none">
+                                <x-user.icon name="eye" x-show="!showPass3" class="w-5 h-5" />
+                                <x-user.icon name="eye-off" x-show="showPass3" class="w-5 h-5" style="display: none;" />
                             </button>
                         </div>
                         @error('password_confirmation') <span class="text-red-500 text-xs mt-1 block">{{ $message }}</span> @enderror
                     </div>
                 </div>
-                <div class="px-6 py-3 bg-slate-50 border-t border-slate-200 text-right flex items-center justify-end gap-3">
-                    <div wire:loading wire:target="updatePassword" class="text-sm text-slate-500">
-                        Đang lưu...
-                    </div>
-                    <button type="submit" wire:loading.attr="disabled" class="inline-flex justify-center py-2.5 px-6 border border-transparent shadow-sm text-sm font-bold rounded-xl text-white bg-slate-800 hover:bg-slate-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-slate-900 transition disabled:opacity-50">
-                        Cập nhật mật khẩu
+                
+                <div class="border-t border-slate-100 bg-slate-50 px-6 py-4 flex justify-end gap-3 relative z-10">
+                    <button type="button" @click="showPasswordModal = false" class="rounded-xl border border-slate-200 bg-white px-4 py-2.5 text-sm font-bold text-slate-600 hover:bg-slate-50">
+                        Đóng
+                    </button>
+                    <button type="submit" class="rounded-xl bg-slate-900 px-4 py-2.5 text-sm font-bold text-white shadow-sm transition-all hover:-translate-y-0.5 hover:bg-slate-800">
+                        Xác nhận đổi
                     </button>
                 </div>
             </form>

@@ -27,9 +27,13 @@
             <section class="admin-card admin-card-hover rounded-2xl border">
                 <div class="p-6">
                     <div class="flex items-center gap-4">
-                        <div class="flex h-20 w-20 items-center justify-center rounded-3xl bg-blue-100 text-3xl font-black text-blue-700">
-                            {{ $initial }}
-                        </div>
+                        @if($user->avatar)
+                            <img src="{{ asset('storage/'.$user->avatar) }}" alt="{{ $user->name }}" class="h-20 w-20 rounded-3xl object-cover bg-blue-100 shadow-sm">
+                        @else
+                            <div class="flex h-20 w-20 items-center justify-center rounded-3xl bg-blue-100 text-3xl font-black text-blue-700 shadow-sm">
+                                {{ $initial }}
+                            </div>
+                        @endif
                         <div class="min-w-0">
                             <p class="text-[10px] font-bold uppercase tracking-widest text-slate-400">Tài khoản hiện tại</p>
                             <h2 class="truncate text-xl font-black text-slate-900">{{ $user->name }}</h2>
@@ -46,61 +50,69 @@
                             <dt class="font-medium text-slate-500">Trạng thái</dt>
                             <dd class="font-bold text-slate-900">{{ ucfirst($user->status ?? 'active') }}</dd>
                         </div>
-                        <div class="flex items-center justify-between gap-4">
-                            <dt class="font-medium text-slate-500">Mã</dt>
-                            <dd class="font-bold text-slate-900">{{ $user->code ?: 'Chưa có' }}</dd>
-                        </div>
                     </dl>
                 </div>
             </section>
 
             <section class="admin-card admin-card-hover overflow-hidden rounded-2xl border">
-                <div class="border-b border-slate-100 p-6">
-                    <h2 class="text-xl font-black text-slate-900">Thông tin chỉnh sửa</h2>
-                    <p class="mt-1 text-sm font-medium text-slate-500">Các trường bên dưới đang được hiển thị đúng theo hồ sơ hiện tại.</p>
-                </div>
-
-                <div class="grid grid-cols-1 gap-6 p-6 lg:grid-cols-2">
-                    <div class="space-y-5">
+                <form method="POST" action="{{ route('admin.users.update', $user) }}">
+                    @csrf
+                    @method('PUT')
+                    
+                    <div class="border-b border-slate-100 p-6 flex justify-between items-center">
                         <div>
-                            <label class="mb-2 block text-[10px] font-bold uppercase tracking-widest text-slate-400">Họ và tên</label>
-                            <input type="text" value="{{ $user->name }}" disabled class="w-full rounded-xl border border-slate-200 bg-white/75 px-4 py-3 text-sm font-bold text-slate-900">
+                            <h2 class="text-xl font-black text-slate-900">Thông tin chỉnh sửa</h2>
+                            <p class="mt-1 text-sm font-medium text-slate-500">Cho phép cập nhật quyền và trạng thái của người dùng này.</p>
                         </div>
-
-                        <div>
-                            <label class="mb-2 block text-[10px] font-bold uppercase tracking-widest text-slate-400">Email</label>
-                            <input type="email" value="{{ $user->email }}" disabled class="w-full rounded-xl border border-slate-200 bg-white/75 px-4 py-3 text-sm font-bold text-slate-900">
-                        </div>
-
-                        <div>
-                            <label class="mb-2 block text-[10px] font-bold uppercase tracking-widest text-slate-400">Mã định danh</label>
-                            <input type="text" value="{{ $user->code }}" disabled class="w-full rounded-xl border border-slate-200 bg-white/75 px-4 py-3 text-sm font-bold text-slate-900 placeholder:text-slate-400">
-                        </div>
+                        <button type="submit" class="rounded-xl bg-gradient-to-r from-emerald-500 to-emerald-600 px-6 py-2.5 text-sm font-bold text-white shadow-sm shadow-emerald-500/25 transition-all hover:-translate-y-0.5 hover:from-emerald-600 hover:to-emerald-700">
+                            Lưu thay đổi
+                        </button>
                     </div>
 
-                    <div class="space-y-5">
-                        <div>
-                            <label class="mb-2 block text-[10px] font-bold uppercase tracking-widest text-slate-400">Vai trò</label>
-                            <select disabled class="w-full rounded-xl border border-slate-200 bg-white/75 px-4 py-3 text-sm font-bold text-slate-900">
-                                <option {{ $user->is_admin ? 'selected' : '' }}>Admin</option>
-                                <option {{ ! $user->is_admin ? 'selected' : '' }}>Người dùng</option>
-                            </select>
+                    @if(session('success'))
+                        <div class="m-6 rounded-xl border border-green-200 bg-green-50 p-4 text-green-800 text-sm font-medium">
+                            {{ session('success') }}
+                        </div>
+                    @endif
+
+                    @if(session('error'))
+                        <div class="m-6 rounded-xl border border-red-200 bg-red-50 p-4 text-red-800 text-sm font-medium">
+                            {{ session('error') }}
+                        </div>
+                    @endif
+
+                    <div class="grid grid-cols-1 gap-6 p-6 lg:grid-cols-2">
+                        <div class="space-y-5">
+                            <div>
+                                <label class="mb-2 block text-[10px] font-bold uppercase tracking-widest text-slate-400">Họ và tên</label>
+                                <input type="text" value="{{ $user->name }}" disabled class="w-full rounded-xl border border-slate-200 bg-slate-50 px-4 py-3 text-sm font-bold text-slate-500 cursor-not-allowed">
+                            </div>
+
+                            <div>
+                                <label class="mb-2 block text-[10px] font-bold uppercase tracking-widest text-slate-400">Email</label>
+                                <input type="email" value="{{ $user->email }}" disabled class="w-full rounded-xl border border-slate-200 bg-slate-50 px-4 py-3 text-sm font-bold text-slate-500 cursor-not-allowed">
+                            </div>
                         </div>
 
-                        <div>
-                            <label class="mb-2 block text-[10px] font-bold uppercase tracking-widest text-slate-400">Trạng thái</label>
-                            <select disabled class="w-full rounded-xl border border-slate-200 bg-white/75 px-4 py-3 text-sm font-bold text-slate-900">
-                                <option {{ $user->status === 'active' ? 'selected' : '' }}>active</option>
-                                <option {{ $user->status === 'blocked' ? 'selected' : '' }}>blocked</option>
-                            </select>
-                        </div>
+                        <div class="space-y-5">
+                            <div>
+                                <label class="mb-2 block text-[10px] font-bold uppercase tracking-widest text-slate-400">Vai trò</label>
+                                <select name="is_admin" class="w-full rounded-xl border border-slate-200 bg-white px-4 py-3 text-sm font-bold text-slate-900 focus:border-blue-500 focus:ring-2 focus:ring-blue-500">
+                                    <option value="1" {{ $user->is_admin ? 'selected' : '' }}>Admin</option>
+                                    <option value="0" {{ ! $user->is_admin ? 'selected' : '' }}>Người dùng</option>
+                                </select>
+                            </div>
 
-                        <div class="rounded-2xl border border-slate-200 bg-white/75 p-4">
-                            <p class="text-[10px] font-bold uppercase tracking-widest text-slate-400">Gợi ý layout</p>
-                            <p class="mt-2 text-sm font-medium leading-6 text-slate-600">Màn hình này đang được giữ ở dạng chỉnh sửa hồ sơ để đồng bộ với luồng quản trị nhiều trang.</p>
+                            <div>
+                                <label class="mb-2 block text-[10px] font-bold uppercase tracking-widest text-slate-400">Trạng thái</label>
+                                <select name="status" class="w-full rounded-xl border border-slate-200 bg-white px-4 py-3 text-sm font-bold text-slate-900 focus:border-blue-500 focus:ring-2 focus:ring-blue-500">
+                                    <option value="active" {{ $user->status === 'active' ? 'selected' : '' }}>Đang hoạt động</option>
+                                    <option value="blocked" {{ $user->status === 'blocked' ? 'selected' : '' }}>Đã khóa</option>
+                                </select>
+                            </div>
                         </div>
                     </div>
-                </div>
+                </form>
             </section>
         </div>
     </div>
