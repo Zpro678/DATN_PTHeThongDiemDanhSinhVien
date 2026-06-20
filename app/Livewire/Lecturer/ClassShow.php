@@ -41,7 +41,7 @@ class ClassShow extends Component
         }]);
 
         $this->studentsCount   = $courseClass->members()->count();
-        $this->sessionsCount   = $courseClass->total_sessions;
+        $this->sessionsCount   = $courseClass->total_lessons;
         $this->sessionsCompleted = $courseClass->sessions()->whereIn('status', ['closed', 'active'])->count();
         $this->pendingLeaveRequests = \App\Models\LeaveRequest::whereHas('classSession', function ($q) use ($courseClass) {
             $q->where('class_id', $courseClass->id);

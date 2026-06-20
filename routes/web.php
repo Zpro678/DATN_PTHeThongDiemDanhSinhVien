@@ -226,7 +226,7 @@ Route::middleware(['auth', 'verified', 'user.route'])->group(function () {
     Route::get('/student/classes/{courseClass}', \App\Livewire\Student\ClassShow::class)->name('student.classes.show');
     Route::get('/lecturer/classes/{courseClass}/settings', \App\Livewire\Lecturer\ClassSettings::class)->name('lecturer.classes.settings');
     Route::get('/lecturer/classes/{courseClass}', \App\Livewire\Lecturer\ClassShow::class)->name('lecturer.classes.show');
-    Route::get('/lecturer/classes/{courseClass}/attendance', \App\Livewire\Lecturer\ClassAttendanceHistory::class)->name('lecturer.classes.attendance');
+    // Route::get('/lecturer/classes/{courseClass}/attendance', \App\Livewire\Lecturer\ClassAttendanceHistory::class)->name('lecturer.classes.attendance'); // TODO: ClassAttendanceHistory chưa được tạo
     Route::get('/lecturer/classes/{class_id}/statistics', \App\Livewire\Lecturer\ClassStatistics::class)->name('lecturer.class.statistics');
     Route::get('/lecturer/attendance', AttendanceIndex::class)->name('lecturer.attendance.index');
     Route::get('/lecturer/attendance/create', AttendanceCreate::class)->name('lecturer.attendance.create');

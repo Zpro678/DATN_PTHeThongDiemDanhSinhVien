@@ -74,15 +74,9 @@
         @forelse ($classes as $index => $class)
             @php
                 $isEnded = $class->status === 'ended';
-                $isArchived = $class->status === 'archived';
-                $isPrimary = $index % 2 === 0;
-                $isTertiary = ! $isPrimary;
-                if ($isEnded || $isArchived) {
-                    $isPrimary = false;
-                    $isTertiary = false;
-                }
-                $barClass = $isTertiary ? 'bg-tertiary' : ($isPrimary ? 'bg-primary' : 'bg-outline-variant');
-                $textClass = $isTertiary ? 'text-tertiary' : ($isPrimary ? 'text-primary' : 'text-on-surface-variant');
+                
+                $barClass = $isEnded ? 'bg-slate-400' : 'bg-blue-500';
+                $textClass = $isEnded ? 'text-slate-500' : 'text-blue-600';
                 
                 $sessionsCompleted = $class->completed_sessions_count ?? 0;
                 $present = $class->sum_present ?? 0;
@@ -97,10 +91,8 @@
             @endphp
             <article @class([
                 'group relative flex flex-col overflow-hidden rounded-3xl bg-white transition-all duration-300 hover:-translate-y-1 cursor-pointer',
-                'ring-1 ring-primary/20 shadow-lg shadow-primary/5 hover:shadow-xl hover:shadow-primary/10' => $isPrimary,
-                'ring-1 ring-tertiary/20 shadow-lg shadow-tertiary/5 hover:shadow-xl hover:shadow-tertiary/10' => $isTertiary,
-                'ring-1 ring-outline-variant/20 shadow-md hover:shadow-xl' => ! $isPrimary && ! $isTertiary,
-                'opacity-80 hover:opacity-100' => $isEnded || $isArchived,
+                'ring-1 ring-blue-500/20 shadow-lg shadow-blue-500/5 hover:shadow-xl hover:shadow-blue-500/10' => ! $isEnded,
+                'ring-1 ring-outline-variant/20 shadow-md hover:shadow-xl opacity-80 hover:opacity-100' => $isEnded,
             ])>
                 {{-- Phủ 1 link tàng hình lên toàn bộ thẻ để click được cả thẻ --}}
                 <a href="{{ route('lecturer.classes.show', $class->id) }}" class="absolute inset-0 z-0"><span class="sr-only">Xem chi tiết lớp</span></a>
@@ -108,10 +100,8 @@
                 <!-- Classroom-style Header -->
                 <div @class([
                     'relative flex h-28 flex-col justify-between p-5',
-                    'bg-primary/95' => $isPrimary,
-                    'bg-tertiary/95' => $isTertiary,
-                    'bg-orange-400/95' => $isArchived,
-                    'bg-slate-600/95' => ! $isPrimary && ! $isTertiary && ! $isArchived,
+                    'bg-blue-600/95' => ! $isEnded,
+                    'bg-slate-600/95' => $isEnded,
                 ])>
                     <div class="flex items-start justify-between">
                         <div class="pr-6">
@@ -135,11 +125,6 @@
                                 @if (! $isEnded)
                                     <a href="{{ route('lecturer.classes.settings', $class->id) }}" class="block w-full px-4 py-2 text-left text-sm font-medium hover:bg-surface-container">Cài đặt lớp</a>
                                 @endif
-                                @if ($isArchived)
-                                    <button type="button" wire:click="toggleArchive({{ $class->id }})" class="w-full px-4 py-2 text-left text-sm font-medium text-primary hover:bg-primary/10">Khôi phục lớp học</button>
-                                @else
-                                    <button type="button" wire:click="toggleArchive({{ $class->id }})" class="w-full px-4 py-2 text-left text-sm font-medium text-error hover:bg-error/10">Lưu trữ lớp học</button>
-                                @endif
                             </div>
                         </div>
                     </div>
@@ -151,12 +136,10 @@
                         <div class="flex items-center gap-2">
                             <span @class([
                                 'rounded-full px-2.5 py-0.5 text-[10px] font-bold uppercase tracking-wider',
-                                'bg-primary/10 text-primary' => ! $isEnded && ! $isArchived && $isPrimary,
-                                'bg-tertiary/10 text-tertiary' => ! $isEnded && ! $isArchived && $isTertiary,
-                                'bg-orange-100 text-orange-700' => $isArchived,
+                                'bg-blue-100 text-blue-700' => ! $isEnded,
                                 'bg-surface-container text-on-surface-variant' => $isEnded,
                             ])>
-                                @if($isArchived) LƯU TRỮ @elseif($isEnded) ĐÃ KẾT THÚC @else ĐANG HOẠT ĐỘNG @endif
+                                @if($isEnded) ĐÃ KẾT THÚC @else ĐANG HOẠT ĐỘNG @endif
                             </span>
                             <span class="flex items-center gap-1 rounded-full bg-[#F59E0B]/10 px-2.5 py-0.5 text-[10px] font-bold uppercase tracking-wider text-[#F59E0B]">
                                 <x-user.icon name="shield" :size="10" />
@@ -179,7 +162,7 @@
                             <p class="text-[9px] font-bold uppercase tracking-wider text-on-surface-variant">Đã học</p>
                             <p class="mt-1 flex items-center gap-1.5">
                                 <x-user.icon name="check-square" class="text-tertiary" :size="16"/>
-                                <span class="text-xl font-black leading-none text-on-surface">{{ $studiedLessons }}/{{ $class->total_lessons }}</span>
+                                <span class="text-xl font-black leading-none text-on-surface">{{ $class->studied_lessons ?? 0 }}/{{ $class->total_lessons }}</span>
                             </p>
                         </div>
                     </div>

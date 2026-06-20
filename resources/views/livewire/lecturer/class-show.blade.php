@@ -169,12 +169,8 @@
                     </div>
                     @endif
                     <div class="flex justify-between">
-                        <span class="text-on-surface-variant">Tổng số buổi</span>
-                        <span class="font-semibold text-on-surface">{{ $class->total_sessions }} buổi</span>
-                    </div>
-                    <div class="flex justify-between">
-                        <span class="text-on-surface-variant">Số tiết/buổi</span>
-                        <span class="font-semibold text-on-surface">{{ $class->lessons_per_session }} tiết</span>
+                        <span class="text-on-surface-variant">Tổng số tiết</span>
+                        <span class="font-semibold text-on-surface">{{ $class->total_lessons }} tiết</span>
                     </div>
                     <div class="flex justify-between">
                         <span class="text-on-surface-variant">Duyệt tham gia</span>

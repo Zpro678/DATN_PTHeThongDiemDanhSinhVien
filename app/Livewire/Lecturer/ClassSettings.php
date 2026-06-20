@@ -53,8 +53,7 @@ class ClassSettings extends Component
             'status' => ['required', 'string', Rule::in(['active', 'archived', 'ended'])],
         ], [
             'name.required' => 'Vui lòng nhập tên lớp.',
-            'totalSessions.min' => 'Tổng số buổi phải lớn hơn 0.',
-            'lessonsPerSession.min' => 'Số tiết mỗi buổi phải lớn hơn 0.',
+            'totalLessons.min' => 'Tổng số tiết phải lớn hơn 0.',
         ]);
 
         $this->courseClass->update([

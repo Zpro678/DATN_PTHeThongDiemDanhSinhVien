@@ -55,8 +55,8 @@ class Classes extends Component
             $color = $colors[$index % 3];
 
             $sessionsCompleted = $class->sessions_completed ?? 0;
-            $attendancePct = $class->total_sessions > 0
-                ? round(($sessionsCompleted / $class->total_sessions) * 100)
+            $attendancePct = $class->total_lessons > 0
+                ? round(($sessionsCompleted / $class->total_lessons) * 100)
                 : 0;
 
             return [

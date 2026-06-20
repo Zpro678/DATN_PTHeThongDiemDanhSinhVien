@@ -98,7 +98,7 @@ class QrAttendanceSession extends Component
         $date = $session->date->format('Y-m-d');
         $className = \Illuminate\Support\Str::slug($session->courseClass->name);
         $startLesson = 1;
-        $endLesson = max(1, $session->courseClass->lessons_per_session);
+        $endLesson = max(1, $session->lesson_count);
         $tiet = "Tiet_{$startLesson}-{$endLesson}";
 
         $fileName = "{$date}_{$className}_{$tiet}.xlsx";

@@ -18,16 +18,6 @@ class ManagedClasses extends Component
         $this->statusFilter = $status;
     }
 
-    public function toggleArchive(int $classId): void
-    {
-        $class = \App\Models\CourseClass::where('owner_user_id', auth()->id())->findOrFail($classId);
-        
-        if ($class->status === 'archived') {
-            $class->update(['status' => 'active']);
-        } else {
-            $class->update(['status' => 'archived']);
-        }
-    }
 
     public function render(): View
     {
@@ -46,7 +36,7 @@ class ManagedClasses extends Component
         if ($this->statusFilter === 'Đang hoạt động') {
             $query->where('status', 'active');
         } elseif ($this->statusFilter === 'Đã kết thúc') {
-            $query->whereIn('status', ['ended', 'archived']);
+            $query->where('status', 'ended');
         }
 
         if ($this->semesterFilter !== 'Tất cả học kỳ') {

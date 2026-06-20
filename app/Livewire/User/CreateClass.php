@@ -97,13 +97,11 @@ class CreateClass extends Component
             'subjectCode'       => ['nullable', 'string', 'max:50'],
             'semester'          => ['nullable', 'string', 'max:50'],
             'description'       => ['nullable', 'string', 'max:5000'],
-            'totalSessions'     => ['required', 'integer', 'min:1', 'max:100'],
-            'lessonsPerSession' => ['required', 'integer', 'min:1', 'max:20'],
+            'totalLessons'      => ['required', 'integer', 'min:1', 'max:300'],
             'requireApproval'   => ['boolean'],
         ], [
             'name.required'          => 'Vui lòng nhập tên lớp.',
-            'totalSessions.min'      => 'Tổng số buổi phải lớn hơn 0.',
-            'lessonsPerSession.min'  => 'Số tiết mỗi buổi phải lớn hơn 0.',
+            'totalLessons.min'      => 'Tổng số tiết phải lớn hơn 0.',
 
         ]);
 
@@ -116,8 +114,7 @@ class CreateClass extends Component
             'subject_code'       => filled($this->subjectCode) ? strtoupper($this->subjectCode) : null,
             'semester'           => $this->semester ?: null,
             'description'        => $this->description ?: null,
-            'total_sessions'     => $this->totalSessions,
-            'lessons_per_session'=> $this->lessonsPerSession,
+            'total_lessons'      => $this->totalLessons,
             'require_approval'   => $this->requireApproval,
             'status'             => 'active',
         ]);
