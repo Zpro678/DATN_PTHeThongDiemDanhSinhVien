@@ -8,6 +8,7 @@ use App\Models\ClassSession;
 use App\Models\ClassJoinRequest;
 use App\Models\AttendanceRecord;
 use App\Models\LeaveRequest;
+use Illuminate\Support\Carbon;
 
 class DashboardStatisticService
 {
@@ -164,6 +165,167 @@ class DashboardStatisticService
             ->count('leave_requests.id');
     }
 
+    private function formatActivityTime($value): string
+    {
+        if (empty($value)) {
+            return 'Vừa cập nhật';
+        }
+
+        $time = Carbon::parse($value);
+
+        if ($time->isFuture()) {
+            return 'Vừa cập nhật';
+        }
+
+        return $time->locale('vi')->diffForHumans();
+    }
+
+    private function getActivitySortTime($value): int
+    {
+        if (empty($value)) {
+            return now()->timestamp;
+        }
+
+        return min(Carbon::parse($value)->timestamp, now()->timestamp);
+    }
+
+    private function getRecentActivities($classIds, array $absenceWarnings, int $limit = 5): array
+    {
+        $activities = collect();
+
+        AttendanceRecord::query()
+            ->join('class_sessions', 'attendance_records.class_session_id', '=', 'class_sessions.id')
+            ->join('class_members', 'attendance_records.class_member_id', '=', 'class_members.id')
+            ->join('classes', 'class_sessions.class_id', '=', 'classes.id')
+            ->whereIn('class_sessions.class_id', $classIds)
+            ->whereIn('attendance_records.status', ['present', 'late'])
+            ->whereNotNull('attendance_records.check_in_time')
+            ->whereNull('class_sessions.deleted_at')
+            ->whereNull('classes.deleted_at')
+            ->orderByDesc('attendance_records.check_in_time')
+            ->take($limit)
+            ->get([
+                'attendance_records.status as record_status',
+                'attendance_records.check_in_time',
+                'class_members.student_code',
+                'class_members.full_name',
+                'classes.name as class_name',
+            ])
+            ->each(function ($record) use ($activities): void {
+                $statusLabel = $record->record_status === 'late' ? 'đi muộn' : 'thành công';
+
+                $activities->push([
+                    'text' => "{$record->student_code} {$record->full_name} điểm danh {$statusLabel} lớp {$record->class_name}",
+                    'time' => $this->formatActivityTime($record->check_in_time),
+                    'icon' => 'user',
+                    'bg' => $record->record_status === 'late' ? 'bg-secondary' : 'bg-tertiary',
+                    'sort_time' => $this->getActivitySortTime($record->check_in_time),
+                ]);
+            });
+
+        ClassSession::query()
+            ->join('classes', 'class_sessions.class_id', '=', 'classes.id')
+            ->whereIn('class_sessions.class_id', $classIds)
+            ->whereNull('classes.deleted_at')
+            ->select([
+                'class_sessions.name',
+                'class_sessions.status as session_status',
+                'class_sessions.created_at',
+                'class_sessions.updated_at',
+                'classes.name as class_name',
+            ])
+            ->selectRaw('COALESCE(class_sessions.updated_at, class_sessions.created_at) as activity_at')
+            ->orderByDesc('activity_at')
+            ->take($limit)
+            ->get()
+            ->each(function ($session) use ($activities): void {
+                $statusLabel = match ($session->session_status) {
+                    'closed' => 'Đã chốt sổ',
+                    'active' => 'Đang mở điểm danh',
+                    default => 'Đã tạo',
+                };
+
+                $activities->push([
+                    'text' => "{$statusLabel} buổi {$session->name} - {$session->class_name}",
+                    'time' => $this->formatActivityTime($session->activity_at),
+                    'icon' => $session->session_status === 'closed' ? 'check-square' : 'calendar-plus',
+                    'bg' => $session->session_status === 'closed' ? 'bg-primary' : 'bg-secondary',
+                    'sort_time' => $this->getActivitySortTime($session->activity_at),
+                ]);
+            });
+
+        LeaveRequest::query()
+            ->join('class_members', 'leave_requests.class_member_id', '=', 'class_members.id')
+            ->join('classes', 'class_members.class_id', '=', 'classes.id')
+            ->whereIn('class_members.class_id', $classIds)
+            ->whereNull('classes.deleted_at')
+            ->select([
+                'leave_requests.status',
+                'leave_requests.created_at',
+                'leave_requests.reviewed_at',
+                'class_members.student_code',
+                'class_members.full_name',
+                'classes.name as class_name',
+            ])
+            ->selectRaw('COALESCE(leave_requests.reviewed_at, leave_requests.created_at) as activity_at')
+            ->orderByDesc('activity_at')
+            ->take($limit)
+            ->get()
+            ->each(function ($request) use ($activities): void {
+                $text = match ($request->status) {
+                    'approved' => "Đơn nghỉ của {$request->student_code} {$request->full_name} đã được duyệt",
+                    'rejected' => "Đơn nghỉ của {$request->student_code} {$request->full_name} đã bị từ chối",
+                    default => "{$request->student_code} {$request->full_name} gửi đơn xin nghỉ lớp {$request->class_name}",
+                };
+
+                $activities->push([
+                    'text' => $text,
+                    'time' => $this->formatActivityTime($request->activity_at),
+                    'icon' => match ($request->status) {
+                        'approved' => 'check-circle',
+                        'rejected' => 'x-circle',
+                        default => 'file-text',
+                    },
+                    'bg' => match ($request->status) {
+                        'approved' => 'bg-tertiary',
+                        'rejected' => 'bg-error',
+                        default => 'bg-secondary',
+                    },
+                    'sort_time' => $this->getActivitySortTime($request->activity_at),
+                ]);
+            });
+
+        if ($absenceWarnings['count'] > 0) {
+            $activities->push([
+                'text' => "Có {$absenceWarnings['count']} sinh viên gần hoặc vượt ngưỡng nghỉ không phép",
+                'time' => 'Vừa cập nhật',
+                'icon' => 'alert-triangle',
+                'bg' => 'bg-error',
+                'sort_time' => now()->timestamp,
+            ]);
+        }
+
+        if ($activities->isEmpty()) {
+            return [[
+                'text' => 'Chưa có hoạt động gần đây',
+                'time' => 'Khi có điểm danh hoặc đơn nghỉ mới, hệ thống sẽ hiển thị tại đây.',
+                'icon' => 'activity',
+                'bg' => 'bg-primary',
+            ]];
+        }
+
+        return $activities
+            ->sortByDesc('sort_time')
+            ->take($limit)
+            ->values()
+            ->map(function (array $activity): array {
+                unset($activity['sort_time']);
+
+                return $activity;
+            })
+            ->toArray();
+    }
+
     /**
      * TỐI ƯU HÓA HÀM TỔNG HỢP DASHBOARD:
      * 1. Tái sử dụng Query: Dùng (clone) $ownedClassesQuery để lấy danh sách ID mà không phải viết lại điều kiện where, code DRY (Don't Repeat Yourself).
@@ -199,6 +361,7 @@ class DashboardStatisticService
                 'attendance_exceeded_students_count' => 0,
                 'attendance_warning_students' => [],
                 'pending_leave_requests_count' => 0,
+                'recent_activities' => [],
                 'classes_progress' => [],
             ];
         }
@@ -274,6 +437,7 @@ class DashboardStatisticService
         $totalAbsent = (int) ($attendance->total_absent ?? 0);
         $absenceWarnings = $this->getUnexcusedAbsenceWarnings($classIds);
         $pendingLeaveRequestsCount = $this->getPendingLeaveRequestsCount($classIds);
+        $recentActivities = $this->getRecentActivities($classIds, $absenceWarnings);
 
         return [
             'total_students' => $totalStudents, // Tổng sinh viên đang hoạt động trong các lớp của chủ lớp.
@@ -291,6 +455,7 @@ class DashboardStatisticService
             'attendance_exceeded_students_count' => $absenceWarnings['exceeded_count'], // Số sinh viên đã vượt ngưỡng chuyên cần 80%.
             'attendance_warning_students' => $absenceWarnings['students'], // Danh sách sinh viên cần cảnh báo chuyên cần.
             'pending_leave_requests_count' => $pendingLeaveRequestsCount, // Tổng số đơn xin nghỉ đang chờ chủ lớp duyệt.
+            'recent_activities' => $recentActivities, // Danh sách hoạt động gần đây từ điểm danh, đơn nghỉ và cảnh báo chuyên cần.
             'classes_progress' => $classesProgress, // Tiến độ học chi tiết của từng lớp.
         ];
     }

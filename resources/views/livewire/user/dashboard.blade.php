@@ -85,11 +85,8 @@
         ->values()
         ->all();
 
-    $activities = [
-        ['text' => 'Bạn vừa tạo buổi điểm danh cho lớp Lập trình Web', 'time' => '10 phút trước', 'icon' => 'check-square', 'bg' => 'bg-primary'],
-        ['text' => 'SV001 Nguyễn Văn A vừa điểm danh thành công', 'time' => '15 phút trước', 'icon' => 'user', 'bg' => 'bg-tertiary'],
-        ['text' => 'Có sinh viên vắng vượt ngưỡng cảnh báo', 'time' => '1 giờ trước', 'icon' => 'alert-triangle', 'bg' => 'bg-error'],
-        ['text' => 'File báo cáo chuyên cần đã xuất xong', 'time' => 'Hôm qua', 'icon' => 'file-text', 'bg' => 'bg-secondary'],
+    $activities = $overview['recent_activities'] ?? [
+        ['text' => 'Chưa có hoạt động gần đây', 'time' => 'Khi có điểm danh hoặc đơn nghỉ mới, hệ thống sẽ hiển thị tại đây.', 'icon' => 'activity', 'bg' => 'bg-primary'],
     ];
 
     $studentStats = [
