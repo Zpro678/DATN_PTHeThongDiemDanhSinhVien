@@ -2,22 +2,27 @@
 
 namespace App\Livewire\Profile;
 
-use Livewire\Component;
-use Livewire\WithFileUploads;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Validation\Rule;
 use Illuminate\Validation\Rules\Password;
+use Livewire\Component;
+use Livewire\WithFileUploads;
 
 class EditProfile extends Component
 {
     use WithFileUploads;
 
     public $name;
+
     public $email;
+
     public $avatar;
+
     public $current_password;
+
     public $password;
+
     public $password_confirmation;
 
     public function mount()
@@ -76,6 +81,7 @@ class EditProfile extends Component
     public function render()
     {
         $layout = Auth::user()->is_admin ? 'components.admin-layout' : 'layouts.user';
+
         return view('livewire.profile.edit-profile')->layout($layout, ['title' => 'Thông tin cá nhân']);
     }
 }

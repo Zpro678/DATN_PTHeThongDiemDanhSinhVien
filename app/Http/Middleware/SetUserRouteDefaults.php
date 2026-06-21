@@ -12,7 +12,7 @@ class SetUserRouteDefaults
     /**
      * Handle an incoming request.
      *
-     * @param  \Closure(\Illuminate\Http\Request): (\Symfony\Component\HttpFoundation\Response)  $next
+     * @param  Closure(Request): (Response)  $next
      */
     public function handle(Request $request, Closure $next): Response
     {
@@ -24,9 +24,9 @@ class SetUserRouteDefaults
             URL::defaults(['ma_user' => $maUser]);
 
             $routeMaUser = $request->route('ma_user');
-            
+
             // Allow access to own route, or if user is admin
-            if ($routeMaUser && $routeMaUser !== (string) $maUser && !$user->is_admin) {
+            if ($routeMaUser && $routeMaUser !== (string) $maUser && ! $user->is_admin) {
                 // If the user is trying to access another user's route, redirect them to their own dashboard
                 // or abort with 403. We'll abort for security.
                 abort(403, 'Bạn không có quyền truy cập vào đường dẫn của người dùng khác.');

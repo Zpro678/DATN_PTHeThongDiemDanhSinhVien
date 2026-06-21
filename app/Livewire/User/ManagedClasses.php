@@ -2,6 +2,7 @@
 
 namespace App\Livewire\User;
 
+use App\Models\CourseClass;
 use Illuminate\Contracts\View\View;
 use Livewire\Component;
 
@@ -18,12 +19,11 @@ class ManagedClasses extends Component
         $this->statusFilter = $status;
     }
 
-
     public function render(): View
     {
-        $query = \App\Models\CourseClass::where('owner_user_id', auth()->id())
+        $query = CourseClass::where('owner_user_id', auth()->id())
             ->withCount([
-                'members as students_count',
+                'members as students_count' => fn ($q) => $q->where('status', 'active'),
                 'sessions as completed_sessions_count' => fn ($q) => $q->where('status', 'closed'),
             ])
             ->withSum(['sessions as studied_lessons' => fn ($query) => $query->where('status', 'closed')], 'lesson_count')
@@ -31,7 +31,6 @@ class ManagedClasses extends Component
             ->withSum('attendanceSummaries as sum_late', 'total_late')
             ->withSum('attendanceSummaries as sum_absent', 'total_absent')
             ->withSum('attendanceSummaries as sum_excused', 'total_excused');
-
 
         if ($this->statusFilter === 'Đang hoạt động') {
             $query->where('status', 'active');
@@ -47,14 +46,14 @@ class ManagedClasses extends Component
             $search = str($this->search)->lower()->toString();
             $query->where(function ($q) use ($search) {
                 $q->whereRaw('LOWER(name) LIKE ?', ["%{$search}%"])
-                  ->orWhereRaw('LOWER(code) LIKE ?', ["%{$search}%"])
-                  ->orWhereRaw('LOWER(subject_code) LIKE ?', ["%{$search}%"]);
+                    ->orWhereRaw('LOWER(code) LIKE ?', ["%{$search}%"])
+                    ->orWhereRaw('LOWER(subject_code) LIKE ?', ["%{$search}%"]);
             });
         }
 
         $classes = $query->orderByDesc('created_at')->get();
 
-        $semesters = \App\Models\CourseClass::where('owner_user_id', auth()->id())
+        $semesters = CourseClass::where('owner_user_id', auth()->id())
             ->whereNotNull('semester')
             ->distinct()
             ->pluck('semester')

@@ -12,15 +12,31 @@ class ClassSettings extends Component
     public CourseClass $courseClass;
 
     public string $name = '';
+
     public string $code = '';
+
     public string $subjectCode = '';
+
     public string $semester = '';
+
     public string $description = '';
+
     public int $totalLessons = 45;
+
     public bool $requireApproval = false;
+
     public string $status = 'active';
 
+    public bool $gpsEnabled = false;
+
+    public ?float $gpsLatitude = null;
+
+    public ?float $gpsLongitude = null;
+
+    public int $gpsRadius = 50;
+
     public bool $isConfirmingDelete = false;
+
     public bool $isConfirmingRegenCode = false;
 
     public function mount(CourseClass $courseClass): void
@@ -30,7 +46,7 @@ class ClassSettings extends Component
         }
 
         $this->courseClass = $courseClass;
-        
+
         $this->name = $courseClass->name;
         $this->code = $courseClass->code;
         $this->subjectCode = $courseClass->subject_code ?? '';
@@ -39,6 +55,11 @@ class ClassSettings extends Component
         $this->totalLessons = $courseClass->total_lessons;
         $this->requireApproval = $courseClass->require_approval;
         $this->status = $courseClass->status;
+
+        $this->gpsEnabled = $courseClass->gps_latitude !== null;
+        $this->gpsLatitude = $courseClass->gps_latitude;
+        $this->gpsLongitude = $courseClass->gps_longitude;
+        $this->gpsRadius = $courseClass->gps_radius ?? 50;
     }
 
     public function save(): void
@@ -51,9 +72,18 @@ class ClassSettings extends Component
             'totalLessons' => ['required', 'integer', 'min:1', 'max:300'],
             'requireApproval' => ['boolean'],
             'status' => ['required', 'string', Rule::in(['active', 'archived', 'ended'])],
+            'gpsEnabled' => ['boolean'],
+            'gpsLatitude' => ['required_if:gpsEnabled,true', 'nullable', 'numeric'],
+            'gpsLongitude' => ['required_if:gpsEnabled,true', 'nullable', 'numeric'],
+            'gpsRadius' => ['required_if:gpsEnabled,true', 'integer', 'min:5', 'max:2500'],
         ], [
             'name.required' => 'Vui lòng nhập tên lớp.',
             'totalLessons.min' => 'Tổng số tiết phải lớn hơn 0.',
+            'gpsLatitude.required_if' => 'Vui lòng lấy tọa độ GPS khi kích hoạt định vị.',
+            'gpsLongitude.required_if' => 'Vui lòng lấy tọa độ GPS khi kích hoạt định vị.',
+            'gpsRadius.required_if' => 'Vui lòng nhập bán kính GPS.',
+            'gpsRadius.min' => 'Bán kính tối thiểu là 5m.',
+            'gpsRadius.max' => 'Bán kính tối đa là 2500m.',
         ]);
 
         $this->courseClass->update([
@@ -64,14 +94,15 @@ class ClassSettings extends Component
             'total_lessons' => $validated['totalLessons'],
             'require_approval' => $validated['requireApproval'],
             'status' => $validated['status'],
+            'gps_latitude' => $validated['gpsEnabled'] ? $validated['gpsLatitude'] : null,
+            'gps_longitude' => $validated['gpsEnabled'] ? $validated['gpsLongitude'] : null,
+            'gps_radius' => $validated['gpsEnabled'] ? $validated['gpsRadius'] : null,
         ]);
 
         session()->flash('status', 'Cài đặt lớp học đã được cập nhật.');
-        
-        // Refresh the model properties just in case
+
         $this->courseClass->refresh();
     }
-
     // ─── Đổi mã lớp ────────────────────────────────────────────────────────────
 
     public function confirmRegenCode(): void
@@ -119,7 +150,7 @@ class ClassSettings extends Component
 
     public function deleteClass(): void
     {
-        if (!$this->isConfirmingDelete) {
+        if (! $this->isConfirmingDelete) {
             return;
         }
 
@@ -131,6 +162,6 @@ class ClassSettings extends Component
     public function render(): View
     {
         return view('livewire.lecturer.class-settings')
-            ->layout('layouts.user', ['title' => 'Cài đặt lớp học - ' . $this->courseClass->code]);
+            ->layout('layouts.user', ['title' => 'Cài đặt lớp học - '.$this->courseClass->code]);
     }
 }

@@ -2,6 +2,10 @@
 
 namespace App\Livewire\User;
 
+use App\Models\ClassMember;
+use App\Models\ClassSession;
+use App\Models\CourseClass;
+use App\Models\LeaveRequest;
 use Illuminate\Contracts\View\View;
 use Livewire\Component;
 
@@ -11,17 +15,17 @@ class Classes extends Component
     {
         $userId = auth()->id();
 
-        $totalClasses = \App\Models\CourseClass::where('owner_user_id', $userId)->count();
-        
-        $totalStudents = \App\Models\ClassMember::whereHas('courseClass', function ($q) use ($userId) {
+        $totalClasses = CourseClass::where('owner_user_id', $userId)->count();
+
+        $totalStudents = ClassMember::whereHas('courseClass', function ($q) use ($userId) {
             $q->where('owner_user_id', $userId);
         })->where('status', 'active')->count();
 
-        $sessionsToday = \App\Models\ClassSession::whereHas('courseClass', function ($q) use ($userId) {
+        $sessionsToday = ClassSession::whereHas('courseClass', function ($q) use ($userId) {
             $q->where('owner_user_id', $userId);
         })->whereDate('created_at', today())->count();
 
-        $pendingLeaves = \App\Models\LeaveRequest::whereHas('courseClass', function ($q) use ($userId) {
+        $pendingLeaves = LeaveRequest::whereHas('courseClass', function ($q) use ($userId) {
             $q->where('owner_user_id', $userId);
         })->where('status', 'pending')->count();
 
@@ -32,7 +36,7 @@ class Classes extends Component
             ['label' => 'Đơn nghỉ chờ duyệt', 'value' => $pendingLeaves, 'icon' => 'clock', 'color' => 'text-error', 'bg' => 'bg-error/10'],
         ];
 
-        $classesQuery = \App\Models\CourseClass::where('owner_user_id', $userId)
+        $classesQuery = CourseClass::where('owner_user_id', $userId)
             ->where('status', 'active')
             ->withCount([
                 'members as students_count' => function ($q) {

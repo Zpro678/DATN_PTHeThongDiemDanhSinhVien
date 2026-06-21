@@ -4,6 +4,7 @@ namespace Tests\Feature;
 
 use App\Livewire\Lecturer\Attendance\QrAttendanceCreate;
 use App\Livewire\Lecturer\Attendance\QrAttendanceSession;
+use App\Livewire\Lecturer\ClassSettings;
 use App\Models\AttendanceRecord;
 use App\Models\ClassMember;
 use App\Models\ClassSession;
@@ -119,5 +120,40 @@ class LecturerQrAttendanceTest extends TestCase
         });
 
         return [$owner, $session];
+    }
+
+    public function test_class_default_gps_settings_are_saved_and_loaded_in_qr_creation(): void
+    {
+        $owner = User::factory()->create();
+        $courseClass = CourseClass::factory()->create([
+            'owner_user_id' => $owner->id,
+            'gps_latitude' => null,
+            'gps_longitude' => null,
+            'gps_radius' => null,
+        ]);
+
+        // 1. Verify ClassSettings saves the GPS config
+        Livewire::actingAs($owner)
+            ->test(ClassSettings::class, ['courseClass' => $courseClass])
+            ->set('gpsEnabled', true)
+            ->set('gpsLatitude', 10.762622)
+            ->set('gpsLongitude', 106.660172)
+            ->set('gpsRadius', 150)
+            ->call('save')
+            ->assertHasNoErrors();
+
+        $courseClass->refresh();
+        $this->assertEquals(10.762622, $courseClass->gps_latitude);
+        $this->assertEquals(106.660172, $courseClass->gps_longitude);
+        $this->assertEquals(150, $courseClass->gps_radius);
+
+        // 2. Verify QrAttendanceCreate loads it as default
+        Livewire::actingAs($owner)
+            ->test(QrAttendanceCreate::class)
+            ->set('classId', (string) $courseClass->id)
+            ->assertSet('gpsEnabled', true)
+            ->assertSet('gpsLatitude', 10.762622)
+            ->assertSet('gpsLongitude', 106.660172)
+            ->assertSet('gpsRadius', 150);
     }
 }

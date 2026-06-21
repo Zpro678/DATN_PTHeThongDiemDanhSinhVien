@@ -25,6 +25,9 @@ class CourseClass extends Model
         'require_approval', // Bật/tắt yêu cầu duyệt khi xin vào lớp.
         'status', // Trạng thái lớp active/archived.
         'total_lessons', // Tổng số tiết của môn học.
+        'gps_latitude', // Vĩ độ định vị GPS mặc định.
+        'gps_longitude', // Kinh độ định vị GPS mặc định.
+        'gps_radius', // Bán kính GPS mặc định.
     ];
 
     protected function casts(): array
@@ -32,6 +35,9 @@ class CourseClass extends Model
         return [
             'require_approval' => 'boolean', // Ép kiểu cờ yêu cầu duyệt.
             'total_lessons' => 'integer', // Ép kiểu tổng số tiết.
+            'gps_latitude' => 'float',
+            'gps_longitude' => 'float',
+            'gps_radius' => 'integer',
         ];
     }
 
@@ -78,21 +84,21 @@ class CourseClass extends Model
      * Tái dùng ở CreateClass và ClassSettings.
      *
      * @param  string  $subjectCode  Mã môn học (có thể rỗng)
-     * @param  string  $semester     Học kỳ (có thể rỗng)
+     * @param  string  $semester  Học kỳ (có thể rỗng)
      * @param  int|null  $excludeId  ID lớp cần loại trừ khi kiểm tra unique (dùng khi đổi mã)
-     * @return string  Mã lớp duy nhất đã được kiểm tra
+     * @return string Mã lớp duy nhất đã được kiểm tra
      */
     public static function generateUniqueCode(string $subjectCode = '', string $semester = '', ?int $excludeId = null): string
     {
         $subPart = strtoupper(substr(preg_replace('/[^A-Za-z0-9]/', '', $subjectCode), 0, 3));
         $semPart = strtoupper(substr(preg_replace('/[^A-Za-z0-9]/', '', $semester), 0, 3));
-        $prefix  = ($subPart ?: 'CLS') . ($semPart ?: 'SEM');
+        $prefix = ($subPart ?: 'CLS').($semPart ?: 'SEM');
 
         $attempts = 0;
         do {
             $suffix = str_pad((string) random_int(0, 9999), 4, '0', STR_PAD_LEFT);
-            $code   = $prefix . $suffix;
-            $query  = self::withTrashed()->where('code', $code);
+            $code = $prefix.$suffix;
+            $query = self::withTrashed()->where('code', $code);
             if ($excludeId) {
                 $query->where('id', '!=', $excludeId);
             }

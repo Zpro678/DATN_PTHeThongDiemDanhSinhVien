@@ -62,8 +62,7 @@
                         console.warn('Cannot get location', error);
                         alert('Không thể lấy tọa độ GPS. Vui lòng cấp quyền vị trí cho trình duyệt.');
                         this.gpsEnabled = false;
-                    },
-                    { enableHighAccuracy: true, timeout: 5000, maximumAge: 0 }
+                    }
                 );
             } else {
                 alert('Trình duyệt của bạn không hỗ trợ định vị.');
@@ -352,18 +351,20 @@
                             <span class="mt-2 block text-sm font-medium text-red-600">{{ $message }}</span>
                         @enderror
                     </div>
-
                     <div>
                         <label class="mb-2 block text-sm font-bold text-slate-600">Bán kính GPS (m)</label>
-                        <div class="grid grid-cols-4 gap-2">
-                            @foreach ([10, 50, 70, 100] as $radius)
-                                <label class="relative">
-                                    <input type="radio" wire:model.live="gpsRadius" value="{{ $radius }}" class="peer sr-only" />
-                                    <span class="flex cursor-pointer items-center justify-center rounded-xl border-2 border-slate-100 bg-slate-50 px-3 py-2.5 text-sm font-bold text-slate-500 transition peer-checked:border-blue-500 peer-checked:bg-blue-50 peer-checked:text-blue-700 hover:border-slate-200">
-                                        {{ $radius }}m
-                                    </span>
-                                </label>
-                            @endforeach
+                        <div class="flex items-center gap-3">
+                            <div class="relative flex-1">
+                                <input type="number" wire:model.live="gpsRadius" placeholder="Nhập bán kính (m)" class="w-full rounded-xl border-2 border-slate-100 bg-slate-50 px-4 py-2.5 text-sm font-bold text-slate-800 outline-none transition focus:border-blue-500 focus:ring-4 focus:ring-blue-500/10" />
+                                <span class="absolute right-4 top-1/2 -translate-y-1/2 text-sm font-bold text-slate-400">mét</span>
+                            </div>
+                            <div class="flex gap-1.5" x-data>
+                                @foreach ([50, 100, 200] as $r)
+                                    <button type="button" @click="$wire.set('gpsRadius', {{ $r }})" class="rounded-xl border border-slate-200 bg-white px-3 py-2.5 text-xs font-bold text-slate-600 hover:bg-slate-50 hover:border-blue-300 transition-all">
+                                        {{ $r }}m
+                                    </button>
+                                @endforeach
+                            </div>
                         </div>
                         @error('gpsRadius')
                             <span class="mt-2 block text-sm font-medium text-red-600">{{ $message }}</span>

@@ -99,18 +99,19 @@ class ManualAttendanceSession extends Component
     public function deleteSession()
     {
         $session = $this->ownedSession($this->sessionId);
-        
+
         abort_if($session->status === 'closed', 403, 'Không thể xóa phiên điểm danh đã chốt.');
 
         $classId = $session->class_id;
-        
-        // Xóa mềm các bản ghi điểm danh (AttendanceRecord) nếu cần thiết, 
+
+        // Xóa mềm các bản ghi điểm danh (AttendanceRecord) nếu cần thiết,
         // nhưng model ClassSession đã cấu hình SoftDeletes nên chỉ cần xóa class session.
-        // Để query records không bị mồ côi thì tốt nhất là xóa luôn cascade hoặc kệ nó 
+        // Để query records không bị mồ côi thì tốt nhất là xóa luôn cascade hoặc kệ nó
         // vì khi truy vấn session đã xóa thì record sẽ ẩn. (Tùy logic hệ thống, nhưng xóa session là đủ).
         $session->delete();
 
         session()->flash('status', 'Buổi điểm danh đã được xóa thành công.');
+
         return redirect()->route('lecturer.classes.show', $classId);
     }
 

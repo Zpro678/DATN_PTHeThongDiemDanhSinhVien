@@ -2,11 +2,10 @@
 
 namespace App\Services;
 
-use App\Models\CourseClass;
+use App\Models\AttendanceRecord;
 use App\Models\ClassMember;
 use App\Models\ClassSession;
-use App\Models\ClassJoinRequest;
-use App\Models\AttendanceRecord;
+use App\Models\CourseClass;
 use App\Models\LeaveRequest;
 use Illuminate\Support\Carbon;
 
@@ -46,10 +45,10 @@ class DashboardStatisticService
             ->get()
             ->map(function ($class) {
                 $requiredLessons = (int) $class->total_lessons;
-                
+
                 // Đảm bảo số tiết đã học không vượt quá số tiết quy định
                 $studiedLessons = min((int) $class->studied_lessons, $requiredLessons);
-                
+
                 // Tính số tiết còn lại (không để số âm)
                 $remainingLessons = max($requiredLessons - $studiedLessons, 0);
 

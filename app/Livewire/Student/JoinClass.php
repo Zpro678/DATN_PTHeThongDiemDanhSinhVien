@@ -11,7 +11,9 @@ use Livewire\Component;
 class JoinClass extends Component
 {
     public $class_code = '';
+
     public $student_code = '';
+
     public $full_name = '';
 
     public function mount()
@@ -29,8 +31,9 @@ class JoinClass extends Component
 
         $courseClass = CourseClass::where('code', $this->class_code)->first();
 
-        if (!$courseClass) {
+        if (! $courseClass) {
             $this->addError('class_code', 'Không tìm thấy lớp học với mã này.');
+
             return;
         }
 
@@ -40,21 +43,22 @@ class JoinClass extends Component
         $isMember = ClassMember::where('class_id', $courseClass->id)
             ->where(function ($query) use ($userId) {
                 $query->where('user_id', $userId)
-                      ->orWhere('student_code', $this->student_code);
+                    ->orWhere('student_code', $this->student_code);
             })->exists();
 
         if ($isMember) {
             $this->addError('class_code', 'Bạn đã là thành viên của lớp học này (hoặc mã sinh viên đã được sử dụng).');
+
             return;
         }
 
         // Luôn thêm sinh viên vào lớp ngay lập tức (không cần chờ duyệt)
         ClassMember::create([
-            'class_id'     => $courseClass->id,
-            'user_id'      => $userId,
+            'class_id' => $courseClass->id,
+            'user_id' => $userId,
             'student_code' => $this->student_code,
-            'full_name'    => $this->full_name,
-            'status'       => 'active',
+            'full_name' => $this->full_name,
+            'status' => 'active',
         ]);
 
         session()->flash('status', 'Bạn đã tham gia lớp học thành công!');

@@ -3,6 +3,7 @@
 namespace App\Services;
 
 use App\Models\ClassMember;
+use App\Models\ClassSession;
 
 class LectureManageStudentService
 {
@@ -17,7 +18,7 @@ class LectureManageStudentService
             return []; // Không có sinh viên thì trả mảng rỗng để view không bị lỗi.
         }
 
-        $studiedLessonsQuery = \App\Models\ClassSession::query()
+        $studiedLessonsQuery = ClassSession::query()
             ->where('status', 'closed') // Chỉ tính các buổi điểm danh đã chốt.
             ->selectRaw('class_id, COALESCE(SUM(lesson_count), 0) as studied_lessons') // Cộng tổng số tiết đã học theo từng lớp.
             ->groupBy('class_id'); // Gom dữ liệu theo lớp để join ngược về sinh viên.

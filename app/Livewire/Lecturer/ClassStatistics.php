@@ -9,10 +9,15 @@ use Livewire\Component;
 class ClassStatistics extends Component
 {
     public $class_id;
+
     public $courseClass;
+
     public $totalStudents;
+
     public $sessionCount;
+
     public $averageAttendance;
+
     public $warningStudents = [];
 
     public function mount($class_id)
@@ -35,12 +40,12 @@ class ClassStatistics extends Component
 
         // Average attendance
         // Assuming we calculate it as (total present records) / (total students * total sessions)
-        // For simplicity, we can mock or do a basic calculation. 
+        // For simplicity, we can mock or do a basic calculation.
         // Here we do a mocked basic calculation if records are sparse, or real if we have relationships.
         if ($this->totalStudents > 0 && $this->sessionCount > 0) {
-            $totalPresent = \App\Models\AttendanceRecord::whereIn('class_session_id', $this->courseClass->sessions->pluck('id'))
-                                ->where('status', 'present')
-                                ->count();
+            $totalPresent = AttendanceRecord::whereIn('class_session_id', $this->courseClass->sessions->pluck('id'))
+                ->where('status', 'present')
+                ->count();
             $this->averageAttendance = round(($totalPresent / ($this->totalStudents * $this->sessionCount)) * 100);
         } else {
             $this->averageAttendance = 0;
@@ -57,6 +62,6 @@ class ClassStatistics extends Component
     public function render()
     {
         return view('livewire.lecturer.class-statistics')
-            ->layout('layouts.user', ['title' => 'Thống kê — ' . ($this->courseClass->name ?? '')]);
+            ->layout('layouts.user', ['title' => 'Thống kê — '.($this->courseClass->name ?? '')]);
     }
 }

@@ -10,7 +10,9 @@ use Maatwebsite\Excel\Concerns\WithStartRow;
 class StudentsImport implements ToCollection, WithStartRow
 {
     protected int $classId;
+
     public array $errors = [];
+
     public int $successCount = 0;
 
     public function __construct(int $classId)
@@ -41,6 +43,7 @@ class StudentsImport implements ToCollection, WithStartRow
 
             if (empty($studentCode) || empty($fullName)) {
                 $this->errors[] = "Dòng {$actualRowNumber}: Thiếu thông tin";
+
                 continue;
             }
 

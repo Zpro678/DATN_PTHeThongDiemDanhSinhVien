@@ -1,5 +1,6 @@
 <?php
 
+use App\Http\Middleware\SetUserRouteDefaults;
 use Illuminate\Foundation\Application;
 use Illuminate\Foundation\Configuration\Exceptions;
 use Illuminate\Foundation\Configuration\Middleware;
@@ -12,10 +13,10 @@ return Application::configure(basePath: dirname(__DIR__))
     )
     ->withMiddleware(function (Middleware $middleware) {
         $middleware->alias([
-            'user.route' => \App\Http\Middleware\SetUserRouteDefaults::class,
+            'user.route' => SetUserRouteDefaults::class,
         ]);
         $middleware->web(append: [
-            \App\Http\Middleware\SetUserRouteDefaults::class,
+            SetUserRouteDefaults::class,
         ]);
     })
     ->withExceptions(function (Exceptions $exceptions) {

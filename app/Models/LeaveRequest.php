@@ -2,6 +2,7 @@
 
 namespace App\Models;
 
+use Illuminate\Database\Eloquent\Casts\Attribute;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
@@ -34,12 +35,15 @@ class LeaveRequest extends Model
         ];
     }
 
-    protected function proofImage(): \Illuminate\Database\Eloquent\Casts\Attribute
+    protected function proofImage(): Attribute
     {
-        return \Illuminate\Database\Eloquent\Casts\Attribute::make(
+        return Attribute::make(
             get: function ($value) {
-                if (empty($value)) return [];
+                if (empty($value)) {
+                    return [];
+                }
                 $decoded = json_decode($value, true);
+
                 return (json_last_error() === JSON_ERROR_NONE && is_array($decoded)) ? $decoded : [$value];
             },
             set: fn ($value) => json_encode(is_array($value) ? array_values($value) : [$value])

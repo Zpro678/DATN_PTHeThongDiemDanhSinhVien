@@ -14,8 +14,11 @@ class LeaveRequestCreate extends Component
     use WithFileUploads;
 
     public $class_id = '';
+
     public $class_session_id = '';
+
     public $reason = '';
+
     public $proof_images = [];
 
     public function getClassesProperty()
@@ -29,7 +32,7 @@ class LeaveRequestCreate extends Component
 
     public function getSessionsProperty()
     {
-        if (!$this->class_id) {
+        if (! $this->class_id) {
             return [];
         }
 
@@ -58,11 +61,12 @@ class LeaveRequestCreate extends Component
 
         if ($existing) {
             $this->addError('class_session_id', 'Bạn đã gửi đơn xin phép cho buổi học này rồi.');
+
             return;
         }
 
         $proofPaths = [];
-        if (!empty($this->proof_images)) {
+        if (! empty($this->proof_images)) {
             foreach ($this->proof_images as $image) {
                 $proofPaths[] = $image->store('leave_proofs', 'public');
             }

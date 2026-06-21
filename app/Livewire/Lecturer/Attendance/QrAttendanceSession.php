@@ -2,6 +2,7 @@
 
 namespace App\Livewire\Lecturer\Attendance;
 
+use App\Exports\ClassSessionExport;
 use App\Livewire\Lecturer\Attendance\Concerns\OwnsAttendanceSessions;
 use App\Models\AttendanceRecord;
 use Illuminate\Contracts\View\View;
@@ -9,6 +10,7 @@ use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Support\Str;
 use Livewire\Component;
 use Livewire\WithPagination;
+use Maatwebsite\Excel\Facades\Excel;
 use SimpleSoftwareIO\QrCode\Facades\QrCode;
 
 class QrAttendanceSession extends Component
@@ -81,30 +83,31 @@ class QrAttendanceSession extends Component
     public function deleteSession()
     {
         $session = $this->ownedSession($this->sessionId);
-        
+
         abort_if($session->status === 'closed', 403, 'Không thể xóa phiên điểm danh đã chốt.');
 
         $classId = $session->class_id;
         $session->delete();
 
         session()->flash('status', 'Buổi điểm danh đã được xóa thành công.');
+
         return redirect()->route('lecturer.classes.show', $classId);
     }
 
     public function exportExcel()
     {
         $session = $this->ownedSession($this->sessionId)->load('courseClass');
-        
+
         $date = $session->date->format('Y-m-d');
-        $className = \Illuminate\Support\Str::slug($session->courseClass->name);
+        $className = Str::slug($session->courseClass->name);
         $startLesson = 1;
         $endLesson = max(1, $session->lesson_count);
         $tiet = "Tiet_{$startLesson}-{$endLesson}";
 
         $fileName = "{$date}_{$className}_{$tiet}.xlsx";
 
-        return \Maatwebsite\Excel\Facades\Excel::download(
-            new \App\Exports\ClassSessionExport($this->sessionId),
+        return Excel::download(
+            new ClassSessionExport($this->sessionId),
             $fileName
         );
     }
