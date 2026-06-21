@@ -2,28 +2,28 @@
 
 namespace App\Livewire\Lecturer\Students;
 
+use App\Imports\StudentsImport;
 use App\Models\ClassMember;
 use App\Models\CourseClass;
 use App\Services\LectureManageStudentService;
 use Illuminate\Contracts\View\View;
 use Illuminate\Database\Eloquent\Builder;
+use Livewire\Attributes\Url;
 use Livewire\Component;
-use Livewire\WithPagination;
 use Livewire\WithFileUploads;
+use Livewire\WithPagination;
 use Maatwebsite\Excel\Facades\Excel;
-use App\Imports\StudentsImport;
-use Illuminate\Support\Facades\Storage;
 
 class StudentIndex extends Component
 {
-    use WithPagination, WithFileUploads;
+    use WithFileUploads, WithPagination;
 
     public string $search = '';
 
-    #[\Livewire\Attributes\Url(as: 'class_id')]
+    #[Url(as: 'class_id')]
     public string $classFilter = 'all';
 
-    #[\Livewire\Attributes\Url(as: 'action')]
+    #[Url(as: 'action')]
     public string $action = '';
 
     public string $statusFilter = 'active';
@@ -38,17 +38,24 @@ class StudentIndex extends Component
 
     // Add Student state
     public bool $isAdding = false;
+
     public string $newName = '';
+
     public string $newStudentCode = '';
+
     public string $newClassId = '';
 
     public ?int $archivingMemberId = null;
 
     // Import state
     public bool $isImporting = false;
+
     public string $importClassId = '';
+
     public $importFile;
+
     public array $importErrors = [];
+
     public int $importSuccess = 0;
 
     public function mount(): void
@@ -128,6 +135,7 @@ class StudentIndex extends Component
 
         if ($duplicateExists) {
             $this->addError('newStudentCode', 'Mã sinh viên đã tồn tại trong lớp này.');
+
             return;
         }
 
@@ -158,8 +166,9 @@ class StudentIndex extends Component
     public function downloadTemplate()
     {
         $csvContent = "Mã sinh viên,Họ và tên\nSV001,Nguyễn Văn A\nSV002,Trần Thị B";
+
         return response()->streamDownload(function () use ($csvContent) {
-            echo "\xEF\xBB\xBF" . $csvContent; // UTF-8 BOM cho Excel
+            echo "\xEF\xBB\xBF".$csvContent; // UTF-8 BOM cho Excel
         }, 'Danh_sach_sinh_vien_mau.csv');
     }
 
@@ -167,20 +176,27 @@ class StudentIndex extends Component
     {
         $this->validate([
             'importClassId' => ['required', 'exists:classes,id'],
-            'importFile' => ['required', 'file', 'mimes:xlsx,xls,csv', 'max:5120'], // Max 5MB
+            'importFile' => ['required', 'file', 'extensions:xlsx,xls,csv', 'max:5120'], // Max 5MB
         ], [
             'importClassId.required' => 'Vui lòng chọn lớp học.',
             'importFile.required' => 'Vui lòng chọn file Excel hoặc CSV.',
-            'importFile.mimes' => 'Định dạng file không hỗ trợ. Vui lòng dùng .xlsx, .xls, .csv',
+            'importFile.extensions' => 'Định dạng file không hỗ trợ. Vui lòng dùng .xlsx, .xls, .csv',
         ]);
 
         $courseClass = CourseClass::where('owner_user_id', auth()->id())->findOrFail($this->importClassId);
 
         $import = new StudentsImport($courseClass->id);
 
+        $extension = $this->importFile->getClientOriginalExtension();
+        $readerType = match (strtolower($extension)) {
+            'csv' => \Maatwebsite\Excel\Excel::CSV,
+            'xls' => \Maatwebsite\Excel\Excel::XLS,
+            default => \Maatwebsite\Excel\Excel::XLSX,
+        };
+
         try {
-            Excel::import($import, $this->importFile);
-            
+            Excel::import($import, $this->importFile->getRealPath(), null, $readerType);
+
             $this->importSuccess = $import->successCount;
             $this->importErrors = $import->errors;
 
@@ -189,7 +205,7 @@ class StudentIndex extends Component
                 session()->flash('status', "Đã nhập thành công {$this->importSuccess} sinh viên vào lớp.");
             }
         } catch (\Exception $e) {
-            $this->addError('importFile', 'Có lỗi khi đọc file: ' . $e->getMessage());
+            $this->addError('importFile', 'Có lỗi khi đọc file: '.$e->getMessage());
         }
     }
 
@@ -242,7 +258,7 @@ class StudentIndex extends Component
 
     public function archiveMember(): void
     {
-        if (!$this->archivingMemberId) {
+        if (! $this->archivingMemberId) {
             return;
         }
 

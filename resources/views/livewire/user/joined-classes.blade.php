@@ -1,49 +1,5 @@
 @php
     $statuses = ['Tất cả', 'Đang học', 'Đã kết thúc', 'Cảnh báo chuyên cần'];
-    $classes = [
-        [
-            'id' => 1,
-            'title' => 'Lập trình Web Frontend - Nhóm 1',
-            'code' => 'WEB301',
-            'join_code' => 'QR-123A',
-            'teacher' => 'TS. Nguyễn Văn A',
-            'schedule' => 'Thứ 3, 07:00 - 11:30 (Phòng A1.203)',
-            'attendance' => 90,
-            'present' => '9/10',
-            'absent' => 1,
-            'late' => 0,
-            'warning' => false,
-            'ended' => false,
-        ],
-        [
-            'id' => 2,
-            'title' => 'Cơ sở dữ liệu - Nhóm 2',
-            'code' => 'DB202',
-            'join_code' => 'QR-124B',
-            'teacher' => 'ThS. Lê Hữu B',
-            'schedule' => 'Thứ 5, 13:00 - 15:30 (Phòng B2.101)',
-            'attendance' => 70,
-            'present' => '7/10',
-            'absent' => 3,
-            'late' => 1,
-            'warning' => true,
-            'ended' => false,
-        ],
-        [
-            'id' => 3,
-            'title' => 'Thiết kế UI/UX',
-            'code' => 'UI401',
-            'join_code' => 'UI-102C',
-            'teacher' => 'ThS. Trần Phương C',
-            'schedule' => 'HK1 2025-2026',
-            'attendance' => 100,
-            'present' => '15/15',
-            'absent' => 0,
-            'late' => 0,
-            'warning' => false,
-            'ended' => true,
-        ],
-    ];
 @endphp
 
 <div class="mx-auto max-w-[1400px] space-y-6 p-4 pb-24 sm:p-8 animate-in fade-in slide-in-from-bottom-4 duration-500">
@@ -65,6 +21,7 @@
         <label class="relative flex-1">
             <x-user.icon name="search" class="absolute left-4 top-1/2 -translate-y-1/2 text-outline" />
             <input
+                wire:model.live.debounce.300ms="search"
                 type="text"
                 placeholder="Tìm kiếm theo mã lớp, tên lớp, môn học..."
                 class="w-full rounded-2xl border border-outline-variant/30 bg-white py-3.5 pl-12 pr-4 text-on-surface shadow-sm transition-all focus:border-secondary focus:outline-none focus:ring-2 focus:ring-secondary/20"
@@ -92,7 +49,7 @@
     </section>
 
     <section class="grid grid-cols-1 gap-6 md:grid-cols-2 xl:grid-cols-3">
-        @foreach ($classes as $class)
+        @forelse ($classes as $class)
             @php
                 $isEnded = $class['ended'];
                 $isWarning = $class['warning'];
@@ -127,10 +84,10 @@
                     <div class="flex items-start justify-between">
                         <div class="pr-6">
                             <h4 class="line-clamp-1 text-lg font-bold text-white hover:underline cursor-pointer sm:text-xl">
-                                <a href="#">{{ $class['title'] }}</a>
+                                <a href="{{ route('student.classes.show', $class['id']) }}">{{ $class['title'] }}</a>
                             </h4>
                             <div class="mt-0.5 flex items-center gap-2 text-xs text-white/90 sm:text-sm">
-                                <span>{{ $class['schedule'] }}</span>
+                                <span>{{ $class['schedule'] }} - {{ $class['teacher'] }}</span>
                             </div>
                         </div>
 
@@ -226,7 +183,7 @@
                                 </a>
                             </div>
                         @else
-                            <button type="button" class="flex items-center gap-1.5 rounded-full bg-secondary px-5 py-2 text-xs font-bold text-white shadow-sm transition-colors hover:bg-secondary/90 active:scale-[0.98]">
+                            <button type="button" onclick="alert('Tính năng quét QR đang được phát triển')" class="flex items-center gap-1.5 rounded-full bg-secondary px-5 py-2 text-xs font-bold text-white shadow-sm transition-colors hover:bg-secondary/90 active:scale-[0.98]">
                                 <x-user.icon name="qr-code" :size="16" />
                                 Điểm danh
                             </button>
@@ -245,6 +202,15 @@
                     </div>
                 </div>
             </article>
-        @endforeach
+        @empty
+            <div class="col-span-full flex flex-col items-center justify-center rounded-3xl border border-dashed border-outline-variant/30 bg-surface-container-lowest py-16 text-center">
+                <div class="mb-4 rounded-full bg-secondary-container p-4 text-on-secondary-container">
+                    <x-user.icon name="search" :size="32" />
+                </div>
+                <h3 class="text-lg font-bold text-on-surface">Không tìm thấy lớp học nào</h3>
+                <p class="mt-2 max-w-sm text-sm text-on-surface-variant">Không có lớp học nào khớp với bộ lọc hoặc từ khóa tìm kiếm của bạn. Hãy thử thay đổi bộ lọc.</p>
+                <button type="button" wire:click="$set('search', ''); $set('statusFilter', 'Tất cả')" class="mt-6 font-bold text-secondary hover:underline">Xóa bộ lọc</button>
+            </div>
+        @endforelse
     </section>
 </div>

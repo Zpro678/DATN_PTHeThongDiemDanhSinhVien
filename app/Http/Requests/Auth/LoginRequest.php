@@ -52,7 +52,7 @@ class LoginRequest extends FormRequest
 
         if (Auth::user()->status === 'blocked') {
             Auth::logout();
-            
+
             RateLimiter::hit($this->throttleKey());
 
             throw ValidationException::withMessages([

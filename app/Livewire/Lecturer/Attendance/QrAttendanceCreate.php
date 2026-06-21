@@ -53,14 +53,14 @@ class QrAttendanceCreate extends Component
         if ($this->editSessionId) {
             $session = ClassSession::query()->findOrFail($this->editSessionId);
             abort_unless($session->created_by === auth()->id(), 403);
-            
+
             $this->classId = (string) $session->class_id;
             $this->name = $session->name;
             $this->date = $session->date->format('Y-m-d');
-            
+
             // Load other settings from cache for this class
             $this->loadConfigForClass($this->classId);
-            
+
             // Override with actual saved DB values if they differ
             $this->gpsEnabled = $session->gps_latitude !== null;
             if ($this->gpsEnabled) {
@@ -71,7 +71,7 @@ class QrAttendanceCreate extends Component
             if ($session->qr_refresh_rate) {
                 $this->qrRefreshRate = $session->qr_refresh_rate;
             }
-            
+
         } else {
             $this->date = now()->toDateString();
             $firstClass = $this->availableClasses()->first();
@@ -92,25 +92,42 @@ class QrAttendanceCreate extends Component
 
     private function loadConfigForClass(string $classId): void
     {
-        $config = cache()->get('qr_config_class_' . $classId);
+        $selectedClass = $this->ownedClass((int) $classId);
+
+        $config = cache()->get('qr_config_class_'.$classId);
         if ($config) {
             $this->startTime = $config['startTime'] ?? '07:00';
             $this->endTime = $config['endTime'] ?? '09:30';
             $this->durationMinutes = $config['durationMinutes'] ?? 15;
-            $this->gpsRadius = $config['gpsRadius'] ?? 100;
             $this->startLesson = $config['startLesson'] ?? 1;
             $this->endLesson = $config['endLesson'] ?? 3;
             $this->qrRefreshRate = $config['qrRefreshRate'] ?? 10;
             $this->gpsEnabled = $config['gpsEnabled'] ?? true;
             $this->deviceCheck = $config['deviceCheck'] ?? true;
+            $this->gpsRadius = $config['gpsRadius'] ?? 100;
+        }
+
+        if ($selectedClass->gps_latitude !== null && $selectedClass->gps_longitude !== null) {
+            $this->gpsLatitude = $selectedClass->gps_latitude;
+            $this->gpsLongitude = $selectedClass->gps_longitude;
+            $this->gpsRadius = $selectedClass->gps_radius ?? 100;
+            $this->gpsEnabled = true;
+        } else {
+            if (! $config || ! isset($config['gpsEnabled'])) {
+                $this->gpsEnabled = false;
+                $this->gpsLatitude = null;
+                $this->gpsLongitude = null;
+            }
         }
     }
 
     public function saveConfig(): void
     {
-        if (!$this->classId) return;
+        if (! $this->classId) {
+            return;
+        }
 
-        cache()->put('qr_config_class_' . $this->classId, [
+        cache()->put('qr_config_class_'.$this->classId, [
             'startTime' => $this->startTime,
             'endTime' => $this->endTime,
             'durationMinutes' => $this->durationMinutes,
@@ -134,7 +151,7 @@ class QrAttendanceCreate extends Component
             'startTime' => ['nullable', 'date_format:H:i'],
             'endTime' => ['nullable', 'date_format:H:i'],
             'durationMinutes' => ['required', 'integer', 'in:10,15,20'],
-            'gpsRadius' => ['required', 'integer', 'in:10,50,70,100'],
+            'gpsRadius' => ['required', 'integer', 'min:5', 'max:2500'],
             'startLesson' => ['required', 'integer', 'min:1', 'max:15'],
             'endLesson' => ['required', 'integer', 'min:1', 'max:15', 'gte:startLesson'],
             'qrRefreshRate' => ['required', 'integer', 'in:5,10,15,30'],
@@ -149,17 +166,18 @@ class QrAttendanceCreate extends Component
             'date.required' => 'Vui lòng chọn ngày học.',
             'durationMinutes.required' => 'Vui lòng nhập thời lượng mở QR.',
             'gpsRadius.required' => 'Vui lòng nhập bán kính GPS.',
+            'gpsRadius.min' => 'Bán kính tối thiểu là 5m.',
+            'gpsRadius.max' => 'Bán kính tối đa là 2500m.',
             'endLesson.gte' => 'Tiết kết thúc phải lớn hơn hoặc bằng tiết bắt đầu.',
         ]);
 
         $courseClass = $this->ownedClass((int) $validated['classId']);
-
         $this->saveConfig();
 
         if ($this->editSessionId) {
             $session = ClassSession::query()->findOrFail($this->editSessionId);
             abort_unless($session->created_by === auth()->id(), 403);
-            
+
             $session->update([
                 'class_id' => $courseClass->id,
                 'name' => $validated['name'],
@@ -172,7 +190,7 @@ class QrAttendanceCreate extends Component
                 'gps_longitude' => $validated['gpsEnabled'] ? $this->gpsLongitude : null,
                 'gps_radius' => $validated['gpsEnabled'] ? $validated['gpsRadius'] : null,
             ]);
-            
+
             session()->flash('success_config', 'Đã cập nhật thiết lập phiên điểm danh.');
         } else {
             $session = ClassSession::query()->create([

@@ -58,7 +58,7 @@ class CreateClass extends Component
             return '';
         }
 
-        return ($subPart ?: '???') . ($semPart ?: '???') . $this->randomSuffix;
+        return ($subPart ?: '???').($semPart ?: '???').$this->randomSuffix;
     }
 
     /**
@@ -68,12 +68,12 @@ class CreateClass extends Component
     {
         $subPart = strtoupper(substr(preg_replace('/[^A-Za-z0-9]/', '', $this->subjectCode), 0, 3));
         $semPart = strtoupper(substr(preg_replace('/[^A-Za-z0-9]/', '', $this->semester), 0, 3));
-        $prefix  = ($subPart ?: 'CLS') . ($semPart ?: 'SEM');
+        $prefix = ($subPart ?: 'CLS').($semPart ?: 'SEM');
 
         $attempts = 0;
         $suffix = $this->randomSuffix;
         do {
-            $code   = $prefix . $suffix;
+            $code = $prefix.$suffix;
             $exists = CourseClass::withTrashed()->where('code', $code)->exists();
             if ($exists) {
                 $suffix = str_pad((string) random_int(0, 9999), 4, '0', STR_PAD_LEFT);
@@ -91,32 +91,31 @@ class CreateClass extends Component
     public function save(): void
     {
 
-       
-         $validated =  $this->validate([
-            'name'              => ['required', 'string', 'max:255'],
-            'subjectCode'       => ['nullable', 'string', 'max:50'],
-            'semester'          => ['nullable', 'string', 'max:50'],
-            'description'       => ['nullable', 'string', 'max:5000'],
-            'totalLessons'      => ['required', 'integer', 'min:1', 'max:300'],
-            'requireApproval'   => ['boolean'],
+        $validated = $this->validate([
+            'name' => ['required', 'string', 'max:255'],
+            'subjectCode' => ['nullable', 'string', 'max:50'],
+            'semester' => ['nullable', 'string', 'max:50'],
+            'description' => ['nullable', 'string', 'max:5000'],
+            'totalLessons' => ['required', 'integer', 'min:1', 'max:300'],
+            'requireApproval' => ['boolean'],
         ], [
-            'name.required'          => 'Vui lòng nhập tên lớp.',
-            'totalLessons.min'      => 'Tổng số tiết phải lớn hơn 0.',
+            'name.required' => 'Vui lòng nhập tên lớp.',
+            'totalLessons.min' => 'Tổng số tiết phải lớn hơn 0.',
 
         ]);
 
         $code = $this->generateUniqueCode();
 
         CourseClass::query()->create([
-            'owner_user_id'      => auth()->id(),
-            'name'               => $this->name,
-            'code'               => $code,
-            'subject_code'       => filled($this->subjectCode) ? strtoupper($this->subjectCode) : null,
-            'semester'           => $this->semester ?: null,
-            'description'        => $this->description ?: null,
-            'total_lessons'      => $this->totalLessons,
-            'require_approval'   => $this->requireApproval,
-            'status'             => 'active',
+            'owner_user_id' => auth()->id(),
+            'name' => $this->name,
+            'code' => $code,
+            'subject_code' => filled($this->subjectCode) ? strtoupper($this->subjectCode) : null,
+            'semester' => $this->semester ?: null,
+            'description' => $this->description ?: null,
+            'total_lessons' => $this->totalLessons,
+            'require_approval' => $this->requireApproval,
+            'status' => 'active',
         ]);
 
         session()->flash('status', 'Lớp học đã được tạo thành công.');

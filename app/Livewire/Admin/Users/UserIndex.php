@@ -3,11 +3,11 @@
 namespace App\Livewire\Admin\Users;
 
 use App\Models\User;
+use Illuminate\Support\Facades\Auth;
+use Livewire\Attributes\Layout;
+use Livewire\Attributes\Url;
 use Livewire\Component;
 use Livewire\WithPagination;
-use Livewire\Attributes\Url;
-use Livewire\Attributes\Layout;
-use Illuminate\Support\Facades\Auth;
 
 class UserIndex extends Component
 {
@@ -59,8 +59,8 @@ class UserIndex extends Component
             ->when($this->search, function ($query) {
                 $query->where(function ($q) {
                     $q->where('name', 'like', "%{$this->search}%")
-                      ->orWhere('email', 'like', "%{$this->search}%")
-                      ->orWhere('code', 'like', "%{$this->search}%");
+                        ->orWhere('email', 'like', "%{$this->search}%")
+                        ->orWhere('code', 'like', "%{$this->search}%");
                 });
             })
             ->when($this->role, function ($query) {
@@ -75,7 +75,7 @@ class UserIndex extends Component
             ->paginate(10);
 
         return view('livewire.admin.users.user-index', [
-            'users' => $users
+            'users' => $users,
         ])->title('Quản lý Tài khoản');
     }
 }

@@ -7,7 +7,7 @@
             </h2>
             <p class="mt-2 text-body-lg text-on-surface-variant">Chỉnh sửa thông tin và thiết lập cho lớp {{ $courseClass->code }}</p>
         </div>
-        <a href="{{ route('managed-classes') }}" class="flex items-center gap-2 rounded-full border border-outline-variant/30 bg-white px-4 py-2 font-bold text-on-surface-variant transition-colors hover:bg-surface-container-low hover:text-on-surface">
+        <a href="{{ route('managed-classes', ['ma_user' => auth()->id()]) }}" class="flex items-center gap-2 rounded-full border border-outline-variant/30 bg-white px-4 py-2 font-bold text-on-surface-variant transition-colors hover:bg-surface-container-low hover:text-on-surface">
             <x-user.icon name="arrow-left" :size="18" />
             Quay lại
         </a>
@@ -95,7 +95,6 @@
                             <select wire:model="status" class="w-full rounded-xl border border-outline-variant/30 bg-surface-container-lowest px-4 py-3 outline-none transition-all focus:border-primary focus:ring-2 focus:ring-primary/20">
                                 <option value="active">Đang hoạt động</option>
                                 <option value="ended">Đã kết thúc</option>
-                                <option value="archived">Lưu trữ</option>
                             </select>
                             @error('status') <span class="text-error text-xs mt-1 block">{{ $message }}</span> @enderror
                         </label>
@@ -120,6 +119,79 @@
                     </div>
                 </div>
 
+                <!-- Cấu hình định vị GPS mặc định -->
+                <div x-data="{
+                    gpsEnabled: @entangle('gpsEnabled').live,
+                    gpsLatitude: @entangle('gpsLatitude'),
+                    gpsLongitude: @entangle('gpsLongitude'),
+                    fetchLocation() {
+                        if (navigator.geolocation) {
+                            navigator.geolocation.getCurrentPosition(
+                                (position) => {
+                                    this.gpsLatitude = position.coords.latitude;
+                                    this.gpsLongitude = position.coords.longitude;
+                                },
+                                (error) => {
+                                    console.warn('Cannot get location', error);
+                                    alert('Không thể lấy tọa độ GPS. Vui lòng cấp quyền vị trí cho trình duyệt.');
+                                    this.gpsEnabled = false;
+                                }
+                            );
+                        } else {
+                            alert('Trình duyệt của bạn không hỗ trợ định vị.');
+                            this.gpsEnabled = false;
+                        }
+                    }
+                }">
+                    <h3 class="mb-4 text-lg font-bold text-on-surface border-b border-outline-variant/10 pb-2">Định vị GPS mặc định</h3>
+                    
+                    <div class="flex items-center justify-between rounded-xl border border-outline-variant/20 bg-surface-container-lowest p-4 mb-4">
+                        <div>
+                            <span class="block text-sm font-bold text-on-surface">Kích hoạt xác minh vị trí GPS mặc định</span>
+                            <span class="text-xs text-on-surface-variant">Khi tạo buổi học QR, hệ thống sẽ sử dụng vị trí GPS này làm mặc định để đối chiếu khoảng cách của sinh viên.</span>
+                        </div>
+                        <button 
+                            type="button" 
+                            @click="gpsEnabled = !gpsEnabled; if(gpsEnabled) fetchLocation();"
+                            class="relative h-6 w-12 rounded-full transition-colors"
+                            :class="gpsEnabled ? 'bg-primary' : 'bg-outline-variant/50'"
+                        >
+                            <span class="absolute top-1 h-4 w-4 rounded-full bg-white transition-all" :class="gpsEnabled ? 'right-1' : 'left-1'"></span>
+                        </button>
+                    </div>
+
+                    <div x-show="gpsEnabled" x-transition class="grid grid-cols-1 md:grid-cols-2 gap-6 rounded-2xl border border-outline-variant/20 bg-slate-50/50 p-5">
+                        <div class="md:col-span-2 flex items-center justify-between gap-3">
+                            <span class="text-sm font-bold text-on-surface">Tọa độ địa lý mặc định</span>
+                            <button type="button" @click="fetchLocation()" class="inline-flex items-center gap-2 rounded-xl bg-white border border-outline-variant/30 px-4 py-2 text-xs font-bold text-on-surface-variant hover:bg-slate-100 hover:text-primary transition-all">
+                                <x-user.icon name="map-pin" :size="14" />
+                                Lấy tọa độ hiện tại
+                            </button>
+                        </div>
+
+                        <div>
+                            <span class="mb-2 block text-sm font-bold text-on-surface">Vĩ độ (Latitude)</span>
+                            <input type="text" wire:model="gpsLatitude" readonly class="w-full rounded-xl border border-outline-variant/30 bg-slate-100 px-4 py-3 text-sm font-bold text-slate-500 outline-none">
+                            @error('gpsLatitude') <span class="text-error text-xs mt-1 block">{{ $message }}</span> @enderror
+                        </div>
+
+                        <div>
+                            <span class="mb-2 block text-sm font-bold text-on-surface">Kinh độ (Longitude)</span>
+                            <input type="text" wire:model="gpsLongitude" readonly class="w-full rounded-xl border border-outline-variant/30 bg-slate-100 px-4 py-3 text-sm font-bold text-slate-500 outline-none">
+                            @error('gpsLongitude') <span class="text-error text-xs mt-1 block">{{ $message }}</span> @enderror
+                        </div>
+
+                        <div class="md:col-span-2">
+                            <span class="mb-2 block text-sm font-bold text-on-surface">Bán kính GPS mặc định (mét)</span>
+                            <div class="flex gap-4 items-center">
+                                <input type="number" wire:model="gpsRadius" class="w-24 rounded-xl border border-outline-variant/30 bg-surface-container-lowest px-4 py-3 outline-none transition-all focus:border-primary focus:ring-2 focus:ring-primary/20 text-center font-bold">
+                                <span class="text-sm text-on-surface-variant">m (phạm vi cho phép điểm danh xung quanh tọa độ, tối thiểu 5m, tối đa 2500m)</span>
+                            </div>
+                            @error('gpsRadius') <span class="text-error text-xs mt-1 block">{{ $message }}</span> @enderror
+                        </div>
+                    </div>
+                </div>
+
                 <!-- Cấu hình bảo mật -->
                 <div>
                     <h3 class="mb-4 text-lg font-bold text-on-surface border-b border-outline-variant/10 pb-2">Bảo mật tham gia</h3>
@@ -137,7 +209,6 @@
                         </button>
                     </div>
                 </div>
-            </div>
 
             <!-- Nút lưu -->
             <div class="flex items-center justify-between border-t border-outline-variant/20 bg-surface-container-lowest p-6">

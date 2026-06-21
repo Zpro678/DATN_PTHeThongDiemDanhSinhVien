@@ -47,16 +47,16 @@ class Dashboard extends Component
         $this->overview = app(DashboardStatisticService::class)
             ->getOwnerOverview($userId, $classId);
 
-                // 
-                //     'total_students' => 40,
-                //     'total_required_lessons' => 45,
-                //     'total_studied_lessons' => 20,
-                //     'remaining_lessons' => 25,
-                //     'lesson_progress_percent' => 44.44,
-                //     'total_present' => 120,
-                //     'total_absent' => 15,
-                //     'classes_progress' => [...]
-                // ]
+        //
+        //     'total_students' => 40,
+        //     'total_required_lessons' => 45,
+        //     'total_studied_lessons' => 20,
+        //     'remaining_lessons' => 25,
+        //     'lesson_progress_percent' => 44.44,
+        //     'total_present' => 120,
+        //     'total_absent' => 15,
+        //     'classes_progress' => [...]
+        // ]
     }
 
     public function setWorkspace(string $workspace): void
