@@ -25,11 +25,65 @@
         ['label' => 'Xuất báo cáo', 'icon' => 'upload', 'color' => 'text-tertiary', 'href' => '#'],
     ];
 
-    $alerts = [
-        ['title' => 'Có 3 sinh viên vắng vượt 20%', 'meta' => 'Lớp Lập trình Web', 'icon' => 'user-check', 'color' => 'text-error', 'bg' => 'bg-error/10', 'border' => 'border-error/20', 'button' => 'bg-error text-white', 'action' => 'Xử lý'],
-        ['title' => '1 buổi điểm danh chưa chốt sổ', 'meta' => 'Lớp Cơ sở dữ liệu - Hôm qua', 'icon' => 'clock', 'color' => 'text-secondary', 'bg' => 'bg-secondary/10', 'border' => 'border-secondary/30', 'button' => 'border border-secondary text-secondary', 'action' => 'Xử lý'],
-        ['title' => 'Phát hiện 1 thiết bị điểm danh nhiều MSSV', 'meta' => 'Lớp Lập trình Web', 'icon' => 'alert-triangle', 'color' => 'text-error', 'bg' => 'bg-error/10', 'border' => 'border-error/20', 'button' => 'bg-error text-white', 'action' => 'Kiểm tra'],
-    ];
+    $alerts = collect($overview['attendance_warning_students'] ?? []) // Lấy danh sách sinh viên gần/vượt ngưỡng nghỉ không phép từ DashboardStatisticService.
+        ->map(function (array $student): array {
+            $isExceeded = ($student['status'] ?? null) === 'exceeded'; // exceeded = đã nghỉ không phép từ 20% số tiết đã học trở lên.
+            $absencePercent = $student['unexcused_absence_percent'] ?? 0; // Phần trăm nghỉ không phép của sinh viên.
+
+            return [
+                'title' => $isExceeded
+                    ? "{$student['full_name']} đã nghỉ {$absencePercent}%"
+                    : "{$student['full_name']} sắp vượt ngưỡng nghỉ",
+                'meta' => "{$student['student_code']} - {$student['class_name']} - Vắng {$student['unexcused_absent_lessons']}/{$student['studied_lessons']} tiết không phép",
+                'icon' => $isExceeded ? 'alert-triangle' : 'user-check',
+                'color' => $isExceeded ? 'text-error' : 'text-secondary',
+                'bg' => $isExceeded ? 'bg-error/10' : 'bg-secondary/10',
+                'border' => $isExceeded ? 'border-error/20' : 'border-secondary/30',
+                'button' => $isExceeded ? 'bg-error text-white' : 'border border-secondary text-secondary',
+                'action' => $isExceeded ? 'Xử lý' : 'Theo dõi',
+                'href' => route('lecturer.students.show', $student['id']),
+            ];
+        })
+        ->when($unclosedAttendanceSessions > 0, function ($items) use ($unclosedAttendanceSessions) {
+            return $items->push([
+                'title' => "{$unclosedAttendanceSessions} buổi điểm danh chưa chốt sổ",
+                'meta' => 'Cần chốt sổ để dữ liệu chuyên cần được tính chính xác.',
+                'icon' => 'clock',
+                'color' => 'text-secondary',
+                'bg' => 'bg-secondary/10',
+                'border' => 'border-secondary/30',
+                'button' => 'border border-secondary text-secondary',
+                'action' => 'Xử lý',
+                'href' => route('lecturer.attendance.index'),
+            ]);
+        })
+        ->when($pendingLeaveRequestsCount > 0, function ($items) use ($pendingLeaveRequestsCount) {
+            return $items->push([
+                'title' => "{$pendingLeaveRequestsCount} đơn nghỉ đang chờ duyệt",
+                'meta' => 'Kiểm tra đơn để cập nhật trạng thái vắng có phép cho sinh viên.',
+                'icon' => 'file-text',
+                'color' => 'text-primary',
+                'bg' => 'bg-primary/10',
+                'border' => 'border-primary/20',
+                'button' => 'bg-primary text-white',
+                'action' => 'Duyệt đơn',
+                'href' => route('lecturer.leave-requests.index'),
+            ]);
+        })
+        ->whenEmpty(fn ($items) => $items->push([
+            'title' => 'Không có cảnh báo cần xử lý',
+            'meta' => 'Chuyên cần, buổi điểm danh và đơn nghỉ hiện đang ổn định.',
+            'icon' => 'check-circle',
+            'color' => 'text-tertiary',
+            'bg' => 'bg-tertiary/10',
+            'border' => 'border-tertiary/20',
+            'button' => 'border border-tertiary text-tertiary',
+            'action' => 'Ổn định',
+            'href' => null,
+        ]))
+        ->take(5)
+        ->values()
+        ->all();
 
     $activities = [
         ['text' => 'Bạn vừa tạo buổi điểm danh cho lớp Lập trình Web', 'time' => '10 phút trước', 'icon' => 'check-square', 'bg' => 'bg-primary'],
@@ -271,7 +325,11 @@
                                         <p class="text-sm font-bold text-on-surface">{{ $alert['title'] }}</p>
                                         <p class="mt-1 text-xs text-on-surface-variant">{{ $alert['meta'] }}</p>
                                     </div>
-                                    <button type="button" class="{{ $alert['button'] }} rounded-lg px-3 py-1.5 text-xs font-bold">{{ $alert['action'] }}</button>
+                                    @if (! empty($alert['href']))
+                                        <a href="{{ $alert['href'] }}" class="{{ $alert['button'] }} rounded-lg px-3 py-1.5 text-xs font-bold">{{ $alert['action'] }}</a>
+                                    @else
+                                        <button type="button" class="{{ $alert['button'] }} rounded-lg px-3 py-1.5 text-xs font-bold">{{ $alert['action'] }}</button>
+                                    @endif
                                 </div>
                             @endforeach
                         </div>
