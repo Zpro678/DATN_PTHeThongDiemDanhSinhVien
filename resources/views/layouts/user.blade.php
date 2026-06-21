@@ -174,74 +174,7 @@
                         </div>
 
                         <div class="flex items-center gap-1 md:ml-4 md:border-l md:border-outline-variant/30 md:pl-4">
-                            <div class="relative" x-data="{ openNotification: false }" @click.away="openNotification = false">
-                                <button type="button" @click="openNotification = !openNotification" class="relative rounded-full p-2 text-on-surface-variant transition-colors hover:bg-surface-container-high" :class="openNotification ? 'bg-surface-container-high' : ''">
-                                    <x-user.icon name="bell" :size="20" />
-                                    <span class="absolute right-2 top-2 h-2 w-2 rounded-full border-2 border-surface bg-error"></span>
-                                </button>
-                                
-                                <div x-show="openNotification" 
-                                     x-transition:enter="transition ease-out duration-200"
-                                     x-transition:enter-start="opacity-0 scale-95 translate-y-2"
-                                     x-transition:enter-end="opacity-100 scale-100 translate-y-0"
-                                     x-transition:leave="transition ease-in duration-150"
-                                     x-transition:leave-start="opacity-100 scale-100 translate-y-0"
-                                     x-transition:leave-end="opacity-0 scale-95 translate-y-2"
-                                     class="absolute right-0 top-full mt-3 w-80 lg:w-96 rounded-2xl bg-white shadow-xl ring-1 ring-black/5 focus:outline-none z-50 overflow-hidden"
-                                     style="display: none;">
-                                     
-                                    <div class="flex items-center justify-between border-b border-slate-100 bg-slate-50/50 px-4 py-3">
-                                        <h3 class="text-sm font-bold text-slate-900">Thông báo mới</h3>
-                                        <button class="text-xs font-medium text-primary hover:text-primary/80">Đánh dấu đã đọc</button>
-                                    </div>
-                                    
-                                    <div class="max-h-[360px] overflow-y-auto overscroll-contain">
-                                        <!-- Notification Item 1 -->
-                                        <a href="#" class="flex items-start gap-4 border-b border-slate-50 px-4 py-3 transition-colors hover:bg-slate-50">
-                                            <div class="mt-1 flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-blue-100 text-blue-600">
-                                                <x-user.icon name="info" :size="16" />
-                                            </div>
-                                            <div class="flex-1 space-y-1">
-                                                <p class="text-sm font-medium text-slate-900">Nhắc nhở nộp minh chứng</p>
-                                                <p class="text-xs text-slate-500">Đơn xin nghỉ phép ngày 05/05/2026 của bạn cần bổ sung minh chứng.</p>
-                                                <p class="text-[10px] font-medium text-slate-400">10 phút trước</p>
-                                            </div>
-                                            <div class="h-2 w-2 shrink-0 rounded-full bg-primary mt-2"></div>
-                                        </a>
-
-                                        <!-- Notification Item 2 -->
-                                        <a href="#" class="flex items-start gap-4 border-b border-slate-50 px-4 py-3 transition-colors hover:bg-slate-50">
-                                            <div class="mt-1 flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-rose-100 text-rose-600">
-                                                <x-user.icon name="alert-triangle" :size="16" />
-                                            </div>
-                                            <div class="flex-1 space-y-1">
-                                                <p class="text-sm font-medium text-slate-900">Cảnh báo vắng mặt</p>
-                                                <p class="text-xs text-slate-500">Bạn đã vắng 3/15 buổi học môn Lập trình Web.</p>
-                                                <p class="text-[10px] font-medium text-slate-400">2 giờ trước</p>
-                                            </div>
-                                            <div class="h-2 w-2 shrink-0 rounded-full bg-primary mt-2"></div>
-                                        </a>
-
-                                        <!-- Notification Item 3 (Read) -->
-                                        <a href="#" class="flex items-start gap-4 px-4 py-3 transition-colors hover:bg-slate-50 opacity-70">
-                                            <div class="mt-1 flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-emerald-100 text-emerald-600">
-                                                <x-user.icon name="check-circle" :size="16" />
-                                            </div>
-                                            <div class="flex-1 space-y-1">
-                                                <p class="text-sm font-medium text-slate-900">Đơn nghỉ phép được duyệt</p>
-                                                <p class="text-xs text-slate-500">Giảng viên đã duyệt đơn nghỉ phép ngày 20/04/2026.</p>
-                                                <p class="text-[10px] font-medium text-slate-400">1 ngày trước</p>
-                                            </div>
-                                        </a>
-                                    </div>
-                                    
-                                    <div class="border-t border-slate-100 bg-slate-50/50 p-2 text-center">
-                                        <a href="{{ route('student.warnings') }}" class="inline-block w-full rounded-lg px-4 py-2 text-xs font-bold text-slate-600 transition-colors hover:bg-slate-200/50 hover:text-slate-900">
-                                            Xem tất cả thông báo
-                                        </a>
-                                    </div>
-                                </div>
-                            </div>
+                            <x-notification-dropdown :all-url="route('student.warnings')" />
                             <button type="button" class="hidden rounded-full p-2 text-on-surface-variant transition-colors hover:bg-surface-container-high sm:block">
                                 <x-user.icon name="settings" :size="20" />
                             </button>

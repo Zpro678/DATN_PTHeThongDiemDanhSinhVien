@@ -4,6 +4,7 @@ namespace App\Livewire\User;
 
 use App\Models\CourseClass;
 use App\Services\DashboardStatisticService;
+use App\Services\LectureManageStudentService;
 use Illuminate\Contracts\View\View;
 use Livewire\Component;
 
@@ -20,6 +21,8 @@ class Dashboard extends Component
     public array $overview = [];
 
     public array $classes = [];
+
+    public array $managedClassCards = [];
 
     public $classId = null;
 
@@ -47,16 +50,47 @@ class Dashboard extends Component
         $this->overview = app(DashboardStatisticService::class)
             ->getOwnerOverview($userId, $classId);
 
-                // 
-                //     'total_students' => 40,
-                //     'total_required_lessons' => 45,
-                //     'total_studied_lessons' => 20,
-                //     'remaining_lessons' => 25,
-                //     'lesson_progress_percent' => 44.44,
-                //     'total_present' => 120,
-                //     'total_absent' => 15,
-                //     'classes_progress' => [...]
-                // ]
+        $this->managedClassCards = $this->loadManagedClassCards($userId);
+    }
+
+    private function loadManagedClassCards(int $userId): array
+    {
+        $studentService = app(LectureManageStudentService::class);
+        $cardStyles = [
+            ['icon' => 'code', 'color' => 'text-primary', 'bar' => 'bg-primary'],
+            ['icon' => 'database', 'color' => 'text-tertiary', 'bar' => 'bg-tertiary'],
+        ];
+
+        return CourseClass::query()
+            ->where('owner_user_id', $userId)
+            ->whereHas('sessions') // Chỉ lấy lớp đã có ít nhất một buổi điểm danh.
+            ->withCount(['members as students_count' => fn ($query) => $query->where('status', 'active')])
+            ->withSum(['sessions as studied_lessons' => fn ($query) => $query->where('status', 'closed')], 'lesson_count')
+            ->withMax('sessions', 'date') // Lấy ngày buổi điểm danh mới nhất của từng lớp.
+            ->orderByDesc('sessions_max_date') // Ưu tiên lớp có buổi điểm danh mới nhất.
+            ->orderByDesc('created_at') // Nếu trùng ngày điểm danh thì ưu tiên lớp tạo sau.
+            ->take(2)
+            ->get(['id', 'code', 'name', 'subject_code', 'semester', 'status', 'total_lessons'])
+            ->values()
+            ->map(function (CourseClass $courseClass, int $index) use ($studentService, $cardStyles, $userId) {
+                $style = $cardStyles[$index % count($cardStyles)];
+                $attendance = $studentService->getTotalAttendanceStats($userId, $courseClass->id);
+                $studiedLessons = (int) ($courseClass->studied_lessons ?? 0);
+
+                return [
+                    'id' => $courseClass->id, // ID lớp để điều hướng sang chi tiết/điểm danh.
+                    'title' => $courseClass->name, // Tên lớp hiển thị trên thẻ.
+                    'code' => $courseClass->code, // Mã lớp.
+                    'subject_code' => $courseClass->subject_code ?: 'N/A', // Mã học phần nếu có.
+                    'semester' => $courseClass->semester ?: 'Chưa xác định', // Học kỳ của lớp.
+                    'students' => (int) $courseClass->students_count, // Tổng sinh viên active trong lớp.
+                    'lessons' => $studiedLessons.'/'.$courseClass->total_lessons, // Tiến độ số tiết đã học/tổng số tiết.
+                    'attendance' => $attendance['attendance_percent'], // Chuyên cần trung bình của cả lớp.
+                    'status_label' => in_array($courseClass->status, ['ended', 'archived'], true) ? 'Đã kết thúc' : 'Đang học',
+                    ...$style,
+                ];
+            })
+            ->toArray();
     }
 
     public function setWorkspace(string $workspace): void
