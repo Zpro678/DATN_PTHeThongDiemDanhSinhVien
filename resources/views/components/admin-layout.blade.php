@@ -192,62 +192,51 @@
             <div class="min-h-screen xl:pl-sidebar-width">
                 <header class="admin-topbar sticky top-0 z-30 flex h-16 items-center justify-between border-b border-slate-200/80 bg-white/85 px-4 backdrop-blur-xl sm:px-6">
                     <div class="flex min-w-0 items-center gap-3">
-                        <button type="button" class="admin-soft-button flex h-10 w-10 items-center justify-center rounded-xl border border-slate-200 bg-white text-slate-500 transition hover:bg-slate-50 xl:hidden" @click="sidebarOpen = true">
+                        <button type="button" class="admin-soft-button flex h-10 w-10 items-center justify-center rounded-xl border border-transparent bg-transparent text-slate-500 transition hover:bg-slate-50 xl:hidden" @click="sidebarOpen = true">
                             <x-user.icon name="menu" :size="20" />
                         </button>
-
-                        <div class="hidden items-center gap-2 text-xs font-bold tracking-tight text-slate-400 sm:flex">
-                            <span>Hệ thống SAMS</span>
-                            <span>/</span>
-                            <span class="truncate text-[11px] font-extrabold uppercase tracking-wider text-slate-800">{{ $title ?: 'Dashboard' }}</span>
-                        </div>
-
-                        <h1 class="truncate text-sm font-extrabold text-slate-900 sm:hidden">{{ $title ?: 'Dashboard' }}</h1>
                     </div>
 
                     <div class="flex items-center gap-2 sm:gap-4">
-                        <div class="relative hidden md:block">
-                            <x-user.icon name="search" :size="16" class="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" />
-                            <input type="text" placeholder="Tìm giảng viên, ngành, khoa..." class="w-64 rounded-xl border border-slate-200 bg-slate-50/80 py-2 pl-10 pr-4 text-xs font-medium text-slate-900 placeholder:text-slate-400 transition focus:bg-white focus:outline-none focus:ring-2 focus:ring-blue-500" />
-                        </div>
-
-                        <button type="button" class="admin-soft-button relative flex h-10 w-10 items-center justify-center rounded-xl border border-slate-200 bg-white text-slate-500 transition hover:bg-slate-50">
-                            <x-user.icon name="bell" :size="16" />
-                            <span class="absolute right-2 top-2 h-2 w-2 rounded-full bg-rose-500"></span>
+                        <button type="button" class="admin-soft-button relative flex h-10 w-10 items-center justify-center rounded-xl border border-transparent bg-transparent text-slate-500 transition hover:bg-slate-50">
+                            <x-user.icon name="bell" :size="20" />
+                            <span class="absolute right-2 top-2 h-2 w-2 rounded-full bg-rose-500 border-2 border-white"></span>
                         </button>
 
-                        <div class="relative">
-                            <button type="button" class="admin-soft-button flex items-center gap-2 rounded-xl border border-slate-200 bg-white py-1.5 pl-1.5 pr-2.5 transition hover:bg-slate-50" @click="userMenuOpen = ! userMenuOpen">
-                                @if(Auth::user()?->avatar)
-                                    <img src="{{ asset('storage/'.Auth::user()->avatar) }}" alt="{{ $userName }}" class="h-7 w-7 rounded-lg object-cover">
-                                @else
-                                    <span class="flex h-7 w-7 items-center justify-center rounded-lg bg-blue-100 text-xs font-extrabold text-blue-700">{{ $userInitial }}</span>
-                                @endif
-                                <span class="hidden text-left sm:block">
-                                    <span class="block text-[11px] font-extrabold leading-tight text-slate-900">{{ $userName }}</span>
-                                    <span class="block py-0.5 text-[9px] font-bold leading-none text-emerald-500">Admin</span>
-                                </span>
-                                <x-user.icon name="chevron-down" :size="14" class="text-slate-400" />
+                        <a href="{{ route('admin.settings.index') }}" class="admin-soft-button flex h-10 w-10 items-center justify-center rounded-xl border border-transparent bg-transparent text-slate-500 transition hover:bg-slate-50">
+                            <x-user.icon name="settings" :size="20" />
+                        </a>
+
+                        <div class="relative ml-2">
+                            <button type="button" class="flex items-center gap-3 transition" @click="userMenuOpen = ! userMenuOpen">
+                                <div class="hidden text-right sm:block">
+                                    <span class="block text-[15px] font-bold text-slate-900">{{ $userName }}</span>
+                                    <span class="block text-xs text-slate-500">{{ $userEmail }}</span>
+                                </div>
+                                <div class="relative flex h-10 w-10 items-center justify-center rounded-full border-2 border-blue-600 bg-blue-50 p-0.5">
+                                    @if(Auth::user()?->avatar)
+                                        <img src="{{ asset('storage/'.Auth::user()->avatar) }}" alt="{{ $userName }}" class="h-full w-full rounded-full object-cover">
+                                    @else
+                                        <span class="flex h-full w-full items-center justify-center rounded-full bg-blue-100 text-sm font-bold text-blue-700">{{ $userInitial }}</span>
+                                    @endif
+                                </div>
                             </button>
 
                             <div x-cloak x-show="userMenuOpen" class="fixed inset-0 z-40" @click="userMenuOpen = false"></div>
-                            <div x-cloak x-show="userMenuOpen" class="absolute right-0 z-50 mt-2 w-52 rounded-2xl border border-slate-200 bg-white p-2.5 shadow-xl" x-transition>
-                                <div class="border-b border-slate-100 px-3.5 py-2 text-left">
-                                    <p class="text-[10px] font-bold uppercase text-slate-400">Hồ sơ đăng nhập</p>
-                                    <p class="text-xs font-extrabold text-slate-900">{{ $userEmail }}</p>
+                            <div x-cloak x-show="userMenuOpen" class="absolute right-0 z-50 mt-2 w-64 rounded-2xl border border-slate-100 bg-white p-3 shadow-xl" x-transition>
+                                <div class="mb-2 px-3 py-2">
+                                    <p class="text-[15px] font-bold text-slate-900">{{ $userEmail }}</p>
                                 </div>
 
-                                <a href="{{ route('profile.edit') }}" class="mt-2 block rounded-xl px-3 py-2 text-xs font-bold text-slate-600 transition-colors hover:bg-slate-50">
+                                <a href="{{ route('profile.edit') }}" class="flex items-center gap-3 rounded-xl px-3 py-2.5 text-[15px] font-medium text-slate-600 transition-colors hover:bg-slate-50">
+                                    <x-user.icon name="user" :size="18" class="text-slate-400" />
                                     Thông tin cá nhân
-                                </a>
-
-                                <a href="{{ route('admin.dashboard') }}" class="mt-1 block rounded-xl px-3 py-2 text-xs font-bold text-slate-600 transition-colors hover:bg-slate-50">
-                                    Về dashboard
                                 </a>
 
                                 <form method="POST" action="{{ route('logout') }}">
                                     @csrf
-                                    <button type="submit" class="mt-1 block w-full rounded-xl px-3 py-2.5 text-left text-xs font-bold text-rose-600 transition-colors hover:bg-rose-50">
+                                    <button type="submit" class="mt-1 flex w-full items-center gap-3 rounded-xl px-3 py-2.5 text-left text-[15px] font-medium text-rose-600 transition-colors hover:bg-rose-50">
+                                        <x-user.icon name="log-out" :size="18" class="text-rose-500" />
                                         Đăng xuất
                                     </button>
                                 </form>

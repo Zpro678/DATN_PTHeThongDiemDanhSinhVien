@@ -4,24 +4,7 @@
 
 <x-admin-layout title="Chỉnh sửa gói dịch vụ">
     <div class="mx-auto max-w-[1000px] space-y-6" x-data="{ isUnlimitedClasses: {{ $package->max_classes >= 999 ? 'true' : 'false' }}, isUnlimitedStudents: true, priceType: '{{ $isFree ? 'free' : 'fixed' }}', hasApi: true, hasGps: true, hasReports: true, hasImport: {{ $package->can_export_excel ? 'true' : 'false' }} }">
-        <nav class="flex" aria-label="Breadcrumb">
-            <ol class="inline-flex items-center space-x-1 md:space-x-3">
-                <li class="inline-flex items-center">
-                    <a href="{{ route('admin.dashboard') }}" class="inline-flex items-center text-sm font-medium text-slate-700 transition-colors hover:text-blue-600">
-                        <x-user.icon name="layout-dashboard" :size="16" class="mr-2" />
-                        Trang chủ
-                    </a>
-                </li>
-                <li class="flex items-center">
-                    <x-user.icon name="chevron-right" :size="18" class="text-slate-400" />
-                    <a href="{{ route('admin.packages.index') }}" class="ml-1 text-sm font-medium text-slate-700 transition-colors hover:text-blue-600 md:ml-2">Gói dịch vụ</a>
-                </li>
-                <li class="flex items-center" aria-current="page">
-                    <x-user.icon name="chevron-right" :size="18" class="text-slate-400" />
-                    <span class="ml-1 text-sm font-medium text-slate-500 md:ml-2">Chỉnh sửa</span>
-                </li>
-            </ol>
-        </nav>
+
 
         <div class="admin-card flex flex-col items-start justify-between gap-4 overflow-hidden rounded-3xl border p-6 md:flex-row md:items-center lg:p-7">
             <div>

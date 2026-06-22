@@ -1,18 +1,6 @@
 @php
-    $data = [
-        ['name' => 'T6/25', 'Chuyên cần' => 91.2, 'Vắng mặt' => 6.1, 'Đi muộn' => 2.7],
-        ['name' => 'T7/25', 'Chuyên cần' => 93.4, 'Vắng mặt' => 4.8, 'Đi muộn' => 1.8],
-        ['name' => 'T8/25', 'Chuyên cần' => 92.1, 'Vắng mặt' => 5.2, 'Đi muộn' => 2.7],
-        ['name' => 'T9/25', 'Chuyên cần' => 95.8, 'Vắng mặt' => 3.1, 'Đi muộn' => 1.1],
-        ['name' => 'T10/25', 'Chuyên cần' => 94.2, 'Vắng mặt' => 4.0, 'Đi muộn' => 1.8],
-        ['name' => 'T11/25', 'Chuyên cần' => 93.9, 'Vắng mặt' => 4.2, 'Đi muộn' => 1.9],
-        ['name' => 'T12/25', 'Chuyên cần' => 90.5, 'Vắng mặt' => 7.3, 'Đi muộn' => 2.2],
-        ['name' => 'T1/26', 'Chuyên cần' => 89.2, 'Vắng mặt' => 8.5, 'Đi muộn' => 2.3],
-        ['name' => 'T2/26', 'Chuyên cần' => 94.6, 'Vắng mặt' => 3.9, 'Đi muộn' => 1.5],
-        ['name' => 'T3/26', 'Chuyên cần' => 95.1, 'Vắng mặt' => 3.4, 'Đi muộn' => 1.5],
-        ['name' => 'T4/26', 'Chuyên cần' => 94.0, 'Vắng mặt' => 4.2, 'Đi muộn' => 1.8],
-        ['name' => 'T5/26', 'Chuyên cần' => 93.2, 'Vắng mặt' => 4.8, 'Đi muộn' => 2.0],
-    ];
+    $data = $chartData;
+
 
     $series = [
         ['label' => 'Chuyên cần', 'key' => 'Chuyên cần', 'color' => '#2563eb', 'fill' => 'rgba(37, 99, 235, 0.12)', 'width' => 3],

@@ -8,15 +8,18 @@
                 <p class="text-sm text-slate-500">Theo dõi dòng sự kiện và các hoạt động thay đổi trên hệ thống.</p>
             </div>
 
-            <div class="flex items-center gap-3">
+            <form action="{{ route('admin.logs.index') }}" method="GET" class="flex items-center gap-3">
                 <div class="relative">
                     <x-user.icon name="search" :size="16" class="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" />
-                    <input type="text" placeholder="Tìm kiếm nhật ký..." class="w-64 rounded-xl border border-slate-200 bg-white py-2 pl-10 pr-4 text-sm text-slate-900 shadow-sm transition-colors focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-500">
+                    <input type="text" name="search" value="{{ request('search') }}" placeholder="Tìm kiếm hành động, bảng, user..." class="w-64 rounded-xl border border-slate-200 bg-white py-2 pl-10 pr-4 text-sm text-slate-900 shadow-sm transition-colors focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-500">
                 </div>
-                <button type="button" class="admin-soft-button rounded-xl border border-slate-200 bg-white px-4 py-2 text-sm font-semibold text-slate-600 hover:bg-slate-50">
-                    Hôm nay
+                <button type="submit" class="admin-soft-button rounded-xl border border-slate-200 bg-white px-4 py-2 text-sm font-semibold text-slate-600 hover:bg-slate-50">
+                    Lọc
                 </button>
-            </div>
+                @if(request()->has('search'))
+                    <a href="{{ route('admin.logs.index') }}" class="text-sm font-semibold text-blue-600 hover:text-blue-700 hover:underline">Xóa lọc</a>
+                @endif
+            </form>
             </div>
         </div>
 
@@ -46,7 +49,7 @@
                             <x-user.icon name="{{ $icon }}" :size="16" class="{{ explode(' ', $tone)[0] }}" />
                         </div>
                         <div class="flex-1 rounded-2xl border border-slate-100 bg-white/75 p-4 transition-all hover:-translate-y-0.5 hover:border-blue-200 hover:bg-blue-50/40 hover:shadow-sm">
-                            <div class="mb-2 flex flex-wrap items-center justify-between gap-2">
+                            <div class="mb-3 flex flex-wrap items-center justify-between gap-2">
                                 <span class="rounded-md border px-2.5 py-1 text-[10px] font-extrabold tracking-wider {{ $tone }}">
                                     {{ strtoupper($log->table_name ?: 'HỆ THỐNG') }}
                                 </span>
@@ -55,6 +58,7 @@
                                     {{ $log->created_at?->format('d/m/Y H:i') ?? 'N/A' }}
                                 </span>
                             </div>
+                            
                             <p class="break-words text-sm font-semibold leading-relaxed text-slate-700">
                                 <span class="font-bold text-blue-600">{{ $log->user?->name ?? 'Hệ thống' }}</span>
                                 {{ $log->action }}
@@ -65,6 +69,37 @@
                                     <span class="text-slate-400">#{{ $log->row_id }}</span>
                                 @endif
                             </p>
+
+                            @if($log->ip_address || $log->user_agent)
+                                <div class="mt-3 flex flex-wrap items-center gap-4 text-[11px] font-medium text-slate-400">
+                                    @if($log->ip_address)
+                                        <div class="flex items-center gap-1">
+                                            <x-user.icon name="map-pin" :size="12" />
+                                            <span>{{ $log->ip_address }}</span>
+                                        </div>
+                                    @endif
+                                    @if($log->user_agent)
+                                        <div class="flex items-center gap-1 max-w-[200px] sm:max-w-md truncate" title="{{ $log->user_agent }}">
+                                            <x-user.icon name="monitor" :size="12" />
+                                            <span class="truncate">{{ $log->user_agent }}</span>
+                                        </div>
+                                    @endif
+                                </div>
+                            @endif
+
+                            @if($log->new_values)
+                                <div class="mt-3 rounded-xl border border-slate-100 bg-slate-50 p-3">
+                                    <details class="group/details text-xs">
+                                        <summary class="cursor-pointer font-bold text-slate-600 outline-none hover:text-blue-600 marker:content-[''] flex items-center gap-1">
+                                            <x-user.icon name="chevron-right" :size="14" class="transition-transform group-open/details:rotate-90" />
+                                            <span>Xem chi tiết dữ liệu (Payload)</span>
+                                        </summary>
+                                        <div class="mt-2 overflow-x-auto rounded-lg bg-slate-800 p-3 font-mono text-[10px] text-slate-300">
+                                            <pre><code>{{ json_encode($log->new_values, JSON_PRETTY_PRINT | JSON_UNESCAPED_UNICODE) }}</code></pre>
+                                        </div>
+                                    </details>
+                                </div>
+                            @endif
                         </div>
                     </div>
                 @empty
@@ -73,22 +108,21 @@
                             <x-user.icon name="activity" :size="16" class="text-slate-400" />
                         </div>
                         <div class="flex-1 rounded-2xl border border-dashed border-slate-200 bg-slate-50/50 p-6 text-sm font-medium text-slate-500">
-                            Chưa có nhật ký hệ thống.
+                            @if(request('search'))
+                                Không tìm thấy kết quả nào phù hợp với "{{ request('search') }}".
+                            @else
+                                Chưa có nhật ký hệ thống.
+                            @endif
                         </div>
                     </div>
                 @endforelse
             </div>
 
-            <div class="relative z-10 mt-8 flex items-center justify-between border-t border-slate-200 pt-6">
-                <p class="text-xs font-medium text-slate-500">
-                    Hiển thị <span class="font-bold text-slate-900">{{ $logs->count() }}</span> bản ghi mới nhất
-                </p>
-                <div class="flex items-center gap-1">
-                    <button type="button" class="cursor-not-allowed rounded-lg border border-slate-200 px-3 py-1.5 text-xs font-semibold text-slate-400">Trước</button>
-                    <button type="button" class="rounded-lg border border-blue-100 bg-blue-50 px-3 py-1.5 text-xs font-bold text-blue-700">1</button>
-                    <button type="button" class="rounded-lg border border-slate-200 px-3 py-1.5 text-xs font-semibold text-slate-600 transition-colors hover:bg-slate-50">Sau</button>
+            @if($logs->hasPages())
+                <div class="relative z-10 mt-8 border-t border-slate-200 pt-6">
+                    {{ $logs->links() }}
                 </div>
-            </div>
+            @endif
         </div>
     </div>
 </x-admin-layout>

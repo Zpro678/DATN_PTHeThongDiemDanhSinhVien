@@ -1,35 +1,3 @@
-@php
-    $students = [
-        [
-            'mssv' => '0306211029',
-            'name' => 'Lê Minh Huy',
-            'class' => 'CD_CNTT21A',
-            'subject' => 'Hệ quản trị CSDL',
-            'attendanceRate' => 62.5,
-            'level' => 'Nguy cấp (Cấm thi)',
-            'levelColor' => 'bg-rose-50 text-rose-700 border-rose-200',
-        ],
-        [
-            'mssv' => '0306231108',
-            'name' => 'Trần Văn Hoàng',
-            'class' => 'CD_CNTT23B',
-            'subject' => 'Lập trình Web nâng cao',
-            'attendanceRate' => 74.2,
-            'level' => 'Cảnh cáo (Gần giới hạn)',
-            'levelColor' => 'bg-amber-50 text-amber-700 border-amber-200',
-        ],
-        [
-            'mssv' => '0306221544',
-            'name' => 'Phạm Thị Thúy',
-            'class' => 'CD_DKH22C',
-            'subject' => 'Kỹ thuật vi điều khiển',
-            'attendanceRate' => 78.0,
-            'level' => 'Nhắc nhở nhẹ',
-            'levelColor' => 'bg-blue-50 text-blue-700 border-blue-200',
-        ],
-    ];
-@endphp
-
 <div class="admin-card admin-card-hover flex h-full min-h-[430px] flex-col justify-between overflow-hidden rounded-2xl border p-6">
     <div class="relative z-10">
         <div class="mb-6 flex flex-col gap-4 border-b border-slate-100 pb-4 sm:flex-row sm:items-center sm:justify-between">
@@ -39,7 +7,7 @@
                 </div>
                 <div>
                     <h2 class="text-base font-extrabold tracking-tight text-slate-900">
-                        Sinh viên có nguy cơ cấm thi
+                        Cảnh báo sinh viên vắng nhiều
                     </h2>
                     <p class="mt-0.5 text-xs font-semibold text-slate-400">
                         Danh sách những bạn có tỷ lệ đi học thấp hơn 80%.
@@ -62,14 +30,14 @@
                         <th class="whitespace-nowrap px-4 py-3">MSSV</th>
                         <th class="whitespace-nowrap px-4 py-3">Họ và tên</th>
                         <th class="whitespace-nowrap px-4 py-3">Lớp chính</th>
-                        <th class="whitespace-nowrap px-4 py-3">Môn giảng dạy</th>
+                        <th class="whitespace-nowrap px-4 py-3">Môn học</th>
                         <th class="whitespace-nowrap px-4 py-3 text-center">Tỷ lệ đi học</th>
                         <th class="min-w-[160px] whitespace-nowrap px-4 py-3">Đánh giá chung</th>
                         <th class="whitespace-nowrap px-4 py-3 text-right">Chi tiết</th>
                     </tr>
                 </thead>
                 <tbody class="divide-y divide-slate-50">
-                    @foreach ($students as $item)
+                    @forelse ($warningStudents as $item)
                         <tr class="transition-colors hover:bg-blue-50/40">
                             <td class="whitespace-nowrap px-4 py-3.5 font-mono font-black text-slate-500">{{ $item['mssv'] }}</td>
                             <td class="px-4 py-3.5 font-extrabold text-slate-800">{{ $item['name'] }}</td>
@@ -99,14 +67,18 @@
                                 </button>
                             </td>
                         </tr>
-                    @endforeach
+                    @empty
+                        <tr>
+                            <td colspan="7" class="px-4 py-8 text-center text-slate-500">Không có sinh viên nào bị cảnh báo.</td>
+                        </tr>
+                    @endforelse
                 </tbody>
             </table>
         </div>
     </div>
 
     <div class="relative z-10 mt-4 flex items-center justify-between border-t border-slate-100 pt-4 text-xs font-bold text-slate-400">
-        <span>Hiển thị 3 / 84 trường hợp khẩn cấp</span>
+        <span>Hiển thị {{ min(10, count($warningStudents)) }} / {{ $warningCount }} trường hợp</span>
         <button type="button" class="text-blue-600 hover:text-blue-700 hover:underline">
             Quản lý toàn bộ cảnh báo chuyên cần &rarr;
         </button>
