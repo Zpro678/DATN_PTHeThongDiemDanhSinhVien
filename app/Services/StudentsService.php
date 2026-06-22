@@ -5,7 +5,8 @@ namespace App\Services;
 use App\Models\AttendanceRecord;
 use App\Models\ClassMember;
 use App\Models\LeaveRequest;
-
+use Illuminate\Support\Carbon;
+use Illuminate\Support\Facades\DB;
 /**
  * Gom các nghiệp vụ dành cho học viên.
  *
@@ -217,4 +218,18 @@ class StudentsService
             ? "{$courseClass->name} ({$code})"
             : $courseClass->name;
     }
+
+    // public function getDashboardForStudent(int $studentUserId) : array
+    // {
+    //     if ($studentUserId <= 0) {
+    //     return $this->emptyStudentDashboard();
+    //     }
+
+    //     $members = ClassMember::query()
+    //     ->with([
+
+    //     ])
+
+    //     return;
+    // }
 }
