@@ -8,18 +8,16 @@
             <p class="mt-2 text-sm text-slate-500">Quản lý danh sách sinh viên trong các lớp bạn đang phụ trách.</p>
         </div>
         <div class="flex items-center gap-3">
-            <button type="button" wire:click="openImport" class="inline-flex items-center justify-center gap-2 rounded-full border border-primary/20 bg-primary/5 px-5 py-2.5 text-sm font-bold text-primary transition-colors hover:bg-primary/10">
-                <x-user.icon name="upload" :size="18" />
-                Import danh sách
-            </button>
-            <button type="button" wire:click="openAdd" class="inline-flex items-center justify-center gap-2 rounded-full bg-primary px-5 py-2.5 text-sm font-bold text-white transition-colors hover:bg-primary/90">
-                <x-user.icon name="plus" :size="18" />
-                Thêm thành viên
-            </button>
-            <a href="{{ route('lecturer.leave-requests.index') }}" class="inline-flex items-center justify-center gap-2 rounded-full border border-primary/20 bg-primary/5 px-5 py-2.5 text-sm font-bold text-primary transition-colors hover:bg-primary/10">
+            <a href="{{ route('lecturer.leave-requests.index') }}" class="inline-flex items-center justify-center gap-2 rounded-full border border-slate-200 bg-white px-5 py-2.5 text-sm font-bold text-slate-600 transition-colors hover:bg-slate-50">
                 <x-user.icon name="file-text" :size="18" />
                 Đơn xin nghỉ
             </a>
+            @if ($showBackButton)
+                <a href="javascript:history.back()" class="inline-flex items-center justify-center gap-2 rounded-xl bg-[#0a46d1] px-5 py-2.5 text-sm font-bold text-white transition-colors hover:bg-blue-800 shadow-sm">
+                    <x-user.icon name="arrow-left" :size="18" />
+                    Trở về
+                </a>
+            @endif
         </div>
     </section>
 
@@ -176,18 +174,18 @@
 
     @if ($isImporting)
         <template x-teleport="body">
-            <div class="fixed inset-0 z-[100] flex items-center justify-center bg-slate-900/50 p-4 backdrop-blur-sm transition-all">
-                <form wire:submit="processImport" class="w-full max-w-[560px] rounded-[24px] bg-white p-8 shadow-2xl">
+            <div class="fixed inset-0 z-[110] flex items-center justify-center bg-slate-900/50 p-4 backdrop-blur-sm transition-all">
+                <form wire:submit="processImport" class="w-full max-w-[560px] rounded-[24px] bg-white p-6 shadow-2xl">
                 
                 {{-- Header --}}
-                <div class="mb-8 flex items-start justify-between">
+                <div class="mb-6 flex items-start justify-between">
                     <div class="flex gap-4">
                         <div class="flex h-12 w-12 shrink-0 items-center justify-center rounded-full bg-blue-100 text-blue-700">
                             <x-user.icon name="upload" :size="24" />
                         </div>
                         <div>
-                            <h3 class="text-[22px] font-bold text-slate-900">Import danh sách sinh viên</h3>
-                            <p class="mt-1.5 text-[15px] text-slate-600">
+                            <h3 class="text-[20px] font-bold text-slate-900">Import danh sách sinh viên</h3>
+                            <p class="mt-1 text-[14px] text-slate-600">
                                 Tải lên tệp Excel hoặc CSV chứa danh sách sinh viên. 
                                 <button type="button" wire:click="downloadTemplate" class="font-bold text-blue-700 hover:underline">Tải mẫu file.</button>
                             </p>
@@ -199,7 +197,7 @@
                 </div>
 
                 {{-- Form Content --}}
-                <div class="space-y-6">
+                <div class="space-y-4">
                     
                     {{-- Class Selection --}}
                     <div>
@@ -213,28 +211,31 @@
                     </div>
 
                     {{-- File Dropzone --}}
-                    <label class="group relative flex cursor-pointer flex-col items-center justify-center rounded-[20px] border-2 border-dashed border-slate-200 bg-slate-50/50 py-12 transition-colors hover:border-blue-400 hover:bg-blue-50/50">
+                    <label class="group relative flex cursor-pointer flex-col items-center justify-center rounded-[20px] border-2 border-dashed border-slate-200 bg-slate-50/50 py-8 transition-colors hover:border-blue-400 hover:bg-blue-50/50">
                         <input type="file" wire:model="importFile" accept=".xlsx,.xls,.csv" class="peer absolute inset-0 h-full w-full cursor-pointer opacity-0">
                         
-                        <div class="flex flex-col items-center justify-center gap-4">
+                        <div class="flex flex-col items-center justify-center gap-3">
                             <div class="flex h-10 w-10 items-center justify-center rounded-full border-[2.5px] border-slate-700 text-slate-700 transition-colors group-hover:border-blue-600 group-hover:text-blue-600">
+                                <div wire:loading.remove wire:target="importFile">
+                                    <x-user.icon name="upload" :size="20" />
+                                </div>
                                 <div wire:loading wire:target="importFile">
                                     <x-user.icon name="loader" class="animate-spin" :size="20" />
                                 </div>
                             </div>
                             
                             <div class="text-center">
-                                <span class="text-[17px] font-bold text-slate-800 transition-colors group-hover:text-blue-700" wire:loading.remove wire:target="importFile">
+                                <span class="text-[16px] font-bold text-slate-800 transition-colors group-hover:text-blue-700" wire:loading.remove wire:target="importFile">
                                     @if($importFile)
                                         {{ $importFile->getClientOriginalName() }}
                                     @else
                                         Nhấn để chọn file
                                     @endif
                                 </span>
-                                <span class="text-[17px] font-bold text-blue-700" wire:loading wire:target="importFile">
+                                <span class="text-[16px] font-bold text-blue-700" wire:loading wire:target="importFile">
                                     Đang tải file...
                                 </span>
-                                <p class="mt-1.5 text-[15px] text-slate-500" wire:loading.remove wire:target="importFile">.xlsx, .xls, .csv</p>
+                                <p class="mt-1 text-[14px] text-slate-500" wire:loading.remove wire:target="importFile">.xlsx, .xls, .csv</p>
                             </div>
                         </div>
                     </label>
@@ -259,7 +260,7 @@
                 </div>
 
                 {{-- Footer Buttons --}}
-                <div class="mt-8 flex justify-end gap-4">
+                <div class="mt-6 flex justify-end gap-3">
                     <button type="button" wire:click="closeImport" class="rounded-full border border-slate-300 bg-white px-8 py-2.5 text-[15px] font-bold text-slate-700 transition-colors hover:bg-slate-50 hover:text-slate-900">
                         Hủy bỏ
                     </button>

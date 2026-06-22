@@ -79,6 +79,7 @@
                 $textClass = $isEnded ? 'text-slate-500' : 'text-blue-600';
                 
                 $sessionsCompleted = $class->completed_sessions_count ?? 0;
+                $studiedLessons = $class->studied_lessons ?? 0;
                 $present = $class->sum_present ?? 0;
                 $late = $class->sum_late ?? 0;
                 $absent = $class->sum_absent ?? 0;
@@ -124,6 +125,7 @@
                                 <a href="{{ route('lecturer.classes.show', $class->id) }}" class="block w-full px-4 py-2 text-left text-sm font-medium hover:bg-surface-container">Xem lớp học</a>
                                 @if (! $isEnded)
                                     <a href="{{ route('lecturer.classes.settings', $class->id) }}" class="block w-full px-4 py-2 text-left text-sm font-medium hover:bg-surface-container">Cài đặt lớp</a>
+                                    <button type="button" wire:click="endClass({{ $class->id }})" wire:confirm="Bạn có chắc chắn muốn kết thúc lớp học này? Hành động này sẽ khóa toàn bộ hoạt động điểm danh của lớp." class="block w-full px-4 py-2 text-left text-sm font-medium text-error hover:bg-error/10">Kết thúc lớp</button>
                                 @endif
                             </div>
                         </div>

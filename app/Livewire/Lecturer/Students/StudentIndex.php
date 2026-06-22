@@ -74,11 +74,12 @@ class StudentIndex extends Component
     // Số lượng sinh viên đã được import thành công
     public int $importSuccess = 0;
 
-    // Tự động thêm vào các buổi điểm danh đã có
-    public bool $syncAttendance = true;
+    public bool $showBackButton = false;
 
     public function mount(): void
     {
+        $this->showBackButton = request()->has('class_id');
+        
         if ($this->action === 'import') {
             $this->openImport();
         }

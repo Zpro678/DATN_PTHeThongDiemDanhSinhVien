@@ -16,7 +16,30 @@ class ClassShow extends Component
     // Đối tượng chứa thông tin chi tiết của lớp học hiện tại
     public CourseClass $class;
 
-    // Tổng số lượng sinh viên đang hoạt động trong lớp
+    public function getRecentSessionsProperty()
+    {
+        return $this->class->sessions()
+            ->withCount([
+                'attendanceRecords as present_count' => function ($query) {
+                    $query->where('status', 'present');
+                },
+                'attendanceRecords as absent_count' => function ($query) {
+                    $query->where('status', 'absent');
+                },
+                'attendanceRecords as late_count' => function ($query) {
+                    $query->where('status', 'late');
+                },
+                'attendanceRecords as excused_count' => function ($query) {
+                    $query->where('status', 'excused');
+                }
+            ])
+            ->latest('date')
+            ->latest('start_time')
+            ->take(5)
+            ->get();
+    }
+
+    // Thống kê hiển thị trên trang
     public int $studentsCount = 0;
 
     // Tổng số buổi học dự kiến của lớp
@@ -41,8 +64,13 @@ class ClassShow extends Component
     // Số lượng sinh viên đã được import thành công vào lớp
     public int $importSuccess = 0;
 
-    // Tự động thêm vào các buổi điểm danh đã có
-    public bool $syncAttendance = true;
+    public bool $showNoStudentsPopup = false;
+
+    public function openImportFromPopup(): void
+    {
+        $this->showNoStudentsPopup = false;
+        $this->openImport();
+    }
 
     public function mount(CourseClass $courseClass): void
     {
@@ -63,12 +91,32 @@ class ClassShow extends Component
         $this->pendingLeaveRequests = LeaveRequest::whereHas('classSession', function ($q) use ($courseClass) {
             $q->where('class_id', $courseClass->id);
         })->where('status', 'pending')->count();
+        
+        if (request()->has('openImport')) {
+            $this->openImport();
+            session()->flash('status', 'Vui lòng import danh sách lớp trước khi điểm danh.');
+        }
+    }
+    
+    public function checkBeforeAttendance(string $type): void
+    {
+        \Illuminate\Support\Facades\Log::info("checkBeforeAttendance called: type={$type}, students={$this->studentsCount}");
+        if ($this->studentsCount === 0) {
+            $this->showNoStudentsPopup = true;
+            return;
+        }
+
+        if ($type === 'qr') {
+            $this->redirectRoute('lecturer.attendance.qr.create', ['ma_user' => auth()->id(), 'class_id' => $this->class->id], navigate: true);
+        } else {
+            $this->redirectRoute('lecturer.attendance.manual.create', ['ma_user' => auth()->id(), 'class_id' => $this->class->id], navigate: true);
+        }
     }
 
     public function render()
     {
         return view('livewire.lecturer.class-show', [
-            'recentSessions' => $this->class->sessions->take(5),
+            'recentSessions' => $this->recentSessions,
         ])->layout('layouts.user', ['title' => $this->class->name]);
     }
 

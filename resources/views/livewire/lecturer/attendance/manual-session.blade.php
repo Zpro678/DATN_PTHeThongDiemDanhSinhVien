@@ -14,7 +14,7 @@
     <div class="mb-8 flex flex-col gap-4 md:flex-row md:items-end md:justify-between">
         <div>
             <div class="mb-3 flex flex-wrap items-center gap-3">
-                <h1 class="text-3xl font-extrabold tracking-tight text-slate-900">Điểm danh thủ công</h1>
+                <h1 class="text-3xl font-extrabold tracking-tight text-slate-900" title="{{ $session->name }}">{{ \Illuminate\Support\Str::limit($session->name, 40) }}</h1>
                 <span @class([
                     'inline-flex items-center gap-2 rounded-full border px-3 py-1 text-xs font-bold',
                     'border-slate-200 bg-slate-100 text-slate-600' => $isClosed,
@@ -29,43 +29,44 @@
                 </span>
             </div>
 
-            <div class="flex flex-wrap items-center gap-x-6 gap-y-2 text-sm text-slate-500">
-                <div class="flex items-center gap-2">
-                    <x-user.icon name="users" :size="20" class="text-blue-600" />
-                    <span class="font-bold text-slate-900">{{ $session->courseClass->code }} - {{ $session->courseClass->name }}</span>
-                </div>
-                <div class="flex items-center gap-2">
-                    <x-user.icon name="clock" :size="20" />
-                    <span class="font-medium">
-                        {{ $session->name }}
-                        • {{ $session->date->format('d/m/Y') }}
-                        @if ($session->start_time || $session->end_time)
-                            • {{ \Illuminate\Support\Str::of((string) $session->start_time)->substr(0, 5) }} - {{ \Illuminate\Support\Str::of((string) $session->end_time)->substr(0, 5) }}
-                        @endif
-                    </span>
-                </div>
+            <div class="mt-4 flex flex-wrap items-center gap-3 text-sm font-bold text-slate-600">
+                <span class="inline-flex items-center gap-2 rounded-xl border border-slate-200 bg-white px-3 py-2 shadow-sm">
+                    <x-user.icon name="check-square" :size="16" class="text-emerald-600" />
+                    Điểm danh thủ công
+                </span>
+                <span class="inline-flex items-center gap-2 rounded-xl border border-slate-200 bg-white px-3 py-2 shadow-sm">
+                    <x-user.icon name="school" :size="16" class="text-blue-600" />
+                    {{ $session->courseClass->code }} - {{ $session->courseClass->name }}
+                </span>
+                <span class="inline-flex items-center gap-2 rounded-xl border border-slate-200 bg-white px-3 py-2 shadow-sm">
+                    <x-user.icon name="clock" :size="16" class="text-amber-500" />
+                    {{ $session->date->format('d/m/Y') }}
+                    @if ($session->start_time || $session->end_time)
+                        ({{ \Illuminate\Support\Str::of((string) $session->start_time)->substr(0, 5) }} - {{ \Illuminate\Support\Str::of((string) $session->end_time)->substr(0, 5) }})
+                    @endif
+                </span>
             </div>
         </div>
 
-        <div class="flex flex-wrap gap-2">
+        <div class="flex w-full items-center gap-3 overflow-x-auto pb-2 md:w-auto md:shrink-0 md:pb-0 scrollbar-hide">
             @if(!$isClosed)
-                <button type="button" @click="deleteModalOpen = true" class="inline-flex items-center justify-center gap-2 rounded-xl border border-rose-200 bg-white px-4 py-2.5 text-sm font-bold text-rose-600 transition hover:bg-rose-50">
-                    <x-user.icon name="trash" :size="16" />
+                <button type="button" @click="deleteModalOpen = true" class="inline-flex shrink-0 items-center justify-center gap-2 rounded-xl border border-rose-200 bg-white px-4 py-2.5 text-sm font-bold text-rose-600 transition hover:bg-rose-50 whitespace-nowrap">
+                    <x-user.icon name="x-circle" :size="18" />
                     Xóa phiên
                 </button>
             @endif
-            <a href="{{ route('lecturer.attendance.create') }}" class="inline-flex items-center justify-center gap-2 rounded-xl border border-slate-200 bg-white px-4 py-2.5 text-sm font-bold text-slate-700 transition hover:bg-slate-50">
-                <x-user.icon name="plus" :size="16" />
-                Tạo buổi điểm danh mới
+            <a href="{{ route('lecturer.attendance.create') }}" class="inline-flex shrink-0 items-center justify-center gap-2 rounded-xl border border-slate-200 bg-white px-4 py-2.5 text-sm font-bold text-slate-700 transition hover:bg-slate-50 whitespace-nowrap">
+                <x-user.icon name="plus" :size="18" />
+                Tạo phiên mới
             </a>
             <button
                 type="button"
                 wire:click="markAllPresent"
                 @disabled($isClosed)
-                class="inline-flex items-center justify-center gap-2 rounded-xl bg-blue-600 px-4 py-2.5 text-sm font-bold text-white shadow-sm shadow-blue-500/20 transition hover:bg-blue-700 disabled:opacity-60"
+                class="inline-flex shrink-0 items-center justify-center gap-2 rounded-xl bg-blue-600 px-4 py-2.5 text-sm font-bold text-white shadow-sm shadow-blue-500/20 transition hover:bg-blue-700 disabled:opacity-60 whitespace-nowrap"
             >
-                <x-user.icon name="check-circle-2" :size="16" />
-                Đánh dấu tất cả có mặt
+                <x-user.icon name="check-circle-2" :size="18" />
+                Tất cả có mặt
             </button>
         </div>
     </div>

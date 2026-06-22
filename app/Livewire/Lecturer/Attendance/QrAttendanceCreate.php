@@ -80,8 +80,15 @@ class QrAttendanceCreate extends Component
 
         } else {
             $this->date = now()->toDateString();
-            $firstClass = $this->availableClasses()->first();
-            $this->classId = (string) ($firstClass?->id ?? '');
+            
+            $preselectedClassId = request()->query('class_id');
+            if ($preselectedClassId && $this->availableClasses()->contains('id', $preselectedClassId)) {
+                $this->classId = (string) $preselectedClassId;
+            } else {
+                $firstClass = $this->availableClasses()->first();
+                $this->classId = (string) ($firstClass?->id ?? '');
+            }
+            
             if ($this->classId) {
                 $this->loadConfigForClass($this->classId);
             }
@@ -179,6 +186,12 @@ class QrAttendanceCreate extends Component
 
         $courseClass = $this->ownedClass((int) $validated['classId']);
         $this->saveConfig();
+
+        if ($courseClass->members()->where('status', 'active')->count() === 0) {
+            $this->addError('classId', 'Vui lòng import danh sách lớp trước khi điểm danh.');
+            $this->redirectRoute('lecturer.classes.show', ['ma_user' => auth()->id(), 'courseClass' => $courseClass->id, 'openImport' => 1], navigate: true);
+            return;
+        }
 
         if ($this->editSessionId) {
             $session = ClassSession::query()->findOrFail($this->editSessionId);

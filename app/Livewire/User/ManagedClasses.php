@@ -68,4 +68,15 @@ class ManagedClasses extends Component
             'semesters' => $semesters,
         ])->layout('layouts.user', ['title' => 'Lớp tôi quản lý']);
     }
+
+    public function endClass(int $classId): void
+    {
+        $class = CourseClass::where('id', $classId)
+            ->where('owner_user_id', auth()->id())
+            ->firstOrFail();
+        
+        if ($class->status !== 'ended') {
+            $class->update(['status' => 'ended']);
+        }
+    }
 }

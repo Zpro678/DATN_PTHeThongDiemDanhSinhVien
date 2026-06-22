@@ -142,10 +142,10 @@
                 </nav>
 
                 <div class="mt-auto space-y-1 border-t border-outline-variant/20 px-2 pt-2 pb-1">
-                    <button type="button" class="flex w-full items-center gap-3 rounded-lg px-3 py-1 text-base font-bold text-on-surface-variant transition-all hover:bg-surface-container-high">
+                    <a href="{{ route('support') }}" class="flex w-full items-center gap-3 rounded-lg px-3 py-1 text-base font-bold text-on-surface-variant transition-all hover:bg-surface-container-high">
                         <x-user.icon name="help-circle" :size="20" class="shrink-0" />
                         <span class="whitespace-nowrap">Hỗ trợ</span>
-                    </button>
+                    </a>
                     <form method="POST" action="{{ route('logout') }}">
                         @csrf
                         <button type="submit" class="flex w-full items-center gap-3 rounded-lg px-3 py-1 text-base font-bold text-error transition-all hover:bg-error-container/40">

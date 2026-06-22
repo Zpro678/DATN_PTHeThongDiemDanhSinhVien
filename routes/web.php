@@ -44,8 +44,8 @@ Route::get('/', function () {
 Route::get('/auth/google', [GoogleController::class, 'redirect'])->name('google.login');
 Route::get('/auth/google/callback', [GoogleController::class, 'callback'])->name('google.callback');
 
-// Route::get('/attendance/check-in/{token}', \App\Livewire\Student\AttendanceCheckIn::class)
-//     ->name('attendance.check-in.guest');
+Route::get('/attendance/check-in/{token}', \App\Livewire\Student\AttendanceCheckIn::class)
+    ->name('attendance.check-in.guest');
 
 Route::middleware(['auth', 'verified', 'user.route'])->group(function () {
     $ensureAdmin = function (): void {
@@ -94,7 +94,7 @@ Route::middleware(['auth', 'verified', 'user.route'])->group(function () {
         Route::get('/student/classes/{courseClass}', ClassShow::class)->name('student.classes.show');
         Route::get('/lecturer/classes/{courseClass}/settings', ClassSettings::class)->name('lecturer.classes.settings');
         Route::get('/lecturer/classes/{courseClass}', App\Livewire\Lecturer\ClassShow::class)->name('lecturer.classes.show');
-        // Route::get('/lecturer/classes/{courseClass}/attendance', \App\Livewire\Lecturer\ClassAttendanceHistory::class)->name('lecturer.classes.attendance'); // TODO: ClassAttendanceHistory chưa được tạo
+        Route::get('/lecturer/classes/{courseClass}/attendance', \App\Livewire\Lecturer\ClassAttendanceHistory::class)->name('lecturer.classes.attendance');
         Route::get('/lecturer/classes/{class_id}/statistics', ClassStatistics::class)->name('lecturer.class.statistics');
         Route::get('/lecturer/attendance', AttendanceIndex::class)->name('lecturer.attendance.index');
         Route::get('/lecturer/attendance/create', AttendanceCreate::class)->name('lecturer.attendance.create');
@@ -126,7 +126,8 @@ Route::middleware(['auth', 'verified', 'user.route'])->group(function () {
 });
 
 Route::middleware('auth')->group(function () {
-    Route::get('/profile', EditProfile::class)->name('profile.edit');
+    Route::get('/profile', \App\Livewire\Profile\EditProfile::class)->name('profile.edit');
+    Route::get('/support', \App\Livewire\User\SupportPage::class)->name('support');
 });
 
 require __DIR__.'/auth.php';

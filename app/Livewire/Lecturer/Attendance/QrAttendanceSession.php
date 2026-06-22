@@ -24,6 +24,8 @@ class QrAttendanceSession extends Component
     public string $statusFilter = 'all';
 
     public bool $isClosed = false;
+    
+    public string $qrAnimationStr = '';
 
     public function mount(int $session): void
     {
@@ -48,10 +50,14 @@ class QrAttendanceSession extends Component
     public function refreshToken(): void
     {
         $session = $this->ownedSession($this->sessionId);
+        
+        // Keep the token valid while the session is running
         $session->update([
-            'qr_token' => Str::upper(Str::random(24)),
             'token_expires_at' => now()->addMinutes(15),
         ]);
+        
+        // Change the query parameter to force the QR code image to change
+        $this->qrAnimationStr = Str::random(8);
     }
 
     public function updateStatus(int $recordId, string $status): void
@@ -115,7 +121,11 @@ class QrAttendanceSession extends Component
     public function render(): View
     {
         $session = $this->ownedSession($this->sessionId)->load('courseClass');
+        
         $attendanceLink = route('attendance.check-in.guest', ['token' => $session->qr_token]);
+        if ($this->qrAnimationStr) {
+            $attendanceLink .= '?r=' . $this->qrAnimationStr;
+        }
         $records = $session->attendanceRecords()
             ->with('classMember.user')
             ->when($this->statusFilter !== 'all', fn (Builder $query) => $query->where('status', $this->statusFilter))
@@ -148,7 +158,7 @@ class QrAttendanceSession extends Component
             : 0;
 
         $qrSvg = $this->qrSvg($attendanceLink);
-        $qrCells = $this->fallbackQrCells($session->qr_token ?? $attendanceLink);
+        $qrCells = $this->fallbackQrCells($attendanceLink);
 
         return view('livewire.lecturer.attendance.qr-session', compact('session', 'records', 'attendanceLink', 'summary', 'qrSvg', 'qrCells'))
             ->layout('layouts.user', ['title' => 'Điểm danh QR']);

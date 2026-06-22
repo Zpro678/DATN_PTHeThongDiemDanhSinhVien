@@ -3,12 +3,7 @@
     {{-- Header --}}
     <div class="mb-6 flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
         <div>
-            <div class="flex items-center gap-2 text-sm text-on-surface-variant mb-1">
-                <a href="{{ route('managed-classes') }}" class="hover:text-primary transition-colors">Lớp tôi quản lý</a>
-                <x-user.icon name="chevron-right" :size="14" />
-                <span class="text-on-surface font-semibold">{{ $class->name }}</span>
-            </div>
-            <h1 class="text-2xl font-bold text-on-surface">{{ $class->name }}</h1>
+            <h1 class="text-2xl font-bold text-on-surface uppercase">{{ $class->name }}</h1>
             <p class="mt-1 text-sm text-on-surface-variant">
                 Mã lớp: <span class="font-bold text-on-surface">{{ $class->code }}</span>
                 @if($class->semester)
@@ -73,7 +68,7 @@
         {{-- Tỉ lệ tiến độ --}}
         <div class="flex items-center gap-3 rounded-2xl bg-white p-4 shadow-sm ring-1 ring-outline-variant/20 transition-shadow hover:shadow-md">
             <div class="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-secondary/10 text-secondary">
-                <x-user.icon name="bar-chart-2" :size="20" />
+                <x-user.icon name="bar-chart" :size="20" />
             </div>
             <div>
                 <p class="text-[11px] font-bold uppercase tracking-wider text-on-surface-variant">Tiến độ</p>
@@ -136,7 +131,7 @@
 
 
             {{-- Thông tin lớp --}}
-            <div class="rounded-3xl bg-white p-6 shadow-sm ring-1 ring-outline-variant/20">
+            <div class="flex-1 rounded-3xl bg-white p-6 shadow-sm ring-1 ring-outline-variant/20">
                 <h3 class="mb-4 font-bold text-on-surface">Thông tin lớp học</h3>
                 <div class="flex flex-col gap-3 text-sm">
                     <div class="flex justify-between">
@@ -212,66 +207,67 @@
             </div>
 
             {{-- Buổi điểm danh gần đây --}}
-            <div class="rounded-3xl bg-white p-6 shadow-sm ring-1 ring-outline-variant/20">
+            <div class="flex flex-1 flex-col rounded-3xl bg-white p-6 shadow-sm ring-1 ring-outline-variant/20">
                 <div class="mb-4 flex items-center justify-between">
                     <h3 class="font-bold text-on-surface flex items-center gap-2">
                         <x-user.icon name="clock" :size="18" class="text-primary" />
-                        Buổi điểm danh gần đây
+                        Buổi điểm danh gần đây ({{ $class->sessions->count() }})
                     </h3>
-                    <a href="{{ route('lecturer.attendance.index', ['class_id' => $class->id]) }}" class="text-xs font-bold text-primary hover:underline">
+                    <a href="{{ route('lecturer.classes.attendance', $class->id) }}" class="text-sm font-bold text-primary transition-colors hover:text-primary/80">
                         Xem tất cả
                     </a>
                 </div>
 
                 @if($recentSessions->isEmpty())
-                    <div class="py-10 text-center">
-                        <div class="mx-auto mb-3 flex h-14 w-14 items-center justify-center rounded-full bg-surface-container-low">
-                            <x-user.icon name="calendar" :size="24" class="text-on-surface-variant" />
+                    <div class="flex flex-1 flex-col items-center justify-center rounded-2xl border-2 border-dashed border-outline-variant/20 bg-surface-container-lowest py-12 text-center">
+                        <div class="mb-4 flex h-16 w-16 items-center justify-center rounded-full bg-primary/10 text-primary">
+                            <x-user.icon name="history" :size="32" />
                         </div>
-                        <p class="text-sm font-medium text-on-surface-variant">Chưa có buổi điểm danh nào.</p>
-                        <a href="{{ route('lecturer.attendance.create', ['class_id' => $class->id]) }}" class="mt-3 inline-flex items-center gap-1.5 text-sm font-bold text-primary hover:underline">
-                            <x-user.icon name="plus" :size="14" />
-                            Tạo buổi điểm danh đầu tiên
-                        </a>
+                        <h3 class="text-lg font-bold text-on-surface">Chưa có dữ liệu</h3>
+                        <p class="mt-1 text-sm text-on-surface-variant">Lớp học này chưa có buổi điểm danh nào.</p>
                     </div>
                 @else
-                    <div class="divide-y divide-outline-variant/10">
-                        @foreach($recentSessions as $session)
-                            @php
-                                $statusLabel = match($session->status) {
-                                    'active'  => 'Đang mở',
-                                    'closed'  => 'Đã đóng',
-                                    'pending' => 'Chờ mở',
-                                    default   => $session->status,
-                                };
-                                $statusClass = match($session->status) {
-                                    'active'  => 'bg-tertiary/10 text-tertiary',
-                                    'closed'  => 'bg-surface-container text-on-surface-variant',
-                                    'pending' => 'bg-primary/10 text-primary',
-                                    default   => 'bg-surface-container text-on-surface-variant',
-                                };
-                            @endphp
-                            <div class="flex items-center justify-between py-3 first:pt-0 last:pb-0">
-                                <div class="flex items-center gap-3">
-                                    <div class="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-surface-container-low">
-                                        <x-user.icon name="calendar" :size="16" class="text-on-surface-variant" />
-                                    </div>
-                                    <div>
-                                        <p class="text-sm font-semibold text-on-surface">{{ $session->name ?? 'Buổi học' }}</p>
-                                        <p class="text-xs text-on-surface-variant">
-                                            {{ $session->date ? $session->date->format('d/m/Y') : 'Chưa xác định' }}
-                                            @if($session->start_time)
-                                                · {{ $session->start_time }}
-                                            @endif
-                                        </p>
-                                    </div>
-                                </div>
-                                <span class="rounded-full px-2.5 py-1 text-[11px] font-bold {{ $statusClass }}">
-                                    {{ $statusLabel }}
-                                </span>
+                <div class="space-y-4">
+                    @foreach($recentSessions as $session)
+                    <div class="group flex flex-col justify-between gap-4 rounded-2xl border border-outline-variant/20 bg-white p-4 transition-all hover:border-primary/30 hover:shadow-md sm:flex-row sm:items-center">
+                        <div class="flex items-center gap-4">
+                            <div class="flex h-12 w-12 shrink-0 items-center justify-center rounded-full bg-primary/10 text-primary transition-colors group-hover:bg-primary group-hover:text-white">
+                                <x-user.icon name="{{ $session->qr_token ? 'qr-code' : 'check-square' }}" :size="20" />
                             </div>
-                        @endforeach
+                            <div>
+                                <h4 class="flex items-center gap-3 font-bold text-on-surface line-clamp-1">
+                                    <span>{{ $session->name }}</span>
+                                    <span class="text-[11px] font-medium text-on-surface-variant/70">{{ $session->created_at->format('H:i') }}</span>
+                                </h4>
+                                <div class="mt-1 flex items-center gap-2 text-xs text-on-surface-variant">
+                                    <span class="flex items-center gap-1"><x-user.icon name="calendar" :size="12" /> {{ $session->date->format('d/m/Y') }}</span>
+                                    <span>•</span>
+                                    <span class="flex items-center gap-1"><x-user.icon name="clock" :size="12" /> {{ \Carbon\Carbon::parse($session->start_time)->format('H:i') }} - {{ \Carbon\Carbon::parse($session->end_time)->format('H:i') }}</span>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="flex items-center justify-between gap-4 sm:justify-end">
+                            <div class="flex gap-3 text-[13px] sm:flex-col sm:items-end sm:gap-1">
+                                <div class="flex gap-2">
+                                    <span class="font-semibold text-success" title="Có mặt">{{ $session->present_count }} có mặt</span>
+                                    <span class="text-on-surface-variant/50">|</span>
+                                    <span class="font-semibold text-error" title="Vắng">{{ $session->absent_count }} vắng</span>
+                                </div>
+                                @if($session->late_count > 0 || $session->excused_count > 0)
+                                <div class="flex gap-2 text-on-surface-variant">
+                                    @if($session->late_count > 0)<span title="Trễ">{{ $session->late_count }} trễ</span>@endif
+                                    @if($session->late_count > 0 && $session->excused_count > 0)<span>•</span>@endif
+                                    @if($session->excused_count > 0)<span title="Có phép">{{ $session->excused_count }} phép</span>@endif
+                                </div>
+                                @endif
+                            </div>
+                            <a href="{{ $session->qr_token ? route('lecturer.attendance.qr.session', $session) : route('lecturer.attendance.manual.session', $session) }}" class="flex h-8 w-8 items-center justify-center rounded-full bg-surface-container text-on-surface-variant transition-colors hover:bg-primary hover:text-white" title="Chi tiết">
+                                <x-user.icon name="chevron-right" :size="16" />
+                            </a>
+                        </div>
                     </div>
+                    @endforeach
+                </div>
                 @endif
             </div>
         </div>
@@ -280,20 +276,20 @@
     {{-- Quick Actions --}}
     <div class="mt-6 grid grid-cols-2 gap-3 sm:grid-cols-4">
         {{-- Điểm danh QR --}}
-        <a href="{{ route('lecturer.attendance.qr.create', ['class_id' => $class->id]) }}" class="group flex flex-col items-center justify-center gap-3 rounded-3xl bg-white p-5 shadow-sm ring-1 ring-outline-variant/20 transition-all hover:-translate-y-1 hover:shadow-lg hover:ring-primary/20">
+        <button type="button" wire:click="checkBeforeAttendance('qr')" class="w-full group flex flex-col items-center justify-center gap-3 rounded-3xl bg-white p-5 shadow-sm ring-1 ring-outline-variant/20 transition-all hover:-translate-y-1 hover:shadow-lg hover:ring-primary/20">
             <div class="flex h-12 w-12 items-center justify-center rounded-full bg-primary/10 text-primary transition-colors group-hover:bg-primary group-hover:text-white">
                 <x-user.icon name="qr-code" :size="24" />
             </div>
             <span class="text-sm font-bold text-on-surface text-center">Điểm danh QR</span>
-        </a>
+        </button>
 
         {{-- Điểm danh Thủ công --}}
-        <a href="{{ route('lecturer.attendance.manual.create', ['class_id' => $class->id]) }}" class="group flex flex-col items-center justify-center gap-3 rounded-3xl bg-white p-5 shadow-sm ring-1 ring-outline-variant/20 transition-all hover:-translate-y-1 hover:shadow-lg hover:ring-tertiary/20">
+        <button type="button" wire:click="checkBeforeAttendance('manual')" class="w-full group flex flex-col items-center justify-center gap-3 rounded-3xl bg-white p-5 shadow-sm ring-1 ring-outline-variant/20 transition-all hover:-translate-y-1 hover:shadow-lg hover:ring-tertiary/20">
             <div class="flex h-12 w-12 items-center justify-center rounded-full bg-tertiary/10 text-tertiary transition-colors group-hover:bg-tertiary group-hover:text-white">
                 <x-user.icon name="check-square" :size="24" />
             </div>
             <span class="text-sm font-bold text-on-surface text-center">Điểm danh thủ công</span>
-        </a>
+        </button>
 
         {{-- Đơn xin nghỉ --}}
         <a href="{{ route('lecturer.leave-requests.index', ['class_id' => $class->id]) }}" class="group flex flex-col items-center justify-center gap-3 rounded-3xl bg-white p-5 shadow-sm ring-1 ring-outline-variant/20 transition-all hover:-translate-y-1 hover:shadow-lg">
@@ -320,18 +316,18 @@
     {{-- Import Modal --}}
     @if ($isImporting)
         <template x-teleport="body">
-            <div class="fixed inset-0 z-[100] flex items-center justify-center bg-slate-900/50 p-4 backdrop-blur-sm transition-all">
-                <form wire:submit="processImport" class="w-full max-w-[560px] rounded-[24px] bg-white p-8 shadow-2xl">
+            <div class="fixed inset-0 z-[110] flex items-center justify-center bg-slate-900/50 p-4 backdrop-blur-sm transition-all">
+                <form wire:submit="processImport" class="w-full max-w-[560px] rounded-[24px] bg-white p-6 shadow-2xl">
                 
                 {{-- Header --}}
-                <div class="mb-8 flex items-start justify-between">
+                <div class="mb-6 flex items-start justify-between">
                     <div class="flex gap-4">
                         <div class="flex h-12 w-12 shrink-0 items-center justify-center rounded-full bg-blue-100 text-blue-700">
                             <x-user.icon name="upload" :size="24" />
                         </div>
                         <div>
-                            <h3 class="text-[22px] font-bold text-slate-900">Import danh sách sinh viên</h3>
-                            <p class="mt-1.5 text-[15px] text-slate-600">
+                            <h3 class="text-[20px] font-bold text-slate-900">Import danh sách sinh viên</h3>
+                            <p class="mt-1 text-[14px] text-slate-600">
                                 Tải lên tệp Excel hoặc CSV chứa danh sách sinh viên. 
                                 <button type="button" wire:click="downloadTemplate" class="font-bold text-blue-700 hover:underline">Tải mẫu file.</button>
                             </p>
@@ -343,31 +339,34 @@
                 </div>
 
                 {{-- Form Content --}}
-                <div class="space-y-6">
+                <div class="space-y-4">
                     
                     {{-- File Dropzone --}}
-                    <label class="group relative flex cursor-pointer flex-col items-center justify-center rounded-[20px] border-2 border-dashed border-slate-200 bg-slate-50/50 py-12 transition-colors hover:border-blue-400 hover:bg-blue-50/50">
+                    <label class="group relative flex cursor-pointer flex-col items-center justify-center rounded-[20px] border-2 border-dashed border-slate-200 bg-slate-50/50 py-8 transition-colors hover:border-blue-400 hover:bg-blue-50/50">
                         <input type="file" wire:model="importFile" accept=".xlsx,.xls,.csv" class="peer absolute inset-0 h-full w-full cursor-pointer opacity-0">
                         
-                        <div class="flex flex-col items-center justify-center gap-4">
+                        <div class="flex flex-col items-center justify-center gap-3">
                             <div class="flex h-10 w-10 items-center justify-center rounded-full border-[2.5px] border-slate-700 text-slate-700 transition-colors group-hover:border-blue-600 group-hover:text-blue-600">
+                                <div wire:loading.remove wire:target="importFile">
+                                    <x-user.icon name="upload" :size="20" />
+                                </div>
                                 <div wire:loading wire:target="importFile">
                                     <x-user.icon name="loader" class="animate-spin" :size="20" />
                                 </div>
                             </div>
                             
                             <div class="text-center">
-                                <span class="text-[17px] font-bold text-slate-800 transition-colors group-hover:text-blue-700" wire:loading.remove wire:target="importFile">
+                                <span class="text-[16px] font-bold text-slate-800 transition-colors group-hover:text-blue-700" wire:loading.remove wire:target="importFile">
                                     @if($importFile)
                                         {{ $importFile->getClientOriginalName() }}
                                     @else
                                         Nhấn để chọn file
                                     @endif
                                 </span>
-                                <span class="text-[17px] font-bold text-blue-700" wire:loading wire:target="importFile">
+                                <span class="text-[16px] font-bold text-blue-700" wire:loading wire:target="importFile">
                                     Đang tải file...
                                 </span>
-                                <p class="mt-1.5 text-[15px] text-slate-500" wire:loading.remove wire:target="importFile">.xlsx, .xls, .csv</p>
+                                <p class="mt-1 text-[14px] text-slate-500" wire:loading.remove wire:target="importFile">.xlsx, .xls, .csv</p>
                             </div>
                         </div>
                     </label>
@@ -392,7 +391,7 @@
                 </div>
 
                 {{-- Footer Buttons --}}
-                <div class="mt-8 flex justify-end gap-4">
+                <div class="mt-6 flex justify-end gap-3">
                     <button type="button" wire:click="closeImport" class="rounded-full border border-slate-300 bg-white px-8 py-2.5 text-[15px] font-bold text-slate-700 transition-colors hover:bg-slate-50 hover:text-slate-900">
                         Hủy bỏ
                     </button>
@@ -405,4 +404,46 @@
             </div>
         </template>
     @endif
+    {{-- No Students Popup --}}
+    <template x-teleport="body">
+        <div x-data="{ showPopup: @entangle('showNoStudentsPopup') }">
+            <div x-show="showPopup" x-cloak class="fixed inset-0 z-[9999] flex items-center justify-center bg-slate-900/60 p-4 backdrop-blur-md"
+                 x-transition:enter="transition ease-out duration-300"
+                 x-transition:enter-start="opacity-0"
+                 x-transition:enter-end="opacity-100"
+                 x-transition:leave="transition ease-in duration-200"
+                 x-transition:leave-start="opacity-100"
+                 x-transition:leave-end="opacity-0">
+                 
+                <div x-show="showPopup" @click.away="showPopup = false"
+                     x-transition:enter="transition ease-out duration-300 delay-75"
+                     x-transition:enter-start="opacity-0 translate-y-8 scale-95"
+                     x-transition:enter-end="opacity-100 translate-y-0 scale-100"
+                     x-transition:leave="transition ease-in duration-200"
+                     class="relative w-full max-w-md overflow-hidden rounded-[24px] bg-white shadow-2xl">
+                    
+                    <button type="button" @click="showPopup = false" class="absolute right-4 top-4 rounded-full p-2 text-slate-400 transition-colors hover:bg-slate-100 hover:text-slate-600">
+                        <x-user.icon name="x" :size="20" />
+                    </button>
+                    
+                    <div class="p-6 text-center">
+                        <div class="mx-auto mb-3 flex h-12 w-12 items-center justify-center rounded-full bg-orange-100 text-orange-500">
+                            <x-user.icon name="alert-circle" :size="24" />
+                        </div>
+                        <h3 class="mb-1.5 text-lg font-bold text-slate-900">Lớp chưa có sinh viên</h3>
+                        <p class="mb-5 text-[14px] text-slate-600">Vui lòng import danh sách lớp trước khi tiến hành điểm danh.</p>
+                        
+                        <div class="flex flex-col gap-2 sm:flex-row sm:justify-center">
+                            <button type="button" @click="showPopup = false" class="rounded-full px-6 py-2.5 text-sm font-bold text-slate-600 transition-colors hover:bg-slate-100">
+                                Hủy bỏ
+                            </button>
+                            <button type="button" @click="showPopup = false; setTimeout(() => $wire.openImportFromPopup(), 200)" class="rounded-full bg-blue-600 px-6 py-2.5 text-sm font-bold text-white shadow-md shadow-blue-500/30 transition-all hover:bg-blue-700 hover:shadow-lg hover:shadow-blue-500/40">
+                                Tới trang import
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </template>
 </div>

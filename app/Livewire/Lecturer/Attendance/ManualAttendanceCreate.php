@@ -34,7 +34,13 @@ class ManualAttendanceCreate extends Component
     public function mount(): void
     {
         $this->date = now()->toDateString();
-        $this->classId = (string) ($this->availableClasses()->first()?->id ?? '');
+        
+        $preselectedClassId = request()->query('class_id');
+        if ($preselectedClassId && $this->availableClasses()->contains('id', $preselectedClassId)) {
+            $this->classId = (string) $preselectedClassId;
+        } else {
+            $this->classId = (string) ($this->availableClasses()->first()?->id ?? '');
+        }
     }
 
     public function save(): void
@@ -62,6 +68,12 @@ class ManualAttendanceCreate extends Component
         ]);
 
         $courseClass = $this->ownedClass((int) $validated['classId']);
+
+        if ($courseClass->members()->where('status', 'active')->count() === 0) {
+            $this->addError('classId', 'Vui lòng import danh sách lớp trước khi điểm danh.');
+            $this->redirectRoute('lecturer.classes.show', ['ma_user' => auth()->id(), 'courseClass' => $courseClass->id, 'openImport' => 1], navigate: true);
+            return;
+        }
 
         $session = ClassSession::query()->create([
             'class_id' => $courseClass->id,
