@@ -10,10 +10,13 @@ use Livewire\Component;
 
 class JoinClass extends Component
 {
+    // Mã lớp học mà sinh viên muốn tham gia
     public $class_code = '';
 
+    // Mã số sinh viên của người dùng
     public $student_code = '';
 
+    // Họ tên đầy đủ của sinh viên
     public $full_name = '';
 
     public function mount()

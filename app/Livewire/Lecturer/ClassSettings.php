@@ -9,34 +9,49 @@ use Livewire\Component;
 
 class ClassSettings extends Component
 {
+    // Model lưu trữ thông tin của lớp học hiện tại đang được chỉnh sửa
     public CourseClass $courseClass;
 
+    // Tên của lớp học
     public string $name = '';
 
+    // Mã lớp học (duy nhất để tham gia lớp)
     public string $code = '';
 
+    // Mã môn học
     public string $subjectCode = '';
 
+    // Học kỳ của lớp học
     public string $semester = '';
 
+    // Mô tả chi tiết về lớp học
     public string $description = '';
 
+    // Tổng số tiết/buổi học dự kiến
     public int $totalLessons = 45;
 
+    // Yêu cầu duyệt khi sinh viên tham gia
     public bool $requireApproval = false;
 
+    // Trạng thái của lớp học (active, archived, ended)
     public string $status = 'active';
 
+    // Trạng thái kích hoạt tính năng kiểm tra vị trí GPS khi điểm danh
     public bool $gpsEnabled = false;
 
+    // Vĩ độ (Latitude) lưu trữ tọa độ GPS trung tâm của lớp học
     public ?float $gpsLatitude = null;
 
+    // Kinh độ (Longitude) lưu trữ tọa độ GPS trung tâm của lớp học
     public ?float $gpsLongitude = null;
 
+    // Bán kính cho phép điểm danh (tính bằng mét), sinh viên phải đứng trong vùng này
     public int $gpsRadius = 50;
 
+    // Trạng thái hiển thị modal xác nhận xóa lớp học
     public bool $isConfirmingDelete = false;
 
+    // Trạng thái hiển thị modal xác nhận tạo lại mã lớp học mới
     public bool $isConfirmingRegenCode = false;
 
     public function mount(CourseClass $courseClass): void

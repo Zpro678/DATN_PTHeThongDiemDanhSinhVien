@@ -18,45 +18,64 @@ class StudentIndex extends Component
 {
     use WithFileUploads, WithPagination;
 
+    // Từ khóa tìm kiếm sinh viên
     public string $search = '';
 
+    // Bộ lọc theo ID lớp học ('all' là tất cả các lớp)
     #[Url(as: 'class_id')]
     public string $classFilter = 'all';
 
+    // Tham số hành động từ URL (ví dụ: 'import' để tự động mở modal)
     #[Url(as: 'action')]
     public string $action = '';
 
+    // Bộ lọc trạng thái sinh viên (đang học hoặc đã lưu trữ)
     public string $statusFilter = 'active';
 
+    // ID của thành viên lớp đang được chỉnh sửa
     public ?int $editingMemberId = null;
 
+    // Họ tên của sinh viên đang được chỉnh sửa
     public string $editingName = '';
 
+    // Mã số sinh viên đang được chỉnh sửa
     public string $editingStudentCode = '';
 
+    // Trạng thái của sinh viên đang được chỉnh sửa
     public string $editingStatus = 'active';
 
-    // Add Student state
+    // Trạng thái hiển thị form thêm sinh viên thủ công
     public bool $isAdding = false;
 
+    // Họ tên sinh viên khi thêm mới
     public string $newName = '';
 
+    // Mã số sinh viên khi thêm mới
     public string $newStudentCode = '';
 
+    // ID lớp học mà sinh viên sẽ được thêm vào
     public string $newClassId = '';
 
+    // ID sinh viên đang được chọn để lưu trữ (chờ xác nhận)
     public ?int $archivingMemberId = null;
 
-    // Import state
+    // Trạng thái hiển thị modal import Excel/CSV
     public bool $isImporting = false;
 
+    // ID lớp học mà danh sách sinh viên sẽ được import vào
     public string $importClassId = '';
 
+    // Đối tượng file Excel hoặc CSV được upload lên
     public $importFile;
 
+    // Mảng lưu trữ các lỗi xuất hiện trong quá trình import
     public array $importErrors = [];
 
+    // Số lượng sinh viên đã được import thành công
     public int $importSuccess = 0;
+
+    // Tự động thêm vào các buổi điểm danh đã có
+    public bool $syncAttendance = true;
 
     public function mount(): void
     {
@@ -165,7 +184,7 @@ class StudentIndex extends Component
 
     public function downloadTemplate()
     {
-        $csvContent = "Mã sinh viên,Họ và tên\nSV001,Nguyễn Văn A\nSV002,Trần Thị B";
+        $csvContent = "Mã sinh viên,Họ và tên,22/06,23/06\nSV001,Nguyễn Văn A,c,m\nSV002,Trần Thị B,v,c";
 
         return response()->streamDownload(function () use ($csvContent) {
             echo "\xEF\xBB\xBF".$csvContent; // UTF-8 BOM cho Excel
@@ -201,6 +220,28 @@ class StudentIndex extends Component
             $this->importErrors = $import->errors;
 
             if (empty($this->importErrors)) {
+                if ($this->syncAttendance && $this->importClassId) {
+                    $sessions = \App\Models\ClassSession::where('class_id', $this->importClassId)->get();
+                    $members = \App\Models\ClassMember::where('class_id', $this->importClassId)->where('status', 'active')->get();
+                    $recordsToInsert = [];
+                    $now = now();
+                    foreach ($sessions as $session) {
+                        foreach ($members as $member) {
+                            $recordsToInsert[] = [
+                                'class_session_id' => $session->id,
+                                'class_member_id' => $member->id,
+                                'status' => 'pending',
+                                'is_verified' => $member->user_id !== null,
+                                'created_at' => $now,
+                                'updated_at' => $now,
+                            ];
+                        }
+                    }
+                    if (!empty($recordsToInsert)) {
+                        \App\Models\AttendanceRecord::insertOrIgnore($recordsToInsert);
+                    }
+                }
+
                 $this->closeImport();
                 session()->flash('status', "Đã nhập thành công {$this->importSuccess} sinh viên vào lớp.");
             }

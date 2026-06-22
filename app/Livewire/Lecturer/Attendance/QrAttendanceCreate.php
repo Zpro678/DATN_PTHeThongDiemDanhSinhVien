@@ -28,20 +28,26 @@ class QrAttendanceCreate extends Component
 
     public int $durationMinutes = 15;
 
+    // Bán kính cho phép sinh viên điểm danh bằng GPS (tính bằng mét)
     public int $gpsRadius = 100;
 
     public int $startLesson = 1;
 
     public int $endLesson = 3;
 
+    // Thời gian làm mới mã QR (tính bằng giây)
     public int $qrRefreshRate = 10;
 
+    // Kích hoạt tính năng yêu cầu sinh viên bật GPS khi điểm danh
     public bool $gpsEnabled = true;
 
+    // Kích hoạt tính năng kiểm tra thiết bị của sinh viên (ngăn chặn dùng nhiều thiết bị)
     public bool $deviceCheck = true;
 
+    // Tọa độ vĩ độ (Latitude) điểm danh của giáo viên hoặc lớp học
     public ?float $gpsLatitude = null;
 
+    // Tọa độ kinh độ (Longitude) điểm danh của giáo viên hoặc lớp học
     public ?float $gpsLongitude = null;
 
     public ?int $editSessionId = null;

@@ -8,10 +8,13 @@ use Livewire\Component;
 
 class ManagedClasses extends Component
 {
+    // Bộ lọc theo trạng thái của lớp học (Đang hoạt động, Đã kết thúc, Tất cả)
     public string $statusFilter = 'Tất cả';
 
+    // Bộ lọc theo học kỳ của lớp học
     public string $semesterFilter = 'Tất cả học kỳ';
 
+    // Từ khóa tìm kiếm lớp học theo tên, mã lớp hoặc mã môn
     public string $search = '';
 
     public function setStatusFilter(string $status): void

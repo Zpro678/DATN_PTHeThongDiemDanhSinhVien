@@ -10,14 +10,19 @@ class ClassStatistics extends Component
 {
     public $class_id;
 
+    // Đối tượng chứa thông tin chi tiết của lớp học
     public $courseClass;
 
+    // Tổng số lượng sinh viên đang tham gia lớp học
     public $totalStudents;
 
+    // Tổng số buổi học đã diễn ra
     public $sessionCount;
 
+    // Tỷ lệ đi học chuyên cần trung bình của toàn lớp (%)
     public $averageAttendance;
 
+    // Danh sách các sinh viên đang bị cảnh báo chuyên cần (nghỉ học nhiều)
     public $warningStudents = [];
 
     public function mount($class_id)

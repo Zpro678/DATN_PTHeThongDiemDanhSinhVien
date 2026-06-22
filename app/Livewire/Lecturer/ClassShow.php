@@ -13,25 +13,36 @@ class ClassShow extends Component
 {
     use WithFileUploads;
 
+    // Đối tượng chứa thông tin chi tiết của lớp học hiện tại
     public CourseClass $class;
 
-    // Thống kê hiển thị trên trang
+    // Tổng số lượng sinh viên đang hoạt động trong lớp
     public int $studentsCount = 0;
 
+    // Tổng số buổi học dự kiến của lớp
     public int $sessionsCount = 0;
 
+    // Tổng số buổi học đã hoàn thành hoặc đang diễn ra
     public int $sessionsCompleted = 0;
 
+    // Số lượng đơn xin phép nghỉ đang chờ duyệt của lớp này
     public int $pendingLeaveRequests = 0;
 
     // Import state
+    // Trạng thái hiển thị modal import sinh viên
     public bool $isImporting = false;
 
+    // Đối tượng file Excel/CSV được chọn để import
     public $importFile;
 
+    // Mảng lưu trữ các lỗi phát sinh trong quá trình import
     public array $importErrors = [];
 
+    // Số lượng sinh viên đã được import thành công vào lớp
     public int $importSuccess = 0;
+
+    // Tự động thêm vào các buổi điểm danh đã có
+    public bool $syncAttendance = true;
 
     public function mount(CourseClass $courseClass): void
     {
@@ -75,7 +86,7 @@ class ClassShow extends Component
 
     public function downloadTemplate()
     {
-        $csvContent = "Mã sinh viên,Họ và tên\nSV001,Nguyễn Văn A\nSV002,Trần Thị B";
+        $csvContent = "Mã sinh viên,Họ và tên,22/06,23/06\nSV001,Nguyễn Văn A,c,m\nSV002,Trần Thị B,v,c";
 
         return response()->streamDownload(function () use ($csvContent) {
             echo "\xEF\xBB\xBF".$csvContent; // UTF-8 BOM cho Excel
@@ -106,6 +117,28 @@ class ClassShow extends Component
             $this->importErrors = $import->errors;
 
             if (empty($this->importErrors)) {
+                if ($this->syncAttendance) {
+                    $sessions = \App\Models\ClassSession::where('class_id', $this->class->id)->get();
+                    $members = \App\Models\ClassMember::where('class_id', $this->class->id)->where('status', 'active')->get();
+                    $recordsToInsert = [];
+                    $now = now();
+                    foreach ($sessions as $session) {
+                        foreach ($members as $member) {
+                            $recordsToInsert[] = [
+                                'class_session_id' => $session->id,
+                                'class_member_id' => $member->id,
+                                'status' => 'pending',
+                                'is_verified' => $member->user_id !== null,
+                                'created_at' => $now,
+                                'updated_at' => $now,
+                            ];
+                        }
+                    }
+                    if (!empty($recordsToInsert)) {
+                        \App\Models\AttendanceRecord::insertOrIgnore($recordsToInsert);
+                    }
+                }
+
                 $this->closeImport();
 
                 // Cập nhật lại số sinh viên

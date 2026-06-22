@@ -8,6 +8,7 @@ use Livewire\Component;
 
 class CreateClass extends Component
 {
+    // Tên của lớp học
     public string $name = '';
 
     // code không còn nhập tay — sinh tự động khi save hoặc khi nhập mã môn/học kỳ
@@ -16,14 +17,19 @@ class CreateClass extends Component
     // 4 số ngẫu nhiên được sinh ra khi load trang để ghép vào mã lớp
     public string $randomSuffix = '';
 
+    // Mã môn học của lớp
     public string $subjectCode = '';
 
+    // Học kỳ diễn ra lớp học (VD: HK1 2026)
     public string $semester = '';
 
+    // Mô tả thêm về lớp học
     public string $description = '';
 
+    // Tổng số tiết học/buổi học dự kiến của lớp
     public int $totalLessons = 45;
 
+    // Yêu cầu giảng viên duyệt khi sinh viên tham gia lớp bằng mã
     public bool $requireApproval = false;
 
     public function mount(): void

@@ -372,6 +372,11 @@
                         </div>
                     </label>
                     @error('importFile')<span class="mt-1 block text-center text-sm text-red-500">{{ $message }}</span>@enderror
+                    
+                    <div class="mt-4 flex items-center gap-2">
+                        <input type="checkbox" id="syncAttendanceShow" wire:model="syncAttendance" class="h-4 w-4 rounded border-slate-300 text-blue-600 focus:ring-blue-600">
+                        <label for="syncAttendanceShow" class="text-[15px] text-slate-700 font-medium">Tự động thêm vào các buổi điểm danh đã có</label>
+                    </div>
 
                     {{-- Error Summary --}}
                     @if(!empty($importErrors))
