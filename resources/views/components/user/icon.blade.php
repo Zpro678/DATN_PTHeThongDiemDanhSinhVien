@@ -63,6 +63,16 @@
             <path d="M19 12H5" />
             @break
 
+        @case('arrow-up-right')
+            <path d="M7 7h10v10" />
+            <path d="M7 17 17 7" />
+            @break
+
+        @case('arrow-down-right')
+            <path d="m7 7 10 10" />
+            <path d="M17 7v10H7" />
+            @break
+
         @case('arrow-right')
             <path d="M5 12h14" />
             <path d="m12 5 7 7-7 7" />
@@ -463,6 +473,22 @@
         @case('inbox')
             <polyline points="22 12 16 12 14 15 10 15 8 12 2 12" />
             <path d="M5.45 5.11 2 12v6a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2v-6l-3.45-6.89A2 2 0 0 0 16.76 4H7.24a2 2 0 0 0-1.79 1.11z" />
+            @break
+
+        @case('user-square')
+            <rect width="18" height="18" x="3" y="3" rx="2" />
+            <circle cx="12" cy="10" r="3" />
+            <path d="M7 21v-2a2 2 0 0 1 2-2h6a2 2 0 0 1 2 2v2" />
+            @break
+
+        @case('star')
+            <polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2" />
+            @break
+
+        @case('menu')
+            <line x1="4" x2="20" y1="12" y2="12" />
+            <line x1="4" x2="20" y1="6" y2="6" />
+            <line x1="4" x2="20" y1="18" y2="18" />
             @break
 
         @default

@@ -179,12 +179,14 @@ class AdminController extends Controller
         $this->ensureAdmin();
 
         $data = $request->validate([
-            'is_admin' => ['required', 'boolean'],
+            'name' => ['required', 'string', 'max:255'],
+            'email' => ['required', 'string', 'email', 'max:255', \Illuminate\Validation\Rule::unique('users')->ignore($user->id)],
+            'code' => ['nullable', 'string', 'max:50', \Illuminate\Validation\Rule::unique('users')->ignore($user->id)],
             'status' => ['required', 'in:active,blocked'],
         ]);
 
-        if ($user->id === auth()->id()) {
-            return back()->with('error', 'Bạn không thể tự thay đổi quyền hoặc trạng thái của chính mình.');
+        if ($user->id === auth()->id() && $data['status'] !== $user->status) {
+            return back()->with('error', 'Bạn không thể tự thay đổi trạng thái của chính mình.');
         }
 
         $user->update($data);
