@@ -89,13 +89,22 @@
         ['text' => 'Chưa có hoạt động gần đây', 'time' => 'Khi có điểm danh hoặc đơn nghỉ mới, hệ thống sẽ hiển thị tại đây.', 'icon' => 'activity', 'bg' => 'bg-primary'],
     ];
 
+    $studentDashboardStats = $studentDashboard['stats'] ?? [];
+    $studentJoinedCards = $studentDashboard['joined_cards'] ?? [];
+    $studentJoinedClassesCount = $studentDashboardStats['joined_classes'] ?? 0;
+    $studentAverageAttendance = $studentDashboardStats['attendance_percent'] ?? 100;
+    $studentAbsentLessons = $studentDashboardStats['absent_lessons'] ?? 0;
+    $studentWarningCount = $studentDashboardStats['warning_count'] ?? 0;
+    $studentPendingLeaveRequests = $studentDashboardStats['pending_leave_requests'] ?? 0;
+    $studentLatestAttendanceLabel = $studentDashboardStats['latest_attendance_label'] ?? 'Chưa có';
+
     $studentStats = [
-        ['label' => 'Lớp đang tham gia', 'value' => '3', 'icon' => 'users', 'color' => 'text-tertiary', 'bg' => 'bg-tertiary/10'],
-        ['label' => 'Chuyên cần trung bình', 'value' => '86%', 'icon' => 'check-circle', 'color' => 'text-primary', 'bg' => 'bg-primary/10'],
-        ['label' => 'Tổng tiết vắng', 'value' => '5', 'icon' => 'clock', 'color' => 'text-error', 'bg' => 'bg-error/10'],
-        ['label' => 'Cảnh báo chuyên cần', 'value' => '1', 'icon' => 'alert-triangle', 'color' => 'text-error', 'bg' => 'bg-error/10'],
-        ['label' => 'Đơn nghỉ đang chờ', 'value' => '2', 'icon' => 'file-text', 'color' => 'text-secondary', 'bg' => 'bg-secondary/10'],
-        ['label' => 'Buổi điểm danh gần nhất', 'value' => 'Hôm qua', 'icon' => 'calendar-check', 'color' => 'text-primary', 'bg' => 'bg-primary/10'],
+        ['label' => 'Lớp đang tham gia', 'value' => $studentJoinedClassesCount, 'icon' => 'users', 'color' => 'text-tertiary', 'bg' => 'bg-tertiary/10'],
+        ['label' => 'Chuyên cần trung bình', 'value' => "{$studentAverageAttendance}%", 'icon' => 'check-circle', 'color' => 'text-primary', 'bg' => 'bg-primary/10'],
+        ['label' => 'Tổng tiết vắng', 'value' => $studentAbsentLessons, 'icon' => 'clock', 'color' => 'text-error', 'bg' => 'bg-error/10'],
+        ['label' => 'Cảnh báo chuyên cần', 'value' => $studentWarningCount, 'icon' => 'alert-triangle', 'color' => 'text-error', 'bg' => 'bg-error/10'],
+        ['label' => 'Đơn nghỉ đang chờ', 'value' => $studentPendingLeaveRequests, 'icon' => 'file-text', 'color' => 'text-secondary', 'bg' => 'bg-secondary/10'],
+        ['label' => 'Buổi điểm danh gần nhất', 'value' => $studentLatestAttendanceLabel, 'icon' => 'calendar-check', 'color' => 'text-primary', 'bg' => 'bg-primary/10'],
     ];
 
     $studentActions = [
@@ -109,10 +118,7 @@
         ['label' => 'Hồ sơ cá nhân', 'icon' => 'user', 'color' => 'text-on-surface-variant', 'href' => route('profile.edit')],
     ];
 
-    $joinedCards = [
-        ['title' => 'Cơ sở dữ liệu', 'teacher' => 'Nguyễn Văn A', 'code' => 'QR-123', 'status' => 'Bình thường', 'statusClass' => 'bg-tertiary/10 text-tertiary', 'attendance' => '92', 'absent' => '3/45 tiết', 'bar' => 'bg-tertiary', 'color' => 'text-tertiary'],
-        ['title' => 'Thiết kế UI/UX', 'teacher' => 'Lê Thị B', 'code' => 'UI-401', 'status' => 'Cảnh báo nhẹ', 'statusClass' => 'bg-[#F59E0B]/10 text-[#F59E0B]', 'attendance' => '82', 'absent' => '8/45 tiết', 'bar' => 'bg-[#F59E0B]', 'color' => 'text-[#F59E0B]'],
-    ];
+    $joinedCards = $studentJoinedCards;
 @endphp
 
 <div class="mx-auto max-w-[1400px] p-4 pb-24 md:p-8 md:pb-12">
@@ -169,7 +175,7 @@
             <div class="relative flex h-full min-h-[350px] items-center justify-center overflow-hidden rounded-[2rem] border border-white bg-white/60 p-8 shadow-sm backdrop-blur-xl">
                 <div class="relative mt-4 flex h-64 w-64 items-center justify-center">
                     <div class="z-20 flex h-28 w-28 flex-col items-center justify-center rounded-full border-4 border-primary-container/20 bg-white shadow-xl">
-                        <span class="font-stat-lg text-3xl text-primary">86%</span>
+                        <span class="font-stat-lg text-3xl text-primary">{{ $studentAverageAttendance }}%</span>
                         <span class="mt-1 px-4 text-center text-[9px] font-bold uppercase leading-none text-outline">Chuyên cần TB</span>
                     </div>
                     <div class="orbit-animation absolute h-full w-full rounded-full border border-dashed border-outline-variant/40">
@@ -193,7 +199,7 @@
                         </div>
                         <div class="orbit-item absolute -left-8 top-1/2 -translate-y-1/2">
                             <div class="flex flex-col items-center rounded-2xl border border-outline-variant/10 bg-white px-4 py-2 shadow-md">
-                                <span class="text-lg font-bold leading-none text-tertiary">3</span>
+                                <span class="text-lg font-bold leading-none text-tertiary">{{ $studentJoinedClassesCount }}</span>
                                 <span class="mt-1 text-[9px] font-bold uppercase text-on-surface-variant">Lớp tham gia</span>
                             </div>
                         </div>
@@ -397,7 +403,7 @@
                 <div>
                     <h4 class="mb-4 text-[16px] font-bold text-on-surface">Lớp tôi tham gia</h4>
                     <div class="grid grid-cols-1 gap-6 md:grid-cols-2 lg:grid-cols-3">
-                        @foreach ($joinedCards as $class)
+                        @forelse ($joinedCards as $class)
                             <article class="group relative flex flex-col overflow-hidden rounded-2xl bg-white p-5 shadow-sm ring-1 ring-outline-variant/20 transition-all duration-300 hover:-translate-y-1 hover:shadow-lg hover:ring-outline-variant/40">
                                 <div class="absolute inset-x-0 top-0 h-1 {{ $class['bar'] }}"></div>
                                 <div class="mb-4 flex items-start justify-between">
@@ -412,7 +418,7 @@
                                     <p class="mb-4 flex items-center gap-2 text-sm text-on-surface-variant">
                                         <span class="font-bold">{{ $class['code'] }}</span>
                                         <span class="h-1 w-1 rounded-full bg-outline-variant"></span>
-                                        <span>HK2 2025-2026</span>
+                                        <span>{{ $class['semester'] ?? 'Chưa cập nhật' }}</span>
                                     </p>
                                     <div class="mb-6 space-y-3 rounded-2xl border border-outline-variant/20 bg-surface-container-low p-4">
                                         <div class="flex justify-between text-sm text-on-surface">
@@ -441,7 +447,18 @@
                                     </div>
                                 </div>
                             </article>
-                        @endforeach
+                        @empty
+                            <div class="col-span-full rounded-2xl border border-dashed border-outline-variant/30 bg-white p-8 text-center">
+                                <div class="mx-auto mb-4 flex h-14 w-14 items-center justify-center rounded-full bg-tertiary/10 text-tertiary">
+                                    <x-user.icon name="book-open" :size="24" />
+                                </div>
+                                <h5 class="text-base font-bold text-on-surface">Chưa tham gia lớp nào</h5>
+                                <p class="mt-2 text-sm text-on-surface-variant">Khi bạn tham gia lớp, thông tin chuyên cần và số tiết vắng sẽ hiển thị tại đây.</p>
+                                <a href="{{ route('student.classes.join') }}" class="mt-4 inline-flex items-center justify-center rounded-xl bg-tertiary px-4 py-2 text-sm font-bold text-white shadow-sm transition-colors hover:bg-tertiary/90">
+                                    Tham gia lớp
+                                </a>
+                            </div>
+                        @endforelse
                     </div>
                 </div>
 

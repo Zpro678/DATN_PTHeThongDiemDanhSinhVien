@@ -1,8 +1,27 @@
-@props(['title' => null])
+@props(['title' => null, 'activeNav' => null])
 
 @php
     $userName = Auth::user()?->name ?? 'Nguyễn Văn A';
     $userRole = Auth::user()?->email ?? 'User';
+    $matchesActive = function ($activePattern) use ($activeNav): bool {
+        $patterns = is_array($activePattern) ? $activePattern : [$activePattern];
+
+        foreach ($patterns as $pattern) {
+            if ($activeNav) {
+                if (\Illuminate\Support\Str::is($pattern, $activeNav)) {
+                    return true;
+                }
+
+                continue;
+            }
+
+            if (request()->routeIs($pattern)) {
+                return true;
+            }
+        }
+
+        return false;
+    };
 
     $navData = [
         ['type' => 'link', 'label' => 'Tổng quan', 'icon' => 'layout-dashboard', 'route' => 'dashboard'],
@@ -37,7 +56,7 @@
     $mobileItems = [
         ['label' => 'Tổng quan', 'icon' => 'home', 'route' => 'dashboard', 'active' => 'dashboard'],
         ['label' => 'Chủ lớp', 'icon' => 'shield', 'route' => 'managed-classes', 'active' => ['managed-classes', 'lecturer.classes.*', 'lecturer.class.*', 'lecturer.attendance.*', 'lecturer.students.*', 'lecturer.leave-requests.*']],
-        ['label' => 'Học viên', 'icon' => 'user', 'route' => 'joined-classes', 'active' => ['joined-classes', 'student.classes.show']],
+        ['label' => 'Học viên', 'icon' => 'user', 'route' => 'joined-classes', 'active' => ['joined-classes', 'student.classes.*', 'student.attendance.*', 'student.leave-requests.*']],
         ['label' => 'Hồ sơ', 'icon' => 'user-circle', 'route' => 'profile.edit', 'active' => 'profile.*'],
     ];
 @endphp
@@ -78,7 +97,7 @@
                             @if($nav['type'] === 'link')
                                 @php
                                     $activePattern = $nav['active'] ?? ($nav['route'] ?? null);
-                                    $isActive = $activePattern ? request()->routeIs($activePattern) : false;
+                                    $isActive = $activePattern ? $matchesActive($activePattern) : false;
                                     $href = isset($nav['route']) ? route($nav['route']) : $nav['href'];
                                 @endphp
                                 <a
@@ -96,12 +115,7 @@
                                 @php
                                     $isGroupActive = false;
                                     if (isset($nav['activePattern'])) {
-                                        foreach ($nav['activePattern'] as $pattern) {
-                                            if (request()->routeIs($pattern)) {
-                                                $isGroupActive = true;
-                                                break;
-                                            }
-                                        }
+                                        $isGroupActive = $matchesActive($nav['activePattern']);
                                     }
                                 @endphp
                                 
@@ -118,7 +132,7 @@
                                         @foreach ($nav['items'] as $item)
                                             @php
                                                 $activePattern = $item['active'] ?? ($item['route'] ?? null);
-                                                $isActive = $activePattern ? request()->routeIs($activePattern) : false;
+                                                $isActive = $activePattern ? $matchesActive($activePattern) : false;
                                                 $href = isset($item['route']) ? route($item['route']) : $item['href'];
                                             @endphp
 
@@ -234,16 +248,16 @@
             <nav class="pb-safe fixed bottom-0 left-0 right-0 z-40 flex h-16 items-center justify-around border-t border-outline-variant/20 bg-surface/90 px-2 backdrop-blur-lg md:hidden">
                 <a href="{{ route($mobileItems[0]['route']) }}" @class([
                     'flex h-full w-full flex-col items-center justify-center transition-colors',
-                    'text-primary' => request()->routeIs($mobileItems[0]['active']),
-                    'text-on-surface-variant hover:text-primary' => ! request()->routeIs($mobileItems[0]['active']),
+                    'text-primary' => $matchesActive($mobileItems[0]['active']),
+                    'text-on-surface-variant hover:text-primary' => ! $matchesActive($mobileItems[0]['active']),
                 ])>
                     <x-user.icon :name="$mobileItems[0]['icon']" :size="20" />
                     <span class="mt-1 text-[10px] font-bold">{{ $mobileItems[0]['label'] }}</span>
                 </a>
                 <a href="{{ route($mobileItems[1]['route']) }}" @class([
                     'flex h-full w-full flex-col items-center justify-center transition-colors',
-                    'text-primary' => request()->routeIs($mobileItems[1]['active']),
-                    'text-on-surface-variant hover:text-primary' => ! request()->routeIs($mobileItems[1]['active']),
+                    'text-primary' => $matchesActive($mobileItems[1]['active']),
+                    'text-on-surface-variant hover:text-primary' => ! $matchesActive($mobileItems[1]['active']),
                 ])>
                     <x-user.icon :name="$mobileItems[1]['icon']" :size="20" />
                     <span class="mt-1 text-[10px] font-bold">{{ $mobileItems[1]['label'] }}</span>
@@ -253,16 +267,16 @@
 
                 <a href="{{ route($mobileItems[2]['route']) }}" @class([
                     'flex h-full w-full flex-col items-center justify-center transition-colors',
-                    'text-primary' => request()->routeIs($mobileItems[2]['active']),
-                    'text-on-surface-variant hover:text-primary' => ! request()->routeIs($mobileItems[2]['active']),
+                    'text-primary' => $matchesActive($mobileItems[2]['active']),
+                    'text-on-surface-variant hover:text-primary' => ! $matchesActive($mobileItems[2]['active']),
                 ])>
                     <x-user.icon :name="$mobileItems[2]['icon']" :size="20" />
                     <span class="mt-1 text-[10px] font-bold">{{ $mobileItems[2]['label'] }}</span>
                 </a>
                 <a href="{{ route($mobileItems[3]['route']) }}" @class([
                     'flex h-full w-full flex-col items-center justify-center transition-colors',
-                    'text-primary' => request()->routeIs($mobileItems[3]['active']),
-                    'text-on-surface-variant hover:text-primary' => ! request()->routeIs($mobileItems[3]['active']),
+                    'text-primary' => $matchesActive($mobileItems[3]['active']),
+                    'text-on-surface-variant hover:text-primary' => ! $matchesActive($mobileItems[3]['active']),
                 ])>
                     <x-user.icon :name="$mobileItems[3]['icon']" :size="20" />
                     <span class="mt-1 text-[10px] font-bold">{{ $mobileItems[3]['label'] }}</span>

@@ -5,6 +5,7 @@ namespace App\Livewire\User;
 use App\Models\CourseClass;
 use App\Services\DashboardStatisticService;
 use App\Services\LectureManageStudentService;
+use App\Services\StudentsService;
 use Illuminate\Contracts\View\View;
 use Livewire\Component;
 
@@ -23,6 +24,8 @@ class Dashboard extends Component
     public array $classes = [];
 
     public array $managedClassCards = [];
+
+    public array $studentDashboard = [];
 
     public $classId = null;
 
@@ -51,6 +54,9 @@ class Dashboard extends Component
             ->getOwnerOverview($userId, $classId);
 
         $this->managedClassCards = $this->loadManagedClassCards($userId);
+
+        $this->studentDashboard = app(StudentsService::class)
+            ->getDashboardForStudent($userId);
     }
 
     private function loadManagedClassCards(int $userId): array
