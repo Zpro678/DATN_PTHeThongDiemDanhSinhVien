@@ -14,7 +14,7 @@
             'items' => [
                 ['label' => 'Lớp tôi quản lý', 'icon' => 'book-open', 'route' => 'managed-classes', 'active' => ['managed-classes', 'lecturer.classes.*', 'lecturer.class.*', 'create-class']],
                 ['label' => 'Điểm danh', 'icon' => 'calendar-check', 'route' => 'lecturer.attendance.index', 'active' => 'lecturer.attendance.*'],
-                ['label' => 'Quản lý sinh viên', 'icon' => 'users', 'route' => 'lecturer.students.index', 'active' => 'lecturer.students.*'],
+                ['label' => 'Quản lý học viên', 'icon' => 'users', 'route' => 'lecturer.students.index', 'active' => 'lecturer.students.*'],
                 ['label' => 'Duyệt đơn xin nghỉ', 'icon' => 'file-text', 'route' => 'lecturer.leave-requests.index', 'active' => 'lecturer.leave-requests.*'],
             ],
         ],
@@ -167,10 +167,10 @@
                                 <x-user.icon name="plus" :size="16" />
                                 Học phần mới
                             </a>
-                            <a href="{{ route('joined-classes') }}" class="group flex items-center gap-2 rounded-full border border-outline-variant/20 bg-surface-container px-4 py-2 text-label-md font-bold text-on-surface-variant transition-all hover:bg-surface-container-highest">
+                            <button type="button" x-on:click="$dispatch('open-join-class-modal')" class="group flex items-center gap-2 rounded-full border border-outline-variant/20 bg-surface-container px-4 py-2 text-label-md font-bold text-on-surface-variant transition-all hover:bg-surface-container-highest">
                                 <x-user.icon name="log-in" :size="16" class="transition-colors group-hover:text-primary" />
                                 Tham gia lớp
-                            </a>
+                            </button>
                         </div>
 
                         <div class="flex items-center gap-1 md:ml-4 md:border-l md:border-outline-variant/30 md:pl-4">
@@ -296,12 +296,14 @@
                         <x-user.icon name="qr-code" :size="16" class="text-primary" />
                         Quét QR
                     </a>
-                    <a href="{{ route('joined-classes') }}" class="flex w-full items-center justify-center gap-2 rounded-full bg-white px-4 py-2 text-sm font-bold text-on-surface shadow-md transition-colors hover:bg-surface-container">
+                    <button type="button" x-on:click="$dispatch('open-join-class-modal')" class="flex w-full items-center justify-center gap-2 rounded-full bg-white px-4 py-2 text-sm font-bold text-on-surface shadow-md transition-colors hover:bg-surface-container">
                         <x-user.icon name="log-in" :size="16" class="text-on-surface-variant" />
                         Tham gia lớp
-                    </a>
+                    </button>
                 </div>
             </div>
         </div>
+        
+        <livewire:student.join-class />
     </body>
 </html>

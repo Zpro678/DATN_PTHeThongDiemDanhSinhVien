@@ -154,7 +154,7 @@
                     <!-- Stats Row -->
                     <div class="mt-4 flex gap-8">
                         <div>
-                            <p class="text-[9px] font-bold uppercase tracking-wider text-on-surface-variant">Sinh viên</p>
+                            <p class="text-[9px] font-bold uppercase tracking-wider text-on-surface-variant">Học viên</p>
                             <p class="mt-1 flex items-center gap-1.5">
                                 <x-user.icon name="users" class="text-primary" :size="16"/>
                                 <span class="text-xl font-black leading-none text-on-surface">{{ $class->students_count }}</span>

@@ -32,7 +32,7 @@
                 Phân bố trạng thái điểm danh
             </h2>
             <p class="mt-0.5 text-xs font-semibold text-slate-400">
-                Tỷ lệ các trạng thái điểm danh của sinh viên trên toàn hệ thống.
+                Tỷ lệ các trạng thái điểm danh của học viên trên toàn hệ thống.
             </p>
         </div>
 

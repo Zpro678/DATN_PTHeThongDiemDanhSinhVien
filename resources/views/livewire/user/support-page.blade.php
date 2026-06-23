@@ -138,12 +138,12 @@
                     {{-- FAQ 3 --}}
                     <div class="rounded-2xl border border-outline-variant/30 bg-surface-container-lowest transition-all hover:border-primary/30">
                         <button @click="active = active === 3 ? null : 3" class="flex w-full items-center justify-between p-4 text-left font-bold text-on-surface focus:outline-none">
-                            <span>Tôi là giảng viên, làm sao để thêm sinh viên vào lớp?</span>
+                            <span>Tôi là giảng viên, làm sao để thêm học viên vào lớp?</span>
                             <x-user.icon name="chevron-down" :size="20" class="text-on-surface-variant transition-transform duration-200" x-bind:class="active === 3 ? 'rotate-180 text-primary' : ''" />
                         </button>
                         <div x-show="active === 3" x-collapse>
                             <div class="p-4 pt-0 text-sm leading-relaxed text-on-surface-variant border-t border-outline-variant/10">
-                                Có hai cách: Bạn có thể đưa "Mã lớp" cho sinh viên tự vào tham gia, hoặc vào "Lớp học > Quản lý sinh viên > Import Excel" để thêm sinh viên hàng loạt vào lớp học của mình.
+                                Có hai cách: Bạn có thể đưa "Mã lớp" cho học viên tự vào tham gia, hoặc vào "Lớp học > Quản lý học viên > Import Excel" để thêm học viên hàng loạt vào lớp học của mình.
                             </div>
                         </div>
                     </div>

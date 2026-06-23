@@ -6,8 +6,8 @@
 
 <div class="mx-auto max-w-[1200px] space-y-6 p-4 pb-24 sm:p-8">
     <div class="flex items-center justify-between gap-4">
-        <div><h1 class="text-2xl font-bold text-slate-900">Chi tiết sinh viên</h1><p class="mt-1 text-sm text-slate-500">Hồ sơ và lịch sử chuyên cần trong lớp học.</p></div>
-        <a href="{{ route('lecturer.students.index') }}" class="inline-flex items-center gap-2 rounded-xl border border-slate-200 bg-white px-4 py-2.5 text-sm font-bold text-slate-600 hover:bg-slate-50"><x-user.icon name="users" :size="18" />Danh sách sinh viên</a>
+        <div><h1 class="text-2xl font-bold text-slate-900">Chi tiết học viên</h1><p class="mt-1 text-sm text-slate-500">Hồ sơ và lịch sử chuyên cần trong lớp học.</p></div>
+        <a href="{{ route('lecturer.students.index') }}" class="inline-flex items-center gap-2 rounded-xl border border-slate-200 bg-white px-4 py-2.5 text-sm font-bold text-slate-600 hover:bg-slate-50"><x-user.icon name="users" :size="18" />Danh sách học viên</a>
     </div>
 
     <section class="overflow-hidden rounded-3xl bg-gradient-to-br from-primary to-[#003184] p-7 text-white shadow-lg shadow-primary/20">

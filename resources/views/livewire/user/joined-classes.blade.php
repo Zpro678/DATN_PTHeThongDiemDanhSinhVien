@@ -11,10 +11,10 @@
             </h1>
             <p class="mt-2 text-sm text-slate-500">Danh sách các lớp bạn đang học và theo dõi điểm danh</p>
         </div>
-        <a href="{{ route('student.classes.join') }}" class="flex w-full items-center justify-center gap-2 rounded-xl bg-secondary px-6 py-3 font-bold text-white transition-all hover:bg-secondary/90 active:scale-95 md:w-auto">
+        <button type="button" x-on:click="$dispatch('open-join-class-modal')" class="flex w-full items-center justify-center gap-2 rounded-xl bg-secondary px-6 py-3 font-bold text-white transition-all hover:bg-secondary/90 active:scale-95 md:w-auto">
             <x-user.icon name="plus" />
             Tham gia lớp bằng mã
-        </a>
+        </button>
     </section>
 
     <section class="flex flex-col gap-4 lg:flex-row">

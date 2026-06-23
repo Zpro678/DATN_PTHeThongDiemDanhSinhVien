@@ -12,6 +12,7 @@ use Livewire\Attributes\Url;
 use Livewire\Component;
 use Livewire\WithFileUploads;
 use Livewire\WithPagination;
+use App\Exports\StudentsExport;
 use Maatwebsite\Excel\Facades\Excel;
 
 class StudentIndex extends Component
@@ -43,6 +44,16 @@ class StudentIndex extends Component
 
     // Trạng thái của sinh viên đang được chỉnh sửa
     public string $editingStatus = 'active';
+
+    // Thao tác với Modal Export
+    public bool $isExporting = false;
+    public string $exportClassId = 'all';
+    public string $exportFormula = '(c + m) / t * 100';
+    public string $selectedTemplate = '(c + m) / t * 100';
+    public bool $isCustomFormula = false;
+
+    // Biến cho các thao tác mảng
+    public bool $isConfirmingArchive = false;
 
     // Trạng thái hiển thị form thêm sinh viên thủ công
     public bool $isAdding = false;
@@ -93,6 +104,13 @@ class StudentIndex extends Component
     public function updatedClassFilter(): void
     {
         $this->resetPage();
+    }
+
+    public function updatedSelectedTemplate($value): void
+    {
+        if (!empty($value)) {
+            $this->exportFormula = $value;
+        }
     }
 
     public function setStatusFilter(string $status): void
@@ -319,6 +337,33 @@ class StudentIndex extends Component
         $member->update(['status' => 'active']);
 
         session()->flash('status', 'Sinh viên đã được khôi phục vào lớp.');
+    }
+
+    public function openExport()
+    {
+        $this->exportClassId = $this->classFilter;
+        $this->exportFormula = '(c + m) / t * 100';
+        $this->selectedTemplate = '(c + m) / t * 100';
+        $this->isCustomFormula = false;
+        $this->isExporting = true;
+    }
+
+    public function closeExport()
+    {
+        $this->isExporting = false;
+    }
+
+    public function exportExcel()
+    {
+        $formulaToUse = $this->isCustomFormula ? $this->exportFormula : $this->selectedTemplate;
+        
+        $fileName = 'danh_sach_sinh_vien_' . date('Ymd_His') . '.xlsx';
+        $this->isExporting = false;
+
+        return Excel::download(
+            new StudentsExport(auth()->id(), $this->exportClassId, $this->statusFilter, $this->search, $formulaToUse),
+            $fileName
+        );
     }
 
     private function ownedMember(int $memberId, bool $withTrashed = false): ClassMember

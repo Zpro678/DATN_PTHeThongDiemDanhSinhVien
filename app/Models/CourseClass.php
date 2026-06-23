@@ -20,6 +20,7 @@ class CourseClass extends Model
         'code', // Mã lớp học duy nhất.
         'name', // Tên lớp học.
         'description', // Mô tả môn học.
+        'late_threshold', // Ngưỡng thời gian trễ.
         'subject_code', // Mã môn học.
         'semester', // Học kỳ.
         'require_approval', // Bật/tắt yêu cầu duyệt khi xin vào lớp.

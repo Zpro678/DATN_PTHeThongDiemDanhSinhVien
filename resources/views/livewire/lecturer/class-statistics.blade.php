@@ -16,7 +16,7 @@
                 <x-user.icon name="users" :size="28" />
             </div>
             <div>
-                <p class="text-sm font-semibold text-on-surface-variant">Tổng sinh viên</p>
+                <p class="text-sm font-semibold text-on-surface-variant">Tổng học viên</p>
                 <h3 class="text-3xl font-bold text-on-surface leading-tight">{{ $totalStudents }}</h3>
             </div>
         </div>
@@ -49,7 +49,7 @@
         <div class="lg:col-span-1">
             <h4 class="mb-4 flex items-center gap-2 text-[16px] font-bold text-on-surface">
                 <x-user.icon name="alert-triangle" class="text-error" />
-                Sinh viên cần chú ý
+                Học viên cần chú ý
             </h4>
             <div class="rounded-3xl border border-outline-variant/10 bg-white p-5">
                 @if(count($warningStudents) > 0)
@@ -69,7 +69,7 @@
                     </div>
                 @else
                     <div class="py-8 text-center text-sm text-on-surface-variant">
-                        Không có sinh viên nào rơi vào mức cảnh báo.
+                        Không có học viên nào rơi vào mức cảnh báo.
                     </div>
                 @endif
             </div>

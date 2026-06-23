@@ -17,6 +17,12 @@ class JoinedClasses extends Component
         $this->statusFilter = $status;
     }
 
+    #[\Livewire\Attributes\On('class-joined')]
+    public function refreshClasses(): void
+    {
+        // Re-renders the component when a class is joined
+    }
+
     public function render(): View
     {
         $query = CourseClass::whereHas('members', function ($q) {

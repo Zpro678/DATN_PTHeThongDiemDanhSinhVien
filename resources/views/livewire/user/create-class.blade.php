@@ -134,10 +134,22 @@
                     </div>
 
                     <div class="grid grid-cols-1 gap-6 lg:grid-cols-2">
-                        <label class="space-y-2 lg:col-span-2">
+                        <label class="space-y-2">
                             <span class="block text-[13px] font-semibold text-slate-700">Tổng số tiết <span class="text-red-500">*</span></span>
                             <input wire:model.live.debounce.300ms="totalLessons" type="number" min="1" max="300" class="h-12 w-full rounded-2xl border border-slate-200 bg-white px-4 text-sm font-semibold text-slate-800 outline-none transition-all hover:border-slate-300 focus:border-blue-500 focus:ring-4 focus:ring-blue-500/10">
                             @error('totalLessons') <span class="block text-xs font-medium text-red-600">{{ $message }}</span> @enderror
+                        </label>
+
+                        <label class="space-y-2">
+                            <span class="block text-[13px] font-semibold text-slate-700">Ngưỡng đi muộn <span class="text-red-500">*</span></span>
+                            <select wire:model="lateThreshold" class="h-12 w-full rounded-2xl border border-slate-200 bg-white px-4 text-sm font-semibold text-slate-800 outline-none transition-all hover:border-slate-300 focus:border-blue-500 focus:ring-4 focus:ring-blue-500/10">
+                                <option value="5">5 phút</option>
+                                <option value="10">10 phút</option>
+                                <option value="15">15 phút</option>
+                                <option value="20">20 phút</option>
+                                <option value="30">30 phút</option>
+                            </select>
+                            @error('lateThreshold') <span class="block text-xs font-medium text-red-600">{{ $message }}</span> @enderror
                         </label>
                     </div>
 
@@ -222,7 +234,7 @@
                                     </div>
                                     <div>
                                         <p class="text-sm font-extrabold text-slate-950">{{ $requireApproval ? 'Có duyệt tham gia' : 'Tham gia trực tiếp' }}</p>
-                                        <p class="mt-0.5 text-xs text-slate-500">{{ $requireApproval ? 'Sinh viên cần được chủ lớp xác nhận.' : 'Sinh viên vào lớp ngay sau khi dùng mã lớp.' }}</p>
+                                        <p class="mt-0.5 text-xs text-slate-500">{{ $requireApproval ? 'Học viên cần được chủ lớp xác nhận.' : 'Học viên vào lớp ngay sau khi dùng mã lớp.' }}</p>
                                     </div>
                                 </div>
                             </div>
@@ -251,7 +263,7 @@
                             </div>
                             <div class="flex gap-3">
                                 <span class="mt-0.5 flex h-6 w-6 items-center justify-center rounded-full bg-blue-50 text-xs font-extrabold text-blue-600">3</span>
-                                <p class="text-sm leading-6 text-slate-600">Bật duyệt tham gia nếu lớp cần kiểm soát danh sách sinh viên trước.</p>
+                                <p class="text-sm leading-6 text-slate-600">Bật duyệt tham gia nếu lớp cần kiểm soát danh sách học viên trước.</p>
                             </div>
                         </div>
                     </section>

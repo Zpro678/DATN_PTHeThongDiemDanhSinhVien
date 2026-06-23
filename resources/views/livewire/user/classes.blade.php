@@ -1,11 +1,11 @@
 @php
     $actions = [
         ['label' => 'Tạo lớp học mới', 'icon' => 'plus-circle', 'href' => route('create-class')],
-        ['label' => 'Import sinh viên', 'icon' => 'upload', 'href' => route('lecturer.students.index')],
+        ['label' => 'Import học viên', 'icon' => 'upload', 'href' => route('lecturer.students.index')],
         ['label' => 'Tạo buổi điểm danh', 'icon' => 'calendar-plus', 'href' => route('lecturer.attendance.create')],
         ['label' => 'Điểm danh thủ công', 'icon' => 'edit', 'href' => route('lecturer.attendance.manual.create')],
         ['label' => 'Tạo QR điểm danh', 'icon' => 'qr-code', 'href' => route('lecturer.attendance.qr.create')],
-         ['label' => 'Quản lý sinh viên', 'icon' => 'users', 'href' => route('lecturer.students.index')], 
+         ['label' => 'Quản lý học viên', 'icon' => 'users', 'href' => route('lecturer.students.index')], 
     ];
 @endphp
 
@@ -84,7 +84,7 @@
                             <div class="flex justify-between text-on-surface-variant">
                                 <span class="flex items-center gap-2">
                                     <x-user.icon name="users" :size="16" />
-                                    <span class="font-label-md">{{ $class['students'] }} Sinh viên</span>
+                                    <span class="font-label-md">{{ $class['students'] }} Học viên</span>
                                 </span>
                                 <span class="font-label-md font-bold text-primary">{{ $class['attendance'] }}%</span>
                             </div>

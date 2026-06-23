@@ -19,6 +19,7 @@ class ClassMember extends Model
         'class_id', // ID của lớp học.
         'student_code', // MSSV thực tế do chủ lớp import.
         'full_name', // Họ tên sinh viên trong lớp.
+        'email', // Email sinh viên
         'user_id', // ID tài khoản liên kết khi sinh viên đăng nhập.
         'status', // Trạng thái thành viên active/dropped.
     ];

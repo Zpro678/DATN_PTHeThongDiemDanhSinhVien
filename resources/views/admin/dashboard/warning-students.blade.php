@@ -7,7 +7,7 @@
                 </div>
                 <div>
                     <h2 class="text-base font-extrabold tracking-tight text-slate-900">
-                        Cảnh báo sinh viên vắng nhiều
+                        Cảnh báo học viên vắng nhiều
                     </h2>
                     <p class="mt-0.5 text-xs font-semibold text-slate-400">
                         Danh sách những bạn có tỷ lệ đi học thấp hơn 80%.
@@ -59,7 +59,7 @@
                             <td class="whitespace-nowrap px-4 py-3.5 text-right">
                                 <button
                                     type="button"
-                                    onclick="alert('Chi tiết cảnh báo sinh viên: {{ $item['name'] }}\nThông báo nhắc nhở tự động đã được chuyển qua SMS/Email công tác.')"
+                                    onclick="alert('Chi tiết cảnh báo học viên: {{ $item['name'] }}\nThông báo nhắc nhở tự động đã được chuyển qua SMS/Email công tác.')"
                                     class="inline-flex items-center gap-1 text-xs font-bold text-blue-600 hover:text-blue-700 hover:underline"
                                 >
                                     <span>Xem</span>
@@ -69,7 +69,7 @@
                         </tr>
                     @empty
                         <tr>
-                            <td colspan="7" class="px-4 py-8 text-center text-slate-500">Không có sinh viên nào bị cảnh báo.</td>
+                            <td colspan="7" class="px-4 py-8 text-center text-slate-500">Không có học viên nào bị cảnh báo.</td>
                         </tr>
                     @endforelse
                 </tbody>

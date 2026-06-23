@@ -62,7 +62,7 @@
                                     <input type="number" value="20" class="w-full rounded-xl border border-slate-200 bg-slate-50 px-4 py-2.5 text-slate-900 transition-colors focus:border-blue-500 focus:ring-2 focus:ring-blue-500">
                                     <span class="absolute right-4 top-3 text-sm font-medium text-slate-400">%</span>
                                 </div>
-                                <p class="text-xs text-slate-500">Sinh viên nghỉ quá tỷ lệ này sẽ bị gắn cờ đỏ cảnh báo.</p>
+                                <p class="text-xs text-slate-500">Học viên nghỉ quá tỷ lệ này sẽ bị gắn cờ đỏ cảnh báo.</p>
                             </div>
 
                             <div class="space-y-2">
@@ -80,7 +80,7 @@
                                     <input type="number" value="50" class="w-full rounded-xl border border-slate-200 bg-slate-50 px-4 py-2.5 text-slate-900 transition-colors focus:border-blue-500 focus:ring-2 focus:ring-blue-500">
                                     <span class="absolute right-4 top-3 text-sm font-medium text-slate-400">m</span>
                                 </div>
-                                <p class="text-xs text-slate-500">Khoảng cách tối đa sinh viên được phép cách vị trí giảng viên.</p>
+                                <p class="text-xs text-slate-500">Khoảng cách tối đa học viên được phép cách vị trí giảng viên.</p>
                             </div>
 
                             <div class="space-y-2">
@@ -218,7 +218,7 @@
                             <div class="space-y-2">
                                 <label class="block text-sm font-semibold text-slate-700">Giới hạn dung lượng Import Excel (MB)</label>
                                 <input type="number" value="10" class="w-full rounded-xl border border-slate-200 bg-slate-50 px-4 py-2.5 text-slate-900 transition-colors focus:border-blue-500 focus:ring-2 focus:ring-blue-500 md:w-1/3">
-                                <p class="mt-1 text-xs text-slate-500">Dung lượng tối đa cho phép tải lên khi Import danh sách sinh viên.</p>
+                                <p class="mt-1 text-xs text-slate-500">Dung lượng tối đa cho phép tải lên khi Import danh sách học viên.</p>
                             </div>
                         </div>
                     </div>

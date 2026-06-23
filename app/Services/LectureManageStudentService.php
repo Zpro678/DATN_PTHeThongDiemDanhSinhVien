@@ -53,7 +53,7 @@ class LectureManageStudentService
                 $lateLessons = (int) $stats->late_lessons; // Số tiết sinh viên đi muộn.
                 $absentLessons = (int) $stats->absent_lessons; // Số tiết sinh viên vắng không phép.
                 $excusedLessons = (int) $stats->excused_lessons; // Số tiết sinh viên vắng có phép.
-                $attendedLessons = $presentLessons + $lateLessons; // Số tiết được tính là có tham gia học.
+                $attendedLessons = $presentLessons + $lateLessons + $absentLessons; // Tính theo công thức (c + m + v)
 
                 return [
                     $stats->id => [
@@ -64,8 +64,8 @@ class LectureManageStudentService
                         'excused_lessons' => $excusedLessons, // Tổng số tiết sinh viên vắng có phép.
                         'attended_lessons' => $attendedLessons, // Tổng số tiết có mặt + đi muộn.
                         'attendance_percent' => $studiedLessons > 0
-                            ? round(($attendedLessons / $studiedLessons) * 100, 2)
-                            : 0, // Phần trăm chuyên cần của sinh viên.
+                            ? round(($absentLessons / $studiedLessons) * 100, 2)
+                            : 0, // Phần trăm chuyên cần (vắng / tổng số tiết).
                     ],
                 ];
             })
@@ -89,7 +89,7 @@ class LectureManageStudentService
         $lateLessons = (int) $studentsStats->sum('late_lessons'); // Tổng số tiết đi muộn của tất cả sinh viên.
         $absentLessons = (int) $studentsStats->sum('absent_lessons'); // Tổng số tiết vắng không phép của tất cả sinh viên.
         $excusedLessons = (int) $studentsStats->sum('excused_lessons'); // Tổng số tiết vắng có phép của tất cả sinh viên.
-        $attendedLessons = $presentLessons + $lateLessons; // Tổng số tiết được tính là tham gia học.
+        $attendedLessons = $presentLessons + $lateLessons + $absentLessons; // Tính theo công thức (c + m + v)
 
         return [
             'total_students' => $memberIds->count(), // Tổng số sinh viên đang học trong phạm vi thống kê.
@@ -99,9 +99,12 @@ class LectureManageStudentService
             'absent_lessons' => $absentLessons, // Tổng số tiết vắng không phép của tất cả sinh viên.
             'excused_lessons' => $excusedLessons, // Tổng số tiết vắng có phép của tất cả sinh viên.
             'attended_lessons' => $attendedLessons, // Tổng số tiết có mặt + đi muộn.
+            'present_percent' => $studiedLessons > 0 ? round(($presentLessons / $studiedLessons) * 100, 2) : 0,
+            'late_percent' => $studiedLessons > 0 ? round(($lateLessons / $studiedLessons) * 100, 2) : 0,
+            'absent_percent' => $studiedLessons > 0 ? round(($absentLessons / $studiedLessons) * 100, 2) : 0,
             'attendance_percent' => $studiedLessons > 0
-                ? round(($attendedLessons / $studiedLessons) * 100, 2)
-                : 0, // Phần trăm chuyên cần tổng.
+                ? round(($absentLessons / $studiedLessons) * 100, 2)
+                : 0, // Phần trăm chuyên cần tổng (vắng / tổng số tiết).
         ];
     }
 }

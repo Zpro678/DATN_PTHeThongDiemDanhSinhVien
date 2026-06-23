@@ -29,6 +29,9 @@ class CreateClass extends Component
     // Tổng số tiết học/buổi học dự kiến của lớp
     public int $totalLessons = 45;
 
+    // Ngưỡng thời gian đi muộn (phút)
+    public int $lateThreshold = 15;
+
     // Yêu cầu giảng viên duyệt khi sinh viên tham gia lớp bằng mã
     public bool $requireApproval = false;
 
@@ -103,6 +106,7 @@ class CreateClass extends Component
             'semester' => ['nullable', 'string', 'max:50'],
             'description' => ['nullable', 'string', 'max:5000'],
             'totalLessons' => ['required', 'integer', 'min:1', 'max:300'],
+            'lateThreshold' => ['required', 'integer', 'in:5,10,15,20,30'],
             'requireApproval' => ['boolean'],
         ], [
             'name.required' => 'Vui lòng nhập tên lớp.',
@@ -119,6 +123,7 @@ class CreateClass extends Component
             'subject_code' => filled($this->subjectCode) ? strtoupper($this->subjectCode) : null,
             'semester' => $this->semester ?: null,
             'description' => $this->description ?: null,
+            'late_threshold' => $this->lateThreshold,
             'total_lessons' => $this->totalLessons,
             'require_approval' => $this->requireApproval,
             'status' => 'active',

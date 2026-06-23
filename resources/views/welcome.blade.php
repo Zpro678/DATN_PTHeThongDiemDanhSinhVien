@@ -3,8 +3,8 @@
 <head>
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
-    <title>AttendanceWeb — Hệ Thống Điểm Danh Sinh Viên</title>
-    <meta name="description" content="Hệ thống quản lý điểm danh thông minh dành cho giảng viên và sinh viên.">
+    <title>AttendanceWeb — Hệ Thống Điểm Danh Học Viên</title>
+    <meta name="description" content="Hệ thống quản lý điểm danh thông minh dành cho giảng viên và học viên.">
     
     <link rel="preconnect" href="https://fonts.bunny.net">
     <link href="https://fonts.bunny.net/css?family=inter:300,400,500,600,700,800,900&display=swap" rel="stylesheet" />
@@ -143,7 +143,7 @@
             </h1>
             
             <p class="text-lg text-slate-500 max-w-2xl mx-auto leading-relaxed font-normal">
-                Hệ thống quản lý điểm danh thông minh giúp giảng viên và sinh viên tiết kiệm thời gian, theo dõi tiến độ chuyên cần chính xác và tương tác dễ dàng trong mỗi buổi học.
+                Hệ thống quản lý điểm danh thông minh giúp giảng viên và học viên tiết kiệm thời gian, theo dõi tiến độ chuyên cần chính xác và tương tác dễ dàng trong mỗi buổi học.
             </p>
 
             <div class="flex flex-col sm:flex-row items-center justify-center gap-4 sm:gap-5 pt-8 w-full px-4 sm:px-0">

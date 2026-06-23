@@ -9,8 +9,9 @@ use Illuminate\Support\Carbon;
 use Illuminate\Support\Collection;
 use Maatwebsite\Excel\Concerns\ToCollection;
 use Maatwebsite\Excel\Concerns\WithStartRow;
+use Maatwebsite\Excel\Concerns\WithMultipleSheets;
 
-class StudentsImport implements ToCollection, WithStartRow
+class StudentsImport implements ToCollection, WithStartRow, WithMultipleSheets
 {
     protected int $classId;
 
@@ -23,6 +24,13 @@ class StudentsImport implements ToCollection, WithStartRow
         $this->classId = $classId;
     }
 
+    public function sheets(): array
+    {
+        return [
+            0 => $this, // Chỉ import Sheet đầu tiên
+        ];
+    }
+
     /**
      * Bỏ qua dòng tiêu đề
      */
@@ -33,20 +41,41 @@ class StudentsImport implements ToCollection, WithStartRow
 
     public function collection(Collection $rows)
     {
+        $hasData = false;
+        foreach ($rows as $r) {
+            $cells = $r instanceof \Illuminate\Support\Collection ? $r->toArray() : (array)$r;
+            foreach ($cells as $cell) {
+                if ($cell !== null && trim((string)$cell) !== '') {
+                    $hasData = true;
+                    break 2;
+                }
+            }
+        }
+        
+        if (!$hasData) {
+            return; // Bỏ qua sheet hoàn toàn rỗng
+        }
+
         $header = null;
         $dateHeaders = [];
+        $headerRowNumber = 1;
         
         // Tìm dòng tiêu đề (bỏ qua các dòng trống phía trên)
         foreach ($rows as $index => $row) {
-            $col0 = trim((string) ($row[0] ?? ''));
-            $col1 = trim((string) ($row[1] ?? ''));
+            $col0Str = mb_strtolower(trim((string) ($row[0] ?? '')));
+            $col1Str = mb_strtolower(trim((string) ($row[1] ?? '')));
             
             // Nếu dòng này có chứa các từ khóa quen thuộc, đây chính là dòng tiêu đề
             $isHeader = false;
-            $keywords = ['mã', 'mssv', 'định danh', 'id', 'student', 'họ', 'tên', 'name'];
+            // Bao gồm cả trường hợp có dấu, không dấu, viết tắt
+            $keywords = [
+                'mã', 'ma', 'mssv', 'mshv', 'mahv', 'định danh', 'dinh danh', 
+                'id', 'student', 'họ', 'ho', 'tên', 'ten', 'name'
+            ];
             foreach ($keywords as $keyword) {
-                if (mb_stripos($col0, $keyword) !== false || mb_stripos($col1, $keyword) !== false) {
+                if (str_contains($col0Str, $keyword) || str_contains($col1Str, $keyword)) {
                     $isHeader = true;
+                    $headerRowNumber = $index + 2; // +2 vì index bắt đầu từ 0 và startRow là 1
                     break;
                 }
             }
@@ -62,12 +91,20 @@ class StudentsImport implements ToCollection, WithStartRow
         }
 
         if (!$header) {
-            $this->errors[] = "Không tìm thấy dòng tiêu đề chứa 'Mã SV' hoặc 'Họ và tên'. Vui lòng kiểm tra lại cấu trúc file.";
+            $this->errors[] = "Không tìm thấy dòng tiêu đề chứa 'Mã SV' hoặc 'Họ và tên'. Vui lòng kiểm tra lại xem bạn có để thừa Sheet rỗng nào không, hoặc cột tiêu đề đã viết đúng chưa.";
             return;
         }
 
+        $emailColIndex = -1;
+
         // Map column indices to ClassSession IDs
         foreach ($header as $colIndex => $colValue) {
+            $colValueLower = mb_strtolower(trim((string) $colValue));
+            if (str_contains($colValueLower, 'email')) {
+                $emailColIndex = $colIndex;
+                continue;
+            }
+
             if ($colIndex < 2) continue;
             
             $colValue = trim((string) $colValue);
@@ -99,6 +136,7 @@ class StudentsImport implements ToCollection, WithStartRow
 
             $studentCode = trim((string) ($row[0] ?? ''));
             $fullName = trim((string) ($row[1] ?? ''));
+            $email = $emailColIndex !== -1 ? trim((string) ($row[$emailColIndex] ?? '')) : null;
 
             if (empty($studentCode) && empty($fullName)) {
                 continue; // Skip empty rows
@@ -122,21 +160,51 @@ class StudentsImport implements ToCollection, WithStartRow
                 ->where('student_code', strtoupper($studentCode))
                 ->first();
 
+            $user = null;
+            if ($email) {
+                $user = \App\Models\User::where('email', $email)->first();
+            }
+
             if ($member) {
                 // Đã tồn tại -> Cập nhật tên và khôi phục nếu đang bị lưu trữ
-                $member->update([
+                $updateData = [
                     'full_name' => $fullName,
                     'status' => 'active',
-                ]);
+                ];
+                if ($email) {
+                    $updateData['email'] = $email;
+                }
+                if ($user && is_null($member->user_id)) {
+                    $updateData['user_id'] = $user->id;
+                }
+                $member->update($updateData);
                 $member->restore();
             } else {
                 // Tạo mới
                 $member = ClassMember::create([
                     'class_id' => $this->classId,
                     'full_name' => $fullName,
+                    'email' => $email,
                     'student_code' => strtoupper($studentCode),
+                    'user_id' => $user ? $user->id : null,
                     'status' => 'active',
                 ]);
+            }
+
+            // Gửi email mời tạo tài khoản nếu học viên chưa có tài khoản
+            if ($email && !$user) {
+                $courseClass = \App\Models\CourseClass::find($this->classId);
+                if ($courseClass) {
+                    \Illuminate\Support\Facades\Mail::to($email)->send(
+                        new \App\Mail\StudentImportNotificationMail(
+                            $courseClass->name,
+                            $courseClass->code,
+                            strtoupper($studentCode),
+                            $fullName,
+                            $email
+                        )
+                    );
+                }
             }
             
             // Xử lý điểm danh
@@ -144,9 +212,19 @@ class StudentsImport implements ToCollection, WithStartRow
                 $statusChar = mb_strtolower(trim((string) ($row[$colIndex] ?? '')));
                 
                 $status = 'pending';
-                if ($statusChar === 'c') $status = 'present';
-                elseif ($statusChar === 'm') $status = 'late';
-                elseif ($statusChar === 'v') $status = 'absent';
+                if ($statusChar === 'c') {
+                    $status = 'present';
+                } elseif ($statusChar === 'm') {
+                    $status = 'late';
+                } elseif ($statusChar === 'v') {
+                    $status = 'absent';
+                } elseif ($statusChar === 'p') {
+                    $status = 'excused';
+                } elseif ($statusChar !== '') {
+                    $colName = trim((string) ($header[$colIndex] ?? "Cột $colIndex"));
+                    $this->errors[] = "Dòng {$actualRowNumber}, Cột '{$colName}': Điểm danh sai ('{$statusChar}'). Chỉ dùng c, m, v, p.";
+                    continue;
+                }
                 
                 if ($statusChar !== '') {
                     AttendanceRecord::updateOrCreate([

@@ -5,6 +5,7 @@ namespace App\Livewire\Lecturer;
 use App\Imports\StudentsImport;
 use App\Models\CourseClass;
 use App\Models\LeaveRequest;
+use Illuminate\Support\Str;
 use Livewire\Component;
 use Livewire\WithFileUploads;
 use Maatwebsite\Excel\Facades\Excel;
@@ -66,6 +67,11 @@ class ClassShow extends Component
 
     public bool $showNoStudentsPopup = false;
 
+    public bool $syncAttendance = false;
+
+    public bool $isEditingCode = false;
+    public string $newClassCode = '';
+
     public function openImportFromPopup(): void
     {
         $this->showNoStudentsPopup = false;
@@ -113,6 +119,43 @@ class ClassShow extends Component
         }
     }
 
+    public function toggleEditCode(): void
+    {
+        $this->isEditingCode = !$this->isEditingCode;
+        if ($this->isEditingCode) {
+            $this->newClassCode = $this->class->code;
+        } else {
+            $this->resetValidation('newClassCode');
+        }
+    }
+
+    public function updateClassCode(): void
+    {
+        $this->validate([
+            'newClassCode' => 'required|string|max:50|unique:classes,code,' . $this->class->id,
+        ], [
+            'newClassCode.required' => 'Mã lớp không được để trống.',
+            'newClassCode.unique' => 'Mã lớp này đã tồn tại trong hệ thống.',
+            'newClassCode.max' => 'Mã lớp không được vượt quá 50 ký tự.',
+        ]);
+
+        $this->class->update([
+            'code' => $this->newClassCode,
+        ]);
+
+        $this->isEditingCode = false;
+        session()->flash('status', 'Đã cập nhật mã lớp thành công.');
+    }
+
+    public function generateRandomCode(): void
+    {
+        do {
+            $code = strtoupper(Str::random(8));
+        } while (CourseClass::where('code', $code)->where('id', '!=', $this->class->id)->exists());
+
+        $this->newClassCode = $code;
+    }
+
     public function render()
     {
         return view('livewire.lecturer.class-show', [
@@ -132,13 +175,22 @@ class ClassShow extends Component
         $this->reset(['importFile', 'importErrors', 'importSuccess']);
     }
 
-    public function downloadTemplate()
+    public function downloadFullTemplate()
     {
-        $csvContent = "Mã sinh viên,Họ và tên,22/06,23/06\nSV001,Nguyễn Văn A,c,m\nSV002,Trần Thị B,v,c";
+        $csvContent = "Mã học viên,Họ và tên,Email,22/06,23/06\nHV001,Nguyễn Văn A,nva@email.com,c,m\nHV002,Trần Thị B,ttb@email.com,v,c";
 
         return response()->streamDownload(function () use ($csvContent) {
             echo "\xEF\xBB\xBF".$csvContent; // UTF-8 BOM cho Excel
-        }, 'Danh_sach_sinh_vien_mau.csv');
+        }, 'Danh_sach_hoc_vien_mau_day_du.csv');
+    }
+
+    public function downloadBasicTemplate()
+    {
+        $csvContent = "Mã học viên,Họ và tên,Email\nHV001,Nguyễn Văn A,nva@email.com\nHV002,Trần Thị B,ttb@email.com";
+
+        return response()->streamDownload(function () use ($csvContent) {
+            echo "\xEF\xBB\xBF".$csvContent; // UTF-8 BOM cho Excel
+        }, 'Danh_sach_hoc_vien_mau_co_ban.csv');
     }
 
     public function processImport(): void

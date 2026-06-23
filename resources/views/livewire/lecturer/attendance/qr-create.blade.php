@@ -151,7 +151,7 @@
                                             <span class="min-w-0">
                                                 <span class="block truncate text-sm font-extrabold">{{ $courseClass['label'] }}</span>
                                                 <span class="mt-0.5 block truncate text-xs font-semibold text-slate-400">
-                                                    {{ $courseClass['semester'] }} · {{ number_format($courseClass['members_count']) }} sinh viên
+                                                    {{ $courseClass['semester'] }} · {{ number_format($courseClass['members_count']) }} học viên
                                                 </span>
                                             </span>
 
@@ -436,7 +436,7 @@
 
                     <div class="grid grid-cols-2 gap-4">
                         <div class="rounded-2xl border border-slate-200 bg-slate-50 p-5">
-                            <p class="text-xs font-extrabold uppercase tracking-widest text-slate-500">Sinh viên</p>
+                            <p class="text-xs font-extrabold uppercase tracking-widest text-slate-500">Học viên</p>
                             <p class="mt-2 text-3xl font-black text-slate-900" x-text="selectedClass.members_count || @js($studentCount)"></p>
                         </div>
 

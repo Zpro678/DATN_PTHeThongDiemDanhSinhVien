@@ -122,7 +122,7 @@
                                             <span class="min-w-0">
                                                 <span class="block truncate text-sm font-bold">{{ $classOption['label'] }}</span>
                                                 <span class="mt-0.5 block truncate text-xs font-medium text-slate-400">
-                                                    {{ $classOption['subject_code'] ?: 'Chưa có mã môn' }} • {{ $classOption['members_count'] }} sinh viên
+                                                    {{ $classOption['subject_code'] ?: 'Chưa có mã môn' }} • {{ $classOption['members_count'] }} học viên
                                                 </span>
                                             </span>
                                             <span class="h-2.5 w-2.5 shrink-0 rounded-full" :class="String(selectedClassId) === @js((string) $classOption['id']) ? 'bg-blue-500' : 'bg-transparent'"></span>
@@ -340,7 +340,7 @@
                                 <div>
                                     <h3 class="text-base font-bold text-amber-700">Mẹo rảnh tay!</h3>
                                     <p class="text-sm font-medium text-amber-800/90">
-                                        Sử dụng <strong class="font-bold text-amber-950">Điểm danh QR</strong> để sinh viên tự động điểm danh.
+                                        Sử dụng <strong class="font-bold text-amber-950">Điểm danh QR</strong> để học viên tự động điểm danh.
                                     </p>
                                 </div>
                             </div>

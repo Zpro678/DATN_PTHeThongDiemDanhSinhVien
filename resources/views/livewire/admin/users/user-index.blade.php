@@ -4,7 +4,7 @@
             <div>
                 <p class="text-[10px] font-bold uppercase tracking-[0.3em] text-slate-400">Accounts</p>
                 <h1 class="mt-1 text-2xl font-black text-slate-900">Quản lý Tài khoản</h1>
-                <p class="mt-1 text-sm text-slate-500">Danh sách tất cả người dùng trong hệ thống (Admin, Giảng viên, Sinh viên).</p>
+                <p class="mt-1 text-sm text-slate-500">Danh sách tất cả người dùng trong hệ thống (Admin, Giảng viên, Học viên).</p>
             </div>
             <div class="flex gap-3">
                 <button type="button" class="admin-soft-button inline-flex items-center rounded-xl border border-slate-200 bg-white px-4 py-2.5 text-sm font-bold text-slate-700 transition-colors hover:bg-slate-50">

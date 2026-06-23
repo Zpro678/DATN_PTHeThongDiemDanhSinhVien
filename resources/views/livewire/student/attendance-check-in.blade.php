@@ -86,7 +86,7 @@
                             Bạn chưa đăng nhập. Vui lòng nhập thông tin để điểm danh.
                         </div>
                         <div class="space-y-1.5">
-                            <label class="block text-sm font-black text-slate-700">Mã số sinh viên <span class="text-rose-500">*</span></label>
+                            <label class="block text-sm font-black text-slate-700">Mã số học viên <span class="text-rose-500">*</span></label>
                             <div class="relative">
                                 <x-user.icon name="credit-card" :size="20" class="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400" />
                                 <input type="text" wire:model="studentCode" class="w-full rounded-2xl border-slate-200 bg-slate-50 py-3.5 pl-12 pr-4 font-bold text-slate-900 transition focus:border-blue-500 focus:bg-white focus:ring-4 focus:ring-blue-500/10" placeholder="Nhập MSSV của bạn" required>

@@ -19,9 +19,25 @@ class JoinClass extends Component
     // Họ tên đầy đủ của sinh viên
     public $full_name = '';
 
+    public $showModal = false;
+
     public function mount()
     {
         $this->full_name = Auth::user()->name;
+    }
+
+    #[\Livewire\Attributes\On('open-join-class-modal')]
+    public function openModal()
+    {
+        $this->full_name = Auth::user()->name;
+        $this->showModal = true;
+    }
+
+    public function closeModal()
+    {
+        $this->showModal = false;
+        $this->reset(['class_code', 'student_code']);
+        $this->resetValidation();
     }
 
     public function submit()
@@ -42,34 +58,68 @@ class JoinClass extends Component
 
         $userId = Auth::id();
 
-        // Check if already a member
-        $isMember = ClassMember::where('class_id', $courseClass->id)
+        $existingMember = ClassMember::where('class_id', $courseClass->id)
             ->where(function ($query) use ($userId) {
                 $query->where('user_id', $userId)
                     ->orWhere('student_code', $this->student_code);
-            })->exists();
+            })->first();
 
-        if ($isMember) {
+        if ($existingMember) {
+            // Nếu học viên đã có trong danh sách (được import) nhưng chưa liên kết user_id
+            if (is_null($existingMember->user_id) && $existingMember->student_code === $this->student_code) {
+                $existingMember->update([
+                    'user_id' => $userId,
+                ]);
+                session()->flash('status', 'Đã liên kết tài khoản của bạn với danh sách học viên trong lớp!');
+                $this->reset(['class_code', 'student_code']);
+                $this->dispatch('class-joined');
+                return;
+            }
+
             $this->addError('class_code', 'Bạn đã là thành viên của lớp học này (hoặc mã sinh viên đã được sử dụng).');
-
             return;
         }
 
-        // Luôn thêm sinh viên vào lớp ngay lập tức (không cần chờ duyệt)
-        ClassMember::create([
-            'class_id' => $courseClass->id,
-            'user_id' => $userId,
-            'student_code' => $this->student_code,
-            'full_name' => $this->full_name,
-            'status' => 'active',
-        ]);
+        if ($courseClass->require_approval) {
+            $existingRequest = \App\Models\ClassJoinRequest::where('class_id', $courseClass->id)
+                ->where('user_id', $userId)
+                ->where('status', 'pending')
+                ->first();
 
-        session()->flash('status', 'Bạn đã tham gia lớp học thành công!');
+            if ($existingRequest) {
+                session()->flash('status', 'Bạn đã gửi yêu cầu tham gia lớp này rồi, vui lòng chờ giảng viên phê duyệt.');
+                $this->reset(['class_code', 'student_code']);
+                return;
+            }
+
+            \App\Models\ClassJoinRequest::create([
+                'class_id' => $courseClass->id,
+                'user_id' => $userId,
+                'student_code' => $this->student_code,
+                'full_name' => $this->full_name,
+                'status' => 'pending',
+            ]);
+
+            session()->flash('status', 'Yêu cầu tham gia lớp của bạn đã được gửi và đang chờ giảng viên phê duyệt!');
+        } else {
+            // Thêm sinh viên vào lớp ngay lập tức
+            ClassMember::create([
+                'class_id' => $courseClass->id,
+                'user_id' => $userId,
+                'student_code' => $this->student_code,
+                'full_name' => $this->full_name,
+                'status' => 'active',
+            ]);
+
+            session()->flash('status', 'Bạn đã tham gia lớp học thành công!');
+            $this->dispatch('class-joined');
+        }
+
         $this->reset(['class_code', 'student_code']);
     }
 
     public function render(): View
     {
-        return view('livewire.student.join-class')->layout('layouts.user', ['title' => 'Tham gia lớp']);
+        return view('livewire.student.join-class');
     }
 }

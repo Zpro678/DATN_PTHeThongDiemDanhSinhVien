@@ -1,6 +1,6 @@
 <div class="admin-grid-equal grid grid-cols-1 gap-5 sm:grid-cols-2 xl:grid-cols-4">
     <x-stats-card
-        title="Tổng Sinh Viên"
+        title="Tổng Học Viên"
         value="{{ number_format($totalStudents) }}"
         change=""
         :isPositive="true"

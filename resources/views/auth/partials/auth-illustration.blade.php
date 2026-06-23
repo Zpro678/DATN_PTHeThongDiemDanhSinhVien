@@ -32,7 +32,7 @@
             <h1 class="text-4xl font-extrabold tracking-tight text-slate-100 leading-tight mb-3 text-center">
                 Hệ Thống Quản Lý <br />
                 <span class="bg-gradient-to-r from-blue-400 via-indigo-400 to-emerald-400 bg-clip-text text-transparent">
-                    Điểm Danh Sinh Viên
+                    Điểm Danh Học Viên
                 </span>
             </h1>
 
@@ -63,7 +63,7 @@
                             Xác thực định vị GPS
                             <i data-lucide="check-circle-2" class="w-4 h-4 text-emerald-500 shrink-0"></i>
                         </h3>
-                        <p class="text-xs text-slate-400 mt-1 leading-normal">Đảm bảo sinh viên thực sự có mặt tại phòng học chỉ định.</p>
+                        <p class="text-xs text-slate-400 mt-1 leading-normal">Đảm bảo học viên thực sự có mặt tại phòng học chỉ định.</p>
                     </div>
                 </div>
 
@@ -86,10 +86,10 @@
                     </div>
                     <div>
                         <h3 class="text-sm font-bold text-slate-200 flex items-center gap-1.5">
-                            Cảnh báo sinh viên nguy cơ
+                            Cảnh báo học viên nguy cơ
                             <i data-lucide="check-circle-2" class="w-4 h-4 text-emerald-500 shrink-0"></i>
                         </h3>
-                        <p class="text-xs text-slate-400 mt-1 leading-normal">Phát hiện sớm sinh viên vắng nhiều quá giới hạn cho phép.</p>
+                        <p class="text-xs text-slate-400 mt-1 leading-normal">Phát hiện sớm học viên vắng nhiều quá giới hạn cho phép.</p>
                     </div>
                 </div>
             </div>

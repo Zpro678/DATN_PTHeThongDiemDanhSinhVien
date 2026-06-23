@@ -14,7 +14,7 @@
                 <x-user.icon name="check-square" :size="36" />
             </div>
             <h2 class="relative z-10 text-xl font-extrabold text-slate-900">Điểm danh thủ công</h2>
-            <p class="relative z-10 mt-3 text-sm leading-relaxed text-slate-500">Phù hợp khi chủ lớp muốn gọi tên đánh dấu trực tiếp từng sinh viên hoặc chỉnh sửa trạng thái nhanh trên lớp.</p>
+            <p class="relative z-10 mt-3 text-sm leading-relaxed text-slate-500">Phù hợp khi chủ lớp muốn gọi tên đánh dấu trực tiếp từng học viên hoặc chỉnh sửa trạng thái nhanh trên lớp.</p>
         </a>
 
         <a href="{{ route('lecturer.attendance.qr.create') }}" class="group relative flex flex-col items-center overflow-hidden rounded-[2.5rem] border-2 border-blue-100 bg-white p-8 text-center shadow-sm transition-all duration-300 hover:-translate-y-2 hover:border-blue-400 hover:shadow-xl">
@@ -23,7 +23,7 @@
                 <x-user.icon name="qr-code" :size="36" />
             </div>
             <h2 class="relative z-10 text-xl font-extrabold text-slate-900">Điểm danh qua QR</h2>
-            <p class="relative z-10 mt-3 text-sm leading-relaxed text-slate-500">Tạo mã QR có thời hạn trên màn hình để sinh viên tự động check-in bằng thiết bị cá nhân của mình.</p>
+            <p class="relative z-10 mt-3 text-sm leading-relaxed text-slate-500">Tạo mã QR có thời hạn trên màn hình để học viên tự động check-in bằng thiết bị cá nhân của mình.</p>
         </a>
     </section>
 </div>

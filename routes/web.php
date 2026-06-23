@@ -90,7 +90,7 @@ Route::middleware(['auth', 'verified', 'user.route'])->group(function () {
         Route::get('/student/leave-requests/create', LeaveRequestCreate::class)->name('student.leave-requests.create');
         Route::get('/student/leave-requests/history', LeaveRequestHistory::class)->name('student.leave-requests.history');
         Route::get('/student/warnings', Warnings::class)->name('student.warnings');
-        Route::get('/student/join-class', JoinClass::class)->name('student.classes.join');
+
         Route::get('/student/classes/{courseClass}', ClassShow::class)->name('student.classes.show');
         Route::get('/lecturer/classes/{courseClass}/settings', ClassSettings::class)->name('lecturer.classes.settings');
         Route::get('/lecturer/classes/{courseClass}', App\Livewire\Lecturer\ClassShow::class)->name('lecturer.classes.show');

@@ -30,6 +30,9 @@ class ClassSettings extends Component
     // Tổng số tiết/buổi học dự kiến
     public int $totalLessons = 45;
 
+    // Ngưỡng thời gian đi muộn (phút)
+    public int $lateThreshold = 15;
+
     // Yêu cầu duyệt khi sinh viên tham gia
     public bool $requireApproval = false;
 
@@ -51,9 +54,6 @@ class ClassSettings extends Component
     // Trạng thái hiển thị modal xác nhận xóa lớp học
     public bool $isConfirmingDelete = false;
 
-    // Trạng thái hiển thị modal xác nhận tạo lại mã lớp học mới
-    public bool $isConfirmingRegenCode = false;
-
     public function mount(CourseClass $courseClass): void
     {
         if ($courseClass->owner_user_id !== auth()->id()) {
@@ -68,6 +68,7 @@ class ClassSettings extends Component
         $this->semester = $courseClass->semester ?? '';
         $this->description = $courseClass->description ?? '';
         $this->totalLessons = $courseClass->total_lessons;
+        $this->lateThreshold = $courseClass->late_threshold ?? 15;
         $this->requireApproval = $courseClass->require_approval;
         $this->status = $courseClass->status;
 
@@ -77,7 +78,7 @@ class ClassSettings extends Component
         $this->gpsRadius = $courseClass->gps_radius ?? 50;
     }
 
-    public function save(): void
+    public function save()
     {
         $validated = $this->validate([
             'name' => ['required', 'string', 'max:255'],
@@ -85,6 +86,7 @@ class ClassSettings extends Component
             'semester' => ['nullable', 'string', 'max:50'],
             'description' => ['nullable', 'string', 'max:5000'],
             'totalLessons' => ['required', 'integer', 'min:1', 'max:300'],
+            'lateThreshold' => ['required', 'integer', 'in:5,10,15,20,30'],
             'requireApproval' => ['boolean'],
             'status' => ['required', 'string', Rule::in(['active', 'archived', 'ended'])],
             'gpsEnabled' => ['boolean'],
@@ -106,6 +108,7 @@ class ClassSettings extends Component
             'subject_code' => filled($validated['subjectCode']) ? strtoupper($validated['subjectCode']) : null,
             'semester' => $validated['semester'] ?: null,
             'description' => $validated['description'] ?: null,
+            'late_threshold' => $validated['lateThreshold'],
             'total_lessons' => $validated['totalLessons'],
             'require_approval' => $validated['requireApproval'],
             'status' => $validated['status'],
@@ -116,41 +119,8 @@ class ClassSettings extends Component
 
         session()->flash('status', 'Cài đặt lớp học đã được cập nhật.');
 
-        $this->courseClass->refresh();
+        return $this->redirectRoute('lecturer.classes.show', ['ma_user' => auth()->id(), 'courseClass' => $this->courseClass->id], navigate: true);
     }
-    // ─── Đổi mã lớp ────────────────────────────────────────────────────────────
-
-    public function confirmRegenCode(): void
-    {
-        $this->isConfirmingRegenCode = true;
-    }
-
-    public function closeRegenCodeConfirm(): void
-    {
-        $this->isConfirmingRegenCode = false;
-    }
-
-    public function regenerateCode(): void
-    {
-        if (! $this->isConfirmingRegenCode) {
-            return;
-        }
-
-        $newCode = CourseClass::generateUniqueCode(
-            $this->courseClass->subject_code ?? '',
-            $this->courseClass->semester ?? '',
-            $this->courseClass->id,
-        );
-
-        $this->courseClass->update(['code' => $newCode]);
-        $this->courseClass->refresh();
-
-        $this->code = $this->courseClass->code;
-        $this->isConfirmingRegenCode = false;
-
-        session()->flash('status', 'Mã lớp đã được đổi thành công. Vui lòng thông báo mã mới cho sinh viên.');
-    }
-
     // ─── Xoá lớp ────────────────────────────────────────────────────────────────
 
     public function confirmDelete(): void

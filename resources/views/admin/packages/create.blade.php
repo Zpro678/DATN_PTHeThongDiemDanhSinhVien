@@ -90,7 +90,7 @@
 
                     <div class="admin-form-panel relative rounded-xl border p-5">
                         <div class="mb-4 flex items-center justify-between gap-4">
-                            <label class="text-sm font-bold text-slate-800">Sinh viên / Lớp tối đa</label>
+                            <label class="text-sm font-bold text-slate-800">Học viên / Lớp tối đa</label>
                             <label class="relative inline-flex cursor-pointer items-center">
                                 <input type="checkbox" x-model="isUnlimitedStudents" class="peer sr-only">
                                 <div class="peer h-6 w-11 rounded-full bg-slate-300 after:absolute after:left-[2px] after:top-[2px] after:h-5 after:w-5 after:rounded-full after:border after:border-slate-300 after:bg-white after:transition-all after:content-[''] peer-checked:bg-amber-500 peer-checked:after:translate-x-full peer-checked:after:border-white"></div>
@@ -113,8 +113,8 @@
                 </div>
                 <div class="divide-y divide-slate-100">
                     @foreach ([
-                        ['model' => 'hasGps', 'title' => 'Xác thực vị trí GPS', 'desc' => 'Cho phép giới hạn bán kính điểm danh của sinh viên quanh vị trí lớp học.'],
-                        ['model' => 'hasImport', 'title' => 'Import sinh viên từ Excel/CSV', 'desc' => 'Hỗ trợ upload file danh sách lớp thay vì nhập tay thủ công từng sinh viên.'],
+                        ['model' => 'hasGps', 'title' => 'Xác thực vị trí GPS', 'desc' => 'Cho phép giới hạn bán kính điểm danh của học viên quanh vị trí lớp học.'],
+                        ['model' => 'hasImport', 'title' => 'Import học viên từ Excel/CSV', 'desc' => 'Hỗ trợ upload file danh sách lớp thay vì nhập tay thủ công từng học viên.'],
                         ['model' => 'hasReports', 'title' => 'Báo cáo Thống kê Nâng cao', 'desc' => 'Biểu đồ chuyên cần trực quan, xuất báo cáo PDF cuối kỳ, cảnh báo tự động.'],
                         ['model' => 'hasApi', 'title' => 'Tích hợp API (SSO, LMS)', 'desc' => 'Tính năng cao cấp cho phép hệ thống gọi API đồng bộ dữ liệu với trường học.'],
                     ] as $feature)

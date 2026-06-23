@@ -7,7 +7,7 @@
 
     $adminStats = [
         ['label' => 'Lớp quản lý', 'value' => $totalClasses, 'icon' => 'book-open', 'color' => 'text-primary', 'bg' => 'bg-primary/10'],
-        ['label' => 'Tổng sinh viên', 'value' => $overview['total_students'] ?? 0, 'icon' => 'users', 'color' => 'text-tertiary', 'bg' => 'bg-tertiary/10'],
+        ['label' => 'Tổng học viên', 'value' => $overview['total_students'] ?? 0, 'icon' => 'users', 'color' => 'text-tertiary', 'bg' => 'bg-tertiary/10'],
         ['label' => 'Buổi điểm danh hôm nay', 'value' => $todayAttendanceSessions, 'icon' => 'calendar-check', 'color' => 'text-secondary', 'bg' => 'bg-secondary/10'],
         ['label' => 'Buổi chưa chốt sổ', 'value' => $unclosedAttendanceSessions, 'icon' => 'clock', 'color' => 'text-error', 'bg' => 'bg-error/10'],
         ['label' => 'SV gần/vượt ngưỡng', 'value' => $attendanceWarningStudentsCount, 'icon' => 'alert-triangle', 'color' => 'text-error', 'bg' => 'bg-error/10'],
@@ -25,10 +25,10 @@
         ['label' => 'Xuất báo cáo', 'icon' => 'upload', 'color' => 'text-tertiary', 'href' => '#'],
     ];
 
-    $alerts = collect($overview['attendance_warning_students'] ?? []) // Lấy danh sách sinh viên gần/vượt ngưỡng nghỉ không phép từ DashboardStatisticService.
+    $alerts = collect($overview['attendance_warning_students'] ?? []) // Lấy danh sách học viên gần/vượt ngưỡng nghỉ không phép từ DashboardStatisticService.
         ->map(function (array $student): array {
             $isExceeded = ($student['status'] ?? null) === 'exceeded'; // exceeded = đã nghỉ không phép từ 20% số tiết đã học trở lên.
-            $absencePercent = $student['unexcused_absence_percent'] ?? 0; // Phần trăm nghỉ không phép của sinh viên.
+            $absencePercent = $student['unexcused_absence_percent'] ?? 0; // Phần trăm nghỉ không phép của học viên.
 
             return [
                 'title' => $isExceeded
@@ -60,7 +60,7 @@
         ->when($pendingLeaveRequestsCount > 0, function ($items) use ($pendingLeaveRequestsCount) {
             return $items->push([
                 'title' => "{$pendingLeaveRequestsCount} đơn nghỉ đang chờ duyệt",
-                'meta' => 'Kiểm tra đơn để cập nhật trạng thái vắng có phép cho sinh viên.',
+                'meta' => 'Kiểm tra đơn để cập nhật trạng thái vắng có phép cho học viên.',
                 'icon' => 'file-text',
                 'color' => 'text-primary',
                 'bg' => 'bg-primary/10',
@@ -99,7 +99,7 @@
     ];
 
     $studentActions = [
-        ['label' => 'Tham gia lớp', 'icon' => 'log-in', 'color' => 'text-primary', 'href' => route('student.classes.join')],
+        ['label' => 'Tham gia lớp', 'icon' => 'log-in', 'color' => 'text-primary', 'action' => '$dispatch(\'open-join-class-modal\')'],
         ['label' => 'Quét QR', 'icon' => 'qr-code', 'color' => 'text-tertiary', 'href' => '#'],
         ['label' => 'Lịch sử điểm danh', 'icon' => 'history', 'color' => 'text-secondary', 'href' => route('student.attendance.history')],
         ['label' => 'Xem chuyên cần', 'icon' => 'check-circle', 'color' => 'text-primary', 'href' => route('student.attendance.stats')],
@@ -157,10 +157,10 @@
                         <x-user.icon name="plus" :size="18" />
                         Tạo lớp mới
                     </a>
-                    <a href="{{ route('student.classes.join') }}" class="flex items-center gap-2 text-sm font-bold text-on-surface-variant transition-colors hover:text-primary">
+                    <button type="button" x-on:click="$dispatch('open-join-class-modal')" class="flex items-center gap-2 text-sm font-bold text-on-surface-variant transition-colors hover:text-primary">
                         <x-user.icon name="key" :size="18" />
                         Tham gia lớp bằng mã
-                    </a>
+                    </button>
                 </div>
             </div>
         </div>
@@ -211,7 +211,7 @@
                         <x-user.icon name="book-open" class="text-primary" />
                         Không gian Chủ lớp
                     </h3>
-                    <p class="mt-1 text-body-md text-on-surface-variant">Quản lý lớp học, sinh viên, buổi điểm danh, báo cáo và cảnh báo chuyên cần.</p>
+                    <p class="mt-1 text-body-md text-on-surface-variant">Quản lý lớp học, học viên, buổi điểm danh, báo cáo và cảnh báo chuyên cần.</p>
                 </div>
 
                 <div class="grid grid-cols-1 gap-4 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-6">
@@ -272,7 +272,7 @@
                                         <div class="flex justify-between text-sm text-on-surface">
                                             <span class="flex items-center gap-2 font-bold">
                                                 <x-user.icon name="users" :size="16" class="text-on-surface-variant" />
-                                                {{ $class['students'] }} sinh viên
+                                                {{ $class['students'] }} học viên
                                             </span>
                                             <span class="font-bold text-on-surface-variant">{{ $class['lessons'] }} tiết</span>
                                         </div>
@@ -384,12 +384,21 @@
                     <h4 class="mb-4 text-[16px] font-bold text-on-surface">Thao tác nhanh</h4>
                     <div class="grid grid-cols-2 gap-3 md:grid-cols-4 lg:grid-cols-8">
                         @foreach ($studentActions as $action)
-                            <a href="{{ $action['href'] }}" class="group flex flex-col items-center justify-center rounded-2xl p-3 transition-all hover:bg-surface-container-lowest hover:shadow-sm">
-                                <div class="mb-3 flex h-12 w-12 items-center justify-center rounded-full bg-white text-on-surface-variant shadow-sm ring-1 ring-outline-variant/20 group-hover:text-tertiary transition-all group-hover:scale-105">
-                                    <x-user.icon :name="$action['icon']" :size="20" />
-                                </div>
-                                <span class="line-clamp-1 text-center text-xs font-semibold text-on-surface-variant group-hover:text-on-surface">{{ $action['label'] }}</span>
-                            </a>
+                            @if(isset($action['action']))
+                                <button type="button" x-on:click="{{ $action['action'] }}" class="group flex flex-col items-center justify-center rounded-2xl p-3 transition-all hover:bg-surface-container-lowest hover:shadow-sm">
+                                    <div class="mb-3 flex h-12 w-12 items-center justify-center rounded-full bg-white text-on-surface-variant shadow-sm ring-1 ring-outline-variant/20 group-hover:text-tertiary transition-all group-hover:scale-105">
+                                        <x-user.icon :name="$action['icon']" :size="20" />
+                                    </div>
+                                    <span class="line-clamp-1 text-center text-xs font-semibold text-on-surface-variant group-hover:text-on-surface">{{ $action['label'] }}</span>
+                                </button>
+                            @else
+                                <a href="{{ $action['href'] }}" class="group flex flex-col items-center justify-center rounded-2xl p-3 transition-all hover:bg-surface-container-lowest hover:shadow-sm">
+                                    <div class="mb-3 flex h-12 w-12 items-center justify-center rounded-full bg-white text-on-surface-variant shadow-sm ring-1 ring-outline-variant/20 group-hover:text-tertiary transition-all group-hover:scale-105">
+                                        <x-user.icon :name="$action['icon']" :size="20" />
+                                    </div>
+                                    <span class="line-clamp-1 text-center text-xs font-semibold text-on-surface-variant group-hover:text-on-surface">{{ $action['label'] }}</span>
+                                </a>
+                            @endif
                         @endforeach
                     </div>
                 </div>
@@ -514,55 +523,5 @@
         </div>
     @endif
 
-    @if ($showJoinModal)
-        <div class="fixed inset-0 z-[100] flex items-center justify-center bg-on-background/40 p-4 backdrop-blur-sm" wire:click.self="closeJoinModal">
-            <div class="flex w-full max-w-md animate-in zoom-in-95 flex-col overflow-hidden rounded-[2rem] bg-white shadow-2xl duration-200">
-                <div class="z-10 flex items-center justify-between border-b border-outline-variant/20 bg-white/90 p-6 backdrop-blur">
-                    <h3 class="flex items-center gap-2 text-xl font-bold text-on-surface">
-                        <x-user.icon name="key" class="text-tertiary" />
-                        Tham gia lớp học
-                    </h3>
-                    <button type="button" wire:click="closeJoinModal" class="rounded-full p-2 transition-colors hover:bg-surface-container">
-                        <x-user.icon name="x" :size="20" class="text-on-surface-variant" />
-                    </button>
-                </div>
-                <div class="p-6">
-                    @if ($joinStep === 'input')
-                        <div class="space-y-6">
-                            <label class="block">
-                                <span class="mb-2 block text-sm font-bold text-on-surface">Nhập mã lớp</span>
-                                <span class="relative block">
-                                    <x-user.icon name="search" :size="20" class="absolute left-4 top-1/2 -translate-y-1/2 text-outline" />
-                                    <input type="text" class="w-full rounded-xl border border-outline-variant/30 bg-surface-container-lowest py-4 pl-12 pr-4 font-mono text-lg font-bold uppercase outline-none transition-all focus:border-tertiary focus:ring-2 focus:ring-tertiary/20" placeholder="QR-123" maxlength="8">
-                                </span>
-                            </label>
-                            <button type="button" wire:click="previewJoinClass" class="w-full rounded-xl bg-tertiary py-4 font-bold text-white shadow-md shadow-tertiary/20 transition-all hover:bg-tertiary/90 active:scale-[0.98]">
-                                Kiểm tra mã lớp
-                            </button>
-                        </div>
-                    @else
-                        <div class="space-y-6">
-                            <div class="rounded-2xl border border-tertiary/20 bg-tertiary/5 p-5">
-                                <p class="mb-3 text-xs font-bold uppercase tracking-wider text-tertiary">Thông tin lớp học</p>
-                                <h4 class="mb-2 text-xl font-bold text-on-surface">Lập trình Web - Nhóm 2</h4>
-                                <div class="space-y-2 text-sm text-on-surface-variant">
-                                    <p class="flex justify-between"><span>Giảng viên:</span> <span class="font-bold text-on-surface">TS. Nguyễn Văn A</span></p>
-                                    <p class="flex justify-between"><span>Học kỳ:</span> <span class="font-bold text-on-surface">HK2 2025-2026</span></p>
-                                    <p class="flex justify-between"><span>Sỉ số hiện tại:</span> <span class="font-bold text-on-surface">45 sinh viên</span></p>
-                                </div>
-                            </div>
-                            <div class="flex items-center gap-2 rounded-xl border border-secondary/20 bg-secondary-container/20 p-3 text-sm text-secondary">
-                                <x-user.icon name="user" :size="16" />
-                                <span>Yêu cầu tham gia của bạn sẽ được gửi tới Chủ lớp để phê duyệt.</span>
-                            </div>
-                            <div class="flex justify-end gap-3">
-                                <button type="button" wire:click="backToJoinInput" class="w-full rounded-xl px-6 py-3 text-sm font-bold text-on-surface-variant transition-colors hover:bg-surface-container">Quay lại</button>
-                                <button type="button" wire:click="closeJoinModal" class="w-full rounded-xl bg-tertiary px-6 py-3 text-sm font-bold text-white shadow-md transition-colors hover:bg-tertiary/90">Xác nhận tham gia</button>
-                            </div>
-                        </div>
-                    @endif
-                </div>
-            </div>
-        </div>
-    @endif
+
 </div>

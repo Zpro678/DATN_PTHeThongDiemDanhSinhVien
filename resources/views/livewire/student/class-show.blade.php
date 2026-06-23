@@ -65,12 +65,12 @@
     <!-- Quick Actions / Stats -->
     <div class="mt-8 grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
         <!-- Điểm danh -->
-        <a href="{{ route('student.classes.join') }}" class="group flex flex-col items-center justify-center gap-3 rounded-3xl bg-white p-6 shadow-sm ring-1 ring-outline-variant/20 transition-all hover:-translate-y-1 hover:shadow-lg hover:ring-secondary/20">
+        <button type="button" onclick="alert('Tính năng quét QR đang được phát triển')" class="w-full group flex flex-col items-center justify-center gap-3 rounded-3xl bg-white p-6 shadow-sm ring-1 ring-outline-variant/20 transition-all hover:-translate-y-1 hover:shadow-lg hover:ring-secondary/20">
             <div class="flex h-12 w-12 items-center justify-center rounded-full bg-secondary/10 text-secondary transition-colors group-hover:bg-secondary group-hover:text-white">
                 <x-user.icon name="qr-code" :size="24" />
             </div>
             <span class="font-bold text-on-surface">Vào lớp (Điểm danh)</span>
-        </a>
+        </button>
 
         <!-- Lịch sử -->
         <a href="{{ route('student.attendance.history', ['classFilter' => $class->id]) }}" class="group flex flex-col items-center justify-center gap-3 rounded-3xl bg-white p-6 shadow-sm ring-1 ring-outline-variant/20 transition-all hover:-translate-y-1 hover:shadow-lg hover:ring-primary/20">

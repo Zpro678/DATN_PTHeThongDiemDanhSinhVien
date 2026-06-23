@@ -34,7 +34,7 @@
                 <x-user.icon name="settings" :size="16" />
                 Cài đặt
             </a>
-            <a href="{{ route('managed-classes') }}" class="inline-flex items-center gap-2 rounded-lg bg-primary px-4 py-2 text-sm font-medium text-on-primary hover:bg-primary/90 transition-colors">
+            <a href="{{ route('managed-classes', ['ma_user' => auth()->id()]) }}" class="inline-flex items-center gap-2 rounded-lg bg-primary px-4 py-2 text-sm font-medium text-on-primary hover:bg-primary/90 transition-colors">
                 <x-user.icon name="arrow-left" :size="16" />
                 Trở về
             </a>
@@ -43,13 +43,13 @@
 
     {{-- Thống kê tổng quan --}}
     <div class="mb-6 grid grid-cols-2 gap-3 sm:grid-cols-4">
-        {{-- Sinh viên --}}
+        {{-- Học viên --}}
         <div class="flex items-center gap-3 rounded-2xl bg-white p-4 shadow-sm ring-1 ring-outline-variant/20 transition-shadow hover:shadow-md">
             <div class="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-primary/10 text-primary">
                 <x-user.icon name="users" :size="20" />
             </div>
             <div>
-                <p class="text-[11px] font-bold uppercase tracking-wider text-on-surface-variant">Sinh viên</p>
+                <p class="text-[11px] font-bold uppercase tracking-wider text-on-surface-variant">Học viên</p>
                 <p class="text-xl font-black text-on-surface leading-tight">{{ $studentsCount }}</p>
             </div>
         </div>
@@ -98,6 +98,15 @@
                 <div class="flex items-center justify-between">
                     <h3 class="font-bold text-on-surface">Mã tham gia lớp</h3>
                     <div class="flex gap-1">
+                        @if(!$isEditingCode)
+                        <button
+                            type="button"
+                            class="rounded-full p-2 text-on-surface-variant hover:bg-surface-container hover:text-primary transition-colors"
+                            title="Đổi mã lớp"
+                            wire:click="toggleEditCode"
+                        >
+                            <x-user.icon name="edit" :size="18" />
+                        </button>
                         <button
                             type="button"
                             class="rounded-full p-2 text-on-surface-variant hover:bg-surface-container hover:text-primary transition-colors"
@@ -111,22 +120,33 @@
                                 <x-user.icon name="check-circle" :size="18" class="text-green-600" />
                             </template>
                         </button>
+                        @endif
                     </div>
                 </div>
-                <div class="mt-4 text-center">
-                    <div :class="copied ? 'bg-green-100 text-green-600' : 'bg-primary/10 text-primary'" class="rounded-2xl px-2 py-4 font-mono text-xl sm:text-2xl font-black tracking-wide whitespace-nowrap overflow-hidden text-ellipsis transition-colors" title="{{ $class->code }}">
-                        <span x-show="!copied">{{ $class->code }}</span>
-                        <span x-show="copied" x-cloak>Đã sao chép</span>
+                
+                @if($isEditingCode)
+                    <div class="mt-4">
+                        <div class="relative">
+                            <input type="text" wire:model="newClassCode" class="w-full rounded-xl border border-outline-variant py-2 pl-3 pr-10 text-center font-mono text-xl font-black uppercase tracking-wide text-on-surface focus:border-primary focus:ring-1 focus:ring-primary" placeholder="Nhập mã lớp mới">
+                            <button type="button" wire:click="generateRandomCode" class="absolute right-2 top-1/2 -translate-y-1/2 rounded-lg p-1.5 text-on-surface-variant hover:bg-surface-container hover:text-primary transition-colors" title="Tạo mã ngẫu nhiên">
+                                <x-user.icon name="refresh-cw" :size="18" />
+                            </button>
+                        </div>
+                        @error('newClassCode') <span class="mt-1 block text-center text-xs text-error">{{ $message }}</span> @enderror
+                        <div class="mt-3 flex justify-center gap-2">
+                            <button type="button" wire:click="toggleEditCode" class="rounded-lg bg-surface-container px-4 py-1.5 text-sm font-medium text-on-surface hover:bg-surface-container-high transition-colors">Hủy</button>
+                            <button type="button" wire:click="updateClassCode" class="rounded-lg bg-primary px-4 py-1.5 text-sm font-medium text-on-primary hover:bg-primary/90 transition-colors">Lưu</button>
+                        </div>
                     </div>
-                </div>
-                <p class="mt-3 text-center text-xs text-on-surface-variant">Gửi mã này cho sinh viên để tham gia lớp học.</p>
-                <a
-                    href="{{ route('lecturer.classes.settings', $class->id) }}"
-                    class="mt-3 flex items-center justify-center gap-1.5 rounded-xl border border-orange-200 bg-orange-50 px-4 py-2 text-xs font-bold text-orange-700 transition-colors hover:bg-orange-100"
-                >
-                    <x-user.icon name="refresh-cw" :size="13" />
-                    Đổi mã lớp
-                </a>
+                @else
+                    <div class="mt-4 text-center">
+                        <div :class="copied ? 'bg-green-100 text-green-600' : 'bg-primary/10 text-primary'" class="rounded-2xl px-2 py-4 font-mono text-xl sm:text-2xl font-black tracking-wide whitespace-nowrap overflow-hidden text-ellipsis transition-colors" title="{{ $class->code }}">
+                            <span x-show="!copied">{{ $class->code }}</span>
+                            <span x-show="copied" x-cloak>Đã sao chép</span>
+                        </div>
+                    </div>
+                    <p class="mt-3 text-center text-xs text-on-surface-variant">Gửi mã này cho học viên để tham gia lớp học.</p>
+                @endif
             </div>
 
 
@@ -183,15 +203,15 @@
 
         {{-- Main Content --}}
         <div class="flex flex-1 flex-col gap-6">
-            {{-- Quản lý sinh viên --}}
+            {{-- Quản lý học viên --}}
             <div class="flex flex-col gap-4 rounded-3xl bg-white p-6 shadow-sm ring-1 ring-outline-variant/20 sm:flex-row sm:items-center sm:justify-between">
                  <div class="flex items-center gap-4">
                      <div class="flex h-12 w-12 shrink-0 items-center justify-center rounded-full bg-secondary/10 text-secondary">
                          <x-user.icon name="users" :size="24" />
                      </div>
                      <div>
-                         <h3 class="font-bold text-on-surface">Danh sách sinh viên</h3>
-                         <p class="text-sm text-on-surface-variant">{{ $studentsCount }} sinh viên trong lớp. Quản lý và thêm sinh viên.</p>
+                         <h3 class="font-bold text-on-surface">Danh sách học viên</h3>
+                         <p class="text-sm text-on-surface-variant">{{ $studentsCount }} học viên trong lớp. Quản lý và thêm học viên.</p>
                      </div>
                  </div>
                  <div class="flex shrink-0 gap-2">
@@ -326,11 +346,21 @@
                             <x-user.icon name="upload" :size="24" />
                         </div>
                         <div>
-                            <h3 class="text-[20px] font-bold text-slate-900">Import danh sách sinh viên</h3>
-                            <p class="mt-1 text-[14px] text-slate-600">
-                                Tải lên tệp Excel hoặc CSV chứa danh sách sinh viên. 
-                                <button type="button" wire:click="downloadTemplate" class="font-bold text-blue-700 hover:underline">Tải mẫu file.</button>
-                            </p>
+                            <h3 class="text-[20px] font-bold text-slate-900">Import danh sách học viên</h3>
+                            <div class="mt-1 text-[14px] text-slate-600">
+                                <p>Tải lên tệp Excel hoặc CSV chứa danh sách học viên.</p>
+                                <div class="mt-2 flex flex-col gap-1">
+                                    <span class="font-medium">Tải file mẫu:</span>
+                                    <div class="flex flex-wrap gap-4">
+                                        <button type="button" wire:click="downloadFullTemplate" class="inline-flex items-center gap-1 font-bold text-blue-700 hover:underline">
+                                            <x-user.icon name="download" :size="14" /> Mẫu đầy đủ
+                                        </button>
+                                        <button type="button" wire:click="downloadBasicTemplate" class="inline-flex items-center gap-1 font-bold text-blue-700 hover:underline">
+                                            <x-user.icon name="download" :size="14" /> Mẫu cơ bản
+                                        </button>
+                                    </div>
+                                </div>
+                            </div>
                         </div>
                     </div>
                     <button type="button" wire:click="closeImport" class="mt-1 shrink-0 rounded-full p-2 text-slate-400 transition-colors hover:bg-slate-100 hover:text-slate-600">
@@ -380,7 +410,7 @@
                     {{-- Error Summary --}}
                     @if(!empty($importErrors))
                         <div class="rounded-xl border border-red-200 bg-red-50 p-4">
-                            <h4 class="mb-2 text-sm font-bold text-red-800">Đã nhập {{ $importSuccess }} sinh viên. Có {{ count($importErrors) }} lỗi:</h4>
+                            <h4 class="mb-2 text-sm font-bold text-red-800">Đã nhập {{ $importSuccess }} học viên. Có {{ count($importErrors) }} lỗi:</h4>
                             <ul class="list-disc space-y-1 pl-5 text-[13px] text-red-700 max-h-32 overflow-y-auto">
                                 @foreach($importErrors as $err)
                                     <li>{{ $err }}</li>
@@ -430,7 +460,7 @@
                         <div class="mx-auto mb-3 flex h-12 w-12 items-center justify-center rounded-full bg-orange-100 text-orange-500">
                             <x-user.icon name="alert-circle" :size="24" />
                         </div>
-                        <h3 class="mb-1.5 text-lg font-bold text-slate-900">Lớp chưa có sinh viên</h3>
+                        <h3 class="mb-1.5 text-lg font-bold text-slate-900">Lớp chưa có học viên</h3>
                         <p class="mb-5 text-[14px] text-slate-600">Vui lòng import danh sách lớp trước khi tiến hành điểm danh.</p>
                         
                         <div class="flex flex-col gap-2 sm:flex-row sm:justify-center">

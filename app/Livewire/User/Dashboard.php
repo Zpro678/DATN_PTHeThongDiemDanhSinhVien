@@ -14,9 +14,7 @@ class Dashboard extends Component
 
     public bool $showCreateModal = false;
 
-    public bool $showJoinModal = false;
 
-    public string $joinStep = 'input';
 
     public array $overview = [];
 
@@ -110,25 +108,10 @@ class Dashboard extends Component
         $this->showCreateModal = false;
     }
 
-    public function openJoinModal(): void
+    #[\Livewire\Attributes\On('class-joined')]
+    public function refreshDashboardStats(): void
     {
-        $this->joinStep = 'input';
-        $this->showJoinModal = true;
-    }
-
-    public function closeJoinModal(): void
-    {
-        $this->showJoinModal = false;
-    }
-
-    public function previewJoinClass(): void
-    {
-        $this->joinStep = 'preview';
-    }
-
-    public function backToJoinInput(): void
-    {
-        $this->joinStep = 'input';
+        $this->loadStatistics();
     }
 
     public function render(): View

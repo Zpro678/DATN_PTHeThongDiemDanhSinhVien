@@ -152,6 +152,11 @@
             <path d="m9 14 2 2 4-4" />
             @break
 
+        @case('credit-card')
+            <rect width="20" height="14" x="2" y="5" rx="2" />
+            <line x1="2" x2="22" y1="10" y2="10" />
+            @break
+
         @case('copy')
             <rect width="14" height="14" x="8" y="8" rx="2" ry="2" />
             <path d="M4 16c-1.1 0-2-.9-2-2V4c0-1.1.9-2 2-2h10c1.1 0 2 .9 2 2" />

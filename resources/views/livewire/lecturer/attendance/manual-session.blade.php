@@ -107,7 +107,7 @@
             <div class="flex flex-col gap-4 xl:flex-row xl:items-center xl:justify-between">
                 <div>
                     <h2 class="text-xl font-bold text-slate-900">
-                        Danh sách sinh viên ({{ $records->count() }})
+                        Danh sách học viên ({{ $records->count() }})
                     </h2>
                 </div>
 
@@ -207,7 +207,7 @@
                     @empty
                         <tr>
                             <td colspan="5" class="px-5 py-12 text-center text-sm font-semibold text-slate-500">
-                                Không tìm thấy sinh viên phù hợp.
+                                Không tìm thấy học viên phù hợp.
                             </td>
                         </tr>
                     @endforelse
@@ -308,7 +308,7 @@
                 </div>
                 <h3 class="mb-2 text-xl font-extrabold text-slate-900">Xóa phiên điểm danh?</h3>
                 <p class="text-sm font-medium leading-relaxed text-slate-500">
-                    Bạn có chắc chắn muốn xóa phiên điểm danh này không? Kết quả điểm danh của sinh viên trong phiên này sẽ bị mất.
+                    Bạn có chắc chắn muốn xóa phiên điểm danh này không? Kết quả điểm danh của học viên trong phiên này sẽ bị mất.
                 </p>
             </div>
             <div class="flex flex-col gap-3 px-6 pb-6 pt-4 sm:flex-row">

@@ -382,7 +382,7 @@
                     @empty
                         <tr>
                             <td colspan="4" class="px-5 py-12 text-center text-sm font-semibold text-slate-500">
-                                Không tìm thấy sinh viên phù hợp.
+                                Không tìm thấy học viên phù hợp.
                             </td>
                         </tr>
                     @endforelse
@@ -452,7 +452,7 @@
                             <x-user.icon name="shield-check" :size="18" />
                             Trạng thái phiên
                         </p>
-                        <p class="mt-2 text-sm font-semibold text-emerald-800/80">{{ $isClosed ? 'Đã chốt, sinh viên không thể quét thêm mã.' : 'Đang mở, sinh viên có thể quét mã để điểm danh.' }}</p>
+                        <p class="mt-2 text-sm font-semibold text-emerald-800/80">{{ $isClosed ? 'Đã chốt, học viên không thể quét thêm mã.' : 'Đang mở, học viên có thể quét mã để điểm danh.' }}</p>
                     </div>
                 </div>
 
@@ -476,7 +476,7 @@
                         </span>
                         <div>
                             <h2 class="text-xl font-black text-slate-900">Chia sẻ mã điểm danh</h2>
-                            <p class="mt-1 text-sm font-medium text-slate-500">Gửi mã hoặc liên kết này cho sinh viên trong lớp.</p>
+                            <p class="mt-1 text-sm font-medium text-slate-500">Gửi mã hoặc liên kết này cho học viên trong lớp.</p>
                         </div>
                     </div>
                     <button type="button" @click="showShareCodeModal = false" class="flex h-10 w-10 items-center justify-center rounded-xl bg-slate-100 text-slate-500 transition hover:bg-slate-200 hover:text-slate-900" title="Đóng">
@@ -516,7 +516,7 @@
                 </div>
                 <h2 class="mt-4 text-lg font-black text-slate-900">Chốt phiên điểm danh?</h2>
                 <p class="mt-2 text-sm font-medium leading-6 text-slate-500">
-                    Phiên {{ $session->name }} sẽ dừng nhận QR mới. Bạn vẫn có thể rà soát lại trạng thái sinh viên trước khi lưu báo cáo.
+                    Phiên {{ $session->name }} sẽ dừng nhận QR mới. Bạn vẫn có thể rà soát lại trạng thái học viên trước khi lưu báo cáo.
                 </p>
                 <div class="mt-6 flex justify-end gap-3">
                     <button type="button" @click="showEndModal = false" class="rounded-xl border border-slate-200 bg-white px-4 py-2.5 text-sm font-bold text-slate-600 transition hover:bg-slate-50">Hủy</button>
@@ -558,7 +558,7 @@
                 </div>
                 <h3 class="mb-2 text-xl font-extrabold text-slate-900">Xóa phiên điểm danh?</h3>
                 <p class="text-sm font-medium leading-relaxed text-slate-500">
-                    Bạn có chắc chắn muốn xóa phiên điểm danh này không? Kết quả điểm danh của sinh viên trong phiên này sẽ bị mất.
+                    Bạn có chắc chắn muốn xóa phiên điểm danh này không? Kết quả điểm danh của học viên trong phiên này sẽ bị mất.
                 </p>
             </div>
             <div class="flex flex-col gap-3 px-6 pb-6 pt-4 sm:flex-row">

@@ -114,8 +114,8 @@
                 </div>
                 <div class="divide-y divide-slate-100">
                     @foreach ([
-                        ['model' => 'hasGps', 'title' => 'Xác thực vị trí GPS', 'desc' => 'Cho phép giới hạn bán kính điểm danh của sinh viên quanh vị trí lớp học.'],
-                        ['model' => 'hasImport', 'title' => 'Import sinh viên từ Excel/CSV', 'desc' => 'Hỗ trợ upload file danh sách lớp thay vì nhập tay thủ công từng sinh viên.'],
+                        ['model' => 'hasGps', 'title' => 'Xác thực vị trí GPS', 'desc' => 'Cho phép giới hạn bán kính điểm danh của học viên quanh vị trí lớp học.'],
+                        ['model' => 'hasImport', 'title' => 'Import học viên từ Excel/CSV', 'desc' => 'Hỗ trợ upload file danh sách lớp thay vì nhập tay thủ công từng học viên.'],
                         ['model' => 'hasReports', 'title' => 'Báo cáo Thống kê Nâng cao', 'desc' => 'Biểu đồ chuyên cần trực quan, xuất báo cáo PDF cuối kỳ, cảnh báo tự động.'],
                         ['model' => 'hasApi', 'title' => 'Tích hợp API (SSO, LMS)', 'desc' => 'Tính năng cao cấp cho phép hệ thống gọi API đồng bộ dữ liệu với trường học.'],
                     ] as $feature)
