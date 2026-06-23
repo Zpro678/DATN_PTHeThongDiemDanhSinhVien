@@ -86,45 +86,29 @@
                     <x-stats-card
                         title="Lớp đã tạo"
                         :value="$user->owned_classes_count ?? 0"
-                        change="Tổng lớp"
-                        :isPositive="true"
                         icon="book-open"
                         iconBg="bg-blue-50 border-blue-100 text-blue-600"
-                        sparklineColor="stroke-blue-500"
-                        sparklinePath="M 0,16 L 10,14 L 20,12 L 30,10 L 40,8 L 50,4"
                     />
 
                     <x-stats-card
                         title="Lớp tham gia"
                         :value="$user->joined_classes_count ?? 0"
-                        change="Tổng lớp"
-                        :isPositive="true"
                         icon="users"
                         iconBg="bg-emerald-50 border-emerald-100 text-emerald-600"
-                        sparklineColor="stroke-emerald-500"
-                        sparklinePath="M 0,18 L 10,15 L 20,14 L 30,11 L 40,7 L 50,4"
                     />
 
                     <x-stats-card
                         title="Phiên đăng ký"
                         :value="$user->subscriptions_count ?? 0"
-                        change="Gói hoạt động"
-                        :isPositive="true"
                         icon="package"
                         iconBg="bg-amber-50 border-amber-100 text-amber-600"
-                        sparklineColor="stroke-amber-500"
-                        sparklinePath="M 0,6 L 10,8 L 20,7 L 30,12 L 40,15 L 50,10"
                     />
 
                     <x-stats-card
                         title="Yêu cầu lớp"
                         :value="$user->class_join_requests_count ?? 0"
-                        change="Chờ xử lý"
-                        :isPositive="false"
                         icon="help-circle"
                         iconBg="bg-rose-50 border-rose-100 text-rose-600"
-                        sparklineColor="stroke-rose-500"
-                        sparklinePath="M 0,2 L 10,7 L 20,5 L 30,13 L 40,16 L 50,18"
                     />
                 </section>
 
@@ -141,6 +125,10 @@
                             <div>
                                 <dt class="text-[10px] font-bold uppercase tracking-widest text-slate-400">Họ và tên</dt>
                                 <dd class="mt-1 rounded-xl border border-slate-200 bg-white/75 px-4 py-3 font-bold text-slate-900">{{ $user->name }}</dd>
+                            </div>
+                            <div>
+                                <dt class="text-[10px] font-bold uppercase tracking-widest text-slate-400">Mã số sinh viên</dt>
+                                <dd class="mt-1 rounded-xl border border-slate-200 bg-white/75 px-4 py-3 font-bold text-slate-900">{{ $user->code ?: 'Chưa cập nhật' }}</dd>
                             </div>
                             <div>
                                 <dt class="text-[10px] font-bold uppercase tracking-widest text-slate-400">Email</dt>

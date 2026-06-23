@@ -3,6 +3,7 @@
 namespace App\Livewire\Student;
 
 use App\Models\CourseClass;
+use App\Services\StatisticalService;
 use Illuminate\Contracts\View\View;
 use Livewire\Component;
 
@@ -10,15 +11,43 @@ class ClassShow extends Component
 {
     public CourseClass $class;
 
+    public array $attendanceDetail = [];
+
+    public bool $fromAttendanceStats = false;
+
     public function mount(CourseClass $courseClass): void
     {
-        $this->class = $courseClass;
+        abort_unless(
+            $courseClass->members()
+                ->where('user_id', auth()->id())
+                ->where('status', 'active')
+                ->exists(),
+            403,
+        );
+
+        $this->class = $courseClass->load('owner');
+        $this->fromAttendanceStats = request()->query('from') === 'attendance-stats';
+
+        $statisticalService = app(StatisticalService::class);
+        $statistics = $statisticalService->getStudentAttendanceStatistics((int) auth()->id());
+
+        $this->attendanceDetail = collect($statistics['subjects'])
+            ->firstWhere('class_id', $this->class->id)
+            ?? $statisticalService->emptyStudentClassAttendanceDetail($this->class);
     }
 
     public function render(): View
     {
+        $layoutData = ['title' => 'Thông tin: '.$this->class->name];
+
+        if ($this->fromAttendanceStats) {
+            $layoutData['activeNav'] = 'student.attendance.stats';
+        }
+
         return view('livewire.student.class-show', [
             'class' => $this->class,
-        ])->layout('layouts.user');
+            'attendanceDetail' => $this->attendanceDetail,
+            'fromAttendanceStats' => $this->fromAttendanceStats,
+        ])->layout('layouts.user', $layoutData);
     }
 }

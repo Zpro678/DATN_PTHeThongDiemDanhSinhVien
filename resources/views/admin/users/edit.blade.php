@@ -62,7 +62,6 @@
                     <div class="border-b border-slate-100 p-6 flex justify-between items-center">
                         <div>
                             <h2 class="text-xl font-black text-slate-900">Thông tin chỉnh sửa</h2>
-                            <p class="mt-1 text-sm font-medium text-slate-500">Cho phép cập nhật quyền và trạng thái của người dùng này.</p>
                         </div>
                         <button type="submit" class="rounded-xl bg-gradient-to-r from-emerald-500 to-emerald-600 px-6 py-2.5 text-sm font-bold text-white shadow-sm shadow-emerald-500/25 transition-all hover:-translate-y-0.5 hover:from-emerald-600 hover:to-emerald-700">
                             Lưu thay đổi
@@ -85,19 +84,27 @@
                         <div class="space-y-5">
                             <div>
                                 <label class="mb-2 block text-[10px] font-bold uppercase tracking-widest text-slate-400">Họ và tên</label>
-                                <input type="text" value="{{ $user->name }}" disabled class="w-full rounded-xl border border-slate-200 bg-slate-50 px-4 py-3 text-sm font-bold text-slate-500 cursor-not-allowed">
+                                <input type="text" name="name" value="{{ old('name', $user->name) }}" class="w-full rounded-xl border border-slate-200 bg-white px-4 py-3 text-sm font-bold text-slate-900 focus:border-blue-500 focus:ring-2 focus:ring-blue-500">
+                                @error('name')<p class="mt-1 text-xs text-red-500">{{ $message }}</p>@enderror
+                            </div>
+
+                            <div>
+                                <label class="mb-2 block text-[10px] font-bold uppercase tracking-widest text-slate-400">Mã số sinh viên (nếu có)</label>
+                                <input type="text" name="code" value="{{ old('code', $user->code) }}" class="w-full rounded-xl border border-slate-200 bg-white px-4 py-3 text-sm font-bold text-slate-900 focus:border-blue-500 focus:ring-2 focus:ring-blue-500">
+                                @error('code')<p class="mt-1 text-xs text-red-500">{{ $message }}</p>@enderror
                             </div>
 
                             <div>
                                 <label class="mb-2 block text-[10px] font-bold uppercase tracking-widest text-slate-400">Email</label>
-                                <input type="email" value="{{ $user->email }}" disabled class="w-full rounded-xl border border-slate-200 bg-slate-50 px-4 py-3 text-sm font-bold text-slate-500 cursor-not-allowed">
+                                <input type="email" name="email" value="{{ old('email', $user->email) }}" class="w-full rounded-xl border border-slate-200 bg-white px-4 py-3 text-sm font-bold text-slate-900 focus:border-blue-500 focus:ring-2 focus:ring-blue-500">
+                                @error('email')<p class="mt-1 text-xs text-red-500">{{ $message }}</p>@enderror
                             </div>
                         </div>
 
                         <div class="space-y-5">
                             <div>
                                 <label class="mb-2 block text-[10px] font-bold uppercase tracking-widest text-slate-400">Vai trò</label>
-                                <select name="is_admin" class="w-full rounded-xl border border-slate-200 bg-white px-4 py-3 text-sm font-bold text-slate-900 focus:border-blue-500 focus:ring-2 focus:ring-blue-500">
+                                <select disabled class="w-full rounded-xl border border-slate-200 bg-slate-50 px-4 py-3 text-sm font-bold text-slate-500 cursor-not-allowed">
                                     <option value="1" {{ $user->is_admin ? 'selected' : '' }}>Admin</option>
                                     <option value="0" {{ ! $user->is_admin ? 'selected' : '' }}>Người dùng</option>
                                 </select>
