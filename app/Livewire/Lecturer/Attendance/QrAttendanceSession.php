@@ -5,6 +5,7 @@ namespace App\Livewire\Lecturer\Attendance;
 use App\Exports\ClassSessionExport;
 use App\Livewire\Lecturer\Attendance\Concerns\OwnsAttendanceSessions;
 use App\Models\AttendanceRecord;
+use App\Services\SubscriptionService;
 use Illuminate\Contracts\View\View;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Support\Str;
@@ -102,6 +103,13 @@ class QrAttendanceSession extends Component
 
     public function exportExcel()
     {
+        // Kiểm tra gói: xuất Excel là tính năng từ gói Pro trở lên.
+        if (! app(SubscriptionService::class)->canExportExcel(auth()->user())) {
+            session()->flash('upgrade_required', 'Xuất báo cáo Excel là tính năng của gói Pro trở lên. Vui lòng nâng cấp để sử dụng.');
+
+            return $this->redirectRoute('upgrade', navigate: true);
+        }
+
         $session = $this->ownedSession($this->sessionId)->load('courseClass');
 
         $date = $session->date->format('Y-m-d');
@@ -160,7 +168,9 @@ class QrAttendanceSession extends Component
         $qrSvg = $this->qrSvg($attendanceLink);
         $qrCells = $this->fallbackQrCells($attendanceLink);
 
-        return view('livewire.lecturer.attendance.qr-session', compact('session', 'records', 'attendanceLink', 'summary', 'qrSvg', 'qrCells'))
+        $canExportExcel = app(SubscriptionService::class)->canExportExcel(auth()->user()); // Quyền xuất Excel theo gói (Pro trở lên).
+
+        return view('livewire.lecturer.attendance.qr-session', compact('session', 'records', 'attendanceLink', 'summary', 'qrSvg', 'qrCells', 'canExportExcel'))
             ->layout('layouts.user', ['title' => 'Điểm danh QR']);
     }
 

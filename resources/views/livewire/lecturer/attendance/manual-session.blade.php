@@ -221,10 +221,20 @@
                 <span class="mx-2 text-slate-300">|</span>
                 Có mặt: <span class="font-bold text-emerald-600">{{ $summary['present'] }}</span>
             </p>
-            <button type="button" class="inline-flex items-center justify-center gap-2 rounded-xl border border-slate-200 bg-white px-4 py-2.5 text-sm font-bold text-slate-700 transition hover:bg-slate-50">
-                <x-user.icon name="download" :size="16" />
-                Xuất Excel
-            </button>
+            @if ($canExportExcel)
+                <button type="button" wire:click="exportExcel" class="inline-flex items-center justify-center gap-2 rounded-xl border border-slate-200 bg-white px-4 py-2.5 text-sm font-bold text-slate-700 transition hover:bg-slate-50">
+                    <x-user.icon name="download" :size="16" />
+                    <span wire:loading.remove wire:target="exportExcel">Xuất Excel</span>
+                    <span wire:loading wire:target="exportExcel">Đang xử lý...</span>
+                </button>
+            @else
+                <a href="{{ route('upgrade') }}" title="Nâng cấp lên gói Pro để xuất báo cáo Excel"
+                    class="inline-flex items-center justify-center gap-2 rounded-xl border border-amber-200 bg-amber-50 px-4 py-2.5 text-sm font-bold text-amber-700 transition hover:bg-amber-100">
+                    <x-user.icon name="download" :size="16" />
+                    Xuất Excel
+                    <span class="rounded-full bg-amber-200 px-1.5 py-0.5 text-[10px] font-bold uppercase tracking-wide text-amber-800">Pro</span>
+                </a>
+            @endif
         </div>
     </div>
 

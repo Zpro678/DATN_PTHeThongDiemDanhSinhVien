@@ -27,6 +27,8 @@ use App\Livewire\User\CreateClass;
 use App\Livewire\User\Dashboard as UserDashboard;
 use App\Livewire\User\JoinedClasses;
 use App\Livewire\User\ManagedClasses;
+use App\Livewire\User\NotificationIndex;
+use App\Livewire\User\Upgrade;
 use App\Models\AuditLog;
 use App\Models\CourseClass;
 use App\Models\Plan;
@@ -90,6 +92,8 @@ Route::middleware(['auth', 'verified', 'user.route'])->group(function () {
         Route::get('/student/leave-requests/create', LeaveRequestCreate::class)->name('student.leave-requests.create');
         Route::get('/student/leave-requests/history', LeaveRequestHistory::class)->name('student.leave-requests.history');
         Route::get('/student/warnings', Warnings::class)->name('student.warnings');
+        Route::get('/notifications', NotificationIndex::class)->name('notifications');
+        Route::get('/upgrade', Upgrade::class)->name('upgrade');
 
         Route::get('/student/classes/{courseClass}', ClassShow::class)->name('student.classes.show');
         Route::get('/lecturer/classes/{courseClass}/settings', ClassSettings::class)->name('lecturer.classes.settings');

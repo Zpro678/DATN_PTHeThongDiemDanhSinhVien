@@ -51,7 +51,7 @@ class AttendanceDataModelTest extends TestCase
         $this->assertSame('success', $teacher->transactions()->firstOrFail()->status);
         $this->assertCount(1, $teacher->notifications);
         $this->assertGreaterThan(0, $teacher->auditLogs()->count());
-        $this->assertSame(2, Plan::query()->count());
+        $this->assertSame(3, Plan::query()->count());
         $this->assertSame(48, AttendanceRecord::query()->count());
     }
 }

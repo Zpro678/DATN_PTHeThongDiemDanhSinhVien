@@ -463,9 +463,9 @@
                                 </div>
                                 <h5 class="text-base font-bold text-on-surface">Chưa tham gia lớp nào</h5>
                                 <p class="mt-2 text-sm text-on-surface-variant">Khi bạn tham gia lớp, thông tin chuyên cần và số tiết vắng sẽ hiển thị tại đây.</p>
-                                <a href="{{ route('student.classes.join') }}" class="mt-4 inline-flex items-center justify-center rounded-xl bg-tertiary px-4 py-2 text-sm font-bold text-white shadow-sm transition-colors hover:bg-tertiary/90">
+                                <button type="button" x-on:click="$dispatch('open-join-class-modal')" class="mt-4 inline-flex items-center justify-center rounded-xl bg-tertiary px-4 py-2 text-sm font-bold text-white shadow-sm transition-colors hover:bg-tertiary/90">
                                     Tham gia lớp
-                                </a>
+                                </button>
                             </div>
                         @endforelse
                     </div>

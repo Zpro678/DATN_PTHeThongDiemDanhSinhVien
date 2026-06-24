@@ -172,7 +172,7 @@
     {{-- Quick Actions --}}
     <div class="mt-8 grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
         {{-- Điểm danh --}}
-        <a href="{{ route('student.classes.join', ['ma_user' => auth()->id()]) }}" class="group flex flex-col items-center justify-center gap-3 rounded-3xl bg-white p-6 shadow-sm ring-1 ring-outline-variant/20 transition-all hover:-translate-y-1 hover:shadow-lg hover:ring-secondary/20">
+        <a href="#" class="group flex flex-col items-center justify-center gap-3 rounded-3xl bg-white p-6 shadow-sm ring-1 ring-outline-variant/20 transition-all hover:-translate-y-1 hover:shadow-lg hover:ring-secondary/20">
             <div class="flex h-12 w-12 items-center justify-center rounded-full bg-secondary/10 text-secondary transition-colors group-hover:bg-secondary group-hover:text-white">
                 <x-user.icon name="qr-code" :size="24" />
             </div>

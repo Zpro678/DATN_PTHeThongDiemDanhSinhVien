@@ -15,5 +15,9 @@ class DatabaseSeeder extends Seeder
             PlanSeeder::class,
             AttendanceDemoSeeder::class,
         ]);
+
+        // NotificationDemoSeeder là dữ liệu demo bổ sung cho trang thông báo,
+        // chạy thủ công khi cần: php artisan db:seed --class=NotificationDemoSeeder
+        // (không đưa vào seed mặc định để giữ ổn định bộ dữ liệu cho test).
     }
 }

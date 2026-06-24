@@ -160,7 +160,7 @@ class StudentsSheet implements FromArray, ShouldAutoSize, WithStyles, WithTitle
                 $member->student_code,
                 $member->full_name,
                 $member->user?->email ?? '',
-                $member->courseClass->code . ' - ' . $member->courseClass->name,
+                $member->courseClass ? $member->courseClass->code . ' - ' . $member->courseClass->name : '',
             ];
 
             $memberRecords = $attendanceRecords->get($member->id, collect())->keyBy('class_session_id');

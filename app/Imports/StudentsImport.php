@@ -130,6 +130,13 @@ class StudentsImport implements ToCollection, WithStartRow, WithMultipleSheets
             }
         }
 
+        // Kiểm tra gói: giới hạn số sinh viên mỗi lớp theo gói của chủ lớp.
+        $courseClass = \App\Models\CourseClass::with('owner')->find($this->classId);
+        $maxStudents = $courseClass?->owner
+            ? app(\App\Services\SubscriptionService::class)->maxStudentsPerClass($courseClass->owner)
+            : PHP_INT_MAX;
+        $activeCount = ClassMember::where('class_id', $this->classId)->where('status', 'active')->count();
+
         foreach ($rows as $index => $row) {
             // Index in startRow=1 means index 0 is row 2
             $actualRowNumber = $index + 2;
@@ -180,6 +187,13 @@ class StudentsImport implements ToCollection, WithStartRow, WithMultipleSheets
                 $member->update($updateData);
                 $member->restore();
             } else {
+                // Kiểm tra gói: dừng tạo mới khi lớp đã đạt giới hạn sinh viên của gói.
+                if ($activeCount >= $maxStudents) {
+                    $this->errors[] = "Dòng {$actualRowNumber}: Vượt giới hạn {$maxStudents} sinh viên của gói, đã bỏ qua. Vui lòng nâng cấp gói.";
+
+                    continue;
+                }
+
                 // Tạo mới
                 $member = ClassMember::create([
                     'class_id' => $this->classId,
@@ -189,6 +203,8 @@ class StudentsImport implements ToCollection, WithStartRow, WithMultipleSheets
                     'user_id' => $user ? $user->id : null,
                     'status' => 'active',
                 ]);
+
+                $activeCount++;
             }
 
             // Gửi email mời tạo tài khoản nếu học viên chưa có tài khoản
