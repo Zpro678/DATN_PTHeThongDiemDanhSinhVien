@@ -3,6 +3,8 @@
 @php
     $userName = Auth::user()?->name ?? 'Nguyễn Văn A';
     $userRole = Auth::user()?->email ?? 'User';
+    // Dữ liệu thông báo cho dropdown ở header (lấy từ DB qua NotificationService).
+    $notificationData = app(\App\Services\NotificationService::class)->getDropdownData(Auth::user());
     $matchesActive = function ($activePattern) use ($activeNav): bool {
         $patterns = is_array($activePattern) ? $activePattern : [$activePattern];
 
@@ -50,6 +52,7 @@
             ],
         ],
         ['type' => 'link', 'label' => 'Cảnh báo', 'icon' => 'alert-triangle', 'route' => 'student.warnings', 'active' => 'student.warnings'],
+        ['type' => 'link', 'label' => 'Nâng cấp gói', 'icon' => 'zap', 'route' => 'upgrade', 'active' => 'upgrade'],
         ['type' => 'link', 'label' => 'Hồ sơ cá nhân', 'icon' => 'user-circle', 'route' => 'profile.edit', 'active' => 'profile.*'],
     ];
 
@@ -191,7 +194,11 @@
                         </div>
 
                         <div class="flex items-center gap-1 md:ml-4 md:border-l md:border-outline-variant/30 md:pl-4">
-                            <x-notification-dropdown :all-url="route('student.warnings')" />
+                            <x-notification-dropdown
+                                :all-url="route('notifications')"
+                                :notifications="$notificationData['items']"
+                                :show-indicator="$notificationData['has_unread']"
+                            />
                             <button type="button" class="hidden rounded-full p-2 text-on-surface-variant transition-colors hover:bg-surface-container-high sm:block">
                                 <x-user.icon name="settings" :size="20" />
                             </button>
@@ -223,6 +230,10 @@
                                         <p class="truncate text-base font-bold text-gray-900">{{ Auth::user()?->email ?? 'user@example.com' }}</p>
                                     </div>
                                     <div class="py-1">
+                                        <a href="{{ route('upgrade') }}" class="group flex items-center px-4 py-2 text-sm font-bold text-primary hover:bg-primary/5 transition-colors">
+                                            <x-user.icon name="zap" :size="18" class="mr-3 text-primary" />
+                                            Nâng cấp gói
+                                        </a>
                                         <a href="{{ route('profile.edit') }}" class="group flex items-center px-4 py-2 text-sm text-gray-700 hover:bg-slate-50 hover:text-primary transition-colors">
                                             <x-user.icon name="user" :size="18" class="mr-3 text-gray-400 group-hover:text-primary transition-colors" />
                                             Thông tin cá nhân

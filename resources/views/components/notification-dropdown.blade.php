@@ -11,35 +11,17 @@
 ])
 
 @php
-    // Component thông báo dùng chung cho layout user/admin; nếu không truyền dữ liệu thì dùng mẫu hiện tại.
-    $notifications = $notifications ?? [
-        [
-            'href' => '#',
-            'icon' => 'info',
-            'iconWrapper' => 'bg-blue-100 text-blue-600',
-            'title' => 'Nhắc nhở nộp minh chứng',
-            'message' => 'Đơn xin nghỉ phép ngày 05/05/2026 của bạn cần bổ sung minh chứng.',
-            'time' => '10 phút trước',
-            'unread' => true,
-        ],
-        [
-            'href' => '#',
-            'icon' => 'alert-triangle',
-            'iconWrapper' => 'bg-rose-100 text-rose-600',
-            'title' => 'Cảnh báo vắng mặt',
-            'message' => 'Bạn đã vắng 3/15 buổi học môn Lập trình Web.',
-            'time' => '2 giờ trước',
-            'unread' => true,
-        ],
-        [
-            'href' => '#',
-            'icon' => 'check-circle',
-            'iconWrapper' => 'bg-emerald-100 text-emerald-600',
-            'title' => 'Đơn nghỉ phép được duyệt',
-            'message' => 'Giảng viên đã duyệt đơn nghỉ phép ngày 20/04/2026.',
-            'time' => '1 ngày trước',
-            'read' => true,
-        ],
+    // Component thông báo dùng chung cho layout user/admin.
+    // Dữ liệu được layout truyền vào từ App\Services\NotificationService::getDropdownData().
+    // Mỗi phần tử nên có: href, level, title, message, time, unread (icon/iconWrapper là tùy chọn).
+    $notifications = $notifications ?? [];
+
+    // Bản đồ mức độ -> icon + class màu. Đặt tại view để Tailwind quét được các class này.
+    $levelStyles = [
+        'info' => ['icon' => 'info', 'iconWrapper' => 'bg-blue-100 text-blue-600'],
+        'success' => ['icon' => 'check-circle', 'iconWrapper' => 'bg-emerald-100 text-emerald-600'],
+        'warning' => ['icon' => 'alert-triangle', 'iconWrapper' => 'bg-amber-100 text-amber-600'],
+        'danger' => ['icon' => 'alert-triangle', 'iconWrapper' => 'bg-rose-100 text-rose-600'],
     ];
 @endphp
 
@@ -78,6 +60,10 @@
                 @php
                     $isUnread = (bool) ($notification['unread'] ?? false);
                     $isRead = (bool) ($notification['read'] ?? false);
+                    // Cho phép truyền sẵn icon/iconWrapper; nếu không thì suy ra từ level.
+                    $style = $levelStyles[$notification['level'] ?? 'info'] ?? $levelStyles['info'];
+                    $icon = $notification['icon'] ?? $style['icon'];
+                    $iconWrapper = $notification['iconWrapper'] ?? $style['iconWrapper'];
                 @endphp
 
                 <a
@@ -88,8 +74,8 @@
                         'opacity-70' => $isRead,
                     ])
                 >
-                    <div class="mt-1 flex h-8 w-8 shrink-0 items-center justify-center rounded-full {{ $notification['iconWrapper'] ?? 'bg-blue-100 text-blue-600' }}">
-                        <x-user.icon :name="$notification['icon'] ?? 'info'" :size="16" />
+                    <div class="mt-1 flex h-8 w-8 shrink-0 items-center justify-center rounded-full {{ $iconWrapper }}">
+                        <x-user.icon :name="$icon" :size="16" />
                     </div>
 
                     <div class="flex-1 space-y-1">

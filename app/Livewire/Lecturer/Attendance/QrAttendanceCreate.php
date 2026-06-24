@@ -7,6 +7,7 @@ use App\Models\AttendanceRecord;
 use App\Models\ClassMember;
 use App\Models\ClassSession;
 use App\Models\CourseClass;
+use App\Services\SubscriptionService;
 use Illuminate\Contracts\View\View;
 use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Support\Str;
@@ -183,6 +184,16 @@ class QrAttendanceCreate extends Component
             'gpsRadius.max' => 'Bán kính tối đa là 2500m.',
             'endLesson.gte' => 'Tiết kết thúc phải lớn hơn hoặc bằng tiết bắt đầu.',
         ]);
+
+        // Kiểm tra gói: giới hạn bán kính định vị GPS theo gói dịch vụ.
+        if ($validated['gpsEnabled']) {
+            $maxRadius = app(SubscriptionService::class)->maxGpsRadius(auth()->user());
+            if ((int) $validated['gpsRadius'] > $maxRadius) {
+                $this->addError('gpsRadius', "Gói hiện tại chỉ cho phép bán kính GPS tối đa {$maxRadius}m. Vui lòng giảm bán kính hoặc nâng cấp gói.");
+
+                return;
+            }
+        }
 
         $courseClass = $this->ownedClass((int) $validated['classId']);
         $this->saveConfig();

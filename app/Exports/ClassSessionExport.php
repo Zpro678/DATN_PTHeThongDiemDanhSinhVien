@@ -38,7 +38,7 @@ class ClassSessionExport implements FromArray, ShouldAutoSize, WithStyles
         }
         
         $startLesson = 1;
-        $endLesson = max(1, $this->session->courseClass->lessons_per_session);
+        $endLesson = max(1, (int) $this->session->lesson_count);
         $tiet = "{$startLesson}-{$endLesson}";
 
         // Add header rows
@@ -51,8 +51,11 @@ class ClassSessionExport implements FromArray, ShouldAutoSize, WithStyles
             ['MSSV', 'Tên sinh viên', 'Trạng thái', 'Lý do (Ghi chú)']
         ];
 
-        // Load attendance records ordered by student code
+        // Load attendance records ordered by student code.
+        // Nạp kèm classMember đã withTrashed để sinh viên đã bị xoá mềm vẫn hiển thị
+        // trong báo cáo của buổi (tránh lỗi đọc thuộc tính trên null).
         $records = $this->session->attendanceRecords()
+            ->with(['classMember' => fn ($query) => $query->withTrashed()])
             ->join('class_members', 'attendance_records.class_member_id', '=', 'class_members.id')
             ->orderBy('class_members.student_code')
             ->select('attendance_records.*')
@@ -67,9 +70,16 @@ class ClassSessionExport implements FromArray, ShouldAutoSize, WithStyles
         ];
 
         foreach ($records as $record) {
+            $member = $record->classMember;
+
+            // Bỏ qua bản ghi mồ côi (sinh viên đã bị xoá hẳn) để không làm hỏng file.
+            if (! $member) {
+                continue;
+            }
+
             $rows[] = [
-                $record->classMember->student_code,
-                $record->classMember->full_name,
+                $member->student_code,
+                $member->full_name,
                 $statusMap[$record->status] ?? 'Chưa điểm danh',
                 $record->note ?? ''
             ];

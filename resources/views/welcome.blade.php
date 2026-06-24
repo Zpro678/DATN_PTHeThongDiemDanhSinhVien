@@ -17,7 +17,7 @@
         <script src="https://cdn.tailwindcss.com"></script>
     @endif
 
-    <script defer src="https://cdn.jsdelivr.net/npm/alpinejs@3.x.x/dist/cdn.min.js"></script>
+    {{-- Alpine được Livewire (@livewireScripts) đóng gói sẵn; không nạp thêm Alpine từ CDN để tránh tải Alpine 2 lần (gây lỗi phải bấm 2 lần). --}}
 
     <style>
         *, *::before, *::after { box-sizing: border-box; }

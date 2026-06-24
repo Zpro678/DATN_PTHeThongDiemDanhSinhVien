@@ -3,6 +3,7 @@
 namespace App\Livewire\User;
 
 use App\Models\CourseClass;
+use App\Services\SubscriptionService;
 use Illuminate\Contracts\View\View;
 use Livewire\Component;
 
@@ -99,6 +100,14 @@ class CreateClass extends Component
 
     public function save(): void
     {
+        // Kiểm tra gói: số lớp được tạo bị giới hạn theo gói dịch vụ.
+        $subscription = app(SubscriptionService::class);
+        if (! $subscription->canCreateClass(auth()->user())) {
+            $max = $subscription->maxClasses(auth()->user());
+            $this->addError('name', "Gói hiện tại của bạn chỉ cho phép tạo tối đa {$max} lớp. Vui lòng nâng cấp gói để tạo thêm lớp.");
+
+            return;
+        }
 
         $validated = $this->validate([
             'name' => ['required', 'string', 'max:255'],

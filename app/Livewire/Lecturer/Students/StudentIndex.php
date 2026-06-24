@@ -6,6 +6,7 @@ use App\Imports\StudentsImport;
 use App\Models\ClassMember;
 use App\Models\CourseClass;
 use App\Services\LectureManageStudentService;
+use App\Services\SubscriptionService;
 use Illuminate\Contracts\View\View;
 use Illuminate\Database\Eloquent\Builder;
 use Livewire\Attributes\Url;
@@ -173,6 +174,19 @@ class StudentIndex extends Component
 
         if ($duplicateExists) {
             $this->addError('newStudentCode', 'Mã sinh viên đã tồn tại trong lớp này.');
+
+            return;
+        }
+
+        // Kiểm tra gói: giới hạn số sinh viên mỗi lớp.
+        $maxStudents = app(SubscriptionService::class)->maxStudentsPerClass(auth()->user());
+        $currentCount = ClassMember::query()
+            ->where('class_id', $courseClass->id)
+            ->where('status', 'active')
+            ->count();
+
+        if ($currentCount >= $maxStudents) {
+            $this->addError('newStudentCode', "Lớp đã đạt giới hạn {$maxStudents} sinh viên của gói hiện tại. Vui lòng nâng cấp gói để thêm sinh viên.");
 
             return;
         }
@@ -355,8 +369,16 @@ class StudentIndex extends Component
 
     public function exportExcel()
     {
+        // Kiểm tra gói: xuất Excel là tính năng từ gói Pro trở lên.
+        if (! app(SubscriptionService::class)->canExportExcel(auth()->user())) {
+            $this->isExporting = false;
+            session()->flash('upgrade_required', 'Xuất báo cáo Excel là tính năng của gói Pro trở lên. Vui lòng nâng cấp để sử dụng.');
+
+            return $this->redirectRoute('upgrade', navigate: true);
+        }
+
         $formulaToUse = $this->isCustomFormula ? $this->exportFormula : $this->selectedTemplate;
-        
+
         $fileName = 'danh_sach_sinh_vien_' . date('Ymd_His') . '.xlsx';
         $this->isExporting = false;
 
@@ -412,7 +434,9 @@ class StudentIndex extends Component
             $this->classFilter !== 'all' ? (int) $this->classFilter : null // Nếu chọn một lớp thì chỉ thống kê lớp đó.
         );
 
-        return view('livewire.lecturer.students.index', compact('classes', 'members', 'attendanceStats', 'attendanceOverview')) // Truyền dữ liệu lớp, sinh viên và chuyên cần sang Blade.
+        $canExportExcel = app(SubscriptionService::class)->canExportExcel(auth()->user()); // Quyền xuất Excel theo gói (Pro trở lên).
+
+        return view('livewire.lecturer.students.index', compact('classes', 'members', 'attendanceStats', 'attendanceOverview', 'canExportExcel')) // Truyền dữ liệu lớp, sinh viên và chuyên cần sang Blade.
             ->layout('layouts.user', ['title' => 'Quản lý sinh viên']);
     }
 }

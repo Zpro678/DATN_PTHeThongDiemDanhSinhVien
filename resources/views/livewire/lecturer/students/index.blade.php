@@ -8,10 +8,19 @@
             <p class="mt-2 text-sm text-slate-500">Quản lý danh sách học viên trong các lớp bạn đang phụ trách.</p>
         </div>
         <div class="flex items-center gap-3">
-            <button type="button" wire:click="openExport" class="inline-flex items-center justify-center gap-2 rounded-full border border-slate-200 bg-white px-5 py-2.5 text-sm font-bold text-slate-600 transition-colors hover:bg-slate-50">
-                <x-user.icon name="download" :size="18" />
-                Xuất Excel
-            </button>
+            @if ($canExportExcel)
+                <button type="button" wire:click="openExport" class="inline-flex items-center justify-center gap-2 rounded-full border border-slate-200 bg-white px-5 py-2.5 text-sm font-bold text-slate-600 transition-colors hover:bg-slate-50">
+                    <x-user.icon name="download" :size="18" />
+                    Xuất Excel
+                </button>
+            @else
+                <a href="{{ route('upgrade') }}" title="Nâng cấp lên gói Pro để xuất báo cáo Excel"
+                    class="inline-flex items-center justify-center gap-2 rounded-full border border-amber-200 bg-amber-50 px-5 py-2.5 text-sm font-bold text-amber-700 transition-colors hover:bg-amber-100">
+                    <x-user.icon name="download" :size="18" />
+                    Xuất Excel
+                    <span class="rounded-full bg-amber-200 px-1.5 py-0.5 text-[10px] font-bold uppercase tracking-wide text-amber-800">Pro</span>
+                </a>
+            @endif
             <a href="{{ route('lecturer.leave-requests.index') }}" class="inline-flex items-center justify-center gap-2 rounded-full border border-slate-200 bg-white px-5 py-2.5 text-sm font-bold text-slate-600 transition-colors hover:bg-slate-50">
                 <x-user.icon name="file-text" :size="18" />
                 Đơn xin nghỉ

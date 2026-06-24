@@ -2,11 +2,15 @@
 
 namespace App\Livewire\Lecturer\Attendance;
 
+use App\Exports\ClassSessionExport;
 use App\Livewire\Lecturer\Attendance\Concerns\OwnsAttendanceSessions;
 use App\Models\AttendanceRecord;
+use App\Services\SubscriptionService;
 use Illuminate\Contracts\View\View;
 use Illuminate\Database\Eloquent\Builder;
+use Illuminate\Support\Str;
 use Livewire\Component;
+use Maatwebsite\Excel\Facades\Excel;
 
 class ManualAttendanceSession extends Component
 {
@@ -115,6 +119,28 @@ class ManualAttendanceSession extends Component
         return redirect()->route('lecturer.classes.show', $classId);
     }
 
+    public function exportExcel()
+    {
+        // Kiểm tra gói: xuất Excel là tính năng từ gói Pro trở lên.
+        if (! app(SubscriptionService::class)->canExportExcel(auth()->user())) {
+            session()->flash('upgrade_required', 'Xuất báo cáo Excel là tính năng của gói Pro trở lên. Vui lòng nâng cấp để sử dụng.');
+
+            return $this->redirectRoute('upgrade', navigate: true);
+        }
+
+        $session = $this->ownedSession($this->sessionId)->load('courseClass');
+
+        $date = $session->date->format('Y-m-d');
+        $className = Str::slug($session->courseClass->name);
+        $endLesson = max(1, (int) $session->lesson_count);
+        $fileName = "{$date}_{$className}_Tiet_1-{$endLesson}.xlsx";
+
+        return Excel::download(
+            new ClassSessionExport($this->sessionId),
+            $fileName
+        );
+    }
+
     public function render(): View
     {
         $session = $this->ownedSession($this->sessionId)->load('courseClass');
@@ -148,7 +174,9 @@ class ManualAttendanceSession extends Component
             ? (int) round(($summary['present'] / $summary['total']) * 100)
             : 0;
 
-        return view('livewire.lecturer.attendance.manual-session', compact('session', 'records', 'summary'))
+        $canExportExcel = app(SubscriptionService::class)->canExportExcel(auth()->user()); // Quyền xuất Excel theo gói (Pro trở lên).
+
+        return view('livewire.lecturer.attendance.manual-session', compact('session', 'records', 'summary', 'canExportExcel'))
             ->layout('layouts.user', ['title' => 'Điểm danh thủ công']);
     }
 

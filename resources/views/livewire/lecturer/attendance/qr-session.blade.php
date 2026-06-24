@@ -314,16 +314,25 @@
                 @if ($search !== '' || $statusFilter !== 'all')
                     <button type="button" wire:click="clearSearch" class="rounded-xl border border-slate-200 bg-white px-4 py-2.5 text-sm font-bold text-slate-600 transition hover:bg-slate-50">Xóa lọc</button>
                 @endif
-                <button type="button" wire:click="exportExcel" class="group relative inline-flex items-center justify-center gap-2 rounded-xl border border-slate-200 bg-white px-5 py-2.5 text-sm font-bold text-slate-700 shadow-sm transition-all hover:-translate-y-0.5 hover:border-blue-200 hover:bg-blue-50 hover:text-blue-700 hover:shadow-md">
-                    <x-user.icon name="download" :size="16" class="text-slate-400 transition-colors group-hover:text-blue-600" />
-                    <span>Xuất Excel</span>
-                    <span class="absolute -right-2 -top-2.5 flex items-center justify-center">
-                        <span class="absolute inline-flex h-full w-full animate-ping rounded-full bg-amber-200 opacity-30"></span>
-                        <span class="relative flex h-7 w-7 items-center justify-center rounded-full border border-amber-200 bg-white shadow-sm">
-                            <span class="text-base leading-none">👑</span>
+                @if ($canExportExcel)
+                    <button type="button" wire:click="exportExcel" class="group relative inline-flex items-center justify-center gap-2 rounded-xl border border-slate-200 bg-white px-5 py-2.5 text-sm font-bold text-slate-700 shadow-sm transition-all hover:-translate-y-0.5 hover:border-blue-200 hover:bg-blue-50 hover:text-blue-700 hover:shadow-md">
+                        <x-user.icon name="download" :size="16" class="text-slate-400 transition-colors group-hover:text-blue-600" />
+                        <span>Xuất Excel</span>
+                        <span class="absolute -right-2 -top-2.5 flex items-center justify-center">
+                            <span class="absolute inline-flex h-full w-full animate-ping rounded-full bg-amber-200 opacity-30"></span>
+                            <span class="relative flex h-7 w-7 items-center justify-center rounded-full border border-amber-200 bg-white shadow-sm">
+                                <span class="text-base leading-none">👑</span>
+                            </span>
                         </span>
-                    </span>
-                </button>
+                    </button>
+                @else
+                    <a href="{{ route('upgrade') }}" title="Nâng cấp lên gói Pro để xuất báo cáo Excel"
+                        class="group relative inline-flex items-center justify-center gap-2 rounded-xl border border-amber-200 bg-amber-50 px-5 py-2.5 text-sm font-bold text-amber-700 shadow-sm transition-all hover:-translate-y-0.5 hover:bg-amber-100">
+                        <x-user.icon name="download" :size="16" />
+                        <span>Xuất Excel</span>
+                        <span class="rounded-full bg-amber-200 px-1.5 py-0.5 text-[10px] font-bold uppercase tracking-wide text-amber-800">Pro</span>
+                    </a>
+                @endif
             </div>
         </div>
 

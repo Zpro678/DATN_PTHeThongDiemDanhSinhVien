@@ -7,6 +7,7 @@ use Database\Factories\UserFactory;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 use Illuminate\Database\Eloquent\Relations\HasMany;
+use Illuminate\Database\Eloquent\Relations\HasOne;
 use Illuminate\Database\Eloquent\Relations\MorphMany;
 use Illuminate\Database\Eloquent\SoftDeletes;
 use Illuminate\Foundation\Auth\User as Authenticatable;
@@ -100,6 +101,26 @@ class User extends Authenticatable
     public function subscriptions(): HasMany
     {
         return $this->hasMany(Subscription::class);
+    }
+
+    /**
+     * Gói thuê bao đang còn hiệu lực (active và chưa hết hạn), mới nhất trước.
+     */
+    public function activeSubscription(): HasOne
+    {
+        return $this->hasOne(Subscription::class)
+            ->where('status', 'active')
+            ->where(fn ($query) => $query->whereNull('end_date')->orWhere('end_date', '>=', now()))
+            ->latest('start_date');
+    }
+
+    /**
+     * Gói dịch vụ hiện tại của người dùng; mặc định là gói FREE nếu chưa đăng ký.
+     */
+    public function currentPlan(): ?Plan
+    {
+        return $this->activeSubscription?->plan
+            ?? Plan::where('code', 'FREE')->first();
     }
 
     public function transactions(): HasMany
