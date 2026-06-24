@@ -21,68 +21,102 @@
         </a>
     </section>
 
-    <section class="overflow-hidden rounded-[2rem] border border-outline-variant/10 bg-white shadow-sm w-full">
-        <div class="overflow-x-auto">
-            <table class="w-full min-w-[980px] border-collapse text-left">
-                <thead class="bg-surface-container-lowest text-base font-bold uppercase tracking-wider text-on-surface">
+    <section class="rounded-[2rem] border border-outline-variant/10 bg-white shadow-sm w-full">
+        <div class="overflow-x-auto rounded-[2rem]">
+            <table class="w-full min-w-[1080px] border-collapse text-left">
+                <thead class="bg-surface-container-lowest text-[13px] font-bold uppercase tracking-wider text-on-surface-variant">
                     <tr>
-                        <th class="pl-[44px] pr-8 py-5">Ngày gửi</th>
-                        <th class="px-8 py-5">Lớp học</th>
-                        <th class="px-8 py-5">Buổi xin nghỉ</th>
-                        <th class="px-8 py-5">Trạng thái</th>
-                        <th class="px-8 py-5 max-w-[300px]">Lý do</th>
+                        <th class="pl-8 pr-6 py-4">Ngày gửi</th>
+                        <th class="px-6 py-4">Lớp học</th>
+                        <th class="px-6 py-4 whitespace-nowrap">Buổi xin nghỉ</th>
+                        <th class="px-6 py-4 whitespace-nowrap">Trạng thái</th>
+                        <th class="px-6 py-4 min-w-[250px]">Lý do</th>
+                        <th class="pr-8 pl-6 py-4 text-center">Thao tác</th>
                     </tr>
                 </thead>
-                <tbody class="divide-y divide-outline-variant/10 text-base">
+                <tbody class="divide-y divide-outline-variant/10">
                     @forelse ($requests as $request)
                         @php($meta = $statusMeta[$request->status] ?? $statusMeta['pending'])
                         <tr class="transition-all duration-200 hover:bg-surface-container-lowest/80 hover:shadow-sm group">
-                            <td class="whitespace-nowrap pl-[44px] pr-8 py-5 font-medium text-[15px] text-on-surface">
+                            <td class="whitespace-nowrap pl-8 pr-6 py-4 font-medium text-sm text-on-surface">
                                 {{ $request->created_at?->format('d/m/Y H:i') ?? '--/--/----' }}
                             </td>
-                            <td class="px-8 py-5">
-                                <p class="text-base font-bold text-on-surface group-hover:text-primary transition-colors">{{ $request->classSession->courseClass->name ?? '' }}</p>
-                                <p class="mt-1.5 flex items-center gap-2 text-sm font-medium text-on-surface-variant">
+                            <td class="px-6 py-4 min-w-[200px]">
+                                <p class="text-sm font-bold text-on-surface group-hover:text-primary transition-colors">{{ $request->classSession->courseClass->name ?? '' }}</p>
+                                <p class="mt-1 flex items-center gap-1.5 text-xs font-medium text-on-surface-variant">
                                     <span>{{ $request->classSession->courseClass->code ?? '' }}</span>
                                 </p>
                             </td>
-                            <td class="px-8 py-5">
-                                <span class="rounded-xl border border-outline-variant/20 bg-surface-container-lowest px-3 py-1.5 text-[13px] font-bold tracking-wider text-on-surface-variant">
+                            <td class="px-6 py-4 whitespace-nowrap">
+                                <span class="rounded-lg border border-outline-variant/20 bg-surface-container-lowest px-2.5 py-1 text-xs font-bold tracking-wider text-on-surface-variant">
                                     {{ $request->classSession->name ?? 'Không xác định' }}
                                 </span>
-                                <span class="ml-2 text-xs text-on-surface-variant">{{ $request->classSession->date?->format('d/m/Y') }}</span>
+                                <span class="ml-1.5 text-[11px] text-on-surface-variant">{{ $request->classSession->date?->format('d/m/Y') }}</span>
                             </td>
-                            <td class="px-8 py-5">
-                                <span class="inline-flex items-center gap-1.5 rounded-xl border px-3 py-1.5 text-[13px] font-bold uppercase tracking-wider {{ $meta['badge'] }}">
-                                    <span class="h-2 w-2 rounded-full {{ $meta['dot'] }}"></span>
+                            <td class="px-6 py-4 whitespace-nowrap">
+                                <span class="inline-flex items-center gap-1.5 rounded-lg border px-2.5 py-1 text-[11px] font-bold uppercase tracking-wider whitespace-nowrap {{ $meta['badge'] }}">
+                                    <span class="h-1.5 w-1.5 rounded-full {{ $meta['dot'] }}"></span>
                                     {{ $meta['label'] }}
                                 </span>
                                 @if($request->status === 'rejected' && $request->rejected_reason)
-                                    <div class="mt-1.5 text-xs text-rose-600 font-medium">Lý do từ chối: {{ $request->rejected_reason }}</div>
+                                    <div class="mt-1.5 text-[11px] text-rose-600 font-medium whitespace-normal max-w-[200px]">Lý do: {{ $request->rejected_reason }}</div>
                                 @endif
                             </td>
-                            <td class="px-8 py-5 max-w-[300px] text-on-surface-variant">
-                                <p class="text-sm line-clamp-2" title="{{ $request->reason }}">{{ $request->reason }}</p>
+                            <td class="px-6 py-4 min-w-[250px] text-on-surface-variant">
+                                <p class="text-[13px]" title="{{ $request->reason }}">{{ $request->reason }}</p>
                                 @if(!empty($request->proof_image))
-                                    <div class="mt-2 flex flex-wrap gap-2">
+                                    <div class="mt-1.5 flex flex-wrap gap-1.5">
                                         @foreach($request->proof_image as $img)
-                                            <a href="{{ asset('storage/'.$img) }}" target="_blank" class="inline-flex items-center gap-1 text-[11px] font-bold text-primary hover:underline bg-primary/10 px-2 py-1 rounded-md">
-                                                <x-user.icon name="image" :size="12" />Ảnh {{ $loop->iteration }}
+                                            <a href="{{ asset('storage/'.$img) }}" target="_blank" class="inline-flex items-center gap-1 text-[10px] font-bold text-primary hover:underline bg-primary/10 px-1.5 py-0.5 rounded">
+                                                <x-user.icon name="image" :size="10" />Ảnh {{ $loop->iteration }}
                                             </a>
                                         @endforeach
                                     </div>
                                 @endif
                             </td>
+                            <td class="pr-8 pl-6 py-4 text-center">
+                                <div x-data="{ open: false }" class="relative inline-block text-left" @click.away="open = false">
+                                    <button @click="open = !open" type="button" class="flex items-center justify-center h-8 w-8 rounded-full text-on-surface-variant hover:bg-surface-container-high transition-colors focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-1 mx-auto">
+                                        <x-user.icon name="more-vertical" :size="18" />
+                                    </button>
+
+                                    <div x-show="open" 
+                                         x-transition:enter="transition ease-out duration-100" 
+                                         x-transition:enter-start="transform opacity-0 scale-95" 
+                                         x-transition:enter-end="transform opacity-100 scale-100" 
+                                         x-transition:leave="transition ease-in duration-75" 
+                                         x-transition:leave-start="transform opacity-100 scale-100" 
+                                         x-transition:leave-end="transform opacity-0 scale-95" 
+                                         class="absolute right-1/2 translate-x-1/2 sm:translate-x-0 sm:right-0 z-50 mt-1 w-36 origin-top-right sm:origin-top-right rounded-lg bg-white shadow-lg ring-1 ring-black ring-opacity-5 focus:outline-none" style="display: none;" x-cloak>
+                                        <div class="py-1">
+                                            <a href="#" class="group flex items-center px-3 py-2 text-[13px] font-semibold text-gray-700 hover:bg-primary/10 hover:text-primary transition-colors">
+                                                <x-user.icon name="eye" :size="14" class="mr-2 text-gray-400 group-hover:text-primary" />
+                                                Xem chi tiết
+                                            </a>
+                                            @if($request->status === 'pending')
+                                            <a href="#" class="group flex items-center px-3 py-2 text-[13px] font-semibold text-gray-700 hover:bg-primary/10 hover:text-primary transition-colors">
+                                                <x-user.icon name="edit-2" :size="14" class="mr-2 text-gray-400 group-hover:text-primary" />
+                                                Chỉnh sửa
+                                            </a>
+                                            <button type="button" wire:click="deleteRequest({{ $request->id }})" wire:confirm="Bạn có chắc chắn muốn xóa đơn xin phép này không?" class="group flex w-full items-center px-3 py-2 text-[13px] font-semibold text-rose-600 hover:bg-rose-50 transition-colors">
+                                                <x-user.icon name="trash-2" :size="14" class="mr-2 text-rose-500" />
+                                                Xóa đơn
+                                            </button>
+                                            @endif
+                                        </div>
+                                    </div>
+                                </div>
+                            </td>
                         </tr>
                     @empty
                         <tr>
-                            <td colspan="5" class="px-8 py-20 text-center">
+                            <td colspan="6" class="px-8 py-16 text-center">
                                 <div class="flex flex-col items-center justify-center text-on-surface-variant">
-                                    <div class="mb-5 rounded-full bg-surface-container p-5 text-outline">
-                                        <x-user.icon name="file-text" :size="40" />
+                                    <div class="mb-4 rounded-full bg-surface-container p-4 text-outline">
+                                        <x-user.icon name="file-text" :size="32" />
                                     </div>
-                                    <p class="text-lg font-bold text-on-surface">Chưa có đơn xin nghỉ phép nào</p>
-                                    <p class="mt-2 text-base">Bạn chưa từng gửi đơn xin nghỉ phép nào lên hệ thống.</p>
+                                    <p class="text-base font-bold text-on-surface">Chưa có đơn xin nghỉ phép nào</p>
+                                    <p class="mt-1 text-sm">Bạn chưa từng gửi đơn xin nghỉ phép nào lên hệ thống.</p>
                                 </div>
                             </td>
                         </tr>

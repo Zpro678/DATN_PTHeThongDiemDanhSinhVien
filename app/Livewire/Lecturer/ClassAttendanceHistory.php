@@ -14,7 +14,7 @@ class ClassAttendanceHistory extends Component
     use WithPagination;
 
     public CourseClass $courseClass;
-    public int $perPage = 5;
+    public int $perPage = 10;
 
     public function mount(CourseClass $courseClass)
     {

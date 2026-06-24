@@ -132,6 +132,10 @@
             <path d="M3 10h18" />
             @break
 
+        @case('check')
+            <polyline points="20 6 9 17 4 12" />
+            @break
+
         @case('check-circle')
         @case('check-circle-2')
             <circle cx="12" cy="12" r="10" />
@@ -276,6 +280,11 @@
             <path d="M15 3h4a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2h-4" />
             <path d="m10 17 5-5-5-5" />
             <path d="M15 12H3" />
+            @break
+
+        @case('link')
+            <path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71" />
+            <path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71" />
             @break
 
         @case('list')

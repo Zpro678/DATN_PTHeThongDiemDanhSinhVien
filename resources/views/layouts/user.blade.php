@@ -70,8 +70,11 @@
 
         <title>{{ $title ? $title.' - ' : '' }}{{ config('app.name', 'EduTrack') }}</title>
 
-        <link rel="preconnect" href="https://fonts.bunny.net">
-        <link href="https://fonts.bunny.net/css?family=outfit:400,500,600,700,800&display=swap" rel="stylesheet" />
+        <link rel="icon" type="image/png" href="{{ asset('favicon.png?v=' . time()) }}">
+
+        <link rel="preconnect" href="https://fonts.googleapis.com">
+        <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+        <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
 
         @livewireStyles
         @vite(['resources/css/app.css', 'resources/js/app.js'])
@@ -91,8 +94,8 @@
                     </a>
                 </div>
 
-                <nav class="flex-1 space-y-4 overflow-y-auto px-3 py-2">
-                    <div class="space-y-1">
+                <nav class="flex-1 space-y-4 overflow-y-auto overflow-x-hidden px-3 py-2">
+                    <div class="space-y-2">
                         @foreach ($navData as $nav)
                             @if($nav['type'] === 'link')
                                 @php
@@ -103,13 +106,13 @@
                                 <a
                                     href="{{ $href }}"
                                     @class([
-                                        'flex w-full items-center gap-3 rounded-lg px-3 py-2.5 text-base font-bold transition-all',
+                                        'flex w-full items-center gap-3 rounded-lg px-3 py-3.5 text-base font-bold transition-all',
                                         'bg-primary-container text-on-primary-container' => $isActive,
                                         'text-on-surface-variant hover:bg-surface-container-high' => ! $isActive,
                                     ])
                                 >
                                     <x-user.icon :name="$nav['icon']" :size="20" class="shrink-0" />
-                                    <span class="whitespace-nowrap">{{ $nav['label'] }}</span>
+                                    <span class="truncate">{{ $nav['label'] }}</span>
                                 </a>
                             @elseif($nav['type'] === 'group')
                                 @php
@@ -119,16 +122,16 @@
                                     }
                                 @endphp
                                 
-                                <div x-data="{ open: {{ $isGroupActive ? 'true' : 'false' }} }" class="space-y-1 mt-2">
-                                    <button @click="open = !open" class="flex w-full items-center justify-between rounded-lg px-3 py-2.5 text-base font-bold text-on-surface-variant transition-all hover:bg-surface-container-high focus:outline-none" :class="open ? 'text-primary' : ''">
+                                <div x-data="{ open: {{ $isGroupActive ? 'true' : 'false' }} }" class="space-y-2 mt-3">
+                                    <button @click="open = !open" class="flex w-full items-center justify-between rounded-lg px-3 py-3.5 text-base font-bold text-on-surface-variant transition-all hover:bg-surface-container-high focus:outline-none" :class="open ? 'text-primary' : ''">
                                         <div class="flex items-center gap-3">
                                             <x-user.icon :name="$nav['icon']" :size="20" class="shrink-0" />
-                                            <span class="whitespace-nowrap">{{ $nav['label'] }}</span>
+                                            <span class="truncate">{{ $nav['label'] }}</span>
                                         </div>
                                         <x-user.icon name="chevron-down" :size="16" class="shrink-0 transition-transform duration-200" x-bind:class="open ? 'rotate-180' : ''" />
                                     </button>
 
-                                    <div x-show="open" x-collapse class="space-y-1 pl-9">
+                                    <div x-show="open" x-collapse class="space-y-2 pl-9 pt-1">
                                         @foreach ($nav['items'] as $item)
                                             @php
                                                 $activePattern = $item['active'] ?? ($item['route'] ?? null);
@@ -139,13 +142,13 @@
                                             <a
                                                 href="{{ $href }}"
                                                 @class([
-                                                    'flex items-center gap-3 rounded-lg px-3 py-2.5 text-base font-semibold transition-all',
+                                                    'flex items-center gap-3 rounded-lg px-3 py-3.5 text-base font-semibold transition-all',
                                                     'bg-primary/10 text-primary font-bold' => $isActive,
                                                     'text-on-surface-variant hover:bg-surface-container-high hover:text-on-surface' => ! $isActive,
                                                 ])
                                             >
                                                 <x-user.icon :name="$item['icon']" :size="18" class="shrink-0" />
-                                                <span class="whitespace-nowrap">{{ $item['label'] }}</span>
+                                                <span class="truncate">{{ $item['label'] }}</span>
                                             </a>
                                         @endforeach
                                     </div>
@@ -158,13 +161,13 @@
                 <div class="mt-auto space-y-1 border-t border-outline-variant/20 px-2 pt-2 pb-1">
                     <a href="{{ route('support') }}" class="flex w-full items-center gap-3 rounded-lg px-3 py-1 text-base font-bold text-on-surface-variant transition-all hover:bg-surface-container-high">
                         <x-user.icon name="help-circle" :size="20" class="shrink-0" />
-                        <span class="whitespace-nowrap">Hỗ trợ</span>
+                        <span class="truncate">{{ __('Hỗ trợ') ?? 'Hỗ trợ' }}</span>
                     </a>
                     <form method="POST" action="{{ route('logout') }}">
                         @csrf
                         <button type="submit" class="flex w-full items-center gap-3 rounded-lg px-3 py-1 text-base font-bold text-error transition-all hover:bg-error-container/40">
                             <x-user.icon name="log-out" :size="20" class="shrink-0" />
-                            <span class="whitespace-nowrap">Đăng xuất</span>
+                            <span class="truncate">{{ __('Đăng xuất') ?? 'Đăng xuất' }}</span>
                         </button>
                     </form>
                 </div>
@@ -318,6 +321,7 @@
             </div>
         </div>
         
+        <x-notification.notification />
         <livewire:student.join-class />
     </body>
 </html>

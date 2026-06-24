@@ -71,11 +71,7 @@
         </div>
     </div>
 
-    @if (session('status'))
-        <div class="mb-6 rounded-2xl border border-emerald-200 bg-emerald-50 px-5 py-3 text-sm font-semibold text-emerald-700">
-            {{ session('status') }}
-        </div>
-    @endif
+    <x-notification.notification />
 
     <div class="mb-8 grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-5">
         @foreach ([

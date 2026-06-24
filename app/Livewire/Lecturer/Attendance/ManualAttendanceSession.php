@@ -85,7 +85,7 @@ class ManualAttendanceSession extends Component
                 'is_verified' => $record->classMember->user_id !== null,
             ]));
 
-        session()->flash('status', 'Đã đánh dấu tất cả sinh viên chưa điểm danh là có mặt.');
+        session()->flash('success', 'Đã đánh dấu tất cả sinh viên chưa điểm danh là có mặt.');
     }
 
     public function closeSession(): void
@@ -93,7 +93,7 @@ class ManualAttendanceSession extends Component
         $session = $this->ownedSession($this->sessionId);
         $session->update(['status' => 'closed']);
 
-        session()->flash('status', 'Phiên điểm danh đã được chốt sổ.');
+        session()->flash('success', 'Phiên điểm danh đã được chốt sổ.');
     }
 
     public function deleteSession()
@@ -110,7 +110,7 @@ class ManualAttendanceSession extends Component
         // vì khi truy vấn session đã xóa thì record sẽ ẩn. (Tùy logic hệ thống, nhưng xóa session là đủ).
         $session->delete();
 
-        session()->flash('status', 'Buổi điểm danh đã được xóa thành công.');
+        session()->flash('success', 'Buổi điểm danh đã được xóa thành công.');
 
         return redirect()->route('lecturer.classes.show', $classId);
     }

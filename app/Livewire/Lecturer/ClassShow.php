@@ -8,11 +8,12 @@ use App\Models\LeaveRequest;
 use Illuminate\Support\Str;
 use Livewire\Component;
 use Livewire\WithFileUploads;
+use Livewire\WithPagination;
 use Maatwebsite\Excel\Facades\Excel;
 
 class ClassShow extends Component
 {
-    use WithFileUploads;
+    use WithFileUploads, WithPagination;
 
     // Đối tượng chứa thông tin chi tiết của lớp học hiện tại
     public CourseClass $class;
@@ -51,6 +52,9 @@ class ClassShow extends Component
 
     // Số lượng đơn xin phép nghỉ đang chờ duyệt của lớp này
     public int $pendingLeaveRequests = 0;
+
+    // Số lượng sinh viên đang chờ duyệt vào lớp
+    public int $pendingMembersCount = 0;
 
     // Import state
     // Trạng thái hiển thị modal import sinh viên
@@ -97,6 +101,7 @@ class ClassShow extends Component
         $this->pendingLeaveRequests = LeaveRequest::whereHas('classSession', function ($q) use ($courseClass) {
             $q->where('class_id', $courseClass->id);
         })->where('status', 'pending')->count();
+        $this->pendingMembersCount = $courseClass->members()->where('status', 'pending')->count();
         
         if (request()->has('openImport')) {
             $this->openImport();
@@ -160,6 +165,7 @@ class ClassShow extends Component
     {
         return view('livewire.lecturer.class-show', [
             'recentSessions' => $this->recentSessions,
+            'students' => $this->class->members()->with(['user', 'attendanceSummary'])->where('status', 'active')->paginate(5),
         ])->layout('layouts.user', ['title' => $this->class->name]);
     }
 

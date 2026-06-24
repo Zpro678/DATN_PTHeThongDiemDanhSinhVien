@@ -123,23 +123,27 @@
 
 <div class="mx-auto max-w-[1400px] p-4 pb-24 md:p-8 md:pb-12">
     <section class="mb-8 grid grid-cols-12 items-center gap-6">
-        <div class="relative col-span-12 overflow-hidden rounded-[2rem] border border-outline-variant/10 bg-white p-6 shadow-sm md:p-10 xl:col-span-7">
-            <div class="absolute -left-24 -top-24 h-64 w-64 rounded-full bg-primary/5 blur-3xl transition-all duration-700"></div>
+        <div class="relative col-span-12 overflow-hidden rounded-[2.5rem] border border-white/40 bg-gradient-to-br from-surface to-surface-container p-6 shadow-xl shadow-primary/5 md:p-10 xl:col-span-7">
+            <!-- Colorful ambient blurs -->
+            <div class="absolute -left-20 -top-20 h-72 w-72 animate-pulse rounded-full bg-primary/20 blur-[80px] transition-all duration-1000"></div>
+            <div class="absolute -bottom-32 -right-20 h-80 w-80 rounded-full bg-tertiary/20 blur-[80px] transition-all duration-1000 delay-500"></div>
+            <div class="absolute bottom-10 left-1/2 h-40 w-40 -translate-x-1/2 rounded-full bg-secondary/15 blur-[60px] transition-all duration-700"></div>
+            
             <div class="relative z-10">
                 <h2 class="mb-4 text-2xl font-bold leading-tight tracking-normal text-on-background md:text-[32px]">
-                    Xin chào, hôm nay bạn muốn quản lý hay tham gia lớp học?
+                    <span class="bg-gradient-to-r from-primary to-tertiary bg-clip-text text-transparent font-extrabold">Xin chào,</span> hôm nay bạn muốn quản lý hay tham gia lớp học?
                 </h2>
-                <p class="mb-8 max-w-xl text-body-lg leading-relaxed text-on-surface-variant">
+                <p class="mb-8 max-w-xl text-body-lg leading-relaxed text-on-surface-variant/90">
                     Quản lý lớp học, tổ chức điểm danh, theo dõi chuyên cần và tham gia lớp học trong một dashboard duy nhất.
                 </p>
-                <div class="mb-8 inline-flex rounded-full bg-surface-container-low p-1.5 shadow-inner">
+                <div class="mb-8 inline-flex rounded-full bg-white/50 p-1.5 shadow-inner ring-1 ring-outline-variant/20 backdrop-blur-md">
                     <button
                         type="button"
                         wire:click="setWorkspace('admin')"
                         @class([
-                            'flex items-center gap-2 rounded-full px-6 py-2.5 text-sm font-bold transition-all',
-                            'bg-white text-primary shadow' => $workspace === 'admin',
-                            'text-on-surface-variant hover:text-on-surface' => $workspace !== 'admin',
+                            'flex items-center gap-2 rounded-full px-6 py-2.5 text-sm font-bold transition-all duration-300',
+                            'bg-gradient-to-r from-primary to-primary-container text-white shadow-lg shadow-primary/30 scale-105' => $workspace === 'admin',
+                            'text-on-surface-variant hover:bg-white/80 hover:text-on-surface' => $workspace !== 'admin',
                         ])
                     >
                         <x-user.icon name="shield" :size="18" />
@@ -149,9 +153,9 @@
                         type="button"
                         wire:click="setWorkspace('student')"
                         @class([
-                            'flex items-center gap-2 rounded-full px-6 py-2.5 text-sm font-bold transition-all',
-                            'bg-white text-tertiary shadow' => $workspace === 'student',
-                            'text-on-surface-variant hover:text-on-surface' => $workspace !== 'student',
+                            'flex items-center gap-2 rounded-full px-6 py-2.5 text-sm font-bold transition-all duration-300',
+                            'bg-gradient-to-r from-tertiary to-tertiary-container text-white shadow-lg shadow-tertiary/30 scale-105' => $workspace === 'student',
+                            'text-on-surface-variant hover:bg-white/80 hover:text-on-surface' => $workspace !== 'student',
                         ])
                     >
                         <x-user.icon name="user" :size="18" />
@@ -159,7 +163,7 @@
                     </button>
                 </div>
                 <div class="flex flex-wrap gap-6 border-t border-outline-variant/20 pt-6">
-                    <a href="{{ route('create-class') }}" class="flex items-center gap-2 text-sm font-bold text-primary underline-offset-4 hover:underline">
+                    <a href="{{ route('create-class') }}" class="group flex items-center gap-2 rounded-xl bg-white px-5 py-2.5 text-sm font-bold text-primary shadow-sm ring-1 ring-primary/10 transition-all hover:bg-primary hover:text-white hover:shadow-md hover:shadow-primary/20">
                         <x-user.icon name="plus" :size="18" />
                         Tạo lớp mới
                     </a>
@@ -172,34 +176,38 @@
         </div>
 
         <div class="col-span-12 hidden h-[350px] md:block xl:col-span-5 xl:h-full">
-            <div class="relative flex h-full min-h-[350px] items-center justify-center overflow-hidden rounded-[2rem] border border-white bg-white/60 p-8 shadow-sm backdrop-blur-xl">
+            <div class="relative flex h-full min-h-[350px] items-center justify-center overflow-hidden rounded-[2.5rem] border border-white/60 bg-gradient-to-br from-white/80 to-white/30 p-8 shadow-xl shadow-primary/5 backdrop-blur-2xl">
+                <!-- Ambient decorative elements inside glassmorphism container -->
+                <div class="absolute -right-10 -top-10 h-48 w-48 rounded-full bg-primary/20 blur-3xl"></div>
+                <div class="absolute -bottom-10 -left-10 h-48 w-48 rounded-full bg-error/20 blur-3xl"></div>
+                
                 <div class="relative mt-4 flex h-64 w-64 items-center justify-center">
                     <div class="z-20 flex h-28 w-28 flex-col items-center justify-center rounded-full border-4 border-primary-container/20 bg-white shadow-xl">
-                        <span class="font-stat-lg text-3xl text-primary">{{ $studentAverageAttendance }}%</span>
+                        <span class="font-stat-lg text-3xl text-primary">86%</span>
                         <span class="mt-1 px-4 text-center text-[9px] font-bold uppercase leading-none text-outline">Chuyên cần TB</span>
                     </div>
-                    <div class="orbit-animation absolute h-full w-full rounded-full border border-dashed border-outline-variant/40">
+                    <div class="orbit-animation absolute h-full w-full rounded-full border border-dashed border-primary/30">
                         <div class="orbit-item absolute -top-5 left-1/2 -translate-x-1/2">
-                            <div class="flex flex-col items-center rounded-2xl border border-outline-variant/10 bg-white px-4 py-2 shadow-md">
-                                <span class="text-lg font-bold leading-none text-primary">{{ $totalClasses }}</span>
+                            <div class="flex flex-col items-center rounded-2xl border border-white/60 bg-white/95 px-4 py-2 shadow-lg backdrop-blur-md">
+                                <span class="text-lg font-black text-primary">{{ $totalClasses }}</span>
                                 <span class="mt-1 text-[9px] font-bold uppercase text-on-surface-variant">Lớp quản lý</span>
                             </div>
                         </div>
                         <div class="orbit-item absolute -right-8 top-1/2 -translate-y-1/2">
-                            <div class="flex flex-col items-center rounded-2xl bg-primary px-4 py-2 text-white shadow-md">
-                                <span class="text-lg font-bold leading-none">{{ $unclosedAttendanceSessions }}</span>
+                            <div class="flex flex-col items-center rounded-2xl border border-white/40 bg-gradient-to-br from-primary to-primary-container px-4 py-2 text-white shadow-lg shadow-primary/30 backdrop-blur-md">
+                                <span class="text-lg font-black">{{ $unclosedAttendanceSessions }}</span>
                                 <span class="mt-1 text-[9px] font-bold uppercase opacity-90">Đang mở</span>
                             </div>
                         </div>
                         <div class="orbit-item absolute -bottom-5 left-1/2 -translate-x-1/2">
-                            <div class="flex flex-col items-center rounded-2xl border border-error/20 bg-error/10 px-4 py-2 text-error shadow-md">
-                                <span class="text-lg font-bold leading-none">{{ $attendanceWarningStudentsCount }}</span>
+                            <div class="flex flex-col items-center rounded-2xl border border-error/20 bg-gradient-to-br from-error to-[#dc2626] px-4 py-2 text-white shadow-lg shadow-error/30 backdrop-blur-md">
+                                <span class="text-lg font-black">{{ $attendanceWarningStudentsCount }}</span>
                                 <span class="mt-1 text-[9px] font-bold uppercase">Cần xử lý</span>
                             </div>
                         </div>
                         <div class="orbit-item absolute -left-8 top-1/2 -translate-y-1/2">
                             <div class="flex flex-col items-center rounded-2xl border border-outline-variant/10 bg-white px-4 py-2 shadow-md">
-                                <span class="text-lg font-bold leading-none text-tertiary">{{ $studentJoinedClassesCount }}</span>
+                                <span class="text-lg font-bold leading-none text-tertiary">3</span>
                                 <span class="mt-1 text-[9px] font-bold uppercase text-on-surface-variant">Lớp tham gia</span>
                             </div>
                         </div>
@@ -463,9 +471,9 @@
                                 </div>
                                 <h5 class="text-base font-bold text-on-surface">Chưa tham gia lớp nào</h5>
                                 <p class="mt-2 text-sm text-on-surface-variant">Khi bạn tham gia lớp, thông tin chuyên cần và số tiết vắng sẽ hiển thị tại đây.</p>
-                                <a href="{{ route('student.classes.join') }}" class="mt-4 inline-flex items-center justify-center rounded-xl bg-tertiary px-4 py-2 text-sm font-bold text-white shadow-sm transition-colors hover:bg-tertiary/90">
+                                <button type="button" x-on:click="$dispatch('open-join-class-modal')" class="mt-4 inline-flex items-center justify-center rounded-xl bg-tertiary px-4 py-2 text-sm font-bold text-white shadow-sm transition-colors hover:bg-tertiary/90">
                                     Tham gia lớp
-                                </a>
+                                </button>
                             </div>
                         @endforelse
                     </div>
