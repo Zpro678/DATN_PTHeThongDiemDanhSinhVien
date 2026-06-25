@@ -124,7 +124,7 @@
                             <div x-cloak x-show="open" x-on:click.outside="open = false" class="absolute right-0 top-full z-50 mt-1 w-44 rounded-xl border border-outline-variant/20 bg-white py-2 shadow-lg">
                                 <a href="{{ route('lecturer.classes.show', $class->id) }}" class="block w-full px-4 py-2 text-left text-sm font-medium hover:bg-surface-container">Xem lớp học</a>
                                 @if (! $isEnded)
-                                    <a href="{{ route('lecturer.classes.settings', $class->id) }}" class="block w-full px-4 py-2 text-left text-sm font-medium hover:bg-surface-container">Cài đặt lớp</a>
+                                    <button type="button" x-on:click="$dispatch('open-class-settings', { classId: {{ $class->id }} })" class="block w-full px-4 py-2 text-left text-sm font-medium hover:bg-surface-container">Cài đặt lớp</button>
                                     <button type="button" wire:click="endClass({{ $class->id }})" wire:confirm="Bạn có chắc chắn muốn kết thúc lớp học này? Hành động này sẽ khóa toàn bộ hoạt động điểm danh của lớp." class="block w-full px-4 py-2 text-left text-sm font-medium text-error hover:bg-error/10">Kết thúc lớp</button>
                                 @endif
                             </div>

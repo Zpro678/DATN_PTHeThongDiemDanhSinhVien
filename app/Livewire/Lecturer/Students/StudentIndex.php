@@ -215,13 +215,22 @@ class StudentIndex extends Component
         $this->reset(['importFile', 'importErrors', 'importSuccess', 'importClassId']);
     }
 
-    public function downloadTemplate()
+    public function downloadFullTemplate()
     {
-        $csvContent = "Mã sinh viên,Họ và tên,22/06,23/06\nSV001,Nguyễn Văn A,c,m\nSV002,Trần Thị B,v,c";
+        $csvContent = "Mã học viên,Họ và tên,Email,22/06,23/06\nHV001,Nguyễn Văn A,nva@email.com,c,m\nHV002,Trần Thị B,ttb@email.com,v,c";
 
         return response()->streamDownload(function () use ($csvContent) {
             echo "\xEF\xBB\xBF".$csvContent; // UTF-8 BOM cho Excel
-        }, 'Danh_sach_sinh_vien_mau.csv');
+        }, 'Danh_sach_hoc_vien_mau_day_du.csv');
+    }
+
+    public function downloadBasicTemplate()
+    {
+        $csvContent = "Mã học viên,Họ và tên,Email\nHV001,Nguyễn Văn A,nva@email.com\nHV002,Trần Thị B,ttb@email.com";
+
+        return response()->streamDownload(function () use ($csvContent) {
+            echo "\xEF\xBB\xBF".$csvContent; // UTF-8 BOM cho Excel
+        }, 'Danh_sach_hoc_vien_mau_co_ban.csv');
     }
 
     public function processImport(): void

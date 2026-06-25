@@ -14,15 +14,23 @@
             <button
                 type="button"
                 class="inline-flex items-center gap-2 rounded-lg border border-slate-200 bg-white px-4 py-2 text-sm font-medium text-slate-600 transition-colors hover:bg-slate-50 hover:text-slate-900"
+                wire:click="openImport"
+            >
+                <x-user.icon name="upload" :size="16" />
+                <span>Import</span>
+            </button>
+            <button
+                type="button"
+                class="inline-flex items-center gap-2 rounded-lg border border-slate-200 bg-white px-4 py-2 text-sm font-medium text-slate-600 transition-colors hover:bg-slate-50 hover:text-slate-900"
                 x-on:click="showShareModal = true"
             >
                 <x-user.icon name="send" :size="16" />
                 <span>Chia sẻ</span>
             </button>
-            <a href="{{ route('lecturer.classes.settings', $class->id) }}" class="inline-flex items-center gap-2 rounded-lg border border-slate-200 bg-white px-4 py-2 text-sm font-medium text-slate-600 transition-colors hover:bg-slate-50 hover:text-slate-900">
-                <x-user.icon name="settings" :size="16" />
-                Cài đặt
-            </a>
+            <button type="button" x-on:click="$dispatch('open-class-settings', { classId: {{ $class->id }} })" class="inline-flex items-center gap-2 rounded-lg border border-slate-200 bg-white px-4 py-2 text-sm font-medium text-slate-600 transition-colors hover:bg-slate-50 hover:text-slate-900">
+                <x-user.icon name="settings" :size="18" />
+                Cài đặt lớp
+            </button>
             <a href="{{ route('managed-classes') }}" class="inline-flex items-center gap-2 rounded-lg bg-blue-600 px-4 py-2 text-sm font-medium text-white transition-colors hover:bg-blue-700">
                 <x-user.icon name="arrow-left" :size="16" />
                 Trở về
@@ -215,8 +223,9 @@
                         <div>
                             <h3 class="text-[20px] font-bold text-slate-800">Import danh sách sinh viên</h3>
                             <p class="mt-1 text-[14px] text-slate-500">
-                                Tải lên tệp Excel hoặc CSV chứa danh sách sinh viên. 
-                                <button type="button" wire:click="downloadTemplate" class="font-bold text-blue-600 hover:underline">Tải mẫu file.</button>
+                                Tải lên tệp Excel hoặc CSV chứa danh sách sinh viên. Bạn có thể tải: 
+                                <button type="button" wire:click="downloadBasicTemplate" class="font-bold text-blue-600 hover:underline">Mẫu cơ bản</button> hoặc 
+                                <button type="button" wire:click="downloadFullTemplate" class="font-bold text-blue-600 hover:underline">Mẫu đầy đủ</button>.
                             </p>
                         </div>
                     </div>

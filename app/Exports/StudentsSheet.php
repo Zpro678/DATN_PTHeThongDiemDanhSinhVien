@@ -130,17 +130,25 @@ class StudentsSheet implements FromArray, ShouldAutoSize, WithStyles, WithTitle
             $percent = 0;
             $studied = $stats['studied_lessons'];
             if ($studied > 0) {
-                // Ensure the formula only contains safe characters
-                $formulaStr = preg_replace('/[^cmvpt0-9\+\-\*\/\(\)\.\s]/', '', strtolower($this->formula));
+                // Ensure the formula only contains safe characters and allowed math functions
+                $formulaStr = strtolower($this->formula);
                 
-                // Map variables to their values
-                $formulaStr = strtr($formulaStr, [
-                    'c' => $stats['present_lessons'],
-                    'm' => $stats['late_lessons'],
-                    'v' => $stats['absent_lessons'],
-                    'p' => $stats['excused_lessons'],
-                    't' => $studied,
-                ]);
+                // Chỉ giữ lại các biến và hàm toán học hợp lệ
+                $formulaStr = preg_replace_callback('/[a-z]+/', function($matches) {
+                    $word = $matches[0];
+                    $allowed = ['c', 'm', 'v', 'p', 't', 'floor', 'ceil', 'round', 'max', 'min', 'abs'];
+                    return in_array($word, $allowed) ? $word : '';
+                }, $formulaStr);
+
+                // Loại bỏ các ký tự đặc biệt nguy hiểm (chỉ cho phép a-z, số, toán tử, khoảng trắng, dấu phẩy)
+                $formulaStr = preg_replace('/[^a-z0-9\+\-\*\/\(\)\.\s,]/', '', $formulaStr);
+                
+                // Map variables to their values using word boundaries to prevent replacing letters inside functions (e.g. 'm' inside 'min')
+                $formulaStr = preg_replace('/\bc\b/', $stats['present_lessons'], $formulaStr);
+                $formulaStr = preg_replace('/\bm\b/', $stats['late_lessons'], $formulaStr);
+                $formulaStr = preg_replace('/\bv\b/', $stats['absent_lessons'], $formulaStr);
+                $formulaStr = preg_replace('/\bp\b/', $stats['excused_lessons'], $formulaStr);
+                $formulaStr = preg_replace('/\bt\b/', $studied, $formulaStr);
 
                 if (!empty($formulaStr)) {
                     try {

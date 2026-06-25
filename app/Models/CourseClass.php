@@ -21,6 +21,8 @@ class CourseClass extends Model
         'name', // Tên lớp học.
         'description', // Mô tả môn học.
         'late_threshold', // Ngưỡng thời gian trễ.
+        'lates_per_absent', // Số lần muộn bằng 1 lần vắng.
+        'deduct_excused_absence', // Trừ chuyên cần khi vắng có phép.
         'subject_code', // Mã môn học.
         'semester', // Học kỳ.
         'require_approval', // Bật/tắt yêu cầu duyệt khi xin vào lớp.
@@ -35,7 +37,9 @@ class CourseClass extends Model
     {
         return [
             'require_approval' => 'boolean', // Ép kiểu cờ yêu cầu duyệt.
+            'deduct_excused_absence' => 'boolean', // Ép kiểu boolean.
             'total_lessons' => 'integer', // Ép kiểu tổng số tiết.
+            'lates_per_absent' => 'integer',
             'gps_latitude' => 'float',
             'gps_longitude' => 'float',
             'gps_radius' => 'integer',

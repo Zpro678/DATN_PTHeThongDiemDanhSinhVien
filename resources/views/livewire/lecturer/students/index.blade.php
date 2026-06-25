@@ -199,8 +199,9 @@
                         <div>
                             <h3 class="text-[20px] font-bold text-slate-900">Import danh sách học viên</h3>
                             <p class="mt-1 text-[14px] text-slate-600">
-                                Tải lên tệp Excel hoặc CSV chứa danh sách học viên. 
-                                <button type="button" wire:click="downloadTemplate" class="font-bold text-blue-700 hover:underline">Tải mẫu file.</button>
+                                Tải lên tệp Excel hoặc CSV chứa danh sách học viên. Bạn có thể tải: 
+                                <button type="button" wire:click="downloadBasicTemplate" class="font-bold text-blue-700 hover:underline">Mẫu cơ bản</button> hoặc 
+                                <button type="button" wire:click="downloadFullTemplate" class="font-bold text-blue-700 hover:underline">Mẫu đầy đủ</button>.
                             </p>
                         </div>
                     </div>
@@ -362,16 +363,30 @@
                         @else
                         <div class="mt-4 border-t border-slate-100 pt-4">
                             <input type="text" wire:model="exportFormula" class="w-full rounded-xl border-slate-200 bg-slate-50 py-3 px-4 text-[15px] font-medium text-slate-700 focus:border-primary focus:ring-primary/20" placeholder="VD: (c + m) / t * 100">
-                            <div class="mt-2 text-xs text-slate-500 space-y-1">
-                                <p>Bạn có thể tự nhập công thức với các biến sau:</p>
-                                <ul class="list-disc pl-4 grid grid-cols-2 gap-x-2">
-                                    <li><code>c</code>: Số buổi có mặt</li>
-                                    <li><code>m</code>: Số buổi đi muộn</li>
-                                    <li><code>v</code>: Số buổi vắng không phép</li>
-                                    <li><code>p</code>: Số buổi vắng có phép</li>
-                                    <li><code>t</code>: Tổng số buổi đã học</li>
-                                </ul>
-                                <p class="text-[11px] mt-1 text-slate-400">Ví dụ: <code>(c + m) / t * 100</code>, hoặc <code>(c + m - floor(m / 3)) / t * 100</code> (3 muộn = 1 vắng)</p>
+                            <div class="mt-4 space-y-3">
+                                <p class="text-sm font-semibold text-slate-700">Bảng tham chiếu công thức</p>
+                                <div class="overflow-y-auto max-h-[160px] rounded-xl border border-slate-200">
+                                    <table class="w-full text-left text-xs text-slate-600">
+                                        <thead class="sticky top-0 bg-slate-50 text-slate-500 shadow-sm z-10">
+                                            <tr>
+                                                <th class="border-b border-slate-200 px-3 py-2 font-semibold">Cú pháp</th>
+                                                <th class="border-b border-slate-200 px-3 py-2 font-semibold">Ý nghĩa</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody class="divide-y divide-slate-100 bg-white">
+                                            <tr><td class="px-3 py-2"><code>c</code>, <code>m</code></td><td class="px-3 py-2">Số buổi <strong>Có mặt</strong>, <strong>Đi muộn</strong></td></tr>
+                                            <tr><td class="px-3 py-2"><code>v</code>, <code>p</code></td><td class="px-3 py-2">Số buổi vắng <strong>Không phép</strong>, <strong>Có phép</strong></td></tr>
+                                            <tr><td class="px-3 py-2"><code>t</code></td><td class="px-3 py-2"><strong>Tổng số buổi</strong> đã học</td></tr>
+                                            <tr><td class="px-3 py-2"><code>floor(x)</code></td><td class="px-3 py-2">Làm tròn <strong>xuống</strong> (VD: floor(1.9) = 1)</td></tr>
+                                            <tr><td class="px-3 py-2"><code>ceil(x)</code>, <code>round(x)</code></td><td class="px-3 py-2">Làm tròn <strong>lên</strong>, làm tròn <strong>gần nhất</strong></td></tr>
+                                            <tr><td class="px-3 py-2"><code>max(a,b)</code>, <code>min(a,b)</code></td><td class="px-3 py-2">Lấy giá trị <strong>lớn nhất</strong> / <strong>nhỏ nhất</strong></td></tr>
+                                        </tbody>
+                                    </table>
+                                </div>
+                                <div class="rounded-lg bg-blue-50 p-3 text-xs text-blue-700">
+                                    <span class="font-bold">Ví dụ:</span> <code>(c + m - floor(m / 3)) / t * 100</code> <br>
+                                    (Cứ 3 lần muộn bị trừ đi 1 buổi có mặt).
+                                </div>
                             </div>
                         </div>
                         @endif

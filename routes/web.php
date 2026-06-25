@@ -108,7 +108,6 @@ Route::middleware(['auth', 'verified', 'user.route'])->group(function () {
         Route::get('/upgrade', Upgrade::class)->name('upgrade');
 
         Route::get('/student/classes/{courseClass}', ClassShow::class)->name('student.classes.show');
-        Route::get('/lecturer/classes/{courseClass}/settings', ClassSettings::class)->name('lecturer.classes.settings');
         Route::get('/lecturer/classes/{courseClass}', App\Livewire\Lecturer\ClassShow::class)->name('lecturer.classes.show');
         Route::get('/lecturer/classes/{courseClass}/attendance', \App\Livewire\Lecturer\ClassAttendanceHistory::class)->name('lecturer.classes.attendance');
         Route::get('/lecturer/classes/{class_id}/statistics', ClassStatistics::class)->name('lecturer.class.statistics');
