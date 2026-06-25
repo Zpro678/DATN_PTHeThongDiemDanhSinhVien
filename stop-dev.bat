@@ -11,6 +11,7 @@ docker compose down
 
 taskkill /F /IM node.exe
 taskkill /F /IM php.exe
+taskkill /F /IM ngrok.exe
 
 echo Done
 

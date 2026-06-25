@@ -3,6 +3,7 @@
 namespace App\Services;
 
 use App\Models\Plan;
+use App\Models\Subscription;
 use App\Models\User;
 
 /**
@@ -14,6 +15,34 @@ use App\Models\User;
  */
 class SubscriptionService
 {
+    /**
+     * Kích hoạt gói cho người dùng (nguồn sự thật duy nhất cho việc "đổi gói").
+     *
+     * Được gọi từ HAI nơi: component Livewire Upgrade (khi chọn gói FREE) và
+     * MomoController::ipn (khi MoMo báo thanh toán thành công). Tập trung ở một
+     * chỗ để mọi luồng kích hoạt đều: (1) kết thúc gói trả phí đang chạy, rồi
+     * (2) tạo thuê bao mới - trừ FREE vốn là gói mặc định nên không cần bản ghi.
+     *
+     * @return Subscription|null Thuê bao mới tạo, hoặc null nếu chuyển về FREE.
+     */
+    public function activate(User $user, Plan $plan): ?Subscription
+    {
+        // Chỉ giữ một gói hiệu lực tại một thời điểm: kết thúc các gói đang active.
+        $user->subscriptions()->where('status', 'active')->update(['status' => 'expired']);
+
+        // FREE là gói mặc định (currentPlan() tự fallback) nên không tạo bản ghi.
+        if ($plan->code === 'FREE') {
+            return null;
+        }
+
+        return $user->subscriptions()->create([
+            'plan_id' => $plan->id,
+            'start_date' => now(),
+            'end_date' => $plan->duration_days > 0 ? now()->addDays($plan->duration_days) : null,
+            'status' => 'active',
+        ]);
+    }
+
     /**
      * Lấy gói hiện tại của người dùng; luôn trả về một Plan để gọi an toàn.
      */

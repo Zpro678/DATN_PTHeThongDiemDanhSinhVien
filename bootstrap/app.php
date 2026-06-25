@@ -18,6 +18,11 @@ return Application::configure(basePath: dirname(__DIR__))
         $middleware->web(append: [
             SetUserRouteDefaults::class,
         ]);
+
+        // MoMo gọi POST server-to-server, không có CSRF token -> phải loại trừ.
+        $middleware->validateCsrfTokens(except: [
+            'payment/momo/ipn',
+        ]);
     })
     ->withExceptions(function (Exceptions $exceptions) {
         //

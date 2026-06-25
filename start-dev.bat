@@ -107,6 +107,21 @@ start "Vite" cmd /k "cd /d ""%~dp0"" && npm.cmd run dev -- --host 127.0.0.1 --st
 REM Socket.IO
 start "Socket.IO" cmd /k "cd /d ""%~dp0"" && node server.cjs"
 
+REM ngrok - tunnel public de MoMo goi IPN ve (cong 8000)
+REM Lan dau dung: cai ngrok roi chay  ngrok config add-authtoken <token>  (lay tai dashboard.ngrok.com)
+where ngrok >nul 2>nul
+if errorlevel 1 (
+    echo [ngrok] Chua cai ngrok hoac chua co trong PATH - bo qua tunnel MoMo.
+    echo         Cai ngrok: https://ngrok.com/download  roi mo lai start-dev.
+) else (
+    REM Mac dinh: URL ngrok doi moi lan chay -> phai cap nhat MOMO_IPN_URL trong .env.
+    start "ngrok" cmd /k "ngrok http --url=https://undefined-sapling-glorify.ngrok-free.dev 8000"
+    REM De URL co dinh (khoi sua .env moi lan): xin 1 static domain mien phi tai
+    REM dashboard.ngrok.com roi thay dong tren bang dong duoi:
+    REM start "ngrok" cmd /k "ngrok http --url=ten-cua-ban.ngrok-free.app 8000"
+
+)
+
 start "" "http://localhost:8080"
 
 echo.

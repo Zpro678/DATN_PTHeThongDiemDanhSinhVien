@@ -16,6 +16,7 @@ class Transaction extends Model
 
     protected $fillable = [
         'user_id', // ID người thực hiện giao dịch.
+        'plan_id', // Gói được thanh toán trong giao dịch này.
         'amount', // Số tiền thanh toán.
         'payment_method', // Phương thức thanh toán.
         'transaction_code', // Mã giao dịch nội bộ duy nhất.
@@ -35,5 +36,10 @@ class Transaction extends Model
     public function user(): BelongsTo
     {
         return $this->belongsTo(User::class);
+    }
+
+    public function plan(): BelongsTo
+    {
+        return $this->belongsTo(Plan::class);
     }
 }

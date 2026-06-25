@@ -49,6 +49,10 @@ Route::get('/auth/google/callback', [GoogleController::class, 'callback'])->name
 Route::get('/attendance/check-in/{token}', \App\Livewire\Student\AttendanceCheckIn::class)
     ->name('attendance.check-in.guest');
 
+// MoMo gọi server-to-server: KHÔNG qua auth, được loại CSRF (xem bootstrap/app.php).
+Route::post('/payment/momo/ipn', [\App\Http\Controllers\MomoController::class, 'ipn'])
+    ->name('momo.ipn');
+
 Route::middleware(['auth', 'verified', 'user.route'])->group(function () {
     $ensureAdmin = function (): void {
         abort_unless(auth()->user()?->is_admin, 403);
@@ -132,6 +136,10 @@ Route::middleware(['auth', 'verified', 'user.route'])->group(function () {
 Route::middleware('auth')->group(function () {
     Route::get('/profile', \App\Livewire\Profile\EditProfile::class)->name('profile.edit');
     Route::get('/support', \App\Livewire\User\SupportPage::class)->name('support');
+
+    // MoMo redirect trình duyệt người dùng về đây sau khi thanh toán (chỉ hiển thị kết quả).
+    Route::get('/payment/momo/return', [\App\Http\Controllers\MomoController::class, 'return'])
+        ->name('momo.return');
 });
 
 require __DIR__.'/auth.php';
