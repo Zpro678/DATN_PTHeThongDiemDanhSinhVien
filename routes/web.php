@@ -67,22 +67,19 @@ Route::middleware(['auth', 'verified', 'user.route'])->group(function () {
         Route::get('/users', UserIndex::class)->name('users.index');
         Route::redirect('/accounts', '/admin/users')->name('accounts.index');
 
-        Route::get('/users/create', [\App\Http\Controllers\Admin\AdminController::class, 'createUser'])->name('users.create');
-        Route::post('/users', [\App\Http\Controllers\Admin\AdminController::class, 'storeUser'])->name('users.store');
-        Route::get('/users/{user}', [\App\Http\Controllers\Admin\AdminController::class, 'showUser'])->whereNumber('user')->name('users.show');
-        Route::get('/users/{user}/edit', [\App\Http\Controllers\Admin\AdminController::class, 'editUser'])->whereNumber('user')->name('users.edit');
-        Route::put('/users/{user}', [\App\Http\Controllers\Admin\AdminController::class, 'updateUser'])->whereNumber('user')->name('users.update');
+        Route::get('/users/create', \App\Livewire\Admin\Users\UserCreate::class)->name('users.create');
+        Route::get('/users/{user}', \App\Livewire\Admin\Users\UserShow::class)->whereNumber('user')->name('users.show');
+        Route::get('/users/{user}/edit', \App\Livewire\Admin\Users\UserEdit::class)->whereNumber('user')->name('users.edit');
 
-        Route::get('/packages', [\App\Http\Controllers\Admin\AdminController::class, 'packagesIndex'])->name('packages.index');
-        Route::get('/packages/create', [\App\Http\Controllers\Admin\AdminController::class, 'createPackage'])->name('packages.create');
-        Route::get('/packages/{package}', [\App\Http\Controllers\Admin\AdminController::class, 'showPackage'])->whereNumber('package')->name('packages.show');
-        Route::get('/packages/{package}/edit', [\App\Http\Controllers\Admin\AdminController::class, 'editPackage'])->whereNumber('package')->name('packages.edit');
+        Route::get('/packages', \App\Livewire\Admin\Packages\PackageIndex::class)->name('packages.index');
+        Route::get('/packages/create', \App\Livewire\Admin\Packages\PackageCreate::class)->name('packages.create');
+        Route::get('/packages/{package}', \App\Livewire\Admin\Packages\PackageShow::class)->whereNumber('package')->name('packages.show');
+        Route::get('/packages/{package}/edit', \App\Livewire\Admin\Packages\PackageEdit::class)->whereNumber('package')->name('packages.edit');
 
-        Route::get('/attendance', [\App\Http\Controllers\Admin\AdminController::class, 'attendanceIndex'])->name('attendance.index');
 
         Route::get('/reports', [\App\Http\Controllers\Admin\AdminController::class, 'reportsIndex'])->name('reports.index');
 
-        Route::get('/logs', [\App\Http\Controllers\Admin\AdminController::class, 'logsIndex'])->name('logs.index');
+        Route::get('/logs', \App\Livewire\Admin\Logs\LogIndex::class)->name('logs.index');
 
         Route::get('/settings', [\App\Http\Controllers\Admin\AdminController::class, 'settingsIndex'])->name('settings.index');
     });

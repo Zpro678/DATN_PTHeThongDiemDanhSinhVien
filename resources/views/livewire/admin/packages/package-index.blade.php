@@ -1,4 +1,4 @@
-<x-admin-layout title="Gói dịch vụ">
+<div>
     <div class="mx-auto max-w-[1400px]">
         <div class="admin-card mb-6 overflow-hidden rounded-3xl border p-5 lg:p-6">
             <div class="relative z-10 flex flex-col items-start justify-between gap-4 md:flex-row md:items-center">
@@ -39,18 +39,57 @@
                     }
 
                     $priceLabel = $isFree ? '0đ' : number_format($package->price, 0, ',', '.') . 'đ';
-                    $durationLabel = $package->duration_days > 0 ? '/' . $package->duration_days . ' ngày' : '/Vĩnh viễn';
+                    $durationLabel = $package->duration_days > 0 ? '/' . ($package->duration_days >= 365 ? round($package->duration_days / 365) . ' năm' : round($package->duration_days / 30) . ' tháng') : '/Vĩnh viễn';
                 @endphp
 
                 <div class="w-[340px] shrink-0 snap-start admin-card admin-card-hover group flex flex-col overflow-hidden rounded-2xl border {{ !$package->is_active ? 'opacity-70 grayscale-[50%]' : '' }}">
                     <div class="h-2.5 w-full bg-gradient-to-r {{ $accent }}"></div>
 
                     <div class="relative z-10 px-6 pb-4 pt-5">
-                        <div class="mb-3 flex items-start justify-between">
+                        <div class="mb-3 flex items-start justify-between" x-data="{ open: false }">
                             <h2 class="truncate pr-2 text-lg font-bold leading-tight text-slate-900">{{ $package->name }}</h2>
-                            <button type="button" class="mt-0.5 shrink-0 rounded-lg p-1.5 text-slate-400 transition-all hover:bg-slate-100 hover:text-slate-600">
-                                <x-user.icon name="more-vertical" :size="20" />
-                            </button>
+                            <div class="relative">
+                                <button type="button" @click="open = !open" @click.outside="open = false" class="mt-0.5 shrink-0 rounded-lg p-1.5 text-slate-400 transition-all hover:bg-slate-100 hover:text-slate-600">
+                                    <x-user.icon name="more-vertical" :size="20" />
+                                </button>
+                                
+                                <div x-show="open" 
+                                    x-transition:enter="transition ease-out duration-100"
+                                    x-transition:enter-start="transform opacity-0 scale-95"
+                                    x-transition:enter-end="transform opacity-100 scale-100"
+                                    x-transition:leave="transition ease-in duration-75"
+                                    x-transition:leave-start="transform opacity-100 scale-100"
+                                    x-transition:leave-end="transform opacity-0 scale-95"
+                                    class="absolute right-0 top-full z-50 mt-1 w-48 rounded-xl border border-slate-200 bg-white p-1.5 shadow-lg outline-none" 
+                                    style="display: none;">
+                                    
+                                    <a href="{{ route('admin.packages.edit', $package) }}" class="flex w-full items-center gap-2 rounded-lg px-3 py-2 text-left text-sm font-medium text-slate-700 transition-colors hover:bg-slate-50 hover:text-blue-600">
+                                        <x-user.icon name="edit-3" :size="16" />
+                                        Sửa thông tin
+                                    </a>
+                                    
+                                    <button type="button" wire:click="toggleStatus({{ $package->id }})" @click="open = false" class="flex w-full items-center gap-2 rounded-lg px-3 py-2 text-left text-sm font-medium text-slate-700 transition-colors hover:bg-slate-50 hover:text-amber-600">
+                                        @if($package->is_active)
+                                            <x-user.icon name="pause-circle" :size="16" />
+                                            Tạm dừng
+                                        @else
+                                            <x-user.icon name="play-circle" :size="16" />
+                                            Mở hoạt động
+                                        @endif
+                                    </button>
+                                    
+                                    <div class="my-1 h-px bg-slate-100"></div>
+                                    
+                                    <button type="button" 
+                                        wire:click="deletePackage({{ $package->id }})"
+                                        wire:confirm="Bạn có chắc chắn muốn xóa gói dịch vụ này? Hành động này sẽ xóa mềm gói dịch vụ."
+                                        @click="open = false"
+                                        class="flex w-full items-center gap-2 rounded-lg px-3 py-2 text-left text-sm font-medium text-rose-600 transition-colors hover:bg-rose-50 hover:text-rose-700">
+                                        <x-user.icon name="trash-2" :size="16" />
+                                        Xóa gói dịch vụ
+                                    </button>
+                                </div>
+                            </div>
                         </div>
                         <div class="mb-3 flex items-center gap-2.5 overflow-hidden whitespace-nowrap h-[26px]">
                             <span class="inline-flex items-center rounded-lg border px-2.5 py-1 text-[11px] font-bold uppercase tracking-wide {{ $badgeClass }}">
@@ -133,4 +172,4 @@
             @endforelse
         </div>
     </div>
-</x-admin-layout>
+</div>

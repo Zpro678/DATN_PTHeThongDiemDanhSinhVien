@@ -1,16 +1,16 @@
-@php
-    $initial = function_exists('mb_substr')
-        ? mb_strtoupper(mb_substr($user->name ?? 'U', 0, 1, 'UTF-8'), 'UTF-8')
-        : strtoupper(substr($user->name ?? 'U', 0, 1));
+<div>
+    @php
+        $initial = function_exists('mb_substr')
+            ? mb_strtoupper(mb_substr($user->name ?? 'U', 0, 1, 'UTF-8'), 'UTF-8')
+            : strtoupper(substr($user->name ?? 'U', 0, 1));
 
-    $roleLabel = $user->is_admin ? 'Admin' : 'Người dùng';
-    $statusLabel = $user->status === 'active' ? 'Đang hoạt động' : 'Bị khóa';
-    $statusColor = $user->status === 'active'
-        ? 'bg-emerald-50 text-emerald-700 border-emerald-100'
-        : 'bg-rose-50 text-rose-700 border-rose-100';
-@endphp
+        $roleLabel = $user->is_admin ? 'Admin' : 'Người dùng';
+        $statusLabel = $user->status === 'active' ? 'Đang hoạt động' : 'Bị khóa';
+        $statusColor = $user->status === 'active'
+            ? 'bg-emerald-50 text-emerald-700 border-emerald-100'
+            : 'bg-rose-50 text-rose-700 border-rose-100';
+    @endphp
 
-<x-admin-layout title="Chi tiết người dùng">
     <div class="mx-auto max-w-[1500px] space-y-6">
         <section class="admin-card flex flex-col justify-between gap-4 overflow-hidden rounded-3xl border p-6 lg:flex-row lg:items-end lg:p-7">
             <div>
@@ -148,9 +148,7 @@
                         </dl>
                     </div>
                 </section>
-
-
             </div>
         </div>
     </div>
-</x-admin-layout>
+</div>

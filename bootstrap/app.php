@@ -19,6 +19,14 @@ return Application::configure(basePath: dirname(__DIR__))
             SetUserRouteDefaults::class,
         ]);
 
+        // Fix redirect for authenticated users (e.g. remember me)
+        $middleware->redirectUsersTo(function (\Illuminate\Http\Request $request) {
+            if (auth()->check() && auth()->user()->is_admin) {
+                return route('admin.dashboard', ['ma_user' => auth()->id()]);
+            }
+            return route('dashboard', ['ma_user' => auth()->id()]);
+        });
+
         // MoMo gọi POST server-to-server, không có CSRF token -> phải loại trừ.
         $middleware->validateCsrfTokens(except: [
             'payment/momo/ipn',

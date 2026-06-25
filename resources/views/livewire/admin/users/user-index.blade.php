@@ -165,7 +165,7 @@
         </div>
 
         <div class="flex-none border-t border-gray-200 bg-white px-4 py-3 sm:px-6">
-            {{ $users->links() }}
+            {{ $users->links('vendor.livewire.tailwind') }}
         </div>
     </div>
 </div>
