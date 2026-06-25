@@ -142,6 +142,10 @@ Route::middleware('auth')->group(function () {
     Route::get('/profile', \App\Livewire\Profile\EditProfile::class)->name('profile.edit');
     Route::get('/support', \App\Livewire\User\SupportPage::class)->name('support');
 
+    // Đánh dấu tất cả thông báo của người dùng hiện tại là đã đọc.
+    Route::post('/notifications/read-all', [\App\Http\Controllers\NotificationController::class, 'readAll'])
+        ->name('notifications.read-all');
+
     // MoMo redirect trình duyệt người dùng về đây sau khi thanh toán (chỉ hiển thị kết quả).
     Route::get('/payment/momo/return', [\App\Http\Controllers\MomoController::class, 'return'])
         ->name('momo.return');

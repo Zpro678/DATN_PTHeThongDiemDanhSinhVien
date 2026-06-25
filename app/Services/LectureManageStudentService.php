@@ -42,6 +42,7 @@ class LectureManageStudentService
             ->selectRaw("
                 COALESCE(SUM(CASE WHEN attendance_records.status = 'present' AND class_sessions.id IS NOT NULL THEN class_sessions.lesson_count ELSE 0 END), 0) as present_lessons,
                 COALESCE(SUM(CASE WHEN attendance_records.status = 'late' AND class_sessions.id IS NOT NULL THEN class_sessions.lesson_count ELSE 0 END), 0) as late_lessons,
+                COALESCE(SUM(CASE WHEN attendance_records.status = 'late' AND class_sessions.id IS NOT NULL THEN 1 ELSE 0 END), 0) as late_count,
                 COALESCE(SUM(CASE WHEN attendance_records.status = 'absent' AND class_sessions.id IS NOT NULL THEN class_sessions.lesson_count ELSE 0 END), 0) as absent_lessons,
                 COALESCE(SUM(CASE WHEN attendance_records.status = 'excused' AND class_sessions.id IS NOT NULL THEN class_sessions.lesson_count ELSE 0 END), 0) as excused_lessons
             ") // Cộng số tiết theo từng trạng thái điểm danh của sinh viên.
@@ -51,21 +52,33 @@ class LectureManageStudentService
                 $studiedLessons = (int) $stats->studied_lessons; // Tổng số tiết đã học của lớp sinh viên đó.
                 $presentLessons = (int) $stats->present_lessons; // Số tiết sinh viên có mặt.
                 $lateLessons = (int) $stats->late_lessons; // Số tiết sinh viên đi muộn.
+                $lateCount = (int) $stats->late_count; // Số LẦN sinh viên đi muộn (để quy đổi 3 lần = 1 tiết vắng).
                 $absentLessons = (int) $stats->absent_lessons; // Số tiết sinh viên vắng không phép.
                 $excusedLessons = (int) $stats->excused_lessons; // Số tiết sinh viên vắng có phép.
-                $attendedLessons = $presentLessons + $lateLessons + $absentLessons; // Tính theo công thức (c + m + v)
+
+                // Bỏ vắng có phép khỏi mẫu số, quy đổi muộn thành vắng (xem AttendanceCalculator).
+                $countedLessons = AttendanceCalculator::countedLessons($studiedLessons, $excusedLessons);
+                $attendedLessons = AttendanceCalculator::attendedLessons($presentLessons, $lateLessons, $lateCount);
+                $effectiveAbsent = AttendanceCalculator::effectiveAbsentLessons($absentLessons, $lateCount);
 
                 return [
                     $stats->id => [
                         'studied_lessons' => $studiedLessons, // Tổng số tiết đã học của lớp.
+                        'counted_lessons' => $countedLessons, // Tổng tiết tính chuyên cần (đã bỏ vắng có phép).
                         'present_lessons' => $presentLessons, // Tổng số tiết sinh viên có mặt.
                         'late_lessons' => $lateLessons, // Tổng số tiết sinh viên đi muộn.
+                        'late_count' => $lateCount, // Tổng số lần sinh viên đi muộn.
                         'absent_lessons' => $absentLessons, // Tổng số tiết sinh viên vắng không phép.
                         'excused_lessons' => $excusedLessons, // Tổng số tiết sinh viên vắng có phép.
-                        'attended_lessons' => $attendedLessons, // Tổng số tiết có mặt + đi muộn.
-                        'attendance_percent' => $studiedLessons > 0
-                            ? round(($absentLessons / $studiedLessons) * 100, 2)
-                            : 0, // Phần trăm chuyên cần (vắng / tổng số tiết).
+                        'effective_absent_lessons' => $effectiveAbsent, // Vắng tính cả muộn quy đổi.
+                        'attended_lessons' => $attendedLessons, // Tiết có chuyên cần (có mặt + muộn còn lại).
+                        'attendance_percent' => AttendanceCalculator::percent(
+                            $presentLessons,
+                            $lateLessons,
+                            $excusedLessons,
+                            $studiedLessons,
+                            $lateCount,
+                        ), // Phần trăm chuyên cần theo công thức chung.
                     ],
                 ];
             })
@@ -85,26 +98,30 @@ class LectureManageStudentService
         $studentsStats = collect($this->getStudentsAttendanceStats($memberIds)); // Lấy thống kê từng sinh viên rồi cộng lại.
 
         $studiedLessons = (int) $studentsStats->sum('studied_lessons'); // Tổng số tiết đã học tính theo tất cả sinh viên.
+        $countedLessons = (int) $studentsStats->sum('counted_lessons'); // Tổng tiết tính chuyên cần (đã bỏ vắng có phép).
         $presentLessons = (int) $studentsStats->sum('present_lessons'); // Tổng số tiết có mặt của tất cả sinh viên.
         $lateLessons = (int) $studentsStats->sum('late_lessons'); // Tổng số tiết đi muộn của tất cả sinh viên.
         $absentLessons = (int) $studentsStats->sum('absent_lessons'); // Tổng số tiết vắng không phép của tất cả sinh viên.
         $excusedLessons = (int) $studentsStats->sum('excused_lessons'); // Tổng số tiết vắng có phép của tất cả sinh viên.
-        $attendedLessons = $presentLessons + $lateLessons + $absentLessons; // Tính theo công thức (c + m + v)
+        $effectiveAbsent = (int) $studentsStats->sum('effective_absent_lessons'); // Vắng tính cả muộn quy đổi.
+        $attendedLessons = (int) $studentsStats->sum('attended_lessons'); // Tổng tiết có chuyên cần (có mặt + muộn còn lại).
 
         return [
             'total_students' => $memberIds->count(), // Tổng số sinh viên đang học trong phạm vi thống kê.
             'studied_lessons' => $studiedLessons, // Tổng số tiết đã học của tất cả sinh viên.
+            'counted_lessons' => $countedLessons, // Tổng tiết tính chuyên cần (đã bỏ vắng có phép).
             'present_lessons' => $presentLessons, // Tổng số tiết có mặt của tất cả sinh viên.
             'late_lessons' => $lateLessons, // Tổng số tiết đi muộn của tất cả sinh viên.
             'absent_lessons' => $absentLessons, // Tổng số tiết vắng không phép của tất cả sinh viên.
             'excused_lessons' => $excusedLessons, // Tổng số tiết vắng có phép của tất cả sinh viên.
-            'attended_lessons' => $attendedLessons, // Tổng số tiết có mặt + đi muộn.
+            'effective_absent_lessons' => $effectiveAbsent, // Vắng tính cả muộn quy đổi.
+            'attended_lessons' => $attendedLessons, // Tổng tiết có chuyên cần.
             'present_percent' => $studiedLessons > 0 ? round(($presentLessons / $studiedLessons) * 100, 2) : 0,
             'late_percent' => $studiedLessons > 0 ? round(($lateLessons / $studiedLessons) * 100, 2) : 0,
             'absent_percent' => $studiedLessons > 0 ? round(($absentLessons / $studiedLessons) * 100, 2) : 0,
-            'attendance_percent' => $studiedLessons > 0
-                ? round(($absentLessons / $studiedLessons) * 100, 2)
-                : 0, // Phần trăm chuyên cần tổng (vắng / tổng số tiết).
+            'attendance_percent' => $countedLessons > 0
+                ? round(($attendedLessons / $countedLessons) * 100, 2)
+                : 0, // Phần trăm chuyên cần tổng theo công thức chung.
         ];
     }
 }

@@ -7,6 +7,7 @@ use App\Models\AttendanceRecord;
 use App\Models\ClassMember;
 use App\Models\ClassSession;
 use App\Models\CourseClass;
+use App\Services\NotificationService;
 use App\Services\SubscriptionService;
 use Illuminate\Contracts\View\View;
 use Illuminate\Database\Eloquent\Collection;
@@ -67,6 +68,11 @@ class QrAttendanceCreate extends Component
 
             // Load other settings from cache for this class
             $this->loadConfigForClass($this->classId);
+
+            // Phản ánh đúng số tiết đã lưu của buổi (DB chỉ lưu lesson_count, không lưu tiết bắt đầu/kết thúc).
+            $savedLessonCount = max(1, (int) $session->lesson_count);
+            $this->startLesson = 1;
+            $this->endLesson = $savedLessonCount;
 
             // Override with actual saved DB values if they differ
             $this->gpsEnabled = $session->gps_latitude !== null;
@@ -214,6 +220,7 @@ class QrAttendanceCreate extends Component
                 'date' => $validated['date'],
                 'start_time' => $validated['startTime'] ?: null,
                 'end_time' => $validated['endTime'] ?: null,
+                'lesson_count' => $validated['endLesson'] - $validated['startLesson'] + 1,
                 'token_expires_at' => now()->addMinutes($validated['durationMinutes']),
                 'qr_refresh_rate' => $validated['qrRefreshRate'],
                 'gps_latitude' => $validated['gpsEnabled'] ? $this->gpsLatitude : null,
@@ -230,6 +237,7 @@ class QrAttendanceCreate extends Component
                 'date' => $validated['date'],
                 'start_time' => $validated['startTime'] ?: null,
                 'end_time' => $validated['endTime'] ?: null,
+                'lesson_count' => $validated['endLesson'] - $validated['startLesson'] + 1,
                 'qr_token' => Str::upper(Str::random(24)),
                 'token_expires_at' => now()->addMinutes($validated['durationMinutes']),
                 'qr_refresh_rate' => $validated['qrRefreshRate'],
@@ -238,6 +246,8 @@ class QrAttendanceCreate extends Component
                 'gps_radius' => $validated['gpsEnabled'] ? $validated['gpsRadius'] : null,
                 'status' => 'active',
             ]);
+
+            app(NotificationService::class)->attendanceSessionCreated((int) auth()->id(), $session, isQr: true);
         }
 
         $courseClass->members()->where('status', 'active')->get()->each(fn ($member) => AttendanceRecord::query()->firstOrCreate([
