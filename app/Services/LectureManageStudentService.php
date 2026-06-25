@@ -19,9 +19,15 @@ class LectureManageStudentService
         }
 
         $studiedLessonsQuery = ClassSession::query()
-            ->where('status', 'closed') // Chỉ tính các buổi điểm danh đã chốt.
-            ->selectRaw('class_id, COALESCE(SUM(lesson_count), 0) as studied_lessons') // Cộng tổng số tiết đã học theo từng lớp.
-            ->groupBy('class_id'); // Gom dữ liệu theo lớp để join ngược về sinh viên.
+            ->join('classes', 'class_sessions.class_id', '=', 'classes.id') // Join bảng classes để lấy cài đặt của lớp.
+            ->where('class_sessions.status', 'closed') // Chỉ tính các buổi điểm danh đã chốt.
+            ->selectRaw('
+                class_sessions.class_id, 
+                COALESCE(SUM(class_sessions.lesson_count), 0) as studied_lessons,
+                MAX(classes.lates_per_absent) as lates_per_absent,
+                MAX(classes.deduct_excused_absence) as deduct_excused_absence
+            ') // Lấy tổng số tiết và cài đặt lớp.
+            ->groupBy('class_sessions.class_id'); // Gom dữ liệu theo lớp.
 
         return ClassMember::withTrashed()
             ->leftJoinSub($studiedLessonsQuery, 'studied', function ($join) {
@@ -39,6 +45,8 @@ class LectureManageStudentService
             ->whereIn('class_members.id', $memberIds) // Chỉ tính cho danh sách sinh viên cần hiển thị.
             ->select('class_members.id') // Dùng id sinh viên làm key trả về.
             ->selectRaw('COALESCE(studied.studied_lessons, 0) as studied_lessons') // Tổng số tiết lớp của sinh viên đã học.
+            ->selectRaw('COALESCE(studied.lates_per_absent, 3) as lates_per_absent') // Lấy cài đặt quy đổi đi muộn.
+            ->selectRaw('COALESCE(studied.deduct_excused_absence, 1) as deduct_excused_absence') // Lấy cài đặt vắng có phép.
             ->selectRaw("
                 COALESCE(SUM(CASE WHEN attendance_records.status = 'present' AND class_sessions.id IS NOT NULL THEN class_sessions.lesson_count ELSE 0 END), 0) as present_lessons,
                 COALESCE(SUM(CASE WHEN attendance_records.status = 'late' AND class_sessions.id IS NOT NULL THEN class_sessions.lesson_count ELSE 0 END), 0) as late_lessons,
@@ -46,7 +54,7 @@ class LectureManageStudentService
                 COALESCE(SUM(CASE WHEN attendance_records.status = 'absent' AND class_sessions.id IS NOT NULL THEN class_sessions.lesson_count ELSE 0 END), 0) as absent_lessons,
                 COALESCE(SUM(CASE WHEN attendance_records.status = 'excused' AND class_sessions.id IS NOT NULL THEN class_sessions.lesson_count ELSE 0 END), 0) as excused_lessons
             ") // Cộng số tiết theo từng trạng thái điểm danh của sinh viên.
-            ->groupBy('class_members.id', 'studied.studied_lessons') // Gom theo từng sinh viên để mỗi sinh viên chỉ có một dòng thống kê.
+            ->groupBy('class_members.id', 'studied.studied_lessons', 'studied.lates_per_absent', 'studied.deduct_excused_absence') // Gom theo từng sinh viên.
             ->get()
             ->mapWithKeys(function ($stats) {
                 $studiedLessons = (int) $stats->studied_lessons; // Tổng số tiết đã học của lớp sinh viên đó.
@@ -56,10 +64,13 @@ class LectureManageStudentService
                 $absentLessons = (int) $stats->absent_lessons; // Số tiết sinh viên vắng không phép.
                 $excusedLessons = (int) $stats->excused_lessons; // Số tiết sinh viên vắng có phép.
 
-                // Bỏ vắng có phép khỏi mẫu số, quy đổi muộn thành vắng (xem AttendanceCalculator).
-                $countedLessons = AttendanceCalculator::countedLessons($studiedLessons, $excusedLessons);
-                $attendedLessons = AttendanceCalculator::attendedLessons($presentLessons, $lateLessons, $lateCount);
-                $effectiveAbsent = AttendanceCalculator::effectiveAbsentLessons($absentLessons, $lateCount);
+                $latesPerAbsent = (int) $stats->lates_per_absent;
+                $deductExcusedAbsence = (bool) $stats->deduct_excused_absence;
+
+                // Tính toán với cài đặt lớp
+                $countedLessons = AttendanceCalculator::countedLessons($studiedLessons, $excusedLessons, $deductExcusedAbsence);
+                $attendedLessons = AttendanceCalculator::attendedLessons($presentLessons, $lateLessons, $lateCount, $latesPerAbsent);
+                $effectiveAbsent = AttendanceCalculator::effectiveAbsentLessons($absentLessons, $lateCount, $latesPerAbsent);
 
                 return [
                     $stats->id => [
@@ -78,6 +89,8 @@ class LectureManageStudentService
                             $excusedLessons,
                             $studiedLessons,
                             $lateCount,
+                            $latesPerAbsent,
+                            $deductExcusedAbsence
                         ), // Phần trăm chuyên cần theo công thức chung.
                     ],
                 ];

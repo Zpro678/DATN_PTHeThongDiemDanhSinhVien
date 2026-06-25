@@ -94,6 +94,8 @@ class StudentIndex extends Component
         
         if ($this->action === 'import') {
             $this->openImport();
+        } elseif ($this->action === 'export') {
+            $this->openExport();
         }
     }
 

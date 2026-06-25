@@ -193,14 +193,17 @@ class StatisticalService
                 $excused = (int) ($row->excused_lessons ?? 0);
                 $absent = (int) ($row->absent_lessons ?? 0);
 
-                // Vắng có phép bị loại khỏi mẫu số; mỗi 3 lần muộn quy thành 1 tiết vắng.
+                $latesPerAbsent = (int) ($courseClass?->lates_per_absent ?? AttendanceCalculator::LATE_TO_ABSENT_RATIO);
+                $deductExcusedAbsence = (bool) ($courseClass?->deduct_excused_absence ?? true);
+
+                // Vắng có phép bị loại khỏi mẫu số; mỗi lates_per_absent lần muộn quy thành 1 tiết vắng.
                 $plannedLessons = max((int) ($courseClass?->total_lessons ?? 0), $total);
-                $countedTotal = AttendanceCalculator::countedLessons($total, $excused);
-                $lateAbsentLessons = AttendanceCalculator::lateAbsentLessons($lateCount);
-                $effectiveAbsent = AttendanceCalculator::effectiveAbsentLessons($absent, $lateCount);
-                $attended = AttendanceCalculator::attendedLessons($present, $late, $lateCount);
+                $countedTotal = AttendanceCalculator::countedLessons($total, $excused, $deductExcusedAbsence);
+                $lateAbsentLessons = AttendanceCalculator::lateAbsentLessons($lateCount, $latesPerAbsent);
+                $effectiveAbsent = AttendanceCalculator::effectiveAbsentLessons($absent, $lateCount, $latesPerAbsent);
+                $attended = AttendanceCalculator::attendedLessons($present, $late, $lateCount, $latesPerAbsent);
                 // % chuyên cần tính trên tổng tiết kế hoạch (cả khóa) để nhất quán với quỹ vắng.
-                $percent = AttendanceCalculator::percentOfPlanned($plannedLessons, $excused, $absent, $lateCount);
+                $percent = AttendanceCalculator::percentOfPlanned($plannedLessons, $excused, $absent, $lateCount, $latesPerAbsent, $deductExcusedAbsence);
 
                 $allowedAbsentLessons = (int) floor($plannedLessons * self::ABSENCE_LIMIT_RATIO);
                 $safeAbsenceLessons = max($allowedAbsentLessons - $effectiveAbsent, 0);

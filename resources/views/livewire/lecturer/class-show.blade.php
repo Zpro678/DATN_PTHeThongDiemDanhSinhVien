@@ -19,6 +19,14 @@
                 <x-user.icon name="upload" :size="16" />
                 <span>Import</span>
             </button>
+            <a
+                href="{{ route('lecturer.students.index', ['class_id' => $class->id, 'action' => 'export']) }}"
+                wire:navigate
+                class="inline-flex items-center gap-2 rounded-lg border border-slate-200 bg-white px-4 py-2 text-sm font-medium text-slate-600 transition-colors hover:bg-slate-50 hover:text-slate-900"
+            >
+                <x-user.icon name="download" :size="16" />
+                <span>Xuất Excel</span>
+            </a>
             <button
                 type="button"
                 class="inline-flex items-center gap-2 rounded-lg border border-slate-200 bg-white px-4 py-2 text-sm font-medium text-slate-600 transition-colors hover:bg-slate-50 hover:text-slate-900"

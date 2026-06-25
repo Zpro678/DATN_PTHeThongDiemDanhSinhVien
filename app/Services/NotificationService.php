@@ -383,7 +383,8 @@ class NotificationService
         foreach ($rows as $row) {
             $userId = (int) $row->user_id;
             $excused = (int) $row->excused_lessons;
-            $effectiveAbsent = AttendanceCalculator::effectiveAbsentLessons((int) $row->absent_lessons, (int) $row->late_count);
+            $latesPerAbsent = (int) ($class->lates_per_absent ?? \App\Services\AttendanceCalculator::LATE_TO_ABSENT_RATIO);
+            $effectiveAbsent = AttendanceCalculator::effectiveAbsentLessons((int) $row->absent_lessons, (int) $row->late_count, $latesPerAbsent);
             $remaining = $allowed - $effectiveAbsent;
             $url = route('student.classes.show', ['ma_user' => $userId, 'courseClass' => $class->id]);
 

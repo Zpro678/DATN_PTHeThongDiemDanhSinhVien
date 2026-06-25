@@ -104,13 +104,18 @@ class StudentsService
         // Bỏ vắng có phép khỏi mẫu số, quy đổi muộn thành vắng (xem AttendanceCalculator).
         // % tính trên tổng tiết kế hoạch của lớp để nhất quán với quỹ vắng/điều kiện dự thi.
         $plannedLessons = max((int) ($member->courseClass?->total_lessons ?? 0), $totalLessons);
+        $latesPerAbsent = (int) ($member->courseClass?->lates_per_absent ?? AttendanceCalculator::LATE_TO_ABSENT_RATIO);
+        $deductExcusedAbsence = (bool) ($member->courseClass?->deduct_excused_absence ?? true);
+
         $allowedAbsentLessons = (int) floor($plannedLessons * AttendanceCalculator::ABSENCE_LIMIT_RATIO);
-        $effectiveAbsentLessons = AttendanceCalculator::effectiveAbsentLessons($absentLessons, $lateCount);
+        $effectiveAbsentLessons = AttendanceCalculator::effectiveAbsentLessons($absentLessons, $lateCount, $latesPerAbsent);
         $attendancePercent = AttendanceCalculator::percentOfPlanned(
             $plannedLessons,
             $excusedLessons,
             $absentLessons,
             $lateCount,
+            $latesPerAbsent,
+            $deductExcusedAbsence
         );
 
         $latestRecord = $records
@@ -135,7 +140,7 @@ class StudentsService
         }
 
         // Đi muộn nhiều lần được tách thành cảnh báo riêng để học viên dễ chú ý.
-        if ($lateCount >= AttendanceCalculator::LATE_TO_ABSENT_RATIO) {
+        if ($latesPerAbsent > 0 && $lateCount >= $latesPerAbsent) {
             $warnings[] = [
                 'type' => 'warning',
                 'icon' => 'clock',
@@ -396,15 +401,19 @@ class StudentsService
 
         foreach ($attendanceRows as $memberId => $row) {
             $planned = (int) ($plannedByMember[$memberId] ?? 0);
-            $counted = AttendanceCalculator::countedLessons($planned, (int) $row->excused_lessons);
-            $effectiveAbsent = AttendanceCalculator::effectiveAbsentLessons((int) $row->absent_lessons, (int) $row->late_count);
+            $courseClass = $members->firstWhere('id', $memberId)?->courseClass;
+            $latesPerAbsent = (int) ($courseClass?->lates_per_absent ?? AttendanceCalculator::LATE_TO_ABSENT_RATIO);
+            $deductExcusedAbsence = (bool) ($courseClass?->deduct_excused_absence ?? true);
+
+            $counted = AttendanceCalculator::countedLessons($planned, (int) $row->excused_lessons, $deductExcusedAbsence);
+            $effectiveAbsent = AttendanceCalculator::effectiveAbsentLessons((int) $row->absent_lessons, (int) $row->late_count, $latesPerAbsent);
 
             $plannedCounted += $counted;
             $projectedAttended += max($counted - $effectiveAbsent, 0);
             $absentLessons += (int) $row->absent_lessons;
 
             if ((int) $row->total_lessons > 0
-                && AttendanceCalculator::percentOfPlanned($planned, (int) $row->excused_lessons, (int) $row->absent_lessons, (int) $row->late_count) < AttendanceCalculator::MIN_ATTENDANCE_PERCENT) {
+                && AttendanceCalculator::percentOfPlanned($planned, (int) $row->excused_lessons, (int) $row->absent_lessons, (int) $row->late_count, $latesPerAbsent, $deductExcusedAbsence) < AttendanceCalculator::MIN_ATTENDANCE_PERCENT) {
                 $warningCount++;
             }
         }
@@ -429,12 +438,17 @@ class StudentsService
                 $absentLessons = (int) ($row->absent_lessons ?? 0);
                 $totalCourseLessons = max((int) ($courseClass?->total_lessons ?? 0), $studiedLessons);
 
+                $latesPerAbsent = (int) ($courseClass?->lates_per_absent ?? AttendanceCalculator::LATE_TO_ABSENT_RATIO);
+                $deductExcusedAbsence = (bool) ($courseClass?->deduct_excused_absence ?? true);
+
                 // % chuyên cần tính trên tổng tiết kế hoạch để nhất quán với quỹ vắng.
                 $attendancePercent = AttendanceCalculator::percentOfPlanned(
                     $totalCourseLessons,
                     (int) ($row->excused_lessons ?? 0),
                     $absentLessons,
                     (int) ($row->late_count ?? 0),
+                    $latesPerAbsent,
+                    $deductExcusedAbsence
                 );
 
                 $style = $this->studentAttendanceStyle($attendancePercent, $studiedLessons);
