@@ -21,6 +21,8 @@ class ClassSession extends Model
         'date', // Ngày diễn ra buổi học.
         'start_time', // Thời gian bắt đầu.
         'end_time', // Thời gian kết thúc.
+        'start_lesson', // Tiết bắt đầu.
+        'end_lesson', // Tiết kết thúc.
         'qr_token', // Chuỗi token mã QR.
         'token_expires_at', // Thời điểm hết hạn của mã QR.
         'qr_refresh_rate', // Tốc độ làm mới mã QR.
@@ -39,6 +41,8 @@ class ClassSession extends Model
             'gps_latitude' => 'decimal:8', // Ép kiểu vĩ độ GPS.
             'gps_longitude' => 'decimal:8', // Ép kiểu kinh độ GPS.
             'gps_radius' => 'integer', // Ép kiểu bán kính GPS.
+            'start_lesson' => 'integer',
+            'end_lesson' => 'integer',
             'lesson_count' => 'integer', // Ép kiểu tổng số tiết của buổi học.
         ];
     }

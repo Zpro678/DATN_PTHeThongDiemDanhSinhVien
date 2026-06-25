@@ -213,7 +213,7 @@
                         ['label' => 'Quản lý SV', 'icon' => 'users'],
                         ['label' => 'Thống kê', 'icon' => 'bar-chart'],
                     ] as $action)
-                        <a href="{{ match ($action['label']) { 'Điểm danh QR' => route('lecturer.attendance.qr.create', ['class_id' => $class->id]), 'Thủ công' => route('lecturer.attendance.manual.create', ['class_id' => $class->id]), 'Quản lý SV' => route('lecturer.students.index', ['class_id' => $class->id]), 'Thống kê' => route('lecturer.class.statistics', ['class_id' => $class->id]), default => '#' } }}" @class([
+                        <a href="{{ match ($action['label']) { 'Điểm danh QR' => route('lecturer.attendance.create', ['class_id' => $class->id]), 'Thủ công' => route('lecturer.attendance.create', ['class_id' => $class->id]), 'Quản lý SV' => route('lecturer.students.index', ['class_id' => $class->id]), 'Thống kê' => route('lecturer.class.statistics', ['class_id' => $class->id]), default => '#' } }}" @class([
                             'group/action relative rounded-full p-2.5 transition-colors hover:bg-surface-container-low',
                             'cursor-not-allowed opacity-50' => $isEnded && in_array($action['icon'], ['qr-code', 'check-square'], true),
                         ]) title="{{ $action['label'] }}">

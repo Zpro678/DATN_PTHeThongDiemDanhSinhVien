@@ -54,21 +54,29 @@
         },
     }"
 >
-    <div class="mb-10 flex flex-col items-start justify-between gap-4 sm:flex-row sm:items-center sm:gap-5">
+    <div class="mb-8 flex flex-col items-start justify-between gap-4 sm:flex-row sm:items-center sm:gap-5">
         <div class="flex items-center gap-5">
-            <div class="flex h-16 w-16 shrink-0 items-center justify-center rounded-[20px] border border-amber-300 bg-gradient-to-br from-amber-100 to-amber-200 text-amber-600 shadow-md transition-transform hover:-translate-y-1">
-                <x-user.icon name="edit" :size="30" />
+            <a href="{{ route('lecturer.attendance.index') }}" class="inline-flex shrink-0 items-center gap-2 rounded-xl border border-slate-200 bg-white px-4 py-2.5 text-sm font-bold text-slate-700 shadow-sm transition hover:border-slate-300 hover:bg-slate-50 hover:text-slate-900">
+                <x-user.icon name="arrow-left" :size="18" />
+                Hủy bỏ
+            </a>
+            <div class="flex h-14 w-14 shrink-0 items-center justify-center rounded-[16px] border border-amber-300 bg-gradient-to-br from-amber-100 to-amber-200 text-amber-600 shadow-sm transition-transform hover:-translate-y-1">
+                <x-user.icon name="edit" :size="28" />
             </div>
             <div>
-                <h1 class="mb-1 text-3xl font-extrabold tracking-tight text-slate-900">Tạo buổi điểm danh</h1>
-                <p class="text-base text-slate-500">Chuẩn bị thông tin cho buổi học để bắt đầu ghi nhận sĩ số thủ công.</p>
+                <h1 class="mb-1 text-2xl font-extrabold tracking-tight text-slate-900">Tạo buổi điểm danh</h1>
+                <p class="text-sm text-slate-500">Chuẩn bị thông tin cho buổi học để bắt đầu ghi nhận sĩ số thủ công.</p>
             </div>
         </div>
         
-        <a href="{{ route('lecturer.attendance.create') }}" class="inline-flex shrink-0 items-center gap-2 rounded-xl border border-slate-200 bg-white px-5 py-2.5 text-sm font-bold text-slate-700 shadow-sm transition hover:border-slate-300 hover:bg-slate-50 hover:text-slate-900">
-            <x-user.icon name="arrow-left" :size="18" />
-            Quay lại
-        </a>
+        <div class="inline-flex shrink-0 items-center rounded-xl bg-slate-100 p-1 shadow-inner">
+            <button type="button" class="inline-flex items-center gap-2 rounded-lg bg-white px-6 py-2.5 text-sm font-bold text-blue-600 shadow-sm transition-all">
+                <x-user.icon name="check-square" :size="18" /> Thủ công
+            </button>
+            <a href="{{ route('lecturer.attendance.qr.create', ['class_id' => $classId, 'date' => $date]) }}" class="inline-flex items-center gap-2 rounded-lg px-6 py-2.5 text-sm font-bold text-slate-500 transition-all hover:text-slate-700">
+                <x-user.icon name="qr-code" :size="18" /> QR / Link
+            </a>
+        </div>
     </div>
 
     @if (session('status'))

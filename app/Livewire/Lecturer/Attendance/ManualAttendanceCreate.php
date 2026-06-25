@@ -34,7 +34,8 @@ class ManualAttendanceCreate extends Component
 
     public function mount(): void
     {
-        $this->date = now()->toDateString();
+        $preselectedDate = request()->query('date');
+        $this->date = $preselectedDate ?: now()->toDateString();
         
         $preselectedClassId = request()->query('class_id');
         if ($preselectedClassId && $this->availableClasses()->contains('id', $preselectedClassId)) {
@@ -70,6 +71,16 @@ class ManualAttendanceCreate extends Component
 
         $courseClass = $this->ownedClass((int) $validated['classId']);
 
+        $lessonCount = $validated['endPeriod'] - $validated['startPeriod'] + 1;
+        $totalLessons = $courseClass->total_lessons;
+        $studiedLessons = (int) $courseClass->sessions()->sum('lesson_count');
+
+        if ($studiedLessons + $lessonCount > $totalLessons) {
+            $remaining = max(0, $totalLessons - $studiedLessons);
+            $this->addError('endPeriod', "Số tiết điểm danh vượt quá giới hạn! Môn học này có tổng cộng {$totalLessons} tiết. Lớp đã hoàn thành {$studiedLessons} tiết, do đó bạn chỉ có thể tạo tối đa {$remaining} tiết cho buổi học này.");
+            return;
+        }
+
         if ($courseClass->members()->where('status', 'active')->count() === 0) {
             $this->addError('classId', 'Vui lòng import danh sách lớp trước khi điểm danh.');
             $this->redirectRoute('lecturer.classes.show', ['ma_user' => auth()->id(), 'courseClass' => $courseClass->id, 'openImport' => 1], navigate: true);
@@ -83,6 +94,8 @@ class ManualAttendanceCreate extends Component
             'date' => $validated['date'],
             'start_time' => $validated['startTime'] ?: null,
             'end_time' => $validated['endTime'] ?: null,
+            'start_lesson' => $validated['startPeriod'],
+            'end_lesson' => $validated['endPeriod'],
             'lesson_count' => $validated['endPeriod'] - $validated['startPeriod'] + 1,
             'status' => 'active',
         ]);

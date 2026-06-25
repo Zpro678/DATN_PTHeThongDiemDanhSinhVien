@@ -82,6 +82,7 @@ class ManualAttendanceSession extends Component
             ->where('class_session_id', $this->sessionId)
             ->where('status', 'pending')
             ->whereHas('classSession.courseClass', fn ($query) => $query->where('owner_user_id', auth()->id()))
+            ->whereHas('classMember')
             ->with('classMember:id,user_id')
             ->get()
             ->each(fn (AttendanceRecord $record) => $record->update([
@@ -91,6 +92,25 @@ class ManualAttendanceSession extends Component
             ]));
 
         session()->flash('success', 'Đã đánh dấu tất cả sinh viên chưa điểm danh là có mặt.');
+    }
+
+    public function validateBeforeClose(): void
+    {
+        $session = $this->ownedSession($this->sessionId);
+        
+        $firstPending = $session->attendanceRecords()
+            ->where('status', 'pending')
+            ->whereHas('classMember')
+            ->with('classMember')
+            ->first();
+
+        if ($firstPending) {
+            $studentName = $firstPending->classMember->full_name ?? 'không xác định';
+            session()->flash('error', "Bạn chưa chọn trạng thái điểm danh của học viên {$studentName}.");
+            $this->dispatch('scroll-to-pending');
+        } else {
+            $this->dispatch('open-close-modal');
+        }
     }
 
     public function closeSession(): void
@@ -148,6 +168,7 @@ class ManualAttendanceSession extends Component
     {
         $session = $this->ownedSession($this->sessionId)->load('courseClass');
         $records = $session->attendanceRecords()
+            ->whereHas('classMember')
             ->with('classMember.user')
             ->when($this->statusFilter !== 'all', fn (Builder $query) => $query->where('status', $this->statusFilter))
             ->when($this->search !== '', function (Builder $query): void {
@@ -160,6 +181,7 @@ class ManualAttendanceSession extends Component
             ->get();
 
         $stats = $session->attendanceRecords()
+            ->whereHas('classMember')
             ->selectRaw('status, COUNT(*) as aggregate')
             ->groupBy('status')
             ->pluck('aggregate', 'status');
@@ -170,7 +192,7 @@ class ManualAttendanceSession extends Component
             'excused' => (int) ($stats['excused'] ?? 0),
             'absent' => (int) ($stats['absent'] ?? 0),
             'pending' => (int) ($stats['pending'] ?? 0),
-            'total' => $session->attendanceRecords()->count(),
+            'total' => $session->attendanceRecords()->whereHas('classMember')->count(),
         ];
 
         $summary['present_percent'] = $summary['total'] > 0

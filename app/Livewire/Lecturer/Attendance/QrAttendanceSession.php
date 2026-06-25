@@ -138,6 +138,7 @@ class QrAttendanceSession extends Component
             $attendanceLink .= '?r=' . $this->qrAnimationStr;
         }
         $records = $session->attendanceRecords()
+            ->whereHas('classMember')
             ->with('classMember.user')
             ->when($this->statusFilter !== 'all', fn (Builder $query) => $query->where('status', $this->statusFilter))
             ->when($this->search !== '', function (Builder $query): void {
@@ -150,6 +151,7 @@ class QrAttendanceSession extends Component
             ->paginate(10);
 
         $stats = $session->attendanceRecords()
+            ->whereHas('classMember')
             ->selectRaw('status, COUNT(*) as aggregate')
             ->groupBy('status')
             ->pluck('aggregate', 'status');
@@ -160,7 +162,7 @@ class QrAttendanceSession extends Component
             'excused' => (int) ($stats['excused'] ?? 0),
             'absent' => (int) ($stats['absent'] ?? 0),
             'pending' => (int) ($stats['pending'] ?? 0),
-            'total' => $session->attendanceRecords()->count(),
+            'total' => $session->attendanceRecords()->whereHas('classMember')->count(),
         ];
 
         $summary['checked_in'] = $summary['present'] + $summary['late'];

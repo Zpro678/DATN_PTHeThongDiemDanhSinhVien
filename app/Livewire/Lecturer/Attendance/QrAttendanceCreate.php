@@ -86,7 +86,8 @@ class QrAttendanceCreate extends Component
             }
 
         } else {
-            $this->date = now()->toDateString();
+            $preselectedDate = request()->query('date');
+            $this->date = $preselectedDate ?: now()->toDateString();
             
             $preselectedClassId = request()->query('class_id');
             if ($preselectedClassId && $this->availableClasses()->contains('id', $preselectedClassId)) {
@@ -202,6 +203,19 @@ class QrAttendanceCreate extends Component
         }
 
         $courseClass = $this->ownedClass((int) $validated['classId']);
+
+        $lessonCount = $validated['endLesson'] - $validated['startLesson'] + 1;
+        $totalLessons = $courseClass->total_lessons;
+        $studiedLessons = (int) $courseClass->sessions()
+            ->when($this->editSessionId, fn($query) => $query->where('id', '!=', $this->editSessionId))
+            ->sum('lesson_count');
+
+        if ($studiedLessons + $lessonCount > $totalLessons) {
+            $remaining = max(0, $totalLessons - $studiedLessons);
+            $this->addError('endLesson', "Số tiết điểm danh vượt quá giới hạn! Môn học này có tổng cộng {$totalLessons} tiết. Lớp đã hoàn thành {$studiedLessons} tiết, do đó bạn chỉ có thể tạo tối đa {$remaining} tiết cho buổi học này.");
+            return;
+        }
+
         $this->saveConfig();
 
         if ($courseClass->members()->where('status', 'active')->count() === 0) {
@@ -220,7 +234,9 @@ class QrAttendanceCreate extends Component
                 'date' => $validated['date'],
                 'start_time' => $validated['startTime'] ?: null,
                 'end_time' => $validated['endTime'] ?: null,
-                'lesson_count' => $validated['endLesson'] - $validated['startLesson'] + 1,
+                'start_lesson' => $validated['startLesson'],
+                'end_lesson' => $validated['endLesson'],
+                'lesson_count' => $lessonCount,
                 'token_expires_at' => now()->addMinutes($validated['durationMinutes']),
                 'qr_refresh_rate' => $validated['qrRefreshRate'],
                 'gps_latitude' => $validated['gpsEnabled'] ? $this->gpsLatitude : null,
@@ -237,7 +253,9 @@ class QrAttendanceCreate extends Component
                 'date' => $validated['date'],
                 'start_time' => $validated['startTime'] ?: null,
                 'end_time' => $validated['endTime'] ?: null,
-                'lesson_count' => $validated['endLesson'] - $validated['startLesson'] + 1,
+                'start_lesson' => $validated['startLesson'],
+                'end_lesson' => $validated['endLesson'],
+                'lesson_count' => $lessonCount,
                 'qr_token' => Str::upper(Str::random(24)),
                 'token_expires_at' => now()->addMinutes($validated['durationMinutes']),
                 'qr_refresh_rate' => $validated['qrRefreshRate'],

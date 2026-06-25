@@ -17,8 +17,8 @@
     $adminActions = [
         ['label' => 'Tạo lớp học', 'icon' => 'plus-circle', 'color' => 'text-primary', 'href' => route('create-class')],
         ['label' => 'Tạo buổi DD', 'icon' => 'calendar-plus', 'color' => 'text-primary', 'href' => route('lecturer.attendance.create')],
-        ['label' => 'Điểm danh QR', 'icon' => 'qr-code', 'color' => 'text-tertiary', 'href' => route('lecturer.attendance.qr.create')],
-        ['label' => 'Điểm danh thủ công', 'icon' => 'edit', 'color' => 'text-secondary', 'href' => route('lecturer.attendance.manual.create')],
+        ['label' => 'Điểm danh QR', 'icon' => 'qr-code', 'color' => 'text-tertiary', 'href' => route('lecturer.attendance.create')],
+        ['label' => 'Điểm danh thủ công', 'icon' => 'edit', 'color' => 'text-secondary', 'href' => route('lecturer.attendance.create')],
         ['label' => 'Đơn xin nghỉ', 'icon' => 'file-text', 'color' => 'text-error', 'href' => route('lecturer.leave-requests.index')],
         ['label' => 'Quản lý SV', 'icon' => 'users', 'color' => 'text-tertiary', 'href' => route('lecturer.students.index')],
         ['label' => 'Thống kê', 'icon' => 'check-circle', 'color' => 'text-secondary', 'href' => '#'],

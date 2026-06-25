@@ -274,7 +274,7 @@ class StudentsService
 
         if ($attendancePercent < 80) {
             return [
-                'label' => 'Nguy cơ cấm thi',
+                'label' => 'Cảnh báo',
                 'statusClass' => 'bg-error/10 text-error',
                 'bar' => 'bg-error',
                 'color' => 'text-error',

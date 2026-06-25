@@ -63,17 +63,16 @@ class Dashboard extends Component
         $cardStyles = [
             ['icon' => 'code', 'color' => 'text-primary', 'bar' => 'bg-primary'],
             ['icon' => 'database', 'color' => 'text-tertiary', 'bar' => 'bg-tertiary'],
+            ['icon' => 'monitor', 'color' => 'text-secondary', 'bar' => 'bg-secondary'],
         ];
 
         return CourseClass::query()
             ->where('owner_user_id', $userId)
-            ->whereHas('sessions') // Chỉ lấy lớp đã có ít nhất một buổi điểm danh.
+            ->where('status', 'active') // Chỉ hiển thị các lớp đang hoạt động
             ->withCount(['members as students_count' => fn ($query) => $query->where('status', 'active')])
             ->withSum(['sessions as studied_lessons' => fn ($query) => $query->where('status', 'closed')], 'lesson_count')
-            ->withMax('sessions', 'date') // Lấy ngày buổi điểm danh mới nhất của từng lớp.
-            ->orderByDesc('sessions_max_date') // Ưu tiên lớp có buổi điểm danh mới nhất.
-            ->orderByDesc('created_at') // Nếu trùng ngày điểm danh thì ưu tiên lớp tạo sau.
-            ->take(2)
+            ->orderByDesc('updated_at') // Lớp nào vừa có tương tác mới nhất (tạo phiên, sửa thông tin, thêm học viên...) sẽ lên đầu
+            ->take(3)
             ->get(['id', 'code', 'name', 'subject_code', 'semester', 'status', 'total_lessons'])
             ->values()
             ->map(function (CourseClass $courseClass, int $index) use ($studentService, $cardStyles, $userId) {

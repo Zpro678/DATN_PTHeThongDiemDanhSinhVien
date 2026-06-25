@@ -13,7 +13,7 @@
 
     <section class="overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm">
         <div class="border-b border-slate-100 px-6 py-5">
-            <h2 class="text-xl font-extrabold text-slate-900">Phiên điểm danh gần đây ({{ number_format($sessions->total()) }})</h2>
+            <h2 class="text-xl font-extrabold text-slate-900">Buổi điểm danh gần đây ({{ number_format($sessions->total()) }})</h2>
         </div>
         <div class="overflow-x-auto">
             <table class="w-full min-w-[900px] text-left">
@@ -57,17 +57,17 @@
                                 <span class="inline-flex h-7 min-w-7 items-center justify-center rounded-full bg-rose-50 px-2 text-sm font-black text-rose-600 ring-1 ring-inset ring-rose-600/20">{{ $session->absent_count }}</span>
                             </td>
                             <td class="px-6 py-4 text-center">
-                                <div class="flex items-center justify-center gap-2">
-                                    <a href="{{ $session->qr_token ? route('lecturer.attendance.qr.session', $session) : route('lecturer.attendance.manual.session', $session) }}" class="whitespace-nowrap rounded-xl bg-blue-50 px-4 py-2 text-xs font-bold text-blue-700 shadow-sm ring-1 ring-inset ring-blue-100 transition-all hover:bg-blue-100 hover:shadow hover:ring-blue-200">Mở phiên</a>
-                                    @if($session->status !== 'closed')
-                                        <button type="button" wire:click="closeSession({{ $session->id }})" wire:confirm="Chốt phiên điểm danh này?" class="whitespace-nowrap rounded-xl bg-amber-50 px-4 py-2 text-xs font-bold text-amber-700 shadow-sm ring-1 ring-inset ring-amber-100 transition-all hover:bg-amber-100 hover:shadow hover:ring-amber-200">Chốt</button>
-                                    @endif
-                                </div>
+                                    <div class="flex items-center justify-center gap-2">
+                                        <a href="{{ $session->qr_token ? route('lecturer.attendance.qr.session', $session) : route('lecturer.attendance.manual.session', $session) }}" class="whitespace-nowrap rounded-xl bg-blue-50 px-4 py-2 text-xs font-bold text-blue-700 shadow-sm ring-1 ring-inset ring-blue-100 transition-all hover:bg-blue-100 hover:shadow hover:ring-blue-200">Mở buổi</a>
+                                        @if($session->status !== 'closed')
+                                            <a href="{{ route('lecturer.attendance.create', ['class_id' => $session->class_id, 'date' => $session->date->format('Y-m-d')]) }}" class="whitespace-nowrap rounded-xl bg-amber-50 px-4 py-2 text-xs font-bold text-amber-700 shadow-sm ring-1 ring-inset ring-amber-100 transition-all hover:bg-amber-100 hover:shadow hover:ring-amber-200">Thêm phiên</a>
+                                        @endif
+                                    </div>
                             </td>
                         </tr>
                     @empty
                         <tr>
-                            <td colspan="6" class="px-6 py-14 text-center text-sm text-slate-500">Chưa có phiên điểm danh nào.</td>
+                            <td colspan="6" class="px-6 py-14 text-center text-sm text-slate-500">Chưa có buổi điểm danh nào.</td>
                         </tr>
                     @endforelse
                 </tbody>

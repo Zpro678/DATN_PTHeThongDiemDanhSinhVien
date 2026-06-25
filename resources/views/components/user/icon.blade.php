@@ -437,6 +437,10 @@
             <path d="m6 6 12 12" />
             @break
 
+        @case('minus')
+            <line x1="5" x2="19" y1="12" y2="12" />
+            @break
+
         @case('x-circle')
             <circle cx="12" cy="12" r="10" />
             <path d="m15 9-6 6" />

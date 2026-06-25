@@ -72,6 +72,22 @@
     }"
     x-init="initGps()"
 >
+    <div class="mb-6 flex flex-col items-start justify-between gap-4 sm:flex-row sm:items-center sm:gap-5">
+        <a href="{{ route('lecturer.attendance.index') }}" class="inline-flex shrink-0 items-center gap-2 rounded-xl border border-slate-200 bg-white px-4 py-2.5 text-sm font-bold text-slate-700 shadow-sm transition hover:border-slate-300 hover:bg-slate-50 hover:text-slate-900">
+            <x-user.icon name="arrow-left" :size="18" />
+            Hủy bỏ
+        </a>
+        
+        <div class="inline-flex shrink-0 items-center rounded-xl bg-slate-100 p-1 shadow-inner">
+            <a href="{{ route('lecturer.attendance.manual.create', ['class_id' => $classId, 'date' => $date]) }}" class="inline-flex items-center gap-2 rounded-lg px-6 py-2.5 text-sm font-bold text-slate-500 transition-all hover:text-slate-700">
+                <x-user.icon name="check-square" :size="18" /> Thủ công
+            </a>
+            <button type="button" class="inline-flex items-center gap-2 rounded-lg bg-white px-6 py-2.5 text-sm font-bold text-blue-600 shadow-sm transition-all">
+                <x-user.icon name="qr-code" :size="18" /> QR / Link
+            </button>
+        </div>
+    </div>
+
     <div class="flex flex-col gap-5 md:flex-row md:items-center md:justify-between xl:grid xl:grid-cols-12 xl:gap-6">
         <div class="min-w-0 flex-1 xl:col-span-8">
             <h1 class="truncate text-2xl md:text-3xl font-extrabold tracking-tight text-slate-900 uppercase" title="THIẾT LẬP ĐIỂM DANH @if($selectedClass) - {{ mb_strtoupper($selectedClass->name) }} @if($selectedClass->subject_code) ({{ mb_strtoupper($selectedClass->subject_code) }}) @endif @endif">

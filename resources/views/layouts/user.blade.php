@@ -108,6 +108,7 @@
                                 @endphp
                                 <a
                                     href="{{ $href }}"
+                                    wire:navigate
                                     @class([
                                         'flex w-full items-center gap-3 rounded-lg px-3 py-3.5 text-base font-bold transition-all',
                                         'bg-primary-container text-on-primary-container' => $isActive,
@@ -144,6 +145,7 @@
 
                                             <a
                                                 href="{{ $href }}"
+                                                wire:navigate
                                                 @class([
                                                     'flex items-center gap-3 rounded-lg px-3 py-3.5 text-base font-semibold transition-all',
                                                     'bg-primary/10 text-primary font-bold' => $isActive,
@@ -256,7 +258,7 @@
             </main>
 
             <nav class="pb-safe fixed bottom-0 left-0 right-0 z-40 flex h-16 items-center justify-around border-t border-outline-variant/20 bg-surface/90 px-2 backdrop-blur-lg md:hidden">
-                <a href="{{ route($mobileItems[0]['route']) }}" @class([
+                <a href="{{ route($mobileItems[0]['route']) }}" wire:navigate @class([
                     'flex h-full w-full flex-col items-center justify-center transition-colors',
                     'text-primary' => $matchesActive($mobileItems[0]['active']),
                     'text-on-surface-variant hover:text-primary' => ! $matchesActive($mobileItems[0]['active']),
@@ -264,7 +266,7 @@
                     <x-user.icon :name="$mobileItems[0]['icon']" :size="20" />
                     <span class="mt-1 text-[10px] font-bold">{{ $mobileItems[0]['label'] }}</span>
                 </a>
-                <a href="{{ route($mobileItems[1]['route']) }}" @class([
+                <a href="{{ route($mobileItems[1]['route']) }}" wire:navigate @class([
                     'flex h-full w-full flex-col items-center justify-center transition-colors',
                     'text-primary' => $matchesActive($mobileItems[1]['active']),
                     'text-on-surface-variant hover:text-primary' => ! $matchesActive($mobileItems[1]['active']),
@@ -275,7 +277,7 @@
 
                 <div class="relative flex w-16 justify-center"></div>
 
-                <a href="{{ route($mobileItems[2]['route']) }}" @class([
+                <a href="{{ route($mobileItems[2]['route']) }}" wire:navigate @class([
                     'flex h-full w-full flex-col items-center justify-center transition-colors',
                     'text-primary' => $matchesActive($mobileItems[2]['active']),
                     'text-on-surface-variant hover:text-primary' => ! $matchesActive($mobileItems[2]['active']),
@@ -283,7 +285,7 @@
                     <x-user.icon :name="$mobileItems[2]['icon']" :size="20" />
                     <span class="mt-1 text-[10px] font-bold">{{ $mobileItems[2]['label'] }}</span>
                 </a>
-                <a href="{{ route($mobileItems[3]['route']) }}" @class([
+                <a href="{{ route($mobileItems[3]['route']) }}" wire:navigate @class([
                     'flex h-full w-full flex-col items-center justify-center transition-colors',
                     'text-primary' => $matchesActive($mobileItems[3]['active']),
                     'text-on-surface-variant hover:text-primary' => ! $matchesActive($mobileItems[3]['active']),
