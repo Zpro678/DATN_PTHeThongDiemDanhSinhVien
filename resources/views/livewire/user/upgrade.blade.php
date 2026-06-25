@@ -35,6 +35,13 @@
         </div>
     @endif
 
+    @if (session('error'))
+        <div class="mx-auto mb-6 flex max-w-2xl items-center gap-3 rounded-2xl border border-red-200 bg-red-50 px-4 py-3 text-sm font-bold text-red-700">
+            <x-user.icon name="zap" :size="20" />
+            {{ session('error') }}
+        </div>
+    @endif
+
     @if ($activeSubscription)
         <div class="mx-auto mb-8 flex max-w-2xl flex-col items-center justify-between gap-2 rounded-2xl border border-outline-variant/20 bg-white px-5 py-3 text-sm shadow-sm sm:flex-row">
             <span class="font-bold text-on-surface">
@@ -115,7 +122,7 @@
 
     <p class="mt-8 text-center text-xs text-on-surface-variant">
         <x-user.icon name="shield" :size="14" class="mr-1 inline align-text-bottom" />
-        Thanh toán sẽ được tích hợp sau. Hiện tại gói được kích hoạt ngay để dùng thử.
+        Thanh toán an toàn qua ví MoMo. Gói được kích hoạt ngay sau khi thanh toán thành công.
     </p>
 
     {{-- Modal xác nhận --}}
@@ -140,7 +147,35 @@
                             <span class="text-on-surface-variant">Giá</span>
                             <span class="font-bold text-on-surface">{{ number_format($confirmingPlan->price, 0, ',', '.') }}đ / {{ $confirmingPlan->duration_days }} ngày</span>
                         </div>
-                        <p class="mt-3 text-xs text-on-surface-variant">Gói sẽ được kích hoạt ngay. Thanh toán tích hợp sau.</p>
+
+                        {{-- Chọn phương thức thanh toán --}}
+                        <div class="mt-4">
+                            <p class="mb-2 text-xs font-bold uppercase tracking-wide text-on-surface-variant">Phương thức thanh toán</p>
+                            <div class="grid grid-cols-2 gap-3">
+                                <button type="button" wire:click="$set('paymentMethod', 'momo')" @class([
+                                    'flex items-center justify-center gap-2 rounded-xl border-2 px-3 py-2.5 text-sm font-bold transition-colors',
+                                    'border-primary bg-primary/5 text-primary' => $paymentMethod === 'momo',
+                                    'border-outline-variant/30 text-on-surface-variant hover:border-outline-variant' => $paymentMethod !== 'momo',
+                                ])>
+                                    <span class="text-base text-[#a50064]">●</span> MoMo
+                                </button>
+                                <button type="button" wire:click="$set('paymentMethod', 'vnpay')" @class([
+                                    'flex items-center justify-center gap-2 rounded-xl border-2 px-3 py-2.5 text-sm font-bold transition-colors',
+                                    'border-primary bg-primary/5 text-primary' => $paymentMethod === 'vnpay',
+                                    'border-outline-variant/30 text-on-surface-variant hover:border-outline-variant' => $paymentMethod !== 'vnpay',
+                                ])>
+                                    <span class="text-base text-[#0066b3]">●</span> VNPay
+                                </button>
+                            </div>
+                        </div>
+
+                        <p class="mt-3 text-xs text-on-surface-variant">
+                            @if ($paymentMethod === 'vnpay')
+                                <span class="font-bold text-amber-600">VNPay đang được tích hợp</span> — hiện chưa thanh toán được, vui lòng chọn MoMo.
+                            @else
+                                Bạn sẽ được chuyển sang ví <strong class="text-[#a50064]">MoMo</strong> để thanh toán. Gói kích hoạt ngay khi thanh toán thành công.
+                            @endif
+                        </p>
                     @endif
                 </div>
 
@@ -150,7 +185,7 @@
                     </button>
                     <button type="button" wire:click="subscribe" wire:loading.attr="disabled"
                         class="rounded-xl bg-primary px-5 py-2.5 text-sm font-bold text-white shadow-md shadow-primary/20 transition-colors hover:bg-primary/90 disabled:opacity-60">
-                        <span wire:loading.remove wire:target="subscribe">Xác nhận đăng ký</span>
+                        <span wire:loading.remove wire:target="subscribe">{{ (float) $confirmingPlan->price <= 0 ? 'Xác nhận' : ($paymentMethod === 'vnpay' ? 'Thanh toán qua VNPay' : 'Thanh toán qua MoMo') }}</span>
                         <span wire:loading wire:target="subscribe">Đang xử lý...</span>
                     </button>
                 </div>
