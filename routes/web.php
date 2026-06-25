@@ -20,7 +20,9 @@ use App\Livewire\Student\AttendanceStats as StudentAttendanceStats;
 use App\Livewire\Student\ClassShow;
 use App\Livewire\Student\JoinClass;
 use App\Livewire\Student\LeaveRequestCreate;
+use App\Livewire\Student\LeaveRequestEdit;
 use App\Livewire\Student\LeaveRequestHistory;
+use App\Livewire\Student\LeaveRequestShow as StudentLeaveRequestShow;
 use App\Livewire\Student\Warnings;
 use App\Livewire\User\Classes as UserClasses;
 use App\Livewire\User\CreateClass;
@@ -91,6 +93,12 @@ Route::middleware(['auth', 'verified', 'user.route'])->group(function () {
         Route::get('/student/attendance/stats', StudentAttendanceStats::class)->name('student.attendance.stats');
         Route::get('/student/leave-requests/create', LeaveRequestCreate::class)->name('student.leave-requests.create');
         Route::get('/student/leave-requests/history', LeaveRequestHistory::class)->name('student.leave-requests.history');
+        Route::get('/student/leave-requests/{leaveRequest}', StudentLeaveRequestShow::class)
+            ->whereNumber('leaveRequest')
+            ->name('student.leave-requests.show');
+        Route::get('/student/leave-requests/{leaveRequest}/edit', LeaveRequestEdit::class)
+            ->whereNumber('leaveRequest')
+            ->name('student.leave-requests.edit');
         Route::get('/student/warnings', Warnings::class)->name('student.warnings');
         Route::get('/notifications', NotificationIndex::class)->name('notifications');
         Route::get('/upgrade', Upgrade::class)->name('upgrade');

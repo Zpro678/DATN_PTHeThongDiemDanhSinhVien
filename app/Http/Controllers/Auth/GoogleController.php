@@ -25,7 +25,8 @@ class GoogleController extends Controller
         try {
             $googleUser = Socialite::driver('google')->user();
         } catch (\Exception $e) {
-            return redirect()->route('login')->withErrors(['email' => 'Có lỗi xảy ra khi đăng nhập bằng Google. Vui lòng thử lại.']);
+            \Log::error('Google Login Error: ' . $e->getMessage());
+            return redirect()->route('login')->withErrors(['email' => 'Có lỗi xảy ra khi đăng nhập bằng Google: ' . $e->getMessage()]);
         }
 
         // Kiểm tra xem email này đã tồn tại chưa

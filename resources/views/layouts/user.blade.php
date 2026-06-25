@@ -210,11 +210,7 @@
                                         <p class="mt-1 max-w-[150px] truncate text-[10px] text-on-surface-variant">{{ $userRole }}</p>
                                     </div>
                                     <div class="h-10 w-10 shrink-0 overflow-hidden rounded-full border-2 border-primary/20 bg-surface-container p-0.5 transition-transform hover:scale-105" :class="openProfile ? 'ring-2 ring-primary ring-offset-2' : ''">
-                                        @if(Auth::user()?->avatar)
-                                            <img src="{{ asset('storage/'.Auth::user()->avatar) }}" alt="{{ $userName }}" class="h-full w-full rounded-full object-cover">
-                                        @else
-                                            <img src="https://api.dicebear.com/7.x/avataaars/svg?seed={{ urlencode($userName) }}&backgroundColor=e5eeff" alt="{{ $userName }}" class="h-full w-full rounded-full object-cover">
-                                        @endif
+                                        <img src="{{ Auth::user()?->avatar_url ?? 'https://ui-avatars.com/api/?name='.urlencode('Guest').'&color=FFFFFF&background=4285F4' }}" alt="{{ $userName }}" class="h-full w-full rounded-full object-cover">
                                     </div>
                                 </button>
 

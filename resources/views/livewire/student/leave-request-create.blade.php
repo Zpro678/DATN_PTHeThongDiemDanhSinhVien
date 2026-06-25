@@ -3,7 +3,7 @@
         <div>
             <h1 class="flex items-center gap-3 text-2xl font-extrabold uppercase tracking-tight text-slate-900">
                 <x-user.icon name="file-text" class="text-primary" />
-                XIN NGHỈ PHÉP
+                {{ $isEdit ?? false ? 'CHỈNH SỬA ĐƠN XIN PHÉP' : 'XIN NGHỈ PHÉP' }}
             </h1>
             <p class="mt-2 text-sm text-slate-500">
                 Điền thông tin và gửi minh chứng để xin phép nghỉ học một buổi cụ thể.
@@ -36,7 +36,7 @@
                         <label for="class_id" class="block text-lg font-bold text-slate-700 mb-2">Chọn lớp học</label>
                         <select wire:model.live="class_id" id="class_id" class="block w-full pl-4 pr-10 py-3 text-lg border-slate-300 focus:outline-none focus:ring-primary focus:border-primary rounded-xl transition">
                             <option value="">-- Chọn lớp --</option>
-                            @foreach ($this->classes as $class)
+                            @foreach ($this->classes() as $class)
                                 <option value="{{ $class->id }}">{{ $class->code }} - {{ $class->name }}</option>
                             @endforeach
                         </select>
@@ -46,13 +46,13 @@
                     <!-- Chọn buổi học -->
                     <div>
                         <label for="class_session_id" class="block text-lg font-bold text-slate-700 mb-2">Chọn buổi học</label>
-                        <select wire:model="class_session_id" id="class_session_id" class="block w-full pl-4 pr-10 py-3 text-lg border-slate-300 focus:outline-none focus:ring-primary focus:border-primary rounded-xl transition" {{ empty($this->sessions) ? 'disabled' : '' }}>
+                        <select wire:model="class_session_id" id="class_session_id" class="block w-full pl-4 pr-10 py-3 text-lg border-slate-300 focus:outline-none focus:ring-primary focus:border-primary rounded-xl transition" {{ empty($this->sessions()) ? 'disabled' : '' }}>
                             <option value="">-- Chọn buổi học --</option>
-                            @foreach ($this->sessions as $session)
+                            @foreach ($this->sessions() as $session)
                                 <option value="{{ $session->id }}">{{ \Carbon\Carbon::parse($session->date)->format('d/m/Y') }} - {{ $session->name }}</option>
                             @endforeach
                         </select>
-                        @if(empty($this->sessions) && $class_id)
+                        @if(empty($this->sessions()) && $class_id)
                             <span class="text-gray-500 text-sm mt-1 block">Không có buổi học nào cho lớp này.</span>
                         @endif
                         @error('class_session_id') <span class="text-red-500 text-sm mt-1 block">{{ $message }}</span> @enderror
@@ -76,8 +76,16 @@
                          x-on:livewire-upload-error="isUploading = false"
                          x-on:livewire-upload-progress="progress = $event.detail.progress">
                         <div class="w-full text-center" x-show="!isUploading">
-                            @if (!empty($proof_images))
+                            @if (!empty($proof_images) || !empty($existing_images))
                                 <div class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-4 mb-6">
+                                    @foreach ($existing_images as $index => $image)
+                                        <div class="relative group aspect-square rounded-lg border border-gray-200 bg-gray-50 flex items-center justify-center p-1">
+                                            <img src="{{ asset('storage/'.$image) }}" class="w-full h-full object-cover rounded shadow-sm">
+                                            <button type="button" wire:click.prevent="removeExistingImage({{ $index }})" class="absolute -top-2 -right-2 bg-red-500 text-white rounded-full p-1 shadow hover:bg-red-600 focus:outline-none transition-transform">
+                                                <x-user.icon name="x" :size="14" stroke-width="3" />
+                                            </button>
+                                        </div>
+                                    @endforeach
                                     @foreach ($proof_images as $index => $image)
                                         <div class="relative group aspect-square rounded-lg border border-gray-200 bg-gray-50 flex items-center justify-center p-1">
                                             <img src="{{ $image->temporaryUrl() }}" class="w-full h-full object-cover rounded shadow-sm">
@@ -115,13 +123,19 @@
                     @error('proof_images') <span class="text-red-500 text-xs mt-1 block">{{ $message }}</span> @enderror
                 </div>
                 
-                <div class="pt-5 border-t border-gray-200 flex items-center justify-end">
-                    <div wire:loading wire:target="submit" class="text-sm text-gray-500 mr-4">
-                        Đang xử lý...
+                <div class="pt-5 border-t border-gray-200 flex items-center justify-between">
+                    <a href="javascript:history.back()" class="inline-flex items-center justify-center py-2.5 px-6 border border-slate-300 shadow-sm text-sm font-bold rounded-lg text-slate-700 bg-white hover:bg-slate-50 focus:outline-none transition">
+                        <x-user.icon name="arrow-left" :size="16" class="mr-2" />
+                        Quay lại
+                    </a>
+                    <div class="flex items-center">
+                        <div wire:loading wire:target="submit" class="text-sm text-gray-500 mr-4">
+                            Đang xử lý...
+                        </div>
+                        <button type="submit" wire:loading.attr="disabled" class="inline-flex justify-center py-2.5 px-6 border border-transparent shadow-sm text-sm font-bold rounded-lg text-white bg-primary hover:bg-primary/90 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary transition disabled:opacity-50">
+                            {{ $isEdit ?? false ? 'Lưu thay đổi' : 'Gửi đơn xin phép' }}
+                        </button>
                     </div>
-                    <button type="submit" wire:loading.attr="disabled" class="inline-flex justify-center py-2.5 px-6 border border-transparent shadow-sm text-sm font-bold rounded-lg text-white bg-primary hover:bg-primary/90 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary transition disabled:opacity-50">
-                        Gửi đơn xin phép
-                    </button>
                 </div>
             </form>
         </div>

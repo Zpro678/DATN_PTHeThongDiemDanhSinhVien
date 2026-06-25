@@ -10,9 +10,11 @@ use Livewire\Attributes\Computed;
 use Livewire\Component;
 use Livewire\WithFileUploads;
 
-class LeaveRequestCreate extends Component
+class LeaveRequestEdit extends Component
 {
     use WithFileUploads;
+
+    public LeaveRequest $leaveRequest;
 
     public $class_id = '';
 
@@ -23,6 +25,18 @@ class LeaveRequestCreate extends Component
     public $proof_images = [];
 
     public $existing_images = [];
+
+    public function mount(LeaveRequest $leaveRequest)
+    {
+        abort_unless($leaveRequest->status === 'pending', 403, 'Chỉ có thể sửa đơn đang chờ duyệt');
+        abort_unless($leaveRequest->classMember->user_id === auth()->id(), 403);
+
+        $this->leaveRequest = $leaveRequest;
+        $this->class_id = $leaveRequest->classMember->class_id;
+        $this->class_session_id = $leaveRequest->class_session_id;
+        $this->reason = $leaveRequest->reason;
+        $this->existing_images = $leaveRequest->proof_image ?? [];
+    }
 
     #[Computed]
     public function classes()
@@ -69,38 +83,33 @@ class LeaveRequestCreate extends Component
             ->where('user_id', auth()->id())
             ->firstOrFail();
 
-        // Check if already requested
-        $existing = LeaveRequest::where('class_member_id', $member->id)
-            ->where('class_session_id', $this->class_session_id)
-            ->first();
+        // Check if changed session and already requested
+        if ($this->class_session_id != $this->leaveRequest->class_session_id) {
+            $existing = LeaveRequest::where('class_member_id', $member->id)
+                ->where('class_session_id', $this->class_session_id)
+                ->first();
 
-        if ($existing) {
-            session()->flash('error', 'Bạn đã gửi đơn xin nghỉ thất bại. Bạn đã có đơn xin phép cho buổi học này rồi.');
-
-            return redirect()->route('student.leave-requests.history');
+            if ($existing) {
+                session()->flash('error', 'Bạn đã có đơn xin phép cho buổi học này rồi.');
+                return;
+            }
         }
 
-        $proofPaths = [];
+        $proofPaths = $this->existing_images;
         if (! empty($this->proof_images)) {
             foreach ($this->proof_images as $image) {
                 $proofPaths[] = $image->store('leave_proofs', 'public');
             }
         }
 
-        $leaveRequest = LeaveRequest::create([
+        $this->leaveRequest->update([
             'class_member_id' => $member->id,
             'class_session_id' => $this->class_session_id,
             'reason' => $this->reason,
             'proof_image' => $proofPaths,
-            'status' => 'pending',
         ]);
 
-        $owner = $member->courseClass->owner;
-        if ($owner) {
-            $owner->notify(new \App\Notifications\LeaveRequestSubmitted($leaveRequest));
-        }
-
-        session()->flash('success', 'Bạn đã gửi đơn xin nghỉ thành công.');
+        session()->flash('success', 'Đã lưu thay đổi thành công.');
 
         return redirect()->route('student.leave-requests.history');
     }
@@ -114,10 +123,18 @@ class LeaveRequestCreate extends Component
         }
     }
 
+    public function removeExistingImage($index)
+    {
+        if (isset($this->existing_images[$index])) {
+            unset($this->existing_images[$index]);
+            $this->existing_images = array_values($this->existing_images);
+        }
+    }
+
     public function render(): View
     {
         return view('livewire.student.leave-request-create', [
-            'isEdit' => false,
-        ])->layout('layouts.user', ['title' => 'Gửi đơn xin phép']);
+            'isEdit' => true,
+        ])->layout('layouts.user', ['title' => 'Chỉnh sửa đơn xin phép']);
     }
 }

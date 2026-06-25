@@ -60,6 +60,20 @@ class User extends Authenticatable
         ];
     }
 
+    public function getAvatarUrlAttribute(): string
+    {
+        if ($this->avatar) {
+            // Check if avatar is an external URL (like Google's)
+            if (str_starts_with($this->avatar, 'http')) {
+                return $this->avatar;
+            }
+            return asset('storage/' . $this->avatar);
+        }
+
+        // Return a generated avatar with the first letter of the name if no avatar exists
+        return 'https://ui-avatars.com/api/?name=' . urlencode($this->name) . '&color=FFFFFF&background=4285F4';
+    }
+
     public function ownedClasses(): HasMany
     {
         return $this->hasMany(CourseClass::class, 'owner_user_id');

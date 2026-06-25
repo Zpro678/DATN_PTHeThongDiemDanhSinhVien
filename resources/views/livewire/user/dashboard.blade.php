@@ -270,7 +270,7 @@
                                 </div>
                                 <div class="flex flex-1 flex-col">
                                     <div class="mb-1 flex items-start justify-between">
-                                        <h4 class="line-clamp-1 text-lg font-bold text-on-surface transition-colors group-hover:{{ $class['color'] }}">{{ $class['title'] }}</h4>
+                                        <h4 class="line-clamp-2 text-lg font-bold text-on-surface transition-colors group-hover:{{ $class['color'] }}" title="{{ $class['title'] }}">{{ $class['title'] }}</h4>
                                         <button type="button" class="rounded-full p-1 text-on-surface-variant hover:bg-surface-container hover:text-on-surface">
                                             <x-user.icon name="more-vertical" :size="20" />
                                         </button>
@@ -430,7 +430,7 @@
                                     <span class="{{ $class['statusClass'] }} rounded-full px-3 py-1 text-[10px] font-bold uppercase tracking-wider ring-1 ring-outline-variant/20">{{ $class['status'] }}</span>
                                 </div>
                                 <div class="flex flex-1 flex-col">
-                                    <h4 class="line-clamp-1 mb-1 text-lg font-bold text-on-surface transition-colors group-hover:{{ $class['color'] }}">{{ $class['title'] }}</h4>
+                                    <h4 class="line-clamp-2 mb-1 text-lg font-bold text-on-surface transition-colors group-hover:{{ $class['color'] }}" title="{{ $class['title'] }}">{{ $class['title'] }}</h4>
                                     <p class="mb-4 text-sm text-on-surface-variant">Giảng viên: <span class="font-bold">{{ $class['teacher'] }}</span></p>
                                     <p class="mb-4 flex items-center gap-2 text-sm text-on-surface-variant">
                                         <span class="font-bold">{{ $class['code'] }}</span>
