@@ -83,7 +83,7 @@
                 ])>
                     <div class="flex items-start justify-between">
                         <div class="pr-6">
-                            <h4 class="line-clamp-2 text-lg font-bold text-white hover:underline cursor-pointer sm:text-xl" title="{{ $class->name }}">
+                            <h4 class="line-clamp-2 text-lg font-bold text-white hover:underline cursor-pointer sm:text-xl" title="{{ $class['title'] }}">
                                 <a href="{{ route('student.classes.show', $class['id']) }}">{{ $class['title'] }}</a>
                             </h4>
                             <div class="mt-0.5 flex items-center gap-2 text-xs text-white/90 sm:text-sm">

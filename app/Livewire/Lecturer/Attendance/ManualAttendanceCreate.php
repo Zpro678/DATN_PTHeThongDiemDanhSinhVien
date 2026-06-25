@@ -7,6 +7,7 @@ use App\Models\AttendanceRecord;
 use App\Models\ClassMember;
 use App\Models\ClassSession;
 use App\Models\CourseClass;
+use App\Services\NotificationService;
 use Illuminate\Contracts\View\View;
 use Illuminate\Database\Eloquent\Collection;
 use Livewire\Component;
@@ -93,6 +94,8 @@ class ManualAttendanceCreate extends Component
             'status' => 'pending',
             'is_verified' => $member->user_id !== null,
         ]));
+
+        app(NotificationService::class)->attendanceSessionCreated((int) auth()->id(), $session, isQr: false);
 
         $this->redirectRoute('lecturer.attendance.manual.session', ['ma_user' => auth()->id(), 'session' => $session->id], navigate: true);
     }

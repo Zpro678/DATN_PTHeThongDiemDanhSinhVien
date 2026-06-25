@@ -11,7 +11,6 @@ use App\Models\ClassMember;
 use App\Models\ClassSession;
 use App\Models\CourseClass;
 use App\Models\LeaveRequest;
-use App\Models\Notification;
 use App\Models\Plan;
 use App\Models\Subscription;
 use App\Models\Transaction;
@@ -463,39 +462,8 @@ class AttendanceDemoSeeder extends Seeder
             ],
         );
 
-        Notification::query()->updateOrCreate(
-            ['id' => '11111111-1111-4111-8111-111111111111'],
-            [
-                'type' => 'App\\Notifications\\AttendanceReminder',
-                'notifiable_type' => User::class,
-                'notifiable_id' => $teacher->id,
-                'data' => [
-                    'title' => 'Dữ liệu demo đã sẵn sàng',
-                    'message' => 'Bạn có thể kiểm thử quản lý sinh viên, đơn xin nghỉ và điểm danh.',
-                    'url' => '/lecturer/attendance',
-                ],
-                'read_at' => null,
-                'created_at' => now(),
-                'updated_at' => now(),
-            ],
-        );
-
-        Notification::query()->updateOrCreate(
-            ['id' => '22222222-2222-4222-8222-222222222222'],
-            [
-                'type' => 'App\\Notifications\\AttendanceReminder',
-                'notifiable_type' => User::class,
-                'notifiable_id' => $firstStudent->id,
-                'data' => [
-                    'title' => 'Có buổi điểm danh QR',
-                    'message' => 'Buổi 4 - Điểm danh QR đang mở.',
-                    'url' => '/joined-classes',
-                ],
-                'read_at' => null,
-                'created_at' => now(),
-                'updated_at' => now(),
-            ],
-        );
+        // Không gieo thông báo giả ở đây: thông báo sẽ được sinh từ các sự kiện thật
+        // (tạo/chốt buổi điểm danh, tạo lớp, cảnh báo vắng...) qua App\Services\NotificationService.
     }
 
     private function studentName(int $index): string

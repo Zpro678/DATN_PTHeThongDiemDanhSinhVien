@@ -5,6 +5,7 @@ namespace App\Livewire\Lecturer\Attendance;
 use App\Exports\ClassSessionExport;
 use App\Livewire\Lecturer\Attendance\Concerns\OwnsAttendanceSessions;
 use App\Models\AttendanceRecord;
+use App\Services\NotificationService;
 use App\Services\SubscriptionService;
 use Illuminate\Contracts\View\View;
 use Illuminate\Database\Eloquent\Builder;
@@ -96,6 +97,8 @@ class ManualAttendanceSession extends Component
     {
         $session = $this->ownedSession($this->sessionId);
         $session->update(['status' => 'closed']);
+
+        app(NotificationService::class)->attendanceSessionClosed((int) auth()->id(), $session, isQr: false);
 
         session()->flash('success', 'Phiên điểm danh đã được chốt sổ.');
     }

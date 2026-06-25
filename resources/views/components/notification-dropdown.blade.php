@@ -15,6 +15,7 @@
     // Dữ liệu được layout truyền vào từ App\Services\NotificationService::getDropdownData().
     // Mỗi phần tử nên có: href, level, title, message, time, unread (icon/iconWrapper là tùy chọn).
     $notifications = $notifications ?? [];
+    $hasUnread = collect($notifications)->contains(fn ($n) => $n['unread'] ?? false);
 
     // Bản đồ mức độ -> icon + class màu. Đặt tại view để Tailwind quét được các class này.
     $levelStyles = [
@@ -52,7 +53,12 @@
     >
         <div class="flex items-center justify-between border-b border-slate-100 bg-slate-50/50 px-4 py-3">
             <h3 class="text-sm font-bold text-slate-900">Thông báo mới</h3>
-            <button class="text-xs font-medium text-primary hover:text-primary/80">Đánh dấu đã đọc</button>
+            @if ($hasUnread)
+                <form method="POST" action="{{ route('notifications.read-all') }}">
+                    @csrf
+                    <button type="submit" class="text-xs font-medium text-primary transition-colors hover:text-primary/80">Đánh dấu đã đọc</button>
+                </form>
+            @endif
         </div>
 
         <div class="max-h-[360px] overflow-y-auto overscroll-contain">

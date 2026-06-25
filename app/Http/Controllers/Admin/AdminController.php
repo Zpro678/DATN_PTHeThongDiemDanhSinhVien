@@ -27,17 +27,18 @@ class AdminController extends Controller
 
         // Calculate attendance rate
         $summaries = \App\Models\AttendanceSummary::selectRaw('SUM(total_present) as present, SUM(total_late) as late, SUM(total_absent) as absent, SUM(total_excused) as excused')->first();
-        $totalSessions = ($summaries->present ?? 0) + ($summaries->late ?? 0) + ($summaries->absent ?? 0) + ($summaries->excused ?? 0);
+        // Bỏ vắng có phép khỏi mẫu số khi tính tỷ lệ chuyên cần.
+        $totalSessions = ($summaries->present ?? 0) + ($summaries->late ?? 0) + ($summaries->absent ?? 0);
         $attendanceRate = $totalSessions > 0 ? round(((($summaries->present ?? 0) + ($summaries->late ?? 0)) / $totalSessions) * 100, 1) : 100;
 
-        // Warning students
+        // Warning students (mẫu số đã bỏ vắng có phép).
         $warningStudentsQuery = \App\Models\AttendanceSummary::with(['classMember', 'courseClass'])
-            ->whereRaw('(total_present + total_late + total_absent + total_excused) > 0')
-            ->whereRaw('((total_present + total_late) / (total_present + total_late + total_absent + total_excused) * 100) < 80');
-        
+            ->whereRaw('(total_present + total_late + total_absent) > 0')
+            ->whereRaw('((total_present + total_late) / (total_present + total_late + total_absent) * 100) < 80');
+
         $warningCount = $warningStudentsQuery->count();
         $warningStudents = $warningStudentsQuery->take(10)->get()->map(function ($summary) {
-            $total = $summary->total_present + $summary->total_late + $summary->total_absent + $summary->total_excused;
+            $total = $summary->total_present + $summary->total_late + $summary->total_absent;
             $rate = $total > 0 ? round((($summary->total_present + $summary->total_late) / $total) * 100, 1) : 100;
             return [
                 'mssv' => $summary->classMember->student_code ?? 'N/A',
@@ -98,11 +99,13 @@ class AdminController extends Controller
                 ->groupBy('status')
                 ->pluck('total', 'status');
             
-            $total = $records->sum();
+            // Bỏ vắng có phép (excused) ra khỏi mẫu số: không tính là chuyên cần cũng không tính là vắng.
+            $excused = $records['excused'] ?? 0;
+            $total = $records->sum() - $excused;
             $present = $records['present'] ?? 0;
             $late = $records['late'] ?? 0;
-            $absent = ($records['absent'] ?? 0) + ($records['excused'] ?? 0);
-            
+            $absent = $records['absent'] ?? 0;
+
             $chartData[] = [
                 'name' => 'T' . $month['month'],
                 'Chuyên cần' => $total > 0 ? round(($present / $total) * 100, 1) : 0,

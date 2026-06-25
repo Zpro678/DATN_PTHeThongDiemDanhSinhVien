@@ -2,10 +2,14 @@
 
 namespace App\Services;
 
+use App\Models\ClassSession;
+use App\Models\CourseClass;
 use App\Models\Notification;
 use App\Models\User;
 use Illuminate\Pagination\LengthAwarePaginator;
 use Illuminate\Support\Carbon;
+use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Str;
 
 /**
  * Cung cấp dữ liệu thông báo cho giao diện (dropdown trên thanh điều hướng...).
@@ -224,5 +228,206 @@ class NotificationService
             str_contains($type, 'warning') || str_contains($type, 'absence') || str_contains($type, 'reminder') => 'warning',
             default => 'info',
         };
+    }
+
+    /* ====================================================================
+     * TẠO THÔNG BÁO (ghi vào bảng notifications)
+     * ==================================================================== */
+
+    /** Tỉ lệ số tiết được phép vắng trên tổng số tiết của lớp (20%). */
+    private const ABSENCE_LIMIT_RATIO = 0.2;
+
+    /** Còn lại tối đa bao nhiêu tiết trong quỹ vắng thì coi là "sắp vượt ngưỡng". */
+    private const NEAR_ABSENCE_LESSONS = 2;
+
+    /**
+     * Ghi một bản ghi thông báo cho người dùng (bảng notifications chuẩn của Laravel).
+     *
+     * @param array<string, mixed> $extra Dữ liệu phụ nhúng vào payload (vd class_id để chống trùng).
+     */
+    public function push(
+        int $userId,
+        string $type,
+        string $title,
+        string $message,
+        string $url = '#',
+        string $level = 'info',
+        array $extra = [],
+    ): void {
+        if ($userId <= 0) {
+            return;
+        }
+
+        Notification::query()->create([
+            'id' => (string) Str::uuid(),
+            'type' => $type,
+            'notifiable_type' => User::class,
+            'notifiable_id' => $userId,
+            'data' => array_merge([
+                'title' => $title,
+                'message' => $message,
+                'url' => $url,
+                'level' => $level,
+            ], $extra),
+            'read_at' => null,
+        ]);
+    }
+
+    /**
+     * Dựng URL tới trang phiên điểm danh (QR hoặc thủ công) cho đúng người nhận.
+     */
+    private function sessionUrl(int $userId, ClassSession $session, bool $isQr): string
+    {
+        return route(
+            $isQr ? 'lecturer.attendance.qr.session' : 'lecturer.attendance.manual.session',
+            ['ma_user' => $userId, 'session' => $session->id],
+        );
+    }
+
+    /**
+     * Báo cho giảng viên khi tạo buổi điểm danh thành công (thủ công hoặc QR).
+     */
+    public function attendanceSessionCreated(int $lecturerUserId, ClassSession $session, bool $isQr): void
+    {
+        $className = $session->courseClass?->name ?? 'lớp học';
+        $lessons = max(1, (int) $session->lesson_count);
+        $url = $this->sessionUrl($lecturerUserId, $session, $isQr);
+
+        $this->push(
+            $lecturerUserId,
+            $isQr ? 'App\\Notifications\\QrSessionOpened' : 'App\\Notifications\\AttendanceSessionCreated',
+            $isQr ? 'Đã mở buổi điểm danh QR' : 'Đã tạo buổi điểm danh thủ công',
+            "Buổi \"{$session->name}\" ({$lessons} tiết) của lớp {$className} đã được tạo thành công.",
+            $url,
+            'success',
+        );
+    }
+
+    /**
+     * Báo cho giảng viên khi chốt sổ buổi điểm danh, đồng thời cảnh báo sinh viên liên quan.
+     */
+    public function attendanceSessionClosed(int $lecturerUserId, ClassSession $session, bool $isQr): void
+    {
+        $className = $session->courseClass?->name ?? 'lớp học';
+        $url = $this->sessionUrl($lecturerUserId, $session, $isQr);
+
+        $this->push(
+            $lecturerUserId,
+            $isQr ? 'App\\Notifications\\QrAttendanceClosed' : 'App\\Notifications\\AttendanceClosed',
+            $isQr ? 'Đã chốt sổ buổi điểm danh QR' : 'Đã chốt sổ buổi điểm danh thủ công',
+            "Buổi \"{$session->name}\" lớp {$className} đã được chốt sổ, dữ liệu chuyên cần đã cập nhật.",
+            $url,
+            'success',
+        );
+
+        $this->notifyStudentAbsenceWarnings($session);
+    }
+
+    /**
+     * Báo cho giảng viên khi tạo lớp thành công.
+     */
+    public function classCreated(int $lecturerUserId, CourseClass $class): void
+    {
+        $url = route('lecturer.classes.show', ['ma_user' => $lecturerUserId, 'courseClass' => $class->id]);
+
+        $this->push(
+            $lecturerUserId,
+            'App\\Notifications\\ClassCreated',
+            'Tạo lớp thành công',
+            "Lớp {$class->name} ({$class->code}) đã được tạo. Hãy import danh sách sinh viên để bắt đầu điểm danh.",
+            $url,
+            'success',
+        );
+    }
+
+    /**
+     * Sau khi chốt sổ, rà từng sinh viên (có tài khoản) trong lớp để gửi cảnh báo:
+     * - Vắng (đã gồm muộn quy đổi) sắp vượt quỹ tiết được phép.
+     * - Vắng có phép quá nhiều (vượt quỹ tiết được phép).
+     */
+    public function notifyStudentAbsenceWarnings(ClassSession $session): void
+    {
+        $class = $session->courseClass;
+
+        if (! $class) {
+            return;
+        }
+
+        $totalLessons = max((int) ($class->total_lessons ?? 0), 0);
+        $allowed = (int) floor($totalLessons * self::ABSENCE_LIMIT_RATIO);
+
+        if ($allowed <= 0) {
+            return;
+        }
+
+        $lessonCount = 'COALESCE(NULLIF(cs.lesson_count, 0), 1)';
+
+        $rows = DB::table('attendance_records as ar')
+            ->join('class_sessions as cs', 'cs.id', '=', 'ar.class_session_id')
+            ->join('class_members as cm', 'cm.id', '=', 'ar.class_member_id')
+            ->where('cs.class_id', $class->id)
+            ->where('cs.status', 'closed')
+            ->whereNull('ar.deleted_at')
+            ->whereNull('cs.deleted_at')
+            ->where('cm.status', 'active')
+            ->whereNotNull('cm.user_id')
+            ->selectRaw("
+                cm.user_id,
+                COALESCE(SUM(CASE WHEN ar.status = 'late' THEN 1 ELSE 0 END), 0) as late_count,
+                COALESCE(SUM(CASE WHEN ar.status = 'excused' THEN {$lessonCount} ELSE 0 END), 0) as excused_lessons,
+                COALESCE(SUM(CASE WHEN ar.status IN ('absent', 'pending', 'invalid') THEN {$lessonCount} ELSE 0 END), 0) as absent_lessons
+            ")
+            ->groupBy('cm.user_id')
+            ->get();
+
+        foreach ($rows as $row) {
+            $userId = (int) $row->user_id;
+            $excused = (int) $row->excused_lessons;
+            $effectiveAbsent = AttendanceCalculator::effectiveAbsentLessons((int) $row->absent_lessons, (int) $row->late_count);
+            $remaining = $allowed - $effectiveAbsent;
+            $url = route('student.classes.show', ['ma_user' => $userId, 'courseClass' => $class->id]);
+
+            // Vắng (gồm muộn quy đổi) sắp chạm quỹ cho phép nhưng chưa vượt.
+            if ($remaining >= 0 && $remaining <= self::NEAR_ABSENCE_LESSONS
+                && ! $this->hasUnreadLike($userId, 'App\\Notifications\\AbsenceWarning', $class->id)) {
+                $this->push(
+                    $userId,
+                    'App\\Notifications\\AbsenceWarning',
+                    'Sắp vượt ngưỡng vắng',
+                    "Lớp {$class->name}: bạn đã vắng {$effectiveAbsent}/{$allowed} tiết được phép (đã tính muộn quy đổi). Chỉ còn {$remaining} tiết trước khi có nguy cơ cấm thi.",
+                    $url,
+                    'warning',
+                    ['class_id' => $class->id],
+                );
+            }
+
+            // Vắng có phép vượt quỹ tiết được phép.
+            if ($excused > $allowed
+                && ! $this->hasUnreadLike($userId, 'App\\Notifications\\ExcusedAbsenceWarning', $class->id)) {
+                $this->push(
+                    $userId,
+                    'App\\Notifications\\ExcusedAbsenceWarning',
+                    'Vắng có phép quá nhiều',
+                    "Lớp {$class->name}: bạn đã vắng có phép {$excused} tiết, vượt mức {$allowed} tiết khuyến nghị. Hãy sắp xếp tham gia học đầy đủ hơn.",
+                    $url,
+                    'warning',
+                    ['class_id' => $class->id],
+                );
+            }
+        }
+    }
+
+    /**
+     * Đã có thông báo cùng loại cho cùng lớp đang chưa đọc hay chưa (chống gửi trùng).
+     */
+    private function hasUnreadLike(int $userId, string $type, int $classId): bool
+    {
+        return Notification::query()
+            ->where('notifiable_id', $userId)
+            ->where('notifiable_type', User::class)
+            ->where('type', $type)
+            ->whereNull('read_at')
+            ->where('data->class_id', $classId)
+            ->exists();
     }
 }
