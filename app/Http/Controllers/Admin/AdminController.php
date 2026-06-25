@@ -27,17 +27,18 @@ class AdminController extends Controller
 
         // Calculate attendance rate
         $summaries = \App\Models\AttendanceSummary::selectRaw('SUM(total_present) as present, SUM(total_late) as late, SUM(total_absent) as absent, SUM(total_excused) as excused')->first();
-        $totalSessions = ($summaries->present ?? 0) + ($summaries->late ?? 0) + ($summaries->absent ?? 0) + ($summaries->excused ?? 0);
+        // Bỏ vắng có phép khỏi mẫu số khi tính tỷ lệ chuyên cần.
+        $totalSessions = ($summaries->present ?? 0) + ($summaries->late ?? 0) + ($summaries->absent ?? 0);
         $attendanceRate = $totalSessions > 0 ? round(((($summaries->present ?? 0) + ($summaries->late ?? 0)) / $totalSessions) * 100, 1) : 100;
 
-        // Warning students
+        // Warning students (mẫu số đã bỏ vắng có phép).
         $warningStudentsQuery = \App\Models\AttendanceSummary::with(['classMember', 'courseClass'])
-            ->whereRaw('(total_present + total_late + total_absent + total_excused) > 0')
-            ->whereRaw('((total_present + total_late) / (total_present + total_late + total_absent + total_excused) * 100) < 80');
-        
+            ->whereRaw('(total_present + total_late + total_absent) > 0')
+            ->whereRaw('((total_present + total_late) / (total_present + total_late + total_absent) * 100) < 80');
+
         $warningCount = $warningStudentsQuery->count();
         $warningStudents = $warningStudentsQuery->take(10)->get()->map(function ($summary) {
-            $total = $summary->total_present + $summary->total_late + $summary->total_absent + $summary->total_excused;
+            $total = $summary->total_present + $summary->total_late + $summary->total_absent;
             $rate = $total > 0 ? round((($summary->total_present + $summary->total_late) / $total) * 100, 1) : 100;
             return [
                 'mssv' => $summary->classMember->student_code ?? 'N/A',
@@ -98,11 +99,13 @@ class AdminController extends Controller
                 ->groupBy('status')
                 ->pluck('total', 'status');
             
-            $total = $records->sum();
+            // Bỏ vắng có phép (excused) ra khỏi mẫu số: không tính là chuyên cần cũng không tính là vắng.
+            $excused = $records['excused'] ?? 0;
+            $total = $records->sum() - $excused;
             $present = $records['present'] ?? 0;
             $late = $records['late'] ?? 0;
-            $absent = ($records['absent'] ?? 0) + ($records['excused'] ?? 0);
-            
+            $absent = $records['absent'] ?? 0;
+
             $chartData[] = [
                 'name' => 'T' . $month['month'],
                 'Chuyên cần' => $total > 0 ? round(($present / $total) * 100, 1) : 0,
@@ -123,163 +126,63 @@ class AdminController extends Controller
         ));
     }
 
-    public function createUser()
-    {
-        $this->ensureAdmin();
-        return view('admin.users.create');
-    }
 
-    public function storeUser(Request $request)
-    {
-        $this->ensureAdmin();
 
-        $data = $request->validate([
-            'name' => ['required', 'string', 'max:255'],
-            'email' => ['required', 'string', 'email', 'max:255', 'unique:users'],
-            'password' => ['required', 'string', 'min:8'],
-            'is_admin' => ['required', 'boolean'],
-            'status' => ['required', 'in:active,blocked'],
-            'avatar' => ['nullable', 'image', 'max:2048'],
-        ]);
 
-        if ($request->hasFile('avatar')) {
-            $data['avatar'] = $request->file('avatar')->store('avatars', 'public');
-        }
 
-        $data['password'] = Hash::make($data['password']);
 
-        User::create($data);
 
-        return redirect()->route('admin.users.index')->with('success', 'Thêm tài khoản người dùng thành công.');
-    }
 
-    public function showUser(User $user)
-    {
-        $this->ensureAdmin();
 
-        $user->loadCount(['ownedClasses', 'joinedClasses', 'subscriptions', 'classJoinRequests']);
-        $recentClasses = $user->ownedClasses()
-            ->withCount(['users', 'sessions'])
-            ->latest()
-            ->take(4)
-            ->get();
-        $recentLogs = $user->auditLogs()->latest('created_at')->take(6)->get();
 
-        return view('admin.users.show', compact('user', 'recentClasses', 'recentLogs'));
-    }
 
-    public function editUser(User $user)
-    {
-        $this->ensureAdmin();
-        return view('admin.users.edit', compact('user'));
-    }
 
-    public function updateUser(Request $request, User $user)
-    {
-        $this->ensureAdmin();
 
-        $data = $request->validate([
-            'name' => ['required', 'string', 'max:255'],
-            'email' => ['required', 'string', 'email', 'max:255', \Illuminate\Validation\Rule::unique('users')->ignore($user->id)],
-            'code' => ['nullable', 'string', 'max:50', \Illuminate\Validation\Rule::unique('users')->ignore($user->id)],
-            'status' => ['required', 'in:active,blocked'],
-        ]);
 
-        if ($user->id === auth()->id() && $data['status'] !== $user->status) {
-            return back()->with('error', 'Bạn không thể tự thay đổi trạng thái của chính mình.');
-        }
 
-        $user->update($data);
 
-        return back()->with('success', 'Cập nhật thông tin người dùng thành công.');
-    }
-
-    public function packagesIndex()
-    {
-        $this->ensureAdmin();
-
-        $packages = Plan::query()
-            ->withCount('subscriptions')
-            ->orderByDesc('price')
-            ->get();
-
-        return view('admin.packages.index', compact('packages'));
-    }
-
-    public function createPackage()
-    {
-        $this->ensureAdmin();
-        return view('admin.packages.create');
-    }
-
-    public function showPackage(Plan $package)
-    {
-        $this->ensureAdmin();
-
-        $package->loadCount('subscriptions');
-        $subscriptions = $package->subscriptions()->with('user')->latest()->take(8)->get();
-
-        return view('admin.packages.show', compact('package', 'subscriptions'));
-    }
-
-    public function editPackage(Plan $package)
-    {
-        $this->ensureAdmin();
-        return view('admin.packages.edit', compact('package'));
-    }
-
-    public function attendanceIndex()
-    {
-        $this->ensureAdmin();
-
-        $sessions = CourseClass::query()
-            ->with(['owner', 'sessions'])
-            ->latest()
-            ->take(6)
-            ->get();
-
-        return view('admin.attendance.index', compact('sessions'));
-    }
 
     public function reportsIndex()
     {
         $this->ensureAdmin();
 
+        $totalRevenue = \App\Models\Transaction::where('status', 'success')->sum('amount');
+        
         $overview = [
             'users' => User::count(),
             'classes' => CourseClass::count(),
             'plans' => Plan::count(),
-            'subscriptions' => Subscription::count(),
-            'logs' => AuditLog::count(),
+            'transactions' => \App\Models\Transaction::where('status', 'success')->count(),
+            'revenue' => $totalRevenue,
         ];
 
-        $recentActivity = AuditLog::query()
-            ->with(['user', 'courseClass'])
+        // Doanh thu theo 6 tháng gần nhất (Mock hoặc thật nếu có dl)
+        $monthlyRevenue = [];
+        for ($i = 5; $i >= 0; $i--) {
+            $month = now()->subMonths($i);
+            $amount = \App\Models\Transaction::where('status', 'success')
+                ->whereYear('created_at', $month->year)
+                ->whereMonth('created_at', $month->month)
+                ->sum('amount');
+            
+            // Nếu chưa có giao dịch thật, tạo dữ liệu ảo để demo biểu đồ đẹp
+            if ($amount == 0 && app()->isLocal()) {
+                $amount = rand(500000, 5000000);
+            }
+                
+            $monthlyRevenue[] = [
+                'month' => $month->format('m/Y'),
+                'amount' => $amount
+            ];
+        }
+
+        $recentTransactions = \App\Models\Transaction::query()
+            ->with(['user', 'plan'])
             ->latest('created_at')
             ->take(8)
             ->get();
 
-        return view('admin.reports.index', compact('overview', 'recentActivity'));
-    }
-
-    public function logsIndex(Request $request)
-    {
-        $this->ensureAdmin();
-
-        $query = AuditLog::query()->with(['user', 'courseClass']);
-
-        if ($request->filled('search')) {
-            $search = $request->search;
-            $query->where('action', 'like', "%{$search}%")
-                ->orWhere('table_name', 'like', "%{$search}%")
-                ->orWhereHas('user', function ($q) use ($search) {
-                    $q->where('name', 'like', "%{$search}%");
-                });
-        }
-
-        $logs = $query->latest('created_at')->paginate(20)->withQueryString();
-
-        return view('admin.logs.index', compact('logs'));
+        return view('admin.reports.index', compact('overview', 'monthlyRevenue', 'recentTransactions'));
     }
 
     public function settingsIndex()

@@ -1,10 +1,9 @@
-@php
-    $initial = function_exists('mb_substr')
-        ? mb_strtoupper(mb_substr($user->name ?? 'U', 0, 1, 'UTF-8'), 'UTF-8')
-        : strtoupper(substr($user->name ?? 'U', 0, 1));
-@endphp
-
-<x-admin-layout title="Chỉnh sửa người dùng">
+<div>
+    @php
+        $initial = function_exists('mb_substr')
+            ? mb_strtoupper(mb_substr($user->name ?? 'U', 0, 1, 'UTF-8'), 'UTF-8')
+            : strtoupper(substr($user->name ?? 'U', 0, 1));
+    @endphp
     <div class="mx-auto max-w-[1500px] space-y-6">
         <section class="admin-card flex flex-col justify-between gap-4 overflow-hidden rounded-3xl border p-6 lg:flex-row lg:items-end lg:p-7">
             <div>
@@ -55,9 +54,7 @@
             </section>
 
             <section class="admin-card admin-card-hover overflow-hidden rounded-2xl border">
-                <form method="POST" action="{{ route('admin.users.update', $user) }}">
-                    @csrf
-                    @method('PUT')
+                <form wire:submit="save">
                     
                     <div class="border-b border-slate-100 p-6 flex justify-between items-center">
                         <div>
@@ -84,19 +81,19 @@
                         <div class="space-y-5">
                             <div>
                                 <label class="mb-2 block text-[10px] font-bold uppercase tracking-widest text-slate-400">Họ và tên</label>
-                                <input type="text" name="name" value="{{ old('name', $user->name) }}" class="w-full rounded-xl border border-slate-200 bg-white px-4 py-3 text-sm font-bold text-slate-900 focus:border-blue-500 focus:ring-2 focus:ring-blue-500">
+                                <input type="text" wire:model="name" class="w-full rounded-xl border border-slate-200 bg-white px-4 py-3 text-sm font-bold text-slate-900 focus:border-blue-500 focus:ring-2 focus:ring-blue-500">
                                 @error('name')<p class="mt-1 text-xs text-red-500">{{ $message }}</p>@enderror
                             </div>
 
                             <div>
                                 <label class="mb-2 block text-[10px] font-bold uppercase tracking-widest text-slate-400">Mã số sinh viên (nếu có)</label>
-                                <input type="text" name="code" value="{{ old('code', $user->code) }}" class="w-full rounded-xl border border-slate-200 bg-white px-4 py-3 text-sm font-bold text-slate-900 focus:border-blue-500 focus:ring-2 focus:ring-blue-500">
+                                <input type="text" wire:model="code" class="w-full rounded-xl border border-slate-200 bg-white px-4 py-3 text-sm font-bold text-slate-900 focus:border-blue-500 focus:ring-2 focus:ring-blue-500">
                                 @error('code')<p class="mt-1 text-xs text-red-500">{{ $message }}</p>@enderror
                             </div>
 
                             <div>
                                 <label class="mb-2 block text-[10px] font-bold uppercase tracking-widest text-slate-400">Email</label>
-                                <input type="email" name="email" value="{{ old('email', $user->email) }}" class="w-full rounded-xl border border-slate-200 bg-white px-4 py-3 text-sm font-bold text-slate-900 focus:border-blue-500 focus:ring-2 focus:ring-blue-500">
+                                <input type="email" wire:model="email" class="w-full rounded-xl border border-slate-200 bg-white px-4 py-3 text-sm font-bold text-slate-900 focus:border-blue-500 focus:ring-2 focus:ring-blue-500">
                                 @error('email')<p class="mt-1 text-xs text-red-500">{{ $message }}</p>@enderror
                             </div>
                         </div>
@@ -112,10 +109,11 @@
 
                             <div>
                                 <label class="mb-2 block text-[10px] font-bold uppercase tracking-widest text-slate-400">Trạng thái</label>
-                                <select name="status" class="w-full rounded-xl border border-slate-200 bg-white px-4 py-3 text-sm font-bold text-slate-900 focus:border-blue-500 focus:ring-2 focus:ring-blue-500">
-                                    <option value="active" {{ $user->status === 'active' ? 'selected' : '' }}>Đang hoạt động</option>
-                                    <option value="blocked" {{ $user->status === 'blocked' ? 'selected' : '' }}>Đã khóa</option>
+                                <select wire:model="status" class="w-full rounded-xl border border-slate-200 bg-white px-4 py-3 text-sm font-bold text-slate-900 focus:border-blue-500 focus:ring-2 focus:ring-blue-500">
+                                    <option value="active">Đang hoạt động</option>
+                                    <option value="blocked">Đã khóa</option>
                                 </select>
+                                @error('status')<p class="mt-1 text-xs text-red-500">{{ $message }}</p>@enderror
                             </div>
                         </div>
                     </div>
@@ -123,4 +121,4 @@
             </section>
         </div>
     </div>
-</x-admin-layout>
+</div>

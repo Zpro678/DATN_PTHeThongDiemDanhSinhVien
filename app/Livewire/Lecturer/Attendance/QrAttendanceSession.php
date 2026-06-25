@@ -5,6 +5,7 @@ namespace App\Livewire\Lecturer\Attendance;
 use App\Exports\ClassSessionExport;
 use App\Livewire\Lecturer\Attendance\Concerns\OwnsAttendanceSessions;
 use App\Models\AttendanceRecord;
+use App\Services\NotificationService;
 use App\Services\SubscriptionService;
 use Illuminate\Contracts\View\View;
 use Illuminate\Database\Eloquent\Builder;
@@ -83,6 +84,8 @@ class QrAttendanceSession extends Component
         $session = $this->ownedSession($this->sessionId);
         $session->update(['status' => 'closed']);
         $this->isClosed = true;
+
+        app(NotificationService::class)->attendanceSessionClosed((int) auth()->id(), $session, isQr: true);
 
         session()->flash('status', 'Phiên QR đã được chốt.');
     }

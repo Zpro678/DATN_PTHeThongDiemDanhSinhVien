@@ -3,6 +3,7 @@
 namespace App\Livewire\User;
 
 use App\Models\CourseClass;
+use App\Services\NotificationService;
 use App\Services\SubscriptionService;
 use Illuminate\Contracts\View\View;
 use Livewire\Component;
@@ -125,7 +126,7 @@ class CreateClass extends Component
 
         $code = $this->generateUniqueCode();
 
-        CourseClass::query()->create([
+        $courseClass = CourseClass::query()->create([
             'owner_user_id' => auth()->id(),
             'name' => $this->name,
             'code' => $code,
@@ -137,6 +138,8 @@ class CreateClass extends Component
             'require_approval' => $this->requireApproval,
             'status' => 'active',
         ]);
+
+        app(NotificationService::class)->classCreated((int) auth()->id(), $courseClass);
 
         session()->flash('status', 'Lớp học đã được tạo thành công.');
 

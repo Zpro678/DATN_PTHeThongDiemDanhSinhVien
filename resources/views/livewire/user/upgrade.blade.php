@@ -54,7 +54,7 @@
     @endif
 
     {{-- Bảng giá --}}
-    <div class="grid grid-cols-1 gap-6 md:grid-cols-3">
+    <div class="mx-auto grid max-w-4xl grid-cols-1 gap-6 md:grid-cols-2">
         @foreach ($plans as $plan)
             @php
                 $style = $planStyles[$plan->code] ?? $planStyles['FREE'];
@@ -90,7 +90,7 @@
                         <span class="text-3xl font-extrabold text-on-surface">Miễn phí</span>
                     @else
                         <span class="text-3xl font-extrabold text-on-surface">{{ number_format($plan->price, 0, ',', '.') }}đ</span>
-                        <span class="text-sm font-medium text-on-surface-variant">/ {{ $plan->duration_days }} ngày</span>
+                        <span class="text-sm font-medium text-on-surface-variant">/ {{ $plan->duration_days >= 365 ? round($plan->duration_days / 365) . ' năm' : round($plan->duration_days / 30) . ' tháng' }}</span>
                     @endif
                 </div>
 
@@ -145,7 +145,7 @@
                     @else
                         <div class="flex items-center justify-between">
                             <span class="text-on-surface-variant">Giá</span>
-                            <span class="font-bold text-on-surface">{{ number_format($confirmingPlan->price, 0, ',', '.') }}đ / {{ $confirmingPlan->duration_days }} ngày</span>
+                            <span class="font-bold text-on-surface">{{ number_format($confirmingPlan->price, 0, ',', '.') }}đ / {{ $confirmingPlan->duration_days >= 365 ? round($confirmingPlan->duration_days / 365) . ' năm' : round($confirmingPlan->duration_days / 30) . ' tháng' }}</span>
                         </div>
 
                         {{-- Chọn phương thức thanh toán --}}

@@ -17,23 +17,12 @@
         return false;
     };
 
-    $sections = [
-        [
-            'title' => 'Hệ thống',
-            'items' => [
-                ['label' => 'Dashboard', 'href' => route('admin.dashboard'), 'icon' => 'layout-dashboard', 'active' => ['admin.dashboard']],
-                ['label' => 'Quản lý tài khoản', 'href' => route('admin.users.index'), 'icon' => 'user-square', 'active' => ['admin.users.*']],
-                ['label' => 'Quản lý gói dịch vụ', 'href' => route('admin.packages.index'), 'icon' => 'star', 'active' => ['admin.packages.*']],
-                ['label' => 'Nhật ký hệ thống', 'href' => route('admin.logs.index'), 'icon' => 'activity', 'active' => ['admin.logs.*']],
-            ],
-        ],
-        [
-            'title' => 'Nghiệp vụ',
-            'items' => [
-                ['label' => 'Quản lý điểm danh', 'href' => route('admin.attendance.index'), 'icon' => 'calendar-check', 'active' => ['admin.attendance.*']],
-                ['label' => 'Báo cáo & thống kê', 'href' => route('admin.reports.index'), 'icon' => 'bar-chart', 'active' => ['admin.reports.*']],
-            ],
-        ],
+    $menuItems = [
+        ['label' => 'Dashboard', 'href' => route('admin.dashboard'), 'icon' => 'layout-dashboard', 'active' => ['admin.dashboard']],
+        ['label' => 'Quản lý tài khoản', 'href' => route('admin.users.index'), 'icon' => 'user-square', 'active' => ['admin.users.*']],
+        ['label' => 'Quản lý gói dịch vụ', 'href' => route('admin.packages.index'), 'icon' => 'star', 'active' => ['admin.packages.*']],
+        ['label' => 'Nhật ký hệ thống', 'href' => route('admin.logs.index'), 'icon' => 'activity', 'active' => ['admin.logs.*']],
+        ['label' => 'Báo cáo & thống kê', 'href' => route('admin.reports.index'), 'icon' => 'bar-chart', 'active' => ['admin.reports.*']],
     ];
 @endphp
 
@@ -70,18 +59,12 @@
                     </a>
                 </div>
 
-                <nav class="flex-1 space-y-4 overflow-y-auto px-3 py-2">
-                    @foreach ($sections as $section)
-                        <div class="space-y-1">
-                            <div class="mb-2 px-3 text-[10px] font-bold uppercase tracking-widest text-on-surface-variant/70">
-                                {{ $section['title'] }}
-                            </div>
-
-                            @foreach ($section['items'] as $item)
-                                @php
-                                    $isItemActive = $isActive($item['active'] ?? []);
-                                @endphp
-                                <a
+                <nav class="flex-1 space-y-2 overflow-y-auto px-3 py-2">
+                    @foreach ($menuItems as $item)
+                        @php
+                            $isItemActive = $isActive($item['active'] ?? []);
+                        @endphp
+                        <a
                                     href="{{ $item['href'] }}"
                                     @class([
                                         'flex w-full items-center gap-3 rounded-lg px-3 py-2.5 text-base font-bold transition-all',
@@ -92,18 +75,28 @@
                                     <x-user.icon name="{{ $item['icon'] }}" :size="20" class="shrink-0" />
                                     <span class="whitespace-nowrap">{{ $item['label'] }}</span>
                                 </a>
-                            @endforeach
-                        </div>
                     @endforeach
                 </nav>
 
                 <div class="mt-auto space-y-1 border-t border-outline-variant/20 px-2 pt-2 pb-1">
-                    <a href="{{ route('admin.settings.index') }}" class="flex w-full items-center gap-3 rounded-lg px-3 py-2.5 text-base font-bold text-on-surface-variant transition-all hover:bg-surface-container-high">
+                    <a href="{{ route('admin.settings.index') }}" 
+                        @class([
+                            'flex w-full items-center gap-3 rounded-lg px-3 py-2.5 text-base font-bold transition-all',
+                            'bg-primary-container text-on-primary-container' => request()->routeIs('admin.settings.*'),
+                            'text-on-surface-variant hover:bg-surface-container-high' => !request()->routeIs('admin.settings.*'),
+                        ])
+                    >
                         <x-user.icon name="settings" :size="20" class="shrink-0" />
                         <span class="whitespace-nowrap">Cấu hình hệ thống</span>
                     </a>
 
-                    <a href="{{ route('profile.edit') }}" class="flex w-full items-center gap-3 rounded-lg px-3 py-2.5 text-base font-bold text-on-surface-variant transition-all hover:bg-surface-container-high">
+                    <a href="{{ route('profile.edit') }}" 
+                        @class([
+                            'flex w-full items-center gap-3 rounded-lg px-3 py-2.5 text-base font-bold transition-all',
+                            'bg-primary-container text-on-primary-container' => request()->routeIs('profile.*'),
+                            'text-on-surface-variant hover:bg-surface-container-high' => !request()->routeIs('profile.*'),
+                        ])
+                    >
                         <x-user.icon name="user-circle" :size="20" class="shrink-0" />
                         <span class="whitespace-nowrap">Hồ sơ cá nhân</span>
                     </a>
@@ -139,18 +132,12 @@
                         </div>
                     </div>
 
-                    <nav class="flex-1 space-y-4 overflow-y-auto px-3 py-2">
-                        @foreach ($sections as $section)
-                            <div class="space-y-1">
-                                <div class="mb-2 px-3 text-[10px] font-bold uppercase tracking-widest text-on-surface-variant/70">
-                                    {{ $section['title'] }}
-                                </div>
-
-                                @foreach ($section['items'] as $item)
-                                    @php
-                                        $isItemActive = $isActive($item['active'] ?? []);
-                                    @endphp
-                                    <a
+                    <nav class="flex-1 space-y-2 overflow-y-auto px-3 py-2">
+                        @foreach ($menuItems as $item)
+                            @php
+                                $isItemActive = $isActive($item['active'] ?? []);
+                            @endphp
+                            <a
                                         href="{{ $item['href'] }}"
                                         @class([
                                             'flex w-full items-center gap-3 rounded-lg px-3 py-2.5 text-base font-bold transition-all',
@@ -162,18 +149,30 @@
                                         <x-user.icon name="{{ $item['icon'] }}" :size="20" class="shrink-0" />
                                         <span class="whitespace-nowrap">{{ $item['label'] }}</span>
                                     </a>
-                                @endforeach
-                            </div>
                         @endforeach
                     </nav>
 
                     <div class="mt-auto space-y-1 border-t border-outline-variant/20 px-2 pt-2 pb-1">
-                        <a href="{{ route('admin.settings.index') }}" class="flex w-full items-center gap-3 rounded-lg px-3 py-2.5 text-base font-bold text-on-surface-variant transition-all hover:bg-surface-container-high" @click="sidebarOpen = false">
+                        <a href="{{ route('admin.settings.index') }}" 
+                            @class([
+                                'flex w-full items-center gap-3 rounded-lg px-3 py-2.5 text-base font-bold transition-all',
+                                'bg-primary-container text-on-primary-container' => request()->routeIs('admin.settings.*'),
+                                'text-on-surface-variant hover:bg-surface-container-high' => !request()->routeIs('admin.settings.*'),
+                            ]) 
+                            @click="sidebarOpen = false"
+                        >
                             <x-user.icon name="settings" :size="20" class="shrink-0" />
                             <span class="whitespace-nowrap">Cấu hình hệ thống</span>
                         </a>
 
-                        <a href="{{ route('profile.edit') }}" class="flex w-full items-center gap-3 rounded-lg px-3 py-2.5 text-base font-bold text-on-surface-variant transition-all hover:bg-surface-container-high" @click="sidebarOpen = false">
+                        <a href="{{ route('profile.edit') }}" 
+                            @class([
+                                'flex w-full items-center gap-3 rounded-lg px-3 py-2.5 text-base font-bold transition-all',
+                                'bg-primary-container text-on-primary-container' => request()->routeIs('profile.*'),
+                                'text-on-surface-variant hover:bg-surface-container-high' => !request()->routeIs('profile.*'),
+                            ]) 
+                            @click="sidebarOpen = false"
+                        >
                             <x-user.icon name="user-circle" :size="20" class="shrink-0" />
                             <span class="whitespace-nowrap">Hồ sơ cá nhân</span>
                         </a>

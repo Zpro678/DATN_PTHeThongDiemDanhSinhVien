@@ -1,5 +1,5 @@
 <x-admin-layout title="Cấu hình hệ thống">
-    <div class="mx-auto max-w-[1200px]" x-data="{ activeTab: 'attendance' }">
+    <div class="mx-auto max-w-[1200px]" x-data="{ activeTab: 'payment' }">
         <div class="admin-card mb-6 overflow-hidden rounded-3xl border p-5 lg:p-6">
             <div class="relative z-10 flex flex-col justify-between gap-4 md:flex-row md:items-end">
             <div>
@@ -7,25 +7,13 @@
                 <h1 class="text-2xl font-extrabold tracking-tight text-slate-900">Cấu hình hệ thống</h1>
                 <p class="mt-1 text-sm text-slate-500">Quản lý các thiết lập lõi, quy tắc nghiệp vụ và cổng kết nối của SAMS.</p>
             </div>
-            <div class="flex items-center gap-3">
-                <button type="button" class="admin-soft-button rounded-xl border border-slate-200 bg-white px-4 py-2 text-sm font-semibold text-slate-700 transition-colors hover:bg-slate-50">
-                    Hủy thay đổi
-                </button>
-                <button type="button" class="admin-soft-button flex items-center gap-2 rounded-xl bg-gradient-to-r from-blue-600 to-cyan-600 px-5 py-2 text-sm font-semibold text-white shadow-sm shadow-blue-500/20">
-                    <x-user.icon name="save" :size="16" />
-                    Lưu cấu hình
-                </button>
-            </div>
             </div>
         </div>
 
         <div class="flex flex-col gap-8 lg:flex-row">
             <div class="w-full shrink-0 lg:w-64">
                 <nav class="admin-card flex flex-row gap-1 overflow-x-auto rounded-2xl border p-2 lg:flex-col lg:overflow-visible">
-                    <button type="button" @click="activeTab = 'attendance'" :class="{ 'bg-blue-50 text-blue-700': activeTab === 'attendance', 'text-slate-600 hover:bg-slate-50': activeTab !== 'attendance' }" class="flex items-center gap-3 whitespace-nowrap rounded-xl px-4 py-3 text-left text-sm font-bold transition-colors lg:whitespace-normal">
-                        <x-user.icon name="calendar-check" :size="20" class="opacity-70" />
-                        Điểm danh & Chuyên cần
-                    </button>
+
 
                     <button type="button" @click="activeTab = 'payment'" :class="{ 'bg-blue-50 text-blue-700': activeTab === 'payment', 'text-slate-600 hover:bg-slate-50': activeTab !== 'payment' }" class="flex items-center gap-3 whitespace-nowrap rounded-xl px-4 py-3 text-left text-sm font-bold transition-colors lg:whitespace-normal">
                         <x-user.icon name="credit-card" :size="20" class="opacity-70" />
@@ -50,53 +38,6 @@
             </div>
 
             <div class="admin-card min-h-[500px] flex-1 overflow-hidden rounded-3xl border">
-                <div x-cloak x-show="activeTab === 'attendance'" class="space-y-8 p-6 md:p-8" x-transition.opacity>
-                    <div>
-                        <h2 class="mb-1 text-lg font-bold text-slate-900">Quy tắc Điểm danh</h2>
-                        <p class="mb-6 text-sm text-slate-500">Thiết lập các thông số mặc định khi giảng viên tạo lớp học hoặc phiên điểm danh.</p>
-
-                        <div class="grid grid-cols-1 gap-6 md:grid-cols-2">
-                            <div class="space-y-2">
-                                <label class="block text-sm font-semibold text-slate-700">Ngưỡng cảnh báo vắng (%)</label>
-                                <div class="relative">
-                                    <input type="number" value="20" class="w-full rounded-xl border border-slate-200 bg-slate-50 px-4 py-2.5 text-slate-900 transition-colors focus:border-blue-500 focus:ring-2 focus:ring-blue-500">
-                                    <span class="absolute right-4 top-3 text-sm font-medium text-slate-400">%</span>
-                                </div>
-                                <p class="text-xs text-slate-500">Học viên nghỉ quá tỷ lệ này sẽ bị gắn cờ đỏ cảnh báo.</p>
-                            </div>
-
-                            <div class="space-y-2">
-                                <label class="block text-sm font-semibold text-slate-700">Thời gian đi muộn mặc định (phút)</label>
-                                <div class="relative">
-                                    <input type="number" value="15" class="w-full rounded-xl border border-slate-200 bg-slate-50 px-4 py-2.5 text-slate-900 transition-colors focus:border-blue-500 focus:ring-2 focus:ring-blue-500">
-                                    <span class="absolute right-4 top-3 text-sm font-medium text-slate-400">phút</span>
-                                </div>
-                                <p class="text-xs text-slate-500">Sau bao lâu từ khi mở điểm danh thì bị tính là đi muộn.</p>
-                            </div>
-
-                            <div class="space-y-2">
-                                <label class="block text-sm font-semibold text-slate-700">Bán kính GPS mặc định (mét)</label>
-                                <div class="relative">
-                                    <input type="number" value="50" class="w-full rounded-xl border border-slate-200 bg-slate-50 px-4 py-2.5 text-slate-900 transition-colors focus:border-blue-500 focus:ring-2 focus:ring-blue-500">
-                                    <span class="absolute right-4 top-3 text-sm font-medium text-slate-400">m</span>
-                                </div>
-                                <p class="text-xs text-slate-500">Khoảng cách tối đa học viên được phép cách vị trí giảng viên.</p>
-                            </div>
-
-                            <div class="space-y-2">
-                                <label class="block text-sm font-semibold text-slate-700">Chặn Check-in 2 máy cùng lúc</label>
-                                <div class="mt-2 flex items-center">
-                                    <label class="relative inline-flex cursor-pointer items-center">
-                                        <input type="checkbox" value="" class="peer sr-only" checked>
-                                        <div class="peer h-6 w-11 rounded-full bg-slate-200 after:absolute after:left-[2px] after:top-[2px] after:h-5 after:w-5 after:rounded-full after:border after:border-slate-300 after:bg-white after:transition-all after:content-[''] peer-checked:bg-blue-600 peer-checked:after:translate-x-full peer-checked:after:border-white"></div>
-                                        <span class="ml-3 text-sm font-medium text-slate-700">Kích hoạt chống gian lận IP/Device</span>
-                                    </label>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-
                 <div x-cloak x-show="activeTab === 'payment'" class="space-y-8 p-6 md:p-8" x-transition.opacity>
                     <div>
                         <h2 class="mb-1 text-lg font-bold text-slate-900">Tích hợp cổng PayOS</h2>
@@ -144,6 +85,15 @@
                                 </div>
                             </div>
                         </div>
+
+                        <div class="mt-8 flex justify-end gap-3 border-t border-slate-100 pt-6">
+                            <button type="button" class="rounded-xl border border-slate-200 bg-white px-5 py-2.5 text-sm font-bold text-slate-600 hover:bg-slate-50">
+                                Hủy
+                            </button>
+                            <button type="button" class="rounded-xl bg-gradient-to-r from-blue-600 to-cyan-600 px-6 py-2.5 text-sm font-bold text-white shadow-sm shadow-blue-500/25 transition-all hover:-translate-y-0.5 hover:from-blue-700 hover:to-cyan-700">
+                                Lưu cấu hình PayOS
+                            </button>
+                        </div>
                     </div>
                 </div>
 
@@ -184,6 +134,15 @@
                                 <input type="text" value="SAMS System Notification" class="w-full rounded-xl border border-slate-200 bg-slate-50 px-4 py-2.5 text-slate-900 transition-colors focus:border-blue-500 focus:ring-2 focus:ring-blue-500">
                             </div>
                         </div>
+
+                        <div class="mt-8 flex justify-end gap-3 border-t border-slate-100 pt-6">
+                            <button type="button" class="rounded-xl border border-slate-200 bg-white px-5 py-2.5 text-sm font-bold text-slate-600 hover:bg-slate-50">
+                                Hủy
+                            </button>
+                            <button type="button" class="rounded-xl bg-gradient-to-r from-blue-600 to-cyan-600 px-6 py-2.5 text-sm font-bold text-white shadow-sm shadow-blue-500/25 transition-all hover:-translate-y-0.5 hover:from-blue-700 hover:to-cyan-700">
+                                Lưu cấu hình Mail
+                            </button>
+                        </div>
                     </div>
                 </div>
 
@@ -221,6 +180,15 @@
                                 <p class="mt-1 text-xs text-slate-500">Dung lượng tối đa cho phép tải lên khi Import danh sách học viên.</p>
                             </div>
                         </div>
+
+                        <div class="mt-8 flex justify-end gap-3 border-t border-slate-100 pt-6">
+                            <button type="button" class="rounded-xl border border-slate-200 bg-white px-5 py-2.5 text-sm font-bold text-slate-600 hover:bg-slate-50">
+                                Hủy
+                            </button>
+                            <button type="button" class="rounded-xl bg-gradient-to-r from-blue-600 to-cyan-600 px-6 py-2.5 text-sm font-bold text-white shadow-sm shadow-blue-500/25 transition-all hover:-translate-y-0.5 hover:from-blue-700 hover:to-cyan-700">
+                                Lưu cấu hình giao diện
+                            </button>
+                        </div>
                     </div>
                 </div>
 
@@ -239,6 +207,23 @@
                                 <input type="checkbox" value="" class="peer sr-only">
                                 <div class="peer h-7 w-14 rounded-full bg-slate-300 after:absolute after:left-[2px] after:top-[2px] after:h-6 after:w-6 after:rounded-full after:border after:border-slate-300 after:bg-white after:transition-all after:content-[''] peer-checked:bg-rose-600 peer-checked:after:translate-x-full peer-checked:after:border-white"></div>
                             </label>
+                        </div>
+
+                        <div class="mt-6 grid grid-cols-1 gap-6 md:grid-cols-2">
+                            <div class="space-y-2">
+                                <label class="block text-sm font-semibold text-slate-700">Thời gian dự kiến Bắt đầu</label>
+                                <input type="datetime-local" class="w-full rounded-xl border border-slate-200 bg-slate-50 px-4 py-2.5 text-slate-900 transition-colors focus:border-rose-500 focus:ring-2 focus:ring-rose-500">
+                            </div>
+                            <div class="space-y-2">
+                                <label class="block text-sm font-semibold text-slate-700">Thời gian dự kiến Kết thúc</label>
+                                <input type="datetime-local" class="w-full rounded-xl border border-slate-200 bg-slate-50 px-4 py-2.5 text-slate-900 transition-colors focus:border-rose-500 focus:ring-2 focus:ring-rose-500">
+                            </div>
+                        </div>
+
+                        <div class="mt-8 flex justify-end gap-3 border-t border-slate-100 pt-6">
+                            <button type="button" class="rounded-xl bg-rose-600 px-6 py-2.5 text-sm font-bold text-white shadow-sm shadow-rose-500/25 transition-all hover:-translate-y-0.5 hover:bg-rose-700">
+                                Thông báo lên hệ thống
+                            </button>
                         </div>
                     </div>
                 </div>

@@ -21,10 +21,11 @@ class StatisticalService
      * - totals: thống kê tổng hợp trên tất cả lớp đang tham gia.
      * - isDemo: luôn false vì dữ liệu được lấy từ database thật.
      *
-     * Công thức tính chuyên cần:
+     * Công thức tính chuyên cần (xem App\Services\AttendanceCalculator):
      * - Chỉ tính các phiên điểm danh đã chốt sổ (class_sessions.status = closed).
      * - Mỗi phiên được quy đổi theo lesson_count để tính theo tiết học.
-     * - present, late, excused được xem là có chuyên cần.
+     * - Vắng có phép (excused) bị loại khỏi mẫu số.
+     * - Đi muộn đếm theo số lần; cứ đủ 3 lần muộn quy thành 1 tiết vắng, phần lẻ vẫn tính có đi học.
      * - absent, pending, invalid được xem là vắng/chưa hợp lệ sau khi phiên đã chốt.
      *
      * @return array{subjects: array<int, array<string, mixed>>, totals: array<string, int>, isDemo: bool}
@@ -70,11 +71,15 @@ class StatisticalService
             'total_lessons' => (int) ($courseClass->total_lessons ?? 0),
             'planned_lessons' => $plannedLessons,
             'total' => 0,
+            'counted_total' => 0,
             'attended' => 0,
             'present' => 0,
             'late' => 0,
+            'late_count' => 0,
+            'late_absent_lessons' => 0,
             'excused' => 0,
             'absent' => 0,
+            'effective_absent' => 0,
             'allowed_absent_lessons' => $allowedAbsentLessons,
             'safe_absence_lessons' => $allowedAbsentLessons,
             'exceeded_absent_lessons' => 0,
@@ -97,12 +102,16 @@ class StatisticalService
             'subjects' => [],
             'totals' => [
                 'records' => 0,
+                'counted_total' => 0,
                 'planned_lessons' => 0,
                 'attended' => 0,
                 'present' => 0,
                 'late' => 0,
+                'late_count' => 0,
+                'late_absent_lessons' => 0,
                 'excused' => 0,
                 'absent' => 0,
+                'effective_absent' => 0,
                 'allowed_absent_lessons' => 0,
                 'safe_absence_lessons' => 0,
                 'exceeded_absent_lessons' => 0,
@@ -154,6 +163,7 @@ class StatisticalService
                 COALESCE(SUM({$lessonCount}), 0) as total_lessons,
                 COALESCE(SUM(CASE WHEN ar.status = 'present' THEN {$lessonCount} ELSE 0 END), 0) as present_lessons,
                 COALESCE(SUM(CASE WHEN ar.status = 'late' THEN {$lessonCount} ELSE 0 END), 0) as late_lessons,
+                COALESCE(SUM(CASE WHEN ar.status = 'late' THEN 1 ELSE 0 END), 0) as late_count,
                 COALESCE(SUM(CASE WHEN ar.status = 'excused' THEN {$lessonCount} ELSE 0 END), 0) as excused_lessons,
                 COALESCE(SUM(CASE WHEN ar.status IN ('absent', 'pending', 'invalid') THEN {$lessonCount} ELSE 0 END), 0) as absent_lessons
             ")
@@ -179,15 +189,23 @@ class StatisticalService
                 $total = (int) ($row->total_lessons ?? 0);
                 $present = (int) ($row->present_lessons ?? 0);
                 $late = (int) ($row->late_lessons ?? 0);
+                $lateCount = (int) ($row->late_count ?? 0);
                 $excused = (int) ($row->excused_lessons ?? 0);
                 $absent = (int) ($row->absent_lessons ?? 0);
 
-                $percent = $this->attendancePercent($present, $late, $excused, $total);
+                // Vắng có phép bị loại khỏi mẫu số; mỗi 3 lần muộn quy thành 1 tiết vắng.
                 $plannedLessons = max((int) ($courseClass?->total_lessons ?? 0), $total);
+                $countedTotal = AttendanceCalculator::countedLessons($total, $excused);
+                $lateAbsentLessons = AttendanceCalculator::lateAbsentLessons($lateCount);
+                $effectiveAbsent = AttendanceCalculator::effectiveAbsentLessons($absent, $lateCount);
+                $attended = AttendanceCalculator::attendedLessons($present, $late, $lateCount);
+                // % chuyên cần tính trên tổng tiết kế hoạch (cả khóa) để nhất quán với quỹ vắng.
+                $percent = AttendanceCalculator::percentOfPlanned($plannedLessons, $excused, $absent, $lateCount);
+
                 $allowedAbsentLessons = (int) floor($plannedLessons * self::ABSENCE_LIMIT_RATIO);
-                $safeAbsenceLessons = max($allowedAbsentLessons - $absent, 0);
-                $exceededAbsentLessons = max($absent - $allowedAbsentLessons, 0);
-                $absenceBudgetState = $this->absenceBudgetState($allowedAbsentLessons, $absent);
+                $safeAbsenceLessons = max($allowedAbsentLessons - $effectiveAbsent, 0);
+                $exceededAbsentLessons = max($effectiveAbsent - $allowedAbsentLessons, 0);
+                $absenceBudgetState = $this->absenceBudgetState($allowedAbsentLessons, $effectiveAbsent);
 
                 return [
                     'id' => $member->id,
@@ -200,15 +218,19 @@ class StatisticalService
                     'total_lessons' => (int) ($courseClass?->total_lessons ?? 0),
                     'planned_lessons' => $plannedLessons,
                     'total' => $total,
-                    'attended' => $present + $late + $excused,
+                    'counted_total' => $countedTotal,
+                    'attended' => $attended,
                     'present' => $present,
                     'late' => $late,
+                    'late_count' => $lateCount,
+                    'late_absent_lessons' => $lateAbsentLessons,
                     'excused' => $excused,
                     'absent' => $absent,
+                    'effective_absent' => $effectiveAbsent,
                     'allowed_absent_lessons' => $allowedAbsentLessons,
                     'safe_absence_lessons' => $safeAbsenceLessons,
                     'exceeded_absent_lessons' => $exceededAbsentLessons,
-                    'absence_budget_label' => $this->absenceBudgetLabel($allowedAbsentLessons, $absent),
+                    'absence_budget_label' => $this->absenceBudgetLabel($allowedAbsentLessons, $effectiveAbsent),
                     'absence_budget_state' => $absenceBudgetState,
                     'percent' => $percent,
                     'warning' => $total > 0 && $percent < self::MIN_ATTENDANCE_PERCENT,
@@ -231,39 +253,30 @@ class StatisticalService
 
         $totals = [
             'records' => (int) $subjectsCollection->sum('total'),
+            'counted_total' => (int) $subjectsCollection->sum('counted_total'),
             'planned_lessons' => (int) $subjectsCollection->sum('planned_lessons'),
             'attended' => (int) $subjectsCollection->sum('attended'),
             'present' => (int) $subjectsCollection->sum('present'),
             'late' => (int) $subjectsCollection->sum('late'),
+            'late_count' => (int) $subjectsCollection->sum('late_count'),
+            'late_absent_lessons' => (int) $subjectsCollection->sum('late_absent_lessons'),
             'excused' => (int) $subjectsCollection->sum('excused'),
             'absent' => (int) $subjectsCollection->sum('absent'),
+            'effective_absent' => (int) $subjectsCollection->sum('effective_absent'),
             'allowed_absent_lessons' => (int) $subjectsCollection->sum('allowed_absent_lessons'),
             'safe_absence_lessons' => (int) $subjectsCollection->sum('safe_absence_lessons'),
             'exceeded_absent_lessons' => (int) $subjectsCollection->sum('exceeded_absent_lessons'),
             'warning_count' => (int) $subjectsCollection->where('warning', true)->count(),
         ];
 
-        $totals['percent'] = $this->attendancePercent(
-            $totals['present'],
-            $totals['late'],
-            $totals['excused'],
-            $totals['records'],
-        );
+        // % tổng tính trên tổng tiết kế hoạch của tất cả môn (đã bỏ vắng có phép),
+        // trừ đi vắng hiệu dụng (gồm muộn quy đổi) — nhất quán với từng môn.
+        $plannedCounted = max($totals['planned_lessons'] - $totals['excused'], 0);
+        $totals['percent'] = $plannedCounted > 0
+            ? (int) round((($plannedCounted - $totals['effective_absent']) / $plannedCounted) * 100)
+            : 100;
 
         return $totals;
-    }
-
-    /**
-     * Tính phần trăm chuyên cần theo công thức:
-     * (có mặt + đi muộn + vắng có phép) / tổng tiết đã chốt.
-     */
-    private function attendancePercent(int $present, int $late, int $excused, int $total): int
-    {
-        if ($total <= 0) {
-            return 100;
-        }
-
-        return (int) round((($present + $late + $excused) / $total) * 100);
     }
 
     /**

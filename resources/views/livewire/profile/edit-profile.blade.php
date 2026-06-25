@@ -19,8 +19,8 @@
         </div>
     </section>
 
-    <div class="grid grid-cols-1 gap-6 xl:grid-cols-[380px_minmax(0,1fr)]">
-        <section class="admin-card admin-card-hover overflow-hidden rounded-2xl border bg-white">
+    <div class="grid grid-cols-1 items-stretch gap-6 xl:grid-cols-[380px_minmax(0,1fr)]">
+        <section class="admin-card admin-card-hover flex h-full flex-col overflow-hidden rounded-2xl border bg-white">
             <div class="h-24 bg-gradient-to-r from-blue-600 via-cyan-500 to-emerald-500"></div>
             <div class="px-6 pb-6">
                 <div class="-mt-12 flex justify-center relative">
@@ -70,9 +70,9 @@
             </div>
         </section>
 
-        <div class="space-y-6 relative" x-cloak>
-            <div x-show="view === 'profile'" x-transition:enter="transition ease-out duration-300" x-transition:enter-start="opacity-0 translate-x-4" x-transition:enter-end="opacity-100 translate-x-0" x-transition:leave="transition ease-in duration-200" x-transition:leave-start="opacity-100 translate-x-0" x-transition:leave-end="opacity-0 -translate-x-4">
-                <section class="admin-card admin-card-hover overflow-hidden rounded-2xl border bg-white">
+        <div class="relative h-full" x-cloak>
+            <div x-show="view === 'profile'" class="h-full" x-transition:enter="transition ease-out duration-300" x-transition:enter-start="opacity-0 translate-x-4" x-transition:enter-end="opacity-100 translate-x-0" x-transition:leave="transition ease-in duration-200" x-transition:leave-start="opacity-100 translate-x-0" x-transition:leave-end="opacity-0 -translate-x-4">
+                <section class="admin-card admin-card-hover flex h-full flex-col overflow-hidden rounded-2xl border bg-white">
                     <div class="flex flex-col gap-4 border-b border-slate-100 p-6 lg:flex-row lg:items-end lg:justify-between">
                         <div>
                             <h2 class="text-xl font-black text-slate-900">Chỉnh sửa hồ sơ</h2>
@@ -85,8 +85,8 @@
                         </div>
                     </div>
 
-                    <form wire:submit.prevent="updateProfileInformation">
-                        <div class="p-6">
+                    <form wire:submit.prevent="updateProfileInformation" class="flex flex-1 flex-col">
+                        <div class="flex-1 p-6">
                             @if (session('status'))
                                 <div class="font-medium text-sm text-emerald-600 bg-emerald-50 p-4 rounded-xl border border-emerald-200 mb-6">
                                     {{ session('status') }}
@@ -116,7 +116,7 @@
                             </div>
                         </div>
 
-                        <div class="border-t border-slate-100 bg-slate-50 p-6 flex justify-end gap-3">
+                        <div class="mt-auto flex justify-end gap-3 border-t border-slate-100 bg-slate-50 p-6">
                             <div wire:loading wire:target="updateProfileInformation" class="text-sm text-slate-500 self-center">
                                 Đang lưu...
                             </div>
@@ -129,8 +129,8 @@
             </div>
 
             <!-- Password Form -->
-            <div x-cloak x-show="view === 'password'" x-transition:enter="transition ease-out duration-300" x-transition:enter-start="opacity-0 translate-x-4" x-transition:enter-end="opacity-100 translate-x-0" x-transition:leave="transition ease-in duration-200" x-transition:leave-start="opacity-100 translate-x-0" x-transition:leave-end="opacity-0 -translate-x-4">
-                <section class="admin-card admin-card-hover overflow-hidden rounded-2xl border bg-white">
+            <div x-cloak x-show="view === 'password'" class="h-full" x-transition:enter="transition ease-out duration-300" x-transition:enter-start="opacity-0 translate-x-4" x-transition:enter-end="opacity-100 translate-x-0" x-transition:leave="transition ease-in duration-200" x-transition:leave-start="opacity-100 translate-x-0" x-transition:leave-end="opacity-0 -translate-x-4">
+                <section class="admin-card admin-card-hover flex h-full flex-col overflow-hidden rounded-2xl border bg-white">
                     <div class="border-b border-slate-100 px-6 py-6 lg:p-6 lg:pb-4 flex flex-col gap-4 lg:flex-row lg:items-end lg:justify-between bg-white relative z-10">
                         <div>
                             <h2 class="text-xl font-black text-slate-900">Đổi mật khẩu</h2>
@@ -138,8 +138,8 @@
                         </div>
                     </div>
                     
-                    <form wire:submit.prevent="updatePassword" class="relative z-10 bg-white">
-                        <div class="px-6 py-5 space-y-4">
+                    <form wire:submit.prevent="updatePassword" class="relative z-10 flex flex-1 flex-col bg-white">
+                        <div class="flex-1 space-y-4 px-6 py-5">
                             @if (session('password_status'))
                                 <div class="font-medium text-sm text-emerald-600 bg-emerald-50 p-4 rounded-xl border border-emerald-200">
                                     {{ session('password_status') }}
@@ -183,7 +183,7 @@
                             </div>
                         </div>
                         
-                        <div class="border-t border-slate-100 bg-slate-50 px-6 py-4 flex justify-end gap-3 relative z-10">
+                        <div class="relative z-10 mt-auto flex justify-end gap-3 border-t border-slate-100 bg-slate-50 px-6 py-4">
                             <button type="button" @click="view = 'profile'" class="rounded-xl border border-slate-200 bg-white px-4 py-2.5 text-sm font-bold text-slate-600 hover:bg-slate-50">
                                 Quay lại
                             </button>

@@ -76,10 +76,4 @@
         </div>
     </div>
 
-    <div class="relative z-10 mt-5 border-t border-slate-100 pt-4 text-center">
-        <a href="{{ route('admin.attendance.index') }}" class="mx-auto inline-flex items-center gap-1.5 text-xs font-bold text-blue-600 hover:text-blue-700 hover:underline">
-            <span>Xem lịch sử điểm danh đầy đủ</span>
-            <x-user.icon name="arrow-right" :size="14" />
-        </a>
-    </div>
 </div>

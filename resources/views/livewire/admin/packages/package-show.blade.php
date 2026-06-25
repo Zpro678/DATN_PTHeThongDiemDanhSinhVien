@@ -1,46 +1,44 @@
-@php
-    $isFree = (float) $package->price <= 0;
-    $isEnterprise = strtolower($package->code) === 'enterprise';
-    
-    if ($isEnterprise) {
-        $accent = 'from-purple-500 via-fuchsia-500 to-pink-500';
-        $badgeClass = 'border-purple-200 bg-purple-100 text-purple-700';
-        $priceClass = 'text-purple-600';
-        $iconBg = 'border-purple-100 bg-purple-50 text-purple-600';
-        $btnClass = 'from-purple-600 to-pink-600 hover:from-purple-700 hover:to-pink-700 shadow-purple-500/30';
-        $packageLabel = 'ENTERPRISE PACKAGE';
-        $progressClass = 'bg-purple-500';
-    } elseif ($isFree) {
-        $accent = 'from-blue-500 via-indigo-500 to-violet-500';
-        $badgeClass = 'border-blue-200 bg-blue-100 text-blue-700';
-        $priceClass = 'text-emerald-600';
-        $iconBg = 'border-blue-100 bg-blue-50 text-blue-600';
-        $btnClass = 'from-blue-600 to-cyan-600 hover:from-blue-700 hover:to-cyan-700 shadow-blue-500/30';
-        $packageLabel = 'FREE PACKAGE';
-        $progressClass = 'bg-blue-500';
-    } else {
-        $accent = 'from-amber-400 via-yellow-500 to-orange-500';
-        $badgeClass = 'border-amber-200 bg-amber-100 text-amber-700';
-        $priceClass = 'text-blue-600';
-        $iconBg = 'border-amber-100 bg-amber-50 text-amber-600';
-        $btnClass = 'from-amber-500 to-orange-500 hover:from-amber-600 hover:to-orange-600 shadow-amber-500/30';
-        $packageLabel = 'PRO PACKAGE';
-        $progressClass = 'bg-amber-500';
-    }
+<div>
+    @php
+        $isFree = (float) $package->price <= 0;
+        $isEnterprise = strtolower($package->code) === 'enterprise';
+        
+        if ($isEnterprise) {
+            $accent = 'from-purple-500 via-fuchsia-500 to-pink-500';
+            $badgeClass = 'border-purple-200 bg-purple-100 text-purple-700';
+            $priceClass = 'text-purple-600';
+            $iconBg = 'border-purple-100 bg-purple-50 text-purple-600';
+            $btnClass = 'from-purple-600 to-pink-600 hover:from-purple-700 hover:to-pink-700 shadow-purple-500/30';
+            $packageLabel = 'ENTERPRISE PACKAGE';
+            $progressClass = 'bg-purple-500';
+        } elseif ($isFree) {
+            $accent = 'from-blue-500 via-indigo-500 to-violet-500';
+            $badgeClass = 'border-blue-200 bg-blue-100 text-blue-700';
+            $priceClass = 'text-emerald-600';
+            $iconBg = 'border-blue-100 bg-blue-50 text-blue-600';
+            $btnClass = 'from-blue-600 to-cyan-600 hover:from-blue-700 hover:to-cyan-700 shadow-blue-500/30';
+            $packageLabel = 'FREE PACKAGE';
+            $progressClass = 'bg-blue-500';
+        } else {
+            $accent = 'from-amber-400 via-yellow-500 to-orange-500';
+            $badgeClass = 'border-amber-200 bg-amber-100 text-amber-700';
+            $priceClass = 'text-blue-600';
+            $iconBg = 'border-amber-100 bg-amber-50 text-amber-600';
+            $btnClass = 'from-amber-500 to-orange-500 hover:from-amber-600 hover:to-orange-600 shadow-amber-500/30';
+            $packageLabel = 'PRO PACKAGE';
+            $progressClass = 'bg-amber-500';
+        }
 
-    $priceLabel = $isFree ? '0đ' : number_format($package->price, 0, ',', '.') . 'đ';
-    $durationLabel = $package->duration_days > 0 ? $package->duration_days . ' ngày' : 'Vĩnh viễn';
-    
-    // Fallback if features is missing
-    $features = is_array($package->features) ? $package->features : [
-        'Điểm danh bằng QR Code / Link',
-        'Quản lý chuyên cần & cảnh báo',
-    ];
-@endphp
+        $priceLabel = $isFree ? '0đ' : number_format($package->price, 0, ',', '.') . 'đ';
+        $durationLabel = $package->duration_days > 0 ? ($package->duration_days >= 365 ? round($package->duration_days / 365) . ' năm' : round($package->duration_days / 30) . ' tháng') : 'Vĩnh viễn';
+        
+        $features = is_array($package->features) ? $package->features : [
+            'Điểm danh bằng QR Code / Link',
+            'Quản lý chuyên cần & cảnh báo',
+        ];
+    @endphp
 
-<x-admin-layout title="Chi tiết gói dịch vụ">
     <div class="mx-auto max-w-[1200px] space-y-6">
-
 
         <div class="admin-card overflow-hidden rounded-3xl border {{ !$package->is_active ? 'opacity-80' : '' }}">
             <div class="h-2 w-full bg-gradient-to-r {{ $accent }}"></div>
@@ -143,6 +141,54 @@
                         </ul>
                     </div>
                 </div>
+
+                <div class="admin-card overflow-hidden rounded-2xl border">
+                    <div class="border-b border-slate-200 bg-slate-50/50 px-6 py-5">
+                        <h3 class="text-lg font-bold text-slate-900">Danh sách người đăng ký gần đây</h3>
+                    </div>
+                    <div class="overflow-x-auto">
+                        <table class="w-full text-left text-sm text-slate-600">
+                            <thead class="border-b border-slate-200 bg-slate-50/50 text-[11px] font-bold uppercase tracking-wider text-slate-500">
+                                <tr>
+                                    <th class="px-6 py-4">Tài khoản</th>
+                                    <th class="px-6 py-4">Trạng thái</th>
+                                    <th class="px-6 py-4">Ngày đăng ký</th>
+                                    <th class="px-6 py-4 text-right">Thao tác</th>
+                                </tr>
+                            </thead>
+                            <tbody class="divide-y divide-slate-100">
+                                @forelse($subscriptions as $sub)
+                                    <tr class="transition-colors hover:bg-slate-50/80">
+                                        <td class="px-6 py-4 font-bold text-slate-900">{{ $sub->user->name ?? 'N/A' }}</td>
+                                        <td class="px-6 py-4">
+                                            @if($sub->status === 'active')
+                                                <span class="inline-flex items-center rounded-lg border border-emerald-100 bg-emerald-50 px-2 py-1 text-[11px] font-bold text-emerald-600">Active</span>
+                                            @else
+                                                <span class="inline-flex items-center rounded-lg border border-slate-200 bg-slate-100 px-2 py-1 text-[11px] font-bold text-slate-500">{{ ucfirst($sub->status) }}</span>
+                                            @endif
+                                        </td>
+                                        <td class="px-6 py-4">{{ $sub->start_date?->format('d/m/Y') }}</td>
+                                        <td class="px-6 py-4 text-right">
+                                            @if($sub->user)
+                                                <a href="{{ route('admin.users.show', $sub->user) }}" class="text-blue-600 hover:underline">Chi tiết</a>
+                                            @endif
+                                        </td>
+                                    </tr>
+                                @empty
+                                    <tr>
+                                        <td colspan="4" class="px-6 py-8 text-center font-medium text-slate-500">Chưa có ai đăng ký gói này.</td>
+                                    </tr>
+                                @endforelse
+                            </tbody>
+                        </table>
+                    </div>
+                    @if($subscriptions->hasPages())
+                        <div class="border-t border-slate-100 p-4">
+                            {{ $subscriptions->links('vendor.livewire.tailwind') }}
+                        </div>
+                    @endif
+                </div>
+
             </div>
 
             <div class="space-y-6">
@@ -157,11 +203,6 @@
                         </div>
                         <div class="mb-6 h-2 w-full rounded-full bg-slate-100">
                             <div class="{{ $progressClass }} h-2 rounded-full" style="width: {{ min(100, max(12, ($package->subscriptions_count ?? 0) * 12)) }}%"></div>
-                        </div>
-
-                        <div class="border-t border-slate-100 pt-6 text-center">
-                            <p class="mb-3 text-sm text-slate-500">Gói này đang được dùng trong hệ thống hiện tại.</p>
-                            <a href="{{ route('admin.users.index') }}" class="text-sm font-semibold text-blue-600 transition-colors hover:text-blue-800">Xem danh sách khách hàng &rarr;</a>
                         </div>
                     </div>
                 </div>
@@ -181,4 +222,4 @@
             </div>
         </div>
     </div>
-</x-admin-layout>
+</div>
