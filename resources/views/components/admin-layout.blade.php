@@ -202,10 +202,6 @@
                             <span class="absolute right-2 top-2 h-2 w-2 rounded-full bg-rose-500 border-2 border-white"></span>
                         </button>
 
-                        <a href="{{ route('admin.settings.index') }}" class="admin-soft-button flex h-10 w-10 items-center justify-center rounded-xl border border-transparent bg-transparent text-slate-500 transition hover:bg-slate-50">
-                            <x-user.icon name="settings" :size="20" />
-                        </a>
-
                         <div class="relative ml-2">
                             <button type="button" class="flex items-center gap-3 transition" @click="userMenuOpen = ! userMenuOpen">
                                 <div class="hidden text-right sm:block">

@@ -17,73 +17,87 @@
     $adminActions = [
         ['label' => 'Tạo lớp học', 'icon' => 'plus-circle', 'color' => 'text-primary', 'href' => route('create-class')],
         ['label' => 'Tạo buổi DD', 'icon' => 'calendar-plus', 'color' => 'text-primary', 'href' => route('lecturer.attendance.create')],
-        ['label' => 'Điểm danh QR', 'icon' => 'qr-code', 'color' => 'text-tertiary', 'href' => route('lecturer.attendance.qr.create')],
-        ['label' => 'Điểm danh thủ công', 'icon' => 'edit', 'color' => 'text-secondary', 'href' => route('lecturer.attendance.manual.create')],
         ['label' => 'Đơn xin nghỉ', 'icon' => 'file-text', 'color' => 'text-error', 'href' => route('lecturer.leave-requests.index')],
         ['label' => 'Quản lý SV', 'icon' => 'users', 'color' => 'text-tertiary', 'href' => route('lecturer.students.index')],
         ['label' => 'Thống kê', 'icon' => 'check-circle', 'color' => 'text-secondary', 'href' => '#'],
         ['label' => 'Xuất báo cáo', 'icon' => 'upload', 'color' => 'text-tertiary', 'href' => '#'],
     ];
 
-    $alerts = collect($overview['attendance_warning_students'] ?? []) // Lấy danh sách học viên gần/vượt ngưỡng nghỉ không phép từ DashboardStatisticService.
-        ->map(function (array $student): array {
-            $isExceeded = ($student['status'] ?? null) === 'exceeded'; // exceeded = đã nghỉ không phép từ 20% số tiết đã học trở lên.
-            $absencePercent = $student['unexcused_absence_percent'] ?? 0; // Phần trăm nghỉ không phép của học viên.
+    $alerts = collect();
 
-            return [
-                'title' => $isExceeded
-                    ? "{$student['full_name']} đã nghỉ {$absencePercent}%"
-                    : "{$student['full_name']} sắp vượt ngưỡng nghỉ",
-                'meta' => "{$student['student_code']} - {$student['class_name']} - Vắng {$student['unexcused_absent_lessons']}/{$student['studied_lessons']} tiết không phép",
-                'icon' => $isExceeded ? 'alert-triangle' : 'user-check',
-                'color' => $isExceeded ? 'text-error' : 'text-secondary',
-                'bg' => $isExceeded ? 'bg-error/10' : 'bg-secondary/10',
-                'border' => $isExceeded ? 'border-error/20' : 'border-secondary/30',
-                'button' => $isExceeded ? 'bg-error text-white' : 'border border-secondary text-secondary',
-                'action' => $isExceeded ? 'Xử lý' : 'Theo dõi',
-                'href' => route('lecturer.students.show', $student['id']),
-            ];
-        })
-        ->when($unclosedAttendanceSessions > 0, function ($items) use ($unclosedAttendanceSessions) {
-            return $items->push([
-                'title' => "{$unclosedAttendanceSessions} buổi điểm danh chưa chốt sổ",
-                'meta' => 'Cần chốt sổ để dữ liệu chuyên cần được tính chính xác.',
-                'icon' => 'clock',
-                'color' => 'text-secondary',
-                'bg' => 'bg-secondary/10',
-                'border' => 'border-secondary/30',
-                'button' => 'border border-secondary text-secondary',
-                'action' => 'Xử lý',
-                'href' => route('lecturer.attendance.index'),
-            ]);
-        })
-        ->when($pendingLeaveRequestsCount > 0, function ($items) use ($pendingLeaveRequestsCount) {
-            return $items->push([
-                'title' => "{$pendingLeaveRequestsCount} đơn nghỉ đang chờ duyệt",
-                'meta' => 'Kiểm tra đơn để cập nhật trạng thái vắng có phép cho học viên.',
-                'icon' => 'file-text',
-                'color' => 'text-primary',
-                'bg' => 'bg-primary/10',
-                'border' => 'border-primary/20',
-                'button' => 'bg-primary text-white',
-                'action' => 'Duyệt đơn',
-                'href' => route('lecturer.leave-requests.index'),
-            ]);
-        })
-        ->whenEmpty(fn ($items) => $items->push([
-            'title' => 'Không có cảnh báo cần xử lý',
-            'meta' => 'Chuyên cần, buổi điểm danh và đơn nghỉ hiện đang ổn định.',
-            'icon' => 'check-circle',
-            'color' => 'text-tertiary',
-            'bg' => 'bg-tertiary/10',
+    // 1. Cảnh báo chuyên cần — dùng AttendanceCalculator, so ngưỡng trên tổng tiết kế hoạch.
+    foreach (($overview['attendance_warning_students'] ?? []) as $student) {
+        $isExceeded   = ($student['status'] ?? null) === 'exceeded';
+        $absenceRatio = $student['absence_ratio_percent'] ?? 0;
+        $present      = $student['present_of_planned'] ?? 0;
+        $planned      = $student['planned_lessons'] ?? 0;
+
+        $alerts->push([
+            'title'  => $isExceeded
+                ? "{$student['full_name']} vắng {$absenceRatio}% tổng tiết"
+                : "{$student['full_name']} sắp vượt ngưỡng nghỉ",
+            'meta'   => "{$student['student_code']} - {$student['class_name']} · Có mặt {$present}/{$planned} tiết",
+            'icon'   => $isExceeded ? 'alert-triangle' : 'alert-circle',
+            'color'  => $isExceeded ? 'text-error' : 'text-secondary',
+            'bg'     => $isExceeded ? 'bg-error/10' : 'bg-secondary/10',
+            'border' => $isExceeded ? 'border-error/20' : 'border-secondary/30',
+            'button' => $isExceeded ? 'bg-error text-white' : 'border border-secondary text-secondary',
+            'action' => 'Xử lý',
+            'href'   => route('lecturer.students.show', $student['id']),
+        ]);
+    }
+
+    // 2. Buổi điểm danh chưa chốt — từng buổi riêng.
+    foreach (($overview['unclosed_sessions_list'] ?? []) as $session) {
+        $dateLabel = $session['date'] ? \Carbon\Carbon::parse($session['date'])->format('d/m/Y') : '';
+        $alerts->push([
+            'title'  => "Chưa chốt sổ: {$session['name']}",
+            'meta'   => "{$session['class_name']} · {$dateLabel}",
+            'icon'   => 'clock',
+            'color'  => 'text-secondary',
+            'bg'     => 'bg-secondary/10',
+            'border' => 'border-secondary/30',
+            'button' => 'border border-secondary text-secondary',
+            'action' => 'Chốt sổ',
+            'href'   => ($session['is_qr'] ?? false)
+                ? route('lecturer.attendance.qr.session', $session['id'])
+                : route('lecturer.attendance.manual.session', $session['id']),
+        ]);
+    }
+
+    // 3. Đơn xin nghỉ đang chờ duyệt — từng đơn riêng.
+    foreach (($overview['pending_leave_requests_list'] ?? []) as $req) {
+        $sessionLabel = $req['session_date']
+            ? \Carbon\Carbon::parse($req['session_date'])->format('d/m/Y')
+            : ($req['session_name'] ?? '');
+        $alerts->push([
+            'title'  => "Đơn xin nghỉ: {$req['full_name']}",
+            'meta'   => "{$req['student_code']} - {$req['class_name']}" . ($sessionLabel ? " · {$sessionLabel}" : ''),
+            'icon'   => 'file-text',
+            'color'  => 'text-primary',
+            'bg'     => 'bg-primary/10',
+            'border' => 'border-primary/20',
+            'button' => 'bg-primary text-white',
+            'action' => 'Duyệt',
+            'href'   => route('lecturer.leave-requests.show', $req['id']),
+        ]);
+    }
+
+    if ($alerts->isEmpty()) {
+        $alerts->push([
+            'title'  => 'Không có cảnh báo cần xử lý',
+            'meta'   => 'Chuyên cần, buổi điểm danh và đơn nghỉ hiện đang ổn định.',
+            'icon'   => 'check-circle',
+            'color'  => 'text-tertiary',
+            'bg'     => 'bg-tertiary/10',
             'border' => 'border-tertiary/20',
-            'button' => 'border border-tertiary text-tertiary',
-            'action' => 'Ổn định',
-            'href' => null,
-        ]))
-        ->take(5)
-        ->values()
-        ->all();
+            'button' => null,
+            'action' => null,
+            'href'   => null,
+        ]);
+    }
+
+    $alerts = $alerts->take(6)->values()->all();
 
     $activities = $overview['recent_activities'] ?? [
         ['text' => 'Chưa có hoạt động gần đây', 'time' => 'Khi có điểm danh hoặc đơn nghỉ mới, hệ thống sẽ hiển thị tại đây.', 'icon' => 'activity', 'bg' => 'bg-primary'],
@@ -99,12 +113,12 @@
     $studentLatestAttendanceLabel = $studentDashboardStats['latest_attendance_label'] ?? 'Chưa có';
 
     $studentStats = [
-        ['label' => 'Lớp đang tham gia', 'value' => $studentJoinedClassesCount, 'icon' => 'users', 'color' => 'text-tertiary', 'bg' => 'bg-tertiary/10'],
-        ['label' => 'Chuyên cần trung bình', 'value' => "{$studentAverageAttendance}%", 'icon' => 'check-circle', 'color' => 'text-primary', 'bg' => 'bg-primary/10'],
-        ['label' => 'Tổng tiết vắng', 'value' => $studentAbsentLessons, 'icon' => 'clock', 'color' => 'text-error', 'bg' => 'bg-error/10'],
-        ['label' => 'Cảnh báo chuyên cần', 'value' => $studentWarningCount, 'icon' => 'alert-triangle', 'color' => 'text-error', 'bg' => 'bg-error/10'],
-        ['label' => 'Đơn nghỉ đang chờ', 'value' => $studentPendingLeaveRequests, 'icon' => 'file-text', 'color' => 'text-secondary', 'bg' => 'bg-secondary/10'],
-        ['label' => 'Buổi điểm danh gần nhất', 'value' => $studentLatestAttendanceLabel, 'icon' => 'calendar-check', 'color' => 'text-primary', 'bg' => 'bg-primary/10'],
+        ['label' => 'Lớp tham gia', 'value' => $studentJoinedClassesCount, 'icon' => 'users', 'color' => 'text-tertiary', 'bg' => 'bg-tertiary/10'],
+        ['label' => 'CC trung bình', 'value' => "{$studentAverageAttendance}%", 'icon' => 'check-circle', 'color' => 'text-primary', 'bg' => 'bg-primary/10'],
+        ['label' => 'Tiết vắng', 'value' => $studentAbsentLessons, 'icon' => 'clock', 'color' => 'text-error', 'bg' => 'bg-error/10'],
+        ['label' => 'Cảnh báo', 'value' => $studentWarningCount, 'icon' => 'alert-triangle', 'color' => 'text-error', 'bg' => 'bg-error/10'],
+        ['label' => 'Đơn chờ duyệt', 'value' => $studentPendingLeaveRequests, 'icon' => 'file-text', 'color' => 'text-secondary', 'bg' => 'bg-secondary/10'],
+        ['label' => 'Buổi gần nhất', 'value' => $studentLatestAttendanceLabel, 'icon' => 'calendar-check', 'color' => 'text-primary', 'bg' => 'bg-primary/10'],
     ];
 
     $studentActions = [
@@ -244,7 +258,7 @@
 
                 <div>
                     <h4 class="mb-4 text-[16px] font-bold text-on-surface">Thao tác nhanh</h4>
-                    <div class="grid grid-cols-2 gap-3 md:grid-cols-4 lg:grid-cols-4 xl:grid-cols-8">
+                    <div class="grid grid-cols-2 gap-3 md:grid-cols-3 lg:grid-cols-6">
                         @foreach ($adminActions as $action)
                             <a href="{{ $action['href'] }}" class="group flex flex-col items-center justify-center rounded-2xl p-3 transition-all hover:bg-surface-container-lowest hover:shadow-sm">
                                 <div class="mb-3 flex h-12 w-12 items-center justify-center rounded-full bg-white text-on-surface-variant shadow-sm ring-1 ring-outline-variant/20 group-hover:text-primary transition-all group-hover:scale-105">
@@ -336,10 +350,8 @@
                                         <p class="text-sm font-bold text-on-surface">{{ $alert['title'] }}</p>
                                         <p class="mt-1 text-xs text-on-surface-variant">{{ $alert['meta'] }}</p>
                                     </div>
-                                    @if (! empty($alert['href']))
-                                        <a href="{{ $alert['href'] }}" class="{{ $alert['button'] }} rounded-lg px-3 py-1.5 text-xs font-bold">{{ $alert['action'] }}</a>
-                                    @else
-                                        <button type="button" class="{{ $alert['button'] }} rounded-lg px-3 py-1.5 text-xs font-bold">{{ $alert['action'] }}</button>
+                                    @if (! empty($alert['href']) && ! empty($alert['button']))
+                                        <a href="{{ $alert['href'] }}" wire:navigate class="{{ $alert['button'] }} shrink-0 rounded-lg px-3 py-1.5 text-xs font-bold">{{ $alert['action'] }}</a>
                                     @endif
                                 </div>
                             @endforeach
@@ -380,15 +392,15 @@
                     <p class="mt-1 text-body-md text-on-surface-variant">Theo dõi lớp đã tham gia, lịch sử điểm danh cá nhân, chuyên cần và đơn xin nghỉ.</p>
                 </div>
 
-                <div class="grid grid-cols-1 gap-4 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-6">
+                <div class="grid grid-cols-2 gap-3 md:grid-cols-3 lg:grid-cols-6">
                     @foreach ($studentStats as $stat)
-                        <div class="flex items-center gap-4 rounded-2xl bg-white p-4 shadow-sm ring-1 ring-outline-variant/10 transition-shadow hover:shadow-md">
-                            <div class="{{ $stat['bg'] }} {{ $stat['color'] }} flex h-12 w-12 shrink-0 items-center justify-center rounded-full">
-                                <x-user.icon :name="$stat['icon']" :size="24" />
+                        <div class="flex items-center gap-3 rounded-2xl bg-white p-3 shadow-sm ring-1 ring-outline-variant/10 transition-shadow hover:shadow-md overflow-hidden">
+                            <div class="{{ $stat['bg'] }} {{ $stat['color'] }} flex h-10 w-10 shrink-0 items-center justify-center rounded-full">
+                                <x-user.icon :name="$stat['icon']" :size="20" />
                             </div>
-                            <div>
-                                <p class="text-xs font-semibold text-on-surface-variant">{{ $stat['label'] }}</p>
-                                <h3 class="text-2xl font-bold text-on-surface leading-tight">{{ $stat['value'] }}</h3>
+                            <div class="min-w-0 flex-1">
+                                <p class="truncate text-[11px] font-semibold uppercase tracking-wide text-on-surface-variant">{{ $stat['label'] }}</p>
+                                <h3 class="truncate text-xl font-bold text-on-surface leading-tight">{{ $stat['value'] }}</h3>
                             </div>
                         </div>
                     @endforeach

@@ -62,7 +62,12 @@
     <div class="flex flex-col gap-5 lg:flex-row lg:items-end lg:justify-between">
         <div>
             <div class="flex flex-wrap items-center gap-3">
-                <h1 class="text-[30px] font-black leading-tight tracking-tight text-slate-900" title="{{ $session->name }}">{{ Str::limit($session->name, 40) }}</h1>
+                <h1 class="text-[30px] font-black leading-tight tracking-tight text-slate-900" title="{{ $session->name }}">
+                    {{ Str::limit($session->name, 40) }}
+                    @if($startLesson && $endLesson)
+                        <span class="text-2xl font-bold text-slate-500 ml-1">(Tiết {{ $startLesson }} - Tiết {{ $endLesson }})</span>
+                    @endif
+                </h1>
                 <span @class([
                     'inline-flex items-center gap-2 rounded-full border px-3 py-1 text-[11px] font-extrabold uppercase tracking-wider',
                     'border-slate-200 bg-slate-100 text-slate-600' => $isClosed,

@@ -53,7 +53,7 @@
                 </div>
             </section>
 
-            <section class="admin-card admin-card-hover overflow-hidden rounded-2xl border">
+            <section class="admin-card admin-card-hover overflow-visible rounded-2xl border">
                 <form wire:submit="save">
                     
                     <div class="border-b border-slate-100 p-6 flex justify-between items-center">
@@ -101,18 +101,24 @@
                         <div class="space-y-5">
                             <div>
                                 <label class="mb-2 block text-[10px] font-bold uppercase tracking-widest text-slate-400">Vai trò</label>
-                                <select disabled class="w-full rounded-xl border border-slate-200 bg-slate-50 px-4 py-3 text-sm font-bold text-slate-500 cursor-not-allowed">
-                                    <option value="1" {{ $user->is_admin ? 'selected' : '' }}>Admin</option>
-                                    <option value="0" {{ ! $user->is_admin ? 'selected' : '' }}>Người dùng</option>
-                                </select>
+                                @php
+                                $roleOptions = [
+                                    ['value' => '0', 'label' => 'Người dùng', 'sub_label' => 'Giảng viên & Học viên'],
+                                    ['value' => '1', 'label' => 'Admin', 'sub_label' => 'Quản trị viên hệ thống'],
+                                ];
+                                @endphp
+                                <x-custom-select disabled wire:model="is_admin" :options="$roleOptions" placeholder="Chọn vai trò" />
                             </div>
 
                             <div>
                                 <label class="mb-2 block text-[10px] font-bold uppercase tracking-widest text-slate-400">Trạng thái</label>
-                                <select wire:model="status" class="w-full rounded-xl border border-slate-200 bg-white px-4 py-3 text-sm font-bold text-slate-900 focus:border-blue-500 focus:ring-2 focus:ring-blue-500">
-                                    <option value="active">Đang hoạt động</option>
-                                    <option value="blocked">Đã khóa</option>
-                                </select>
+                                @php
+                                $statusOptions = [
+                                    ['value' => 'active', 'label' => 'Đang hoạt động', 'sub_label' => 'Tài khoản bình thường'],
+                                    ['value' => 'blocked', 'label' => 'Đã khóa', 'sub_label' => 'Tài khoản bị vô hiệu hóa'],
+                                ];
+                                @endphp
+                                <x-custom-select wire:model="status" :options="$statusOptions" placeholder="Chọn trạng thái" />
                                 @error('status')<p class="mt-1 text-xs text-red-500">{{ $message }}</p>@enderror
                             </div>
                         </div>

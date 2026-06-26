@@ -52,7 +52,8 @@
         @forelse ($classes as $class)
             @php
                 $isEnded = $class['ended'];
-                $isWarning = $class['warning'];
+                $isWarning = $class['warning']; // Chuyên cần 80–84%: sắp đến ngưỡng cấm thi.
+                $isBanned  = $class['banned'];  // Chuyên cần < 80% hoặc vắng > 20%: nguy cơ cấm thi.
                 if ($isEnded) {
                     $isPrimary = false;
                     $isTertiary = false;
@@ -60,9 +61,24 @@
                     $isPrimary = $loop->iteration % 3 === 1;
                     $isTertiary = $loop->iteration % 3 === 2;
                 }
-                
-                $attendanceColor = $isWarning ? 'text-error' : ($isEnded ? 'text-on-surface-variant' : ($isTertiary ? 'text-tertiary' : 'text-primary'));
-                $barColor = $isWarning ? 'bg-error' : ($isEnded ? 'bg-outline-variant' : ($isTertiary ? 'bg-tertiary' : 'bg-primary'));
+
+                // Màu text và bar theo trạng thái chuyên cần.
+                if ($isBanned) {
+                    $attendanceColor = 'text-red-600';
+                    $barColor        = 'bg-red-500';
+                } elseif ($isWarning) {
+                    $attendanceColor = 'text-amber-600';
+                    $barColor        = 'bg-amber-400';
+                } elseif ($isEnded) {
+                    $attendanceColor = 'text-on-surface-variant';
+                    $barColor        = 'bg-outline-variant';
+                } elseif ($isTertiary) {
+                    $attendanceColor = 'text-tertiary';
+                    $barColor        = 'bg-tertiary';
+                } else {
+                    $attendanceColor = 'text-primary';
+                    $barColor        = 'bg-primary';
+                }
             @endphp
 
             <article @class([
@@ -164,6 +180,11 @@
                             <div class="h-1.5 w-full overflow-hidden rounded-full bg-surface-container-highest">
                                 <div class="{{ $barColor }} h-full rounded-full transition-all duration-1000" style="width: {{ $class['attendance'] }}%"></div>
                             </div>
+                            @if ($isBanned)
+                                <span class="mt-1 inline-block text-[9px] font-bold uppercase tracking-wide text-red-500">Nguy cơ cấm thi</span>
+                            @elseif ($isWarning)
+                                <span class="mt-1 inline-block text-[9px] font-bold uppercase tracking-wide text-amber-500">Cảnh báo</span>
+                            @endif
                         </div>
                     </div>
 

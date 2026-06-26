@@ -37,7 +37,7 @@
                 </nav>
             </div>
 
-            <div class="admin-card min-h-[500px] flex-1 overflow-hidden rounded-3xl border">
+            <div class="admin-card min-h-[500px] flex-1 overflow-visible rounded-3xl border">
                 <div x-cloak x-show="activeTab === 'payment'" class="space-y-8 p-6 md:p-8" x-transition.opacity>
                     <div>
                         <h2 class="mb-1 text-lg font-bold text-slate-900">Tích hợp cổng PayOS</h2>
@@ -54,10 +54,13 @@
                         <div class="space-y-5">
                             <div class="space-y-2">
                                 <label class="block text-sm font-semibold text-slate-700">Môi trường (Environment)</label>
-                                <select class="w-full rounded-xl border border-slate-200 bg-slate-50 px-4 py-2.5 text-slate-900 transition-colors focus:border-blue-500 focus:ring-2 focus:ring-blue-500 md:w-1/2">
-                                    <option value="sandbox">Sandbox (Thử nghiệm)</option>
-                                    <option value="production" selected>Production (Thực tế)</option>
-                                </select>
+                                @php
+                                $envOptions = [
+                                    ['value' => 'sandbox', 'label' => 'Sandbox (Thử nghiệm)', 'sub_label' => 'Dùng để test giao dịch'],
+                                    ['value' => 'production', 'label' => 'Production (Thực tế)', 'sub_label' => 'Giao dịch thật'],
+                                ];
+                                @endphp
+                                <x-custom-select :options="$envOptions" placeholder="Chọn môi trường" value="production" />
                             </div>
 
                             <div class="space-y-2">
@@ -108,11 +111,14 @@
                         <div class="grid grid-cols-1 gap-6 md:grid-cols-2">
                             <div class="space-y-2">
                                 <label class="block text-sm font-semibold text-slate-700">Mail Driver</label>
-                                <select class="w-full rounded-xl border border-slate-200 bg-slate-50 px-4 py-2.5 text-slate-900 transition-colors focus:border-blue-500 focus:ring-2 focus:ring-blue-500">
-                                    <option value="smtp" selected>SMTP</option>
-                                    <option value="mailgun">Mailgun</option>
-                                    <option value="ses">Amazon SES</option>
-                                </select>
+                                @php
+                                $mailDriverOptions = [
+                                    ['value' => 'smtp', 'label' => 'SMTP', 'sub_label' => 'Sử dụng máy chủ SMTP tiêu chuẩn'],
+                                    ['value' => 'mailgun', 'label' => 'Mailgun', 'sub_label' => 'Dịch vụ gửi email Mailgun'],
+                                    ['value' => 'ses', 'label' => 'Amazon SES', 'sub_label' => 'Dịch vụ gửi email của AWS'],
+                                ];
+                                @endphp
+                                <x-custom-select :options="$mailDriverOptions" placeholder="Chọn Mail Driver" value="smtp" />
                             </div>
                             <div class="space-y-2">
                                 <label class="block text-sm font-semibold text-slate-700">Mail Host</label>
@@ -124,10 +130,13 @@
                             </div>
                             <div class="space-y-2">
                                 <label class="block text-sm font-semibold text-slate-700">Mã hóa (Encryption)</label>
-                                <select class="w-full rounded-xl border border-slate-200 bg-slate-50 px-4 py-2.5 text-slate-900 transition-colors focus:border-blue-500 focus:ring-2 focus:ring-blue-500">
-                                    <option value="tls">TLS</option>
-                                    <option value="ssl" selected>SSL</option>
-                                </select>
+                                @php
+                                $encryptionOptions = [
+                                    ['value' => 'tls', 'label' => 'TLS', 'sub_label' => 'Bảo mật truyền tải (Transport Layer Security)'],
+                                    ['value' => 'ssl', 'label' => 'SSL', 'sub_label' => 'Lớp cổng bảo mật (Secure Sockets Layer)'],
+                                ];
+                                @endphp
+                                <x-custom-select :options="$encryptionOptions" placeholder="Chọn Mã hóa" value="ssl" />
                             </div>
                             <div class="space-y-2 md:col-span-2">
                                 <label class="block text-sm font-semibold text-slate-700">Tên người gửi (From Name)</label>

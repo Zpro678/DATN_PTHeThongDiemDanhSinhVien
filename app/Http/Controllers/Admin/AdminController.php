@@ -165,11 +165,6 @@ class AdminController extends Controller
                 ->whereMonth('created_at', $month->month)
                 ->sum('amount');
             
-            // Nếu chưa có giao dịch thật, tạo dữ liệu ảo để demo biểu đồ đẹp
-            if ($amount == 0 && app()->isLocal()) {
-                $amount = rand(500000, 5000000);
-            }
-                
             $monthlyRevenue[] = [
                 'month' => $month->format('m/Y'),
                 'amount' => $amount

@@ -3,6 +3,8 @@
 namespace App\Livewire\User;
 
 use App\Models\CourseClass;
+use App\Services\AttendanceCalculator;
+use App\Services\LectureManageStudentService;
 use Illuminate\Contracts\View\View;
 use Livewire\Component;
 
@@ -29,7 +31,7 @@ class JoinedClasses extends Component
             $q->where('user_id', auth()->id())->where('status', 'active');
         })
             ->with(['owner:id,name', 'members' => function ($q) {
-                $q->where('user_id', auth()->id())->where('status', 'active')->with('attendanceSummary');
+                $q->where('user_id', auth()->id())->where('status', 'active');
             }]);
 
         if ($this->statusFilter === 'Đang học') {
@@ -49,19 +51,29 @@ class JoinedClasses extends Component
 
         $courseClasses = $query->orderByDesc('created_at')->get();
 
-        $classes = $courseClasses->map(function ($class) {
+        // Lấy tất cả member ID rồi query 1 lần (cùng nguồn với trang giảng viên).
+        $memberIds = $courseClasses->map(fn ($c) => $c->members->first()?->id)->filter()->values()->all();
+        $statsMap  = $memberIds
+            ? app(LectureManageStudentService::class)->getStudentsAttendanceStats($memberIds)
+            : [];
+
+        $classes = $courseClasses->map(function ($class) use ($statsMap) {
             $member = $class->members->first();
-            $summary = $member?->attendanceSummary;
+            // $stats từ LectureManageStudentService — live query, tính theo TIẾT, chỉ buổi đã chốt.
+            $stats   = $statsMap[$member?->id] ?? null;
 
-            $present = $summary?->total_present ?? 0;
-            $absent = $summary?->total_absent ?? 0;
-            $late = $summary?->total_late ?? 0;
+            // Số TIẾT (lesson_count-weighted), chỉ buổi đã chốt — đồng nhất với trang giảng viên.
+            $present = (int) ($stats['present_lessons'] ?? 0); // Tiết có mặt đúng giờ.
+            $late    = (int) ($stats['late_lessons']    ?? 0); // Tiết đi muộn.
+            $absent  = (int) ($stats['absent_lessons']  ?? 0); // Tiết vắng không phép.
+            $excused = (int) ($stats['excused_lessons'] ?? 0); // Tiết vắng có phép.
 
-            // Calc attendance percent
-            $totalRecorded = $present + $absent + $late;
-            $attendance = $totalRecorded > 0 ? round((($present + $late) / $totalRecorded) * 100) : 100;
+            // % chuyên cần đã được tính sẵn qua AttendanceCalculator::percentOfPlanned trong service.
+            $attendance = (int) ($stats['attendance_percent'] ?? 100);
 
-            $isWarning = $attendance < 80;
+            // Cấm thi / cảnh báo từ service (tính theo ngưỡng 80%/20% tổng tiết kế hoạch).
+            $isBanned  = (bool) ($stats['is_banned']  ?? false);
+            $isWarning = (bool) ($stats['is_warning'] ?? false);
 
             // Handle warning filter
             if ($this->statusFilter === 'Cảnh báo chuyên cần' && ! $isWarning) {
@@ -79,7 +91,9 @@ class JoinedClasses extends Component
                 'present' => $present,
                 'absent' => $absent,
                 'late' => $late,
+                'excused' => $excused,
                 'warning' => $isWarning,
+                'banned' => $isBanned,
                 'ended' => $class->status === 'ended',
             ];
         })->filter()->values()->toArray();

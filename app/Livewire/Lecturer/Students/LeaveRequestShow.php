@@ -8,9 +8,11 @@ use App\Services\LeaveRequestReviewService;
 use Illuminate\Contracts\View\View;
 use Illuminate\Database\Eloquent\Builder;
 use Livewire\Component;
+use Livewire\WithPagination;
 
 class LeaveRequestShow extends Component
 {
+    use WithPagination;
     public int $leaveRequestId;
 
     public bool $showRejectForm = false;
@@ -66,13 +68,13 @@ class LeaveRequestShow extends Component
             'reviewer',
         ]);
 
-        $recentRecords = $leaveRequest->classMember->attendanceRecords()
+        $approvedLeaveRequests = $leaveRequest->classMember->leaveRequests()
             ->with('classSession:id,name,date')
+            ->where('status', 'approved')
             ->orderByDesc('created_at')
-            ->limit(5)
-            ->get();
+            ->paginate(6);
 
-        return view('livewire.lecturer.students.leave-requests.show', compact('leaveRequest', 'recentRecords'))
+        return view('livewire.lecturer.students.leave-requests.show', compact('leaveRequest', 'approvedLeaveRequests'))
             ->layout('layouts.user', ['title' => 'Chi tiết đơn xin nghỉ']);
     }
 }

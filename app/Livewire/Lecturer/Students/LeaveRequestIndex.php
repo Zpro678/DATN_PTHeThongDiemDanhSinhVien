@@ -21,6 +21,8 @@ class LeaveRequestIndex extends Component
 
     public string $classFilter = 'all';
 
+    public int $perPage = 10;
+
     public ?int $rejectingRequestId = null;
 
     public string $rejectedReason = '';
@@ -37,6 +39,11 @@ class LeaveRequestIndex extends Component
     }
 
     public function updatedClassFilter(): void
+    {
+        $this->resetPage();
+    }
+
+    public function updatedPerPage(): void
     {
         $this->resetPage();
     }
@@ -124,7 +131,7 @@ class LeaveRequestIndex extends Component
                 });
             })
             ->orderByDesc('created_at')
-            ->paginate(10);
+            ->paginate($this->perPage);
 
         return view('livewire.lecturer.students.leave-requests.index', compact('classes', 'leaveRequests'))
             ->layout('layouts.user', ['title' => 'Đơn xin nghỉ']);

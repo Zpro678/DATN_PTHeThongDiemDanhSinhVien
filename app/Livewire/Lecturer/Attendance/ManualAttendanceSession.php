@@ -5,6 +5,7 @@ namespace App\Livewire\Lecturer\Attendance;
 use App\Exports\ClassSessionExport;
 use App\Livewire\Lecturer\Attendance\Concerns\OwnsAttendanceSessions;
 use App\Models\AttendanceRecord;
+use App\Models\ClassSession;
 use App\Services\NotificationService;
 use App\Services\SubscriptionService;
 use Illuminate\Contracts\View\View;
@@ -82,6 +83,7 @@ class ManualAttendanceSession extends Component
             ->where('class_session_id', $this->sessionId)
             ->where('status', 'pending')
             ->whereHas('classSession.courseClass', fn ($query) => $query->where('owner_user_id', auth()->id()))
+            ->whereHas('classMember')
             ->with('classMember:id,user_id')
             ->get()
             ->each(fn (AttendanceRecord $record) => $record->update([
@@ -91,6 +93,25 @@ class ManualAttendanceSession extends Component
             ]));
 
         session()->flash('success', 'Đã đánh dấu tất cả sinh viên chưa điểm danh là có mặt.');
+    }
+
+    public function validateBeforeClose(): void
+    {
+        $session = $this->ownedSession($this->sessionId);
+        
+        $firstPending = $session->attendanceRecords()
+            ->where('status', 'pending')
+            ->whereHas('classMember')
+            ->with('classMember')
+            ->first();
+
+        if ($firstPending) {
+            $studentName = $firstPending->classMember->full_name ?? 'không xác định';
+            session()->flash('error', "Bạn chưa chọn trạng thái điểm danh của học viên {$studentName}.");
+            $this->dispatch('scroll-to-pending');
+        } else {
+            $this->dispatch('open-close-modal');
+        }
     }
 
     public function closeSession(): void
@@ -122,6 +143,37 @@ class ManualAttendanceSession extends Component
         return redirect()->route('lecturer.classes.show', $classId);
     }
 
+    public function createDuplicateManualSession(): void
+    {
+        $oldSession = $this->ownedSession($this->sessionId)->load('courseClass');
+        $courseClass = $oldSession->courseClass;
+
+        $newSession = ClassSession::query()->create([
+            'class_id' => $courseClass->id,
+            'created_by' => auth()->id(),
+            'name' => $oldSession->name,
+            'date' => $oldSession->date,
+            'start_time' => $oldSession->start_time,
+            'end_time' => $oldSession->end_time,
+            'start_lesson' => $oldSession->start_lesson,
+            'end_lesson' => $oldSession->end_lesson,
+            'lesson_count' => $oldSession->lesson_count,
+            'status' => 'active',
+        ]);
+
+        $courseClass->members()->where('status', 'active')->get()->each(fn ($member) => AttendanceRecord::query()->firstOrCreate([
+            'class_session_id' => $newSession->id,
+            'class_member_id' => $member->id,
+        ], [
+            'status' => 'pending',
+            'is_verified' => $member->user_id !== null,
+        ]));
+
+        app(NotificationService::class)->attendanceSessionCreated((int) auth()->id(), $newSession, isQr: false);
+
+        $this->redirectRoute('lecturer.attendance.manual.session', ['ma_user' => auth()->id(), 'session' => $newSession->id], navigate: true);
+    }
+
     public function exportExcel()
     {
         // Kiểm tra gói: xuất Excel là tính năng từ gói Pro trở lên.
@@ -148,6 +200,7 @@ class ManualAttendanceSession extends Component
     {
         $session = $this->ownedSession($this->sessionId)->load('courseClass');
         $records = $session->attendanceRecords()
+            ->whereHas('classMember')
             ->with('classMember.user')
             ->when($this->statusFilter !== 'all', fn (Builder $query) => $query->where('status', $this->statusFilter))
             ->when($this->search !== '', function (Builder $query): void {
@@ -160,6 +213,7 @@ class ManualAttendanceSession extends Component
             ->get();
 
         $stats = $session->attendanceRecords()
+            ->whereHas('classMember')
             ->selectRaw('status, COUNT(*) as aggregate')
             ->groupBy('status')
             ->pluck('aggregate', 'status');
@@ -170,7 +224,7 @@ class ManualAttendanceSession extends Component
             'excused' => (int) ($stats['excused'] ?? 0),
             'absent' => (int) ($stats['absent'] ?? 0),
             'pending' => (int) ($stats['pending'] ?? 0),
-            'total' => $session->attendanceRecords()->count(),
+            'total' => $session->attendanceRecords()->whereHas('classMember')->count(),
         ];
 
         $summary['present_percent'] = $summary['total'] > 0

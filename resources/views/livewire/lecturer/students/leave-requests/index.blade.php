@@ -30,23 +30,68 @@
             @endforeach
         </nav>
 
-        <div class="grid gap-3 border-b border-slate-100 p-4 lg:grid-cols-[1fr_300px]">
+        <div class="grid gap-3 border-b border-slate-100 p-4 lg:grid-cols-[1fr_260px]">
             <label class="relative"><x-user.icon name="search" :size="18" class="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400" /><input wire:model.live.debounce.300ms="search" type="search" placeholder="Tìm học viên, mã học viên hoặc lý do..." class="w-full rounded-xl border-slate-200 py-2.5 pl-11 pr-4 text-sm focus:border-primary focus:ring-primary/20"></label>
-            <select wire:model.live="classFilter" class="rounded-xl border-slate-200 text-sm font-semibold text-slate-700 focus:border-primary focus:ring-primary/20"><option value="all">Tất cả lớp học</option>@foreach($classes as $class)<option value="{{ $class->id }}">{{ $class->code }} - {{ $class->name }}</option>@endforeach</select>
+            <div x-data="{ 
+                    open: false,
+                    options: [
+                        { value: 'all', label: 'Tất cả lớp học' },
+                        @foreach($classes as $class)
+                            { value: '{{ $class->id }}', label: '{{ $class->code }} - {{ $class->name }}' },
+                        @endforeach
+                    ],
+                    get selectedLabel() {
+                        let selected = this.options.find(opt => opt.value == $wire.classFilter);
+                        return selected ? selected.label : 'Tất cả lớp học';
+                    },
+                    select(value) {
+                        $wire.set('classFilter', value);
+                        this.open = false;
+                    }
+                }" 
+                class="relative min-w-[260px]">
+                <button @click="open = !open" type="button" class="flex w-full items-center justify-between rounded-xl border border-slate-200 bg-white px-4 py-2.5 text-sm font-semibold text-slate-700 shadow-sm transition-colors hover:border-slate-300 focus:border-primary focus:outline-none focus:ring-2 focus:ring-primary/20">
+                    <span x-text="selectedLabel" class="truncate">Tất cả lớp học</span>
+                    <x-user.icon name="chevron-down" :size="16" class="ml-2 shrink-0 text-slate-400 transition-transform duration-200" x-bind:class="open ? 'rotate-180' : ''" />
+                </button>
+                <div x-show="open" 
+                     @click.outside="open = false"
+                     x-transition:enter="transition ease-out duration-100"
+                     x-transition:enter-start="opacity-0 scale-95"
+                     x-transition:enter-end="opacity-100 scale-100"
+                     x-transition:leave="transition ease-in duration-75"
+                     x-transition:leave-start="opacity-100 scale-100"
+                     x-transition:leave-end="opacity-0 scale-95"
+                     class="absolute right-0 top-full z-[100] mt-1.5 max-h-64 w-[320px] overflow-y-auto rounded-xl border border-slate-100 bg-white p-1.5 shadow-xl sm:w-full"
+                     style="display: none;">
+                    
+                    <button @click="select('all')" type="button" class="flex w-full items-center rounded-lg px-3 py-2 text-left text-sm font-medium transition-colors hover:bg-slate-50 hover:text-primary" :class="$wire.classFilter === 'all' ? 'bg-primary/5 text-primary' : 'text-slate-600'">
+                        Tất cả lớp học
+                        <x-user.icon name="check" :size="14" class="ml-auto shrink-0" x-show="$wire.classFilter === 'all'" />
+                    </button>
+                    
+                    @foreach($classes as $class)
+                        <button @click="select('{{ $class->id }}')" type="button" class="flex w-full items-center rounded-lg px-3 py-2 text-left text-sm font-medium transition-colors hover:bg-slate-50 hover:text-primary" :class="$wire.classFilter == '{{ $class->id }}' ? 'bg-primary/5 text-primary' : 'text-slate-600'">
+                            <span class="truncate">{{ $class->code }} - {{ $class->name }}</span>
+                            <x-user.icon name="check" :size="14" class="ml-auto shrink-0" x-show="$wire.classFilter == '{{ $class->id }}'" />
+                        </button>
+                    @endforeach
+                </div>
+            </div>
         </div>
 
-        <div class="overflow-x-auto">
+        <div class="overflow-x-auto min-h-[260px]">
             <table class="w-full min-w-[1050px] text-left">
-                <thead class="bg-slate-50 text-xs font-bold uppercase tracking-wider text-slate-500"><tr><th class="px-6 py-4">Học viên</th><th class="px-4 py-4">Lớp học</th><th class="px-4 py-4">Buổi xin nghỉ</th><th class="px-4 py-4">Lý do</th><th class="px-4 py-4">Ngày gửi</th><th class="px-6 py-4 text-right">Thao tác</th></tr></thead>
+                <thead class="bg-slate-50 text-xs font-bold uppercase tracking-wider text-slate-500"><tr><th class="px-6 py-4">Học viên</th><th class="px-4 py-4">Lớp học</th><th class="px-4 py-4">Buổi xin nghỉ</th><th class="px-4 py-4">Lý do</th><th class="px-4 py-4">Trạng thái</th><th class="px-6 py-4 text-right whitespace-nowrap">Thao tác</th></tr></thead>
                 <tbody class="divide-y divide-slate-100">
                     @forelse ($leaveRequests as $request)
-                        <tr class="transition-colors hover:bg-slate-50/70">
+                        <tr class="transition-colors hover:bg-slate-50/70 cursor-pointer" onclick="if(!event.target.closest('a, button')) window.location.href='{{ route('lecturer.leave-requests.show', $request) }}'">
                             <td class="px-6 py-4"><div class="flex items-center gap-3"><span class="flex h-10 w-10 items-center justify-center rounded-full bg-primary/10 font-bold text-primary">{{ mb_strtoupper(mb_substr($request->classMember->full_name, 0, 1)) }}</span><span><a href="{{ route('lecturer.students.show', $request->classMember) }}" class="block text-sm font-bold text-slate-900 hover:text-primary">{{ $request->classMember->full_name }}</a><span class="text-xs text-slate-500">{{ $request->classMember->student_code }}</span></span></div></td>
                             <td class="px-4 py-4"><span class="block text-sm font-semibold text-slate-700">{{ $request->classMember->courseClass->name }}</span><span class="text-xs text-slate-500">{{ $request->classMember->courseClass->code }}</span></td>
-                            <td class="px-4 py-4"><span class="block text-sm font-semibold text-slate-700">{{ $request->classSession->name }}</span><span class="text-xs text-slate-500">{{ $request->classSession->date->format('d/m/Y') }}</span></td>
+                            <td class="px-4 py-4"><span class="block text-sm font-semibold text-slate-700">{{ $request->classSession->name }}</span><span class="block mt-0.5 text-xs text-slate-400">Ngày gửi: {{ $request->created_at?->format('d/m/Y H:i') }}</span></td>
                             <td class="max-w-[280px] px-4 py-4"><p class="truncate text-sm text-slate-600" title="{{ $request->reason }}">{{ $request->reason }}</p>@if(!empty($request->proof_image))<div class="mt-1 flex flex-wrap gap-3">@foreach($request->proof_image as $img)<a href="{{ asset('storage/'.$img) }}" target="_blank" class="inline-flex items-center gap-1 text-xs font-bold text-primary hover:underline"><x-user.icon name="image" :size="14" />Ảnh {{ $loop->iteration }}</a>@endforeach</div>@endif</td>
-                            <td class="px-4 py-4 text-sm text-slate-500">{{ $request->created_at?->format('d/m/Y H:i') }}</td>
-                            <td class="px-6 py-4"><div class="flex justify-end gap-2"><a href="{{ route('lecturer.leave-requests.show', $request) }}" class="rounded-lg p-2 text-slate-500 hover:bg-slate-100 hover:text-primary" title="Xem chi tiết"><x-user.icon name="eye" :size="18" /></a>@if($request->status === 'pending')<button type="button" wire:click="approve({{ $request->id }})" wire:confirm="Duyệt đơn xin nghỉ này?" class="rounded-lg bg-emerald-600 px-3 py-2 text-xs font-bold text-white hover:bg-emerald-700">Duyệt</button><button type="button" wire:click="openReject({{ $request->id }})" class="rounded-lg border border-red-200 px-3 py-2 text-xs font-bold text-red-600 hover:bg-red-50">Từ chối</button>@else<span @class(['rounded-full px-3 py-1.5 text-xs font-bold', 'bg-emerald-50 text-emerald-700' => $request->status === 'approved', 'bg-red-50 text-red-700' => $request->status === 'rejected'])>{{ $request->status === 'approved' ? 'Đã duyệt' : 'Đã từ chối' }}</span>@endif</div></td>
+                            <td class="px-4 py-4"><span @class(['inline-flex rounded-full px-3 py-1.5 text-xs font-bold whitespace-nowrap', 'bg-amber-50 text-amber-700' => $request->status === 'pending', 'bg-emerald-50 text-emerald-700' => $request->status === 'approved', 'bg-red-50 text-red-700' => $request->status === 'rejected'])>{{ $request->status === 'pending' ? 'Chờ duyệt' : ($request->status === 'approved' ? 'Đã duyệt' : 'Đã từ chối') }}</span></td>
+                            <td class="px-6 py-4"><div class="flex items-center justify-end gap-2"><div x-data="{ open: false }" class="relative" @click.outside="open = false"><button @click="open = !open" type="button" class="flex h-8 w-8 items-center justify-center rounded-lg text-slate-500 transition-colors hover:bg-slate-100 hover:text-slate-900"><x-user.icon name="more-vertical" :size="18" /></button><div x-show="open" style="display: none;" x-transition class="absolute right-0 {{ ($loop->index > 0 && $loop->remaining < 2) ? 'bottom-full mb-1' : 'top-full mt-1' }} z-[50] w-36 overflow-hidden rounded-xl border border-slate-200 bg-white py-1 shadow-lg"><a href="{{ route('lecturer.leave-requests.show', $request) }}" class="flex w-full items-center gap-2 px-3 py-2 text-left text-sm font-semibold text-slate-600 hover:bg-slate-50 hover:text-primary"><x-user.icon name="eye" :size="16" />Xem</a>@if($request->status === 'pending')<button type="button" wire:click="approve({{ $request->id }})" wire:confirm="Duyệt đơn xin nghỉ này?" class="flex w-full items-center gap-2 px-3 py-2 text-left text-sm font-semibold text-emerald-600 hover:bg-emerald-50"><x-user.icon name="check" :size="16" />Duyệt</button><button type="button" wire:click="openReject({{ $request->id }})" class="flex w-full items-center gap-2 px-3 py-2 text-left text-sm font-semibold text-red-600 hover:bg-red-50"><x-user.icon name="x" :size="16" />Từ chối</button>@endif</div></div></div></td>
                         </tr>
                     @empty
                         <tr><td colspan="6" class="px-6 py-16 text-center text-sm text-slate-500">Không có đơn xin nghỉ ở trạng thái này.</td></tr>

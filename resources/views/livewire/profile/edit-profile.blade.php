@@ -70,8 +70,8 @@
             </div>
         </section>
 
-        <div class="relative h-full" x-cloak>
-            <div x-show="view === 'profile'" class="h-full" x-transition:enter="transition ease-out duration-300" x-transition:enter-start="opacity-0 translate-x-4" x-transition:enter-end="opacity-100 translate-x-0" x-transition:leave="transition ease-in duration-200" x-transition:leave-start="opacity-100 translate-x-0" x-transition:leave-end="opacity-0 -translate-x-4">
+        <div class="relative h-full min-h-[550px]" x-cloak>
+            <div x-show="view === 'profile'" class="absolute inset-0 h-full w-full" x-transition:enter="transition ease-out duration-300" x-transition:enter-start="opacity-0 translate-x-4" x-transition:enter-end="opacity-100 translate-x-0" x-transition:leave="transition ease-in duration-200" x-transition:leave-start="opacity-100 translate-x-0" x-transition:leave-end="opacity-0 -translate-x-4">
                 <section class="admin-card admin-card-hover flex h-full flex-col overflow-hidden rounded-2xl border bg-white">
                     <div class="flex flex-col gap-4 border-b border-slate-100 p-6 lg:flex-row lg:items-end lg:justify-between">
                         <div>
@@ -129,7 +129,7 @@
             </div>
 
             <!-- Password Form -->
-            <div x-cloak x-show="view === 'password'" class="h-full" x-transition:enter="transition ease-out duration-300" x-transition:enter-start="opacity-0 translate-x-4" x-transition:enter-end="opacity-100 translate-x-0" x-transition:leave="transition ease-in duration-200" x-transition:leave-start="opacity-100 translate-x-0" x-transition:leave-end="opacity-0 -translate-x-4">
+            <div x-cloak x-show="view === 'password'" class="absolute inset-0 h-full w-full" x-transition:enter="transition ease-out duration-300" x-transition:enter-start="opacity-0 translate-x-4" x-transition:enter-end="opacity-100 translate-x-0" x-transition:leave="transition ease-in duration-200" x-transition:leave-start="opacity-100 translate-x-0" x-transition:leave-end="opacity-0 -translate-x-4">
                 <section class="admin-card admin-card-hover flex h-full flex-col overflow-hidden rounded-2xl border bg-white">
                     <div class="border-b border-slate-100 px-6 py-6 lg:p-6 lg:pb-4 flex flex-col gap-4 lg:flex-row lg:items-end lg:justify-between bg-white relative z-10">
                         <div>

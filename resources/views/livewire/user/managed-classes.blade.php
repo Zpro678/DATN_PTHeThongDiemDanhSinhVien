@@ -74,21 +74,51 @@
         @forelse ($classes as $index => $class)
             @php
                 $isEnded = $class->status === 'ended';
-                
-                $barClass = $isEnded ? 'bg-slate-400' : 'bg-blue-500';
-                $textClass = $isEnded ? 'text-slate-500' : 'text-blue-600';
-                
+
                 $sessionsCompleted = $class->completed_sessions_count ?? 0;
-                $studiedLessons = $class->studied_lessons ?? 0;
-                $present = $class->sum_present ?? 0;
-                $late = $class->sum_late ?? 0;
-                $absent = $class->sum_absent ?? 0;
-                $excused = $class->sum_excused ?? 0;
-                
-                $totalRecords = $present + $late + $absent + $excused;
-                $attendedRecords = $present + $late + $excused;
-                
-                $attendancePct = $totalRecords > 0 ? round(($attendedRecords / $totalRecords) * 100) : 100;
+                $studiedLessons    = $class->studied_lessons ?? 0;
+
+                // Số tiết tổng hợp từ AttendanceSummary của tất cả học viên trong lớp.
+                $present  = $class->sum_present  ?? 0; // Tổng tiết có mặt của cả lớp.
+                $late     = $class->sum_late     ?? 0; // Tổng tiết đi muộn của cả lớp.
+                $absent   = $class->sum_absent   ?? 0; // Tổng tiết vắng không phép của cả lớp.
+                $excused  = $class->sum_excused  ?? 0; // Tổng tiết vắng có phép của cả lớp.
+
+                // Tổng tiết kế hoạch cả khóa; fallback về tiết đã học nếu chưa cấu hình.
+                $totalStudied   = $present + $late + $absent + $excused;
+                $plannedLessons = max((int) ($class->total_lessons ?? 0), $totalStudied);
+
+                // % trung bình chuyên cần lớp = (planned − excused − absent) / (planned − excused).
+                // lateCount = 0 vì aggregate sum không tách số LẦN muộn.
+                $attendancePct = \App\Services\AttendanceCalculator::percentOfPlanned(
+                    $plannedLessons,
+                    $excused,
+                    $absent,
+                    lateCount: 0,
+                );
+
+                // Số tiết tối đa được phép vắng (20% tổng tiết kế hoạch).
+                $allowedAbsent = (int) floor($plannedLessons * \App\Services\AttendanceCalculator::ABSENCE_LIMIT_RATIO);
+
+                // Cấm thi: vắng cả lớp vượt ngưỡng hoặc chuyên cần trung bình < 80%.
+                $isBanned  = $plannedLessons > 0 && ($absent > $allowedAbsent || $attendancePct < \App\Services\AttendanceCalculator::MIN_ATTENDANCE_PERCENT);
+                // Cảnh báo: chuyên cần trung bình 80–84%.
+                $isWarning = ! $isBanned && $attendancePct < 85;
+
+                // Màu progress bar và text theo trạng thái.
+                if ($isEnded) {
+                    $barClass  = 'bg-slate-400';
+                    $textClass = 'text-slate-500';
+                } elseif ($isBanned) {
+                    $barClass  = 'bg-red-500';
+                    $textClass = 'text-red-600';
+                } elseif ($isWarning) {
+                    $barClass  = 'bg-amber-400';
+                    $textClass = 'text-amber-600';
+                } else {
+                    $barClass  = 'bg-blue-500';
+                    $textClass = 'text-blue-600';
+                }
             @endphp
             <article @class([
                 'group relative flex flex-col overflow-hidden rounded-3xl bg-white transition-all duration-300 hover:-translate-y-1 cursor-pointer',
@@ -172,7 +202,14 @@
                     <!-- Progress Bar -->
                     <div class="mt-auto pt-4">
                         <div class="mb-1.5 flex items-center justify-between">
-                            <span class="text-[9px] font-bold uppercase tracking-widest text-on-surface-variant">Chuyên cần</span>
+                            <div class="flex items-center gap-2">
+                                <span class="text-[9px] font-bold uppercase tracking-widest text-on-surface-variant">TB chuyên cần</span>
+                                @if ($isBanned)
+                                    <span class="rounded-full bg-red-100 px-1.5 py-0.5 text-[8px] font-bold uppercase tracking-wide text-red-600">Cấm thi</span>
+                                @elseif ($isWarning)
+                                    <span class="rounded-full bg-amber-100 px-1.5 py-0.5 text-[8px] font-bold uppercase tracking-wide text-amber-600">Cảnh báo</span>
+                                @endif
+                            </div>
                             <span class="{{ $textClass }} text-xs font-black">{{ $attendancePct }}%</span>
                         </div>
                         <div class="h-1 w-full overflow-hidden rounded-full bg-surface-container-highest">
@@ -213,7 +250,7 @@
                         ['label' => 'Quản lý SV', 'icon' => 'users'],
                         ['label' => 'Thống kê', 'icon' => 'bar-chart'],
                     ] as $action)
-                        <a href="{{ match ($action['label']) { 'Điểm danh QR' => route('lecturer.attendance.qr.create', ['class_id' => $class->id]), 'Thủ công' => route('lecturer.attendance.manual.create', ['class_id' => $class->id]), 'Quản lý SV' => route('lecturer.students.index', ['class_id' => $class->id]), 'Thống kê' => route('lecturer.class.statistics', ['class_id' => $class->id]), default => '#' } }}" @class([
+                        <a href="{{ match ($action['label']) { 'Điểm danh QR' => route('lecturer.attendance.create', ['class_id' => $class->id]), 'Thủ công' => route('lecturer.attendance.create', ['class_id' => $class->id]), 'Quản lý SV' => route('lecturer.students.index', ['class_id' => $class->id]), 'Thống kê' => route('lecturer.class.statistics', ['class_id' => $class->id]), default => '#' } }}" @class([
                             'group/action relative rounded-full p-2.5 transition-colors hover:bg-surface-container-low',
                             'cursor-not-allowed opacity-50' => $isEnded && in_array($action['icon'], ['qr-code', 'check-square'], true),
                         ]) title="{{ $action['label'] }}">

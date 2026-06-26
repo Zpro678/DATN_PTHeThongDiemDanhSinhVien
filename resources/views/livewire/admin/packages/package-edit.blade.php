@@ -19,7 +19,7 @@
         </div>
 
         <form wire:submit="save" class="space-y-6">
-            <div class="admin-card admin-card-hover overflow-hidden rounded-2xl border">
+            <div class="admin-card admin-card-hover overflow-visible rounded-2xl border relative z-20">
                 <div class="flex items-center gap-3 border-b border-slate-100 bg-slate-50/50 px-6 py-5">
                     <div class="flex h-8 w-8 items-center justify-center rounded-lg bg-blue-100 text-blue-600">
                         <x-user.icon name="alert-circle" :size="20" />
@@ -40,22 +40,28 @@
                     </div>
                     <div>
                         <label class="mb-2 block text-sm font-semibold text-slate-700">Hình thức tính giá</label>
-                        <select wire:model.live="priceType" class="w-full rounded-xl border border-slate-300 bg-white px-4 py-2.5 text-slate-900 transition-colors focus:border-blue-500 focus:ring-2 focus:ring-blue-500">
-                            <option value="fixed">Cố định (VND)</option>
-                            <option value="contact">Thỏa thuận (Liên hệ)</option>
-                            <option value="free">Miễn phí</option>
-                        </select>
+                        @php
+                        $priceTypeOptions = [
+                            ['value' => 'fixed', 'label' => 'Cố định (VND)', 'sub_label' => 'Thanh toán một mức giá cố định'],
+                            ['value' => 'contact', 'label' => 'Thỏa thuận (Liên hệ)', 'sub_label' => 'Khách hàng liên hệ để nhận báo giá'],
+                            ['value' => 'free', 'label' => 'Miễn phí', 'sub_label' => 'Không thu phí người dùng'],
+                        ];
+                        @endphp
+                        <x-custom-select wire:model.live="priceType" :options="$priceTypeOptions" placeholder="Chọn hình thức" />
                         @error('priceType') <span class="text-xs text-red-500">{{ $message }}</span> @enderror
                     </div>
                     <div>
                         <label class="mb-2 block text-sm font-semibold text-slate-700">Thời hạn sử dụng</label>
-                        <select wire:model="duration_days" class="w-full rounded-xl border border-slate-300 bg-white px-4 py-2.5 text-slate-900 transition-colors focus:border-blue-500 focus:ring-2 focus:ring-blue-500">
-                            <option value="30">1 Tháng</option>
-                            <option value="90">3 Tháng</option>
-                            <option value="180">6 Tháng</option>
-                            <option value="365">1 Năm</option>
-                            <option value="0">Vĩnh viễn (Trọn đời)</option>
-                        </select>
+                        @php
+                        $durationOptions = [
+                            ['value' => '30', 'label' => '1 Tháng', 'sub_label' => 'Sử dụng trong 30 ngày'],
+                            ['value' => '90', 'label' => '3 Tháng', 'sub_label' => 'Sử dụng trong 90 ngày'],
+                            ['value' => '180', 'label' => '6 Tháng', 'sub_label' => 'Sử dụng trong 180 ngày'],
+                            ['value' => '365', 'label' => '1 Năm', 'sub_label' => 'Sử dụng trong 365 ngày'],
+                            ['value' => '0', 'label' => 'Vĩnh viễn', 'sub_label' => 'Sử dụng không giới hạn thời gian'],
+                        ];
+                        @endphp
+                        <x-custom-select wire:model="duration_days" :options="$durationOptions" placeholder="Chọn thời hạn" />
                         @error('duration_days') <span class="text-xs text-red-500">{{ $message }}</span> @enderror
                     </div>
                     @if($priceType === 'fixed')

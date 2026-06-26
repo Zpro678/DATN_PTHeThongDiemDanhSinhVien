@@ -118,8 +118,8 @@ Route::middleware(['auth', 'verified', 'user.route'])->group(function () {
         Route::get('/lecturer/classes/{courseClass}/attendance', \App\Livewire\Lecturer\ClassAttendanceHistory::class)->name('lecturer.classes.attendance');
         Route::get('/lecturer/classes/{class_id}/statistics', ClassStatistics::class)->name('lecturer.class.statistics');
         Route::get('/lecturer/attendance', AttendanceIndex::class)->name('lecturer.attendance.index');
+        Route::get('/lecturer/attendance/group/{courseClass}/{groupKey}', \App\Livewire\Lecturer\Attendance\SessionGroupDetail::class)->name('lecturer.attendance.group.detail');
         Route::get('/lecturer/attendance/create', AttendanceCreate::class)->name('lecturer.attendance.create');
-        Route::get('/lecturer/attendance/manual/create', ManualAttendanceCreate::class)->name('lecturer.attendance.manual.create');
         Route::get('/lecturer/attendance/manual/{session}', ManualAttendanceSession::class)
             ->whereNumber('session')
             ->name('lecturer.attendance.manual.session');

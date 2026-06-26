@@ -3,6 +3,7 @@
 @php
     $userName = Auth::user()?->name ?? 'Nguyễn Văn A';
     $userRole = Auth::user()?->email ?? 'User';
+
     // Dữ liệu thông báo cho dropdown ở header (lấy từ DB qua NotificationService).
     $notificationData = app(\App\Services\NotificationService::class)->getDropdownData(Auth::user());
     $matchesActive = function ($activePattern) use ($activeNav): bool {
@@ -53,14 +54,14 @@
         ],
         ['type' => 'link', 'label' => 'Cảnh báo', 'icon' => 'alert-triangle', 'route' => 'student.warnings', 'active' => 'student.warnings'],
         ['type' => 'link', 'label' => 'Nâng cấp gói', 'icon' => 'zap', 'route' => 'upgrade', 'active' => 'upgrade'],
-        ['type' => 'link', 'label' => 'Hồ sơ cá nhân', 'icon' => 'user-circle', 'route' => 'profile.edit', 'active' => 'profile.*'],
+        ['type' => 'link', 'label' => 'Thông báo', 'icon' => 'bell', 'route' => 'notifications', 'active' => 'notifications'],
     ];
 
     $mobileItems = [
         ['label' => 'Tổng quan', 'icon' => 'home', 'route' => 'dashboard', 'active' => 'dashboard'],
         ['label' => 'Chủ lớp', 'icon' => 'shield', 'route' => 'managed-classes', 'active' => ['managed-classes', 'lecturer.classes.*', 'lecturer.class.*', 'lecturer.attendance.*', 'lecturer.students.*', 'lecturer.leave-requests.*']],
         ['label' => 'Học viên', 'icon' => 'user', 'route' => 'joined-classes', 'active' => ['joined-classes', 'student.classes.*', 'student.attendance.*', 'student.leave-requests.*']],
-        ['label' => 'Hồ sơ', 'icon' => 'user-circle', 'route' => 'profile.edit', 'active' => 'profile.*'],
+        ['label' => 'Thông báo', 'icon' => 'bell', 'route' => 'notifications', 'active' => 'notifications'],
     ];
 @endphp
 
@@ -108,6 +109,7 @@
                                 @endphp
                                 <a
                                     href="{{ $href }}"
+                                    wire:navigate
                                     @class([
                                         'flex w-full items-center gap-3 rounded-lg px-3 py-3.5 text-base font-bold transition-all',
                                         'bg-primary-container text-on-primary-container' => $isActive,
@@ -144,6 +146,7 @@
 
                                             <a
                                                 href="{{ $href }}"
+                                                wire:navigate
                                                 @class([
                                                     'flex items-center gap-3 rounded-lg px-3 py-3.5 text-base font-semibold transition-all',
                                                     'bg-primary/10 text-primary font-bold' => $isActive,
@@ -204,13 +207,21 @@
                             </button>
 
                             <div class="ml-2 relative" x-data="{ openProfile: false }" @click.away="openProfile = false">
+                                @php
+                                    $firstCharacter = function_exists('mb_substr') ? mb_substr($userName, 0, 1, 'UTF-8') : substr($userName, 0, 1);
+                                    $userInitial = function_exists('mb_strtoupper') ? mb_strtoupper($firstCharacter, 'UTF-8') : strtoupper($firstCharacter);
+                                @endphp
                                 <button type="button" @click="openProfile = !openProfile" class="flex items-center gap-3 focus:outline-none">
                                     <div class="hidden text-right sm:block">
                                         <p class="font-label-md font-bold leading-none text-on-surface">{{ $userName }}</p>
                                         <p class="mt-1 max-w-[150px] truncate text-[10px] text-on-surface-variant">{{ $userRole }}</p>
                                     </div>
-                                    <div class="h-10 w-10 shrink-0 overflow-hidden rounded-full border-2 border-primary/20 bg-surface-container p-0.5 transition-transform hover:scale-105" :class="openProfile ? 'ring-2 ring-primary ring-offset-2' : ''">
-                                        <img src="{{ Auth::user()?->avatar_url ?? 'https://ui-avatars.com/api/?name='.urlencode('Guest').'&color=FFFFFF&background=4285F4' }}" alt="{{ $userName }}" class="h-full w-full rounded-full object-cover">
+                                    <div class="flex h-10 w-10 shrink-0 items-center justify-center overflow-hidden rounded-full border-2 border-primary/20 bg-blue-100 p-0.5 transition-transform hover:scale-105" :class="openProfile ? 'ring-2 ring-primary ring-offset-2' : ''">
+                                        @if(Auth::user()?->avatar)
+                                            <img src="{{ asset('storage/'.Auth::user()->avatar) }}" alt="{{ $userName }}" class="h-full w-full rounded-full object-cover">
+                                        @else
+                                            <span class="text-sm font-black text-blue-700">{{ $userInitial }}</span>
+                                        @endif
                                     </div>
                                 </button>
 
@@ -256,7 +267,7 @@
             </main>
 
             <nav class="pb-safe fixed bottom-0 left-0 right-0 z-40 flex h-16 items-center justify-around border-t border-outline-variant/20 bg-surface/90 px-2 backdrop-blur-lg md:hidden">
-                <a href="{{ route($mobileItems[0]['route']) }}" @class([
+                <a href="{{ route($mobileItems[0]['route']) }}" wire:navigate @class([
                     'flex h-full w-full flex-col items-center justify-center transition-colors',
                     'text-primary' => $matchesActive($mobileItems[0]['active']),
                     'text-on-surface-variant hover:text-primary' => ! $matchesActive($mobileItems[0]['active']),
@@ -264,7 +275,7 @@
                     <x-user.icon :name="$mobileItems[0]['icon']" :size="20" />
                     <span class="mt-1 text-[10px] font-bold">{{ $mobileItems[0]['label'] }}</span>
                 </a>
-                <a href="{{ route($mobileItems[1]['route']) }}" @class([
+                <a href="{{ route($mobileItems[1]['route']) }}" wire:navigate @class([
                     'flex h-full w-full flex-col items-center justify-center transition-colors',
                     'text-primary' => $matchesActive($mobileItems[1]['active']),
                     'text-on-surface-variant hover:text-primary' => ! $matchesActive($mobileItems[1]['active']),
@@ -275,7 +286,7 @@
 
                 <div class="relative flex w-16 justify-center"></div>
 
-                <a href="{{ route($mobileItems[2]['route']) }}" @class([
+                <a href="{{ route($mobileItems[2]['route']) }}" wire:navigate @class([
                     'flex h-full w-full flex-col items-center justify-center transition-colors',
                     'text-primary' => $matchesActive($mobileItems[2]['active']),
                     'text-on-surface-variant hover:text-primary' => ! $matchesActive($mobileItems[2]['active']),
@@ -283,7 +294,7 @@
                     <x-user.icon :name="$mobileItems[2]['icon']" :size="20" />
                     <span class="mt-1 text-[10px] font-bold">{{ $mobileItems[2]['label'] }}</span>
                 </a>
-                <a href="{{ route($mobileItems[3]['route']) }}" @class([
+                <a href="{{ route($mobileItems[3]['route']) }}" wire:navigate @class([
                     'flex h-full w-full flex-col items-center justify-center transition-colors',
                     'text-primary' => $matchesActive($mobileItems[3]['active']),
                     'text-on-surface-variant hover:text-primary' => ! $matchesActive($mobileItems[3]['active']),

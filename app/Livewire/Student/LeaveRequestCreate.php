@@ -93,6 +93,7 @@ class LeaveRequestCreate extends Component
             'reason' => $this->reason,
             'proof_image' => $proofPaths,
             'status' => 'pending',
+            'created_at' => now(),
         ]);
 
         $owner = $member->courseClass->owner;

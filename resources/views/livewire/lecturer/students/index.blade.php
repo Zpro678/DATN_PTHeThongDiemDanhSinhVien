@@ -47,7 +47,7 @@
             ['label' => 'Có mặt', 'value' => $attendanceOverview['present_lessons'], 'color' => 'text-emerald-600'],
             ['label' => 'Muộn', 'value' => $attendanceOverview['late_lessons'], 'color' => 'text-amber-600'],
             ['label' => 'Vắng', 'value' => $attendanceOverview['absent_lessons'], 'color' => 'text-red-600'],
-            ['label' => 'Chuyên cần tổng', 'value' => $attendanceOverview['attendance_percent'].'%', 'color' => 'text-primary'],
+            ['label' => 'TB chuyên cần', 'value' => $attendanceOverview['attendance_percent'].'%', 'color' => 'text-primary'],
         ] as $overviewItem)
             <div class="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm">
                 <p class="text-xs font-bold uppercase tracking-wider text-slate-500">{{ $overviewItem['label'] }}</p>
@@ -96,13 +96,22 @@
                                 'late_lessons' => 0,
                                 'absent_lessons' => 0,
                                 'attendance_percent' => 0,
+                                'is_warning' => false,
+                                'is_banned' => false,
                             ];
                             $rate = (float) $stats['attendance_percent'];
+                            $isBanned = $stats['is_banned'] ?? false;
+                            $isWarning = $stats['is_warning'] ?? false;
                         @endphp
-                        <tr class="transition-colors hover:bg-slate-50/70">
+                        <tr @class(['transition-colors hover:bg-slate-50/70', 'bg-red-50/30' => $isBanned, 'bg-amber-50/30' => $isWarning && !$isBanned])>
                             <td class="px-6 py-4">
                                 <a href="{{ route('lecturer.students.show', $member) }}" class="flex items-center gap-3">
-                                    <span class="flex h-10 w-10 items-center justify-center rounded-full bg-primary/10 font-bold text-primary">{{ mb_strtoupper(mb_substr($member->full_name, 0, 1)) }}</span>
+                                    <span @class([
+                                        'flex h-10 w-10 shrink-0 items-center justify-center rounded-full font-bold',
+                                        'bg-red-100 text-red-600'     => $isBanned,
+                                        'bg-amber-100 text-amber-600' => $isWarning && !$isBanned,
+                                        'bg-primary/10 text-primary'  => !$isBanned && !$isWarning,
+                                    ])>{{ mb_strtoupper(mb_substr($member->full_name, 0, 1)) }}</span>
                                     <span>
                                         <span class="block text-sm font-bold text-slate-900">{{ $member->full_name }}</span>
                                         <span class="block text-xs text-slate-500">{{ $member->student_code }} · {{ $member->email ?? ($member->user?->email ?? 'Chưa có email') }}</span>
@@ -130,13 +139,30 @@
                                 @endif
                             </td>
                             <td class="px-4 py-4 text-center">
-                                <span @class(['inline-flex rounded-full px-3 py-1 text-xs font-bold', 'bg-emerald-50 text-emerald-700' => $rate >= 80, 'bg-amber-50 text-amber-700' => $rate >= 60 && $rate < 80, 'bg-red-50 text-red-700' => $rate < 60])>{{ $rate }}%</span>
+                                <div class="flex flex-col items-center gap-1">
+                                    <span @class(['inline-flex rounded-full px-3 py-1 text-xs font-bold', 'bg-red-50 text-red-700' => $isBanned, 'bg-amber-50 text-amber-700' => $isWarning, 'bg-emerald-50 text-emerald-700' => !$isBanned && !$isWarning])>{{ $rate }}%</span>
+                                    @if ($isBanned)
+                                        <span class="text-[10px] font-bold uppercase tracking-wide text-red-600">Cấm thi</span>
+                                    @elseif ($isWarning)
+                                        <span class="text-[10px] font-bold uppercase tracking-wide text-amber-600">Cảnh báo</span>
+                                    @endif
+                                </div>
                             </td>
                             <td class="px-6 py-4">
-                                <div class="flex justify-end gap-2">
+                                <div class="flex items-center justify-end gap-2">
+                                    @if ($isBanned)
+                                        <a href="{{ route('lecturer.students.show', $member) }}" class="inline-flex items-center gap-1 rounded-lg bg-red-100 px-2.5 py-1.5 text-[11px] font-bold text-red-700 transition-colors hover:bg-red-200" title="Nguy cơ cấm thi">
+                                            <x-user.icon name="alert-triangle" :size="13" />
+                                            Cấm thi
+                                        </a>
+                                    @elseif ($isWarning)
+                                        <a href="{{ route('lecturer.students.show', $member) }}" class="inline-flex items-center gap-1 rounded-lg bg-amber-100 px-2.5 py-1.5 text-[11px] font-bold text-amber-700 transition-colors hover:bg-amber-200" title="Cảnh báo chuyên cần">
+                                            <x-user.icon name="alert-triangle" :size="13" />
+                                            Cảnh báo
+                                        </a>
+                                    @endif
                                     <a href="{{ route('lecturer.students.show', $member) }}" class="rounded-lg p-2 text-slate-500 transition-colors hover:bg-primary/10 hover:text-primary" title="Xem chi tiết"><x-user.icon name="eye" :size="18" /></a>
                                     @if ($statusFilter === 'active')
-                                        <button type="button" wire:click="openEdit({{ $member->id }})" class="rounded-lg p-2 text-slate-500 transition-colors hover:bg-slate-100 hover:text-slate-800" title="Sửa"><x-user.icon name="edit" :size="18" /></button>
                                         <button type="button" wire:click="confirmArchive({{ $member->id }})" class="rounded-lg p-2 text-red-500 transition-colors hover:bg-red-50" title="Lưu trữ"><x-user.icon name="x" :size="18" /></button>
                                     @else
                                         <button type="button" wire:click="restoreMember({{ $member->id }})" class="rounded-lg px-3 py-2 text-xs font-bold text-primary transition-colors hover:bg-primary/10">Khôi phục</button>
@@ -178,7 +204,6 @@
             </div>
         </template>
     @endif
-
     @if ($isAdding)
         <template x-teleport="body">
             <div class="fixed inset-0 z-[100] flex items-center justify-center bg-slate-900/50 p-4 backdrop-blur-sm">
