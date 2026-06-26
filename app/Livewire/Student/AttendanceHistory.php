@@ -4,6 +4,7 @@ namespace App\Livewire\Student;
 
 use App\Models\AttendanceRecord;
 use App\Models\ClassMember;
+use App\Services\LectureManageStudentService;
 use Illuminate\Contracts\View\View;
 use Illuminate\Database\Eloquent\Collection;
 use Livewire\Attributes\Url;
@@ -43,11 +44,18 @@ class AttendanceHistory extends Component
             ->where('user_id', auth()->id())
             ->get();
 
+        // Summary: dùng LectureManageStudentService — tính theo TIẾT, chỉ buổi đã chốt.
+        // Đồng nhất với trang "Lớp tôi tham gia" và trang giảng viên.
+        $memberIds = $members->pluck('id')->all();
+        $statsMap  = $memberIds
+            ? app(LectureManageStudentService::class)->getStudentsAttendanceStats($memberIds)
+            : [];
+
         $allRecords = $this->attendanceRecords($members);
 
         $page = $this->getPage();
         $perPage = $this->perPage;
-        
+
         $paginatedRecords = new LengthAwarePaginator(
             $allRecords->forPage($page, $perPage),
             $allRecords->count(),
@@ -62,7 +70,7 @@ class AttendanceHistory extends Component
         return view('livewire.student.attendance-history', [
             'records' => $paginatedRecords,
             'classes' => $members->pluck('courseClass')->filter()->unique('id')->values(),
-            'summary' => $this->summary($allRecords),
+            'summary' => $this->summary($allRecords, $statsMap),
             'isDemo' => false,
         ])->layout('layouts.user', ['title' => 'Lịch sử điểm danh']);
     }
@@ -82,6 +90,7 @@ class AttendanceHistory extends Component
         $records = AttendanceRecord::query()
             ->with(['classMember.courseClass.owner', 'classSession'])
             ->whereIn('class_member_id', $memberIds)
+            ->whereHas('classSession', fn ($q) => $q->where('status', 'closed'))
             ->get()
             ->sortByDesc(fn (AttendanceRecord $record) => $record->classSession?->date?->timestamp ?? 0)
             ->map(fn (AttendanceRecord $record): array => [
@@ -128,17 +137,26 @@ class AttendanceHistory extends Component
 
     /**
      * @param  \Illuminate\Support\Collection<int, array<string, mixed>>  $records
+     * @param  array<int, array<string, mixed>>  $statsMap  từ LectureManageStudentService
      * @return array<string, int>
      */
-    private function summary(\Illuminate\Support\Collection $records): array
+    private function summary(\Illuminate\Support\Collection $records, array $statsMap): array
     {
+        // Tổng hợp TIẾT từ service — chỉ buổi đã chốt, tính theo lesson_count.
+        // Đồng nhất với trang giảng viên và trang "Lớp tôi tham gia".
+        $presentLessons = (int) array_sum(array_column($statsMap, 'present_lessons'));
+        $lateLessons    = (int) array_sum(array_column($statsMap, 'late_lessons'));
+        $absentLessons  = (int) array_sum(array_column($statsMap, 'absent_lessons'));
+        $excusedLessons = (int) array_sum(array_column($statsMap, 'excused_lessons'));
+        $studiedLessons = (int) array_sum(array_column($statsMap, 'studied_lessons'));
+
         return [
-            'total' => $records->count(),
-            'present' => $records->where('status', 'present')->count(),
-            'late' => $records->where('status', 'late')->count(),
-            'excused' => $records->where('status', 'excused')->count(),
-            'absent' => $records->where('status', 'absent')->count(),
-            'pending' => $records->where('status', 'pending')->count(),
+            'total'   => $studiedLessons,   // Tổng tiết đã chốt (mẫu số).
+            'present' => $presentLessons,   // Tiết có mặt đúng giờ.
+            'late'    => $lateLessons,       // Tiết đi muộn.
+            'excused' => $excusedLessons,   // Tiết vắng có phép.
+            'absent'  => $absentLessons,    // Tiết vắng không phép.
+            'pending' => $records->where('status', 'pending')->count(), // Buổi chưa điểm danh (vẫn đếm bản ghi).
         ];
     }
 }

@@ -4,69 +4,92 @@ namespace App\Livewire\Lecturer;
 
 use App\Models\AttendanceRecord;
 use App\Models\CourseClass;
+use App\Services\LectureManageStudentService;
 use Livewire\Component;
 
 class ClassStatistics extends Component
 {
-    public $class_id;
+    public int $class_id;
 
-    // Đối tượng chứa thông tin chi tiết của lớp học
-    public $courseClass;
-
-    // Tổng số lượng sinh viên đang tham gia lớp học
-    public $totalStudents;
-
-    // Tổng số buổi học đã diễn ra
-    public $sessionCount;
-
-    // Tỷ lệ đi học chuyên cần trung bình của toàn lớp (%)
-    public $averageAttendance;
-
-    // Danh sách các sinh viên đang bị cảnh báo chuyên cần (nghỉ học nhiều)
-    public $warningStudents = [];
-
-    public function mount($class_id)
+    public function mount(int $class_id): void
     {
         $this->class_id = $class_id;
-        $this->courseClass = CourseClass::where('id', $class_id)
+
+        CourseClass::where('id', $class_id)
             ->where('owner_user_id', auth()->id())
             ->firstOrFail();
-
-        $this->loadStatistics();
     }
 
-    public function loadStatistics()
+    public function render(LectureManageStudentService $service): \Illuminate\Contracts\View\View
     {
-        // Total students
-        $this->totalStudents = $this->courseClass->members()->count();
+        $class = CourseClass::with(['sessions' => fn ($q) => $q->orderBy('date')->orderBy('id')])
+            ->where('id', $this->class_id)
+            ->firstOrFail();
 
-        // Total sessions
-        $this->sessionCount = $this->courseClass->sessions()->count();
+        $members = $class->members()->where('status', 'active')->with('user')->get();
+        $memberIds = $members->pluck('id')->all();
+        $statsMap = $memberIds ? $service->getStudentsAttendanceStats($memberIds) : [];
 
-        // Average attendance
-        // Assuming we calculate it as (total present records) / (total students * total sessions)
-        // For simplicity, we can mock or do a basic calculation.
-        // Here we do a mocked basic calculation if records are sparse, or real if we have relationships.
-        if ($this->totalStudents > 0 && $this->sessionCount > 0) {
-            $totalPresent = AttendanceRecord::whereIn('class_session_id', $this->courseClass->sessions->pluck('id'))
-                ->where('status', 'present')
+        // Tổng hợp summary
+        $statsCollection = collect($statsMap);
+        $totalStudents   = $members->count();
+        $closedSessions  = $class->sessions->where('status', 'closed');
+        $totalSessions   = $class->sessions->count();
+        $studiedLessons  = $closedSessions->sum('lesson_count');
+        $plannedLessons  = (int) $class->total_lessons;
+        $avgAttendance   = $statsCollection->isNotEmpty()
+            ? (int) round($statsCollection->avg('attendance_percent'))
+            : 100;
+        $bannedCount   = $statsCollection->where('is_banned', true)->count();
+        $warningCount  = $statsCollection->where('is_warning', true)->where('is_banned', false)->count();
+        $allowedAbsent = $plannedLessons > 0 ? (int) floor($plannedLessons * 0.2) : 0;
+
+        // Danh sách học viên cần chú ý (banned trước, warning sau)
+        $alertStudents = $members
+            ->map(fn ($m) => ['member' => $m, 'stats' => $statsMap[$m->id] ?? null])
+            ->filter(fn ($row) => $row['stats'] && ($row['stats']['is_banned'] || $row['stats']['is_warning']))
+            ->sortByDesc(fn ($row) => $row['stats']['is_banned'] ? 1 : 0)
+            ->values();
+
+        // Tất cả học viên (sắp xếp chuyên cần tăng dần để dễ phát hiện vấn đề)
+        $allStudents = $members
+            ->map(fn ($m) => ['member' => $m, 'stats' => $statsMap[$m->id] ?? null])
+            ->sortBy(fn ($row) => $row['stats']['attendance_percent'] ?? 100)
+            ->values();
+
+        // Dữ liệu điểm danh theo từng buổi đã chốt (cho biểu đồ)
+        $sessionChart = $closedSessions->map(function ($session) use ($totalStudents) {
+            $presentCount = AttendanceRecord::where('class_session_id', $session->id)
+                ->whereIn('status', ['present', 'late'])
                 ->count();
-            $this->averageAttendance = round(($totalPresent / ($this->totalStudents * $this->sessionCount)) * 100);
-        } else {
-            $this->averageAttendance = 0;
-        }
 
-        // Warning students (students with high absence rate)
-        // For now, let's mock it to match the UI, or query actual data
-        $this->warningStudents = [
-            ['name' => 'Nguyễn Văn A', 'code' => 'SV001', 'absent' => 3, 'percent' => 70],
-            ['name' => 'Trần Thị B', 'code' => 'SV002', 'absent' => 4, 'percent' => 60],
-        ];
-    }
+            $attendanceRate = $totalStudents > 0
+                ? (int) round(($presentCount / $totalStudents) * 100)
+                : 0;
 
-    public function render()
-    {
-        return view('livewire.lecturer.class-statistics')
-            ->layout('layouts.user', ['title' => 'Thống kê — '.($this->courseClass->name ?? '')]);
+            return [
+                'name'            => $session->name,
+                'date'            => $session->date?->format('d/m'),
+                'present'         => $presentCount,
+                'total'           => $totalStudents,
+                'attendance_rate' => $attendanceRate,
+            ];
+        })->values()->all();
+
+        return view('livewire.lecturer.class-statistics', [
+            'class'           => $class,
+            'totalStudents'   => $totalStudents,
+            'totalSessions'   => $totalSessions,
+            'closedCount'     => $closedSessions->count(),
+            'studiedLessons'  => $studiedLessons,
+            'plannedLessons'  => $plannedLessons,
+            'avgAttendance'   => $avgAttendance,
+            'bannedCount'     => $bannedCount,
+            'warningCount'    => $warningCount,
+            'allowedAbsent'   => $allowedAbsent,
+            'alertStudents'   => $alertStudents,
+            'allStudents'     => $allStudents,
+            'sessionChart'    => $sessionChart,
+        ])->layout('layouts.user', ['title' => 'Thống kê — ' . $class->name]);
     }
 }

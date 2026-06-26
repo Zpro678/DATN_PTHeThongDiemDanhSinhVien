@@ -126,6 +126,6 @@ class Upgrade extends Component
             'confirmingPlan' => $this->confirmingPlanId
                 ? $plans->firstWhere('id', $this->confirmingPlanId)
                 : null,
-        ])->layout('layouts.user', ['title' => 'Nâng cấp gói']);
+        ])->layout('layouts.upgrade');
     }
 }

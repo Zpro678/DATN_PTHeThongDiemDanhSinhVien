@@ -53,14 +53,14 @@
         ],
         ['type' => 'link', 'label' => 'Cảnh báo', 'icon' => 'alert-triangle', 'route' => 'student.warnings', 'active' => 'student.warnings'],
         ['type' => 'link', 'label' => 'Nâng cấp gói', 'icon' => 'zap', 'route' => 'upgrade', 'active' => 'upgrade'],
-        ['type' => 'link', 'label' => 'Hồ sơ cá nhân', 'icon' => 'user-circle', 'route' => 'profile.edit', 'active' => 'profile.*'],
+        ['type' => 'link', 'label' => 'Thông báo', 'icon' => 'bell', 'route' => 'notifications', 'active' => 'notifications'],
     ];
 
     $mobileItems = [
         ['label' => 'Tổng quan', 'icon' => 'home', 'route' => 'dashboard', 'active' => 'dashboard'],
         ['label' => 'Chủ lớp', 'icon' => 'shield', 'route' => 'managed-classes', 'active' => ['managed-classes', 'lecturer.classes.*', 'lecturer.class.*', 'lecturer.attendance.*', 'lecturer.students.*', 'lecturer.leave-requests.*']],
         ['label' => 'Học viên', 'icon' => 'user', 'route' => 'joined-classes', 'active' => ['joined-classes', 'student.classes.*', 'student.attendance.*', 'student.leave-requests.*']],
-        ['label' => 'Hồ sơ', 'icon' => 'user-circle', 'route' => 'profile.edit', 'active' => 'profile.*'],
+        ['label' => 'Thông báo', 'icon' => 'bell', 'route' => 'notifications', 'active' => 'notifications'],
     ];
 @endphp
 
