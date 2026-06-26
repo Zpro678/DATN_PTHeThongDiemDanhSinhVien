@@ -51,6 +51,14 @@ Route::get('/auth/google/callback', [GoogleController::class, 'callback'])->name
 Route::get('/attendance/check-in/{token}', \App\Livewire\Student\AttendanceCheckIn::class)
     ->name('attendance.check-in.guest');
 
+Route::post('/gps/token', [\App\Http\Controllers\GpsVerificationController::class, 'issueToken'])
+    ->name('gps.token')
+    ->middleware('throttle:10,1');
+
+Route::post('/gps/verify', [\App\Http\Controllers\GpsVerificationController::class, 'verify'])
+    ->name('gps.verify')
+    ->middleware('throttle:5,1');
+
 // MoMo gọi server-to-server: KHÔNG qua auth, được loại CSRF (xem bootstrap/app.php).
 Route::post('/payment/momo/ipn', [\App\Http\Controllers\MomoController::class, 'ipn'])
     ->name('momo.ipn');
@@ -106,6 +114,7 @@ Route::middleware(['auth', 'verified', 'user.route'])->group(function () {
 
         Route::get('/student/classes/{courseClass}', ClassShow::class)->name('student.classes.show');
         Route::get('/lecturer/classes/{courseClass}', App\Livewire\Lecturer\ClassShow::class)->name('lecturer.classes.show');
+        Route::get('/lecturer/classes/{courseClass}/settings', ClassSettings::class)->name('lecturer.classes.settings');
         Route::get('/lecturer/classes/{courseClass}/attendance', \App\Livewire\Lecturer\ClassAttendanceHistory::class)->name('lecturer.classes.attendance');
         Route::get('/lecturer/classes/{class_id}/statistics', ClassStatistics::class)->name('lecturer.class.statistics');
         Route::get('/lecturer/attendance', AttendanceIndex::class)->name('lecturer.attendance.index');

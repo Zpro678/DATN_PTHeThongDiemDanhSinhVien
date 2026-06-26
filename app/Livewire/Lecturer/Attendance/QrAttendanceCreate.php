@@ -125,20 +125,14 @@ class QrAttendanceCreate extends Component
             $this->gpsEnabled = $config['gpsEnabled'] ?? true;
             $this->deviceCheck = $config['deviceCheck'] ?? true;
             $this->gpsRadius = $config['gpsRadius'] ?? 100;
+        } else {
+            $this->gpsEnabled = false;
+            $this->gpsRadius = 100;
         }
 
-        if ($selectedClass->gps_latitude !== null && $selectedClass->gps_longitude !== null) {
-            $this->gpsLatitude = $selectedClass->gps_latitude;
-            $this->gpsLongitude = $selectedClass->gps_longitude;
-            $this->gpsRadius = $selectedClass->gps_radius ?? 100;
-            $this->gpsEnabled = true;
-        } else {
-            if (! $config || ! isset($config['gpsEnabled'])) {
-                $this->gpsEnabled = false;
-                $this->gpsLatitude = null;
-                $this->gpsLongitude = null;
-            }
-        }
+        // Tọa độ GPS sẽ luôn được lấy động từ vị trí hiện tại của thiết bị giáo viên khi bật
+        $this->gpsLatitude = null;
+        $this->gpsLongitude = null;
     }
 
     public function saveConfig(): void
@@ -176,8 +170,8 @@ class QrAttendanceCreate extends Component
             'endLesson' => ['required', 'integer', 'min:1', 'max:15', 'gte:startLesson'],
             'qrRefreshRate' => ['required', 'integer', 'in:5,10,15,30'],
             'gpsEnabled' => ['boolean'],
-            'gpsLatitude' => ['nullable', 'numeric'],
-            'gpsLongitude' => ['nullable', 'numeric'],
+            'gpsLatitude' => ['required_if:gpsEnabled,true', 'nullable', 'numeric'],
+            'gpsLongitude' => ['required_if:gpsEnabled,true', 'nullable', 'numeric'],
             'deviceCheck' => ['boolean'],
         ], [
             'classId.required' => 'Vui lòng chọn lớp học.',
@@ -188,6 +182,8 @@ class QrAttendanceCreate extends Component
             'gpsRadius.required' => 'Vui lòng nhập bán kính GPS.',
             'gpsRadius.min' => 'Bán kính tối thiểu là 5m.',
             'gpsRadius.max' => 'Bán kính tối đa là 2500m.',
+            'gpsLatitude.required_if' => 'Vui lòng cho phép trình duyệt truy cập vị trí hiện tại để xác minh GPS.',
+            'gpsLongitude.required_if' => 'Vui lòng cho phép trình duyệt truy cập vị trí hiện tại để xác minh GPS.',
             'endLesson.gte' => 'Tiết kết thúc phải lớn hơn hoặc bằng tiết bắt đầu.',
         ]);
 

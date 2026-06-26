@@ -17,6 +17,19 @@ class ManagedClasses extends Component
     // Từ khóa tìm kiếm lớp học theo tên, mã lớp hoặc mã môn
     public string $search = '';
 
+    // ID lớp đang chờ xác nhận kết thúc
+    public ?int $confirmingEndClassId = null;
+
+    public function confirmEndClass(int $classId): void
+    {
+        $this->confirmingEndClassId = $classId;
+    }
+
+    public function cancelEndClass(): void
+    {
+        $this->confirmingEndClassId = null;
+    }
+
     public function setStatusFilter(string $status): void
     {
         $this->statusFilter = $status;
@@ -78,5 +91,7 @@ class ManagedClasses extends Component
         if ($class->status !== 'ended') {
             $class->update(['status' => 'ended']);
         }
+
+        $this->confirmingEndClassId = null;
     }
 }

@@ -37,6 +37,9 @@
     @if (session('status'))
         <div class="rounded-2xl border border-emerald-200 bg-emerald-50 px-5 py-3 text-sm font-semibold text-emerald-700">{{ session('status') }}</div>
     @endif
+    @if (session('success'))
+        <div class="rounded-2xl border border-emerald-200 bg-emerald-50 px-5 py-3 text-sm font-semibold text-emerald-700">{{ session('success') }}</div>
+    @endif
 
     <section class="grid gap-4 sm:grid-cols-2 lg:grid-cols-5">
         @foreach ([
@@ -80,6 +83,7 @@
                         <th class="px-4 py-4 text-center">Có mặt</th>
                         <th class="px-4 py-4 text-center">Muộn</th>
                         <th class="px-4 py-4 text-center">Vắng</th>
+                        <th class="px-4 py-4 text-center">Liên kết</th>
                         <th class="px-4 py-4 text-center">Chuyên cần</th>
                         <th class="px-6 py-4 text-right">Thao tác</th>
                     </tr>
@@ -101,7 +105,7 @@
                                     <span class="flex h-10 w-10 items-center justify-center rounded-full bg-primary/10 font-bold text-primary">{{ mb_strtoupper(mb_substr($member->full_name, 0, 1)) }}</span>
                                     <span>
                                         <span class="block text-sm font-bold text-slate-900">{{ $member->full_name }}</span>
-                                        <span class="block text-xs text-slate-500">{{ $member->student_code }} · {{ $member->user?->email ?? 'Chưa liên kết tài khoản' }}</span>
+                                        <span class="block text-xs text-slate-500">{{ $member->student_code }} · {{ $member->email ?? ($member->user?->email ?? 'Chưa có email') }}</span>
                                     </span>
                                 </a>
                             </td>
@@ -112,6 +116,19 @@
                             <td class="px-4 py-4 text-center text-sm font-bold text-emerald-600">{{ $stats['present_lessons'] }}</td>
                             <td class="px-4 py-4 text-center text-sm font-bold text-amber-600">{{ $stats['late_lessons'] }}</td>
                             <td class="px-4 py-4 text-center text-sm font-bold text-red-600">{{ $stats['absent_lessons'] }}</td>
+                            <td class="px-4 py-4 text-center">
+                                @if($member->user_id)
+                                    <span class="inline-flex items-center gap-1 rounded-full bg-green-50 px-2.5 py-1 text-xs font-bold text-green-700">
+                                        <span class="h-1.5 w-1.5 rounded-full bg-green-600"></span>
+                                        Đã liên kết
+                                    </span>
+                                @else
+                                    <span class="inline-flex items-center gap-1 rounded-full bg-slate-100 px-2.5 py-1 text-xs font-bold text-slate-500">
+                                        <span class="h-1.5 w-1.5 rounded-full bg-slate-400"></span>
+                                        Chưa liên kết
+                                    </span>
+                                @endif
+                            </td>
                             <td class="px-4 py-4 text-center">
                                 <span @class(['inline-flex rounded-full px-3 py-1 text-xs font-bold', 'bg-emerald-50 text-emerald-700' => $rate >= 80, 'bg-amber-50 text-amber-700' => $rate >= 60 && $rate < 80, 'bg-red-50 text-red-700' => $rate < 60])>{{ $rate }}%</span>
                             </td>
@@ -149,6 +166,11 @@
                     <div class="space-y-4">
                         <label class="block space-y-2"><span class="text-sm font-semibold text-slate-700">Họ và tên</span><input wire:model="editingName" class="w-full rounded-xl border-slate-200 focus:border-primary focus:ring-primary/20">@error('editingName')<span class="text-xs text-red-600">{{ $message }}</span>@enderror</label>
                         <label class="block space-y-2"><span class="text-sm font-semibold text-slate-700">Mã học viên</span><input wire:model="editingStudentCode" class="w-full rounded-xl border-slate-200 uppercase focus:border-primary focus:ring-primary/20">@error('editingStudentCode')<span class="text-xs text-red-600">{{ $message }}</span>@enderror</label>
+                        <label class="block space-y-2">
+                            <span class="text-sm font-semibold text-slate-700">Email</span>
+                            <input type="email" wire:model="editingEmail" class="w-full rounded-xl border-slate-200 focus:border-primary focus:ring-primary/20" placeholder="nva@email.com">
+                            @error('editingEmail')<span class="text-xs text-red-600">{{ $message }}</span>@enderror
+                        </label>
                         <label class="block space-y-2"><span class="text-sm font-semibold text-slate-700">Trạng thái</span><select wire:model="editingStatus" class="w-full rounded-xl border-slate-200 focus:border-primary focus:ring-primary/20"><option value="active">Đang học</option><option value="dropped">Đã thôi học</option></select></label>
                     </div>
                     <div class="mt-6 flex justify-end gap-3"><button type="button" wire:click="closeEdit" class="rounded-xl px-5 py-2.5 text-sm font-bold text-slate-600 hover:bg-slate-100">Hủy</button><button type="submit" class="rounded-xl bg-primary px-5 py-2.5 text-sm font-bold text-white">Lưu thay đổi</button></div>
@@ -178,6 +200,11 @@
                         </label>
                         <label class="block space-y-2"><span class="text-sm font-semibold text-slate-700">Họ và tên</span><input wire:model="newName" class="w-full rounded-xl border-slate-200 focus:border-primary focus:ring-primary/20" placeholder="Nguyễn Văn A">@error('newName')<span class="text-xs text-red-600">{{ $message }}</span>@enderror</label>
                         <label class="block space-y-2"><span class="text-sm font-semibold text-slate-700">Mã học viên</span><input wire:model="newStudentCode" class="w-full rounded-xl border-slate-200 uppercase focus:border-primary focus:ring-primary/20" placeholder="SV001">@error('newStudentCode')<span class="text-xs text-red-600">{{ $message }}</span>@enderror</label>
+                        <label class="block space-y-2">
+                            <span class="text-sm font-semibold text-slate-700">Email (Không bắt buộc)</span>
+                            <input type="email" wire:model="newEmail" class="w-full rounded-xl border-slate-200 focus:border-primary focus:ring-primary/20" placeholder="nva@email.com">
+                            @error('newEmail')<span class="text-xs text-red-600">{{ $message }}</span>@enderror
+                        </label>
                     </div>
                     <div class="mt-6 flex justify-end gap-3"><button type="button" wire:click="closeAdd" class="rounded-xl px-5 py-2.5 text-sm font-bold text-slate-600 hover:bg-slate-100">Hủy</button><button type="submit" class="rounded-xl bg-primary px-5 py-2.5 text-sm font-bold text-white">Thêm học viên</button></div>
                 </form>
@@ -225,8 +252,8 @@
                     </div>
 
                     {{-- File Dropzone --}}
-                    <label class="group relative flex cursor-pointer flex-col items-center justify-center rounded-[20px] border-2 border-dashed border-slate-200 bg-slate-50/50 py-8 transition-colors hover:border-blue-400 hover:bg-blue-50/50">
-                        <input type="file" wire:model="importFile" accept=".xlsx,.xls,.csv" class="peer absolute inset-0 h-full w-full cursor-pointer opacity-0">
+                    <label class="group relative flex @if($isImportingStatus) cursor-not-allowed opacity-60 @else cursor-pointer @endif flex-col items-center justify-center rounded-[20px] border-2 border-dashed border-slate-200 bg-slate-50/50 py-8 transition-colors hover:border-blue-400 hover:bg-blue-50/50">
+                        <input type="file" wire:model="importFile" accept=".xlsx,.xls,.csv" @if($isImportingStatus) disabled @endif class="peer absolute inset-0 h-full w-full cursor-pointer opacity-0">
                         
                         <div class="flex flex-col items-center justify-center gap-3">
                             <div class="flex h-10 w-10 items-center justify-center rounded-full border-[2.5px] border-slate-700 text-slate-700 transition-colors group-hover:border-blue-600 group-hover:text-blue-600">
@@ -256,10 +283,29 @@
                     @error('importFile')<span class="mt-1 block text-center text-sm text-red-500">{{ $message }}</span>@enderror
                     
                     <div class="mt-4 flex items-center gap-2">
-                        <input type="checkbox" id="syncAttendanceIndex" wire:model="syncAttendance" class="h-4 w-4 rounded border-slate-300 text-blue-600 focus:ring-blue-600">
+                        <input type="checkbox" id="syncAttendanceIndex" wire:model="syncAttendance" @if($isImportingStatus) disabled @endif class="h-4 w-4 rounded border-slate-300 text-blue-600 focus:ring-blue-600">
                         <label for="syncAttendanceIndex" class="text-[15px] text-slate-700 font-medium">Tự động thêm vào các buổi điểm danh đã có</label>
                     </div>
 
+                    {{-- Progress Bar --}}
+                    @if($isImportingStatus)
+                        <div class="mt-4 p-4 bg-blue-50 rounded-2xl flex flex-col gap-2 shadow-inner" wire:poll.500ms="checkImportProgress">
+                            <div class="flex justify-between text-sm font-semibold text-blue-700">
+                                <span class="flex items-center gap-2">
+                                    <svg class="animate-spin h-4 w-4 text-blue-600" fill="none" viewBox="0 0 24 24">
+                                        <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+                                        <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                                    </svg>
+                                    Đang ghi nhận học viên...
+                                </span>
+                                <span>{{ $importProcessedRows }}/{{ $importTotalRows }}</span>
+                            </div>
+                            <div class="w-full bg-blue-100 rounded-full h-2">
+                                <div class="bg-blue-600 h-2 rounded-full transition-all duration-300" style="width: {{ $importTotalRows > 0 ? ($importProcessedRows / $importTotalRows) * 100 : 0 }}%"></div>
+                            </div>
+                        </div>
+                    @endif
+ 
                     {{-- Error Summary --}}
                     @if(!empty($importErrors))
                         <div class="rounded-xl border border-red-200 bg-red-50 p-4">
@@ -272,16 +318,22 @@
                         </div>
                     @endif
                 </div>
-
+ 
                 {{-- Footer Buttons --}}
                 <div class="mt-6 flex justify-end gap-3">
-                    <button type="button" wire:click="closeImport" class="rounded-full border border-slate-300 bg-white px-8 py-2.5 text-[15px] font-bold text-slate-700 transition-colors hover:bg-slate-50 hover:text-slate-900">
-                        Hủy bỏ
-                    </button>
-                    <button type="submit" class="flex items-center gap-2 rounded-full bg-[#0a46d1] px-10 py-2.5 text-[15px] font-bold text-white transition-colors hover:bg-blue-800">
-                        <span wire:loading.remove wire:target="processImport">Import</span>
-                        <span wire:loading wire:target="processImport">Đang xử lý...</span>
-                    </button>
+                    @if(!$isImportingStatus)
+                        <button type="button" wire:click="closeImport" class="rounded-full border border-slate-300 bg-white px-8 py-2.5 text-[15px] font-bold text-slate-700 transition-colors hover:bg-slate-50 hover:text-slate-900">
+                            Hủy bỏ
+                        </button>
+                        <button type="submit" class="flex items-center gap-2 rounded-full bg-[#0a46d1] px-10 py-2.5 text-[15px] font-bold text-white transition-colors hover:bg-blue-800">
+                            <span wire:loading.remove wire:target="processImport">Import</span>
+                            <span wire:loading wire:target="processImport">Đang xử lý...</span>
+                        </button>
+                    @else
+                        <button type="button" disabled class="flex items-center gap-2 rounded-full bg-slate-100 px-10 py-2.5 text-[15px] font-bold text-slate-400 cursor-not-allowed">
+                            Đang xử lý...
+                        </button>
+                    @endif
                 </div>
             </form>
             </div>

@@ -14,14 +14,16 @@ use Maatwebsite\Excel\Concerns\WithMultipleSheets;
 class StudentsImport implements ToCollection, WithStartRow, WithMultipleSheets
 {
     protected int $classId;
+    protected ?string $importToken;
 
     public array $errors = [];
 
     public int $successCount = 0;
 
-    public function __construct(int $classId)
+    public function __construct(int $classId, ?string $importToken = null)
     {
         $this->classId = $classId;
+        $this->importToken = $importToken;
     }
 
     public function sheets(): array
@@ -130,13 +132,7 @@ class StudentsImport implements ToCollection, WithStartRow, WithMultipleSheets
             }
         }
 
-        // Kiểm tra gói: giới hạn số sinh viên mỗi lớp theo gói của chủ lớp.
-        $courseClass = \App\Models\CourseClass::with('owner')->find($this->classId);
-        $maxStudents = $courseClass?->owner
-            ? app(\App\Services\SubscriptionService::class)->maxStudentsPerClass($courseClass->owner)
-            : PHP_INT_MAX;
-        $activeCount = ClassMember::where('class_id', $this->classId)->where('status', 'active')->count();
-
+        $validRows = [];
         foreach ($rows as $index => $row) {
             // Index in startRow=1 means index 0 is row 2
             $actualRowNumber = $index + 2;
@@ -156,104 +152,50 @@ class StudentsImport implements ToCollection, WithStartRow, WithMultipleSheets
 
             if (empty($studentCode) || empty($fullName)) {
                 $this->errors[] = "Dòng {$actualRowNumber}: Thiếu thông tin";
-
                 continue;
             }
 
-            // Upsert (Cập nhật nếu trùng Mã SV trong lớp, nếu không thì Tạo mới)
-            // Lấy sinh viên (kể cả đã bị đưa vào thùng rác - lưu trữ)
-            $member = ClassMember::withTrashed()
-                ->where('class_id', $this->classId)
-                ->where('student_code', strtoupper($studentCode))
-                ->first();
-
-            $user = null;
-            if ($email) {
-                $user = \App\Models\User::where('email', $email)->first();
-            }
-
-            if ($member) {
-                // Đã tồn tại -> Cập nhật tên và khôi phục nếu đang bị lưu trữ
-                $updateData = [
-                    'full_name' => $fullName,
-                    'status' => 'active',
-                ];
-                if ($email) {
-                    $updateData['email'] = $email;
-                }
-                if ($user && is_null($member->user_id)) {
-                    $updateData['user_id'] = $user->id;
-                }
-                $member->update($updateData);
-                $member->restore();
-            } else {
-                // Kiểm tra gói: dừng tạo mới khi lớp đã đạt giới hạn sinh viên của gói.
-                if ($activeCount >= $maxStudents) {
-                    $this->errors[] = "Dòng {$actualRowNumber}: Vượt giới hạn {$maxStudents} sinh viên của gói, đã bỏ qua. Vui lòng nâng cấp gói.";
-
-                    continue;
-                }
-
-                // Tạo mới
-                $member = ClassMember::create([
-                    'class_id' => $this->classId,
-                    'full_name' => $fullName,
-                    'email' => $email,
-                    'student_code' => strtoupper($studentCode),
-                    'user_id' => $user ? $user->id : null,
-                    'status' => 'active',
-                ]);
-
-                $activeCount++;
-            }
-
-            // Gửi email mời tạo tài khoản nếu học viên chưa có tài khoản
-            if ($email && !$user) {
-                $courseClass = \App\Models\CourseClass::find($this->classId);
-                if ($courseClass) {
-                    \Illuminate\Support\Facades\Mail::to($email)->send(
-                        new \App\Mail\StudentImportNotificationMail(
-                            $courseClass->name,
-                            $courseClass->code,
-                            strtoupper($studentCode),
-                            $fullName,
-                            $email
-                        )
-                    );
-                }
-            }
-            
-            // Xử lý điểm danh
+            // Kiểm tra trước lỗi nhập liệu cột ngày học điểm danh để báo lỗi nếu có
+            $isValidRow = true;
             foreach ($dateHeaders as $colIndex => $sessionId) {
                 $statusChar = mb_strtolower(trim((string) ($row[$colIndex] ?? '')));
-                
-                $status = 'pending';
-                if ($statusChar === 'c') {
-                    $status = 'present';
-                } elseif ($statusChar === 'm') {
-                    $status = 'late';
-                } elseif ($statusChar === 'v') {
-                    $status = 'absent';
-                } elseif ($statusChar === 'p') {
-                    $status = 'excused';
-                } elseif ($statusChar !== '') {
+                if ($statusChar !== '' && !in_array($statusChar, ['c', 'm', 'v', 'p'])) {
                     $colName = trim((string) ($header[$colIndex] ?? "Cột $colIndex"));
                     $this->errors[] = "Dòng {$actualRowNumber}, Cột '{$colName}': Điểm danh sai ('{$statusChar}'). Chỉ dùng c, m, v, p.";
-                    continue;
-                }
-                
-                if ($statusChar !== '') {
-                    AttendanceRecord::updateOrCreate([
-                        'class_session_id' => $sessionId,
-                        'class_member_id' => $member->id,
-                    ], [
-                        'status' => $status,
-                        'is_verified' => $member->user_id !== null,
-                    ]);
+                    $isValidRow = false;
                 }
             }
 
-            $this->successCount++;
+            if ($isValidRow) {
+                $validRows[] = $row instanceof \Illuminate\Support\Collection ? $row->toArray() : (array)$row;
+            }
+        }
+
+        if (!empty($validRows)) {
+            // Chia nhỏ danh sách thành các cụm 50 sinh viên và đẩy vào hàng đợi Job xử lý nền
+            $chunks = array_chunk($validRows, 50);
+            
+            if ($this->importToken) {
+                \Illuminate\Support\Facades\Cache::put("import_progress_{$this->importToken}", [
+                    'total_chunks' => count($chunks),
+                    'completed_chunks' => 0,
+                    'total_rows' => count($validRows),
+                    'processed_rows' => 0,
+                    'status' => 'processing'
+                ], now()->addMinutes(15));
+            }
+
+            foreach ($chunks as $chunk) {
+                \App\Jobs\ImportStudentsChunkJob::dispatch(
+                    $this->classId,
+                    $chunk,
+                    $dateHeaders,
+                    $emailColIndex,
+                    (int) auth()->id(),
+                    $this->importToken
+                );
+            }
+            $this->successCount = count($validRows);
         }
     }
 

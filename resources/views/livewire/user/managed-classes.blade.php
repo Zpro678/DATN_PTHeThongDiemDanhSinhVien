@@ -124,8 +124,8 @@
                             <div x-cloak x-show="open" x-on:click.outside="open = false" class="absolute right-0 top-full z-50 mt-1 w-44 rounded-xl border border-outline-variant/20 bg-white py-2 shadow-lg">
                                 <a href="{{ route('lecturer.classes.show', $class->id) }}" class="block w-full px-4 py-2 text-left text-sm font-medium hover:bg-surface-container">Xem lớp học</a>
                                 @if (! $isEnded)
-                                    <button type="button" x-on:click="$dispatch('open-class-settings', { classId: {{ $class->id }} })" class="block w-full px-4 py-2 text-left text-sm font-medium hover:bg-surface-container">Cài đặt lớp</button>
-                                    <button type="button" wire:click="endClass({{ $class->id }})" wire:confirm="Bạn có chắc chắn muốn kết thúc lớp học này? Hành động này sẽ khóa toàn bộ hoạt động điểm danh của lớp." class="block w-full px-4 py-2 text-left text-sm font-medium text-error hover:bg-error/10">Kết thúc lớp</button>
+                                    <a href="{{ route('lecturer.classes.settings', $class->id) }}" class="block w-full px-4 py-2 text-left text-sm font-medium hover:bg-surface-container">Cài đặt lớp</a>
+                                    <button type="button" wire:click="confirmEndClass({{ $class->id }})" class="block w-full px-4 py-2 text-left text-sm font-medium text-error hover:bg-error/10">Kết thúc lớp</button>
                                 @endif
                             </div>
                         </div>
@@ -134,21 +134,21 @@
                 
                 <div class="flex flex-1 flex-col p-4 pt-3">
                     <!-- Tags & Class Code -->
-                    <div class="flex items-center justify-between">
-                        <div class="flex items-center gap-2">
+                    <div class="flex items-center justify-between gap-2 min-w-0">
+                        <div class="flex items-center gap-1.5 shrink-0">
                             <span @class([
-                                'rounded-full px-2.5 py-0.5 text-[10px] font-bold uppercase tracking-wider',
+                                'whitespace-nowrap rounded-full px-2.5 py-0.5 text-[10px] font-bold uppercase tracking-wider',
                                 'bg-blue-100 text-blue-700' => ! $isEnded,
                                 'bg-surface-container text-on-surface-variant' => $isEnded,
                             ])>
                                 @if($isEnded) ĐÃ KẾT THÚC @else ĐANG HOẠT ĐỘNG @endif
                             </span>
-                            <span class="flex items-center gap-1 rounded-full bg-[#F59E0B]/10 px-2.5 py-0.5 text-[10px] font-bold uppercase tracking-wider text-[#F59E0B]">
+                            <span class="whitespace-nowrap flex items-center gap-1 rounded-full bg-[#F59E0B]/10 px-2.5 py-0.5 text-[10px] font-bold uppercase tracking-wider text-[#F59E0B]">
                                 <x-user.icon name="shield" :size="10" />
                                 Chủ lớp
                             </span>
                         </div>
-                        <span class="text-[11px] font-medium text-on-surface-variant">Mã lớp: <span class="font-bold text-on-surface">{{ $class->code }}</span></span>
+                        <span class="whitespace-nowrap text-[11px] font-medium text-on-surface-variant shrink-0">Mã lớp: <span class="font-bold text-on-surface">{{ $class->code }}</span></span>
                     </div>
 
                     <!-- Stats Row -->
@@ -229,4 +229,42 @@
                 </div>
             @endforelse
     </section>
+
+    {{-- Modal xác nhận Kết thúc lớp --}}
+    @if ($confirmingEndClassId)
+        <template x-teleport="body">
+            <div class="fixed inset-0 z-[110] flex items-center justify-center bg-slate-900/50 p-4 backdrop-blur-sm"
+                 x-data
+                 x-transition:enter="transition ease-out duration-200"
+                 x-transition:enter-start="opacity-0"
+                 x-transition:enter-end="opacity-100"
+                 x-transition:leave="transition ease-in duration-150"
+                 x-transition:leave-start="opacity-100"
+                 x-transition:leave-end="opacity-0">
+                <div class="w-full max-w-md rounded-2xl bg-white p-6 shadow-2xl"
+                     x-transition:enter="transition ease-out duration-200"
+                     x-transition:enter-start="opacity-0 scale-95 translate-y-4"
+                     x-transition:enter-end="opacity-100 scale-100 translate-y-0"
+                     x-transition:leave="transition ease-in duration-150"
+                     x-transition:leave-start="opacity-100 scale-100 translate-y-0"
+                     x-transition:leave-end="opacity-0 scale-95 translate-y-4">
+                    <div class="mb-4 flex items-center gap-3">
+                        <div class="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-amber-100">
+                            <x-user.icon name="alert-triangle" :size="20" class="text-amber-600" />
+                        </div>
+                        <h3 class="text-lg font-bold text-on-surface">Xác nhận kết thúc lớp</h3>
+                    </div>
+                    <p class="text-sm text-on-surface-variant">Bạn có chắc chắn muốn kết thúc lớp học này? Hành động này sẽ khóa toàn bộ hoạt động điểm danh của lớp.</p>
+                    <div class="mt-6 flex justify-end gap-3">
+                        <button type="button" wire:click="cancelEndClass" class="rounded-xl border border-outline-variant/30 px-5 py-2.5 text-sm font-bold text-on-surface-variant transition-colors hover:bg-surface-container-low">
+                            Hủy bỏ
+                        </button>
+                        <button type="button" wire:click="endClass({{ $confirmingEndClassId }})" class="rounded-xl bg-amber-500 px-5 py-2.5 text-sm font-bold text-white transition-colors hover:bg-amber-600">
+                            Kết thúc lớp
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </template>
+    @endif
 </div>

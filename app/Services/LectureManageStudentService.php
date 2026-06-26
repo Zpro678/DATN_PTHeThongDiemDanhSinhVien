@@ -33,6 +33,7 @@ class LectureManageStudentService
             ->leftJoinSub($studiedLessonsQuery, 'studied', function ($join) {
                 $join->on('class_members.class_id', '=', 'studied.class_id'); // Gắn tổng số tiết đã học của lớp vào từng sinh viên.
             })
+            ->leftJoin('classes', 'class_members.class_id', '=', 'classes.id') // Join trực tiếp bảng classes để đọc cài đặt mới nhất dù lớp chưa có buổi học nào chốt.
             ->leftJoin('attendance_records', function ($join) {
                 $join->on('class_members.id', '=', 'attendance_records.class_member_id')
                     ->whereNull('attendance_records.deleted_at'); // Không tính bản ghi điểm danh đã bị xóa mềm.
@@ -45,8 +46,8 @@ class LectureManageStudentService
             ->whereIn('class_members.id', $memberIds) // Chỉ tính cho danh sách sinh viên cần hiển thị.
             ->select('class_members.id') // Dùng id sinh viên làm key trả về.
             ->selectRaw('COALESCE(studied.studied_lessons, 0) as studied_lessons') // Tổng số tiết lớp của sinh viên đã học.
-            ->selectRaw('COALESCE(studied.lates_per_absent, 3) as lates_per_absent') // Lấy cài đặt quy đổi đi muộn.
-            ->selectRaw('COALESCE(studied.deduct_excused_absence, 1) as deduct_excused_absence') // Lấy cài đặt vắng có phép.
+            ->selectRaw('COALESCE(classes.lates_per_absent, 0) as lates_per_absent') // Đọc từ bảng classes (cài đặt mới nhất), fallback 0 = không quy đổi.
+            ->selectRaw('COALESCE(classes.deduct_excused_absence, 0) as deduct_excused_absence') // Đọc từ bảng classes, fallback false.
             ->selectRaw("
                 COALESCE(SUM(CASE WHEN attendance_records.status = 'present' AND class_sessions.id IS NOT NULL THEN class_sessions.lesson_count ELSE 0 END), 0) as present_lessons,
                 COALESCE(SUM(CASE WHEN attendance_records.status = 'late' AND class_sessions.id IS NOT NULL THEN class_sessions.lesson_count ELSE 0 END), 0) as late_lessons,
@@ -54,7 +55,7 @@ class LectureManageStudentService
                 COALESCE(SUM(CASE WHEN attendance_records.status = 'absent' AND class_sessions.id IS NOT NULL THEN class_sessions.lesson_count ELSE 0 END), 0) as absent_lessons,
                 COALESCE(SUM(CASE WHEN attendance_records.status = 'excused' AND class_sessions.id IS NOT NULL THEN class_sessions.lesson_count ELSE 0 END), 0) as excused_lessons
             ") // Cộng số tiết theo từng trạng thái điểm danh của sinh viên.
-            ->groupBy('class_members.id', 'studied.studied_lessons', 'studied.lates_per_absent', 'studied.deduct_excused_absence') // Gom theo từng sinh viên.
+            ->groupBy('class_members.id', 'studied.studied_lessons', 'classes.lates_per_absent', 'classes.deduct_excused_absence') // Gom theo từng sinh viên.
             ->get()
             ->mapWithKeys(function ($stats) {
                 $studiedLessons = (int) $stats->studied_lessons; // Tổng số tiết đã học của lớp sinh viên đó.

@@ -330,6 +330,5 @@
         
         <x-notification.notification />
         <livewire:student.join-class />
-        <livewire:lecturer.class-settings />
     </body>
 </html>

@@ -23,6 +23,7 @@ class AttendanceCheckIn extends Component
     public bool $isAutoCheckIn = false;
     public bool $isGuestForm = false;
     public bool $isGpsError = false;
+    public ?int $memberId = null;
 
     public function mount(string $token): void
     {
@@ -61,6 +62,7 @@ class AttendanceCheckIn extends Component
                 return;
             }
             
+            $this->memberId = $classMember->id;
             $this->initializeRecord($classMember->id);
         } else {
             $this->isGuestForm = true;
@@ -107,12 +109,13 @@ class AttendanceCheckIn extends Component
             return;
         }
         
+        $this->memberId = $classMember->id;
         $this->isGuestForm = false;
         $this->initializeRecord($classMember->id);
         $this->isAutoCheckIn = true;
     }
 
-    public function checkIn(?float $lat = null, ?float $lng = null): void
+    public function checkIn(?string $gpsCheckToken = null): void
     {
         if (!$this->session || !$this->record) {
             return;
@@ -139,49 +142,68 @@ class AttendanceCheckIn extends Component
         }
 
         $this->isGpsError = false;
+        $distanceMeters = null;
+        $gpsAccuracy = null;
+        $gpsLatRecorded = null;
+        $gpsLngRecorded = null;
+        $gpsFraudFlag = null;
 
         if ($this->session->gps_radius && $this->session->gps_latitude && $this->session->gps_longitude) {
-            if ($lat === null || $lng === null) {
+            if (!$gpsCheckToken) {
                 $this->statusMessage = 'Phiên điểm danh yêu cầu xác minh vị trí GPS. Vui lòng cấp quyền và bật vị trí trên trình duyệt.';
                 $this->isGpsError = true;
                 return;
             }
 
-            $distanceMeters = $this->calculateDistance($lat, $lng, $this->session->gps_latitude, $this->session->gps_longitude);
+            $service = app(\App\Services\GpsValidationService::class);
+            $verification = $service->consumeCheckToken($gpsCheckToken, $this->session);
+
+            if (!$verification) {
+                $this->statusMessage = 'Xác thực vị trí thất bại hoặc token hết hạn. Vui lòng load lại trang và thử lại.';
+                $this->isGpsError = true;
+                return;
+            }
+
+            $distanceMeters = $service->calculateDistance(
+                $verification->lat,
+                $verification->lng,
+                $this->session->gps_latitude,
+                $this->session->gps_longitude
+            );
+            $gpsAccuracy = $verification->accuracy;
+            $gpsLatRecorded = $verification->lat;
+            $gpsLngRecorded = $verification->lng;
+
             if ($distanceMeters > $this->session->gps_radius) {
                 $this->statusMessage = 'Vị trí của bạn quá xa lớp học (' . round($distanceMeters) . 'm). Bán kính cho phép là ' . $this->session->gps_radius . 'm.';
                 $this->isGpsError = true;
-                return;
+                
+                // Vẫn ghi nhận nhật ký gian lận
+                $gpsFraudFlag = 'out_of_radius';
             }
         }
 
         $this->record->update([
-            'status' => $status,
+            'status' => $gpsFraudFlag === 'out_of_radius' ? 'invalid' : $status,
             'check_in_time' => now(),
             'distance_meters' => $distanceMeters,
+            'gps_accuracy_meters' => $gpsAccuracy,
+            'gps_latitude_recorded' => $gpsLatRecorded,
+            'gps_longitude_recorded' => $gpsLngRecorded,
+            'gps_fraud_flag' => $gpsFraudFlag,
             'is_verified' => true,
         ]);
+
+        if ($gpsFraudFlag === 'out_of_radius') {
+            $this->isSuccess = false;
+            $this->statusMessage = 'Vị trí của bạn quá xa lớp học (' . round($distanceMeters) . 'm).';
+            return;
+        }
 
         $this->isSuccess = true;
         $this->statusMessage = 'Điểm danh thành công!';
         
         session()->flash('success', 'Điểm danh thành công!');
-    }
-
-    private function calculateDistance(float $lat1, float $lon1, float $lat2, float $lon2): float
-    {
-        $earthRadius = 6371000; // in meters
-        
-        $latDelta = deg2rad($lat2 - $lat1);
-        $lonDelta = deg2rad($lon2 - $lon1);
-        
-        $a = sin($latDelta / 2) * sin($latDelta / 2) +
-            cos(deg2rad($lat1)) * cos(deg2rad($lat2)) *
-            sin($lonDelta / 2) * sin($lonDelta / 2);
-            
-        $c = 2 * atan2(sqrt($a), sqrt(1 - $a));
-        
-        return $earthRadius * $c;
     }
 
     public function render(): View

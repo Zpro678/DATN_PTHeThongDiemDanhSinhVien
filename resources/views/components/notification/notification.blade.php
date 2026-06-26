@@ -3,12 +3,12 @@
 
 	{{-- Success Messages --}}
 	@if (session('success'))
-	<div wire:key="toast-success-{{ \Illuminate\Support\Str::random(10) }}" x-data="{ show: true }" x-show="show" x-init="setTimeout(() => show = false, 5000)" x-transition:leave="hiding" class="custom-toast server-toast" style="background-color: #28a745; color: white;">
+	<div wire:key="toast-success-{{ \Illuminate\Support\Str::random(10) }}" x-data="{ show: true }" x-show="show" x-init="setTimeout(() => show = false, 5000)" x-transition:leave="hiding" class="custom-toast server-toast toast-success">
 		<div class="toast-content">
 			<div class="toast-icon">
-				<svg style="flex-shrink: 0; min-width: 28px; min-height: 28px; display: block;" viewBox="0 0 24 24" width="28" height="28">
-					<circle cx="12" cy="12" r="12" fill="#d4edda" />
-					<path d="M7 13l3 3 7-7" stroke="#28a745" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" fill="none" />
+				<svg style="flex-shrink: 0; min-width: 24px; min-height: 24px; display: block;" viewBox="0 0 24 24" width="24" height="24">
+					<circle cx="12" cy="12" r="11" fill="#ffffff" />
+					<path d="M7.5 12.5l3 3 6-6" stroke="#15803d" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" fill="none" />
 				</svg>
 			</div>
 			<div class="toast-message">
@@ -24,9 +24,9 @@
 	<div wire:key="toast-error-{{ \Illuminate\Support\Str::random(10) }}" x-data="{ show: true }" x-show="show" x-init="setTimeout(() => show = false, 5000)" x-transition:leave="hiding" class="custom-toast server-toast toast-error">
 		<div class="toast-content">
 			<div class="toast-icon">
-				<svg style="flex-shrink: 0; min-width: 28px; min-height: 28px; display: block;" viewBox="0 0 24 24" width="28" height="28">
-					<circle cx="12" cy="12" r="12" fill="#f8d7da" />
-					<path d="M15 9l-6 6m0-6l6 6" stroke="#dc3545" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" fill="none" />
+				<svg style="flex-shrink: 0; min-width: 24px; min-height: 24px; display: block;" viewBox="0 0 24 24" width="24" height="24">
+					<circle cx="12" cy="12" r="11" fill="#ffffff" />
+					<path d="M15 9l-6 6m0-6l6 6" stroke="#dc2626" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" fill="none" />
 				</svg>
 			</div>
 			<div class="toast-message">
@@ -42,14 +42,14 @@
 	<div wire:key="toast-validation-{{ \Illuminate\Support\Str::random(10) }}" x-data="{ show: true }" x-show="show" x-init="setTimeout(() => show = false, 5000)" x-transition:leave="hiding" class="custom-toast server-toast toast-error">
 		<div class="toast-content">
 			<div class="toast-icon">
-				<svg style="flex-shrink: 0; min-width: 28px; min-height: 28px; display: block;" viewBox="0 0 24 24" width="28" height="28">
-					<circle cx="12" cy="12" r="12" fill="#f8d7da" />
-					<path d="M15 9l-6 6m0-6l6 6" stroke="#dc3545" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" fill="none" />
+				<svg style="flex-shrink: 0; min-width: 24px; min-height: 24px; display: block;" viewBox="0 0 24 24" width="24" height="24">
+					<circle cx="12" cy="12" r="11" fill="#ffffff" />
+					<path d="M15 9l-6 6m0-6l6 6" stroke="#dc2626" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" fill="none" />
 				</svg>
 			</div>
 			<div class="toast-message">
 				<div style="font-weight: 600; margin-bottom: 4px;">Vui lòng kiểm tra lại:</div>
-				<ul style="margin: 0; padding-left: 18px; line-height: 1.5;">
+				<ul style="margin: 0; padding-left: 18px; line-height: 1.5; font-size: 14px;">
 					@foreach ($errors->all() as $error)
 					<li>{{ $error }}</li>
 					@endforeach
@@ -66,84 +66,80 @@
 <style>
 	.custom-toast.server-toast {
 		pointer-events: auto;
-		padding: 15px 20px;
-		border-radius: 5px;
-		box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
-		min-width: 250px;
-		max-width: 400px;
+		padding: 14px 20px;
+		border-radius: 12px;
+		box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
+		min-width: 320px;
+		max-width: 450px;
 		word-break: break-word;
 		position: relative;
-		animation: slideInRight 0.4s ease-out forwards;
+		animation: slideInRight 0.3s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+		font-family: 'Inter', system-ui, -apple-system, sans-serif;
+	}
+
+	.toast-success {
+		background-color: #15803d;
+		color: #ffffff;
+	}
+
+	.toast-error {
+		background-color: #dc2626;
+		color: #ffffff;
 	}
 
 	.custom-toast.server-toast.hiding {
-		animation: slideOutRight 0.1s ease-in forwards !important;
-	}
-
-	@keyframes slideOutRight {
-		0% {
-			clip-path: inset(0 0 0 0);
-			transform: translateX(0);
-			opacity: 1;
-		}
-
-		100% {
-			clip-path: inset(0 0 0 100%);
-			transform: translateX(20px);
-			opacity: 0;
-		}
-	}
-
-	.toast-close {
-		pointer-events: auto !important;
-		user-select: none;
+		animation: slideOutRight 0.2s cubic-bezier(0.16, 1, 0.3, 1) forwards !important;
 	}
 
 	@keyframes slideInRight {
 		0% {
-			transform: translateX(100%);
+			transform: translateX(100%) translateY(-10px);
 			opacity: 0;
 		}
-
 		100% {
-			transform: translateX(0);
+			transform: translateX(0) translateY(0);
 			opacity: 1;
 		}
 	}
 
-	.toast-error {
-		background-color: #dc3545;
-		color: white;
-	}
-
-	.toast-warning {
-		background-color: #ffc107;
-		color: #212529;
+	@keyframes slideOutRight {
+		0% {
+			transform: translateX(0);
+			opacity: 1;
+		}
+		100% {
+			transform: translateX(100%);
+			opacity: 0;
+		}
 	}
 
 	.toast-content {
 		display: flex;
 		align-items: center;
 		gap: 12px;
-		padding-right: 20px;
+		padding-right: 15px;
 	}
 
 	.toast-message {
 		flex: 1;
-		font-family: sans-serif;
-		font-size: 15px;
+		font-size: 14px;
+		font-weight: 500;
 		line-height: 1.4;
 	}
 
 	.toast-close {
 		position: absolute;
-		top: 3px;
+		top: 50%;
 		right: 12px;
+		transform: translateY(-50%);
 		cursor: pointer;
-		font-size: 24px;
+		font-size: 20px;
 		line-height: 1;
 		opacity: 0.7;
-		color: inherit;
+		color: #ffffff;
+		transition: opacity 0.15s ease;
+		pointer-events: auto !important;
+		user-select: none;
 	}
 
 	.toast-close:hover {

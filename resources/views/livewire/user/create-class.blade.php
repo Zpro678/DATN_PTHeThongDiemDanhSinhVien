@@ -140,49 +140,152 @@
                             @error('totalLessons') <span class="block text-xs font-medium text-red-600">{{ $message }}</span> @enderror
                         </label>
 
-                        <label class="space-y-2">
+                        <div class="space-y-2" x-data="{
+                            open: false,
+                            value: @entangle('lateThreshold'),
+                            options: [
+                                { value: 5,  label: '5 phút' },
+                                { value: 10, label: '10 phút' },
+                                { value: 15, label: '15 phút' },
+                                { value: 20, label: '20 phút' },
+                                { value: 30, label: '30 phút' },
+                            ],
+                            get label() { return this.options.find(o => o.value == this.value)?.label ?? 'Chọn...' }
+                        }" @click.outside="open = false" @keydown.escape.window="open = false">
                             <span class="block text-[13px] font-semibold text-slate-700">Ngưỡng đi muộn <span class="text-red-500">*</span></span>
-                            <select wire:model="lateThreshold" class="h-12 w-full rounded-2xl border border-slate-200 bg-white px-4 text-sm font-semibold text-slate-800 outline-none transition-all hover:border-slate-300 focus:border-blue-500 focus:ring-4 focus:ring-blue-500/10">
-                                <option value="5">5 phút</option>
-                                <option value="10">10 phút</option>
-                                <option value="15">15 phút</option>
-                                <option value="20">20 phút</option>
-                                <option value="30">30 phút</option>
-                            </select>
-                            @error('lateThreshold') <span class="block text-xs font-medium text-red-600">{{ $message }}</span> @enderror
-                        </label>
-                    </div>
-
-                    <div class="mt-7 rounded-2xl border border-slate-200 bg-slate-50/70 p-5">
-                        <div class="flex flex-col gap-5 sm:flex-row sm:items-center sm:justify-between">
-                            <div class="flex gap-3">
-                                <div class="flex h-10 w-10 items-center justify-center rounded-2xl bg-white text-blue-600 shadow-sm">
-                                    <x-user.icon name="shield-check" :size="20" />
-                                </div>
-                                <div>
-                                    <span class="block text-sm font-extrabold text-slate-950">Yêu cầu duyệt tham gia</span>
-                                    <p class="mt-1 max-w-2xl text-[13px] leading-5 text-slate-500">Học viên tham gia bằng mã lớp cần được chủ lớp duyệt trước khi xuất hiện trong danh sách chính thức.</p>
+                            <div class="relative">
+                                <button type="button" @click="open = !open"
+                                    class="flex w-full items-center justify-between gap-3 rounded-2xl border border-slate-200 bg-white px-4 h-12 text-left text-sm font-semibold text-slate-800 outline-none transition-all hover:border-slate-300 focus:border-blue-500 focus:ring-4 focus:ring-blue-500/10"
+                                    :class="open ? 'border-blue-500 ring-4 ring-blue-500/10' : ''">
+                                    <span x-text="label"></span>
+                                    <x-user.icon name="chevron-down" :size="16" class="shrink-0 text-slate-400 transition-transform duration-200" x-bind:class="open ? 'rotate-180 text-blue-500' : ''" />
+                                </button>
+                                <div x-show="open" x-cloak x-transition:enter="transition ease-out duration-150" x-transition:enter-start="opacity-0 -translate-y-2" x-transition:enter-end="opacity-100 translate-y-0" x-transition:leave="transition ease-in duration-100" x-transition:leave-start="opacity-100 translate-y-0" x-transition:leave-end="opacity-0 -translate-y-2"
+                                    class="absolute left-0 right-0 top-full z-50 mt-1.5 overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-xl shadow-slate-900/10">
+                                    <template x-for="option in options" :key="option.value">
+                                        <button type="button"
+                                            @click="value = option.value; open = false"
+                                            class="flex w-full items-center justify-between px-4 py-3 text-sm font-bold transition-colors hover:bg-slate-50"
+                                            :class="value == option.value ? 'text-blue-600 bg-blue-50/50' : 'text-slate-700'">
+                                            <span x-text="option.label"></span>
+                                            <span x-show="value == option.value" class="flex h-4 w-4 items-center justify-center rounded-full bg-blue-600">
+                                                <x-user.icon name="check" :size="10" class="text-white" />
+                                            </span>
+                                        </button>
+                                    </template>
                                 </div>
                             </div>
+                            @error('lateThreshold') <span class="block text-xs font-medium text-red-600">{{ $message }}</span> @enderror
+                        </div>
 
-                            <button
-                                type="button"
-                                wire:click="$toggle('requireApproval')"
-                                role="switch"
-                                aria-label="Yêu cầu duyệt tham gia"
-                                aria-checked="{{ $requireApproval ? 'true' : 'false' }}"
-                                @class([
-                                    'relative inline-flex h-8 w-14 shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 focus:outline-none focus:ring-4 focus:ring-blue-500/20',
-                                    'bg-blue-600' => $requireApproval,
-                                    'bg-slate-300' => ! $requireApproval,
-                                ])
-                            >
-                                <span @class([
-                                    'pointer-events-none inline-block h-7 w-7 transform rounded-full bg-white shadow ring-0 transition duration-200',
-                                    'translate-x-6' => $requireApproval,
-                                    'translate-x-0' => ! $requireApproval,
-                                ])></span>
-                            </button>
+                        <div class="space-y-2" x-data="{
+                            open: false,
+                            value: @entangle('latesPerAbsent'),
+                            options: [
+                                { value: 0, label: 'Không quy đổi' },
+                                { value: 1, label: '1 lần muộn = 1 vắng' },
+                                { value: 2, label: '2 lần muộn = 1 vắng' },
+                                { value: 3, label: '3 lần muộn = 1 vắng' },
+                                { value: 4, label: '4 lần muộn = 1 vắng' },
+                                { value: 5, label: '5 lần muộn = 1 vắng' },
+                            ],
+                            get label() { return this.options.find(o => o.value == this.value)?.label ?? 'Chọn...' }
+                        }" @click.outside="open = false" @keydown.escape.window="open = false">
+                            <span class="block text-[13px] font-semibold text-slate-700">Quy đổi đi muộn <span class="text-red-500">*</span></span>
+                            <div class="relative">
+                                <button type="button" @click="open = !open"
+                                    class="flex w-full items-center justify-between gap-3 rounded-2xl border border-slate-200 bg-white px-4 h-12 text-left text-sm font-semibold text-slate-800 outline-none transition-all hover:border-slate-300 focus:border-blue-500 focus:ring-4 focus:ring-blue-500/10"
+                                    :class="open ? 'border-blue-500 ring-4 ring-blue-500/10' : ''">
+                                    <span x-text="label"></span>
+                                    <x-user.icon name="chevron-down" :size="16" class="shrink-0 text-slate-400 transition-transform duration-200" x-bind:class="open ? 'rotate-180 text-blue-500' : ''" />
+                                </button>
+                                <div x-show="open" x-cloak x-transition:enter="transition ease-out duration-150" x-transition:enter-start="opacity-0 -translate-y-2" x-transition:enter-end="opacity-100 translate-y-0" x-transition:leave="transition ease-in duration-100" x-transition:leave-start="opacity-100 translate-y-0" x-transition:leave-end="opacity-0 -translate-y-2"
+                                    class="absolute left-0 right-0 top-full z-50 mt-1.5 overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-xl shadow-slate-900/10">
+                                    <template x-for="option in options" :key="option.value">
+                                        <button type="button"
+                                            @click="value = option.value; open = false"
+                                            class="flex w-full items-center justify-between px-4 py-3 text-sm font-bold transition-colors hover:bg-slate-50"
+                                            :class="value == option.value ? 'text-blue-600 bg-blue-50/50' : 'text-slate-700'">
+                                            <span x-text="option.label"></span>
+                                            <span x-show="value == option.value" class="flex h-4 w-4 items-center justify-center rounded-full bg-blue-600">
+                                                <x-user.icon name="check" :size="10" class="text-white" />
+                                            </span>
+                                        </button>
+                                    </template>
+                                </div>
+                            </div>
+                            <p class="text-[12px] text-slate-400">Số lần đi muộn tích lũy để quy ra 1 buổi vắng khi tính chuyên cần.</p>
+                            @error('latesPerAbsent') <span class="block text-xs font-medium text-red-600">{{ $message }}</span> @enderror
+                        </div>
+                    </div>
+
+                    <div class="mt-7 space-y-4">
+                        {{-- Toggle: Trừ chuyên cần khi vắng có phép --}}
+                        <div class="rounded-2xl border border-slate-200 bg-slate-50/70 p-5">
+                            <div class="flex flex-col gap-5 sm:flex-row sm:items-center sm:justify-between">
+                                <div class="flex gap-3">
+                                    <div class="flex h-10 w-10 items-center justify-center rounded-2xl bg-white text-amber-500 shadow-sm">
+                                        <x-user.icon name="clock" :size="20" />
+                                    </div>
+                                    <div>
+                                        <span class="block text-sm font-extrabold text-slate-950">Trừ chuyên cần khi vắng có phép</span>
+                                        <p class="mt-1 max-w-2xl text-[13px] leading-5 text-slate-500">Nếu bật, buổi vắng có phép vẫn sẽ được tính vào tỷ lệ vắng khi xết chuyên cần.</p>
+                                    </div>
+                                </div>
+
+                                <button
+                                    type="button"
+                                    wire:click="$toggle('deductExcusedAbsence')"
+                                    role="switch"
+                                    aria-label="Trừ chuyên cần khi vắng có phép"
+                                    aria-checked="{{ $deductExcusedAbsence ? 'true' : 'false' }}"
+                                    @class([
+                                        'relative inline-flex h-8 w-14 shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 focus:outline-none focus:ring-4 focus:ring-amber-500/20',
+                                        'bg-amber-500' => $deductExcusedAbsence,
+                                        'bg-slate-300' => ! $deductExcusedAbsence,
+                                    ])
+                                >
+                                    <span @class([
+                                        'pointer-events-none inline-block h-7 w-7 transform rounded-full bg-white shadow ring-0 transition duration-200',
+                                        'translate-x-6' => $deductExcusedAbsence,
+                                        'translate-x-0' => ! $deductExcusedAbsence,
+                                    ])></span>
+                                </button>
+                            </div>
+                        </div>
+
+                        {{-- Toggle: Yêu cầu duyệt tham gia --}}
+                        <div class="rounded-2xl border border-slate-200 bg-slate-50/70 p-5">
+                            <div class="flex flex-col gap-5 sm:flex-row sm:items-center sm:justify-between">
+                                <div class="flex gap-3">
+                                    <div class="flex h-10 w-10 items-center justify-center rounded-2xl bg-white text-blue-600 shadow-sm">
+                                        <x-user.icon name="shield-check" :size="20" />
+                                    </div>
+                                    <div>
+                                        <span class="block text-sm font-extrabold text-slate-950">Yêu cầu duyệt tham gia</span>
+                                        <p class="mt-1 max-w-2xl text-[13px] leading-5 text-slate-500">Học viên tham gia bằng mã lớp cần được chủ lớp duyệt trước khi xuất hiện trong danh sách chính thức.</p>
+                                    </div>
+                                </div>
+
+                                <button
+                                    type="button"
+                                    wire:click="$toggle('requireApproval')"
+                                    role="switch"
+                                    aria-label="Yêu cầu duyệt tham gia"
+                                    aria-checked="{{ $requireApproval ? 'true' : 'false' }}"
+                                    @class([
+                                        'relative inline-flex h-8 w-14 shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 focus:outline-none focus:ring-4 focus:ring-blue-500/20',
+                                        'bg-blue-600' => $requireApproval,
+                                        'bg-slate-300' => ! $requireApproval,
+                                    ])
+                                >
+                                    <span @class([
+                                        'pointer-events-none inline-block h-7 w-7 transform rounded-full bg-white shadow ring-0 transition duration-200',
+                                        'translate-x-6' => $requireApproval,
+                                        'translate-x-0' => ! $requireApproval,
+                                    ])></span>
+                                </button>
+                            </div>
                         </div>
                     </div>
                 </section>

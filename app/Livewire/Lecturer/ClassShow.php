@@ -76,6 +76,54 @@ class ClassShow extends Component
     public bool $isEditingCode = false;
     public string $newClassCode = '';
 
+    // Các thuộc tính phục vụ theo dõi tiến trình import dạng chunk qua Cache/Polling
+    public ?string $importToken = null;
+    public bool $isImportingStatus = false;
+    public int $importTotalRows = 0;
+    public int $importProcessedRows = 0;
+    public int $importQuietTicks = 0;
+
+    public function checkImportProgress(): void
+    {
+        if (!$this->importToken) {
+            return;
+        }
+
+        $progress = \Illuminate\Support\Facades\Cache::get("import_progress_{$this->importToken}");
+        if ($progress) {
+            $this->importTotalRows = $progress['total_rows'];
+            
+            if ($progress['processed_rows'] === $this->importProcessedRows) {
+                $this->importQuietTicks++;
+            } else {
+                $this->importProcessedRows = $progress['processed_rows'];
+                $this->importQuietTicks = 0;
+            }
+
+            if ($progress['status'] === 'completed') {
+                $this->finalizeImport();
+                return;
+            }
+
+            // Nếu sau 3 giây (6 lần poll 500ms) không thấy tiến trình chạy (do Queue Worker không chạy)
+            if ($this->importQuietTicks >= 6) {
+                // Tự động chuyển sang xử lý đồng bộ để tránh bị treo
+                $this->finalizeImport();
+            }
+        }
+    }
+
+    protected function finalizeImport(): void
+    {
+        $this->closeImport();
+        
+        // Cập nhật lại số sinh viên
+        $this->studentsCount = $this->class->members()->where('status', 'active')->count();
+        
+        session()->flash('success', "Đã nhập thành công {$this->importSuccess} sinh viên vào lớp.");
+        $this->reset(['importToken', 'isImportingStatus', 'importTotalRows', 'importProcessedRows', 'importQuietTicks']);
+    }
+
     public function openImportFromPopup(): void
     {
         $this->showNoStudentsPopup = false;
@@ -149,7 +197,7 @@ class ClassShow extends Component
         ]);
 
         $this->isEditingCode = false;
-        session()->flash('status', 'Đã cập nhật mã lớp thành công.');
+        session()->flash('success', 'Đã cập nhật mã lớp thành công.');
     }
 
     public function generateRandomCode(): void
@@ -208,7 +256,13 @@ class ClassShow extends Component
             'importFile.extensions' => 'Định dạng file không hỗ trợ. Vui lòng dùng .xlsx, .xls, .csv',
         ]);
 
-        $import = new StudentsImport($this->class->id);
+        $this->importToken = \Illuminate\Support\Str::uuid()->toString();
+        $this->isImportingStatus = true;
+        $this->importTotalRows = 0;
+        $this->importProcessedRows = 0;
+        $this->importQuietTicks = 0;
+
+        $import = new StudentsImport($this->class->id, $this->importToken);
         $extension = $this->importFile->getClientOriginalExtension();
         $readerType = match (strtolower($extension)) {
             'csv' => \Maatwebsite\Excel\Excel::CSV,
@@ -245,14 +299,14 @@ class ClassShow extends Component
                     }
                 }
 
-                $this->closeImport();
-
-                // Cập nhật lại số sinh viên
-                $this->studentsCount = $this->class->members()->where('status', 'active')->count();
-
-                session()->flash('status', "Đã nhập thành công {$this->importSuccess} sinh viên vào lớp.");
+                // Do not close import yet. We will poll progress.
+            } else {
+                $this->isImportingStatus = false;
+                $this->importToken = null;
             }
         } catch (\Exception $e) {
+            $this->isImportingStatus = false;
+            $this->importToken = null;
             $this->addError('importFile', 'Có lỗi khi đọc file: '.$e->getMessage());
         }
     }

@@ -34,6 +34,12 @@ class CreateClass extends Component
     // Ngưỡng thời gian đi muộn (phút)
     public int $lateThreshold = 15;
 
+    // Số lần đi muộn được quy đổi thành 1 lần vắng (0 = không quy đổi)
+    public int $latesPerAbsent = 0;
+
+    // Có trừ chuyên cần khi vắng có phép hay không
+    public bool $deductExcusedAbsence = false;
+
     // Yêu cầu giảng viên duyệt khi sinh viên tham gia lớp bằng mã
     public bool $requireApproval = false;
 
@@ -117,11 +123,12 @@ class CreateClass extends Component
             'description' => ['nullable', 'string', 'max:5000'],
             'totalLessons' => ['required', 'integer', 'min:1', 'max:300'],
             'lateThreshold' => ['required', 'integer', 'in:5,10,15,20,30'],
+            'latesPerAbsent' => ['required', 'integer', 'in:0,1,2,3,4,5'],
+            'deductExcusedAbsence' => ['boolean'],
             'requireApproval' => ['boolean'],
         ], [
             'name.required' => 'Vui lòng nhập tên lớp.',
             'totalLessons.min' => 'Tổng số tiết phải lớn hơn 0.',
-
         ]);
 
         $code = $this->generateUniqueCode();
@@ -134,6 +141,8 @@ class CreateClass extends Component
             'semester' => $this->semester ?: null,
             'description' => $this->description ?: null,
             'late_threshold' => $this->lateThreshold,
+            'lates_per_absent' => $this->latesPerAbsent,
+            'deduct_excused_absence' => $this->deductExcusedAbsence,
             'total_lessons' => $this->totalLessons,
             'require_approval' => $this->requireApproval,
             'status' => 'active',

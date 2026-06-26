@@ -35,10 +35,14 @@
                 <x-user.icon name="send" :size="16" />
                 <span>Chia sẻ</span>
             </button>
-            <button type="button" x-on:click="$dispatch('open-class-settings', { classId: {{ $class->id }} })" class="inline-flex items-center gap-2 rounded-lg border border-slate-200 bg-white px-4 py-2 text-sm font-medium text-slate-600 transition-colors hover:bg-slate-50 hover:text-slate-900">
+            <a
+                href="{{ route('lecturer.classes.settings', $class) }}"
+                wire:navigate
+                class="inline-flex items-center gap-2 rounded-lg border border-slate-200 bg-white px-4 py-2 text-sm font-medium text-slate-600 transition-colors hover:bg-slate-50 hover:text-slate-900"
+            >
                 <x-user.icon name="settings" :size="18" />
                 Cài đặt lớp
-            </button>
+            </a>
             <a href="{{ route('managed-classes') }}" class="inline-flex items-center gap-2 rounded-lg bg-blue-600 px-4 py-2 text-sm font-medium text-white transition-colors hover:bg-blue-700">
                 <x-user.icon name="arrow-left" :size="16" />
                 Trở về
@@ -129,7 +133,7 @@
                     <span class="absolute right-2 top-2 flex h-5 w-5 items-center justify-center rounded-full bg-white text-[10px] font-bold text-rose-600">{{ $pendingLeaveRequests }}</span>
                 @endif
             </a>
-            <a href="{{ route('lecturer.class.statistics', ['class_id' => $class->id]) }}" wire:navigate class="group flex h-[100px] flex-col items-center justify-center gap-2 rounded-[20px] bg-slate-700 p-4 transition-colors hover:bg-slate-800">
+            <a href="{{ route('lecturer.class.statistics', ['class_id' => $class->id]) }}" wire:navigate class="group flex h-[100px] flex-col items-center justify-center gap-2 rounded-[20px] bg-slate-700 p-4 transition-colors hover:bg-slate-800" style="background-color: #334155;">
                 <div class="flex h-10 w-10 items-center justify-center rounded-full bg-white/20 text-white transition-colors group-hover:bg-white/30">
                     <x-user.icon name="bar-chart-2" :size="20" />
                 </div>
@@ -167,9 +171,10 @@
                     <thead class="border-b border-slate-200 bg-slate-50 text-sm uppercase text-black">
                         <tr>
                             <th scope="col" class="w-[15%] px-6 py-4 font-bold text-center">MSSV</th>
-                            <th scope="col" class="w-[30%] pl-6 pr-6 py-4 font-bold">Họ & Tên</th>
-                            <th scope="col" class="w-[30%] pl-6 pr-6 py-4 font-bold">Email</th>
-                            <th scope="col" class="w-[25%] px-6 py-4 font-bold text-center">Chuyên cần</th>
+                            <th scope="col" class="w-[25%] pl-6 pr-6 py-4 font-bold">Họ & Tên</th>
+                            <th scope="col" class="w-[25%] pl-6 pr-6 py-4 font-bold">Email</th>
+                            <th scope="col" class="w-[20%] px-6 py-4 font-bold text-center">Liên kết</th>
+                            <th scope="col" class="w-[15%] px-6 py-4 font-bold text-center">Chuyên cần</th>
                         </tr>
                     </thead>
                     <tbody class="divide-y divide-slate-100">
@@ -195,7 +200,20 @@
                                         <span class="font-bold text-slate-800">{{ $student->full_name }}</span>
                                     </div>
                                 </td>
-                                <td class="pl-6 pr-6 py-4 text-slate-500">{{ $student->user ? $student->user->email : '—' }}</td>
+                                <td class="pl-6 pr-6 py-4 text-slate-500">{{ $student->email ?? ($student->user ? $student->user->email : '—') }}</td>
+                                <td class="px-6 py-4 text-center">
+                                    @if($student->user_id)
+                                        <span class="inline-flex items-center gap-1 rounded-full bg-green-50 px-2.5 py-1 text-xs font-bold text-green-700">
+                                            <span class="h-1.5 w-1.5 rounded-full bg-green-600"></span>
+                                            Đã liên kết
+                                        </span>
+                                    @else
+                                        <span class="inline-flex items-center gap-1 rounded-full bg-slate-100 px-2.5 py-1 text-xs font-bold text-slate-500">
+                                            <span class="h-1.5 w-1.5 rounded-full bg-slate-400"></span>
+                                            Chưa liên kết
+                                        </span>
+                                    @endif
+                                </td>
                                 <td class="px-6 py-4 text-center">
                                     <span class="inline-flex rounded-md px-2 py-1 text-xs font-bold {{ $rateColor }}">
                                         {{ $rate }}%
@@ -245,8 +263,8 @@
                 {{-- Form Content --}}
                 <div class="space-y-4">
                     {{-- File Dropzone --}}
-                    <label class="group relative flex cursor-pointer flex-col items-center justify-center rounded-[20px] border-2 border-dashed border-slate-200 bg-[#F9FAFB] py-8 transition-colors hover:border-blue-400 hover:bg-blue-50/50">
-                        <input type="file" wire:model="importFile" accept=".xlsx,.xls,.csv" class="peer absolute inset-0 h-full w-full cursor-pointer opacity-0">
+                    <label class="group relative flex @if($isImportingStatus) cursor-not-allowed opacity-60 @else cursor-pointer @endif flex-col items-center justify-center rounded-[20px] border-2 border-dashed border-slate-200 bg-[#F9FAFB] py-8 transition-colors hover:border-blue-400 hover:bg-blue-50/50">
+                        <input type="file" wire:model="importFile" accept=".xlsx,.xls,.csv" @if($isImportingStatus) disabled @endif class="peer absolute inset-0 h-full w-full cursor-pointer opacity-0">
                         
                         <div class="flex flex-col items-center justify-center gap-3">
                             <div class="flex h-10 w-10 items-center justify-center rounded-full border-[2.5px] border-slate-500 text-slate-500 transition-colors group-hover:border-blue-600 group-hover:text-blue-600">
@@ -276,10 +294,29 @@
                     @error('importFile')<span class="mt-1 block text-center text-sm text-red-500">{{ $message }}</span>@enderror
                     
                     <div class="mt-4 flex items-center gap-2">
-                        <input type="checkbox" id="syncAttendanceShow" wire:model="syncAttendance" class="h-4 w-4 rounded border-slate-300 text-blue-600 focus:ring-blue-600">
+                        <input type="checkbox" id="syncAttendanceShow" wire:model="syncAttendance" @if($isImportingStatus) disabled @endif class="h-4 w-4 rounded border-slate-300 text-blue-600 focus:ring-blue-600">
                         <label for="syncAttendanceShow" class="text-[14px] text-slate-700 font-medium">Tự động thêm vào các buổi điểm danh đã có</label>
                     </div>
 
+                    {{-- Progress Bar --}}
+                    @if($isImportingStatus)
+                        <div class="mt-4 p-4 bg-blue-50 rounded-2xl flex flex-col gap-2 shadow-inner" wire:poll.500ms="checkImportProgress">
+                            <div class="flex justify-between text-sm font-semibold text-blue-700">
+                                <span class="flex items-center gap-2">
+                                    <svg class="animate-spin h-4 w-4 text-blue-600" fill="none" viewBox="0 0 24 24">
+                                        <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+                                        <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                                    </svg>
+                                    Đang ghi nhận học viên...
+                                </span>
+                                <span>{{ $importProcessedRows }}/{{ $importTotalRows }}</span>
+                            </div>
+                            <div class="w-full bg-blue-100 rounded-full h-2">
+                                <div class="bg-blue-600 h-2 rounded-full transition-all duration-300" style="width: {{ $importTotalRows > 0 ? ($importProcessedRows / $importTotalRows) * 100 : 0 }}%"></div>
+                            </div>
+                        </div>
+                    @endif
+ 
                     {{-- Error Summary --}}
                     @if(!empty($importErrors))
                         <div class="rounded-xl border border-red-200 bg-red-50 p-4">
@@ -292,16 +329,22 @@
                         </div>
                     @endif
                 </div>
-
+ 
                 {{-- Footer Buttons --}}
                 <div class="mt-6 flex justify-end gap-3">
-                    <button type="button" wire:click="closeImport" class="rounded-full border border-slate-300 bg-white px-6 py-2.5 text-[14px] font-semibold text-slate-700 transition-colors hover:bg-slate-50">
-                        Hủy bỏ
-                    </button>
-                    <button type="submit" class="flex items-center gap-2 rounded-full bg-blue-600 px-8 py-2.5 text-[14px] font-semibold text-white transition-colors hover:bg-blue-700">
-                        <span wire:loading.remove wire:target="processImport">Import</span>
-                        <span wire:loading wire:target="processImport">Đang xử lý...</span>
-                    </button>
+                    @if(!$isImportingStatus)
+                        <button type="button" wire:click="closeImport" class="rounded-full border border-slate-300 bg-white px-6 py-2.5 text-[14px] font-semibold text-slate-700 transition-colors hover:bg-slate-50">
+                            Hủy bỏ
+                        </button>
+                        <button type="submit" class="flex items-center gap-2 rounded-full bg-blue-600 px-8 py-2.5 text-[14px] font-semibold text-white transition-colors hover:bg-blue-700">
+                            <span wire:loading.remove wire:target="processImport">Import</span>
+                            <span wire:loading wire:target="processImport">Đang xử lý...</span>
+                        </button>
+                    @else
+                        <button type="button" disabled class="flex items-center gap-2 rounded-full bg-slate-100 px-8 py-2.5 text-[14px] font-semibold text-slate-400 cursor-not-allowed">
+                            Đang xử lý...
+                        </button>
+                    @endif
                 </div>
             </form>
             </div>

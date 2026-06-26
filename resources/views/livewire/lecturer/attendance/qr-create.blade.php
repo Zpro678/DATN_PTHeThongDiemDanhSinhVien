@@ -48,7 +48,17 @@
                 this.fetchLocation();
             }
             this.$watch('gpsEnabled', value => {
-                if (value) this.fetchLocation();
+                if (value) {
+                    this.fetchLocation();
+                } else {
+                    this.gpsLatitude = null;
+                    this.gpsLongitude = null;
+                }
+            });
+            this.$watch('selectedClassId', value => {
+                if (this.gpsEnabled) {
+                    this.fetchLocation();
+                }
             });
         },
         fetchLocation() {
@@ -62,11 +72,15 @@
                         console.warn('Cannot get location', error);
                         alert('Không thể lấy tọa độ GPS. Vui lòng cấp quyền vị trí cho trình duyệt.');
                         this.gpsEnabled = false;
+                        this.gpsLatitude = null;
+                        this.gpsLongitude = null;
                     }
                 );
             } else {
                 alert('Trình duyệt của bạn không hỗ trợ định vị.');
                 this.gpsEnabled = false;
+                this.gpsLatitude = null;
+                this.gpsLongitude = null;
             }
         }
     }"

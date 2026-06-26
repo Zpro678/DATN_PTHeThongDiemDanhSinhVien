@@ -5,16 +5,12 @@ namespace App\Livewire\Lecturer;
 use App\Models\CourseClass;
 use Illuminate\Contracts\View\View;
 use Illuminate\Validation\Rule;
-use Livewire\Attributes\On;
 use Livewire\Component;
 
 class ClassSettings extends Component
 {
-    // Cờ hiển thị modal
-    public bool $showModal = false;
-
     // Model lưu trữ thông tin của lớp học hiện tại đang được chỉnh sửa
-    public ?CourseClass $courseClass = null;
+    public CourseClass $courseClass;
 
     // Tên của lớp học
     public string $name = '';
@@ -49,33 +45,19 @@ class ClassSettings extends Component
     // Trạng thái của lớp học (active, archived, ended)
     public string $status = 'active';
 
-    // Trạng thái kích hoạt tính năng kiểm tra vị trí GPS khi điểm danh
-    public bool $gpsEnabled = false;
 
-    // Vĩ độ (Latitude) lưu trữ tọa độ GPS trung tâm của lớp học
-    public ?float $gpsLatitude = null;
-
-    // Kinh độ (Longitude) lưu trữ tọa độ GPS trung tâm của lớp học
-    public ?float $gpsLongitude = null;
-
-    // Bán kính cho phép điểm danh (tính bằng mét), sinh viên phải đứng trong vùng này
-    public int $gpsRadius = 50;
 
     // Trạng thái hiển thị modal xác nhận xóa lớp học
     public bool $isConfirmingDelete = false;
 
-    public function mount(): void
+    public function mount(CourseClass $courseClass): void
     {
-        // 
-    }
-
-    #[On('open-class-settings')]
-    public function openModal(int $classId): void
-    {
-        $courseClass = CourseClass::find($classId);
-        if (! $courseClass || $courseClass->owner_user_id !== auth()->id()) {
-            return;
-        }
+        // Kiểm tra quyền — chỉ chủ lớp mới được xem
+        abort_unless(
+            $courseClass->owner_user_id === auth()->id(),
+            403,
+            'Bạn không có quyền chỉnh sửa lớp học này.'
+        );
 
         $this->courseClass = $courseClass;
 
@@ -91,24 +73,11 @@ class ClassSettings extends Component
         $this->requireApproval = $courseClass->require_approval;
         $this->status = $courseClass->status;
 
-        $this->gpsEnabled = $courseClass->gps_latitude !== null;
-        $this->gpsLatitude = $courseClass->gps_latitude;
-        $this->gpsLongitude = $courseClass->gps_longitude;
-        $this->gpsRadius = $courseClass->gps_radius ?? 50;
 
-        $this->showModal = true;
-    }
-
-    public function closeModal(): void
-    {
-        $this->showModal = false;
-        $this->resetValidation();
     }
 
     public function save()
     {
-        if (!$this->courseClass) return;
-
         $validated = $this->validate([
             'name' => ['required', 'string', 'max:255'],
             'code' => ['required', 'string', 'max:20', Rule::unique('classes', 'code')->ignore($this->courseClass->id)],
@@ -117,24 +86,17 @@ class ClassSettings extends Component
             'description' => ['nullable', 'string', 'max:5000'],
             'totalLessons' => ['required', 'integer', 'min:1', 'max:300'],
             'lateThreshold' => ['required', 'integer', 'in:5,10,15,20,30'],
-            'latesPerAbsent' => ['required', 'integer', 'in:0,2,3,4,5'],
+            'latesPerAbsent' => ['required', 'integer', 'in:0,1,2,3,4,5'],
             'deductExcusedAbsence' => ['boolean'],
             'requireApproval' => ['boolean'],
             'status' => ['required', 'string', Rule::in(['active', 'archived', 'ended'])],
-            'gpsEnabled' => ['boolean'],
-            'gpsLatitude' => ['required_if:gpsEnabled,true', 'nullable', 'numeric'],
-            'gpsLongitude' => ['required_if:gpsEnabled,true', 'nullable', 'numeric'],
-            'gpsRadius' => ['required_if:gpsEnabled,true', 'integer', 'min:5', 'max:2500'],
+
         ], [
             'name.required' => 'Vui lòng nhập tên lớp.',
             'code.required' => 'Mã lớp không được để trống.',
             'code.unique' => 'Mã lớp đã tồn tại.',
             'totalLessons.min' => 'Tổng số tiết phải lớn hơn 0.',
-            'gpsLatitude.required_if' => 'Vui lòng lấy tọa độ GPS khi kích hoạt định vị.',
-            'gpsLongitude.required_if' => 'Vui lòng lấy tọa độ GPS khi kích hoạt định vị.',
-            'gpsRadius.required_if' => 'Vui lòng nhập bán kính GPS.',
-            'gpsRadius.min' => 'Bán kính tối thiểu là 5m.',
-            'gpsRadius.max' => 'Bán kính tối đa là 2500m.',
+
         ]);
 
         $this->courseClass->update([
@@ -149,22 +111,18 @@ class ClassSettings extends Component
             'total_lessons' => $validated['totalLessons'],
             'require_approval' => $validated['requireApproval'],
             'status' => $validated['status'],
-            'gps_latitude' => $validated['gpsEnabled'] ? $validated['gpsLatitude'] : null,
-            'gps_longitude' => $validated['gpsEnabled'] ? $validated['gpsLongitude'] : null,
-            'gps_radius' => $validated['gpsEnabled'] ? $validated['gpsRadius'] : null,
+
         ]);
 
-        $this->closeModal();
         session()->flash('status', 'Cài đặt lớp học đã được cập nhật.');
-        $this->dispatch('class-settings-updated');
-        $this->redirect(request()->header('Referer'), navigate: true);
+        $this->redirectRoute('lecturer.classes.show', $this->courseClass, navigate: true);
     }
 
     public function regenerateCode(): void
     {
-        if (!$this->courseClass) return;
         $this->code = CourseClass::generateUniqueCode($this->subjectCode, $this->semester, $this->courseClass->id);
     }
+
     // ─── Xoá lớp ────────────────────────────────────────────────────────────────
 
     public function confirmDelete(): void
@@ -179,18 +137,18 @@ class ClassSettings extends Component
 
     public function deleteClass(): void
     {
-        if (! $this->isConfirmingDelete || !$this->courseClass) {
+        if (! $this->isConfirmingDelete) {
             return;
         }
 
         $this->courseClass->delete();
-        $this->closeModal();
         session()->flash('status', 'Đã xóa lớp học thành công.');
         $this->redirectRoute('managed-classes', navigate: true);
     }
 
     public function render(): View
     {
-        return view('livewire.lecturer.class-settings');
+        return view('livewire.lecturer.class-settings')
+            ->layout('layouts.user', ['title' => 'Cài đặt · ' . $this->courseClass->name]);
     }
 }

@@ -6,6 +6,7 @@ use App\Models\ClassMember;
 use App\Models\CourseClass;
 use App\Models\ClassSession;
 use App\Models\AttendanceRecord;
+use App\Services\AttendanceCalculator;
 use App\Services\LectureManageStudentService;
 use Illuminate\Database\Eloquent\Builder;
 use Maatwebsite\Excel\Concerns\FromArray;
@@ -95,14 +96,16 @@ class StudentsSheet implements FromArray, ShouldAutoSize, WithStyles, WithTitle
             $headers[] = $session->date->format('d/m');
         }
 
-        $formulaName = 'Kết quả tính (%)';
+        $formulaName = 'Kết quả công thức (%)';
 
         $headers = array_merge($headers, [
             'Tổng số tiết đã học',
             'Có mặt', 
             'Đi muộn', 
             'Vắng không phép', 
-            'Vắng có phép', 
+            'Vắng có phép',
+            'Muộn quy đổi (tiết)',
+            'Chuyên cần (% cài đặt lớp)',
             $formulaName
         ]);
 
@@ -126,9 +129,29 @@ class StudentsSheet implements FromArray, ShouldAutoSize, WithStyles, WithTitle
                 'excused_lessons' => 0,
             ]);
 
-            // Calculate percentage based on formula
+            // Tính chuyên cần theo cài đặt lớp (lấy từ stats, do LectureManageStudentService đã join classes)
+            $latesPerAbsent     = (int) ($stats['lates_per_absent'] ?? 0);
+            $deductExcused      = (bool) ($stats['deduct_excused_absence'] ?? false);
+            $lateCount          = (int) ($stats['late_count'] ?? 0);
+            $presentLessons     = (int) ($stats['present_lessons'] ?? 0);
+            $lateLessons        = (int) ($stats['late_lessons'] ?? 0);
+            $absentLessons      = (int) ($stats['absent_lessons'] ?? 0);
+            $excusedLessons     = (int) ($stats['excused_lessons'] ?? 0);
+            $studied            = (int) ($stats['studied_lessons'] ?? 0);
+
+            $lateConvertedLessons = AttendanceCalculator::lateAbsentLessons($lateCount, $latesPerAbsent);
+            $classPercent = AttendanceCalculator::percent(
+                $presentLessons,
+                $lateLessons,
+                $excusedLessons,
+                $studied,
+                $lateCount,
+                $latesPerAbsent,
+                $deductExcused,
+            );
+
+            // Tính phần trăm theo công thức tự nhập
             $percent = 0;
-            $studied = $stats['studied_lessons'];
             if ($studied > 0) {
                 // Ensure the formula only contains safe characters and allowed math functions
                 $formulaStr = strtolower($this->formula);
@@ -143,16 +166,15 @@ class StudentsSheet implements FromArray, ShouldAutoSize, WithStyles, WithTitle
                 // Loại bỏ các ký tự đặc biệt nguy hiểm (chỉ cho phép a-z, số, toán tử, khoảng trắng, dấu phẩy)
                 $formulaStr = preg_replace('/[^a-z0-9\+\-\*\/\(\)\.\s,]/', '', $formulaStr);
                 
-                // Map variables to their values using word boundaries to prevent replacing letters inside functions (e.g. 'm' inside 'min')
-                $formulaStr = preg_replace('/\bc\b/', $stats['present_lessons'], $formulaStr);
-                $formulaStr = preg_replace('/\bm\b/', $stats['late_lessons'], $formulaStr);
-                $formulaStr = preg_replace('/\bv\b/', $stats['absent_lessons'], $formulaStr);
-                $formulaStr = preg_replace('/\bp\b/', $stats['excused_lessons'], $formulaStr);
+                // Map variables to their values using word boundaries
+                $formulaStr = preg_replace('/\bc\b/', $presentLessons, $formulaStr);
+                $formulaStr = preg_replace('/\bm\b/', $lateLessons, $formulaStr);
+                $formulaStr = preg_replace('/\bv\b/', $absentLessons, $formulaStr);
+                $formulaStr = preg_replace('/\bp\b/', $excusedLessons, $formulaStr);
                 $formulaStr = preg_replace('/\bt\b/', $studied, $formulaStr);
 
                 if (!empty($formulaStr)) {
                     try {
-                        // Suppress warnings from eval (e.g., division by zero syntax in edge cases)
                         $result = @eval("return $formulaStr;");
                         if (is_numeric($result)) {
                             $percent = round((float) $result, 2);
@@ -199,6 +221,8 @@ class StudentsSheet implements FromArray, ShouldAutoSize, WithStyles, WithTitle
                 $stats['late_lessons'],
                 $stats['absent_lessons'],
                 $stats['excused_lessons'],
+                $lateConvertedLessons > 0 ? $lateConvertedLessons : '-',
+                $classPercent . '%',
                 $percent . '%',
             ]);
 

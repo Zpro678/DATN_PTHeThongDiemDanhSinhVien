@@ -22,6 +22,10 @@ class AttendanceRecord extends Model
         'ip_address', // IP mạng của thiết bị điểm danh.
         'device_fingerprint', // Mã định danh thiết bị đã băm.
         'distance_meters', // Khoảng cách GPS tính bằng mét.
+        'gps_accuracy_meters', // Độ chính xác GPS của thiết bị sinh viên.
+        'gps_latitude_recorded', // Vĩ độ thực tế ghi nhận từ sinh viên.
+        'gps_longitude_recorded', // Kinh độ thực tế ghi nhận từ sinh viên.
+        'gps_fraud_flag', // Cờ ghi nhận gian lận ('low_accuracy', 'speed_anomaly', 'token_reuse').
         'note', // Ghi chú hoặc lý do liên quan đến bản ghi.
     ];
 
@@ -31,6 +35,9 @@ class AttendanceRecord extends Model
             'is_verified' => 'boolean', // Ép kiểu trạng thái xác thực.
             'check_in_time' => 'datetime', // Ép kiểu thời điểm check-in.
             'distance_meters' => 'decimal:2', // Ép kiểu khoảng cách GPS.
+            'gps_accuracy_meters' => 'float',
+            'gps_latitude_recorded' => 'float',
+            'gps_longitude_recorded' => 'float',
         ];
     }
 

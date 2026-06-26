@@ -109,7 +109,11 @@
                     <div class="mt-8 text-center" x-data="{
                         isCheckingIn: false,
                         hasGpsRequirement: @js((bool)$session?->gps_radius),
-                        performCheckIn() {
+                        sessionId: @js($session?->id),
+                        getMemberId() {
+                            return @this.get('memberId');
+                        },
+                        async performCheckIn() {
                             if (this.isCheckingIn) return;
                             this.isCheckingIn = true;
                             if (this.hasGpsRequirement) {
@@ -120,29 +124,89 @@
                                 }
 
                                 if (navigator.geolocation) {
-                                    navigator.geolocation.getCurrentPosition(
-                                        (position) => {
-                                            $wire.checkIn(position.coords.latitude, position.coords.longitude).then(() => {
-                                                this.isCheckingIn = false;
-                                            });
-                                        },
-                                        (error) => {
-                                            console.warn('Cannot get location', error);
-                                            let msg = 'Không thể lấy vị trí. Vui lòng bật vị trí (GPS) và cấp quyền cho trình duyệt.';
-                                            if (error.code === 1) msg = 'Bạn đã từ chối cấp quyền vị trí cho trình duyệt.';
-                                            if (error.code === 2) msg = 'Không thể xác định được vị trí hiện tại của thiết bị.';
-                                            if (error.code === 3) msg = 'Quá thời gian lấy vị trí (Timeout).';
-                                            alert(msg);
+                                    const memberId = this.getMemberId();
+                                    if (!memberId) {
+                                        alert('Không tìm thấy ID thành viên lớp học.');
+                                        this.isCheckingIn = false;
+                                        return;
+                                    }
+
+                                    try {
+                                        const csrfToken = document.querySelector('meta[name=csrf-token]').getAttribute('content');
+                                        const tokenResp = await fetch('/gps/token', {
+                                            method: 'POST',
+                                            headers: {
+                                                'Content-Type': 'application/json',
+                                                'X-CSRF-TOKEN': csrfToken
+                                            },
+                                            body: JSON.stringify({
+                                                session_id: this.sessionId,
+                                                member_id: memberId
+                                            })
+                                        });
+                                        const tokenData = await tokenResp.json();
+                                        if (!tokenData.success) {
+                                            alert('Không thể khởi tạo token GPS.');
                                             this.isCheckingIn = false;
-                                        },
-                                        { enableHighAccuracy: true, timeout: 10000, maximumAge: 0 }
-                                    );
+                                            return;
+                                        }
+
+                                        const verificationToken = tokenData.verification_token;
+
+                                        navigator.geolocation.getCurrentPosition(
+                                            async (position) => {
+                                                try {
+                                                    const verifyResp = await fetch('/gps/verify', {
+                                                        method: 'POST',
+                                                        headers: {
+                                                            'Content-Type': 'application/json',
+                                                            'X-CSRF-TOKEN': csrfToken
+                                                        },
+                                                        body: JSON.stringify({
+                                                            token: verificationToken,
+                                                            lat: position.coords.latitude,
+                                                            lng: position.coords.longitude,
+                                                            accuracy: position.coords.accuracy
+                                                        })
+                                                    });
+                                                    const verifyData = await verifyResp.json();
+                                                    if (!verifyData.success) {
+                                                        alert('Xác thực tọa độ GPS không thành công: ' + verifyData.error);
+                                                        // Gửi checkIn không token để kích hoạt thông báo lỗi của Livewire
+                                                        await $wire.checkIn(null);
+                                                        this.isCheckingIn = false;
+                                                        return;
+                                                    }
+
+                                                    $wire.checkIn(verifyData.check_token).then(() => {
+                                                        this.isCheckingIn = false;
+                                                    });
+                                                } catch (e) {
+                                                    alert('Lỗi kết nối máy chủ xác thực.');
+                                                    this.isCheckingIn = false;
+                                                }
+                                            },
+                                            (error) => {
+                                                console.warn('Cannot get location', error);
+                                                let msg = 'Không thể lấy vị trí. Vui lòng bật vị trí (GPS) và cấp quyền cho trình duyệt.';
+                                                if (error.code === 1) msg = 'Bạn đã từ chối cấp quyền vị trí cho trình duyệt.';
+                                                if (error.code === 2) msg = 'Không thể xác định được vị trí hiện tại của thiết bị.';
+                                                if (error.code === 3) msg = 'Quá thời gian lấy vị trí (Timeout).';
+                                                alert(msg);
+                                                this.isCheckingIn = false;
+                                            },
+                                            { enableHighAccuracy: true, timeout: 10000, maximumAge: 0 }
+                                        );
+                                    } catch (err) {
+                                        alert('Lỗi kết nối máy chủ khi lấy token.');
+                                        this.isCheckingIn = false;
+                                    }
                                 } else {
                                     alert('Trình duyệt của bạn không hỗ trợ định vị.');
                                     this.isCheckingIn = false;
                                 }
                             } else {
-                                $wire.checkIn(null, null).then(() => {
+                                $wire.checkIn(null).then(() => {
                                     this.isCheckingIn = false;
                                 });
                             }

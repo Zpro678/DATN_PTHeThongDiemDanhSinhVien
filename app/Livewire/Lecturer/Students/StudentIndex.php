@@ -43,6 +43,9 @@ class StudentIndex extends Component
     // Mã số sinh viên đang được chỉnh sửa
     public string $editingStudentCode = '';
 
+    // Email của sinh viên đang được chỉnh sửa
+    public string $editingEmail = '';
+
     // Trạng thái của sinh viên đang được chỉnh sửa
     public string $editingStatus = 'active';
 
@@ -64,6 +67,9 @@ class StudentIndex extends Component
 
     // Mã số sinh viên khi thêm mới
     public string $newStudentCode = '';
+
+    // Email sinh viên khi thêm mới
+    public string $newEmail = '';
 
     // ID lớp học mà sinh viên sẽ được thêm vào
     public string $newClassId = '';
@@ -87,6 +93,50 @@ class StudentIndex extends Component
     public int $importSuccess = 0;
 
     public bool $showBackButton = false;
+
+    // Các thuộc tính phục vụ theo dõi tiến trình import dạng chunk qua Cache/Polling
+    public ?string $importToken = null;
+    public bool $isImportingStatus = false;
+    public int $importTotalRows = 0;
+    public int $importProcessedRows = 0;
+    public int $importQuietTicks = 0;
+
+    public function checkImportProgress(): void
+    {
+        if (!$this->importToken) {
+            return;
+        }
+
+        $progress = \Illuminate\Support\Facades\Cache::get("import_progress_{$this->importToken}");
+        if ($progress) {
+            $this->importTotalRows = $progress['total_rows'];
+            
+            if ($progress['processed_rows'] === $this->importProcessedRows) {
+                $this->importQuietTicks++;
+            } else {
+                $this->importProcessedRows = $progress['processed_rows'];
+                $this->importQuietTicks = 0;
+            }
+
+            if ($progress['status'] === 'completed') {
+                $this->finalizeImport();
+                return;
+            }
+
+            // Nếu sau 3 giây (6 lần poll 500ms) không thấy tiến trình chạy (do Queue Worker không chạy)
+            if ($this->importQuietTicks >= 6) {
+                // Tự động chuyển sang xử lý đồng bộ để tránh bị treo
+                $this->finalizeImport();
+            }
+        }
+    }
+
+    protected function finalizeImport(): void
+    {
+        $this->closeImport();
+        session()->flash('success', "Đã nhập thành công {$this->importSuccess} sinh viên vào lớp.");
+        $this->reset(['importToken', 'isImportingStatus', 'importTotalRows', 'importProcessedRows', 'importQuietTicks']);
+    }
 
     public function mount(): void
     {
@@ -131,12 +181,13 @@ class StudentIndex extends Component
         $this->editingMemberId = $member->id;
         $this->editingName = $member->full_name;
         $this->editingStudentCode = $member->student_code;
+        $this->editingEmail = $member->email ?? '';
         $this->editingStatus = $member->status;
     }
 
     public function closeEdit(): void
     {
-        $this->reset(['editingMemberId', 'editingName', 'editingStudentCode']);
+        $this->reset(['editingMemberId', 'editingName', 'editingStudentCode', 'editingEmail']);
         $this->editingStatus = 'active';
         $this->resetValidation();
     }
@@ -145,12 +196,13 @@ class StudentIndex extends Component
     {
         $this->isAdding = true;
         $this->newClassId = $this->classFilter !== 'all' ? $this->classFilter : '';
+        $this->newEmail = '';
     }
 
     public function closeAdd(): void
     {
         $this->isAdding = false;
-        $this->reset(['newName', 'newStudentCode', 'newClassId']);
+        $this->reset(['newName', 'newStudentCode', 'newClassId', 'newEmail']);
         $this->resetValidation();
     }
 
@@ -160,10 +212,12 @@ class StudentIndex extends Component
             'newClassId' => ['required', 'exists:classes,id'],
             'newName' => ['required', 'string', 'max:255'],
             'newStudentCode' => ['required', 'string', 'max:50'],
+            'newEmail' => ['nullable', 'email', 'max:255'],
         ], [
             'newClassId.required' => 'Vui lòng chọn lớp học.',
             'newName.required' => 'Vui lòng nhập họ tên.',
             'newStudentCode.required' => 'Vui lòng nhập mã sinh viên.',
+            'newEmail.email' => 'Email không đúng định dạng.',
         ]);
 
         // Ensure the class belongs to the lecturer
@@ -193,15 +247,22 @@ class StudentIndex extends Component
             return;
         }
 
+        $user = null;
+        if ($validated['newEmail']) {
+            $user = \App\Models\User::where('email', $validated['newEmail'])->first();
+        }
+
         ClassMember::create([
             'class_id' => $courseClass->id,
             'full_name' => $validated['newName'],
+            'email' => $validated['newEmail'] ?: null,
             'student_code' => strtoupper($validated['newStudentCode']),
+            'user_id' => $user ? $user->id : null,
             'status' => 'active',
         ]);
 
         $this->closeAdd();
-        session()->flash('status', 'Sinh viên đã được thêm vào lớp thành công.');
+        session()->flash('success', 'Sinh viên đã được thêm vào lớp thành công.');
     }
 
     public function openImport(): void
@@ -248,7 +309,13 @@ class StudentIndex extends Component
 
         $courseClass = CourseClass::where('owner_user_id', auth()->id())->findOrFail($this->importClassId);
 
-        $import = new StudentsImport($courseClass->id);
+        $this->importToken = \Illuminate\Support\Str::uuid()->toString();
+        $this->isImportingStatus = true;
+        $this->importTotalRows = 0;
+        $this->importProcessedRows = 0;
+        $this->importQuietTicks = 0;
+
+        $import = new StudentsImport($courseClass->id, $this->importToken);
 
         $extension = $this->importFile->getClientOriginalExtension();
         $readerType = match (strtolower($extension)) {
@@ -286,10 +353,14 @@ class StudentIndex extends Component
                     }
                 }
 
-                $this->closeImport();
-                session()->flash('status', "Đã nhập thành công {$this->importSuccess} sinh viên vào lớp.");
+                // Do not close import yet. We will poll progress.
+            } else {
+                $this->isImportingStatus = false;
+                $this->importToken = null;
             }
         } catch (\Exception $e) {
+            $this->isImportingStatus = false;
+            $this->importToken = null;
             $this->addError('importFile', 'Có lỗi khi đọc file: '.$e->getMessage());
         }
     }
@@ -301,7 +372,10 @@ class StudentIndex extends Component
         $validated = $this->validate([
             'editingName' => ['required', 'string', 'max:255'],
             'editingStudentCode' => ['required', 'string', 'max:50'],
+            'editingEmail' => ['nullable', 'email', 'max:255'],
             'editingStatus' => ['required', 'in:active,dropped'],
+        ], [
+            'editingEmail.email' => 'Email không đúng định dạng.',
         ]);
 
         $duplicateExists = ClassMember::query()
@@ -316,9 +390,16 @@ class StudentIndex extends Component
             return;
         }
 
+        $user = null;
+        if ($validated['editingEmail']) {
+            $user = \App\Models\User::where('email', $validated['editingEmail'])->first();
+        }
+
         $member->update([
             'full_name' => $validated['editingName'],
             'student_code' => strtoupper($validated['editingStudentCode']),
+            'email' => $validated['editingEmail'] ?: null,
+            'user_id' => $user ? $user->id : ($member->email !== $validated['editingEmail'] ? null : $member->user_id),
             'status' => $validated['editingStatus'],
         ]);
 
@@ -328,7 +409,7 @@ class StudentIndex extends Component
         }
 
         $this->closeEdit();
-        session()->flash('status', 'Thông tin sinh viên đã được cập nhật.');
+        session()->flash('success', 'Thông tin sinh viên đã được cập nhật.');
     }
 
     public function confirmArchive(int $memberId): void
@@ -352,7 +433,7 @@ class StudentIndex extends Component
         $member->delete();
 
         $this->closeArchiveConfirm();
-        session()->flash('status', 'Sinh viên đã được chuyển vào lưu trữ.');
+        session()->flash('success', 'Sinh viên đã được chuyển vào lưu trữ.');
     }
 
     public function restoreMember(int $memberId): void
@@ -361,7 +442,7 @@ class StudentIndex extends Component
         $member->restore();
         $member->update(['status' => 'active']);
 
-        session()->flash('status', 'Sinh viên đã được khôi phục vào lớp.');
+        session()->flash('success', 'Sinh viên đã được khôi phục vào lớp.');
     }
 
     public function openExport()
