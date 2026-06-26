@@ -59,7 +59,9 @@
             'border' => 'border-secondary/30',
             'button' => 'border border-secondary text-secondary',
             'action' => 'Chốt sổ',
-            'href'   => route('lecturer.classes.attendance', $session['class_id']),
+            'href'   => ($session['is_qr'] ?? false)
+                ? route('lecturer.attendance.qr.session', $session['id'])
+                : route('lecturer.attendance.manual.session', $session['id']),
         ]);
     }
 

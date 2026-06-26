@@ -3,16 +3,6 @@
 @php
     $userName = Auth::user()?->name ?? 'Nguyễn Văn A';
     $userRole = Auth::user()?->email ?? 'User';
-    
-    $activeSession = null;
-    if (Auth::check()) {
-        $activeSession = \App\Models\ClassSession::query()
-            ->where('created_by', Auth::id())
-            ->where('status', 'active')
-            ->latest('id')
-            ->with('courseClass:id,name,code')
-            ->first();
-    }
 
     // Dữ liệu thông báo cho dropdown ở header (lấy từ DB qua NotificationService).
     $notificationData = app(\App\Services\NotificationService::class)->getDropdownData(Auth::user());
@@ -270,24 +260,6 @@
                         </div>
                     </div>
                 </header>
-
-                @if($activeSession)
-                    <div class="z-30 flex w-full items-center justify-between border-b border-emerald-200 bg-emerald-50 px-4 py-2.5 shadow-sm">
-                        <div class="flex items-center gap-2">
-                            <span class="relative flex h-2.5 w-2.5">
-                              <span class="absolute inline-flex h-full w-full animate-ping rounded-full bg-emerald-400 opacity-75"></span>
-                              <span class="relative inline-flex h-2.5 w-2.5 rounded-full bg-emerald-500"></span>
-                            </span>
-                            <p class="text-xs sm:text-sm font-medium text-emerald-800">
-                                Đang có phiên điểm danh mở tại lớp <span class="font-bold">{{ $activeSession->courseClass->code }}</span> ({{ $activeSession->name }}).
-                            </p>
-                        </div>
-                        <a href="{{ $activeSession->qr_token ? route('lecturer.attendance.qr.session', $activeSession) : route('lecturer.attendance.manual.session', $activeSession) }}" class="inline-flex shrink-0 items-center gap-1.5 rounded-lg bg-emerald-600 px-3 py-1.5 text-xs font-bold text-white shadow-sm transition-colors hover:bg-emerald-700">
-                            Đi tới phiên
-                            <x-user.icon name="arrow-right" :size="14" />
-                        </a>
-                    </div>
-                @endif
 
                 <div id="main-scroll-area" class="relative flex-1 overflow-auto pb-24 md:pb-0">
                     {{ $slot }}
