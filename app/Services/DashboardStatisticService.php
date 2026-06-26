@@ -176,6 +176,7 @@ class DashboardStatisticService
                 'class_sessions.date',
                 'class_sessions.status',
                 'class_sessions.class_id',
+                'class_sessions.qr_token',
                 'classes.name as class_name',
                 'classes.code as class_code',
             ])
@@ -188,6 +189,7 @@ class DashboardStatisticService
                 'date'       => $s->date,
                 'status'     => $s->status,
                 'class_id'   => $s->class_id,
+                'is_qr'      => ! empty($s->qr_token),
                 'class_name' => $s->class_name,
                 'class_code' => $s->class_code,
             ])
