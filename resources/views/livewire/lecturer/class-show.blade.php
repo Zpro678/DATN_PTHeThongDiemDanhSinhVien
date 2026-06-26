@@ -175,31 +175,46 @@
                     <tbody class="divide-y divide-slate-100">
                         @foreach($students as $student)
                             @php
-                                $summary = $student->attendanceSummary;
-                                $present = $summary->total_present ?? 0;
-                                $late = $summary->total_late ?? 0;
-                                $absent = $summary->total_absent ?? 0;
-                                
-                                $totalAttended = max(1, $sessionsCompleted);
-                                $rate = $totalAttended > 0 ? min(100, round((($present + ($late * 0.5)) / $totalAttended) * 100)) : 0;
-                                
-                                $rateColor = $rate >= 80 ? 'bg-green-50 text-green-600' : ($rate >= 60 ? 'bg-orange-50 text-orange-600' : 'bg-red-50 text-red-600');
+                                // $statsMap từ LectureManageStudentService — tính theo TIẾT, chỉ buổi đã chốt.
+                                $stats     = $statsMap[$student->id] ?? [];
+                                $rate      = (int) ($stats['attendance_percent'] ?? 100);
+                                $isBanned  = (bool) ($stats['is_banned']  ?? false);
+                                $isWarning = (bool) ($stats['is_warning'] ?? false);
+
+                                // Màu row: đỏ nhạt = cấm thi, vàng nhạt = cảnh báo.
+                                $rowBg = $isBanned ? 'bg-red-50/40' : ($isWarning ? 'bg-amber-50/40' : '');
                             @endphp
-                            <tr class="transition-colors hover:bg-slate-50/50">
+                            <tr class="transition-colors hover:bg-slate-50/50 {{ $rowBg }}">
                                 <td class="px-6 py-4 font-medium text-slate-700 text-center">{{ $student->student_code }}</td>
                                 <td class="pl-6 pr-6 py-4 text-left">
                                     <div class="flex items-center gap-3">
                                         <div class="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-blue-50 text-[13px] font-bold text-blue-600 uppercase">
                                             {{ mb_substr(collect(explode(' ', $student->full_name))->last(), 0, 1) }}
                                         </div>
-                                        <span class="font-bold text-slate-800">{{ $student->full_name }}</span>
+                                        <div class="flex flex-col gap-0.5">
+                                            <span class="font-bold text-slate-800">{{ $student->full_name }}</span>
+                                            @if ($isBanned)
+                                                <span class="inline-flex w-fit items-center gap-1 rounded-full bg-red-100 px-2 py-0.5 text-[10px] font-bold uppercase tracking-wide text-red-700">
+                                                    <x-user.icon name="alert-triangle" :size="10" />
+                                                    Nguy cơ cấm thi
+                                                </span>
+                                            @elseif ($isWarning)
+                                                <span class="inline-flex w-fit items-center gap-1 rounded-full bg-amber-100 px-2 py-0.5 text-[10px] font-bold uppercase tracking-wide text-amber-700">
+                                                    <x-user.icon name="alert-triangle" :size="10" />
+                                                    Cảnh báo chuyên cần
+                                                </span>
+                                            @endif
+                                        </div>
                                     </div>
                                 </td>
                                 <td class="pl-6 pr-6 py-4 text-slate-500">{{ $student->user ? $student->user->email : '—' }}</td>
                                 <td class="px-6 py-4 text-center">
-                                    <span class="inline-flex rounded-md px-2 py-1 text-xs font-bold {{ $rateColor }}">
-                                        {{ $rate }}%
-                                    </span>
+                                    <span @class([
+                                        'inline-flex rounded-md px-2 py-1 text-xs font-bold',
+                                        'bg-red-100 text-red-700'    => $isBanned,
+                                        'bg-amber-100 text-amber-700' => $isWarning,
+                                        'bg-green-50 text-green-600'  => !$isBanned && !$isWarning,
+                                    ])>{{ $rate }}%</span>
                                 </td>
                             </tr>
                         @endforeach

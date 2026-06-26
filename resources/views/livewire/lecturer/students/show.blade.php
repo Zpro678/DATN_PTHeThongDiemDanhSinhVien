@@ -1,7 +1,36 @@
 @php
-    $summary = $member->attendanceSummary;
-    $total = ($summary?->total_present ?? 0) + ($summary?->total_late ?? 0) + ($summary?->total_absent ?? 0) + ($summary?->total_excused ?? 0);
-    $rate = $total > 0 ? (int) round((($summary?->total_present ?? 0) + ($summary?->total_late ?? 0)) / $total * 100) : 0;
+    // $stats được truyền từ StudentShow::render() — lấy từ LectureManageStudentService
+    // (cùng nguồn với trang danh sách học viên, query live từ attendance_records).
+
+    // Số tiết học viên có mặt đúng giờ.
+    $presentLessons = (int) ($stats['present_lessons'] ?? 0);
+
+    // Số tiết học viên đi muộn.
+    $lateLessons = (int) ($stats['late_lessons'] ?? 0);
+
+    // Số tiết học viên vắng không phép.
+    $absentLessons = (int) ($stats['absent_lessons'] ?? 0);
+
+    // Số tiết học viên vắng có phép.
+    $excusedLessons = (int) ($stats['excused_lessons'] ?? 0);
+
+    // Tổng tiết kế hoạch cả khóa học (mẫu số tính %).
+    $plannedLessons = (int) ($stats['planned_lessons'] ?? 0);
+
+    // Số tiết vắng hiệu dụng (vắng + muộn quy đổi).
+    $effectiveAbsent = (int) ($stats['effective_absent_lessons'] ?? $absentLessons);
+
+    // % chuyên cần đã được tính qua AttendanceCalculator::percentOfPlanned trong service.
+    $rate = (int) ($stats['attendance_percent'] ?? 100);
+
+    // Ngưỡng vắng tối đa cho phép (20% tổng tiết kế hoạch).
+    $allowedAbsent = (int) ($stats['allowed_absent_lessons'] ?? 0);
+
+    // Cấm thi: vắng > 20% hoặc chuyên cần < 80%.
+    $isBanned = (bool) ($stats['is_banned'] ?? false);
+
+    // Cảnh báo: chuyên cần 80–84%.
+    $isWarning = (bool) ($stats['is_warning'] ?? false);
 @endphp
 
 <div class="mx-auto max-w-[1200px] space-y-6 p-4 pb-24 sm:p-8">
@@ -19,9 +48,18 @@
     </section>
 
     <section class="grid gap-4 sm:grid-cols-2 lg:grid-cols-5">
-        @foreach ([['Có mặt', $summary?->total_present ?? 0, 'text-emerald-600'], ['Đi muộn', $summary?->total_late ?? 0, 'text-amber-600'], ['Vắng', $summary?->total_absent ?? 0, 'text-red-600'], ['Có phép', $summary?->total_excused ?? 0, 'text-blue-600'], ['Chuyên cần', $rate.'%', 'text-primary']] as [$label, $value, $color])
+        @foreach ([['Có mặt', $presentLessons, 'text-emerald-600'], ['Đi muộn', $lateLessons, 'text-amber-600'], ['Vắng', $absentLessons, 'text-red-600'], ['Có phép', $excusedLessons, 'text-blue-600']] as [$label, $value, $color])
             <div class="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm"><p class="text-xs font-bold uppercase tracking-wider text-slate-500">{{ $label }}</p><p class="mt-2 text-3xl font-extrabold {{ $color }}">{{ $value }}</p></div>
         @endforeach
+        <div class="rounded-2xl border bg-white p-5 shadow-sm {{ $isBanned ? 'border-red-200' : ($isWarning ? 'border-amber-200' : 'border-slate-200') }}">
+            <p class="text-xs font-bold uppercase tracking-wider text-slate-500">Chuyên cần</p>
+            <p class="mt-2 text-3xl font-extrabold {{ $isBanned ? 'text-red-600' : ($isWarning ? 'text-amber-600' : 'text-primary') }}">{{ $rate }}%</p>
+            @if ($isBanned)
+                <p class="mt-1 text-[11px] font-bold uppercase tracking-wide text-red-500">Nguy cơ cấm thi</p>
+            @elseif ($isWarning)
+                <p class="mt-1 text-[11px] font-bold uppercase tracking-wide text-amber-500">Cảnh báo chuyên cần</p>
+            @endif
+        </div>
     </section>
 
     <section class="overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm">

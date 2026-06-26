@@ -8,6 +8,7 @@ use App\Models\ClassSession;
 use App\Models\CourseClass;
 use App\Models\LeaveRequest;
 use Illuminate\Support\Carbon;
+use App\Services\AttendanceCalculator;
 
 class DashboardStatisticService
 {
@@ -67,21 +68,14 @@ class DashboardStatisticService
             ->toArray();
     }
 
-    private function getUnexcusedAbsenceWarnings($classIds, float $attendanceThreshold = 80, float $nearMargin = 5): array
+    private function getUnexcusedAbsenceWarnings($classIds, float $nearMarginPercent = 5): array
     {
-        $maxUnexcusedAbsencePercent = 100 - $attendanceThreshold;
-        $warningUnexcusedAbsencePercent = max(0, $maxUnexcusedAbsencePercent - $nearMargin);
-
-        $studiedLessonsQuery = ClassSession::query()
-            ->where('status', 'closed')
-            ->selectRaw('class_id, COALESCE(SUM(lesson_count), 0) as studied_lessons')
-            ->groupBy('class_id');
+        // Ngưỡng vắng tối đa theo AttendanceCalculator (20% tổng tiết kế hoạch).
+        $absenceLimitRatio   = AttendanceCalculator::ABSENCE_LIMIT_RATIO;        // 0.20
+        $warningLimitRatio   = max(0.0, $absenceLimitRatio - $nearMarginPercent / 100); // 0.15
 
         $warningStudents = ClassMember::query()
             ->join('classes', 'class_members.class_id', '=', 'classes.id')
-            ->leftJoinSub($studiedLessonsQuery, 'studied', function ($join) {
-                $join->on('class_members.class_id', '=', 'studied.class_id');
-            })
             ->leftJoin('attendance_records', 'class_members.id', '=', 'attendance_records.class_member_id')
             ->leftJoin('class_sessions', function ($join) {
                 $join->on('attendance_records.class_session_id', '=', 'class_sessions.id')
@@ -96,54 +90,59 @@ class DashboardStatisticService
                 'class_members.student_code',
                 'class_members.full_name',
                 'classes.name as class_name',
+                'classes.total_lessons as planned_lessons',
             ])
-            ->selectRaw('COALESCE(studied.studied_lessons, 0) as studied_lessons')
-            ->selectRaw("
-                COALESCE(SUM(CASE
-                    WHEN attendance_records.status = 'absent' AND class_sessions.id IS NOT NULL
-                    THEN class_sessions.lesson_count
-                    ELSE 0
-                END), 0) as unexcused_absent_lessons
-            ")
+            ->selectRaw("COALESCE(SUM(CASE WHEN attendance_records.status = 'absent'  AND class_sessions.id IS NOT NULL THEN class_sessions.lesson_count ELSE 0 END), 0) as absent_lessons")
+            ->selectRaw("COALESCE(SUM(CASE WHEN attendance_records.status = 'excused' AND class_sessions.id IS NOT NULL THEN class_sessions.lesson_count ELSE 0 END), 0) as excused_lessons")
+            ->selectRaw("COALESCE(SUM(CASE WHEN attendance_records.status = 'late'    AND class_sessions.id IS NOT NULL THEN 1 ELSE 0 END), 0) as late_count")
             ->groupBy(
                 'class_members.id',
                 'class_members.class_id',
                 'class_members.student_code',
                 'class_members.full_name',
                 'classes.name',
-                'studied.studied_lessons'
+                'classes.total_lessons',
             )
             ->get()
-            ->map(function ($student) use ($attendanceThreshold, $maxUnexcusedAbsencePercent) {
-                $studiedLessons = (int) $student->studied_lessons;
-                $unexcusedAbsentLessons = (int) $student->unexcused_absent_lessons;
+            ->map(function ($student) use ($absenceLimitRatio, $warningLimitRatio) {
+                $plannedLessons  = (int) $student->planned_lessons;
+                $absentLessons   = (int) $student->absent_lessons;
+                $excusedLessons  = (int) $student->excused_lessons;
+                $lateCount       = (int) $student->late_count;
 
-                if ($studiedLessons <= 0) {
+                // Dùng AttendanceCalculator để tính đúng theo quy ước toàn hệ thống.
+                $counted         = AttendanceCalculator::countedLessons($plannedLessons, $excusedLessons);
+                $effectiveAbsent = AttendanceCalculator::effectiveAbsentLessons($absentLessons, $lateCount);
+
+                if ($counted <= 0 || $plannedLessons <= 0) {
                     return null;
                 }
 
-                $unexcusedAbsencePercent = round(($unexcusedAbsentLessons / $studiedLessons) * 100, 2);
-                $attendancePercent = max(round(100 - $unexcusedAbsencePercent, 2), 0);
+                $absenceRatio      = $effectiveAbsent / $counted;
+                $attendancePercent = AttendanceCalculator::percentOfPlanned($plannedLessons, $excusedLessons, $absentLessons, $lateCount);
+
+                if ($absenceRatio < $warningLimitRatio) {
+                    return null;
+                }
 
                 return [
-                    'id' => $student->id,
-                    'class_id' => $student->class_id,
-                    'class_name' => $student->class_name,
-                    'student_code' => $student->student_code,
-                    'full_name' => $student->full_name,
-                    'studied_lessons' => $studiedLessons,
-                    'unexcused_absent_lessons' => $unexcusedAbsentLessons,
-                    'unexcused_absence_percent' => $unexcusedAbsencePercent,
-                    'attendance_percent' => $attendancePercent,
-                    'threshold_percent' => $attendanceThreshold,
-                    'status' => $unexcusedAbsencePercent >= $maxUnexcusedAbsencePercent
-                        ? 'exceeded'
-                        : 'at_risk',
+                    'id'                       => $student->id,
+                    'class_id'                 => $student->class_id,
+                    'class_name'               => $student->class_name,
+                    'student_code'             => $student->student_code,
+                    'full_name'                => $student->full_name,
+                    'planned_lessons'          => $plannedLessons,
+                    'absent_lessons'           => $absentLessons,
+                    'excused_lessons'          => $excusedLessons,
+                    'effective_absent_lessons' => $effectiveAbsent,
+                    'present_of_planned'       => max($plannedLessons - $excusedLessons - $effectiveAbsent, 0),
+                    'attendance_percent'       => $attendancePercent,
+                    'absence_ratio_percent'    => round($absenceRatio * 100, 1),
+                    'status'                   => $absenceRatio >= $absenceLimitRatio ? 'exceeded' : 'at_risk',
                 ];
             })
-            ->filter(fn (?array $student) => $student !== null
-                && $student['unexcused_absence_percent'] >= $warningUnexcusedAbsencePercent)
-            ->sortByDesc('unexcused_absence_percent')
+            ->filter(fn (?array $s) => $s !== null)
+            ->sortByDesc('absence_ratio_percent')
             ->values();
 
         return [
@@ -162,6 +161,72 @@ class DashboardStatisticService
             ->whereIn('class_members.class_id', $classIds)
             ->where('leave_requests.status', 'pending')
             ->count('leave_requests.id');
+    }
+
+    private function getUnclosedSessionsList($classIds, int $limit = 5): array
+    {
+        return ClassSession::query()
+            ->join('classes', 'class_sessions.class_id', '=', 'classes.id')
+            ->whereIn('class_sessions.class_id', $classIds)
+            ->where('class_sessions.status', '!=', 'closed')
+            ->whereNull('classes.deleted_at')
+            ->select([
+                'class_sessions.id',
+                'class_sessions.name',
+                'class_sessions.date',
+                'class_sessions.status',
+                'class_sessions.class_id',
+                'classes.name as class_name',
+                'classes.code as class_code',
+            ])
+            ->orderByDesc('class_sessions.date')
+            ->take($limit)
+            ->get()
+            ->map(fn ($s) => [
+                'id'         => $s->id,
+                'name'       => $s->name,
+                'date'       => $s->date,
+                'status'     => $s->status,
+                'class_id'   => $s->class_id,
+                'class_name' => $s->class_name,
+                'class_code' => $s->class_code,
+            ])
+            ->toArray();
+    }
+
+    private function getPendingLeaveRequestsList($classIds, int $limit = 5): array
+    {
+        return LeaveRequest::query()
+            ->join('class_members', 'leave_requests.class_member_id', '=', 'class_members.id')
+            ->join('classes', 'class_members.class_id', '=', 'classes.id')
+            ->leftJoin('class_sessions', 'leave_requests.class_session_id', '=', 'class_sessions.id')
+            ->whereIn('class_members.class_id', $classIds)
+            ->where('leave_requests.status', 'pending')
+            ->whereNull('classes.deleted_at')
+            ->select([
+                'leave_requests.id',
+                'leave_requests.class_member_id',
+                'class_members.student_code',
+                'class_members.full_name',
+                'class_members.class_id',
+                'classes.name as class_name',
+                'class_sessions.date as session_date',
+                'class_sessions.name as session_name',
+            ])
+            ->orderByDesc('leave_requests.created_at')
+            ->take($limit)
+            ->get()
+            ->map(fn ($r) => [
+                'id'           => $r->id,
+                'member_id'    => $r->class_member_id,
+                'student_code' => $r->student_code,
+                'full_name'    => $r->full_name,
+                'class_id'     => $r->class_id,
+                'class_name'   => $r->class_name,
+                'session_date' => $r->session_date,
+                'session_name' => $r->session_name,
+            ])
+            ->toArray();
     }
 
     private function formatActivityTime($value): string
@@ -360,6 +425,8 @@ class DashboardStatisticService
                 'attendance_exceeded_students_count' => 0,
                 'attendance_warning_students' => [],
                 'pending_leave_requests_count' => 0,
+                'unclosed_sessions_list' => [],
+                'pending_leave_requests_list' => [],
                 'recent_activities' => [],
                 'classes_progress' => [],
             ];
@@ -437,25 +504,29 @@ class DashboardStatisticService
         $absenceWarnings = $this->getUnexcusedAbsenceWarnings($classIds);
         $pendingLeaveRequestsCount = $this->getPendingLeaveRequestsCount($classIds);
         $recentActivities = $this->getRecentActivities($classIds, $absenceWarnings);
+        $unclosedSessionsList = $this->getUnclosedSessionsList($classIds);
+        $pendingLeaveRequestsList = $this->getPendingLeaveRequestsList($classIds);
 
         return [
-            'total_students' => $totalStudents, // Tổng sinh viên đang hoạt động trong các lớp của chủ lớp.
-            'total_required_lessons' => $totalRequiredLessons, // Tổng số tiết phải học của tất cả lớp.
-            'total_studied_lessons' => $totalStudiedLessons, // Tổng số tiết đã học, chỉ tính các buổi đã chốt.
-            'remaining_lessons' => $remainingLessons, // Tổng số tiết còn lại phải học.
-            'lesson_progress_percent' => $lessonProgressPercent, // Phần trăm tiến độ học chung của tất cả lớp.
-            'total_present' => $totalPresent, // Tổng số tiết sinh viên có mặt hoặc đi trễ.
-            'total_absent' => $totalAbsent, // Tổng số tiết sinh viên vắng hoặc vắng có phép.
-            'total_classes' => $totalClasses, // Tổng số lớp do user hiện tại quản lý.
-            'today_attendance_sessions' => $todayAttendanceSessions, // Số buổi điểm danh diễn ra trong hôm nay.
-            'unclosed_attendance_sessions' => $unclosedAttendanceSessions, // Số buổi điểm danh chưa chốt sổ.
-            'attendance_sessions_by_date' => $attendanceSessionsByDate, // Thống kê số buổi điểm danh theo từng ngày.
-            'attendance_warning_students_count' => $absenceWarnings['count'], // Số sinh viên gần hoặc đã vượt ngưỡng nghỉ không phép.
-            'attendance_exceeded_students_count' => $absenceWarnings['exceeded_count'], // Số sinh viên đã vượt ngưỡng chuyên cần 80%.
-            'attendance_warning_students' => $absenceWarnings['students'], // Danh sách sinh viên cần cảnh báo chuyên cần.
-            'pending_leave_requests_count' => $pendingLeaveRequestsCount, // Tổng số đơn xin nghỉ đang chờ chủ lớp duyệt.
-            'recent_activities' => $recentActivities, // Danh sách hoạt động gần đây từ điểm danh, đơn nghỉ và cảnh báo chuyên cần.
-            'classes_progress' => $classesProgress, // Tiến độ học chi tiết của từng lớp.
+            'total_students' => $totalStudents,
+            'total_required_lessons' => $totalRequiredLessons,
+            'total_studied_lessons' => $totalStudiedLessons,
+            'remaining_lessons' => $remainingLessons,
+            'lesson_progress_percent' => $lessonProgressPercent,
+            'total_present' => $totalPresent,
+            'total_absent' => $totalAbsent,
+            'total_classes' => $totalClasses,
+            'today_attendance_sessions' => $todayAttendanceSessions,
+            'unclosed_attendance_sessions' => $unclosedAttendanceSessions,
+            'attendance_sessions_by_date' => $attendanceSessionsByDate,
+            'attendance_warning_students_count' => $absenceWarnings['count'],
+            'attendance_exceeded_students_count' => $absenceWarnings['exceeded_count'],
+            'attendance_warning_students' => $absenceWarnings['students'],
+            'pending_leave_requests_count' => $pendingLeaveRequestsCount,
+            'unclosed_sessions_list' => $unclosedSessionsList,
+            'pending_leave_requests_list' => $pendingLeaveRequestsList,
+            'recent_activities' => $recentActivities,
+            'classes_progress' => $classesProgress,
         ];
     }
 }

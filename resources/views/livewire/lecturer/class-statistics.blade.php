@@ -1,102 +1,296 @@
-<div class="space-y-6 animate-in fade-in slide-in-from-bottom-4 duration-500">
+<div class="mx-auto max-w-[1400px] space-y-6 p-4 pb-24 sm:p-8 animate-in fade-in slide-in-from-bottom-4 duration-500">
+
+    {{-- Header --}}
     <div class="flex items-center gap-4">
-        <a href="{{ route('lecturer.classes.show', $courseClass->id) }}" class="flex h-10 w-10 items-center justify-center rounded-full bg-surface-container-low text-on-surface-variant transition-colors hover:bg-surface-container hover:text-on-surface">
+        <a href="{{ route('lecturer.classes.show', $class->id) }}" wire:navigate
+            class="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-surface-container-low text-on-surface-variant transition-colors hover:bg-surface-container hover:text-on-surface">
             <x-user.icon name="arrow-left" :size="20" />
         </a>
-        <div>
-            <h1 class="text-2xl font-bold text-on-surface">Thống kê lớp: {{ $courseClass->name }}</h1>
-            <p class="text-sm text-on-surface-variant">{{ $courseClass->code }} • {{ $courseClass->semester ?? 'Chưa xác định' }}</p>
+        <div class="min-w-0 flex-1">
+            <h1 class="truncate text-2xl font-bold text-on-surface">Thống kê: {{ $class->name }}</h1>
+            <p class="text-sm text-on-surface-variant">{{ $class->code }} · {{ $class->semester ?? 'Chưa xác định' }}</p>
         </div>
+        <a href="{{ route('lecturer.students.index') }}" wire:navigate
+            class="hidden shrink-0 items-center gap-2 rounded-xl border border-outline-variant/30 bg-white px-4 py-2 text-sm font-semibold text-on-surface-variant shadow-sm transition hover:bg-surface-container md:flex">
+            <x-user.icon name="users" :size="16" />
+            Quản lý học viên
+        </a>
     </div>
 
-    <!-- Overview Stats -->
-    <div class="grid grid-cols-1 gap-4 md:grid-cols-3">
-        <div class="flex items-center gap-4 rounded-2xl bg-white p-5 shadow-sm ring-1 ring-outline-variant/10 transition-shadow hover:shadow-md">
-            <div class="flex h-14 w-14 shrink-0 items-center justify-center rounded-full bg-tertiary/10 text-tertiary">
-                <x-user.icon name="users" :size="28" />
+    {{-- Summary cards --}}
+    @php
+        $cards = [
+            ['label' => 'Tổng học viên',    'value' => $totalStudents,                             'sub' => 'đang hoạt động',                    'icon' => 'users',         'color' => 'text-tertiary',  'bg' => 'bg-tertiary/10'],
+            ['label' => 'Buổi đã chốt',     'value' => "{$closedCount}/{$totalSessions}",          'sub' => 'buổi đã chốt sổ',                   'icon' => 'calendar-check','color' => 'text-secondary', 'bg' => 'bg-secondary/10'],
+            ['label' => 'Tiến độ tiết học', 'value' => "{$studiedLessons}/{$plannedLessons}",      'sub' => 'tiết đã học / kế hoạch',            'icon' => 'book-open',     'color' => 'text-primary',   'bg' => 'bg-primary/10'],
+            ['label' => 'CC trung bình',    'value' => "{$avgAttendance}%",                        'sub' => 'chuyên cần toàn lớp',               'icon' => 'bar-chart-2',   'color' => ($avgAttendance < 80 ? 'text-error' : ($avgAttendance < 85 ? 'text-secondary' : 'text-tertiary')), 'bg' => ($avgAttendance < 80 ? 'bg-error/10' : ($avgAttendance < 85 ? 'bg-secondary/10' : 'bg-tertiary/10'))],
+            ['label' => 'Cần chú ý',        'value' => $bannedCount + $warningCount,               'sub' => "{$bannedCount} cấm thi · {$warningCount} cảnh báo", 'icon' => 'alert-triangle','color' => ($bannedCount > 0 ? 'text-error' : ($warningCount > 0 ? 'text-secondary' : 'text-tertiary')), 'bg' => ($bannedCount > 0 ? 'bg-error/10' : ($warningCount > 0 ? 'bg-secondary/10' : 'bg-tertiary/10'))],
+            ['label' => 'Phép vắng / SV',   'value' => $allowedAbsent,                            'sub' => 'tiết được phép vắng (20%)',         'icon' => 'shield',        'color' => 'text-primary',   'bg' => 'bg-primary/10'],
+        ];
+    @endphp
+    <div class="grid grid-cols-2 gap-3 md:grid-cols-3 lg:grid-cols-6">
+        @foreach ($cards as $card)
+            <div class="flex flex-col gap-2 rounded-2xl bg-white p-4 shadow-sm ring-1 ring-outline-variant/10 transition-shadow hover:shadow-md">
+                <div class="{{ $card['bg'] }} {{ $card['color'] }} flex h-10 w-10 items-center justify-center rounded-xl">
+                    <x-user.icon :name="$card['icon']" :size="20" />
+                </div>
+                <p class="text-[11px] font-medium text-on-surface-variant">{{ $card['label'] }}</p>
+                <p class="text-xl font-extrabold leading-none text-on-surface">{{ $card['value'] }}</p>
+                <p class="text-[10px] text-on-surface-variant/70">{{ $card['sub'] }}</p>
             </div>
-            <div>
-                <p class="text-sm font-semibold text-on-surface-variant">Tổng học viên</p>
-                <h3 class="text-3xl font-bold text-on-surface leading-tight">{{ $totalStudents }}</h3>
-            </div>
-        </div>
-
-        <div class="flex items-center gap-4 rounded-2xl bg-white p-5 shadow-sm ring-1 ring-outline-variant/10 transition-shadow hover:shadow-md">
-            <div class="flex h-14 w-14 shrink-0 items-center justify-center rounded-full bg-secondary/10 text-secondary">
-                <x-user.icon name="calendar" :size="28" />
-            </div>
-            <div>
-                <p class="text-sm font-semibold text-on-surface-variant">Buổi đã điểm danh</p>
-                <h3 class="text-3xl font-bold text-on-surface leading-tight">{{ $sessionCount }}</h3>
-            </div>
-        </div>
-
-        <div class="flex items-center gap-4 rounded-2xl bg-white p-5 shadow-sm ring-1 ring-outline-variant/10 transition-shadow hover:shadow-md">
-            <div class="flex h-14 w-14 shrink-0 items-center justify-center rounded-full bg-primary/10 text-primary">
-                <x-user.icon name="bar-chart-2" :size="28" />
-            </div>
-            <div>
-                <p class="text-sm font-semibold text-on-surface-variant">Chuyên cần trung bình</p>
-                <h3 class="text-3xl font-bold text-on-surface leading-tight">{{ $averageAttendance }}%</h3>
-            </div>
-        </div>
+        @endforeach
     </div>
 
-    <!-- Detailed Stats -->
+    {{-- Main content --}}
     <div class="grid grid-cols-1 gap-6 lg:grid-cols-3">
-        
-        <!-- Warning Students -->
-        <div class="lg:col-span-1">
-            <h4 class="mb-4 flex items-center gap-2 text-[16px] font-bold text-on-surface">
-                <x-user.icon name="alert-triangle" class="text-error" />
+
+        {{-- Học viên cần chú ý --}}
+        <div class="flex flex-col">
+            <h4 class="mb-3 flex items-center gap-2 text-[15px] font-bold text-on-surface">
+                <x-user.icon name="alert-triangle" class="text-error" :size="18" />
                 Học viên cần chú ý
+                @if ($bannedCount + $warningCount > 0)
+                    <span class="ml-auto rounded-full bg-error/10 px-2 py-0.5 text-[11px] font-bold text-error">{{ $bannedCount + $warningCount }}</span>
+                @endif
             </h4>
-            <div class="rounded-3xl border border-outline-variant/10 bg-white p-5">
-                @if(count($warningStudents) > 0)
-                    <div class="space-y-4">
-                        @foreach($warningStudents as $student)
-                            <div class="flex items-center justify-between border-b border-outline-variant/10 pb-4 last:border-0 last:pb-0">
-                                <div>
-                                    <p class="text-sm font-bold text-on-surface">{{ $student['name'] }}</p>
-                                    <p class="text-xs text-on-surface-variant">{{ $student['code'] }}</p>
-                                </div>
-                                <div class="text-right">
-                                    <p class="text-sm font-bold text-error">Vắng {{ $student['absent'] }} buổi</p>
-                                    <p class="text-xs text-on-surface-variant">Chuyên cần: {{ $student['percent'] }}%</p>
-                                </div>
-                            </div>
-                        @endforeach
+            <div class="flex flex-1 flex-col rounded-2xl border border-outline-variant/10 bg-white p-4">
+                @if ($alertStudents->isEmpty())
+                    <div class="flex flex-1 flex-col items-center justify-center gap-2 py-8 text-center">
+                        <div class="flex h-12 w-12 items-center justify-center rounded-full bg-tertiary/10 text-tertiary">
+                            <x-user.icon name="check-circle" :size="24" />
+                        </div>
+                        <p class="text-sm font-semibold text-on-surface">Tất cả ổn định</p>
+                        <p class="text-xs text-on-surface-variant">Không có học viên nào cần chú ý.</p>
                     </div>
                 @else
-                    <div class="py-8 text-center text-sm text-on-surface-variant">
-                        Không có học viên nào rơi vào mức cảnh báo.
+                    <div class="space-y-3">
+                        @foreach ($alertStudents as $row)
+                            @php
+                                $s       = $row['stats'];
+                                $m       = $row['member'];
+                                $banned  = $s['is_banned'];
+                                $pct     = $s['attendance_percent'];
+                                $present = $s['present_lessons'];
+                                $absent  = $s['absent_lessons'];
+                                $planned = $s['planned_lessons'];
+                            @endphp
+                            <a href="{{ route('lecturer.students.show', $m->id) }}" wire:navigate
+                                class="flex items-center gap-3 rounded-xl border p-3 transition-all hover:shadow-sm {{ $banned ? 'border-error/20 bg-error/5 hover:border-error/40' : 'border-secondary/20 bg-secondary/5 hover:border-secondary/40' }}">
+                                <div class="flex h-9 w-9 shrink-0 items-center justify-center rounded-full {{ $banned ? 'bg-error/15 text-error' : 'bg-secondary/15 text-secondary' }} text-sm font-bold">
+                                    {{ mb_strtoupper(mb_substr($m->full_name, 0, 1)) }}
+                                </div>
+                                <div class="min-w-0 flex-1">
+                                    <p class="truncate text-sm font-bold text-on-surface">{{ $m->full_name }}</p>
+                                    <p class="text-[11px] text-on-surface-variant">{{ $m->student_code }} · CC: <span class="{{ $banned ? 'text-error font-bold' : 'text-secondary font-semibold' }}">{{ $pct }}%</span></p>
+                                </div>
+                                <div class="shrink-0 text-right">
+                                    @if ($banned)
+                                        <span class="inline-flex items-center gap-1 rounded-full bg-error/10 px-2 py-0.5 text-[10px] font-bold text-error">
+                                            <x-user.icon name="alert-triangle" :size="10" /> Cấm thi
+                                        </span>
+                                    @else
+                                        <span class="inline-flex items-center gap-1 rounded-full bg-secondary/10 px-2 py-0.5 text-[10px] font-bold text-secondary">
+                                            <x-user.icon name="alert-circle" :size="10" /> Cảnh báo
+                                        </span>
+                                    @endif
+                                    <p class="mt-0.5 text-[10px] text-on-surface-variant">Vắng {{ $absent }}/{{ $planned }} tiết</p>
+                                </div>
+                            </a>
+                        @endforeach
                     </div>
+                    <a href="{{ route('lecturer.students.index') }}" wire:navigate
+                        class="mt-3 flex items-center justify-center gap-1.5 rounded-xl border border-outline-variant/20 py-2 text-xs font-semibold text-on-surface-variant transition hover:bg-surface-container">
+                        Xem tất cả học viên <x-user.icon name="arrow-right" :size="13" />
+                    </a>
                 @endif
             </div>
         </div>
 
-        <!-- Attendance Chart (Mocked UI) -->
-        <div class="lg:col-span-2">
-            <h4 class="mb-4 flex items-center gap-2 text-[16px] font-bold text-on-surface">
-                <x-user.icon name="trending-up" class="text-tertiary" />
-                Tiến độ chuyên cần
+        {{-- Biểu đồ chuyên cần theo buổi --}}
+        <div class="flex flex-col lg:col-span-2">
+            <h4 class="mb-3 flex items-center gap-2 text-[15px] font-bold text-on-surface">
+                <x-user.icon name="trending-up" class="text-tertiary" :size="18" />
+                Tỉ lệ có mặt theo buổi
+                <span class="ml-auto text-[11px] font-normal text-on-surface-variant">{{ $closedCount }} buổi đã chốt</span>
             </h4>
-            <div class="flex h-64 flex-col items-center justify-center rounded-3xl border border-outline-variant/10 bg-white p-6">
-                <!-- A simple visual representation since we don't have a charting library handy -->
-                <div class="flex w-full h-full items-end justify-around gap-2 px-4 pb-2 pt-8">
-                    @php
-                        $mockData = [95, 92, 100, 88, 85, 90, 94, 98];
-                    @endphp
-                    @foreach($mockData as $idx => $val)
-                        <div class="group relative flex w-full max-w-[40px] flex-col items-center justify-end">
-                            <div class="absolute -top-8 hidden rounded bg-surface-container-high px-2 py-1 text-xs font-bold text-on-surface group-hover:block">{{ $val }}%</div>
-                            <div class="w-full rounded-t-md bg-primary/20 transition-all group-hover:bg-primary/40" style="height: {{ $val }}%"></div>
-                            <span class="mt-2 text-xs text-on-surface-variant">B{{ $idx + 1 }}</span>
+            <div class="flex flex-1 flex-col justify-center rounded-2xl border border-outline-variant/10 bg-white p-5">
+                @if (empty($sessionChart))
+                    <div class="flex flex-1 flex-col items-center justify-center gap-2 py-10 text-center">
+                        <div class="flex h-12 w-12 items-center justify-center rounded-full bg-primary/10 text-primary">
+                            <x-user.icon name="bar-chart-2" :size="24" />
                         </div>
-                    @endforeach
-                </div>
+                        <p class="text-sm font-semibold text-on-surface">Chưa có buổi nào chốt sổ</p>
+                        <p class="text-xs text-on-surface-variant">Sau khi chốt buổi điểm danh, biểu đồ sẽ hiển thị tại đây.</p>
+                    </div>
+                @else
+                    {{-- Vùng biểu đồ: trục % bên trái + các cột --}}
+                    <div class="flex gap-3">
+                        {{-- Trục Y --}}
+                        <div class="flex h-56 w-8 shrink-0 flex-col justify-between py-1 text-right text-[10px] text-on-surface-variant/60">
+                            <span>100%</span>
+                            <span>75%</span>
+                            <span>50%</span>
+                            <span>25%</span>
+                            <span>0%</span>
+                        </div>
+
+                        {{-- Khu vực cột với đường lưới ngang --}}
+                        <div class="relative h-56 flex-1">
+                            {{-- Gridlines --}}
+                            <div class="pointer-events-none absolute inset-0 flex flex-col justify-between">
+                                @for ($i = 0; $i < 5; $i++)
+                                    <div class="border-t border-dashed border-outline-variant/15"></div>
+                                @endfor
+                            </div>
+
+                            {{-- Cột --}}
+                            <div class="absolute inset-0 flex items-end justify-around gap-3 px-2">
+                                @foreach ($sessionChart as $session)
+                                    @php
+                                        $rate  = $session['attendance_rate'];
+                                        $color = $rate < 70 ? 'bg-error' : ($rate < 85 ? 'bg-secondary' : 'bg-tertiary');
+                                        $barH  = max($rate, 3);
+                                    @endphp
+                                    <div class="group relative flex h-full max-w-[64px] flex-1 flex-col items-center justify-end">
+                                        {{-- Tooltip --}}
+                                        <div class="pointer-events-none absolute bottom-full left-1/2 z-10 mb-2 hidden w-max -translate-x-1/2 rounded-lg bg-on-surface px-2.5 py-1.5 text-center text-[11px] font-bold text-white shadow-lg group-hover:block">
+                                            {{ $session['name'] }}<br>
+                                            <span class="font-normal">{{ $session['present'] }}/{{ $session['total'] }} HV có mặt</span>
+                                            <div class="absolute left-1/2 top-full -translate-x-1/2 border-4 border-transparent border-t-on-surface"></div>
+                                        </div>
+                                        {{-- % trên đầu cột --}}
+                                        <span class="mb-1 text-[11px] font-bold {{ $rate < 70 ? 'text-error' : ($rate < 85 ? 'text-secondary' : 'text-tertiary') }}">{{ $rate }}%</span>
+                                        {{-- Cột --}}
+                                        <div class="{{ $color }} w-full rounded-t-md opacity-85 transition-all group-hover:opacity-100"
+                                            style="height: {{ $barH }}%"></div>
+                                    </div>
+                                @endforeach
+                            </div>
+                        </div>
+                    </div>
+
+                    {{-- Nhãn buổi --}}
+                    <div class="ml-11 mt-2 flex justify-around gap-3 px-2">
+                        @foreach ($sessionChart as $session)
+                            <span class="max-w-[64px] flex-1 truncate text-center text-[11px] font-medium text-on-surface-variant">{{ $session['date'] }}</span>
+                        @endforeach
+                    </div>
+
+                    {{-- Legend --}}
+                    <div class="mt-4 flex flex-wrap items-center gap-4 border-t border-outline-variant/10 pt-3 text-[11px] text-on-surface-variant">
+                        <span class="flex items-center gap-1.5"><span class="h-2.5 w-2.5 rounded-full bg-tertiary"></span>≥ 85%</span>
+                        <span class="flex items-center gap-1.5"><span class="h-2.5 w-2.5 rounded-full bg-secondary"></span>70–84%</span>
+                        <span class="flex items-center gap-1.5"><span class="h-2.5 w-2.5 rounded-full bg-error"></span>&lt; 70%</span>
+                    </div>
+                @endif
             </div>
         </div>
-        
     </div>
+
+    {{-- Danh sách đầy đủ học viên --}}
+    <div>
+        <h4 class="mb-3 flex items-center gap-2 text-[15px] font-bold text-on-surface">
+            <x-user.icon name="list" class="text-primary" :size="18" />
+            Danh sách học viên
+            <span class="ml-auto text-[11px] font-normal text-on-surface-variant">Sắp xếp theo chuyên cần tăng dần</span>
+        </h4>
+        <div class="overflow-hidden rounded-2xl border border-outline-variant/10 bg-white shadow-sm">
+            @if ($allStudents->isEmpty())
+                <div class="py-12 text-center text-sm text-on-surface-variant">Chưa có học viên nào trong lớp.</div>
+            @else
+                <div class="overflow-x-auto">
+                    <table class="w-full text-sm">
+                        <thead>
+                            <tr class="border-b border-outline-variant/10 bg-surface-container-low/50 text-left text-[11px] font-bold uppercase tracking-wider text-on-surface-variant">
+                                <th class="px-4 py-3">Học viên</th>
+                                <th class="px-4 py-3 text-center">CC (%)</th>
+                                <th class="px-4 py-3 text-center">Có mặt</th>
+                                <th class="px-4 py-3 text-center">Muộn</th>
+                                <th class="px-4 py-3 text-center">Vắng KP</th>
+                                <th class="px-4 py-3 text-center">Vắng CP</th>
+                                <th class="px-4 py-3 text-center">Trạng thái</th>
+                            </tr>
+                        </thead>
+                        <tbody class="divide-y divide-outline-variant/8">
+                            @foreach ($allStudents as $row)
+                                @php
+                                    $s      = $row['stats'];
+                                    $m      = $row['member'];
+                                    $pct    = $s ? $s['attendance_percent'] : 100;
+                                    $banned = $s && $s['is_banned'];
+                                    $warn   = $s && $s['is_warning'] && !$banned;
+                                    $barW   = max(min($pct, 100), 0);
+                                    $barColor = $pct < 80 ? 'bg-error' : ($pct < 85 ? 'bg-secondary' : 'bg-tertiary');
+                                @endphp
+                                <tr @class([
+                                    'transition-colors hover:bg-slate-50/60',
+                                    'bg-error/5' => $banned,
+                                    'bg-amber-50/40' => $warn,
+                                ])>
+                                    <td class="px-4 py-3">
+                                        <a href="{{ route('lecturer.students.show', $m->id) }}" wire:navigate
+                                            class="flex items-center gap-3 hover:underline">
+                                            <div class="flex h-8 w-8 shrink-0 items-center justify-center rounded-full {{ $banned ? 'bg-error/15 text-error' : ($warn ? 'bg-secondary/15 text-secondary' : 'bg-primary/10 text-primary') }} text-xs font-bold">
+                                                {{ mb_strtoupper(mb_substr($m->full_name, 0, 1)) }}
+                                            </div>
+                                            <div class="min-w-0">
+                                                <p class="truncate font-semibold text-on-surface">{{ $m->full_name }}</p>
+                                                <p class="text-[11px] text-on-surface-variant">{{ $m->student_code }}</p>
+                                            </div>
+                                        </a>
+                                    </td>
+                                    <td class="px-4 py-3">
+                                        <div class="flex flex-col items-center gap-1">
+                                            <span class="font-bold {{ $pct < 80 ? 'text-error' : ($pct < 85 ? 'text-secondary' : 'text-tertiary') }}">{{ $pct }}%</span>
+                                            <div class="h-1.5 w-16 overflow-hidden rounded-full bg-surface-container-high">
+                                                <div class="{{ $barColor }} h-full rounded-full transition-all" style="width:{{ $barW }}%"></div>
+                                            </div>
+                                        </div>
+                                    </td>
+                                    <td class="px-4 py-3 text-center font-medium text-on-surface">{{ $s ? $s['present_lessons'] : '—' }}<span class="text-on-surface-variant/60">/{{ $s ? $s['planned_lessons'] : '—' }}</span></td>
+                                    <td class="px-4 py-3 text-center">
+                                        @if ($s && $s['late_count'] > 0)
+                                            <span class="font-medium text-secondary">{{ $s['late_count'] }}x</span>
+                                        @else
+                                            <span class="text-on-surface-variant/40">—</span>
+                                        @endif
+                                    </td>
+                                    <td class="px-4 py-3 text-center">
+                                        @if ($s && $s['absent_lessons'] > 0)
+                                            <span class="font-medium text-error">{{ $s['absent_lessons'] }}</span>
+                                        @else
+                                            <span class="text-on-surface-variant/40">0</span>
+                                        @endif
+                                    </td>
+                                    <td class="px-4 py-3 text-center">
+                                        @if ($s && $s['excused_lessons'] > 0)
+                                            <span class="font-medium text-primary">{{ $s['excused_lessons'] }}</span>
+                                        @else
+                                            <span class="text-on-surface-variant/40">0</span>
+                                        @endif
+                                    </td>
+                                    <td class="px-4 py-3 text-center">
+                                        @if ($banned)
+                                            <span class="inline-flex items-center gap-1 rounded-full bg-error/10 px-2.5 py-1 text-[10px] font-bold text-error">
+                                                <x-user.icon name="alert-triangle" :size="10" /> Cấm thi
+                                            </span>
+                                        @elseif ($warn)
+                                            <span class="inline-flex items-center gap-1 rounded-full bg-secondary/10 px-2.5 py-1 text-[10px] font-bold text-secondary">
+                                                <x-user.icon name="alert-circle" :size="10" /> Cảnh báo
+                                            </span>
+                                        @else
+                                            <span class="inline-flex items-center gap-1 rounded-full bg-tertiary/10 px-2.5 py-1 text-[10px] font-bold text-tertiary">
+                                                <x-user.icon name="check-circle" :size="10" /> Ổn định
+                                            </span>
+                                        @endif
+                                    </td>
+                                </tr>
+                            @endforeach
+                        </tbody>
+                    </table>
+                </div>
+            @endif
+        </div>
+    </div>
+
 </div>

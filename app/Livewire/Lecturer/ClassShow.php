@@ -5,6 +5,7 @@ namespace App\Livewire\Lecturer;
 use App\Imports\StudentsImport;
 use App\Models\CourseClass;
 use App\Models\LeaveRequest;
+use App\Services\LectureManageStudentService;
 use Illuminate\Support\Str;
 use Livewire\Component;
 use Livewire\WithFileUploads;
@@ -163,9 +164,21 @@ class ClassShow extends Component
 
     public function render()
     {
+        $students = $this->class->members()
+            ->with(['user'])
+            ->where('status', 'active')
+            ->paginate(5);
+
+        // Dùng service để tính chuyên cần đồng nhất với trang danh sách học viên.
+        $memberIds = $students->pluck('id')->all();
+        $statsMap  = $memberIds
+            ? app(LectureManageStudentService::class)->getStudentsAttendanceStats($memberIds)
+            : [];
+
         return view('livewire.lecturer.class-show', [
             'recentSessions' => $this->recentSessions,
-            'students' => $this->class->members()->with(['user', 'attendanceSummary'])->where('status', 'active')->paginate(5),
+            'students'       => $students,
+            'statsMap'       => $statsMap,
         ])->layout('layouts.user', ['title' => $this->class->name]);
     }
 
