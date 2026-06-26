@@ -5,6 +5,7 @@ namespace App\Livewire\Lecturer\Attendance;
 use App\Exports\ClassSessionExport;
 use App\Livewire\Lecturer\Attendance\Concerns\OwnsAttendanceSessions;
 use App\Models\AttendanceRecord;
+use App\Models\ClassSession;
 use App\Services\NotificationService;
 use App\Services\SubscriptionService;
 use Illuminate\Contracts\View\View;
@@ -140,6 +141,37 @@ class ManualAttendanceSession extends Component
         session()->flash('success', 'Buổi điểm danh đã được xóa thành công.');
 
         return redirect()->route('lecturer.classes.show', $classId);
+    }
+
+    public function createDuplicateManualSession(): void
+    {
+        $oldSession = $this->ownedSession($this->sessionId)->load('courseClass');
+        $courseClass = $oldSession->courseClass;
+
+        $newSession = ClassSession::query()->create([
+            'class_id' => $courseClass->id,
+            'created_by' => auth()->id(),
+            'name' => $oldSession->name,
+            'date' => $oldSession->date,
+            'start_time' => $oldSession->start_time,
+            'end_time' => $oldSession->end_time,
+            'start_lesson' => $oldSession->start_lesson,
+            'end_lesson' => $oldSession->end_lesson,
+            'lesson_count' => $oldSession->lesson_count,
+            'status' => 'active',
+        ]);
+
+        $courseClass->members()->where('status', 'active')->get()->each(fn ($member) => AttendanceRecord::query()->firstOrCreate([
+            'class_session_id' => $newSession->id,
+            'class_member_id' => $member->id,
+        ], [
+            'status' => 'pending',
+            'is_verified' => $member->user_id !== null,
+        ]));
+
+        app(NotificationService::class)->attendanceSessionCreated((int) auth()->id(), $newSession, isQr: false);
+
+        $this->redirectRoute('lecturer.attendance.manual.session', ['ma_user' => auth()->id(), 'session' => $newSession->id], navigate: true);
     }
 
     public function exportExcel()

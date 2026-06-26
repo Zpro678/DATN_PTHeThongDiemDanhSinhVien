@@ -72,21 +72,7 @@
     }"
     x-init="initGps()"
 >
-    <div class="mb-6 flex flex-col items-start justify-between gap-4 sm:flex-row sm:items-center sm:gap-5">
-        <a href="{{ route('lecturer.attendance.index') }}" class="inline-flex shrink-0 items-center gap-2 rounded-xl border border-slate-200 bg-white px-4 py-2.5 text-sm font-bold text-slate-700 shadow-sm transition hover:border-slate-300 hover:bg-slate-50 hover:text-slate-900">
-            <x-user.icon name="arrow-left" :size="18" />
-            Hủy bỏ
-        </a>
-        
-        <div class="inline-flex shrink-0 items-center rounded-xl bg-slate-100 p-1 shadow-inner">
-            <a href="{{ route('lecturer.attendance.manual.create', ['class_id' => $classId, 'date' => $date]) }}" class="inline-flex items-center gap-2 rounded-lg px-6 py-2.5 text-sm font-bold text-slate-500 transition-all hover:text-slate-700">
-                <x-user.icon name="check-square" :size="18" /> Thủ công
-            </a>
-            <button type="button" class="inline-flex items-center gap-2 rounded-lg bg-white px-6 py-2.5 text-sm font-bold text-blue-600 shadow-sm transition-all">
-                <x-user.icon name="qr-code" :size="18" /> QR / Link
-            </button>
-        </div>
-    </div>
+
 
     <div class="flex flex-col gap-5 md:flex-row md:items-center md:justify-between xl:grid xl:grid-cols-12 xl:gap-6">
         <div class="min-w-0 flex-1 xl:col-span-8">
@@ -133,6 +119,11 @@
 
                     <div>
                         <label id="class_picker_label" class="mb-2 block text-sm font-bold text-slate-600">Chọn lớp học</label>
+                        @if($cloneSessionId || $editSessionId)
+                        <div class="relative">
+                            <input type="text" readonly class="w-full cursor-default rounded-2xl border-2 border-slate-100 bg-white px-4 py-3.5 text-sm font-extrabold text-slate-800 shadow-sm outline-none transition hover:border-blue-300 hover:bg-slate-50 focus:border-blue-500 focus:ring-4 focus:ring-blue-500/10" :value="selectedClass.label || 'Chọn lớp học'" />
+                        </div>
+                        @else
                         <div class="relative" @keydown.escape.window="classDropdownOpen = false">
                             <button
                                 type="button"
@@ -183,6 +174,7 @@
                                 </div>
                             </div>
                         </div>
+                        @endif
                         @error('classId')
                             <span class="mt-2 block text-sm font-medium text-red-600">{{ $message }}</span>
                         @enderror
@@ -190,7 +182,11 @@
 
                     <div>
                         <label for="session_title" class="mb-2 block text-sm font-bold text-slate-600">Tiêu đề buổi học</label>
-                        <input id="session_title" wire:model.blur="name" type="text" placeholder="Ví dụ: Buổi 1 - Lý thuyết..." class="w-full rounded-xl border-2 border-slate-100 bg-slate-50 px-4 py-3 text-sm font-bold text-slate-800 outline-none transition focus:border-blue-500 focus:ring-4 focus:ring-blue-500/10" />
+                        @if($cloneSessionId || $editSessionId)
+                        <input id="session_title" wire:model.blur="name" type="text" readonly class="w-full cursor-default rounded-xl border-2 border-slate-100 bg-white px-4 py-3 text-sm font-bold text-slate-800 outline-none transition hover:border-blue-300 hover:bg-slate-50 focus:border-blue-500 focus:ring-4 focus:ring-blue-500/10" />
+                        @else
+                        <input id="session_title" wire:model.blur="name" type="text" placeholder="Ví dụ: Buổi 1 - Lý thuyết..." class="w-full rounded-xl border-2 border-slate-100 bg-white px-4 py-3 text-sm font-bold text-slate-800 outline-none transition focus:border-blue-500 focus:ring-4 focus:ring-blue-500/10" />
+                        @endif
                         @error('name')
                             <span class="mt-2 block text-sm font-medium text-red-600">{{ $message }}</span>
                         @enderror
@@ -199,7 +195,11 @@
                     <div class="space-y-4">
                         <div>
                             <label for="session_date" class="mb-2 block text-sm font-bold text-slate-600">Ngày học</label>
+                            @if($cloneSessionId || $editSessionId)
+                            <input id="session_date" wire:model="date" type="date" readonly class="w-full cursor-default rounded-xl border-2 border-slate-100 bg-slate-50 px-4 py-3 text-sm font-bold text-slate-800 outline-none transition hover:border-blue-300 focus:border-blue-500 focus:ring-4 focus:ring-blue-500/10" />
+                            @else
                             <input id="session_date" wire:model="date" type="date" readonly class="w-full rounded-xl border-2 border-slate-100 bg-slate-50 px-4 py-3 text-sm font-bold text-slate-800 outline-none transition focus:border-blue-500 focus:ring-4 focus:ring-blue-500/10" />
+                            @endif
                         </div>
 
                         <div>
@@ -207,6 +207,14 @@
                             <div class="grid grid-cols-[minmax(0,1fr)_auto_minmax(0,1fr)] items-center gap-3 rounded-2xl border border-slate-100 bg-slate-50 p-3">
                                 <div>
                                     <span class="mb-1 block text-xs font-bold text-slate-400">Bắt đầu</span>
+                                    @if($cloneSessionId || $editSessionId)
+                                    <div class="relative">
+                                        <div class="flex w-full cursor-default items-center gap-2 rounded-xl border-2 border-slate-100 bg-white px-3 py-3 text-sm font-extrabold text-slate-800 transition hover:border-blue-300 hover:bg-slate-50">
+                                            <x-user.icon name="clock" :size="16" class="text-blue-500" />
+                                            <span x-text="'Tiết ' + startLesson"></span>
+                                        </div>
+                                    </div>
+                                    @else
                                     <div class="relative" x-data="{ openStart: false, position: 'bottom' }" @click.outside="openStart = false">
                                         <button 
                                             type="button" 
@@ -259,12 +267,21 @@
                                             </div>
                                         </div>
                                     </div>
+                                    @endif
                                 </div>
 
                                 <span class="mt-4 text-lg font-black text-slate-300">-</span>
 
                                 <div>
                                     <span class="mb-1 block text-xs font-bold text-slate-400">Kết thúc</span>
+                                    @if($cloneSessionId || $editSessionId)
+                                    <div class="relative">
+                                        <div class="flex w-full cursor-default items-center gap-2 rounded-xl border-2 border-slate-100 bg-white px-3 py-3 text-sm font-extrabold text-slate-800 transition hover:border-blue-300 hover:bg-slate-50">
+                                            <x-user.icon name="clock" :size="16" class="text-blue-500" />
+                                            <span x-text="'Tiết ' + endLesson"></span>
+                                        </div>
+                                    </div>
+                                    @else
                                     <div class="relative" x-data="{ openEnd: false, position: 'bottom' }" @click.outside="openEnd = false">
                                         <button 
                                             type="button" 
@@ -317,6 +334,7 @@
                                             </div>
                                         </div>
                                     </div>
+                                    @endif
                                 </div>
                             </div>
                             @error('endLesson')
@@ -370,13 +388,13 @@
                     <div>
                         <label class="mb-2 block text-sm font-bold text-slate-600">Bán kính GPS (m)</label>
                         <div class="flex items-center gap-3">
-                            <div class="relative flex-1">
-                                <input type="number" wire:model.live="gpsRadius" placeholder="Nhập bán kính (m)" class="w-full rounded-xl border-2 border-slate-100 bg-slate-50 px-4 py-2.5 text-sm font-bold text-slate-800 outline-none transition focus:border-blue-500 focus:ring-4 focus:ring-blue-500/10" />
-                                <span class="absolute right-4 top-1/2 -translate-y-1/2 text-sm font-bold text-slate-400">mét</span>
+                            <div class="relative w-32 shrink-0">
+                                <input type="number" wire:model="gpsRadius" readonly class="w-full cursor-default rounded-xl border-2 border-blue-500 bg-blue-50 py-2.5 pl-4 pr-12 text-sm font-bold text-blue-700 outline-none transition" />
+                                <span class="absolute right-4 top-1/2 -translate-y-1/2 text-sm font-bold text-blue-700">mét</span>
                             </div>
-                            <div class="flex gap-1.5" x-data>
-                                @foreach ([50, 100, 200] as $r)
-                                    <button type="button" @click="$wire.set('gpsRadius', {{ $r }})" class="rounded-xl border border-slate-200 bg-white px-3 py-2.5 text-xs font-bold text-slate-600 hover:bg-slate-50 hover:border-blue-300 transition-all">
+                            <div class="flex flex-1 gap-2">
+                                @foreach ([50, 70, 100] as $r)
+                                    <button type="button" wire:click="$set('gpsRadius', {{ $r }})" class="flex-1 whitespace-nowrap rounded-xl border-2 px-3 py-2.5 text-xs font-bold transition-all {{ $gpsRadius == $r ? 'border-blue-500 bg-blue-50 text-blue-700' : 'border-slate-100 bg-white text-slate-600 hover:bg-slate-50 hover:border-blue-300' }}">
                                         {{ $r }}m
                                     </button>
                                 @endforeach
@@ -388,22 +406,20 @@
                     </div>
 
                     <div class="space-y-3 pt-1">
-                        <label class="group relative flex cursor-pointer items-center justify-between gap-3 rounded-2xl border-2 px-4 py-3 transition-all duration-300"
-                            :class="gpsEnabled ? 'border-red-500 bg-red-50/50 shadow-sm shadow-red-500/10' : 'border-slate-100 bg-white hover:border-red-200'">
+                        <label class="group relative flex items-center justify-between gap-3 rounded-2xl border-2 px-4 py-3 transition-all duration-300 border-red-500 bg-red-50/50 shadow-sm shadow-red-500/10">
                             <div class="flex items-center gap-3">
-                                <span class="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl transition-colors duration-300"
-                                    :class="gpsEnabled ? 'bg-red-500 text-white shadow-md shadow-red-500/20' : 'bg-red-50 text-red-500 group-hover:bg-red-100'">
+                                <span class="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl transition-colors duration-300 bg-red-500 text-white shadow-md shadow-red-500/20">
                                     <x-user.icon name="shield-alert" :size="18" />
                                 </span>
                                 <div>
-                                    <p class="text-[13px] font-black transition-colors duration-300" :class="gpsEnabled ? 'text-red-900' : 'text-slate-800'">Xác minh tọa độ GPS</p>
-                                    <p class="text-[11px] font-semibold leading-tight transition-colors duration-300" :class="gpsEnabled ? 'text-red-700/80' : 'text-slate-400'">Giới hạn khoảng cách</p>
+                                    <p class="text-[13px] font-black transition-colors duration-300 text-red-900">Xác minh tọa độ GPS</p>
+                                    <p class="text-[11px] font-semibold leading-tight transition-colors duration-300 text-red-700/80">Luôn luôn bật</p>
                                 </div>
                             </div>
                             <div class="relative inline-flex shrink-0 items-center">
-                                <input type="checkbox" wire:model.live="gpsEnabled" class="peer sr-only" />
-                                <span class="h-6 w-10 rounded-full bg-slate-200 transition-colors duration-300 peer-checked:bg-red-500"></span>
-                                <span class="absolute left-1 top-1 h-4 w-4 rounded-full bg-white shadow-sm transition-transform duration-300 peer-checked:translate-x-4"></span>
+                                <input type="checkbox" checked disabled class="peer sr-only" />
+                                <span class="h-6 w-10 rounded-full bg-red-500 transition-colors duration-300"></span>
+                                <span class="absolute left-1 top-1 h-4 w-4 rounded-full bg-white shadow-sm transition-transform duration-300 translate-x-4"></span>
                             </div>
                         </label>
 

@@ -10,11 +10,16 @@
     $isClosed = $session->status === 'closed';
 @endphp
 
-<div class="mx-auto max-w-[1400px] px-4 pt-4 sm:px-8 sm:pt-8" x-data="{ modalOpen: false, confirmChecked: false, deleteModalOpen: false }">
+<div class="mx-auto max-w-[1400px] px-4 pt-4 sm:px-8 sm:pt-8" x-data="{ modalOpen: false, confirmChecked: false, deleteModalOpen: false, createSessionModalOpen: false }">
     <div class="mb-8 flex flex-col gap-4 md:flex-row md:items-end md:justify-between">
         <div>
             <div class="mb-3 flex flex-wrap items-center gap-3">
-                <h1 class="text-3xl font-extrabold tracking-tight text-slate-900" title="{{ $session->name }}">{{ \Illuminate\Support\Str::limit($session->name, 40) }}</h1>
+                <h1 class="text-3xl font-extrabold tracking-tight text-slate-900" title="{{ $session->name }}">
+                    {{ \Illuminate\Support\Str::limit($session->name, 40) }}
+                    @if($session->start_lesson && $session->end_lesson)
+                        <span class="text-2xl font-bold text-slate-500 ml-1">(Tiết {{ $session->start_lesson }} - Tiết {{ $session->end_lesson }})</span>
+                    @endif
+                </h1>
                 <span @class([
                     'inline-flex items-center gap-2 rounded-full border px-3 py-1 text-xs font-bold',
                     'border-slate-200 bg-slate-100 text-slate-600' => $isClosed,
@@ -55,10 +60,10 @@
                     Xóa phiên
                 </button>
             @endif
-            <a href="{{ route('lecturer.attendance.create') }}" class="inline-flex shrink-0 items-center justify-center gap-2 rounded-xl border border-slate-200 bg-white px-4 py-2.5 text-sm font-bold text-slate-700 transition hover:bg-slate-50 whitespace-nowrap">
+            <button type="button" @click="createSessionModalOpen = true" class="inline-flex shrink-0 items-center justify-center gap-2 rounded-xl border border-slate-200 bg-white px-4 py-2.5 text-sm font-bold text-slate-700 transition hover:bg-slate-50 whitespace-nowrap">
                 <x-user.icon name="plus" :size="18" />
                 Tạo phiên mới
-            </a>
+            </button>
             <button
                 type="button"
                 wire:click="markAllPresent"
@@ -324,6 +329,52 @@
                 <button type="button" wire:click="deleteSession" @click="deleteModalOpen = false" class="rounded-xl bg-rose-600 px-5 py-2.5 text-sm font-bold text-white shadow-sm shadow-rose-600/20 transition hover:bg-rose-700 sm:flex-1">
                     Xóa phiên
                 </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Create Session Modal -->
+    <div x-cloak x-show="createSessionModalOpen" class="fixed inset-0 z-[100] flex items-center justify-center p-4">
+        <div x-show="createSessionModalOpen" x-transition.opacity.duration.200ms class="absolute inset-0 bg-slate-950/45 backdrop-blur-sm" @click="createSessionModalOpen = false" aria-label="Đóng"></div>
+        <div x-show="createSessionModalOpen" x-transition.scale.origin.center.duration.200ms class="relative w-full max-w-[380px] overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-2xl">
+            <button type="button" @click="createSessionModalOpen = false" class="absolute right-3 top-3 flex h-8 w-8 items-center justify-center rounded-full text-slate-400 transition hover:bg-slate-100 hover:text-slate-600">
+                <x-user.icon name="x" :size="20" />
+            </button>
+            <div class="p-5 pb-2 text-center">
+                <div class="mx-auto mb-3 flex h-14 w-14 items-center justify-center rounded-full bg-blue-50 text-blue-600">
+                    <x-user.icon name="plus-circle" :size="28" />
+                </div>
+                <h3 class="mb-3 text-lg font-extrabold text-slate-900">Tạo phiên điểm danh mới</h3>
+                <div class="text-sm text-slate-700">
+                    <div class="flex flex-col gap-2.5 text-left bg-slate-50 p-4 rounded-xl border border-slate-200 shadow-sm">
+                        <div class="flex justify-between items-center border-b border-slate-200/60 pb-2.5">
+                            <span class="font-medium text-slate-500">Lớp:</span>
+                            <span class="font-bold text-slate-900 text-right max-w-[65%] truncate" title="{{ $session->courseClass->code }} - {{ $session->courseClass->name }}">{{ $session->courseClass->code }} - {{ $session->courseClass->name }}</span>
+                        </div>
+                        <div class="flex justify-between items-center border-b border-slate-200/60 pb-2.5">
+                            <span class="font-medium text-slate-500">Buổi:</span>
+                            <span class="font-bold text-slate-900">{{ $session->name }}</span>
+                        </div>
+                        <div class="flex justify-between items-center border-b border-slate-200/60 pb-2.5">
+                            <span class="font-medium text-slate-500">Tiết:</span>
+                            <span class="font-bold text-slate-900">{{ $session->start_lesson ?? 1 }} đến {{ $session->end_lesson ?? 3 }}</span>
+                        </div>
+                        <div class="flex justify-between items-center">
+                            <span class="font-medium text-slate-500">Ngày:</span>
+                            <span class="font-bold text-slate-900">{{ $session->date->format('d/m/Y') }}</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="flex flex-col gap-3 px-5 pb-5 pt-3 sm:flex-row">
+                <button type="button" wire:click="createDuplicateManualSession" wire:loading.attr="disabled" class="inline-flex justify-center items-center gap-2 rounded-xl border border-slate-200 bg-white px-5 py-2.5 text-sm font-bold text-slate-700 transition hover:bg-slate-50 disabled:opacity-50 sm:flex-1">
+                    <x-user.icon name="check-square" :size="18" class="text-emerald-600" />
+                    Thủ công
+                </button>
+                <a href="{{ route('lecturer.attendance.qr.create', ['class_id' => $session->class_id, 'date' => $session->date->format('Y-m-d'), 'clone_session' => $session->id]) }}" class="inline-flex justify-center items-center gap-2 rounded-xl bg-blue-600 px-5 py-2.5 text-sm font-bold text-white shadow-sm shadow-blue-600/20 transition hover:bg-blue-700 sm:flex-1">
+                    <x-user.icon name="qr-code" :size="18" />
+                    QR/Link
+                </a>
             </div>
         </div>
     </div>

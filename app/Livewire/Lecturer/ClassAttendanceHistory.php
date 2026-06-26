@@ -8,13 +8,17 @@ use Illuminate\Contracts\View\View;
 use Illuminate\Database\Eloquent\Builder;
 use Livewire\Component;
 use Livewire\WithPagination;
+use Livewire\Attributes\Url;
 
 class ClassAttendanceHistory extends Component
 {
     use WithPagination;
 
+    #[Url(as: 'group')]
+    public ?string $initialGroupKey = null;
+
     public CourseClass $courseClass;
-    public int $perPage = 10;
+    public int $perPage = 20;
 
     public function mount(CourseClass $courseClass)
     {
@@ -42,9 +46,10 @@ class ClassAttendanceHistory extends Component
 
     public function render(): View
     {
-        $members = $this->courseClass->members()->where('status', 'active')->orderBy('student_code')->get();
+        $members = $this->courseClass->members()->where('status', 'active')->orderBy('student_code')->paginate($this->perPage);
         $sessions = ClassSession::query()
             ->where('class_id', $this->courseClass->id)
+            ->where('status', 'closed')
             ->orderBy('date', 'asc')
             ->orderBy('start_time', 'asc')
             ->orderBy('created_at', 'asc')
@@ -61,8 +66,10 @@ class ClassAttendanceHistory extends Component
             ->groupBy('class_member_id');
 
         $matrix = [];
+        $totalAttended = [];
         foreach ($members as $member) {
             $memberRecords = $records->get($member->id, collect())->keyBy('class_session_id');
+            $totalAttended[$member->id] = 0;
             foreach ($groupedSessions as $groupKey => $daySessions) {
                 $dayDetailsArr = [];
                 $presentCount = 0;
@@ -136,10 +143,13 @@ class ClassAttendanceHistory extends Component
                     'attendedLessons' => $attendedLessons,
                     'absentLessons' => $absentLessons
                 ];
+                
+                $totalAttended[$member->id] += $attendedLessons;
             }
         }
 
-        $groupedSessionsInfo = $groupedSessions->map(function($sessions, $key) {
+        $dayIndex = 1;
+        $groupedSessionsInfo = $groupedSessions->map(function($sessions, $key) use (&$dayIndex) {
             $first = $sessions->first();
             $timeStr = $first->start_time ? \Carbon\Carbon::parse($first->start_time)->format('H:i') . ' - ' . \Carbon\Carbon::parse($first->end_time)->format('H:i') : '';
             
@@ -155,6 +165,7 @@ class ClassAttendanceHistory extends Component
 
             return [
                 'key' => $key,
+                'name' => 'Buổi ' . $dayIndex++,
                 'date' => $first->date->format('d/m/Y'),
                 'timeStr' => $timeStr,
                 'startLesson' => $first->start_lesson,
@@ -164,11 +175,34 @@ class ClassAttendanceHistory extends Component
             ];
         });
 
-        $membersData = $members->map(fn($m) => [
-            'id' => $m->id, 
-            'full_name' => $m->full_name, 
-            'student_code' => $m->student_code
-        ])->keyBy('id');
+        $colors = [
+            ['bg' => 'bg-indigo-100', 'text' => 'text-indigo-700', 'border' => 'border-indigo-200/60'],
+            ['bg' => 'bg-emerald-100', 'text' => 'text-emerald-700', 'border' => 'border-emerald-200/60'],
+            ['bg' => 'bg-rose-100', 'text' => 'text-rose-700', 'border' => 'border-rose-200/60'],
+            ['bg' => 'bg-amber-100', 'text' => 'text-amber-700', 'border' => 'border-amber-200/60'],
+            ['bg' => 'bg-sky-100', 'text' => 'text-sky-700', 'border' => 'border-sky-200/60'],
+            ['bg' => 'bg-fuchsia-100', 'text' => 'text-fuchsia-700', 'border' => 'border-fuchsia-200/60'],
+            ['bg' => 'bg-orange-100', 'text' => 'text-orange-700', 'border' => 'border-orange-200/60'],
+            ['bg' => 'bg-teal-100', 'text' => 'text-teal-700', 'border' => 'border-teal-200/60'],
+            ['bg' => 'bg-violet-100', 'text' => 'text-violet-700', 'border' => 'border-violet-200/60'],
+            ['bg' => 'bg-pink-100', 'text' => 'text-pink-700', 'border' => 'border-pink-200/60'],
+        ];
+
+        $totalCourseLessons = $this->courseClass->total_lessons ?? 0;
+
+        $membersData = collect($members->items())->map(function($m) use ($colors, $totalAttended, $totalCourseLessons) {
+            $color = $colors[$m->id % count($colors)];
+            return [
+                'id' => $m->id, 
+                'full_name' => $m->full_name, 
+                'student_code' => $m->student_code,
+                'avatar_bg' => $color['bg'],
+                'avatar_text' => $color['text'],
+                'avatar_border' => $color['border'],
+                'total_attended_lessons' => $totalAttended[$m->id] ?? 0,
+                'total_course_lessons' => $totalCourseLessons
+            ];
+        })->keyBy('id');
 
         return view('livewire.lecturer.class-attendance-history', compact('members', 'groupedSessions', 'matrix', 'sessions', 'groupedSessionsInfo', 'membersData'))
             ->layout('layouts.user', ['title' => 'Lịch sử điểm danh: ' . $this->courseClass->name]);

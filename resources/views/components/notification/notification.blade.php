@@ -1,9 +1,10 @@
 @if (session('success') || session('error') || $errors->any())
 <div id="toast-container" style="position: fixed; top: 20px; right: 20px; z-index: 9999; display: flex; flex-direction: column; gap: 10px; pointer-events: none;">
+	@php $toastId = \Illuminate\Support\Str::random(10); @endphp
 
 	{{-- Success Messages --}}
 	@if (session('success'))
-	<div wire:key="toast-success-{{ \Illuminate\Support\Str::random(10) }}" x-data="{ show: true }" x-show="show" x-init="setTimeout(() => show = false, 5000)" x-transition:leave="hiding" class="custom-toast server-toast" style="background-color: #28a745; color: white;">
+	<div wire:key="toast-success-{{ $toastId }}" x-data="{ show: !sessionStorage.getItem('toast_{{ $toastId }}') }" x-show="show" x-init="if(show) { sessionStorage.setItem('toast_{{ $toastId }}', '1'); setTimeout(() => { show = false; setTimeout(() => $el.remove(), 500); }, 5000); }" x-transition:leave="hiding" class="custom-toast server-toast" style="background-color: #28a745; color: white;">
 		<div class="toast-content">
 			<div class="toast-icon">
 				<svg style="flex-shrink: 0; min-width: 28px; min-height: 28px; display: block;" viewBox="0 0 24 24" width="28" height="28">
@@ -21,7 +22,7 @@
 
 	{{-- Error Messages --}}
 	@if (session('error'))
-	<div wire:key="toast-error-{{ \Illuminate\Support\Str::random(10) }}" x-data="{ show: true }" x-show="show" x-init="setTimeout(() => show = false, 5000)" x-transition:leave="hiding" class="custom-toast server-toast toast-error">
+	<div wire:key="toast-error-{{ $toastId }}" x-data="{ show: !sessionStorage.getItem('toast_{{ $toastId }}') }" x-show="show" x-init="if(show) { sessionStorage.setItem('toast_{{ $toastId }}', '1'); setTimeout(() => { show = false; setTimeout(() => $el.remove(), 500); }, 5000); }" x-transition:leave="hiding" class="custom-toast server-toast toast-error">
 		<div class="toast-content">
 			<div class="toast-icon">
 				<svg style="flex-shrink: 0; min-width: 28px; min-height: 28px; display: block;" viewBox="0 0 24 24" width="28" height="28">
@@ -39,7 +40,7 @@
 
 	{{-- Validation Errors --}}
 	@if ($errors->any())
-	<div wire:key="toast-validation-{{ \Illuminate\Support\Str::random(10) }}" x-data="{ show: true }" x-show="show" x-init="setTimeout(() => show = false, 5000)" x-transition:leave="hiding" class="custom-toast server-toast toast-error">
+	<div wire:key="toast-validation-{{ $toastId }}" x-data="{ show: !sessionStorage.getItem('toast_{{ $toastId }}') }" x-show="show" x-init="if(show) { sessionStorage.setItem('toast_{{ $toastId }}', '1'); setTimeout(() => { show = false; setTimeout(() => $el.remove(), 500); }, 5000); }" x-transition:leave="hiding" class="custom-toast server-toast toast-error">
 		<div class="toast-content">
 			<div class="toast-icon">
 				<svg style="flex-shrink: 0; min-width: 28px; min-height: 28px; display: block;" viewBox="0 0 24 24" width="28" height="28">

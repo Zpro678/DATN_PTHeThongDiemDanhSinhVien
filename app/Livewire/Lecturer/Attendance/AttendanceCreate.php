@@ -39,15 +39,29 @@ class AttendanceCreate extends Component
     public ?float $gpsLatitude = null;
     public ?float $gpsLongitude = null;
 
+    public ?int $cloneSessionId = null;
+
     public function mount(): void
     {
         $this->sessionId = request()->query('session_id');
+        $this->cloneSessionId = request()->query('clone_session');
 
         if ($this->sessionId) {
             $session = ClassSession::query()->findOrFail($this->sessionId);
             abort_unless($session->created_by === auth()->id(), 403);
 
             $this->step = 2; // Nếu truyền session_id vào, mở màn hình chọn phương thức
+            $this->classId = (string) $session->class_id;
+            $this->name = $session->name;
+            $this->date = $session->date->format('Y-m-d');
+            $this->startTime = $session->start_time ? \Carbon\Carbon::parse($session->start_time)->format('H:i') : '07:00';
+            $this->endTime = $session->end_time ? \Carbon\Carbon::parse($session->end_time)->format('H:i') : '09:30';
+            $this->startLesson = $session->start_lesson ?? 1;
+            $this->endLesson = $session->end_lesson ?? 3;
+        } elseif ($this->cloneSessionId) {
+            $session = ClassSession::query()->findOrFail($this->cloneSessionId);
+            abort_unless($session->created_by === auth()->id(), 403);
+
             $this->classId = (string) $session->class_id;
             $this->name = $session->name;
             $this->date = $session->date->format('Y-m-d');
@@ -118,7 +132,18 @@ class AttendanceCreate extends Component
         $totalLessons = $courseClass->total_lessons;
         $studiedLessons = (int) $courseClass->sessions()->sum('lesson_count');
 
-        if ($studiedLessons + $lessonCount > $totalLessons) {
+        // Kiểm tra xem đã có phiên nào cùng date, start_time, end_time chưa
+        $existingSession = ClassSession::query()
+            ->where('class_id', $courseClass->id)
+            ->whereDate('date', $validated['date'])
+            ->where('start_time', $validated['startTime'] ?: null)
+            ->where('end_time', $validated['endTime'] ?: null)
+            ->first();
+
+        // Nếu đã có phiên rồi (tức là đang tạo Lần 2, Lần 3), thì lesson_count của bản ghi mới phải là 0 để không cộng dồn
+        $actualLessonCount = $existingSession ? 0 : $lessonCount;
+
+        if ($studiedLessons + $actualLessonCount > $totalLessons) {
             $remaining = max(0, $totalLessons - $studiedLessons);
             $this->addError('endLesson', "Số tiết vượt quá giới hạn! Lớp đã học {$studiedLessons}/{$totalLessons} tiết, chỉ có thể tạo tối đa {$remaining} tiết nữa.");
             return null;
@@ -133,7 +158,7 @@ class AttendanceCreate extends Component
             'end_time' => $validated['endTime'] ?: null,
             'start_lesson' => $validated['startLesson'],
             'end_lesson' => $validated['endLesson'],
-            'lesson_count' => $lessonCount,
+            'lesson_count' => $actualLessonCount,
             'status' => $status,
         ]);
 

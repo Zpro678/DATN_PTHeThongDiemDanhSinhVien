@@ -34,24 +34,82 @@
                     <!-- Chọn lớp -->
                     <div>
                         <label for="class_id" class="block text-lg font-bold text-slate-700 mb-2">Chọn lớp học</label>
-                        <select wire:model.live="class_id" id="class_id" class="block w-full pl-4 pr-10 py-3 text-lg border-slate-300 focus:outline-none focus:ring-primary focus:border-primary rounded-xl transition">
-                            <option value="">-- Chọn lớp --</option>
-                            @foreach ($this->classes() as $class)
-                                <option value="{{ $class->id }}">{{ $class->code }} - {{ $class->name }}</option>
-                            @endforeach
-                        </select>
-                        @error('class_id') <span class="text-red-500 text-sm mt-1 block">{{ $message }}</span> @enderror
+                        <div x-data="{ open: false }" class="relative w-full">
+                            <button @click="open = !open" @click.away="open = false" type="button" 
+                                class="flex w-full items-center justify-between rounded-xl border border-slate-300 bg-white px-4 py-3 text-lg text-slate-700 transition hover:border-primary focus:border-primary focus:outline-none focus:ring-2 focus:ring-primary/20">
+                                <span class="truncate">
+                                    @if($class_id)
+                                        @php $selectedClass = collect($this->classes())->firstWhere('id', $class_id); @endphp
+                                        {{ $selectedClass ? $selectedClass->code . ' - ' . $selectedClass->name : '-- Chọn lớp --' }}
+                                    @else
+                                        -- Chọn lớp --
+                                    @endif
+                                </span>
+                                <x-user.icon name="chevron-down" class="h-5 w-5 text-slate-400 transition-transform duration-200" x-bind:class="open ? 'rotate-180' : ''" />
+                            </button>
+                            <div x-show="open" x-transition.opacity.duration.200ms style="display: none;" 
+                                class="absolute left-0 top-full z-10 mt-1 w-full overflow-hidden rounded-xl border border-slate-100 bg-white shadow-lg ring-1 ring-black/5">
+                                <ul class="max-h-60 overflow-y-auto p-1">
+                                    <li>
+                                        <button @click="$wire.set('class_id', ''); open = false;" type="button" 
+                                            class="flex w-full items-center justify-between rounded-lg px-3 py-2.5 text-left text-base transition-colors {{ empty($class_id) ? 'bg-primary/10 text-primary font-bold' : 'text-slate-700 hover:bg-slate-50' }}">
+                                            <span>-- Chọn lớp --</span>
+                                            @if(empty($class_id)) <x-user.icon name="check" class="h-4 w-4" /> @endif
+                                        </button>
+                                    </li>
+                                    @foreach($this->classes() as $class)
+                                        <li>
+                                            <button @click="$wire.set('class_id', '{{ $class->id }}'); open = false;" type="button" 
+                                                class="flex w-full items-center justify-between rounded-lg px-3 py-2.5 text-left text-base transition-colors {{ $class_id == $class->id ? 'bg-primary/10 text-primary font-bold' : 'text-slate-700 hover:bg-slate-50' }}">
+                                                <span>{{ $class->code }} - {{ $class->name }}</span>
+                                                @if($class_id == $class->id) <x-user.icon name="check" class="h-4 w-4" /> @endif
+                                            </button>
+                                        </li>
+                                    @endforeach
+                                </ul>
+                            </div>
+                        </div>
                     </div>
 
                     <!-- Chọn buổi học -->
                     <div>
                         <label for="class_session_id" class="block text-lg font-bold text-slate-700 mb-2">Chọn buổi học</label>
-                        <select wire:model="class_session_id" id="class_session_id" class="block w-full pl-4 pr-10 py-3 text-lg border-slate-300 focus:outline-none focus:ring-primary focus:border-primary rounded-xl transition" {{ empty($this->sessions()) ? 'disabled' : '' }}>
-                            <option value="">-- Chọn buổi học --</option>
-                            @foreach ($this->sessions() as $session)
-                                <option value="{{ $session->id }}">{{ \Carbon\Carbon::parse($session->date)->format('d/m/Y') }} - {{ $session->name }}</option>
-                            @endforeach
-                        </select>
+                        <div x-data="{ open: false }" class="relative w-full {{ empty($this->sessions()) ? 'opacity-50 pointer-events-none' : '' }}">
+                            <button @click="open = !open" @click.away="open = false" type="button" 
+                                class="flex w-full items-center justify-between rounded-xl border border-slate-300 bg-white px-4 py-3 text-lg text-slate-700 transition hover:border-primary focus:border-primary focus:outline-none focus:ring-2 focus:ring-primary/20"
+                                {{ empty($this->sessions()) ? 'disabled' : '' }}>
+                                <span class="truncate">
+                                    @if($class_session_id)
+                                        @php $selectedSession = collect($this->sessions())->firstWhere('id', $class_session_id); @endphp
+                                        {{ $selectedSession ? \Carbon\Carbon::parse($selectedSession->date)->format('d/m/Y') . ' - ' . $selectedSession->name : '-- Chọn buổi học --' }}
+                                    @else
+                                        -- Chọn buổi học --
+                                    @endif
+                                </span>
+                                <x-user.icon name="chevron-down" class="h-5 w-5 text-slate-400 transition-transform duration-200" x-bind:class="open ? 'rotate-180' : ''" />
+                            </button>
+                            <div x-show="open" x-transition.opacity.duration.200ms style="display: none;" 
+                                class="absolute left-0 top-full z-10 mt-1 w-full overflow-hidden rounded-xl border border-slate-100 bg-white shadow-lg ring-1 ring-black/5">
+                                <ul class="max-h-60 overflow-y-auto p-1">
+                                    <li>
+                                        <button @click="$wire.set('class_session_id', ''); open = false;" type="button" 
+                                            class="flex w-full items-center justify-between rounded-lg px-3 py-2.5 text-left text-base transition-colors {{ empty($class_session_id) ? 'bg-primary/10 text-primary font-bold' : 'text-slate-700 hover:bg-slate-50' }}">
+                                            <span>-- Chọn buổi học --</span>
+                                            @if(empty($class_session_id)) <x-user.icon name="check" class="h-4 w-4" /> @endif
+                                        </button>
+                                    </li>
+                                    @foreach($this->sessions() as $session)
+                                        <li>
+                                            <button @click="$wire.set('class_session_id', '{{ $session->id }}'); open = false;" type="button" 
+                                                class="flex w-full items-center justify-between rounded-lg px-3 py-2.5 text-left text-base transition-colors {{ $class_session_id == $session->id ? 'bg-primary/10 text-primary font-bold' : 'text-slate-700 hover:bg-slate-50' }}">
+                                                <span>{{ \Carbon\Carbon::parse($session->date)->format('d/m/Y') }} - {{ $session->name }}</span>
+                                                @if($class_session_id == $session->id) <x-user.icon name="check" class="h-4 w-4" /> @endif
+                                            </button>
+                                        </li>
+                                    @endforeach
+                                </ul>
+                            </div>
+                        </div>
                         @if(empty($this->sessions()) && $class_id)
                             <span class="text-gray-500 text-sm mt-1 block">Không có buổi học nào cho lớp này.</span>
                         @endif

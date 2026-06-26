@@ -39,7 +39,7 @@
     @endif
 
     <section class="grid gap-6 lg:grid-cols-[1fr_1.5fr]">
-        <div class="space-y-6">
+        <div class="flex h-full flex-col gap-6">
             <div class="rounded-[2rem] border border-outline-variant/10 bg-white p-6 shadow-sm">
                 <div class="mb-5 flex items-center justify-between border-b border-slate-100 pb-4">
                     <h2 class="text-sm font-extrabold uppercase tracking-wider text-slate-900">Thông tin chung</h2>
@@ -64,7 +64,7 @@
                 </dl>
             </div>
 
-            <div class="rounded-[2rem] border border-outline-variant/10 bg-white p-6 shadow-sm">
+            <div class="flex flex-1 flex-col rounded-[2rem] border border-outline-variant/10 bg-white p-6 shadow-sm">
                 <h2 class="mb-4 text-sm font-extrabold uppercase tracking-wider text-slate-900 border-b border-slate-100 pb-4">Trạng thái xét duyệt</h2>
                 @if($leaveRequest->reviewer)
                     <p class="text-sm text-slate-600 mb-2">Được xử lý bởi <strong class="text-slate-900">{{ $leaveRequest->reviewer->name }}</strong> lúc {{ $leaveRequest->reviewed_at?->format('H:i d/m/Y') }}.</p>

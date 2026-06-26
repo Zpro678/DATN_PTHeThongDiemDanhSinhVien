@@ -53,10 +53,12 @@ class QrAttendanceCreate extends Component
     public ?float $gpsLongitude = null;
 
     public ?int $editSessionId = null;
+    public ?int $cloneSessionId = null;
 
     public function mount(): void
     {
         $this->editSessionId = request()->query('edit_session');
+        $this->cloneSessionId = request()->query('clone_session');
 
         if ($this->editSessionId) {
             $session = ClassSession::query()->findOrFail($this->editSessionId);
@@ -69,10 +71,8 @@ class QrAttendanceCreate extends Component
             // Load other settings from cache for this class
             $this->loadConfigForClass($this->classId);
 
-            // Phản ánh đúng số tiết đã lưu của buổi (DB chỉ lưu lesson_count, không lưu tiết bắt đầu/kết thúc).
-            $savedLessonCount = max(1, (int) $session->lesson_count);
-            $this->startLesson = 1;
-            $this->endLesson = $savedLessonCount;
+            $this->startLesson = $session->start_lesson ?? 1;
+            $this->endLesson = $session->end_lesson ?? max(1, $session->lesson_count);
 
             // Override with actual saved DB values if they differ
             $this->gpsEnabled = $session->gps_latitude !== null;
@@ -85,6 +85,18 @@ class QrAttendanceCreate extends Component
                 $this->qrRefreshRate = $session->qr_refresh_rate;
             }
 
+        } elseif ($this->cloneSessionId) {
+            $session = ClassSession::query()->findOrFail($this->cloneSessionId);
+            abort_unless($session->created_by === auth()->id(), 403);
+
+            $this->classId = (string) $session->class_id;
+            
+            $this->loadConfigForClass($this->classId);
+
+            $this->name = $session->name;
+            $this->date = $session->date->format('Y-m-d');
+            $this->startLesson = $session->start_lesson ?? 1;
+            $this->endLesson = $session->end_lesson ?? max(1, $session->lesson_count);
         } else {
             $preselectedDate = request()->query('date');
             $this->date = $preselectedDate ?: now()->toDateString();
@@ -123,22 +135,19 @@ class QrAttendanceCreate extends Component
             $this->startLesson = $config['startLesson'] ?? 1;
             $this->endLesson = $config['endLesson'] ?? 3;
             $this->qrRefreshRate = $config['qrRefreshRate'] ?? 10;
-            $this->gpsEnabled = $config['gpsEnabled'] ?? true;
             $this->deviceCheck = $config['deviceCheck'] ?? true;
-            $this->gpsRadius = $config['gpsRadius'] ?? 100;
         }
+
+        // Bắt buộc GPS luôn bật và bán kính 100m theo yêu cầu
+        $this->gpsEnabled = true;
+        $this->gpsRadius = 100;
 
         if ($selectedClass->gps_latitude !== null && $selectedClass->gps_longitude !== null) {
             $this->gpsLatitude = $selectedClass->gps_latitude;
             $this->gpsLongitude = $selectedClass->gps_longitude;
-            $this->gpsRadius = $selectedClass->gps_radius ?? 100;
-            $this->gpsEnabled = true;
         } else {
-            if (! $config || ! isset($config['gpsEnabled'])) {
-                $this->gpsEnabled = false;
-                $this->gpsLatitude = null;
-                $this->gpsLongitude = null;
-            }
+            $this->gpsLatitude = null;
+            $this->gpsLongitude = null;
         }
     }
 
@@ -224,6 +233,15 @@ class QrAttendanceCreate extends Component
             return;
         }
 
+        $existingSession = ClassSession::query()
+            ->where('class_id', $courseClass->id)
+            ->whereDate('date', $validated['date'])
+            ->where('start_time', $validated['startTime'] ?: null)
+            ->where('end_time', $validated['endTime'] ?: null)
+            ->first();
+
+        $actualLessonCount = $existingSession ? 0 : $lessonCount;
+
         if ($this->editSessionId) {
             $session = ClassSession::query()->findOrFail($this->editSessionId);
             abort_unless($session->created_by === auth()->id(), 403);
@@ -236,7 +254,8 @@ class QrAttendanceCreate extends Component
                 'end_time' => $validated['endTime'] ?: null,
                 'start_lesson' => $validated['startLesson'],
                 'end_lesson' => $validated['endLesson'],
-                'lesson_count' => $lessonCount,
+                'lesson_count' => $actualLessonCount,
+                'qr_token' => Str::upper(Str::random(24)),
                 'token_expires_at' => now()->addMinutes($validated['durationMinutes']),
                 'qr_refresh_rate' => $validated['qrRefreshRate'],
                 'gps_latitude' => $validated['gpsEnabled'] ? $this->gpsLatitude : null,
@@ -255,7 +274,7 @@ class QrAttendanceCreate extends Component
                 'end_time' => $validated['endTime'] ?: null,
                 'start_lesson' => $validated['startLesson'],
                 'end_lesson' => $validated['endLesson'],
-                'lesson_count' => $lessonCount,
+                'lesson_count' => $actualLessonCount,
                 'qr_token' => Str::upper(Str::random(24)),
                 'token_expires_at' => now()->addMinutes($validated['durationMinutes']),
                 'qr_refresh_rate' => $validated['qrRefreshRate'],

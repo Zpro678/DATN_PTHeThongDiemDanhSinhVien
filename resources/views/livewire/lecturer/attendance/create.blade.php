@@ -138,14 +138,18 @@
                                 <div class="pointer-events-none absolute inset-y-0 left-0 flex items-center pl-4">
                                     <x-user.icon name="users" :size="20" class="text-slate-400 transition-colors group-focus-within:text-blue-500" />
                                 </div>
-                                <button
-                                    type="button"
-                                    class="flex w-full items-center justify-between gap-3 rounded-2xl border-2 border-transparent bg-slate-50 py-4 pl-12 pr-4 text-left font-semibold text-slate-900 shadow-sm outline-none transition-all hover:border-slate-200 focus:border-blue-500 focus:bg-white focus:ring-4 focus:ring-blue-500/10"
-                                    @click="classDropdownOpen = ! classDropdownOpen"
-                                >
-                                    <span class="min-w-0 truncate" x-text="selectedClass.label || 'Chọn lớp học'"></span>
-                                    <x-user.icon name="chevron-down" :size="20" class="shrink-0 text-slate-500 transition-transform duration-200" x-bind:class="classDropdownOpen ? 'rotate-180' : ''" />
-                                </button>
+                                @if($sessionId || $cloneSessionId)
+                                    <input type="text" readonly class="w-full cursor-default rounded-2xl border-2 border-slate-100 bg-slate-50 py-4 pl-12 pr-4 font-semibold text-slate-700 outline-none" value="{{ $classOptions->firstWhere('id', $classId)['label'] ?? '' }}">
+                                @else
+                                    <button
+                                        type="button"
+                                        class="flex w-full items-center justify-between gap-3 rounded-2xl border-2 border-transparent bg-slate-50 py-4 pl-12 pr-4 text-left font-semibold text-slate-900 shadow-sm outline-none transition-all hover:border-slate-200 focus:border-blue-500 focus:bg-white focus:ring-4 focus:ring-blue-500/10"
+                                        @click="classDropdownOpen = ! classDropdownOpen"
+                                    >
+                                        <span class="min-w-0 truncate" x-text="selectedClass.label || 'Chọn lớp học'"></span>
+                                        <x-user.icon name="chevron-down" :size="20" class="shrink-0 text-slate-500 transition-transform duration-200" x-bind:class="classDropdownOpen ? 'rotate-180' : ''" />
+                                    </button>
+                                @endif
 
                                 <div
                                     x-cloak
@@ -182,14 +186,24 @@
                                 <div class="pointer-events-none absolute inset-y-0 left-0 flex items-center pl-4">
                                     <x-user.icon name="edit" :size="20" class="text-slate-400 transition-colors group-focus-within:text-blue-500" />
                                 </div>
-                                <input
-                                    id="session_name"
-                                    wire:model.blur="name"
-                                    type="text"
-                                    placeholder="Ví dụ: Buổi 1 - Lý thuyết..."
-                                    class="w-full rounded-2xl border-2 border-transparent bg-slate-50 py-4 pl-12 pr-4 font-semibold text-slate-900 shadow-sm outline-none transition-all hover:border-slate-200 focus:border-blue-500 focus:bg-white focus:ring-4 focus:ring-blue-500/10"
-                                    required
-                                >
+                                @if($sessionId || $cloneSessionId)
+                                    <input
+                                        id="session_name"
+                                        type="text"
+                                        readonly
+                                        value="{{ $name }}"
+                                        class="w-full cursor-default rounded-2xl border-2 border-slate-100 bg-slate-50 py-4 pl-12 pr-4 font-semibold text-slate-700 outline-none"
+                                    >
+                                @else
+                                    <input
+                                        id="session_name"
+                                        wire:model.blur="name"
+                                        type="text"
+                                        placeholder="Ví dụ: Buổi 1 - Lý thuyết..."
+                                        class="w-full rounded-2xl border-2 border-transparent bg-slate-50 py-4 pl-12 pr-4 font-semibold text-slate-900 shadow-sm outline-none transition-all hover:border-slate-200 focus:border-blue-500 focus:bg-white focus:ring-4 focus:ring-blue-500/10"
+                                        required
+                                    >
+                                @endif
                             </div>
                             @error('name')<span class="text-sm font-medium text-red-600">{{ $message }}</span>@enderror
                         </div>
@@ -202,13 +216,23 @@
                                 <div class="pointer-events-none absolute inset-y-0 left-0 flex items-center pl-4">
                                     <x-user.icon name="calendar" :size="20" class="text-slate-400 transition-colors group-focus-within:text-blue-500" />
                                 </div>
-                                <input
-                                    id="session_date"
-                                    wire:model="date"
-                                    type="date"
-                                    class="w-full rounded-2xl border-2 border-transparent bg-slate-50 py-4 pl-12 pr-4 font-semibold text-slate-900 shadow-sm outline-none transition-all focus:border-blue-500 focus:bg-white focus:ring-4 focus:ring-blue-500/10"
-                                    required
-                                >
+                                @if($sessionId || $cloneSessionId)
+                                    <input
+                                        id="session_date"
+                                        type="date"
+                                        readonly
+                                        value="{{ $date }}"
+                                        class="w-full cursor-default rounded-2xl border-2 border-slate-100 bg-slate-50 py-4 pl-12 pr-4 font-semibold text-slate-700 outline-none"
+                                    >
+                                @else
+                                    <input
+                                        id="session_date"
+                                        wire:model="date"
+                                        type="date"
+                                        class="w-full rounded-2xl border-2 border-transparent bg-slate-50 py-4 pl-12 pr-4 font-semibold text-slate-900 shadow-sm outline-none transition-all focus:border-blue-500 focus:bg-white focus:ring-4 focus:ring-blue-500/10"
+                                        required
+                                    >
+                                @endif
                             </div>
                             @error('date')<span class="text-sm font-medium text-red-600">{{ $message }}</span>@enderror
                         </div>
@@ -225,26 +249,32 @@
                                 <div class="space-y-2">
                                     <label class="block text-[11px] font-bold uppercase tracking-wider text-slate-500">Tiết bắt đầu</label>
                                     <div class="relative" x-data="{ position: 'bottom' }" @click.outside="startLessonDropdownOpen = false">
-                                        <button
-                                            type="button"
-                                            x-ref="btnStart"
-                                            class="flex w-full items-center justify-between gap-3 rounded-2xl border-2 border-transparent bg-slate-50 py-4 pl-4 pr-4 text-left font-semibold text-slate-900 shadow-sm outline-none transition-all hover:border-slate-200 focus:border-blue-500 focus:bg-white focus:ring-4 focus:ring-blue-500/10"
-                                            @click="
-                                                startLessonDropdownOpen = ! startLessonDropdownOpen;
-                                                if (startLessonDropdownOpen) {
-                                                    $nextTick(() => {
-                                                        let rect = $refs.btnStart.getBoundingClientRect();
-                                                        let menuRect = $refs.menuStart.getBoundingClientRect();
-                                                        let spaceBelow = window.innerHeight - rect.bottom;
-                                                        let spaceAbove = rect.top;
-                                                        position = (spaceBelow < menuRect.height && spaceAbove > spaceBelow) ? 'top' : 'bottom';
-                                                    });
-                                                }
-                                            "
-                                        >
-                                            <span x-text="'Tiết ' + startLesson"></span>
-                                            <x-user.icon name="chevron-down" :size="20" class="shrink-0 text-slate-500 transition-transform duration-200" x-bind:class="startLessonDropdownOpen ? 'rotate-180' : ''" />
-                                        </button>
+                                        @if($sessionId || $cloneSessionId)
+                                            <div class="flex w-full cursor-default items-center justify-between gap-3 rounded-2xl border-2 border-slate-100 bg-slate-50 py-4 pl-4 pr-4 text-left font-semibold text-slate-700">
+                                                <span>Tiết {{ $startLesson }}</span>
+                                            </div>
+                                        @else
+                                            <button
+                                                type="button"
+                                                x-ref="btnStart"
+                                                class="flex w-full items-center justify-between gap-3 rounded-2xl border-2 border-transparent bg-slate-50 py-4 pl-4 pr-4 text-left font-semibold text-slate-900 shadow-sm outline-none transition-all hover:border-slate-200 focus:border-blue-500 focus:bg-white focus:ring-4 focus:ring-blue-500/10"
+                                                @click="
+                                                    startLessonDropdownOpen = ! startLessonDropdownOpen;
+                                                    if (startLessonDropdownOpen) {
+                                                        $nextTick(() => {
+                                                            let rect = $refs.btnStart.getBoundingClientRect();
+                                                            let menuRect = $refs.menuStart.getBoundingClientRect();
+                                                            let spaceBelow = window.innerHeight - rect.bottom;
+                                                            let spaceAbove = rect.top;
+                                                            position = (spaceBelow < menuRect.height && spaceAbove > spaceBelow) ? 'top' : 'bottom';
+                                                        });
+                                                    }
+                                                "
+                                            >
+                                                <span x-text="'Tiết ' + startLesson"></span>
+                                                <x-user.icon name="chevron-down" :size="20" class="shrink-0 text-slate-500 transition-transform duration-200" x-bind:class="startLessonDropdownOpen ? 'rotate-180' : ''" />
+                                            </button>
+                                        @endif
 
                                         <div
                                             x-cloak
@@ -271,26 +301,32 @@
                                 <div class="space-y-2">
                                     <label class="block text-[11px] font-bold uppercase tracking-wider text-slate-500">Tiết kết thúc</label>
                                     <div class="relative" x-data="{ position: 'bottom' }" @click.outside="endLessonDropdownOpen = false">
-                                        <button
-                                            type="button"
-                                            x-ref="btnEnd"
-                                            class="flex w-full items-center justify-between gap-3 rounded-2xl border-2 border-transparent bg-slate-50 py-4 pl-4 pr-4 text-left font-semibold text-slate-900 shadow-sm outline-none transition-all hover:border-slate-200 focus:border-blue-500 focus:bg-white focus:ring-4 focus:ring-blue-500/10"
-                                            @click="
-                                                endLessonDropdownOpen = ! endLessonDropdownOpen;
-                                                if (endLessonDropdownOpen) {
-                                                    $nextTick(() => {
-                                                        let rect = $refs.btnEnd.getBoundingClientRect();
-                                                        let menuRect = $refs.menuEnd.getBoundingClientRect();
-                                                        let spaceBelow = window.innerHeight - rect.bottom;
-                                                        let spaceAbove = rect.top;
-                                                        position = (spaceBelow < menuRect.height && spaceAbove > spaceBelow) ? 'top' : 'bottom';
-                                                    });
-                                                }
-                                            "
-                                        >
-                                            <span x-text="'Tiết ' + endLesson"></span>
-                                            <x-user.icon name="chevron-down" :size="20" class="shrink-0 text-slate-500 transition-transform duration-200" x-bind:class="endLessonDropdownOpen ? 'rotate-180' : ''" />
-                                        </button>
+                                        @if($sessionId || $cloneSessionId)
+                                            <div class="flex w-full cursor-default items-center justify-between gap-3 rounded-2xl border-2 border-slate-100 bg-slate-50 py-4 pl-4 pr-4 text-left font-semibold text-slate-700">
+                                                <span>Tiết {{ $endLesson }}</span>
+                                            </div>
+                                        @else
+                                            <button
+                                                type="button"
+                                                x-ref="btnEnd"
+                                                class="flex w-full items-center justify-between gap-3 rounded-2xl border-2 border-transparent bg-slate-50 py-4 pl-4 pr-4 text-left font-semibold text-slate-900 shadow-sm outline-none transition-all hover:border-slate-200 focus:border-blue-500 focus:bg-white focus:ring-4 focus:ring-blue-500/10"
+                                                @click="
+                                                    endLessonDropdownOpen = ! endLessonDropdownOpen;
+                                                    if (endLessonDropdownOpen) {
+                                                        $nextTick(() => {
+                                                            let rect = $refs.btnEnd.getBoundingClientRect();
+                                                            let menuRect = $refs.menuEnd.getBoundingClientRect();
+                                                            let spaceBelow = window.innerHeight - rect.bottom;
+                                                            let spaceAbove = rect.top;
+                                                            position = (spaceBelow < menuRect.height && spaceAbove > spaceBelow) ? 'top' : 'bottom';
+                                                        });
+                                                    }
+                                                "
+                                            >
+                                                <span x-text="'Tiết ' + endLesson"></span>
+                                                <x-user.icon name="chevron-down" :size="20" class="shrink-0 text-slate-500 transition-transform duration-200" x-bind:class="endLessonDropdownOpen ? 'rotate-180' : ''" />
+                                            </button>
+                                        @endif
 
                                         <div
                                             x-cloak
