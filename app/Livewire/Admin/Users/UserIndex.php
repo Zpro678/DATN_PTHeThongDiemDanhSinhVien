@@ -20,7 +20,7 @@ class UserIndex extends Component
     public $role = '';
 
     #[Url(history: true)]
-    public $status = '';
+    public $status = 'active';
 
     public function updatingSearch()
     {
@@ -71,7 +71,7 @@ class UserIndex extends Component
                 }
             })
             ->when($this->status, fn ($query) => $query->where('status', $this->status))
-            ->orderBy('name')
+            ->orderByDesc('created_at')
             ->paginate(10);
 
         return view('livewire.admin.users.user-index', [

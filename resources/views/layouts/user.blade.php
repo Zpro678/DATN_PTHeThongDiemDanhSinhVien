@@ -217,13 +217,21 @@
                             </button>
 
                             <div class="ml-2 relative" x-data="{ openProfile: false }" @click.away="openProfile = false">
+                                @php
+                                    $firstCharacter = function_exists('mb_substr') ? mb_substr($userName, 0, 1, 'UTF-8') : substr($userName, 0, 1);
+                                    $userInitial = function_exists('mb_strtoupper') ? mb_strtoupper($firstCharacter, 'UTF-8') : strtoupper($firstCharacter);
+                                @endphp
                                 <button type="button" @click="openProfile = !openProfile" class="flex items-center gap-3 focus:outline-none">
                                     <div class="hidden text-right sm:block">
                                         <p class="font-label-md font-bold leading-none text-on-surface">{{ $userName }}</p>
                                         <p class="mt-1 max-w-[150px] truncate text-[10px] text-on-surface-variant">{{ $userRole }}</p>
                                     </div>
-                                    <div class="h-10 w-10 shrink-0 overflow-hidden rounded-full border-2 border-primary/20 bg-surface-container p-0.5 transition-transform hover:scale-105" :class="openProfile ? 'ring-2 ring-primary ring-offset-2' : ''">
-                                        <img src="{{ Auth::user()?->avatar_url ?? 'https://ui-avatars.com/api/?name='.urlencode('Guest').'&color=FFFFFF&background=4285F4' }}" alt="{{ $userName }}" class="h-full w-full rounded-full object-cover">
+                                    <div class="flex h-10 w-10 shrink-0 items-center justify-center overflow-hidden rounded-full border-2 border-primary/20 bg-blue-100 p-0.5 transition-transform hover:scale-105" :class="openProfile ? 'ring-2 ring-primary ring-offset-2' : ''">
+                                        @if(Auth::user()?->avatar)
+                                            <img src="{{ asset('storage/'.Auth::user()->avatar) }}" alt="{{ $userName }}" class="h-full w-full rounded-full object-cover">
+                                        @else
+                                            <span class="text-sm font-black text-blue-700">{{ $userInitial }}</span>
+                                        @endif
                                     </div>
                                 </button>
 

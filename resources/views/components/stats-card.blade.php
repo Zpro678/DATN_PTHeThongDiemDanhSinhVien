@@ -11,11 +11,11 @@
 
 <div class="admin-card admin-card-hover group flex {{ ($change || $sparklinePath) ? 'min-h-[172px]' : '' }} h-full flex-col justify-between overflow-hidden rounded-2xl border p-5">
     <div class="relative z-10 flex items-start justify-between gap-4">
-        <div class="space-y-1.5">
-            <span class="block text-[11px] font-bold uppercase tracking-widest text-slate-400">
+        <div class="space-y-1.5 min-w-0">
+            <span class="block text-[11px] font-bold uppercase tracking-widest text-slate-400 truncate" title="{{ $title }}">
                 {{ $title }}
             </span>
-            <h3 class="text-[28px] font-black leading-none tracking-tight text-slate-900">
+            <h3 class="text-[28px] font-black leading-none tracking-tight text-slate-900 truncate" title="{{ $value }}">
                 {{ $value }}
             </h3>
         </div>

@@ -7,10 +7,6 @@
                 <p class="mt-1 text-sm text-slate-500">Danh sách tất cả người dùng trong hệ thống (Admin, Giảng viên, Học viên).</p>
             </div>
             <div class="flex gap-3">
-                <button type="button" class="admin-soft-button inline-flex items-center rounded-xl border border-slate-200 bg-white px-4 py-2.5 text-sm font-bold text-slate-700 transition-colors hover:bg-slate-50">
-                    <x-user.icon name="download" :size="18" class="mr-2 text-gray-400" />
-                    Xuất Excel
-                </button>
                 <a href="{{ route('admin.users.create', ['ma_user' => request()->route('ma_user') ?? Auth::id()]) }}" class="admin-soft-button inline-flex items-center rounded-xl border border-transparent bg-gradient-to-r from-blue-600 to-cyan-600 px-4 py-2.5 text-sm font-bold text-white shadow-sm shadow-blue-500/20">
                     <x-user.icon name="plus" :size="18" class="mr-2" />
                     Thêm tài khoản
@@ -31,7 +27,7 @@
         </div>
     @endif
 
-    <div class="admin-card flex-none overflow-hidden rounded-2xl border p-4 lg:p-5">
+    <div class="admin-card flex-none overflow-visible rounded-2xl border p-4 lg:p-5 relative z-20">
         <div class="grid grid-cols-1 gap-4 md:grid-cols-4">
             <div class="relative col-span-1 md:col-span-2">
                 <div class="pointer-events-none absolute inset-y-0 left-0 flex items-center pl-3">
@@ -46,31 +42,30 @@
             </div>
 
             <div>
-                <select wire:model.live="role" class="relative z-10 block w-full rounded-xl border-slate-200 bg-white py-2.5 pl-3 pr-10 text-sm text-slate-900 transition-colors focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-500">
-                    <option value="">Tất cả vai trò</option>
-                    <option value="admin">Admin</option>
-                    <option value="user">Người dùng</option>
-                </select>
+                @php
+                $roleOptions = [
+                    ['value' => 'admin', 'label' => 'Admin', 'sub_label' => 'Quản trị viên hệ thống'],
+                    ['value' => 'user', 'label' => 'Người dùng', 'sub_label' => 'Giảng viên & Học viên'],
+                ];
+                @endphp
+                <x-custom-select wire:model.live="role" :options="$roleOptions" placeholder="Tất cả vai trò" />
             </div>
 
             <div>
-                <select wire:model.live="status" class="relative z-10 block w-full rounded-xl border-slate-200 bg-white py-2.5 pl-3 pr-10 text-sm text-slate-900 transition-colors focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-500">
-                    <option value="">Tất cả trạng thái</option>
-                    <option value="active">Đang hoạt động</option>
-                    <option value="blocked">Đã khóa</option>
-                </select>
+                @php
+                $statusOptions = [
+                    ['value' => 'active', 'label' => 'Đang hoạt động', 'sub_label' => 'Tài khoản bình thường'],
+                    ['value' => 'blocked', 'label' => 'Đã khóa', 'sub_label' => 'Tài khoản bị vô hiệu hóa'],
+                ];
+                @endphp
+                <x-custom-select wire:model.live="status" :options="$statusOptions" placeholder="" />
             </div>
         </div>
     </div>
 
     <div class="admin-card flex min-h-0 flex-1 flex-col overflow-hidden rounded-2xl border relative">
         <!-- Livewire Loading Overlay -->
-        <div wire:loading class="absolute inset-0 z-10 bg-white/50 backdrop-blur-sm flex items-center justify-center">
-            <div class="flex items-center gap-2 text-blue-600 font-bold">
-                <x-user.icon name="loader-2" class="animate-spin" :size="24" />
-                Đang tìm kiếm...
-            </div>
-        </div>
+        <div wire:loading class="absolute inset-0 z-10 bg-white/50 backdrop-blur-sm"></div>
 
         <div class="flex-1 overflow-auto">
             <table class="min-w-full divide-y divide-gray-200">
