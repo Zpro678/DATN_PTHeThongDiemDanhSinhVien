@@ -74,7 +74,7 @@
 
     <section class="overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm">
         <div class="overflow-x-auto">
-            <table class="w-full min-w-[900px] text-left">
+            <table class="w-full min-w-[900px] text-left whitespace-nowrap">
                 <thead class="bg-slate-50 text-xs font-bold uppercase tracking-wider text-slate-500">
                     <tr>
                         <th class="px-6 py-4">Học viên</th>

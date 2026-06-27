@@ -23,7 +23,7 @@
             <h2 class="text-xl font-extrabold text-slate-900">Buổi điểm danh gần đây ({{ number_format($meetings->total()) }})</h2>
         </div>
         <div class="overflow-x-auto">
-            <table class="w-full min-w-[900px] text-left">
+            <table class="w-full min-w-[900px] text-left whitespace-nowrap">
                 <thead class="bg-slate-50 text-sm font-extrabold uppercase tracking-wider text-slate-800 whitespace-nowrap">
                     <tr>
                         <th class="w-[25%] px-6 py-4 text-left">Buổi học</th>

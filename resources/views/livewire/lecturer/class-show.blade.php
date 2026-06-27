@@ -88,7 +88,6 @@
                     <span class="text-sm text-slate-500">Tổng số buổi</span>
                     <p class="mt-1 text-2xl sm:text-[28px] font-bold text-slate-800 leading-none">{{ $class->total_sessions }} <span class="text-base font-medium text-slate-500">buổi</span></p>
                 </div>
-                </div>
 
                 @if($class->subject_code)
                 <div class="min-w-0">
