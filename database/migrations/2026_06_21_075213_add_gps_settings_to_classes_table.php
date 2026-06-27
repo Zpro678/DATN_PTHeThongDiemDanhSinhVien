@@ -12,7 +12,7 @@ return new class extends Migration
     public function up(): void
     {
         Schema::table('classes', function (Blueprint $table) {
-            $table->decimal('gps_latitude', 10, 8)->nullable()->after('total_lessons');
+            $table->decimal('gps_latitude', 10, 8)->nullable()->after('total_sessions');
             $table->decimal('gps_longitude', 11, 8)->nullable()->after('gps_latitude');
             $table->unsignedInteger('gps_radius')->nullable()->default(100)->after('gps_longitude');
         });

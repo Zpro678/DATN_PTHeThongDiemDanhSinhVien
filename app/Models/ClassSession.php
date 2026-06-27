@@ -16,13 +16,12 @@ class ClassSession extends Model
 
     protected $fillable = [
         'class_id', // ID của lớp học.
+        'meeting_id', // ID buổi học chứa phiên này.
         'created_by', // ID chủ lớp tạo phiên điểm danh.
         'name', // Tên buổi học.
         'date', // Ngày diễn ra buổi học.
         'start_time', // Thời gian bắt đầu.
         'end_time', // Thời gian kết thúc.
-        'start_lesson', // Tiết bắt đầu.
-        'end_lesson', // Tiết kết thúc.
         'qr_token', // Chuỗi token mã QR.
         'token_expires_at', // Thời điểm hết hạn của mã QR.
         'qr_refresh_rate', // Tốc độ làm mới mã QR.
@@ -30,7 +29,6 @@ class ClassSession extends Model
         'gps_longitude', // Kinh độ vị trí điểm danh.
         'gps_radius', // Bán kính GPS cho phép.
         'status', // Trạng thái phiên pending/active/closed.
-        'lesson_count', // Tổng số tiết học của buổi học này.
     ];
 
     protected function casts(): array
@@ -41,15 +39,17 @@ class ClassSession extends Model
             'gps_latitude' => 'decimal:8', // Ép kiểu vĩ độ GPS.
             'gps_longitude' => 'decimal:8', // Ép kiểu kinh độ GPS.
             'gps_radius' => 'integer', // Ép kiểu bán kính GPS.
-            'start_lesson' => 'integer',
-            'end_lesson' => 'integer',
-            'lesson_count' => 'integer', // Ép kiểu tổng số tiết của buổi học.
         ];
     }
 
     public function courseClass(): BelongsTo
     {
         return $this->belongsTo(CourseClass::class, 'class_id');
+    }
+
+    public function meeting(): BelongsTo
+    {
+        return $this->belongsTo(ClassMeeting::class, 'meeting_id');
     }
 
     public function creator(): BelongsTo

@@ -3,28 +3,28 @@
     // (cùng nguồn với trang danh sách học viên, query live từ attendance_records).
 
     // Số tiết học viên có mặt đúng giờ.
-    $presentLessons = (int) ($stats['present_lessons'] ?? 0);
+    $presentSessions = (int) ($stats['present_sessions'] ?? 0);
 
     // Số tiết học viên đi muộn.
-    $lateLessons = (int) ($stats['late_lessons'] ?? 0);
+    $lateSessions = (int) ($stats['late_sessions'] ?? 0);
 
     // Số tiết học viên vắng không phép.
-    $absentLessons = (int) ($stats['absent_lessons'] ?? 0);
+    $absentSessions = (int) ($stats['absent_sessions'] ?? 0);
 
     // Số tiết học viên vắng có phép.
-    $excusedLessons = (int) ($stats['excused_lessons'] ?? 0);
+    $excusedSessions = (int) ($stats['excused_sessions'] ?? 0);
 
     // Tổng tiết kế hoạch cả khóa học (mẫu số tính %).
-    $plannedLessons = (int) ($stats['planned_lessons'] ?? 0);
+    $plannedSessions = (int) ($stats['planned_sessions'] ?? 0);
 
     // Số tiết vắng hiệu dụng (vắng + muộn quy đổi).
-    $effectiveAbsent = (int) ($stats['effective_absent_lessons'] ?? $absentLessons);
+    $effectiveAbsent = (int) ($stats['effective_absent_sessions'] ?? $absentSessions);
 
     // % chuyên cần đã được tính qua AttendanceCalculator::percentOfPlanned trong service.
     $rate = (int) ($stats['attendance_percent'] ?? 100);
 
     // Ngưỡng vắng tối đa cho phép (20% tổng tiết kế hoạch).
-    $allowedAbsent = (int) ($stats['allowed_absent_lessons'] ?? 0);
+    $allowedAbsent = (int) ($stats['allowed_absent_sessions'] ?? 0);
 
     // Cấm thi: vắng > 20% hoặc chuyên cần < 80%.
     $isBanned = (bool) ($stats['is_banned'] ?? false);
@@ -48,7 +48,7 @@
     </section>
 
     <section class="grid gap-4 sm:grid-cols-2 lg:grid-cols-5">
-        @foreach ([['Có mặt', $presentLessons, 'text-emerald-600'], ['Đi muộn', $lateLessons, 'text-amber-600'], ['Vắng', $absentLessons, 'text-red-600'], ['Có phép', $excusedLessons, 'text-blue-600']] as [$label, $value, $color])
+        @foreach ([['Có mặt', $presentSessions, 'text-emerald-600'], ['Đi muộn', $lateSessions, 'text-amber-600'], ['Vắng', $absentSessions, 'text-red-600'], ['Có phép', $excusedSessions, 'text-blue-600']] as [$label, $value, $color])
             <div class="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm"><p class="text-xs font-bold uppercase tracking-wider text-slate-500">{{ $label }}</p><p class="mt-2 text-3xl font-extrabold {{ $color }}">{{ $value }}</p></div>
         @endforeach
         <div class="rounded-2xl border bg-white p-5 shadow-sm {{ $isBanned ? 'border-red-200' : ($isWarning ? 'border-amber-200' : 'border-slate-200') }}">

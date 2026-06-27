@@ -42,7 +42,7 @@ class ManagedClasses extends Component
                 'members as students_count' => fn ($q) => $q->where('status', 'active'),
                 'sessions as completed_sessions_count' => fn ($q) => $q->where('status', 'closed'),
             ])
-            ->withSum(['sessions as studied_lessons' => fn ($query) => $query->where('status', 'closed')], 'lesson_count')
+            ->withCount(['meetings as studied_sessions' => fn ($query) => $query->whereHas('sessions', fn ($s) => $s->where('status', 'closed'))])
             ->withSum('attendanceSummaries as sum_present', 'total_present')
             ->withSum('attendanceSummaries as sum_late', 'total_late')
             ->withSum('attendanceSummaries as sum_absent', 'total_absent')

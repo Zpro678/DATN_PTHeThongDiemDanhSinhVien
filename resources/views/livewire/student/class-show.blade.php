@@ -4,16 +4,16 @@
     </x-slot>
 
     @php
-        $validLessons = $attendanceDetail['attended'] ?? (($attendanceDetail['present'] ?? 0) + ($attendanceDetail['late'] ?? 0) + ($attendanceDetail['excused'] ?? 0));
+        $validSessions = $attendanceDetail['attended'] ?? (($attendanceDetail['present'] ?? 0) + ($attendanceDetail['late'] ?? 0) + ($attendanceDetail['excused'] ?? 0));
         $percent = $attendanceDetail['percent'] ?? 100;
         $isWarning = $attendanceDetail['warning'] ?? false;
-        $plannedLessons = $attendanceDetail['planned_lessons'] ?? 0;
-        $allowedAbsentLessons = $attendanceDetail['allowed_absent_lessons'] ?? 0;
-        $safeAbsenceLessons = $attendanceDetail['safe_absence_lessons'] ?? 0;
-        $exceededAbsentLessons = $attendanceDetail['exceeded_absent_lessons'] ?? 0;
+        $plannedSessions = $attendanceDetail['planned_sessions'] ?? 0;
+        $allowedAbsentSessions = $attendanceDetail['allowed_absent_sessions'] ?? 0;
+        $safeAbsenceSessions = $attendanceDetail['safe_absence_sessions'] ?? 0;
+        $exceededAbsentSessions = $attendanceDetail['exceeded_absent_sessions'] ?? 0;
         $absenceBudgetState = $attendanceDetail['absence_budget_state'] ?? 'safe';
         $absenceBudgetLabel = $attendanceDetail['absence_budget_label'] ?? 'Chưa có dữ liệu';
-        $absenceBudgetValue = $absenceBudgetState === 'danger' ? 'Vượt '.$exceededAbsentLessons.' tiết' : $safeAbsenceLessons.' tiết';
+        $absenceBudgetValue = $absenceBudgetState === 'danger' ? 'Vượt '.$exceededAbsentSessions.' buổi' : $safeAbsenceSessions.' buổi';
         $backRoute = $fromAttendanceStats
             ? route('student.attendance.stats', ['ma_user' => auth()->id()])
             : route('joined-classes', ['ma_user' => auth()->id()]);
@@ -73,8 +73,8 @@
                         <span class="font-semibold text-on-surface text-right">{{ $class->subject_code ?? 'N/A' }}</span>
                     </div>
                     <div class="flex items-center justify-between gap-3 border-t border-outline-variant/15 py-3">
-                        <span class="text-on-surface-variant">Tổng số tiết</span>
-                        <span class="font-semibold text-on-surface text-right">{{ $class->total_lessons }} tiết</span>
+                        <span class="text-on-surface-variant">Tổng số buổi</span>
+                        <span class="font-semibold text-on-surface text-right">{{ $class->total_sessions }} buổi</span>
                     </div>
                 </div>
 
@@ -111,10 +111,10 @@
                     @php
                         $tiles = [
                             ['label' => 'Tỷ lệ chuyên cần', 'value' => $percent.'%', 'icon' => 'trending-up', 'border' => $isWarning ? 'border-rose-100' : 'border-primary/10', 'bg' => $isWarning ? 'bg-rose-50' : 'bg-primary/5', 'icon_bg' => $isWarning ? 'bg-rose-100 text-rose-600' : 'bg-primary/10 text-primary', 'text' => $isWarning ? 'text-rose-600' : 'text-primary'],
-                            ['label' => 'Tiết hợp lệ', 'value' => $validLessons, 'icon' => 'check-circle', 'border' => 'border-emerald-100', 'bg' => 'bg-emerald-50', 'icon_bg' => 'bg-emerald-100 text-emerald-600', 'text' => 'text-emerald-600'],
-                            ['label' => 'Tổng tiết đã chốt', 'value' => $attendanceDetail['total'] ?? 0, 'icon' => 'calendar-check', 'border' => 'border-slate-100', 'bg' => 'bg-slate-50', 'icon_bg' => 'bg-slate-100 text-slate-600', 'text' => 'text-slate-700'],
-                            ['label' => 'Tiết đi muộn', 'value' => $attendanceDetail['late'] ?? 0, 'icon' => 'clock', 'border' => 'border-amber-100', 'bg' => 'bg-amber-50', 'icon_bg' => 'bg-amber-100 text-amber-600', 'text' => 'text-amber-600'],
-                            ['label' => 'Tiết vắng', 'value' => $attendanceDetail['absent'] ?? 0, 'icon' => 'x-circle', 'border' => 'border-rose-100', 'bg' => 'bg-rose-50', 'icon_bg' => 'bg-rose-100 text-rose-600', 'text' => 'text-rose-600'],
+                            ['label' => 'Buổi hợp lệ', 'value' => $validSessions, 'icon' => 'check-circle', 'border' => 'border-emerald-100', 'bg' => 'bg-emerald-50', 'icon_bg' => 'bg-emerald-100 text-emerald-600', 'text' => 'text-emerald-600'],
+                            ['label' => 'Tổng buổi đã chốt', 'value' => $attendanceDetail['total'] ?? 0, 'icon' => 'calendar-check', 'border' => 'border-slate-100', 'bg' => 'bg-slate-50', 'icon_bg' => 'bg-slate-100 text-slate-600', 'text' => 'text-slate-700'],
+                            ['label' => 'Buổi đi muộn', 'value' => $attendanceDetail['late'] ?? 0, 'icon' => 'clock', 'border' => 'border-amber-100', 'bg' => 'bg-amber-50', 'icon_bg' => 'bg-amber-100 text-amber-600', 'text' => 'text-amber-600'],
+                            ['label' => 'Buổi vắng', 'value' => $attendanceDetail['absent'] ?? 0, 'icon' => 'x-circle', 'border' => 'border-rose-100', 'bg' => 'bg-rose-50', 'icon_bg' => 'bg-rose-100 text-rose-600', 'text' => 'text-rose-600'],
                             ['label' => 'Quỹ vắng an toàn', 'value' => $absenceBudgetValue, 'icon' => $absenceBudgetState === 'safe' ? 'shield-check' : 'alert-triangle', 'border' => $absenceBudgetState === 'danger' ? 'border-rose-100' : ($absenceBudgetState === 'warning' ? 'border-amber-100' : 'border-sky-100'), 'bg' => $absenceBudgetState === 'danger' ? 'bg-rose-50' : ($absenceBudgetState === 'warning' ? 'bg-amber-50' : 'bg-sky-50'), 'icon_bg' => $absenceBudgetState === 'danger' ? 'bg-rose-100 text-rose-600' : ($absenceBudgetState === 'warning' ? 'bg-amber-100 text-amber-600' : 'bg-sky-100 text-sky-600'), 'text' => $absenceBudgetState === 'danger' ? 'text-rose-600' : ($absenceBudgetState === 'warning' ? 'text-amber-600' : 'text-sky-600')],
                         ];
                     @endphp
@@ -143,16 +143,16 @@
                         ]) style="width: {{ min(100, $percent) }}%"></div>
                     </div>
                     <p class="mt-3 text-sm text-on-surface-variant leading-relaxed">
-                        Dữ liệu được tính từ các phiên điểm danh đã chốt của lớp này, quy đổi theo số tiết từng buổi. Cần duy trì từ <span class="font-bold text-on-surface">80%</span> trở lên để đủ điều kiện dự thi.
+                        Dữ liệu được tính từ các buổi đã chốt của lớp này (mỗi buổi tính 1 đơn vị). Cần duy trì từ <span class="font-bold text-on-surface">80%</span> trở lên để đủ điều kiện dự thi.
                     </p>
                     <div class="mt-4 grid grid-cols-1 gap-3 sm:grid-cols-3">
                         <div class="rounded-xl bg-white/70 px-4 py-3 ring-1 ring-outline-variant/10">
-                            <p class="text-[11px] font-bold uppercase tracking-wide text-on-surface-variant">Tổng tiết kế hoạch</p>
-                            <strong class="mt-1 block text-lg font-black text-on-surface">{{ $plannedLessons }} tiết</strong>
+                            <p class="text-[11px] font-bold uppercase tracking-wide text-on-surface-variant">Tổng buổi dự kiến</p>
+                            <strong class="mt-1 block text-lg font-black text-on-surface">{{ $plannedSessions }} buổi</strong>
                         </div>
                         <div class="rounded-xl bg-white/70 px-4 py-3 ring-1 ring-outline-variant/10">
                             <p class="text-[11px] font-bold uppercase tracking-wide text-on-surface-variant">Ngưỡng vắng tối đa</p>
-                            <strong class="mt-1 block text-lg font-black text-on-surface">{{ $allowedAbsentLessons }} tiết</strong>
+                            <strong class="mt-1 block text-lg font-black text-on-surface">{{ $allowedAbsentSessions }} buổi</strong>
                         </div>
                         <div class="rounded-xl bg-white/70 px-4 py-3 ring-1 ring-outline-variant/10">
                             <p class="text-[11px] font-bold uppercase tracking-wide text-on-surface-variant">Trạng thái quỹ</p>

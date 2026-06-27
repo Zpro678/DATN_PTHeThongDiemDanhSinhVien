@@ -25,7 +25,7 @@ class Classes extends Component
             $q->where('owner_user_id', $userId);
         })->whereDate('created_at', today())->count();
 
-        $pendingLeaves = LeaveRequest::whereHas('courseClass', function ($q) use ($userId) {
+        $pendingLeaves = LeaveRequest::whereHas('classMember.courseClass', function ($q) use ($userId) {
             $q->where('owner_user_id', $userId);
         })->where('status', 'pending')->count();
 
@@ -59,8 +59,8 @@ class Classes extends Component
             $color = $colors[$index % 3];
 
             $sessionsCompleted = $class->sessions_completed ?? 0;
-            $attendancePct = $class->total_lessons > 0
-                ? round(($sessionsCompleted / $class->total_lessons) * 100)
+            $attendancePct = $class->total_sessions > 0
+                ? min(100, round(($sessionsCompleted / $class->total_sessions) * 100))
                 : 0;
 
             return [

@@ -36,11 +36,11 @@ class StudentsService
         // Mỗi ClassMember là quan hệ của học viên với một lớp học cụ thể.
         $members = ClassMember::query()
             ->with([
-                'courseClass:id,code,name,subject_code,semester,total_lessons',
+                'courseClass:id,code,name,subject_code,semester,total_sessions,deduct_excused_absence',
                 'attendanceRecords' => fn ($query) => $query
                     // Chỉ tính các bản ghi thuộc buổi điểm danh đã chốt.
                     ->whereHas('classSession', fn ($sessionQuery) => $sessionQuery->where('status', 'closed'))
-                    ->with('classSession:id,class_id,date,status,lesson_count'),
+                    ->with('classSession:id,class_id,date,status,meeting_id'),
                 'leaveRequests.classSession:id,class_id,name,date',
             ])
             ->where('user_id', $studentUserId)
@@ -83,38 +83,26 @@ class StudentsService
             return [];
         }
 
-        // Tính theo số tiết của từng buổi, không chỉ đếm số buổi điểm danh.
-        $totalLessons = (int) $records->sum(fn (AttendanceRecord $record) => $this->lessonCount($record));
-        $presentLessons = (int) $records
-            ->where('status', 'present')
-            ->sum(fn (AttendanceRecord $record) => $this->lessonCount($record));
-        $lateLessons = (int) $records
-            ->where('status', 'late')
-            ->sum(fn (AttendanceRecord $record) => $this->lessonCount($record));
-        $excusedLessons = (int) $records
-            ->where('status', 'excused')
-            ->sum(fn (AttendanceRecord $record) => $this->lessonCount($record));
-        $absentLessons = (int) $records
-            ->where('status', 'absent')
-            ->sum(fn (AttendanceRecord $record) => $this->lessonCount($record));
+        // Gộp theo buổi (mỗi buổi = 1 đơn vị).
+        $rows = $records->map(fn (AttendanceRecord $record) => (object) [
+            'meeting_id' => $record->classSession?->meeting_id,
+            'status' => $record->status,
+        ]);
+        $counts = AttendanceCalculator::consolidateByMeeting($rows);
+        $totalSessions = $counts['total'];
+        $excusedSessions = $counts['excused'];
+        $absentSessions = $counts['absent'];
 
-        // Số lần đi muộn để quy đổi 3 lần = 1 tiết vắng.
-        $lateCount = $records->where('status', 'late')->count();
-
-        // Bỏ vắng có phép khỏi mẫu số, quy đổi muộn thành vắng (xem AttendanceCalculator).
-        // % tính trên tổng tiết kế hoạch của lớp để nhất quán với quỹ vắng/điều kiện dự thi.
-        $plannedLessons = max((int) ($member->courseClass?->total_lessons ?? 0), $totalLessons);
-        $latesPerAbsent = (int) ($member->courseClass?->lates_per_absent ?? AttendanceCalculator::LATE_TO_ABSENT_RATIO);
+        // % tính trên tổng số buổi dự kiến của lớp để nhất quán với quỹ vắng.
+        $plannedSessions = max((int) ($member->courseClass?->total_sessions ?? 0), $totalSessions);
         $deductExcusedAbsence = (bool) ($member->courseClass?->deduct_excused_absence ?? true);
 
-        $allowedAbsentLessons = (int) floor($plannedLessons * AttendanceCalculator::ABSENCE_LIMIT_RATIO);
-        $effectiveAbsentLessons = AttendanceCalculator::effectiveAbsentLessons($absentLessons, $lateCount, $latesPerAbsent);
+        $allowedAbsentSessions = AttendanceCalculator::allowedAbsentSessions($plannedSessions);
+        $effectiveAbsentSessions = $absentSessions;
         $attendancePercent = AttendanceCalculator::percentOfPlanned(
-            $plannedLessons,
-            $excusedLessons,
-            $absentLessons,
-            $lateCount,
-            $latesPerAbsent,
+            $plannedSessions,
+            $excusedSessions,
+            $absentSessions,
             $deductExcusedAbsence
         );
 
@@ -126,26 +114,12 @@ class StudentsService
         $warnings = [];
 
         // Dưới ngưỡng chuyên cần tối thiểu thì sinh cảnh báo nguy cơ cấm thi.
-        if ($totalLessons > 0 && $attendancePercent < AttendanceCalculator::MIN_ATTENDANCE_PERCENT) {
+        if ($totalSessions > 0 && $attendancePercent < AttendanceCalculator::MIN_ATTENDANCE_PERCENT) {
             $warnings[] = [
                 'type' => 'danger',
                 'icon' => 'alert-triangle',
                 'title' => 'Nguy cơ cấm thi',
-                'message' => "Lớp {$classLabel}. Bạn đã vắng {$effectiveAbsentLessons}/{$allowedAbsentLessons} tiết được phép (đã tính muộn quy đổi), tỷ lệ chuyên cần còn {$attendancePercent}%.",
-                'date' => $latestDate?->format('d/m/Y') ?? now()->format('d/m/Y'),
-                'sort_date' => $latestDate?->toDateString() ?? now()->toDateString(),
-                'route' => 'student.attendance.history',
-                'action_label' => 'Xem lịch sử',
-            ];
-        }
-
-        // Đi muộn nhiều lần được tách thành cảnh báo riêng để học viên dễ chú ý.
-        if ($latesPerAbsent > 0 && $lateCount >= $latesPerAbsent) {
-            $warnings[] = [
-                'type' => 'warning',
-                'icon' => 'clock',
-                'title' => 'Điểm danh muộn',
-                'message' => "Lớp {$classLabel}. Bạn đã điểm danh muộn {$lateCount} lần. Hãy kiểm tra lại lịch học để tránh ảnh hưởng chuyên cần.",
+                'message' => "Lớp {$classLabel}. Bạn đã vắng {$effectiveAbsentSessions}/{$allowedAbsentSessions} buổi được phép, tỷ lệ chuyên cần còn {$attendancePercent}%.",
                 'date' => $latestDate?->format('d/m/Y') ?? now()->format('d/m/Y'),
                 'sort_date' => $latestDate?->toDateString() ?? now()->toDateString(),
                 'route' => 'student.attendance.history',
@@ -189,14 +163,6 @@ class StudentsService
             })
             ->values()
             ->all();
-    }
-
-    /**
-     * Lấy số tiết của bản ghi điểm danh; nếu dữ liệu cũ chưa có lesson_count thì tính là 1 tiết.
-     */
-    private function lessonCount(AttendanceRecord $record): int
-    {
-        return max(1, (int) ($record->classSession?->lesson_count ?? 1));
     }
 
     /**
@@ -247,7 +213,7 @@ class StudentsService
             'stats' => [
                 'joined_classes' => 0,
                 'attendance_percent' => 100,
-                'absent_lessons' => 0,
+                'absent_sessions' => 0,
                 'warning_count' => 0,
                 'pending_leave_requests' => 0,
                 'latest_attendance_label' => 'Chưa có',
@@ -261,9 +227,9 @@ class StudentsService
      *
      * @return array{label: string, statusClass: string, bar: string, color: string}
      */
-    private function studentAttendanceStyle(int $attendancePercent, int $studiedLessons): array
+    private function studentAttendanceStyle(int $attendancePercent, int $studiedSessions): array
     {
-        if ($studiedLessons <= 0) {
+        if ($studiedSessions <= 0) {
             return [
                 'label' => 'Chưa có dữ liệu',
                 'statusClass' => 'bg-slate-100 text-slate-500',
@@ -338,7 +304,7 @@ class StudentsService
 
         $members = ClassMember::query()
             ->with([
-                'courseClass:id,owner_user_id,code,name,subject_code,semester,status,total_lessons',
+                'courseClass:id,owner_user_id,code,name,subject_code,semester,status,total_sessions,deduct_excused_absence',
                 'courseClass.owner:id,name',
             ])
             ->where('user_id', $studentUserId)
@@ -351,30 +317,31 @@ class StudentsService
 
         $memberIds = $members->pluck('id');
 
-        $attendanceRows = DB::table('attendance_records as ar')
+        // Lấy bản ghi điểm danh ở phiên đã chốt, kèm meeting_id + ngày để gộp theo buổi.
+        $rawRows = DB::table('attendance_records as ar')
             ->join('class_sessions as cs', 'cs.id', '=', 'ar.class_session_id')
             ->whereIn('ar.class_member_id', $memberIds)
             ->whereNull('ar.deleted_at')
             ->whereNull('cs.deleted_at')
             ->where('cs.status', 'closed')
-            ->selectRaw("
-                ar.class_member_id,
-                COUNT(*) as records_count,
-                SUM(COALESCE(NULLIF(cs.lesson_count, 0), 1)) as total_lessons,
-                SUM(CASE WHEN ar.status = 'present'
-                    THEN COALESCE(NULLIF(cs.lesson_count, 0), 1) ELSE 0 END) as present_lessons,
-                SUM(CASE WHEN ar.status = 'late'
-                    THEN COALESCE(NULLIF(cs.lesson_count, 0), 1) ELSE 0 END) as late_lessons,
-                SUM(CASE WHEN ar.status = 'excused'
-                    THEN COALESCE(NULLIF(cs.lesson_count, 0), 1) ELSE 0 END) as excused_lessons,
-                SUM(CASE WHEN ar.status = 'absent'
-                    THEN COALESCE(NULLIF(cs.lesson_count, 0), 1) ELSE 0 END) as absent_lessons,
-                SUM(CASE WHEN ar.status = 'late' THEN 1 ELSE 0 END) as late_count,
-                MAX(cs.date) as latest_session_date
-            ")
-            ->groupBy('ar.class_member_id')
-            ->get()
-            ->keyBy('class_member_id');
+            ->whereNotNull('cs.meeting_id')
+            ->get(['ar.class_member_id', 'cs.meeting_id', 'ar.status', 'cs.date'])
+            ->groupBy('class_member_id');
+
+        // Gộp theo buổi cho mỗi sinh viên (đơn vị buổi).
+        $attendanceRows = $rawRows->map(function ($memberRows) {
+            $counts = AttendanceCalculator::consolidateByMeeting($memberRows);
+
+            return (object) [
+                'total_sessions' => $counts['total'],
+                'present_sessions' => $counts['present'],
+                'late_sessions' => $counts['late'],
+                'excused_sessions' => $counts['excused'],
+                'absent_sessions' => $counts['absent'],
+                'late_count' => $counts['late'],
+                'latest_session_date' => $memberRows->max('date'),
+            ];
+        });
 
         $leaveRows = DB::table('leave_requests')
             ->whereIn('class_member_id', $memberIds)
@@ -386,34 +353,33 @@ class StudentsService
             ->get()
             ->keyBy('class_member_id');
 
-        // Tổng tiết kế hoạch theo từng môn để tính % chuyên cần trên cả khóa.
+        // Tổng số buổi dự kiến theo từng môn để tính % chuyên cần trên cả khóa.
         $plannedByMember = $members->mapWithKeys(function (ClassMember $member) use ($attendanceRows) {
-            $studied = (int) ($attendanceRows->get($member->id)->total_lessons ?? 0);
+            $studied = (int) ($attendanceRows->get($member->id)->total_sessions ?? 0);
 
-            return [$member->id => max((int) ($member->courseClass?->total_lessons ?? 0), $studied)];
+            return [$member->id => max((int) ($member->courseClass?->total_sessions ?? 0), $studied)];
         });
 
-        // Tổng hợp theo tổng tiết kế hoạch: bỏ vắng có phép, quy đổi 3 lần muộn = 1 tiết vắng.
+        // Tổng hợp theo tổng buổi dự kiến: bỏ vắng có phép (nếu bật). Không quy đổi muộn.
         $plannedCounted = 0;
         $projectedAttended = 0;
-        $absentLessons = 0;
+        $absentSessions = 0;
         $warningCount = 0;
 
         foreach ($attendanceRows as $memberId => $row) {
             $planned = (int) ($plannedByMember[$memberId] ?? 0);
             $courseClass = $members->firstWhere('id', $memberId)?->courseClass;
-            $latesPerAbsent = (int) ($courseClass?->lates_per_absent ?? AttendanceCalculator::LATE_TO_ABSENT_RATIO);
             $deductExcusedAbsence = (bool) ($courseClass?->deduct_excused_absence ?? true);
 
-            $counted = AttendanceCalculator::countedLessons($planned, (int) $row->excused_lessons, $deductExcusedAbsence);
-            $effectiveAbsent = AttendanceCalculator::effectiveAbsentLessons((int) $row->absent_lessons, (int) $row->late_count, $latesPerAbsent);
+            $counted = AttendanceCalculator::countedSessions($planned, (int) $row->excused_sessions, $deductExcusedAbsence);
+            $effectiveAbsent = (int) $row->absent_sessions;
 
             $plannedCounted += $counted;
             $projectedAttended += max($counted - $effectiveAbsent, 0);
-            $absentLessons += (int) $row->absent_lessons;
+            $absentSessions += (int) $row->absent_sessions;
 
-            if ((int) $row->total_lessons > 0
-                && AttendanceCalculator::percentOfPlanned($planned, (int) $row->excused_lessons, (int) $row->absent_lessons, (int) $row->late_count, $latesPerAbsent, $deductExcusedAbsence) < AttendanceCalculator::MIN_ATTENDANCE_PERCENT) {
+            if ((int) $row->total_sessions > 0
+                && AttendanceCalculator::percentOfPlanned($planned, (int) $row->excused_sessions, (int) $row->absent_sessions, $deductExcusedAbsence) < AttendanceCalculator::MIN_ATTENDANCE_PERCENT) {
                 $warningCount++;
             }
         }
@@ -434,24 +400,21 @@ class StudentsService
                 $courseClass = $member->courseClass;
                 $row = $attendanceRows->get($member->id);
 
-                $studiedLessons = (int) ($row->total_lessons ?? 0);
-                $absentLessons = (int) ($row->absent_lessons ?? 0);
-                $totalCourseLessons = max((int) ($courseClass?->total_lessons ?? 0), $studiedLessons);
+                $studiedSessions = (int) ($row->total_sessions ?? 0);
+                $absentSessions = (int) ($row->absent_sessions ?? 0);
+                $totalCourseSessions = max((int) ($courseClass?->total_sessions ?? 0), $studiedSessions);
 
-                $latesPerAbsent = (int) ($courseClass?->lates_per_absent ?? AttendanceCalculator::LATE_TO_ABSENT_RATIO);
                 $deductExcusedAbsence = (bool) ($courseClass?->deduct_excused_absence ?? true);
 
-                // % chuyên cần tính trên tổng tiết kế hoạch để nhất quán với quỹ vắng.
+                // % chuyên cần tính trên tổng buổi dự kiến để nhất quán với quỹ vắng.
                 $attendancePercent = AttendanceCalculator::percentOfPlanned(
-                    $totalCourseLessons,
-                    (int) ($row->excused_lessons ?? 0),
-                    $absentLessons,
-                    (int) ($row->late_count ?? 0),
-                    $latesPerAbsent,
+                    $totalCourseSessions,
+                    (int) ($row->excused_sessions ?? 0),
+                    $absentSessions,
                     $deductExcusedAbsence
                 );
 
-                $style = $this->studentAttendanceStyle($attendancePercent, $studiedLessons);
+                $style = $this->studentAttendanceStyle($attendancePercent, $studiedSessions);
 
                 return [
                     // ID của bản ghi class_members, đại diện cho quan hệ sinh viên với lớp.
@@ -474,12 +437,12 @@ class StudentsService
                     'statusClass' => $style['statusClass'],
                     // Phần trăm chuyên cần của sinh viên trong lớp này.
                     'attendance' => $attendancePercent,
-                    // Số tiết vắng trên tổng số tiết của lớp, dùng để hiển thị dạng "x/y tiết".
-                    'absent' => "{$absentLessons}/{$totalCourseLessons} tiết",
-                    // Tổng số tiết đã học/đã chốt điểm danh của lớp này.
-                    'studied_lessons' => $studiedLessons,
-                    // Tổng số tiết theo kế hoạch của lớp, dùng làm mẫu số cho tiến độ.
-                    'total_lessons' => $totalCourseLessons,
+                    // Số buổi vắng trên tổng số buổi của lớp, dùng để hiển thị dạng "x/y buổi".
+                    'absent' => "{$absentSessions}/{$totalCourseSessions} buổi",
+                    // Tổng số buổi đã học/đã chốt điểm danh của lớp này.
+                    'studied_sessions' => $studiedSessions,
+                    // Tổng số buổi theo kế hoạch của lớp, dùng làm mẫu số cho tiến độ.
+                    'total_sessions' => $totalCourseSessions,
                     // CSS class cho thanh tiến độ chuyên cần.
                     'bar' => $style['bar'],
                     // CSS class màu chữ/số liệu chuyên cần.
@@ -493,7 +456,7 @@ class StudentsService
             'stats' => [
                 'joined_classes' => $members->count(),
                 'attendance_percent' => $attendancePercent,
-                'absent_lessons' => $absentLessons,
+                'absent_sessions' => $absentSessions,
                 'warning_count' => $warningCount,
                 'pending_leave_requests' => $pendingLeaveRequests,
                 'latest_attendance_label' => $this->studentDashboardDateLabel($latestAttendanceDate),

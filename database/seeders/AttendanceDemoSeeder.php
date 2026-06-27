@@ -7,6 +7,7 @@ use App\Models\AttendanceSummary;
 use App\Models\AuditLog;
 use App\Models\CheckInScan;
 use App\Models\ClassJoinRequest;
+use App\Models\ClassMeeting;
 use App\Models\ClassMember;
 use App\Models\ClassSession;
 use App\Models\CourseClass;
@@ -56,7 +57,7 @@ class AttendanceDemoSeeder extends Seeder
             'semester' => 'HK2 2025-2026',
             'require_approval' => true,
             'status' => 'active',
-            'total_lessons' => 45,
+            'total_sessions' => 15,
         ]);
 
         $databaseClass = $this->demoClass($teacher, 'DB-2026-01', [
@@ -66,7 +67,7 @@ class AttendanceDemoSeeder extends Seeder
             'semester' => 'HK2 2025-2026',
             'require_approval' => false,
             'status' => 'active',
-            'total_lessons' => 36,
+            'total_sessions' => 12,
         ]);
 
         $this->demoClass($teacher, 'UI-2025-01', [
@@ -76,7 +77,7 @@ class AttendanceDemoSeeder extends Seeder
             'semester' => 'HK1 2025-2026',
             'require_approval' => false,
             'status' => 'archived',
-            'total_lessons' => 30,
+            'total_sessions' => 10,
         ]);
 
         $webMembers = $students->map(fn (User $student) => $this->demoMember($webClass, $student));
@@ -97,19 +98,45 @@ class AttendanceDemoSeeder extends Seeder
             ],
         );
 
+        // Buổi 1: một phiên thủ công đã chốt.
+        $meeting1 = $this->demoMeeting($webClass, $teacher, 'Buổi 1 - Tổng quan Laravel', [
+            'date' => now()->subWeeks(3)->toDateString(),
+            'start_time' => '07:00:00',
+            'end_time' => '09:30:00',
+            'status' => 'closed',
+        ]);
+
+        // Buổi 2: một phiên QR đã chốt.
+        $meeting2 = $this->demoMeeting($webClass, $teacher, 'Buổi 2 - Eloquent ORM', [
+            'date' => now()->subWeeks(2)->toDateString(),
+            'start_time' => '07:00:00',
+            'end_time' => '09:30:00',
+            'status' => 'closed',
+        ]);
+
+        // Buổi 3: một phiên thủ công đang mở.
+        $meeting3 = $this->demoMeeting($webClass, $teacher, 'Buổi 3 - Điểm danh thủ công', [
+            'date' => now()->toDateString(),
+            'start_time' => '07:00:00',
+            'end_time' => '09:30:00',
+            'status' => 'active',
+        ]);
+
+        // Buổi 4: HAI phiên (1 QR đã chốt + 1 thủ công đang mở) để minh hoạ buổi nhiều phiên.
+        $meeting4 = $this->demoMeeting($webClass, $teacher, 'Buổi 4 - Điểm danh QR', [
+            'date' => now()->toDateString(),
+            'start_time' => '13:00:00',
+            'end_time' => '15:30:00',
+            'status' => 'active',
+        ]);
+
         $sessions = collect([
-            $this->demoSession($webClass, $teacher, 'Buổi 1 - Tổng quan Laravel', [
-                'date' => now()->subWeeks(3)->toDateString(),
-                'start_time' => '07:00:00',
-                'end_time' => '09:30:00',
+            $this->demoSession($meeting1, [
                 'status' => 'closed',
                 'qr_token' => null,
                 'token_expires_at' => null,
             ]),
-            $this->demoSession($webClass, $teacher, 'Buổi 2 - Eloquent ORM', [
-                'date' => now()->subWeeks(2)->toDateString(),
-                'start_time' => '07:00:00',
-                'end_time' => '09:30:00',
+            $this->demoSession($meeting2, [
                 'status' => 'closed',
                 'qr_token' => 'demo-qr-eloquent',
                 'token_expires_at' => now()->subWeeks(2)->addMinutes(20),
@@ -117,31 +144,36 @@ class AttendanceDemoSeeder extends Seeder
                 'gps_longitude' => 106.660172,
                 'gps_radius' => 100,
             ]),
-            $this->demoSession($webClass, $teacher, 'Buổi 3 - Điểm danh thủ công', [
-                'date' => now()->toDateString(),
-                'start_time' => '07:00:00',
-                'end_time' => '09:30:00',
+            $this->demoSession($meeting3, [
                 'status' => 'active',
                 'qr_token' => null,
                 'token_expires_at' => null,
             ]),
-            $this->demoSession($webClass, $teacher, 'Buổi 4 - Điểm danh QR', [
-                'date' => now()->toDateString(),
-                'start_time' => '13:00:00',
-                'end_time' => '15:30:00',
-                'status' => 'active',
+            $this->demoSession($meeting4, [
+                'status' => 'closed',
                 'qr_token' => 'demo-qr-livewire',
-                'token_expires_at' => now()->addMinutes(30),
+                'token_expires_at' => now()->subHour(),
                 'gps_latitude' => 10.762622,
                 'gps_longitude' => 106.660172,
                 'gps_radius' => 120,
             ]),
         ]);
 
-        $this->demoSession($databaseClass, $teacher, 'Buổi 1 - Chuẩn hoá dữ liệu', [
+        // Phiên thứ hai của Buổi 4 (thủ công, đang mở) — không cộng dồn số tiết.
+        $this->demoSession($meeting4, [
+            'name_suffix' => ' (phiên 2)',
+            'status' => 'active',
+            'qr_token' => null,
+            'token_expires_at' => null,
+        ]);
+
+        $dbMeeting = $this->demoMeeting($databaseClass, $teacher, 'Buổi 1 - Chuẩn hoá dữ liệu', [
             'date' => now()->subDays(3)->toDateString(),
             'start_time' => '13:00:00',
             'end_time' => '15:30:00',
+            'status' => 'closed',
+        ]);
+        $this->demoSession($dbMeeting, [
             'status' => 'closed',
             'qr_token' => null,
             'token_expires_at' => null,
@@ -217,18 +249,51 @@ class AttendanceDemoSeeder extends Seeder
     }
 
     /**
+     * Tạo một buổi học (cha của các phiên điểm danh).
+     *
      * @param  array<string, mixed>  $attributes
      */
-    private function demoSession(CourseClass $courseClass, User $teacher, string $name, array $attributes): ClassSession
+    private function demoMeeting(CourseClass $courseClass, User $teacher, string $name, array $attributes): ClassMeeting
     {
-        $session = ClassSession::withTrashed()->firstOrNew([
+        $meeting = ClassMeeting::withTrashed()->firstOrNew([
             'class_id' => $courseClass->id,
             'name' => $name,
         ]);
-        $session->fill([
+        $meeting->fill([
             'class_id' => $courseClass->id,
             'created_by' => $teacher->id,
             'name' => $name,
+            ...$attributes,
+        ]);
+        $meeting->save();
+        $this->restoreIfTrashed($meeting);
+
+        return $meeting->fresh();
+    }
+
+    /**
+     * Tạo một phiên điểm danh thuộc một buổi, sao chép thông tin ngày/giờ/tiết từ buổi.
+     *
+     * @param  array<string, mixed>  $attributes
+     */
+    private function demoSession(ClassMeeting $meeting, array $attributes = []): ClassSession
+    {
+        $suffix = $attributes['name_suffix'] ?? '';
+        unset($attributes['name_suffix']);
+        $name = $meeting->name.$suffix;
+
+        $session = ClassSession::withTrashed()->firstOrNew([
+            'meeting_id' => $meeting->id,
+            'name' => $name,
+        ]);
+        $session->fill([
+            'class_id' => $meeting->class_id,
+            'meeting_id' => $meeting->id,
+            'created_by' => $meeting->created_by,
+            'name' => $name,
+            'date' => $meeting->date,
+            'start_time' => $meeting->start_time,
+            'end_time' => $meeting->end_time,
             'gps_latitude' => null,
             'gps_longitude' => null,
             'gps_radius' => null,

@@ -4,6 +4,7 @@ namespace App\Livewire\Lecturer\Attendance;
 
 use App\Livewire\Lecturer\Attendance\Concerns\OwnsAttendanceSessions;
 use App\Models\AttendanceRecord;
+use App\Models\ClassMeeting;
 use App\Models\ClassMember;
 use App\Models\ClassSession;
 use App\Models\CourseClass;
@@ -27,8 +28,9 @@ class AttendanceCreate extends Component
     public string $date = '';
     public string $startTime = '07:00';
     public string $endTime = '09:30';
-    public int $startLesson = 1;
-    public int $endLesson = 3;
+
+    // Giờ kết thúc buổi (chỉ nhập giờ kết thúc; ngày = hôm nay, bắt đầu = lúc tạo).
+    public string $meetingEndTime = '';
 
     // --- STEP 3: CẤU HÌNH QR ---
     public int $durationMinutes = 15;
@@ -56,8 +58,6 @@ class AttendanceCreate extends Component
             $this->date = $session->date->format('Y-m-d');
             $this->startTime = $session->start_time ? \Carbon\Carbon::parse($session->start_time)->format('H:i') : '07:00';
             $this->endTime = $session->end_time ? \Carbon\Carbon::parse($session->end_time)->format('H:i') : '09:30';
-            $this->startLesson = $session->start_lesson ?? 1;
-            $this->endLesson = $session->end_lesson ?? 3;
         } elseif ($this->cloneSessionId) {
             $session = ClassSession::query()->findOrFail($this->cloneSessionId);
             abort_unless($session->created_by === auth()->id(), 403);
@@ -67,12 +67,13 @@ class AttendanceCreate extends Component
             $this->date = $session->date->format('Y-m-d');
             $this->startTime = $session->start_time ? \Carbon\Carbon::parse($session->start_time)->format('H:i') : '07:00';
             $this->endTime = $session->end_time ? \Carbon\Carbon::parse($session->end_time)->format('H:i') : '09:30';
-            $this->startLesson = $session->start_lesson ?? 1;
-            $this->endLesson = $session->end_lesson ?? 3;
         } else {
-            $preselectedDate = request()->query('date');
-            $this->date = $preselectedDate ?: now()->toDateString();
-            
+            // Buổi luôn diễn ra hôm nay, bắt đầu tại thời điểm tạo; chỉ cần nhập giờ kết thúc.
+            $this->date = now()->toDateString();
+            $defaultEnd = now()->addMinutes(90)->second(0);
+            $defaultEnd->minute(intdiv($defaultEnd->minute, 5) * 5); // Làm tròn xuống bội số 5 phút cho khớp lưới chọn.
+            $this->meetingEndTime = $defaultEnd->format('H:i');
+
             $preselectedClassId = request()->query('class_id');
             if ($preselectedClassId && $this->availableClasses()->contains('id', $preselectedClassId)) {
                 $this->classId = (string) $preselectedClassId;
@@ -107,18 +108,24 @@ class AttendanceCreate extends Component
         $validated = $this->validate([
             'classId' => ['required', 'integer'],
             'name' => ['required', 'string', 'max:255'],
-            'date' => ['required', 'date'],
-            'startTime' => ['nullable', 'date_format:H:i'],
-            'endTime' => ['nullable', 'date_format:H:i'],
-            'startLesson' => ['required', 'integer', 'min:1', 'max:15'],
-            'endLesson' => ['required', 'integer', 'min:1', 'max:15', 'gte:startLesson'],
+            'meetingEndTime' => ['required', 'date_format:H:i'],
         ], [
             'classId.required' => 'Vui lòng chọn lớp học.',
             'classId.integer' => 'Lớp học không hợp lệ.',
             'name.required' => 'Vui lòng nhập tiêu đề buổi học.',
-            'date.required' => 'Vui lòng chọn ngày học.',
-            'endLesson.gte' => 'Tiết kết thúc phải lớn hơn hoặc bằng tiết bắt đầu.',
+            'meetingEndTime.required' => 'Vui lòng nhập giờ kết thúc buổi điểm danh.',
+            'meetingEndTime.date_format' => 'Giờ kết thúc không hợp lệ.',
         ]);
+
+        // Ngày = hôm nay, giờ bắt đầu = lúc tạo; chỉ nhận giờ kết thúc và phải cách hiện tại >= 10 phút.
+        $date = now()->toDateString();
+        $startTime = now()->format('H:i');
+        $endsAt = \Carbon\Carbon::parse($date.' '.$validated['meetingEndTime'].':00');
+
+        if ($endsAt->lessThanOrEqualTo(now()->addMinutes(10))) {
+            $this->addError('meetingEndTime', 'Giờ kết thúc phải sau thời điểm hiện tại ít nhất 10 phút.');
+            return null;
+        }
 
         $courseClass = $this->ownedClass((int) $validated['classId']);
 
@@ -128,45 +135,45 @@ class AttendanceCreate extends Component
             return null;
         }
 
-        $lessonCount = $validated['endLesson'] - $validated['startLesson'] + 1;
-        $totalLessons = $courseClass->total_lessons;
-        $studiedLessons = (int) $courseClass->sessions()->sum('lesson_count');
+        // Giới hạn theo SỐ BUỔI dự kiến của lớp.
+        $totalSessions = (int) $courseClass->total_sessions;
+        $createdMeetings = (int) $courseClass->meetings()->count();
 
-        // Kiểm tra xem đã có phiên nào cùng date, start_time, end_time chưa
-        $existingSession = ClassSession::query()
-            ->where('class_id', $courseClass->id)
-            ->whereDate('date', $validated['date'])
-            ->where('start_time', $validated['startTime'] ?: null)
-            ->where('end_time', $validated['endTime'] ?: null)
-            ->first();
-
-        // Nếu đã có phiên rồi (tức là đang tạo Lần 2, Lần 3), thì lesson_count của bản ghi mới phải là 0 để không cộng dồn
-        $actualLessonCount = $existingSession ? 0 : $lessonCount;
-
-        if ($studiedLessons + $actualLessonCount > $totalLessons) {
-            $remaining = max(0, $totalLessons - $studiedLessons);
-            $this->addError('endLesson', "Số tiết vượt quá giới hạn! Lớp đã học {$studiedLessons}/{$totalLessons} tiết, chỉ có thể tạo tối đa {$remaining} tiết nữa.");
+        if ($totalSessions > 0 && $createdMeetings >= $totalSessions) {
+            $this->addError('name', "Đã tạo đủ {$createdMeetings}/{$totalSessions} buổi dự kiến. Vui lòng tăng tổng số buổi trong cài đặt lớp nếu cần tạo thêm.");
             return null;
         }
 
-        $session = ClassSession::query()->create([
+        // Mỗi lần "Tạo buổi điểm danh" tạo một BUỔI mới và phiên đầu tiên của buổi đó.
+        $meeting = ClassMeeting::query()->create([
             'class_id' => $courseClass->id,
             'created_by' => auth()->id(),
             'name' => $validated['name'],
-            'date' => $validated['date'],
-            'start_time' => $validated['startTime'] ?: null,
-            'end_time' => $validated['endTime'] ?: null,
-            'start_lesson' => $validated['startLesson'],
-            'end_lesson' => $validated['endLesson'],
-            'lesson_count' => $actualLessonCount,
+            'date' => $date,
+            'start_time' => $startTime,
+            'end_time' => $validated['meetingEndTime'],
+            'status' => 'active',
+        ]);
+
+        $session = ClassSession::query()->create([
+            'class_id' => $courseClass->id,
+            'meeting_id' => $meeting->id,
+            'created_by' => auth()->id(),
+            'name' => $validated['name'],
+            'date' => $date,
+            'start_time' => $startTime,
+            'end_time' => $validated['meetingEndTime'],
             'status' => $status,
         ]);
+
+        // Phiên thủ công (status 'active') mặc định "Có mặt"; phiên QR (status 'pending') giữ "chưa điểm danh".
+        $defaultStatus = $status === 'pending' ? 'pending' : 'present';
 
         $courseClass->members()->where('status', 'active')->get()->each(fn ($member) => AttendanceRecord::query()->firstOrCreate([
             'class_session_id' => $session->id,
             'class_member_id' => $member->id,
         ], [
-            'status' => 'pending',
+            'status' => $defaultStatus,
             'is_verified' => $member->user_id !== null,
         ]));
 
@@ -299,7 +306,7 @@ class AttendanceCreate extends Component
                 'semester' => 'HK2 2025-2026',
                 'require_approval' => false,
                 'status' => 'active',
-                'total_lessons' => 45,
+                'total_sessions' => 15,
             ],
         );
 

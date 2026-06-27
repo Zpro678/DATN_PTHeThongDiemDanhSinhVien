@@ -32,6 +32,10 @@ class QrAttendanceSession extends Component
     public function mount(int $session): void
     {
         $model = $this->ownedSession($session);
+        // Buổi hết giờ thì tự động chốt phiên này.
+        $model->meeting?->closeIfExpired();
+        $model->refresh();
+
         $this->sessionId = $model->id;
         $this->isClosed = $model->status === 'closed';
     }
@@ -90,6 +94,23 @@ class QrAttendanceSession extends Component
         session()->flash('status', 'Phiên QR đã được chốt.');
     }
 
+    /**
+     * Lưu phiên QR rồi quay về trang chi tiết buổi.
+     * Điểm danh QR đã được ghi trực tiếp khi sinh viên quét, nên ở đây chỉ điều hướng về buổi.
+     * Không chốt sổ: phiên vẫn mở, chuyên cần sẽ tổng hợp khi buổi kết thúc.
+     */
+    public function saveSession(): void
+    {
+        $meetingId = $this->ownedSession($this->sessionId)->meeting_id;
+
+        session()->flash('status', 'Đã lưu phiên điểm danh.');
+
+        $this->redirectRoute('lecturer.attendance.meeting.sessions', [
+            'ma_user' => auth()->id(),
+            'meeting' => $meetingId,
+        ], navigate: true);
+    }
+
     public function deleteSession()
     {
         $session = $this->ownedSession($this->sessionId);
@@ -117,11 +138,7 @@ class QrAttendanceSession extends Component
 
         $date = $session->date->format('Y-m-d');
         $className = Str::slug($session->courseClass->name);
-        $startLesson = 1;
-        $endLesson = max(1, $session->lesson_count);
-        $tiet = "Tiet_{$startLesson}-{$endLesson}";
-
-        $fileName = "{$date}_{$className}_{$tiet}.xlsx";
+        $fileName = "{$date}_{$className}.xlsx";
 
         return Excel::download(
             new ClassSessionExport($this->sessionId),

@@ -81,8 +81,8 @@
                     <p class="mt-1 text-[28px] font-bold text-slate-800 leading-none">{{ $sessionsCount > 0 ? round(($sessionsCompleted / $sessionsCount) * 100) : 0 }}%</p>
                 </div>
                 <div>
-                    <span class="text-sm text-slate-500">Tổng số tiết</span>
-                    <p class="mt-1 text-[28px] font-bold text-slate-800 leading-none">{{ $class->total_lessons }} <span class="text-base font-medium text-slate-500">tiết</span></p>
+                    <span class="text-sm text-slate-500">Tổng số buổi</span>
+                    <p class="mt-1 text-[28px] font-bold text-slate-800 leading-none">{{ $class->total_sessions }} <span class="text-base font-medium text-slate-500">buổi</span></p>
                 </div>
 
                 @if($class->semester)

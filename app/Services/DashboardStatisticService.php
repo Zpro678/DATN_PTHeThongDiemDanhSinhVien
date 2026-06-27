@@ -15,52 +15,50 @@ class DashboardStatisticService
     /**
      * TỐI ƯU HÓA HÀM TÍNH TIẾN ĐỘ TỪNG LỚP:
      * 1. Chống lỗi N+1 Query: Sử dụng LEFT JOIN để gom dữ liệu của 'classes' và 'class_sessions' trong 1 lần gọi duy nhất.
-     * 2. Đẩy logic tính toán xuống DB: Dùng SUM() và GROUP BY của SQL để tính tổng số tiết đã học (studied_lessons), giúp máy chủ PHP không bị tràn RAM do phải load hàng ngàn Model.
-     * 3. Tối ưu bộ nhớ: Chỉ select chính xác các cột cần dùng ('id', 'name', 'total_lessons') thay vì lấy toàn bộ (*) các cột.
+     * 2. Đẩy logic tính toán xuống DB: Dùng SUM() và GROUP BY của SQL để tính tổng số tiết đã học (studied_sessions), giúp máy chủ PHP không bị tràn RAM do phải load hàng ngàn Model.
+     * 3. Tối ưu bộ nhớ: Chỉ select chính xác các cột cần dùng ('id', 'name', 'total_sessions') thay vì lấy toàn bộ (*) các cột.
      * 4. Xử lý logic nhẹ nhàng bằng PHP: Sử dụng Collection (map) để tính phần trăm (%) và trừ số tiết còn lại. PHP xử lý toán học trên mảng rất nhanh, làm vậy giúp câu lệnh SQL gọn nhẹ và dễ bảo trì hơn.
      */
-    private function getClassesLessonProgress(int $userId, ?int $classId = null): array
+    private function getClassesSessionProgress(int $userId, ?int $classId = null): array
     {
-        return CourseClass::query()
-            ->leftJoin('class_sessions', function ($join) {
-                $join->on('classes.id', '=', 'class_sessions.class_id')
-                    ->where('class_sessions.status', '=', 'closed');
-            })
-            ->where('classes.owner_user_id', $userId)
-            ->when($classId, function ($query) use ($classId) {
-                $query->where('classes.id', $classId);
-            })
-            ->select([
-                'classes.id',
-                'classes.name',
-                'classes.total_lessons', // Lấy tổng số tiết cần học
-            ])
-            // Cộng dồn số tiết của các buổi học đã đóng
-            ->selectRaw('COALESCE(SUM(class_sessions.lesson_count), 0) as studied_lessons')
-            ->groupBy(
-                'classes.id',
-                'classes.name',
-                'classes.total_lessons'
-            )
-            ->orderBy('classes.name')
-            ->get()
-            ->map(function ($class) {
-                $requiredLessons = (int) $class->total_lessons;
+        $classes = CourseClass::query()
+            ->where('owner_user_id', $userId)
+            ->when($classId, fn ($query) => $query->where('id', $classId))
+            ->orderBy('name')
+            ->get(['id', 'name', 'total_sessions']);
 
-                // Đảm bảo số tiết đã học không vượt quá số tiết quy định
-                $studiedLessons = min((int) $class->studied_lessons, $requiredLessons);
+        if ($classes->isEmpty()) {
+            return [];
+        }
 
-                // Tính số tiết còn lại (không để số âm)
-                $remainingLessons = max($requiredLessons - $studiedLessons, 0);
+        // Số buổi đã chốt (đếm distinct buổi qua các phiên đã chốt) cho mỗi lớp.
+        $studiedByClass = ClassSession::query()
+            ->whereIn('class_id', $classes->pluck('id'))
+            ->where('status', 'closed')
+            ->whereNotNull('meeting_id')
+            ->selectRaw('class_id, COUNT(DISTINCT meeting_id) as studied_sessions')
+            ->groupBy('class_id')
+            ->pluck('studied_sessions', 'class_id');
+
+        return $classes
+            ->map(function ($class) use ($studiedByClass) {
+                $requiredSessions = (int) $class->total_sessions;
+                $studiedSessions = (int) ($studiedByClass[$class->id] ?? 0);
+
+                if ($requiredSessions > 0) {
+                    $studiedSessions = min($studiedSessions, $requiredSessions);
+                }
+
+                $remainingSessions = max($requiredSessions - $studiedSessions, 0);
 
                 return [
                     'id' => $class->id,
                     'name' => $class->name,
-                    'required_lessons' => $requiredLessons,
-                    'studied_lessons' => $studiedLessons,
-                    'remaining_lessons' => $remainingLessons,
-                    'progress_percent' => $requiredLessons > 0
-                        ? round(($studiedLessons / $requiredLessons) * 100, 2)
+                    'required_sessions' => $requiredSessions,
+                    'studied_sessions' => $studiedSessions,
+                    'remaining_sessions' => $remainingSessions,
+                    'progress_percent' => $requiredSessions > 0
+                        ? round(($studiedSessions / $requiredSessions) * 100, 2)
                         : 0,
                 ];
             })
@@ -74,52 +72,54 @@ class DashboardStatisticService
         $absenceLimitRatio   = AttendanceCalculator::ABSENCE_LIMIT_RATIO;        // 0.20
         $warningLimitRatio   = max(0.0, $absenceLimitRatio - $nearMarginPercent / 100); // 0.15
 
-        $warningStudents = ClassMember::query()
+        $members = ClassMember::query()
             ->join('classes', 'class_members.class_id', '=', 'classes.id')
-            ->leftJoin('attendance_records', 'class_members.id', '=', 'attendance_records.class_member_id')
-            ->leftJoin('class_sessions', function ($join) {
-                $join->on('attendance_records.class_session_id', '=', 'class_sessions.id')
-                    ->where('class_sessions.status', '=', 'closed');
-            })
             ->whereIn('class_members.class_id', $classIds)
             ->where('class_members.status', 'active')
             ->whereNull('classes.deleted_at')
-            ->select([
+            ->get([
                 'class_members.id',
                 'class_members.class_id',
                 'class_members.student_code',
                 'class_members.full_name',
                 'classes.name as class_name',
-                'classes.total_lessons as planned_lessons',
-            ])
-            ->selectRaw("COALESCE(SUM(CASE WHEN attendance_records.status = 'absent'  AND class_sessions.id IS NOT NULL THEN class_sessions.lesson_count ELSE 0 END), 0) as absent_lessons")
-            ->selectRaw("COALESCE(SUM(CASE WHEN attendance_records.status = 'excused' AND class_sessions.id IS NOT NULL THEN class_sessions.lesson_count ELSE 0 END), 0) as excused_lessons")
-            ->selectRaw("COALESCE(SUM(CASE WHEN attendance_records.status = 'late'    AND class_sessions.id IS NOT NULL THEN 1 ELSE 0 END), 0) as late_count")
-            ->groupBy(
-                'class_members.id',
-                'class_members.class_id',
-                'class_members.student_code',
-                'class_members.full_name',
-                'classes.name',
-                'classes.total_lessons',
-            )
-            ->get()
-            ->map(function ($student) use ($absenceLimitRatio, $warningLimitRatio) {
-                $plannedLessons  = (int) $student->planned_lessons;
-                $absentLessons   = (int) $student->absent_lessons;
-                $excusedLessons  = (int) $student->excused_lessons;
-                $lateCount       = (int) $student->late_count;
+                'classes.total_sessions as planned_sessions',
+                'classes.deduct_excused_absence as deduct_excused_absence',
+            ]);
 
-                // Dùng AttendanceCalculator để tính đúng theo quy ước toàn hệ thống.
-                $counted         = AttendanceCalculator::countedLessons($plannedLessons, $excusedLessons);
-                $effectiveAbsent = AttendanceCalculator::effectiveAbsentLessons($absentLessons, $lateCount);
+        if ($members->isEmpty()) {
+            return ['students' => [], 'count' => 0, 'exceeded_count' => 0];
+        }
 
-                if ($counted <= 0 || $plannedLessons <= 0) {
+        // Bản ghi điểm danh ở phiên đã chốt, kèm meeting_id để gộp theo buổi.
+        $rowsByMember = \Illuminate\Support\Facades\DB::table('attendance_records as ar')
+            ->join('class_sessions as cs', 'cs.id', '=', 'ar.class_session_id')
+            ->whereIn('ar.class_member_id', $members->pluck('id'))
+            ->where('cs.status', 'closed')
+            ->whereNotNull('cs.meeting_id')
+            ->whereNull('ar.deleted_at')
+            ->whereNull('cs.deleted_at')
+            ->get(['ar.class_member_id', 'cs.meeting_id', 'ar.status'])
+            ->groupBy('class_member_id');
+
+        $warningStudents = $members
+            ->map(function ($student) use ($rowsByMember, $absenceLimitRatio, $warningLimitRatio) {
+                $counts = AttendanceCalculator::consolidateByMeeting($rowsByMember->get($student->id, collect()));
+
+                $plannedSessions  = (int) $student->planned_sessions;
+                $absentSessions   = $counts['absent'];
+                $excusedSessions  = $counts['excused'];
+                $deduct          = (bool) $student->deduct_excused_absence;
+
+                $counted         = AttendanceCalculator::countedSessions($plannedSessions, $excusedSessions, $deduct);
+                $effectiveAbsent = $absentSessions; // Không quy đổi muộn.
+
+                if ($counted <= 0 || $plannedSessions <= 0) {
                     return null;
                 }
 
                 $absenceRatio      = $effectiveAbsent / $counted;
-                $attendancePercent = AttendanceCalculator::percentOfPlanned($plannedLessons, $excusedLessons, $absentLessons, $lateCount);
+                $attendancePercent = AttendanceCalculator::percentOfPlanned($plannedSessions, $excusedSessions, $absentSessions, $deduct);
 
                 if ($absenceRatio < $warningLimitRatio) {
                     return null;
@@ -131,11 +131,11 @@ class DashboardStatisticService
                     'class_name'               => $student->class_name,
                     'student_code'             => $student->student_code,
                     'full_name'                => $student->full_name,
-                    'planned_lessons'          => $plannedLessons,
-                    'absent_lessons'           => $absentLessons,
-                    'excused_lessons'          => $excusedLessons,
-                    'effective_absent_lessons' => $effectiveAbsent,
-                    'present_of_planned'       => max($plannedLessons - $excusedLessons - $effectiveAbsent, 0),
+                    'planned_sessions'          => $plannedSessions,
+                    'absent_sessions'           => $absentSessions,
+                    'excused_sessions'          => $excusedSessions,
+                    'effective_absent_sessions' => $effectiveAbsent,
+                    'present_of_planned'       => max($plannedSessions - $excusedSessions - $effectiveAbsent, 0),
                     'attendance_percent'       => $attendancePercent,
                     'absence_ratio_percent'    => round($absenceRatio * 100, 1),
                     'status'                   => $absenceRatio >= $absenceLimitRatio ? 'exceeded' : 'at_risk',
@@ -395,7 +395,7 @@ class DashboardStatisticService
     /**
      * TỐI ƯU HÓA HÀM TỔNG HỢP DASHBOARD:
      * 1. Tái sử dụng Query: Dùng (clone) $ownedClassesQuery để lấy danh sách ID mà không phải viết lại điều kiện where, code DRY (Don't Repeat Yourself).
-     * 2. Tái sử dụng dữ liệu tính toán (Cắt giảm 2 truy vấn nặng): Gọi hàm getClassesLessonProgress() trước, sau đó dùng vòng lặp foreach trong PHP để cộng dồn tổng số tiết cần học và đã học. Loại bỏ hoàn toàn 2 câu query khổng lồ chọc vào DB.
+     * 2. Tái sử dụng dữ liệu tính toán (Cắt giảm 2 truy vấn nặng): Gọi hàm getClassesSessionProgress() trước, sau đó dùng vòng lặp foreach trong PHP để cộng dồn tổng số tiết cần học và đã học. Loại bỏ hoàn toàn 2 câu query khổng lồ chọc vào DB.
      * 3. Đếm trực tiếp từ DB: Việc đếm học viên (count) diễn ra thẳng ở Database, không tải dữ liệu rác về PHP.
      * 4. Gộp truy vấn điểm danh: Dùng kỹ thuật Pivot với CASE WHEN bên trong lệnh SUM(). Thay vì phải chạy 1 query để tính Có mặt, 1 query để tính Vắng mặt, chúng ta gom cả 2 vào duy nhất 1 truy vấn quét qua bảng attendance_records.
      */
@@ -413,10 +413,10 @@ class DashboardStatisticService
         if ($classIds->isEmpty()) {
             return [
                 'total_students' => 0,
-                'total_required_lessons' => 0,
-                'total_studied_lessons' => 0,
-                'remaining_lessons' => 0,
-                'lesson_progress_percent' => 0,
+                'total_required_sessions' => 0,
+                'total_studied_sessions' => 0,
+                'remaining_sessions' => 0,
+                'session_progress_percent' => 0,
                 'total_present' => 0,
                 'total_absent' => 0,
                 'total_classes' => 0,
@@ -437,22 +437,22 @@ class DashboardStatisticService
         $totalClasses = $classIds->count();
 
         // 1. Lấy dữ liệu tiến độ của từng lớp trước (Để tái sử dụng, giảm query)
-        $classesProgress = $this->getClassesLessonProgress($userId, $classId);
+        $classesProgress = $this->getClassesSessionProgress($userId, $classId);
 
         // 2. Tính tổng số tiết (Cộng dồn bằng PHP)
-        $totalRequiredLessons = 0;
-        $totalStudiedLessons = 0;
+        $totalRequiredSessions = 0;
+        $totalStudiedSessions = 0;
 
         foreach ($classesProgress as $classStats) {
-            $totalRequiredLessons += $classStats['required_lessons'];
-            $totalStudiedLessons += $classStats['studied_lessons'];
+            $totalRequiredSessions += $classStats['required_sessions'];
+            $totalStudiedSessions += $classStats['studied_sessions'];
         }
 
-        $remainingLessons = max($totalRequiredLessons - $totalStudiedLessons, 0);
+        $remainingSessions = max($totalRequiredSessions - $totalStudiedSessions, 0);
 
         // 3. Phần trăm tiến độ học của tất cả các lớp
-        $lessonProgressPercent = $totalRequiredLessons > 0
-            ? round(($totalStudiedLessons / $totalRequiredLessons) * 100, 2)
+        $sessionProgressPercent = $totalRequiredSessions > 0
+            ? round(($totalStudiedSessions / $totalRequiredSessions) * 100, 2)
             : 0;
 
         // 4. Đếm tổng học viên đang hoạt động
@@ -490,19 +490,33 @@ class DashboardStatisticService
             ])
             ->toArray();
 
-        // 6. Tính tổng số tiết sinh viên có mặt / vắng mặt.
-        $attendance = AttendanceRecord::query()
-            ->join('class_sessions', 'attendance_records.class_session_id', '=', 'class_sessions.id')
-            ->whereIn('class_sessions.class_id', $classIds)
-            ->where('class_sessions.status', 'closed')
-            ->selectRaw("
-                COALESCE(SUM(CASE WHEN attendance_records.status IN ('present', 'late') THEN class_sessions.lesson_count ELSE 0 END), 0) AS total_present,
-                COALESCE(SUM(CASE WHEN attendance_records.status IN ('absent', 'excused') THEN class_sessions.lesson_count ELSE 0 END), 0) AS total_absent
-            ")
-            ->first();
+        // 6. Tính tổng số buổi sinh viên có mặt / vắng (gộp theo buổi từng sinh viên).
+        $activeMemberIds = ClassMember::query()
+            ->whereIn('class_id', $classIds)
+            ->where('status', 'active')
+            ->pluck('id');
 
-        $totalPresent = (int) ($attendance->total_present ?? 0);
-        $totalAbsent = (int) ($attendance->total_absent ?? 0);
+        $rowsByMember = AttendanceRecord::query()
+            ->join('class_sessions', 'attendance_records.class_session_id', '=', 'class_sessions.id')
+            ->whereIn('attendance_records.class_member_id', $activeMemberIds)
+            ->where('class_sessions.status', 'closed')
+            ->whereNotNull('class_sessions.meeting_id')
+            ->whereNull('attendance_records.deleted_at')
+            ->whereNull('class_sessions.deleted_at')
+            ->get([
+                'attendance_records.class_member_id as class_member_id',
+                'class_sessions.meeting_id as meeting_id',
+                'attendance_records.status as status',
+            ])
+            ->groupBy('class_member_id');
+
+        $totalPresent = 0;
+        $totalAbsent = 0;
+        foreach ($rowsByMember as $memberRows) {
+            $counts = AttendanceCalculator::consolidateByMeeting($memberRows);
+            $totalPresent += $counts['present'] + $counts['late'];
+            $totalAbsent += $counts['absent'] + $counts['excused'];
+        }
         $absenceWarnings = $this->getUnexcusedAbsenceWarnings($classIds);
         $pendingLeaveRequestsCount = $this->getPendingLeaveRequestsCount($classIds);
         $recentActivities = $this->getRecentActivities($classIds, $absenceWarnings);
@@ -511,10 +525,10 @@ class DashboardStatisticService
 
         return [
             'total_students' => $totalStudents,
-            'total_required_lessons' => $totalRequiredLessons,
-            'total_studied_lessons' => $totalStudiedLessons,
-            'remaining_lessons' => $remainingLessons,
-            'lesson_progress_percent' => $lessonProgressPercent,
+            'total_required_sessions' => $totalRequiredSessions,
+            'total_studied_sessions' => $totalStudiedSessions,
+            'remaining_sessions' => $remainingSessions,
+            'session_progress_percent' => $sessionProgressPercent,
             'total_present' => $totalPresent,
             'total_absent' => $totalAbsent,
             'total_classes' => $totalClasses,

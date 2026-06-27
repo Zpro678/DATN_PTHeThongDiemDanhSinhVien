@@ -4,6 +4,7 @@ namespace App\Livewire\Lecturer\Attendance;
 
 use App\Livewire\Lecturer\Attendance\Concerns\OwnsAttendanceSessions;
 use App\Models\AttendanceRecord;
+use App\Models\ClassMeeting;
 use App\Models\ClassMember;
 use App\Models\ClassSession;
 use App\Models\CourseClass;
@@ -33,10 +34,6 @@ class QrAttendanceCreate extends Component
     // Bán kính cho phép sinh viên điểm danh bằng GPS (tính bằng mét)
     public int $gpsRadius = 100;
 
-    public int $startLesson = 1;
-
-    public int $endLesson = 3;
-
     // Thời gian làm mới mã QR (tính bằng giây)
     public int $qrRefreshRate = 10;
 
@@ -54,13 +51,26 @@ class QrAttendanceCreate extends Component
 
     public ?int $editSessionId = null;
     public ?int $cloneSessionId = null;
+    public ?int $meetingId = null;
 
     public function mount(): void
     {
         $this->editSessionId = request()->query('edit_session');
         $this->cloneSessionId = request()->query('clone_session');
+        $this->meetingId = request()->query('meeting');
 
-        if ($this->editSessionId) {
+        if ($this->meetingId) {
+            $meeting = ClassMeeting::query()->with('courseClass')->findOrFail($this->meetingId);
+            abort_unless($meeting->courseClass->owner_user_id === auth()->id(), 403);
+
+            $this->classId = (string) $meeting->class_id;
+            $this->loadConfigForClass($this->classId);
+
+            $this->name = $meeting->name;
+            $this->date = $meeting->date->format('Y-m-d');
+            $this->startTime = $meeting->start_time ? \Carbon\Carbon::parse($meeting->start_time)->format('H:i') : '07:00';
+            $this->endTime = $meeting->end_time ? \Carbon\Carbon::parse($meeting->end_time)->format('H:i') : '09:30';
+        } elseif ($this->editSessionId) {
             $session = ClassSession::query()->findOrFail($this->editSessionId);
             abort_unless($session->created_by === auth()->id(), 403);
 
@@ -70,9 +80,6 @@ class QrAttendanceCreate extends Component
 
             // Load other settings from cache for this class
             $this->loadConfigForClass($this->classId);
-
-            $this->startLesson = $session->start_lesson ?? 1;
-            $this->endLesson = $session->end_lesson ?? max(1, $session->lesson_count);
 
             // Override with actual saved DB values if they differ
             $this->gpsEnabled = $session->gps_latitude !== null;
@@ -95,8 +102,6 @@ class QrAttendanceCreate extends Component
 
             $this->name = $session->name;
             $this->date = $session->date->format('Y-m-d');
-            $this->startLesson = $session->start_lesson ?? 1;
-            $this->endLesson = $session->end_lesson ?? max(1, $session->lesson_count);
         } else {
             $preselectedDate = request()->query('date');
             $this->date = $preselectedDate ?: now()->toDateString();
@@ -132,8 +137,6 @@ class QrAttendanceCreate extends Component
             $this->startTime = $config['startTime'] ?? '07:00';
             $this->endTime = $config['endTime'] ?? '09:30';
             $this->durationMinutes = $config['durationMinutes'] ?? 15;
-            $this->startLesson = $config['startLesson'] ?? 1;
-            $this->endLesson = $config['endLesson'] ?? 3;
             $this->qrRefreshRate = $config['qrRefreshRate'] ?? 10;
             $this->deviceCheck = $config['deviceCheck'] ?? true;
             $this->gpsRadius = $config['gpsRadius'] ?? 100;
@@ -158,8 +161,6 @@ class QrAttendanceCreate extends Component
             'endTime' => $this->endTime,
             'durationMinutes' => $this->durationMinutes,
             'gpsRadius' => $this->gpsRadius,
-            'startLesson' => $this->startLesson,
-            'endLesson' => $this->endLesson,
             'qrRefreshRate' => $this->qrRefreshRate,
             'gpsEnabled' => $this->gpsEnabled,
             'deviceCheck' => $this->deviceCheck,
@@ -178,8 +179,6 @@ class QrAttendanceCreate extends Component
             'endTime' => ['nullable', 'date_format:H:i'],
             'durationMinutes' => ['required', 'integer', 'in:10,15,20'],
             'gpsRadius' => ['required', 'integer', 'min:5', 'max:2500'],
-            'startLesson' => ['required', 'integer', 'min:1', 'max:15'],
-            'endLesson' => ['required', 'integer', 'min:1', 'max:15', 'gte:startLesson'],
             'qrRefreshRate' => ['required', 'integer', 'in:5,10,15,30'],
             'gpsEnabled' => ['boolean'],
             'gpsLatitude' => ['required_if:gpsEnabled,true', 'nullable', 'numeric'],
@@ -196,7 +195,6 @@ class QrAttendanceCreate extends Component
             'gpsRadius.max' => 'Bán kính tối đa là 2500m.',
             'gpsLatitude.required_if' => 'Vui lòng cho phép trình duyệt truy cập vị trí hiện tại để xác minh GPS.',
             'gpsLongitude.required_if' => 'Vui lòng cho phép trình duyệt truy cập vị trí hiện tại để xác minh GPS.',
-            'endLesson.gte' => 'Tiết kết thúc phải lớn hơn hoặc bằng tiết bắt đầu.',
         ]);
 
         // Kiểm tra gói: giới hạn bán kính định vị GPS theo gói dịch vụ.
@@ -211,88 +209,105 @@ class QrAttendanceCreate extends Component
 
         $courseClass = $this->ownedClass((int) $validated['classId']);
 
-        $lessonCount = $validated['endLesson'] - $validated['startLesson'] + 1;
-        $totalLessons = $courseClass->total_lessons;
-        $studiedLessons = (int) $courseClass->sessions()
-            ->when($this->editSessionId, fn($query) => $query->where('id', '!=', $this->editSessionId))
-            ->sum('lesson_count');
-
-        if ($studiedLessons + $lessonCount > $totalLessons) {
-            $remaining = max(0, $totalLessons - $studiedLessons);
-            $this->addError('endLesson', "Số tiết điểm danh vượt quá giới hạn! Môn học này có tổng cộng {$totalLessons} tiết. Lớp đã hoàn thành {$studiedLessons} tiết, do đó bạn chỉ có thể tạo tối đa {$remaining} tiết cho buổi học này.");
-            return;
-        }
-
-        $this->saveConfig();
-
         if ($courseClass->members()->where('status', 'active')->count() === 0) {
             $this->addError('classId', 'Vui lòng import danh sách lớp trước khi điểm danh.');
             $this->redirectRoute('lecturer.classes.show', ['ma_user' => auth()->id(), 'courseClass' => $courseClass->id, 'openImport' => 1], navigate: true);
             return;
         }
 
-        $existingSession = ClassSession::query()
-            ->where('class_id', $courseClass->id)
-            ->whereDate('date', $validated['date'])
-            ->where('start_time', $validated['startTime'] ?: null)
-            ->where('end_time', $validated['endTime'] ?: null)
-            ->first();
+        $this->saveConfig();
 
-        $actualLessonCount = $existingSession ? 0 : $lessonCount;
+        $qrFields = [
+            'qr_token' => Str::upper(Str::random(24)),
+            'token_expires_at' => now()->addMinutes($validated['durationMinutes']),
+            'qr_refresh_rate' => $validated['qrRefreshRate'],
+            'gps_latitude' => $validated['gpsEnabled'] ? $this->gpsLatitude : null,
+            'gps_longitude' => $validated['gpsEnabled'] ? $this->gpsLongitude : null,
+            'gps_radius' => $validated['gpsEnabled'] ? $validated['gpsRadius'] : null,
+        ];
 
+        // ===== Thêm phiên QR vào buổi đã có =====
+        if ($this->meetingId) {
+            $meeting = ClassMeeting::query()
+                ->whereHas('courseClass', fn ($query) => $query->where('owner_user_id', auth()->id()))
+                ->findOrFail($this->meetingId);
+
+            if (! $meeting->canAddSession()) {
+                $this->addError('name', 'Buổi điểm danh đã kết thúc, không thể thêm phiên mới.');
+                return;
+            }
+
+            $meeting->update(['status' => 'active']);
+            $session = $meeting->createSession('active', $qrFields);
+
+            app(NotificationService::class)->attendanceSessionCreated((int) auth()->id(), $session, isQr: true);
+            $this->redirectRoute('lecturer.attendance.qr.session', ['ma_user' => auth()->id(), 'session' => $session->id], navigate: true);
+            return;
+        }
+
+        // ===== Chỉnh sửa thiết lập phiên QR hiện có =====
         if ($this->editSessionId) {
             $session = ClassSession::query()->findOrFail($this->editSessionId);
             abort_unless($session->created_by === auth()->id(), 403);
 
-            $session->update([
-                'class_id' => $courseClass->id,
+            $meetingFields = [
                 'name' => $validated['name'],
                 'date' => $validated['date'],
                 'start_time' => $validated['startTime'] ?: null,
                 'end_time' => $validated['endTime'] ?: null,
-                'start_lesson' => $validated['startLesson'],
-                'end_lesson' => $validated['endLesson'],
-                'lesson_count' => $actualLessonCount,
-                'qr_token' => Str::upper(Str::random(24)),
-                'token_expires_at' => now()->addMinutes($validated['durationMinutes']),
-                'qr_refresh_rate' => $validated['qrRefreshRate'],
-                'gps_latitude' => $validated['gpsEnabled'] ? $this->gpsLatitude : null,
-                'gps_longitude' => $validated['gpsEnabled'] ? $this->gpsLongitude : null,
-                'gps_radius' => $validated['gpsEnabled'] ? $validated['gpsRadius'] : null,
-            ]);
+            ];
+
+            $session->update(array_merge($meetingFields, $qrFields));
+
+            // Đồng bộ thông tin buổi để các trang khác hiển thị nhất quán.
+            $session->meeting?->update($meetingFields);
+
+            $courseClass->members()->where('status', 'active')->get()->each(fn ($member) => AttendanceRecord::query()->firstOrCreate([
+                'class_session_id' => $session->id,
+                'class_member_id' => $member->id,
+            ], [
+                'status' => 'pending',
+                'is_verified' => $member->user_id !== null,
+            ]));
 
             session()->flash('success_config', 'Đã cập nhật thiết lập phiên điểm danh.');
-        } else {
-            $session = ClassSession::query()->create([
-                'class_id' => $courseClass->id,
-                'created_by' => auth()->id(),
-                'name' => $validated['name'],
-                'date' => $validated['date'],
-                'start_time' => $validated['startTime'] ?: null,
-                'end_time' => $validated['endTime'] ?: null,
-                'start_lesson' => $validated['startLesson'],
-                'end_lesson' => $validated['endLesson'],
-                'lesson_count' => $actualLessonCount,
-                'qr_token' => Str::upper(Str::random(24)),
-                'token_expires_at' => now()->addMinutes($validated['durationMinutes']),
-                'qr_refresh_rate' => $validated['qrRefreshRate'],
-                'gps_latitude' => $validated['gpsEnabled'] ? $this->gpsLatitude : null,
-                'gps_longitude' => $validated['gpsEnabled'] ? $this->gpsLongitude : null,
-                'gps_radius' => $validated['gpsEnabled'] ? $validated['gpsRadius'] : null,
-                'status' => 'active',
-            ]);
-
-            app(NotificationService::class)->attendanceSessionCreated((int) auth()->id(), $session, isQr: true);
+            $this->redirectRoute('lecturer.attendance.qr.session', ['ma_user' => auth()->id(), 'session' => $session->id], navigate: true);
+            return;
         }
 
-        $courseClass->members()->where('status', 'active')->get()->each(fn ($member) => AttendanceRecord::query()->firstOrCreate([
-            'class_session_id' => $session->id,
-            'class_member_id' => $member->id,
-        ], [
-            'status' => 'pending',
-            'is_verified' => $member->user_id !== null,
-        ]));
+        // ===== Tạo buổi điểm danh QR mới (buổi + phiên đầu tiên) =====
+        $totalSessions = (int) $courseClass->total_sessions;
+        $createdMeetings = (int) $courseClass->meetings()->count();
 
+        if ($totalSessions > 0 && $createdMeetings >= $totalSessions) {
+            $this->addError('name', "Đã tạo đủ {$createdMeetings}/{$totalSessions} buổi dự kiến. Vui lòng tăng tổng số buổi trong cài đặt lớp nếu cần tạo thêm.");
+            return;
+        }
+
+        // Buổi luôn diễn ra hôm nay, bắt đầu lúc tạo; giờ kết thúc phải cách hiện tại >= 10 phút.
+        $date = now()->toDateString();
+        $startTime = now()->format('H:i');
+        $endTime = $validated['endTime'] ?: now()->addMinutes(90)->format('H:i');
+        $endsAt = \Carbon\Carbon::parse($date.' '.$endTime.':00');
+
+        if ($endsAt->lessThanOrEqualTo(now()->addMinutes(10))) {
+            $this->addError('endTime', 'Giờ kết thúc phải sau thời điểm hiện tại ít nhất 10 phút.');
+            return;
+        }
+
+        $meeting = ClassMeeting::query()->create([
+            'class_id' => $courseClass->id,
+            'created_by' => auth()->id(),
+            'name' => $validated['name'],
+            'date' => $date,
+            'start_time' => $startTime,
+            'end_time' => $endTime,
+            'status' => 'active',
+        ]);
+
+        $session = $meeting->createSession('active', $qrFields);
+
+        app(NotificationService::class)->attendanceSessionCreated((int) auth()->id(), $session, isQr: true);
         $this->redirectRoute('lecturer.attendance.qr.session', ['ma_user' => auth()->id(), 'session' => $session->id], navigate: true);
     }
 
@@ -337,7 +352,7 @@ class QrAttendanceCreate extends Component
                 'semester' => 'HK2 2025-2026',
                 'require_approval' => false,
                 'status' => 'active',
-                'total_lessons' => 45,
+                'total_sessions' => 15,
             ],
         );
 

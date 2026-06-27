@@ -37,16 +37,12 @@ class ClassSessionExport implements FromArray, ShouldAutoSize, WithStyles
             }
         }
         
-        $startLesson = 1;
-        $endLesson = max(1, (int) $this->session->lesson_count);
-        $tiet = "{$startLesson}-{$endLesson}";
-
         // Add header rows
         $rows = [
             ['TÊN LỚP:', $className],
             ['BUỔI ĐIỂM DANH:', $sessionName],
             ['NGÀY:', $date],
-            ['CA:', $ca, 'TIẾT:', $tiet],
+            ['CA:', $ca],
             [''],
             ['MSSV', 'Tên sinh viên', 'Trạng thái', 'Lý do (Ghi chú)']
         ];

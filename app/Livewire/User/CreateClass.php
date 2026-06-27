@@ -28,14 +28,11 @@ class CreateClass extends Component
     // Mô tả thêm về lớp học
     public string $description = '';
 
-    // Tổng số tiết học/buổi học dự kiến của lớp
-    public int $totalLessons = 45;
+    // Tổng số buổi học dự kiến của lớp
+    public int $totalSessions = 15;
 
     // Ngưỡng thời gian đi muộn (phút)
     public int $lateThreshold = 15;
-
-    // Số lần đi muộn được quy đổi thành 1 lần vắng (0 = không quy đổi)
-    public int $latesPerAbsent = 0;
 
     // Có trừ chuyên cần khi vắng có phép hay không
     public bool $deductExcusedAbsence = false;
@@ -121,14 +118,13 @@ class CreateClass extends Component
             'subjectCode' => ['nullable', 'string', 'max:50'],
             'semester' => ['nullable', 'string', 'max:50'],
             'description' => ['nullable', 'string', 'max:5000'],
-            'totalLessons' => ['required', 'integer', 'min:1', 'max:300'],
+            'totalSessions' => ['required', 'integer', 'min:1', 'max:200'],
             'lateThreshold' => ['required', 'integer', 'in:5,10,15,20,30'],
-            'latesPerAbsent' => ['required', 'integer', 'in:0,1,2,3,4,5'],
             'deductExcusedAbsence' => ['boolean'],
             'requireApproval' => ['boolean'],
         ], [
             'name.required' => 'Vui lòng nhập tên lớp.',
-            'totalLessons.min' => 'Tổng số tiết phải lớn hơn 0.',
+            'totalSessions.min' => 'Tổng số buổi phải lớn hơn 0.',
         ]);
 
         $code = $this->generateUniqueCode();
@@ -141,9 +137,8 @@ class CreateClass extends Component
             'semester' => $this->semester ?: null,
             'description' => $this->description ?: null,
             'late_threshold' => $this->lateThreshold,
-            'lates_per_absent' => $this->latesPerAbsent,
             'deduct_excused_absence' => $this->deductExcusedAbsence,
-            'total_lessons' => $this->totalLessons,
+            'total_sessions' => $this->totalSessions,
             'require_approval' => $this->requireApproval,
             'status' => 'active',
         ]);

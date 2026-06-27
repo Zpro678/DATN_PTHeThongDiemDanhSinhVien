@@ -27,14 +27,11 @@ class ClassSettings extends Component
     // Mô tả chi tiết về lớp học
     public string $description = '';
 
-    // Tổng số tiết/buổi học dự kiến
-    public int $totalLessons = 45;
+    // Tổng số buổi học dự kiến
+    public int $totalSessions = 15;
 
     // Ngưỡng thời gian đi muộn (phút)
     public int $lateThreshold = 15;
-
-    // Số lần muộn quy đổi thành 1 lần vắng (0 = không quy đổi)
-    public int $latesPerAbsent = 0;
 
     // Có trừ điểm chuyên cần khi vắng có phép hay không
     public bool $deductExcusedAbsence = false;
@@ -66,9 +63,8 @@ class ClassSettings extends Component
         $this->subjectCode = $courseClass->subject_code ?? '';
         $this->semester = $courseClass->semester ?? '';
         $this->description = $courseClass->description ?? '';
-        $this->totalLessons = $courseClass->total_lessons;
+        $this->totalSessions = $courseClass->total_sessions;
         $this->lateThreshold = $courseClass->late_threshold ?? 15;
-        $this->latesPerAbsent = $courseClass->lates_per_absent ?? 0;
         $this->deductExcusedAbsence = (bool) $courseClass->deduct_excused_absence;
         $this->requireApproval = $courseClass->require_approval;
         $this->status = $courseClass->status;
@@ -84,9 +80,8 @@ class ClassSettings extends Component
             'subjectCode' => ['nullable', 'string', 'max:50'],
             'semester' => ['nullable', 'string', 'max:50'],
             'description' => ['nullable', 'string', 'max:5000'],
-            'totalLessons' => ['required', 'integer', 'min:1', 'max:300'],
+            'totalSessions' => ['required', 'integer', 'min:1', 'max:200'],
             'lateThreshold' => ['required', 'integer', 'in:5,10,15,20,30'],
-            'latesPerAbsent' => ['required', 'integer', 'in:0,1,2,3,4,5'],
             'deductExcusedAbsence' => ['boolean'],
             'requireApproval' => ['boolean'],
             'status' => ['required', 'string', Rule::in(['active', 'archived', 'ended'])],
@@ -95,7 +90,7 @@ class ClassSettings extends Component
             'name.required' => 'Vui lòng nhập tên lớp.',
             'code.required' => 'Mã lớp không được để trống.',
             'code.unique' => 'Mã lớp đã tồn tại.',
-            'totalLessons.min' => 'Tổng số tiết phải lớn hơn 0.',
+            'totalSessions.min' => 'Tổng số buổi phải lớn hơn 0.',
 
         ]);
 
@@ -106,9 +101,8 @@ class ClassSettings extends Component
             'semester' => $validated['semester'] ?: null,
             'description' => $validated['description'] ?: null,
             'late_threshold' => $validated['lateThreshold'],
-            'lates_per_absent' => $validated['latesPerAbsent'],
             'deduct_excused_absence' => $validated['deductExcusedAbsence'],
-            'total_lessons' => $validated['totalLessons'],
+            'total_sessions' => $validated['totalSessions'],
             'require_approval' => $validated['requireApproval'],
             'status' => $validated['status'],
 

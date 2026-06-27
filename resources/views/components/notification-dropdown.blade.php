@@ -61,7 +61,7 @@
             @endif
         </div>
 
-        <div class="max-h-[360px] overflow-y-auto overscroll-contain">
+        <div class="scrollbar-custom max-h-[360px] overflow-y-auto overscroll-contain">
             @forelse ($notifications as $notification)
                 @php
                     $isUnread = (bool) ($notification['unread'] ?? false);

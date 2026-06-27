@@ -24,9 +24,45 @@ class ManualAttendanceSession extends Component
 
     public string $statusFilter = 'all';
 
+    /** @var array<int, string> Trạng thái tạm thời theo từng bản ghi (chưa ghi DB cho tới khi "Lưu phiên"). */
+    public array $draftStatuses = [];
+
+    /** @var array<int, string> Ghi chú tạm thời theo từng bản ghi. */
+    public array $draftNotes = [];
+
     public function mount(int $session): void
     {
-        $this->sessionId = $this->ownedSession($session)->id;
+        $ownedSession = $this->ownedSession($session);
+        // Buổi hết giờ thì tự động chốt (kéo theo phiên này) trước khi cho thao tác.
+        $ownedSession->meeting?->closeIfExpired();
+
+        $this->sessionId = $ownedSession->id;
+        $this->initDrafts();
+    }
+
+    /**
+     * Nạp trạng thái/ghi chú hiện tại từ DB vào bộ nhớ tạm để chỉnh sửa.
+     */
+    private function initDrafts(): void
+    {
+        // Phiên thủ công: học viên chưa đánh dấu mặc định là "Có mặt"; giảng viên chỉ sửa người vắng/trễ.
+        $isManual = $this->ownedSession($this->sessionId)->qr_token === null;
+
+        $records = AttendanceRecord::query()
+            ->where('class_session_id', $this->sessionId)
+            ->whereHas('classMember')
+            ->get(['id', 'status', 'note']);
+
+        foreach ($records as $record) {
+            $status = $record->status;
+
+            if ($isManual && $status === 'pending') {
+                $status = 'present';
+            }
+
+            $this->draftStatuses[$record->id] = $status;
+            $this->draftNotes[$record->id] = $record->note ?? '';
+        }
     }
 
     public function setStatusFilter(string $status): void
@@ -47,81 +83,75 @@ class ManualAttendanceSession extends Component
         $this->statusFilter = 'all';
     }
 
-    public function updateStatus(int $recordId, string $status): void
+    /**
+     * Đánh dấu trạng thái tạm thời (chưa ghi DB) cho một bản ghi.
+     */
+    public function setStatus(int $recordId, string $status): void
     {
         abort_unless(in_array($status, ['present', 'late', 'absent', 'excused'], true), 422);
         $this->ensureSessionIsOpen();
 
-        $record = AttendanceRecord::query()
-            ->where('class_session_id', $this->sessionId)
-            ->whereHas('classSession.courseClass', fn ($query) => $query->where('owner_user_id', auth()->id()))
-            ->findOrFail($recordId);
+        if (! array_key_exists($recordId, $this->draftStatuses)) {
+            return;
+        }
 
-        $record->update([
-            'status' => $status,
-            'check_in_time' => in_array($status, ['present', 'late'], true) ? now() : null,
-            'is_verified' => $record->classMember->user_id !== null,
-        ]);
+        $this->draftStatuses[$recordId] = $status;
     }
 
-    public function updateNote(int $recordId, string $note): void
-    {
-        $this->ensureSessionIsOpen();
-
-        AttendanceRecord::query()
-            ->where('class_session_id', $this->sessionId)
-            ->whereHas('classSession.courseClass', fn ($query) => $query->where('owner_user_id', auth()->id()))
-            ->findOrFail($recordId)
-            ->update(['note' => trim($note) ?: null]);
-    }
-
+    /**
+     * Đánh dấu tạm thời tất cả học viên chưa điểm danh là có mặt.
+     */
     public function markAllPresent(): void
     {
         $this->ensureSessionIsOpen();
 
-        AttendanceRecord::query()
+        foreach ($this->draftStatuses as $recordId => $status) {
+            if ($status === 'pending') {
+                $this->draftStatuses[$recordId] = 'present';
+            }
+        }
+
+        session()->flash('success', 'Đã đánh dấu tạm thời tất cả học viên chưa điểm danh là có mặt. Nhấn "Lưu phiên" để lưu lại.');
+    }
+
+    /**
+     * Lưu toàn bộ trạng thái/ghi chú tạm thời của phiên này vào DB.
+     * Không chốt sổ: phiên vẫn mở để chỉnh sửa, chuyên cần sẽ được tổng hợp khi buổi kết thúc.
+     */
+    public function saveSession(): void
+    {
+        $this->ensureSessionIsOpen();
+
+        $records = AttendanceRecord::query()
             ->where('class_session_id', $this->sessionId)
-            ->where('status', 'pending')
             ->whereHas('classSession.courseClass', fn ($query) => $query->where('owner_user_id', auth()->id()))
             ->whereHas('classMember')
             ->with('classMember:id,user_id')
-            ->get()
-            ->each(fn (AttendanceRecord $record) => $record->update([
-                'status' => 'present',
-                'check_in_time' => now(),
-                'is_verified' => $record->classMember->user_id !== null,
-            ]));
+            ->get();
 
-        session()->flash('success', 'Đã đánh dấu tất cả sinh viên chưa điểm danh là có mặt.');
-    }
+        foreach ($records as $record) {
+            $status = $this->draftStatuses[$record->id] ?? $record->status;
+            $note = trim((string) ($this->draftNotes[$record->id] ?? ''));
 
-    public function validateBeforeClose(): void
-    {
-        $session = $this->ownedSession($this->sessionId);
-        
-        $firstPending = $session->attendanceRecords()
-            ->where('status', 'pending')
-            ->whereHas('classMember')
-            ->with('classMember')
-            ->first();
-
-        if ($firstPending) {
-            $studentName = $firstPending->classMember->full_name ?? 'không xác định';
-            session()->flash('error', "Bạn chưa chọn trạng thái điểm danh của học viên {$studentName}.");
-            $this->dispatch('scroll-to-pending');
-        } else {
-            $this->dispatch('open-close-modal');
+            $record->update([
+                'status' => $status,
+                'note' => $note !== '' ? $note : null,
+                'check_in_time' => in_array($status, ['present', 'late'], true)
+                    ? ($record->check_in_time ?? now())
+                    : null,
+                'is_verified' => $record->classMember?->user_id !== null,
+            ]);
         }
-    }
 
-    public function closeSession(): void
-    {
-        $session = $this->ownedSession($this->sessionId);
-        $session->update(['status' => 'closed']);
+        session()->flash('status', 'Đã lưu phiên điểm danh.');
 
-        app(NotificationService::class)->attendanceSessionClosed((int) auth()->id(), $session, isQr: false);
+        // Quay về trang chi tiết buổi (danh sách phiên) sau khi lưu.
+        $meetingId = $this->ownedSession($this->sessionId)->meeting_id;
 
-        session()->flash('success', 'Phiên điểm danh đã được chốt sổ.');
+        $this->redirectRoute('lecturer.attendance.meeting.sessions', [
+            'ma_user' => auth()->id(),
+            'meeting' => $meetingId,
+        ], navigate: true);
     }
 
     public function deleteSession()
@@ -145,29 +175,18 @@ class ManualAttendanceSession extends Component
 
     public function createDuplicateManualSession(): void
     {
-        $oldSession = $this->ownedSession($this->sessionId)->load('courseClass');
-        $courseClass = $oldSession->courseClass;
+        $oldSession = $this->ownedSession($this->sessionId)->load('meeting.courseClass');
+        $meeting = $oldSession->meeting;
 
-        $newSession = ClassSession::query()->create([
-            'class_id' => $courseClass->id,
-            'created_by' => auth()->id(),
-            'name' => $oldSession->name,
-            'date' => $oldSession->date,
-            'start_time' => $oldSession->start_time,
-            'end_time' => $oldSession->end_time,
-            'start_lesson' => $oldSession->start_lesson,
-            'end_lesson' => $oldSession->end_lesson,
-            'lesson_count' => $oldSession->lesson_count,
-            'status' => 'active',
-        ]);
+        if (! $meeting->canAddSession()) {
+            session()->flash('error', 'Buổi điểm danh đã kết thúc, không thể thêm phiên mới.');
+            return;
+        }
 
-        $courseClass->members()->where('status', 'active')->get()->each(fn ($member) => AttendanceRecord::query()->firstOrCreate([
-            'class_session_id' => $newSession->id,
-            'class_member_id' => $member->id,
-        ], [
-            'status' => 'pending',
-            'is_verified' => $member->user_id !== null,
-        ]));
+        $meeting->update(['status' => 'active']);
+
+        // Thêm một phiên thủ công mới vào cùng buổi học.
+        $newSession = $meeting->createSession('active');
 
         app(NotificationService::class)->attendanceSessionCreated((int) auth()->id(), $newSession, isQr: false);
 
@@ -187,8 +206,7 @@ class ManualAttendanceSession extends Component
 
         $date = $session->date->format('Y-m-d');
         $className = Str::slug($session->courseClass->name);
-        $endLesson = max(1, (int) $session->lesson_count);
-        $fileName = "{$date}_{$className}_Tiet_1-{$endLesson}.xlsx";
+        $fileName = "{$date}_{$className}.xlsx";
 
         return Excel::download(
             new ClassSessionExport($this->sessionId),
@@ -202,7 +220,6 @@ class ManualAttendanceSession extends Component
         $records = $session->attendanceRecords()
             ->whereHas('classMember')
             ->with('classMember.user')
-            ->when($this->statusFilter !== 'all', fn (Builder $query) => $query->where('status', $this->statusFilter))
             ->when($this->search !== '', function (Builder $query): void {
                 $query->whereHas('classMember', function (Builder $query): void {
                     $query->where('student_code', 'like', '%'.$this->search.'%')
@@ -212,21 +229,20 @@ class ManualAttendanceSession extends Component
             ->orderBy('id')
             ->get();
 
-        $stats = $session->attendanceRecords()
-            ->whereHas('classMember')
-            ->selectRaw('status, COUNT(*) as aggregate')
-            ->groupBy('status')
-            ->pluck('aggregate', 'status');
+        // Lọc theo trạng thái dựa trên đánh dấu TẠM THỜI (chưa lưu cũng được lọc đúng).
+        if ($this->statusFilter !== 'all') {
+            $records = $records->filter(fn (AttendanceRecord $record) => ($this->draftStatuses[$record->id] ?? $record->status) === $this->statusFilter)
+                ->values();
+        }
 
-        $summary = [
-            'present' => (int) ($stats['present'] ?? 0),
-            'late' => (int) ($stats['late'] ?? 0),
-            'excused' => (int) ($stats['excused'] ?? 0),
-            'absent' => (int) ($stats['absent'] ?? 0),
-            'pending' => (int) ($stats['pending'] ?? 0),
-            'total' => $session->attendanceRecords()->whereHas('classMember')->count(),
-        ];
-
+        // Tổng hợp nhanh tính theo đánh dấu tạm thời của toàn bộ phiên.
+        $summary = ['present' => 0, 'late' => 0, 'excused' => 0, 'absent' => 0, 'pending' => 0];
+        foreach ($this->draftStatuses as $status) {
+            if (array_key_exists($status, $summary)) {
+                $summary[$status]++;
+            }
+        }
+        $summary['total'] = count($this->draftStatuses);
         $summary['present_percent'] = $summary['total'] > 0
             ? (int) round(($summary['present'] / $summary['total']) * 100)
             : 0;

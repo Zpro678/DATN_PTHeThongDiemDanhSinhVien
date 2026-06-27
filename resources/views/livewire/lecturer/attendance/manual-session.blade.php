@@ -16,9 +16,6 @@
             <div class="mb-3 flex flex-wrap items-center gap-3">
                 <h1 class="text-3xl font-extrabold tracking-tight text-slate-900" title="{{ $session->name }}">
                     {{ \Illuminate\Support\Str::limit($session->name, 40) }}
-                    @if($session->start_lesson && $session->end_lesson)
-                        <span class="text-2xl font-bold text-slate-500 ml-1">(Tiết {{ $session->start_lesson }} - Tiết {{ $session->end_lesson }})</span>
-                    @endif
                 </h1>
                 <span @class([
                     'inline-flex items-center gap-2 rounded-full border px-3 py-1 text-xs font-bold',
@@ -54,6 +51,10 @@
         </div>
 
         <div class="flex w-full items-center gap-3 overflow-x-auto pb-2 md:w-auto md:shrink-0 md:pb-0 scrollbar-hide">
+            <a href="{{ route('lecturer.attendance.meeting.sessions', $session->meeting_id) }}" class="inline-flex shrink-0 items-center justify-center gap-2 rounded-xl border border-slate-200 bg-white px-4 py-2.5 text-sm font-bold text-slate-700 transition hover:bg-slate-50 whitespace-nowrap">
+                <x-user.icon name="arrow-left" :size="18" />
+                Quay lại
+            </a>
             @if(!$isClosed)
                 <button type="button" @click="deleteModalOpen = true" class="inline-flex shrink-0 items-center justify-center gap-2 rounded-xl border border-rose-200 bg-white px-4 py-2.5 text-sm font-bold text-rose-600 transition hover:bg-rose-50 whitespace-nowrap">
                     <x-user.icon name="x-circle" :size="18" />
@@ -162,7 +163,8 @@
                 </thead>
                 <tbody class="divide-y divide-slate-100 text-sm">
                     @forelse ($records as $record)
-                        <tr class="{{ $statusMeta[$record->status]['row'] ?? $statusMeta['pending']['row'] }} transition-colors">
+                        @php($current = $draftStatuses[$record->id] ?? $record->status)
+                        <tr class="{{ $statusMeta[$current]['row'] ?? $statusMeta['pending']['row'] }} transition-colors">
                             <td class="px-5 py-4 text-base font-bold text-slate-500">{{ str_pad((string) $loop->iteration, 2, '0', STR_PAD_LEFT) }}</td>
                             <td class="px-5 py-4 font-mono text-base font-bold text-slate-600">{{ $record->classMember?->student_code ?? 'N/A' }}</td>
                             <td class="px-5 py-4">
@@ -172,7 +174,7 @@
                                     </div>
                                     <div class="min-w-0">
                                         <p class="truncate text-base font-bold text-slate-900">{{ $record->classMember?->full_name ?? 'Không xác định' }}</p>
-                                        <p class="text-sm font-medium text-slate-400">{{ $statusMeta[$record->status]['label'] ?? $statusMeta['pending']['label'] }}</p>
+                                        <p class="text-sm font-medium text-slate-400">{{ $statusMeta[$current]['label'] ?? $statusMeta['pending']['label'] }}</p>
                                     </div>
                                 </div>
                             </td>
@@ -181,12 +183,12 @@
                                     @foreach (['present', 'absent', 'late', 'excused'] as $option)
                                         <button
                                             type="button"
-                                            wire:click="updateStatus({{ $record->id }}, '{{ $option }}')"
+                                            wire:click="setStatus({{ $record->id }}, '{{ $option }}')"
                                             @disabled($isClosed)
                                             @class([
                                                 'rounded-full px-4 py-2 text-sm font-bold transition disabled:opacity-60',
-                                                $statusMeta[$option]['button'] . ' shadow-sm ring-1 ring-black/5' => $record->status === $option,
-                                                'bg-slate-100 text-slate-600 hover:bg-slate-200 hover:text-slate-900' => $record->status !== $option,
+                                                $statusMeta[$option]['button'] . ' shadow-sm ring-1 ring-black/5' => $current === $option,
+                                                'bg-slate-100 text-slate-600 hover:bg-slate-200 hover:text-slate-900' => $current !== $option,
                                             ])
                                         >
                                             {{ $statusMeta[$option]['short'] }}
@@ -197,8 +199,7 @@
                             <td class="px-5 py-4">
                                 <input
                                     type="text"
-                                    value="{{ $record->note }}"
-                                    wire:change="updateNote({{ $record->id }}, $event.target.value)"
+                                    wire:model="draftNotes.{{ $record->id }}"
                                     placeholder="Thêm ghi chú..."
                                     @disabled($isClosed)
                                     class="w-full rounded-lg border border-transparent bg-transparent px-3 py-2 text-base font-medium outline-none transition hover:border-slate-200 hover:bg-white focus:border-blue-500 focus:bg-white focus:ring-2 focus:ring-blue-500/20 disabled:text-slate-400"
@@ -249,61 +250,16 @@
             </div>
             <button
                 type="button"
-                @click="modalOpen = true; confirmChecked = false"
+                wire:click="saveSession"
+                wire:loading.attr="disabled"
+                wire:target="saveSession"
                 @disabled($isClosed)
                 class="inline-flex items-center justify-center gap-2 rounded-xl bg-orange-500 px-8 py-3 text-lg font-bold text-white shadow-lg shadow-orange-500/20 transition hover:bg-orange-600 active:scale-95 disabled:opacity-60"
             >
                 <x-user.icon name="save" :size="20" />
-                {{ $isClosed ? 'ĐÃ CHỐT SỔ' : 'LƯU & CHỐT SỔ' }}
+                <span wire:loading.remove wire:target="saveSession">{{ $isClosed ? 'ĐÃ CHỐT SỔ' : 'LƯU PHIÊN' }}</span>
+                <span wire:loading wire:target="saveSession">ĐANG LƯU...</span>
             </button>
-        </div>
-    </div>
-
-    <div x-cloak x-show="modalOpen" x-transition.opacity class="fixed inset-0 z-[100] flex items-center justify-center p-4">
-        <button type="button" class="absolute inset-0 bg-slate-950/45 backdrop-blur-sm" @click="modalOpen = false" aria-label="Đóng"></button>
-
-        <div x-show="modalOpen" x-transition.scale.origin.center.duration.150ms class="relative w-full max-w-2xl overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-2xl">
-            <div class="flex items-start gap-4 border-b border-slate-200 p-6">
-                <div class="flex h-12 w-12 shrink-0 items-center justify-center rounded-full bg-rose-50 text-rose-600">
-                    <x-user.icon name="lock" :size="24" />
-                </div>
-                <div>
-                    <h3 class="text-2xl font-extrabold text-slate-900">Xác nhận chốt sổ điểm danh?</h3>
-                    <p class="mt-2 text-sm leading-relaxed text-slate-500">Sau khi chốt sổ, giao diện sẽ khóa chỉnh sửa trong phiên hiện tại.</p>
-                </div>
-            </div>
-
-            <div class="space-y-6 p-6">
-                <div class="grid grid-cols-2 overflow-hidden rounded-xl border border-slate-200 sm:grid-cols-5">
-                    @foreach (['present', 'absent', 'late', 'excused', 'pending'] as $status)
-                        <div class="border-b border-r border-slate-200 p-4 text-center last:border-r-0 sm:border-b-0">
-                            <p class="mb-1 text-xs font-bold uppercase text-slate-500">{{ $statusMeta[$status]['label'] }}</p>
-                            <p class="text-2xl font-extrabold text-slate-900">{{ $summary[$status] }}</p>
-                        </div>
-                    @endforeach
-                </div>
-
-                <label class="flex cursor-pointer items-center gap-3 rounded-xl border border-transparent bg-slate-50 p-4 transition hover:border-slate-200">
-                    <input type="checkbox" x-model="confirmChecked" class="h-5 w-5 rounded border-slate-300 text-orange-500 focus:ring-orange-500">
-                    <span class="select-none font-semibold text-slate-900">Tôi đã kiểm tra lại danh sách điểm danh.</span>
-                </label>
-            </div>
-
-            <div class="flex flex-col gap-3 border-t border-slate-200 bg-slate-50 p-6 sm:flex-row">
-                <button type="button" class="rounded-xl border border-slate-200 bg-white px-6 py-3 font-bold text-slate-700 transition hover:bg-slate-100 sm:flex-[0.4]" @click="modalOpen = false">
-                    Quay lại kiểm tra
-                </button>
-                <button
-                    type="button"
-                    wire:click="closeSession"
-                    @click="modalOpen = false"
-                    class="inline-flex flex-1 items-center justify-center gap-2 rounded-xl bg-orange-500 px-6 py-3 font-bold text-white shadow-sm shadow-orange-500/20 transition hover:bg-orange-600 disabled:cursor-not-allowed disabled:opacity-50"
-                    :disabled="! confirmChecked"
-                >
-                    <x-user.icon name="user-check" :size="20" />
-                    Chốt sổ điểm danh
-                </button>
-            </div>
         </div>
     </div>
 
@@ -354,10 +310,6 @@
                         <div class="flex justify-between items-center border-b border-slate-200/60 pb-2.5">
                             <span class="font-medium text-slate-500">Buổi:</span>
                             <span class="font-bold text-slate-900">{{ $session->name }}</span>
-                        </div>
-                        <div class="flex justify-between items-center border-b border-slate-200/60 pb-2.5">
-                            <span class="font-medium text-slate-500">Tiết:</span>
-                            <span class="font-bold text-slate-900">{{ $session->start_lesson ?? 1 }} đến {{ $session->end_lesson ?? 3 }}</span>
                         </div>
                         <div class="flex justify-between items-center">
                             <span class="font-medium text-slate-500">Ngày:</span>

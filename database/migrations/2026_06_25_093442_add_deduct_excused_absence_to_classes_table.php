@@ -12,7 +12,7 @@ return new class extends Migration
     public function up(): void
     {
         Schema::table('classes', function (Blueprint $table) {
-            $table->boolean('deduct_excused_absence')->default(false)->after('lates_per_absent')->comment('Có trừ phần trăm chuyên cần khi vắng có phép hay không?');
+            $table->boolean('deduct_excused_absence')->default(false)->after('late_threshold')->comment('Có trừ phần trăm chuyên cần khi vắng có phép hay không?');
         });
     }
 

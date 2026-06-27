@@ -4,9 +4,6 @@
     $sessionDateLabel = $session->date->format('d/m/Y');
     $openMinutes = max(1, (int) now()->diffInMinutes($session->token_expires_at ?? now()->addMinutes(15), false));
     $qrRefreshRate = $session->qr_refresh_rate ?? 10;
-    $config = cache()->get('qr_config_class_' . $session->class_id);
-    $startLesson = $config['startLesson'] ?? 1;
-    $endLesson = $config['endLesson'] ?? max(1, (int) $session->courseClass->lessons_per_session);
     $statusMeta = [
         'pending' => ['label' => 'Chưa điểm danh', 'pill' => 'border-slate-200 bg-slate-100 text-slate-600'],
         'present' => ['label' => 'Có mặt', 'pill' => 'border-emerald-200 bg-emerald-100 text-emerald-700'],
@@ -64,9 +61,6 @@
             <div class="flex flex-wrap items-center gap-3">
                 <h1 class="text-[30px] font-black leading-tight tracking-tight text-slate-900" title="{{ $session->name }}">
                     {{ Str::limit($session->name, 40) }}
-                    @if($startLesson && $endLesson)
-                        <span class="text-2xl font-bold text-slate-500 ml-1">(Tiết {{ $startLesson }} - Tiết {{ $endLesson }})</span>
-                    @endif
                 </h1>
                 <span @class([
                     'inline-flex items-center gap-2 rounded-full border px-3 py-1 text-[11px] font-extrabold uppercase tracking-wider',
@@ -90,10 +84,6 @@
                 <span class="inline-flex items-center gap-2 rounded-xl border border-slate-200 bg-white px-3 py-2 shadow-sm">
                     <x-user.icon name="calendar" :size="16" class="text-slate-500" />
                     {{ $sessionDateLabel }}
-                </span>
-                <span class="inline-flex items-center gap-2 rounded-xl border border-slate-200 bg-white px-3 py-2 shadow-sm">
-                    <x-user.icon name="history" :size="16" class="text-slate-500" />
-                    Tiết {{ $startLesson }} - {{ $endLesson }}
                 </span>
             </div>
         </div>
@@ -258,8 +248,8 @@
                                 </div>
 
                                 <div class="min-w-0 rounded-xl bg-white/10 px-4 py-3 ring-1 ring-inset ring-white/10 transition-colors hover:bg-white/20">
-                                    <p class="text-[10px] font-bold uppercase tracking-widest text-blue-200">Lớp / Tiết</p>
-                                    <p class="mt-1 text-sm font-bold leading-snug text-white">{{ $selectedSubject }} - Tiết {{ $startLesson }}-{{ $endLesson }}</p>
+                                    <p class="text-[10px] font-bold uppercase tracking-widest text-blue-200">Lớp / Buổi</p>
+                                    <p class="mt-1 text-sm font-bold leading-snug text-white">{{ $selectedSubject }} - {{ Str::limit($session->name, 30) }}</p>
                                 </div>
                             </div>
                         </div>
@@ -412,13 +402,14 @@
     </section>
 
     <div class="mt-6 flex items-center justify-between gap-3">
-        <a href="{{ route('lecturer.classes.show', $session->class_id) }}" class="inline-flex items-center justify-center gap-2 rounded-xl border border-slate-200 bg-white px-6 py-2.5 text-sm font-bold text-slate-700 shadow-sm transition hover:bg-slate-50">
+        <a href="{{ route('lecturer.attendance.meeting.sessions', $session->meeting_id) }}" class="inline-flex items-center justify-center gap-2 rounded-xl border border-slate-200 bg-white px-6 py-2.5 text-sm font-bold text-slate-700 shadow-sm transition hover:bg-slate-50">
             <x-user.icon name="arrow-left" :size="18" />
             Quay lại
         </a>
-        <button type="button" @click="showEndModal = true" @disabled($isClosed) class="inline-flex items-center justify-center gap-2 rounded-xl bg-amber-500 px-6 py-2.5 text-sm font-bold text-white shadow-sm shadow-amber-500/30 transition hover:bg-amber-600 disabled:cursor-not-allowed disabled:opacity-60">
-            <x-user.icon name="calendar-check" :size="18" />
-            Chốt phiên
+        <button type="button" wire:click="saveSession" wire:loading.attr="disabled" wire:target="saveSession" class="inline-flex items-center justify-center gap-2 rounded-xl bg-orange-500 px-6 py-2.5 text-sm font-bold text-white shadow-sm shadow-orange-500/30 transition hover:bg-orange-600 disabled:cursor-not-allowed disabled:opacity-60">
+            <x-user.icon name="save" :size="18" />
+            <span wire:loading.remove wire:target="saveSession">Lưu phiên</span>
+            <span wire:loading wire:target="saveSession">Đang lưu...</span>
         </button>
     </div>
 
@@ -450,7 +441,7 @@
                     <div class="rounded-2xl border border-slate-200 bg-slate-50 p-4">
                         <p class="text-[11px] font-black uppercase tracking-wider text-slate-400">Buổi học</p>
                         <p class="mt-2 text-base font-black text-slate-900">{{ $session->name }}</p>
-                        <p class="mt-1 text-sm font-semibold text-slate-500">{{ $sessionDateLabel }} · Tiết {{ $startLesson }}-{{ $endLesson }}</p>
+                        <p class="mt-1 text-sm font-semibold text-slate-500">{{ $sessionDateLabel }}</p>
                     </div>
 
                     <div class="rounded-2xl border border-blue-100 bg-blue-50 p-4">

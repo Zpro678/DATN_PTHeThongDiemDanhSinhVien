@@ -18,7 +18,7 @@ class CourseClassFactory extends Factory
             'semester' => fake()->randomElement(['HK1 2025-2026', 'HK2 2025-2026', 'HK1 2026-2027']),
             'require_approval' => fake()->boolean(),
             'status' => 'active',
-            'total_lessons' => 45,
+            'total_sessions' => 15,
         ];
     }
 

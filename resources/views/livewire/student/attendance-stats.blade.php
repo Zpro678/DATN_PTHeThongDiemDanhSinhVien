@@ -56,9 +56,9 @@
         <section class="grid grid-cols-1 gap-4 md:grid-cols-2 xl:grid-cols-4">
             @foreach ([
                 ['label' => 'Tỷ lệ chuyên cần', 'value' => $totals['percent'].'%', 'hint' => 'Trung bình tất cả môn', 'bg' => 'bg-primary/5', 'text' => 'text-primary', 'border' => 'border-primary/10'],
-                ['label' => 'Số tiết có mặt', 'value' => $totals['present'] + $totals['late'] + $totals['excused'], 'hint' => 'Bao gồm muộn/có phép', 'bg' => 'bg-emerald-50', 'text' => 'text-emerald-600', 'border' => 'border-emerald-100'],
-                ['label' => 'Số tiết vắng', 'value' => $totals['absent'], 'hint' => 'Vắng không phép/chưa hợp lệ', 'bg' => 'bg-rose-50', 'text' => 'text-rose-600', 'border' => 'border-rose-100'],
-                ['label' => 'Số tiết đi muộn', 'value' => $totals['late'], 'hint' => 'Đi trễ quá giờ quy định', 'bg' => 'bg-amber-50', 'text' => 'text-amber-600', 'border' => 'border-amber-100'],
+                ['label' => 'Số buổi có mặt', 'value' => $totals['present'] + $totals['late'] + $totals['excused'], 'hint' => 'Bao gồm muộn/có phép', 'bg' => 'bg-emerald-50', 'text' => 'text-emerald-600', 'border' => 'border-emerald-100'],
+                ['label' => 'Số buổi vắng', 'value' => $totals['absent'], 'hint' => 'Vắng không phép/chưa hợp lệ', 'bg' => 'bg-rose-50', 'text' => 'text-rose-600', 'border' => 'border-rose-100'],
+                ['label' => 'Số buổi đi muộn', 'value' => $totals['late'], 'hint' => 'Đi trễ quá giờ quy định', 'bg' => 'bg-amber-50', 'text' => 'text-amber-600', 'border' => 'border-amber-100'],
             ] as $card)
                 <article class="flex flex-col justify-between overflow-hidden rounded-[2.5rem] border {{ $card['border'] }} bg-white shadow-sm transition hover:shadow-md">
                     <div class="p-5">
@@ -81,7 +81,7 @@
         @php
             // Xếp môn theo % tăng dần: môn rủi ro cao nhất lên đầu.
             $ranked = collect($subjects)
-                ->filter(fn ($s) => ($s['planned_lessons'] ?? $s['total_lessons'] ?? 0) > 0 || ($s['total'] ?? 0) > 0)
+                ->filter(fn ($s) => ($s['planned_sessions'] ?? $s['total_sessions'] ?? 0) > 0 || ($s['total'] ?? 0) > 0)
                 ->sortBy('percent')
                 ->values();
         @endphp
@@ -90,11 +90,11 @@
                 <div class="flex flex-col gap-1 border-b border-outline-variant/10 p-5 sm:flex-row sm:items-center sm:justify-between">
                     <div>
                         <h2 class="text-[22px] font-black text-on-surface">Quỹ vắng an toàn theo môn</h2>
-                        <p class="mt-1 text-[13px] text-on-surface-variant">Số tiết bạn còn được phép vắng trước khi rớt mốc đủ điều kiện dự thi.</p>
+                        <p class="mt-1 text-[13px] text-on-surface-variant">Số buổi bạn còn được phép vắng trước khi rớt mốc đủ điều kiện dự thi.</p>
                     </div>
                     <span class="inline-flex w-fit items-center gap-1.5 rounded-full bg-surface-container-low px-3 py-1.5 text-[11px] font-bold uppercase tracking-wider text-on-surface-variant">
                         <x-user.icon name="info" :size="13" />
-                        Ngưỡng cấm thi: vắng &gt; 20% số tiết
+                        Ngưỡng cấm thi: vắng &gt; 20% số buổi
                     </span>
                 </div>
 

@@ -76,7 +76,7 @@
                 $isEnded = $class->status === 'ended';
 
                 $sessionsCompleted = $class->completed_sessions_count ?? 0;
-                $studiedLessons    = $class->studied_lessons ?? 0;
+                $studiedSessions    = $class->studied_sessions ?? 0;
 
                 // Số tiết tổng hợp từ AttendanceSummary của tất cả học viên trong lớp.
                 $present  = $class->sum_present  ?? 0; // Tổng tiết có mặt của cả lớp.
@@ -86,22 +86,20 @@
 
                 // Tổng tiết kế hoạch cả khóa; fallback về tiết đã học nếu chưa cấu hình.
                 $totalStudied   = $present + $late + $absent + $excused;
-                $plannedLessons = max((int) ($class->total_lessons ?? 0), $totalStudied);
+                $plannedSessions = max((int) ($class->total_sessions ?? 0), $totalStudied);
 
                 // % trung bình chuyên cần lớp = (planned − excused − absent) / (planned − excused).
-                // lateCount = 0 vì aggregate sum không tách số LẦN muộn.
                 $attendancePct = \App\Services\AttendanceCalculator::percentOfPlanned(
-                    $plannedLessons,
+                    $plannedSessions,
                     $excused,
                     $absent,
-                    lateCount: 0,
                 );
 
-                // Số tiết tối đa được phép vắng (20% tổng tiết kế hoạch).
-                $allowedAbsent = (int) floor($plannedLessons * \App\Services\AttendanceCalculator::ABSENCE_LIMIT_RATIO);
+                // Số buổi tối đa được phép vắng (20% tổng buổi dự kiến).
+                $allowedAbsent = \App\Services\AttendanceCalculator::allowedAbsentSessions($plannedSessions);
 
                 // Cấm thi: vắng cả lớp vượt ngưỡng hoặc chuyên cần trung bình < 80%.
-                $isBanned  = $plannedLessons > 0 && ($absent > $allowedAbsent || $attendancePct < \App\Services\AttendanceCalculator::MIN_ATTENDANCE_PERCENT);
+                $isBanned  = $plannedSessions > 0 && ($absent > $allowedAbsent || $attendancePct < \App\Services\AttendanceCalculator::MIN_ATTENDANCE_PERCENT);
                 // Cảnh báo: chuyên cần trung bình 80–84%.
                 $isWarning = ! $isBanned && $attendancePct < 85;
 
@@ -194,7 +192,7 @@
                             <p class="text-[9px] font-bold uppercase tracking-wider text-on-surface-variant">Đã học</p>
                             <p class="mt-1 flex items-center gap-1.5">
                                 <x-user.icon name="check-square" class="text-tertiary" :size="16"/>
-                                <span class="text-xl font-black leading-none text-on-surface">{{ $class->studied_lessons ?? 0 }}/{{ $class->total_lessons }}</span>
+                                <span class="text-xl font-black leading-none text-on-surface">{{ $class->studied_sessions ?? 0 }}/{{ $class->total_sessions }}</span>
                             </p>
                         </div>
                     </div>

@@ -35,14 +35,15 @@ class ClassStatistics extends Component
         $totalStudents   = $members->count();
         $closedSessions  = $class->sessions->where('status', 'closed');
         $totalSessions   = $class->sessions->count();
-        $studiedLessons  = $closedSessions->sum('lesson_count');
-        $plannedLessons  = (int) $class->total_lessons;
+        // Số buổi đã học = số buổi (meeting) có phiên đã chốt.
+        $studiedSessions  = $closedSessions->pluck('meeting_id')->filter()->unique()->count();
+        $plannedSessions  = (int) $class->total_sessions;
         $avgAttendance   = $statsCollection->isNotEmpty()
             ? (int) round($statsCollection->avg('attendance_percent'))
             : 100;
         $bannedCount   = $statsCollection->where('is_banned', true)->count();
         $warningCount  = $statsCollection->where('is_warning', true)->where('is_banned', false)->count();
-        $allowedAbsent = $plannedLessons > 0 ? (int) floor($plannedLessons * 0.2) : 0;
+        $allowedAbsent = \App\Services\AttendanceCalculator::allowedAbsentSessions($plannedSessions);
 
         // Danh sách học viên cần chú ý (banned trước, warning sau)
         $alertStudents = $members
@@ -81,8 +82,8 @@ class ClassStatistics extends Component
             'totalStudents'   => $totalStudents,
             'totalSessions'   => $totalSessions,
             'closedCount'     => $closedSessions->count(),
-            'studiedLessons'  => $studiedLessons,
-            'plannedLessons'  => $plannedLessons,
+            'studiedSessions'  => $studiedSessions,
+            'plannedSessions'  => $plannedSessions,
             'avgAttendance'   => $avgAttendance,
             'bannedCount'     => $bannedCount,
             'warningCount'    => $warningCount,

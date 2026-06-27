@@ -99,12 +99,11 @@ class StudentsSheet implements FromArray, ShouldAutoSize, WithStyles, WithTitle
         $formulaName = 'Kết quả công thức (%)';
 
         $headers = array_merge($headers, [
-            'Tổng số tiết đã học',
-            'Có mặt', 
-            'Đi muộn', 
-            'Vắng không phép', 
+            'Tổng số buổi đã học',
+            'Có mặt',
+            'Đi muộn',
+            'Vắng không phép',
             'Vắng có phép',
-            'Muộn quy đổi (tiết)',
             'Chuyên cần (% cài đặt lớp)',
             $formulaName
         ]);
@@ -122,33 +121,21 @@ class StudentsSheet implements FromArray, ShouldAutoSize, WithStyles, WithTitle
         $stt = 1;
         foreach ($members as $member) {
             $stats = $attendanceStats->get($member->id, [
-                'studied_lessons' => 0,
-                'present_lessons' => 0,
-                'late_lessons' => 0,
-                'absent_lessons' => 0,
-                'excused_lessons' => 0,
+                'studied_sessions' => 0,
+                'present_sessions' => 0,
+                'late_sessions' => 0,
+                'absent_sessions' => 0,
+                'excused_sessions' => 0,
+                'attendance_percent' => 100,
             ]);
 
-            // Tính chuyên cần theo cài đặt lớp (lấy từ stats, do LectureManageStudentService đã join classes)
-            $latesPerAbsent     = (int) ($stats['lates_per_absent'] ?? 0);
-            $deductExcused      = (bool) ($stats['deduct_excused_absence'] ?? false);
-            $lateCount          = (int) ($stats['late_count'] ?? 0);
-            $presentLessons     = (int) ($stats['present_lessons'] ?? 0);
-            $lateLessons        = (int) ($stats['late_lessons'] ?? 0);
-            $absentLessons      = (int) ($stats['absent_lessons'] ?? 0);
-            $excusedLessons     = (int) ($stats['excused_lessons'] ?? 0);
-            $studied            = (int) ($stats['studied_lessons'] ?? 0);
-
-            $lateConvertedLessons = AttendanceCalculator::lateAbsentLessons($lateCount, $latesPerAbsent);
-            $classPercent = AttendanceCalculator::percent(
-                $presentLessons,
-                $lateLessons,
-                $excusedLessons,
-                $studied,
-                $lateCount,
-                $latesPerAbsent,
-                $deductExcused,
-            );
+            // Chuyên cần tính theo BUỔI (đã do LectureManageStudentService tính sẵn).
+            $presentSessions     = (int) ($stats['present_sessions'] ?? 0);
+            $lateSessions        = (int) ($stats['late_sessions'] ?? 0);
+            $absentSessions      = (int) ($stats['absent_sessions'] ?? 0);
+            $excusedSessions     = (int) ($stats['excused_sessions'] ?? 0);
+            $studied            = (int) ($stats['studied_sessions'] ?? 0);
+            $classPercent       = (int) ($stats['attendance_percent'] ?? 0);
 
             // Tính phần trăm theo công thức tự nhập
             $percent = 0;
@@ -167,10 +154,10 @@ class StudentsSheet implements FromArray, ShouldAutoSize, WithStyles, WithTitle
                 $formulaStr = preg_replace('/[^a-z0-9\+\-\*\/\(\)\.\s,]/', '', $formulaStr);
                 
                 // Map variables to their values using word boundaries
-                $formulaStr = preg_replace('/\bc\b/', $presentLessons, $formulaStr);
-                $formulaStr = preg_replace('/\bm\b/', $lateLessons, $formulaStr);
-                $formulaStr = preg_replace('/\bv\b/', $absentLessons, $formulaStr);
-                $formulaStr = preg_replace('/\bp\b/', $excusedLessons, $formulaStr);
+                $formulaStr = preg_replace('/\bc\b/', $presentSessions, $formulaStr);
+                $formulaStr = preg_replace('/\bm\b/', $lateSessions, $formulaStr);
+                $formulaStr = preg_replace('/\bv\b/', $absentSessions, $formulaStr);
+                $formulaStr = preg_replace('/\bp\b/', $excusedSessions, $formulaStr);
                 $formulaStr = preg_replace('/\bt\b/', $studied, $formulaStr);
 
                 if (!empty($formulaStr)) {
@@ -216,12 +203,11 @@ class StudentsSheet implements FromArray, ShouldAutoSize, WithStyles, WithTitle
             }
 
             $row = array_merge($row, [
-                $stats['studied_lessons'],
-                $stats['present_lessons'],
-                $stats['late_lessons'],
-                $stats['absent_lessons'],
-                $stats['excused_lessons'],
-                $lateConvertedLessons > 0 ? $lateConvertedLessons : '-',
+                $studied,
+                $presentSessions,
+                $lateSessions,
+                $absentSessions,
+                $excusedSessions,
                 $classPercent . '%',
                 $percent . '%',
             ]);
