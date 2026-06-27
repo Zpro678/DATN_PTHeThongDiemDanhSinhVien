@@ -15,15 +15,17 @@ class StudentsImport implements ToCollection, WithStartRow, WithMultipleSheets
 {
     protected int $classId;
     protected ?string $importToken;
+    protected bool $syncAttendance;
 
     public array $errors = [];
 
     public int $successCount = 0;
 
-    public function __construct(int $classId, ?string $importToken = null)
+    public function __construct(int $classId, ?string $importToken = null, bool $syncAttendance = false)
     {
         $this->classId = $classId;
         $this->importToken = $importToken;
+        $this->syncAttendance = $syncAttendance;
     }
 
     public function sheets(): array
@@ -159,6 +161,7 @@ class StudentsImport implements ToCollection, WithStartRow, WithMultipleSheets
             $isValidRow = true;
             foreach ($dateHeaders as $colIndex => $sessionId) {
                 $statusChar = mb_strtolower(trim((string) ($row[$colIndex] ?? '')));
+                // c=có mặt, m=muộn, v=vắng KP, p=vắng có phép
                 if ($statusChar !== '' && !in_array($statusChar, ['c', 'm', 'v', 'p'])) {
                     $colName = trim((string) ($header[$colIndex] ?? "Cột $colIndex"));
                     $this->errors[] = "Dòng {$actualRowNumber}, Cột '{$colName}': Điểm danh sai ('{$statusChar}'). Chỉ dùng c, m, v, p.";
@@ -192,7 +195,8 @@ class StudentsImport implements ToCollection, WithStartRow, WithMultipleSheets
                     $dateHeaders,
                     $emailColIndex,
                     (int) auth()->id(),
-                    $this->importToken
+                    $this->importToken,
+                    $this->syncAttendance
                 );
             }
             $this->successCount = count($validRows);

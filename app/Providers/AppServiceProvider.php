@@ -19,7 +19,12 @@ class AppServiceProvider extends ServiceProvider
      */
     public function boot(): void
     {
+        \Illuminate\Support\Facades\Event::listen(\Illuminate\Auth\Events\Authenticated::class, function ($event) {
+            \Illuminate\Support\Facades\URL::defaults(['ma_user' => $event->user->id]);
+        });
+
         \Illuminate\Support\Facades\Event::listen(function (\Illuminate\Auth\Events\Login $event) {
+            \Illuminate\Support\Facades\URL::defaults(['ma_user' => $event->user->id]);
             if ($event->user->email) {
                 \App\Models\ClassMember::where('email', $event->user->email)
                     ->whereNull('user_id')

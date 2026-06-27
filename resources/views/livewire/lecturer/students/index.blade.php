@@ -1,32 +1,28 @@
 <div class="mx-auto max-w-[1400px] space-y-6 p-4 pb-24 sm:p-8">
     <section class="flex flex-col justify-between gap-4 rounded-[2rem] border border-outline-variant/10 bg-white p-6 shadow-sm md:flex-row md:items-end">
-        <div>
-            <h1 class="flex items-center gap-3 text-2xl font-extrabold uppercase tracking-tight text-slate-900">
-                <x-user.icon name="users" class="text-primary" />
-                Học viên
-            </h1>
+        <div class="flex-1 w-full min-w-0">
+            <div class="flex items-center justify-between gap-4">
+                <h1 class="flex items-center gap-3 text-2xl font-extrabold uppercase tracking-tight text-slate-900 truncate">
+                    <x-user.icon name="users" class="text-primary shrink-0" />
+                    <span class="truncate">Học viên</span>
+                </h1>
+                @if ($showBackButton)
+                    <a href="javascript:history.back()" class="inline-flex md:hidden shrink-0 items-center justify-center gap-2 rounded-xl bg-blue-600 px-3 py-2 text-sm font-bold text-white transition-colors hover:bg-blue-700 shadow-sm">
+                        <x-user.icon name="arrow-left" :size="16" />
+                        Trở về
+                    </a>
+                @endif
+            </div>
             <p class="mt-2 text-sm text-slate-500">Quản lý danh sách học viên trong các lớp bạn đang phụ trách.</p>
         </div>
-        <div class="flex items-center gap-3">
-            @if ($canExportExcel)
-                <button type="button" wire:click="openExport" class="inline-flex items-center justify-center gap-2 rounded-full border border-slate-200 bg-white px-5 py-2.5 text-sm font-bold text-slate-600 transition-colors hover:bg-slate-50">
-                    <x-user.icon name="download" :size="18" />
-                    Xuất Excel
-                </button>
-            @else
-                <a href="{{ route('upgrade') }}" title="Nâng cấp lên gói Pro để xuất báo cáo Excel"
-                    class="inline-flex items-center justify-center gap-2 rounded-full border border-amber-200 bg-amber-50 px-5 py-2.5 text-sm font-bold text-amber-700 transition-colors hover:bg-amber-100">
-                    <x-user.icon name="download" :size="18" />
-                    Xuất Excel
-                    <span class="rounded-full bg-amber-200 px-1.5 py-0.5 text-[10px] font-bold uppercase tracking-wide text-amber-800">Pro</span>
-                </a>
-            @endif
-            <a href="{{ route('lecturer.leave-requests.index') }}" class="inline-flex items-center justify-center gap-2 rounded-full border border-slate-200 bg-white px-5 py-2.5 text-sm font-bold text-slate-600 transition-colors hover:bg-slate-50">
+        <div class="flex flex-wrap items-center justify-end gap-2 sm:gap-3">
+
+            <a href="{{ route('lecturer.leave-requests.index') }}" class="inline-flex whitespace-nowrap items-center justify-center gap-2 rounded-full border border-slate-200 bg-white px-4 sm:px-5 py-2 sm:py-2.5 text-sm font-bold text-slate-600 transition-colors hover:bg-slate-50">
                 <x-user.icon name="file-text" :size="18" />
                 Đơn xin nghỉ
             </a>
             @if ($showBackButton)
-                <a href="javascript:history.back()" class="inline-flex items-center justify-center gap-2 rounded-xl bg-[#0a46d1] px-5 py-2.5 text-sm font-bold text-white transition-colors hover:bg-blue-800 shadow-sm">
+                <a href="javascript:history.back()" class="hidden md:inline-flex whitespace-nowrap items-center justify-center gap-2 rounded-xl bg-blue-600 px-4 sm:px-5 py-2 sm:py-2.5 text-sm font-bold text-white transition-colors hover:bg-blue-700 shadow-sm">
                     <x-user.icon name="arrow-left" :size="18" />
                     Trở về
                 </a>
@@ -41,7 +37,7 @@
         <div class="rounded-2xl border border-emerald-200 bg-emerald-50 px-5 py-3 text-sm font-semibold text-emerald-700">{{ session('success') }}</div>
     @endif
 
-    <section class="grid gap-4 sm:grid-cols-2 lg:grid-cols-5">
+    <section class="grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-5">
         @foreach ([
             ['label' => 'Tổng học viên', 'value' => $attendanceOverview['total_students'], 'color' => 'text-primary'],
             ['label' => 'Có mặt', 'value' => $attendanceOverview['present_lessons'], 'color' => 'text-emerald-600'],
@@ -49,9 +45,12 @@
             ['label' => 'Vắng', 'value' => $attendanceOverview['absent_lessons'], 'color' => 'text-red-600'],
             ['label' => 'TB chuyên cần', 'value' => $attendanceOverview['attendance_percent'].'%', 'color' => 'text-primary'],
         ] as $overviewItem)
-            <div class="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm">
-                <p class="text-xs font-bold uppercase tracking-wider text-slate-500">{{ $overviewItem['label'] }}</p>
-                <p class="mt-2 text-3xl font-extrabold {{ $overviewItem['color'] }}">{{ $overviewItem['value'] }}</p>
+            <div @class([
+                'rounded-2xl border border-slate-200 bg-white p-4 sm:p-5 shadow-sm text-center',
+                'col-span-2 sm:col-span-1 lg:col-span-1' => $loop->last,
+            ])>
+                <p class="text-[11px] sm:text-xs font-bold uppercase tracking-wider text-slate-500 truncate">{{ $overviewItem['label'] }}</p>
+                <p class="mt-1.5 sm:mt-2 text-2xl sm:text-3xl font-extrabold {{ $overviewItem['color'] }}">{{ $overviewItem['value'] }}</p>
             </div>
         @endforeach
     </section>
@@ -67,7 +66,7 @@
                 <option value="{{ $class->id }}">{{ $class->code }} - {{ $class->name }}</option>
             @endforeach
         </select>
-        <div class="flex rounded-xl bg-slate-100 p-1">
+        <div class="inline-flex w-max ml-auto rounded-xl bg-slate-100 p-1">
             <button type="button" wire:click="setStatusFilter('active')" @class(['rounded-lg px-4 py-2 text-xs font-bold transition-colors', 'bg-white text-primary shadow-sm' => $statusFilter === 'active', 'text-slate-500' => $statusFilter !== 'active'])>Đang học</button>
             <button type="button" wire:click="setStatusFilter('archived')" @class(['rounded-lg px-4 py-2 text-xs font-bold transition-colors', 'bg-white text-primary shadow-sm' => $statusFilter === 'archived', 'text-slate-500' => $statusFilter !== 'archived'])>Lưu trữ</button>
         </div>
@@ -387,8 +386,10 @@
 
     @if ($isExporting)
         <template x-teleport="body">
-            <div class="fixed inset-0 z-[110] flex items-center justify-center bg-slate-900/50 p-4 backdrop-blur-sm transition-all">
-                <div class="w-full max-w-[500px] rounded-[24px] bg-white p-6 shadow-2xl">
+            <div class="fixed inset-0 z-[110] flex items-center justify-center bg-slate-900/50 p-4 backdrop-blur-sm" x-data="{ showHelpModal: false }">
+
+                {{-- Main Modal (luôn căn giữa màn hình) --}}
+                <div class="w-[500px] max-w-[calc(100vw-2rem)] rounded-[24px] bg-white p-6 shadow-2xl">
                 
                 {{-- Header --}}
                 <div class="mb-6 flex items-start justify-between">
@@ -406,81 +407,241 @@
                     </button>
                 </div>
 
-                {{-- Form Content --}}
-                <div class="space-y-4">
-                    {{-- Class Selection --}}
-                    <div>
-                        <label class="mb-2 block text-sm font-semibold text-slate-700">Lớp học cần xuất</label>
-                        <select wire:model="exportClassId" class="w-full rounded-xl border-slate-200 bg-slate-50 py-3 text-[15px] font-medium text-slate-700 focus:border-primary focus:ring-primary/20">
-                            <option value="all">Tất cả lớp học (Chia nhiều Sheet)</option>
-                            @foreach ($classes as $class)
-                                <option value="{{ $class->id }}">{{ $class->code }} - {{ $class->name }}</option>
-                            @endforeach
-                        </select>
-                    </div>
-
-                    {{-- Formula Selection --}}
-                    <div>
-                        <label class="mb-2 block text-sm font-semibold text-slate-700">Công thức tính Chuyên cần (%)</label>
-                        
-                        <div class="mb-3 flex items-center gap-2">
-                            <input type="checkbox" id="customFormulaCheck" wire:model.live="isCustomFormula" class="rounded border-slate-300 text-primary focus:ring-primary">
-                            <label for="customFormulaCheck" class="text-[14px] font-semibold text-slate-700 cursor-pointer">Nhập công thức tùy chỉnh</label>
-                        </div>
-
-                        @if (! $isCustomFormula)
-                        <div class="mb-3">
-                            <select wire:model="selectedTemplate" class="w-full rounded-xl border-slate-200 bg-white py-2 px-3 text-[14px] font-medium text-slate-700 focus:border-primary focus:ring-primary/20">
-                                <option value="(c + m) / t * 100">Mặc định: (c + m) / t * 100</option>
-                                <option value="v / t * 100">Tính tỷ lệ vắng: v / t * 100</option>
-                                <option value="(c + m + v) / t * 100">Điểm danh đầy đủ: (c + m + v) / t * 100</option>
-                                <option value="(c + m - floor(m / 3)) / t * 100">Phạt đi muộn (3 lần muộn = 1 lần vắng): (c + m - floor(m / 3)) / t * 100</option>
-                            </select>
-                        </div>
-                        @else
-                        <div class="mt-4 border-t border-slate-100 pt-4">
-                            <input type="text" wire:model="exportFormula" class="w-full rounded-xl border-slate-200 bg-slate-50 py-3 px-4 text-[15px] font-medium text-slate-700 focus:border-primary focus:ring-primary/20" placeholder="VD: (c + m) / t * 100">
-                            <div class="mt-4 space-y-3">
-                                <p class="text-sm font-semibold text-slate-700">Bảng tham chiếu công thức</p>
-                                <div class="overflow-y-auto max-h-[160px] rounded-xl border border-slate-200">
-                                    <table class="w-full text-left text-xs text-slate-600">
-                                        <thead class="sticky top-0 bg-slate-50 text-slate-500 shadow-sm z-10">
-                                            <tr>
-                                                <th class="border-b border-slate-200 px-3 py-2 font-semibold">Cú pháp</th>
-                                                <th class="border-b border-slate-200 px-3 py-2 font-semibold">Ý nghĩa</th>
-                                            </tr>
-                                        </thead>
-                                        <tbody class="divide-y divide-slate-100 bg-white">
-                                            <tr><td class="px-3 py-2"><code>c</code>, <code>m</code></td><td class="px-3 py-2">Số buổi <strong>Có mặt</strong>, <strong>Đi muộn</strong></td></tr>
-                                            <tr><td class="px-3 py-2"><code>v</code>, <code>p</code></td><td class="px-3 py-2">Số buổi vắng <strong>Không phép</strong>, <strong>Có phép</strong></td></tr>
-                                            <tr><td class="px-3 py-2"><code>t</code></td><td class="px-3 py-2"><strong>Tổng số buổi</strong> đã học</td></tr>
-                                            <tr><td class="px-3 py-2"><code>floor(x)</code></td><td class="px-3 py-2">Làm tròn <strong>xuống</strong> (VD: floor(1.9) = 1)</td></tr>
-                                            <tr><td class="px-3 py-2"><code>ceil(x)</code>, <code>round(x)</code></td><td class="px-3 py-2">Làm tròn <strong>lên</strong>, làm tròn <strong>gần nhất</strong></td></tr>
-                                            <tr><td class="px-3 py-2"><code>max(a,b)</code>, <code>min(a,b)</code></td><td class="px-3 py-2">Lấy giá trị <strong>lớn nhất</strong> / <strong>nhỏ nhất</strong></td></tr>
-                                        </tbody>
-                                    </table>
-                                </div>
-                                <div class="rounded-lg bg-blue-50 p-3 text-xs text-blue-700">
-                                    <span class="font-bold">Ví dụ:</span> <code>(c + m - floor(m / 3)) / t * 100</code> <br>
-                                    (Cứ 3 lần muộn bị trừ đi 1 buổi có mặt).
+                {{-- Form Content only (single column now) --}}
+                <div class="grid grid-cols-1 gap-6 items-start">
+                    {{-- Left Column: Form Content --}}
+                    <div class="space-y-4">
+                        {{-- Class Selection --}}
+                        <div>
+                            <label class="mb-2 block text-sm font-semibold text-slate-700">Lớp học cần xuất</label>
+                            <div class="mb-3" x-data="{
+                                open: false,
+                                value: @entangle('exportClassId'),
+                                position: 'bottom',
+                                options: [
+                                    { value: 'all', label: 'Tất cả lớp học (Chia nhiều Sheet)' },
+                                    @foreach ($classes as $class)
+                                        { value: '{{ $class->id }}', label: '{{ $class->code }} - {{ $class->name }}' },
+                                    @endforeach
+                                ],
+                                get selectedOption() { return this.options.find(o => o.value == this.value) ?? this.options[0] },
+                                checkPosition() {
+                                    this.$nextTick(() => {
+                                        let rect = this.$refs.btn.getBoundingClientRect();
+                                        let menuRect = this.$refs.menu.getBoundingClientRect();
+                                        let spaceBelow = window.innerHeight - rect.bottom;
+                                        let spaceAbove = rect.top;
+                                        this.position = (spaceBelow < menuRect.height && spaceAbove > spaceBelow) ? 'top' : 'bottom';
+                                    });
+                                }
+                            }" @click.outside="open = false" @keydown.escape.window="open = false">
+                                <div class="relative">
+                                    <button type="button" @click="open = !open; if(open) checkPosition();" x-ref="btn"
+                                        class="flex w-full items-center justify-between gap-3 rounded-xl border border-slate-200 bg-white px-4 py-3 text-left text-sm font-bold text-slate-700 outline-none transition-all hover:border-primary focus:border-primary focus:ring-2 focus:ring-primary/20"
+                                        :class="open ? 'border-primary ring-2 ring-primary/20' : ''">
+                                        <span x-text="selectedOption.label"></span>
+                                        <x-user.icon name="chevron-down" :size="16" class="shrink-0 text-slate-400 transition-transform duration-200" x-bind:class="open ? 'rotate-180 text-primary' : ''" />
+                                    </button>
+                                    <div x-show="open" x-cloak x-ref="menu" x-transition:enter="transition ease-out duration-150" x-transition:enter-start="opacity-0 -translate-y-2" x-transition:enter-end="opacity-100 translate-y-0" x-transition:leave="transition ease-in duration-100" x-transition:leave-start="opacity-100 translate-y-0" x-transition:leave-end="opacity-0 -translate-y-2"
+                                        class="absolute left-0 right-0 z-50 overflow-hidden max-h-60 overflow-y-auto rounded-2xl border border-slate-200 bg-white shadow-xl shadow-slate-900/10 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden"
+                                        :class="position === 'top' ? 'bottom-full mb-1.5' : 'top-full mt-1.5'">
+                                        <template x-for="option in options" :key="option.value">
+                                            <button type="button"
+                                                @click="value = option.value; open = false"
+                                                class="flex w-full items-center justify-between px-4 py-3 text-sm font-bold transition-colors hover:bg-slate-50"
+                                                :class="value == option.value ? 'text-primary bg-primary/5' : 'text-slate-700'">
+                                                <span x-text="option.label"></span>
+                                                <span x-show="value == option.value" class="flex h-4 w-4 items-center justify-center rounded-full bg-primary">
+                                                    <x-user.icon name="check" :size="10" class="text-white" />
+                                                </span>
+                                            </button>
+                                        </template>
+                                    </div>
                                 </div>
                             </div>
                         </div>
-                        @endif
+
+                        {{-- Formula Selection --}}
+                        <div>
+                            <label class="mb-2 flex items-center gap-1.5 text-sm font-semibold text-slate-700">
+                                <span>Công thức tính Chuyên cần (%)</span>
+                                <button type="button" @click="showHelpModal = !showHelpModal" class="flex h-5 w-5 items-center justify-center rounded-full bg-slate-100 text-slate-500 transition-colors hover:bg-slate-200" title="Hướng dẫn các ký hiệu">
+                                    <x-user.icon name="help-circle" :size="14" />
+                                </button>
+                            </label>
+                            
+                            @if (!$isCustomFormula)
+                                <!-- Dropdown Chọn tên công thức (Custom Alpine.js) -->
+                                <div class="mb-3" x-data="{
+                                    open: false,
+                                    value: @entangle('selectedTemplate'),
+                                    position: 'bottom',
+                                    options: [
+                                        { value: '(c + m) / t * 100', label: 'Mặc định' },
+                                        { value: 'v / t * 100', label: 'Tính tỷ lệ vắng' },
+                                        { value: '(c + m + v) / t * 100', label: 'Điểm danh đầy đủ' },
+                                        { value: '(c + m - floor(m / 3)) / t * 100', label: 'Phạt đi muộn (3 lần muộn = 1 lần vắng)' },
+                                    ],
+                                    get label() { return this.options.find(o => o.value == this.value)?.label ?? 'Chọn...' },
+                                    checkPosition() {
+                                        this.$nextTick(() => {
+                                            let rect = this.$refs.btn.getBoundingClientRect();
+                                            let menuRect = this.$refs.menu.getBoundingClientRect();
+                                            let spaceBelow = window.innerHeight - rect.bottom;
+                                            let spaceAbove = rect.top;
+                                            this.position = (spaceBelow < menuRect.height && spaceAbove > spaceBelow) ? 'top' : 'bottom';
+                                        });
+                                    }
+                                }" @click.outside="open = false" @keydown.escape.window="open = false">
+                                    <div class="relative">
+                                        <button type="button" @click="open = !open; if(open) checkPosition();" x-ref="btn"
+                                            class="flex w-full items-center justify-between gap-3 rounded-xl border border-slate-200 bg-white px-4 py-3 text-left text-sm font-bold text-slate-700 outline-none transition-all hover:border-primary focus:border-primary focus:ring-2 focus:ring-primary/20"
+                                            :class="open ? 'border-primary ring-2 ring-primary/20' : ''">
+                                            <span x-text="label"></span>
+                                            <x-user.icon name="chevron-down" :size="16" class="shrink-0 text-slate-400 transition-transform duration-200" x-bind:class="open ? 'rotate-180 text-primary' : ''" />
+                                        </button>
+                                        <div x-show="open" x-cloak x-ref="menu" x-transition:enter="transition ease-out duration-150" x-transition:enter-start="opacity-0 -translate-y-2" x-transition:enter-end="opacity-100 translate-y-0" x-transition:leave="transition ease-in duration-100" x-transition:leave-start="opacity-100 translate-y-0" x-transition:leave-end="opacity-0 -translate-y-2"
+                                            class="absolute left-0 right-0 z-50 overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-xl shadow-slate-900/10"
+                                            :class="position === 'top' ? 'bottom-full mb-1.5' : 'top-full mt-1.5'">
+                                            <template x-for="option in options" :key="option.value">
+                                                <button type="button"
+                                                    @click="value = option.value; open = false"
+                                                    class="flex w-full items-center justify-between px-4 py-3 text-sm font-bold transition-colors hover:bg-slate-50"
+                                                    :class="value == option.value ? 'text-primary bg-primary/5' : 'text-slate-700'">
+                                                    <span x-text="option.label"></span>
+                                                    <span x-show="value == option.value" class="flex h-4 w-4 items-center justify-center rounded-full bg-primary">
+                                                        <x-user.icon name="check" :size="10" class="text-white" />
+                                                    </span>
+                                                </button>
+                                            </template>
+                                        </div>
+                                    </div>
+                                </div>
+                            @endif
+
+                            <!-- Checkbox Nhập công thức tùy chỉnh -->
+                            <div class="mb-3 flex items-center gap-2">
+                                <input type="checkbox" id="customFormulaCheck" wire:model.live="isCustomFormula" class="rounded border-slate-300 text-primary focus:ring-primary">
+                                <label for="customFormulaCheck" class="text-[14px] font-semibold text-slate-700 cursor-pointer">Nhập công thức tùy chỉnh</label>
+                            </div>
+
+                            <!-- Ô text nhập công thức tùy chỉnh (Chỉ hiển thị khi tích chọn) -->
+                            @if ($isCustomFormula)
+                                <div class="mt-3">
+                                    <input type="text" wire:model="exportFormula" class="w-full rounded-xl border-slate-200 bg-slate-50 py-3 px-4 text-[15px] font-medium text-slate-700 focus:border-primary focus:ring-primary/20" placeholder="VD: (c + m) / t * 100">
+                                </div>
+                            @endif
+                        </div>
                     </div>
                 </div>
 
                 {{-- Footer Buttons --}}
-                <div class="mt-8 flex justify-end gap-3">
+                <div class="mt-6 flex justify-end gap-3">
                     <button type="button" wire:click="closeExport" class="rounded-full border border-slate-300 bg-white px-8 py-2.5 text-[15px] font-bold text-slate-700 transition-colors hover:bg-slate-50 hover:text-slate-900">
                         Hủy bỏ
                     </button>
                     <button type="button" wire:click="exportExcel" class="flex items-center gap-2 rounded-full bg-emerald-600 px-10 py-2.5 text-[15px] font-bold text-white transition-colors hover:bg-emerald-700">
-                        <span wire:loading.remove wire:target="exportExcel">Xuất báo cáo</span>
-                        <span wire:loading wire:target="exportExcel">Đang xử lý...</span>
+                        <span wire:loading.remove wire:target="exportExcel">Xuất Excel</span>
+                        <span wire:loading wire:target="exportExcel">Đang xuất...</span>
                     </button>
                 </div>
                 </div>
+                {{-- End Main Modal --}}
+
+                {{-- Side Panel: Hướng dẫn (fixed, bên phải modal, không ảnh hưởng vị trí modal) --}}
+                <div
+                    x-show="showHelpModal"
+                    x-transition:enter="transition ease-out duration-200"
+                    x-transition:enter-start="opacity-0 translate-x-4 scale-95"
+                    x-transition:enter-end="opacity-100 translate-x-0 scale-100"
+                    x-transition:leave="transition ease-in duration-150"
+                    x-transition:leave-start="opacity-100 translate-x-0 scale-100"
+                    x-transition:leave-end="opacity-0 translate-x-4 scale-95"
+                    class="fixed z-[115] w-[290px] max-w-[calc(100vw-2rem)] rounded-[24px] bg-white p-5 shadow-2xl border border-slate-100 left-1/2 -translate-x-1/2 top-1/2 -translate-y-1/2 xl:left-[calc(50vw+262px)] xl:translate-x-0"
+                    style="display: none;"
+                >
+                    {{-- Panel Header --}}
+                    <div class="flex items-center justify-between border-b border-slate-200 pb-3 mb-4">
+                        <p class="font-bold text-slate-800 flex items-center gap-1.5 text-sm">
+                            <x-user.icon name="help-circle" class="text-primary" :size="16" />
+                            Hướng dẫn các ký hiệu
+                        </p>
+                        <button type="button" @click="showHelpModal = false" class="text-slate-400 hover:text-slate-600 transition-colors rounded-full p-1 hover:bg-slate-100">
+                            <x-user.icon name="x" :size="14" />
+                        </button>
+                    </div>
+
+                    <div class="space-y-4 text-xs text-slate-600 leading-relaxed">
+                        {{-- Công thức mẫu --}}
+                        <div>
+                            <p class="mb-2 text-[11px] font-bold uppercase tracking-wider text-slate-500">Công thức mẫu</p>
+                            <ul class="space-y-1.5">
+                                <li class="flex flex-col gap-0.5">
+                                    <span class="font-semibold text-slate-700">Mặc định</span>
+                                    <code class="bg-slate-100 rounded px-1.5 py-0.5 text-[11px] text-primary font-mono">(c + m) / t * 100</code>
+                                </li>
+                                <li class="flex flex-col gap-0.5">
+                                    <span class="font-semibold text-slate-700">Tính tỷ lệ vắng</span>
+                                    <code class="bg-slate-100 rounded px-1.5 py-0.5 text-[11px] text-primary font-mono">v / t * 100</code>
+                                </li>
+                                <li class="flex flex-col gap-0.5">
+                                    <span class="font-semibold text-slate-700">Điểm danh đầy đủ</span>
+                                    <code class="bg-slate-100 rounded px-1.5 py-0.5 text-[11px] text-primary font-mono">(c + m + v) / t * 100</code>
+                                </li>
+                                <li class="flex flex-col gap-0.5">
+                                    <span class="font-semibold text-slate-700">Phạt đi muộn</span>
+                                    <code class="bg-slate-100 rounded px-1.5 py-0.5 text-[11px] text-primary font-mono">(c + m - floor(m/3)) / t * 100</code>
+                                </li>
+                            </ul>
+                        </div>
+
+                        <div class="border-t border-slate-100 pt-3">
+                            <p class="mb-2 text-[11px] font-bold uppercase tracking-wider text-slate-500">Ký hiệu biến (công thức)</p>
+                            <ul class="space-y-1.5">
+                                <li class="flex items-center gap-2">
+                                    <code class="bg-emerald-50 text-emerald-700 rounded px-1.5 py-0.5 font-mono text-[11px] min-w-[20px] text-center">c</code>
+                                    <span>Số buổi có mặt</span>
+                                </li>
+                                <li class="flex items-center gap-2">
+                                    <code class="bg-amber-50 text-amber-700 rounded px-1.5 py-0.5 font-mono text-[11px] min-w-[20px] text-center">m</code>
+                                    <span>Số buổi đi muộn</span>
+                                </li>
+                                <li class="flex items-center gap-2">
+                                    <code class="bg-red-50 text-red-700 rounded px-1.5 py-0.5 font-mono text-[11px] min-w-[20px] text-center">v</code>
+                                    <span>Vắng không phép</span>
+                                </li>
+                                <li class="flex items-center gap-2">
+                                    <code class="bg-blue-50 text-blue-700 rounded px-1.5 py-0.5 font-mono text-[11px] min-w-[20px] text-center">p</code>
+                                    <span>Nghỉ có phép</span>
+                                </li>
+                                <li class="flex items-center gap-2">
+                                    <code class="bg-slate-100 text-slate-700 rounded px-1.5 py-0.5 font-mono text-[11px] min-w-[20px] text-center">t</code>
+                                    <span>Tổng số buổi đã học</span>
+                                </li>
+                            </ul>
+                        </div>
+
+                        <div class="border-t border-slate-100 pt-3">
+                            <p class="mb-2 text-[11px] font-bold uppercase tracking-wider text-slate-500">Hàm toán học</p>
+                            <ul class="space-y-1.5">
+                                <li class="flex items-center gap-2">
+                                    <code class="bg-slate-100 text-slate-700 rounded px-1.5 py-0.5 font-mono text-[11px]">floor()</code>
+                                    <span>Làm tròn xuống</span>
+                                </li>
+                                <li class="flex items-center gap-2">
+                                    <code class="bg-slate-100 text-slate-700 rounded px-1.5 py-0.5 font-mono text-[11px]">ceil()</code>
+                                    <span>Làm tròn lên</span>
+                                </li>
+                                <li class="flex items-center gap-2">
+                                    <code class="bg-slate-100 text-slate-700 rounded px-1.5 py-0.5 font-mono text-[11px]">round()</code>
+                                    <span>Làm tròn thường</span>
+                                </li>
+                            </ul>
+                        </div>
+                    </div>
+                </div>
+                {{-- End Side Panel --}}
+
             </div>
         </template>
     @endif

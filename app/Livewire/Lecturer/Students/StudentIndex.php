@@ -14,6 +14,7 @@ use Livewire\Component;
 use Livewire\WithFileUploads;
 use Livewire\WithPagination;
 use App\Exports\StudentsExport;
+use App\Models\ClassJoinRequest;
 use Maatwebsite\Excel\Facades\Excel;
 
 class StudentIndex extends Component
@@ -31,7 +32,8 @@ class StudentIndex extends Component
     #[Url(as: 'action')]
     public string $action = '';
 
-    // Bộ lọc trạng thái sinh viên (đang học hoặc đã lưu trữ)
+    // Bộ lọc trạng thái học viên (đang học hoặc đã lưu trữ)
+    #[Url(as: 'status')]
     public string $statusFilter = 'active';
 
     // ID của thành viên lớp đang được chỉnh sửa
@@ -94,6 +96,8 @@ class StudentIndex extends Component
 
     public bool $showBackButton = false;
 
+    public bool $syncAttendance = false;
+
     // Các thuộc tính phục vụ theo dõi tiến trình import dạng chunk qua Cache/Polling
     public ?string $importToken = null;
     public bool $isImportingStatus = false;
@@ -133,8 +137,11 @@ class StudentIndex extends Component
 
     protected function finalizeImport(): void
     {
+        $count = $this->importSuccess;
         $this->closeImport();
-        session()->flash('success', "Đã nhập thành công {$this->importSuccess} sinh viên vào lớp.");
+        $message = "Đã nhập thành công {$count} sinh viên vào lớp.";
+        session()->flash('success', $message);
+        $this->dispatch('toast', message: $message, type: 'success');
         $this->reset(['importToken', 'isImportingStatus', 'importTotalRows', 'importProcessedRows', 'importQuietTicks']);
     }
 
@@ -168,10 +175,61 @@ class StudentIndex extends Component
 
     public function setStatusFilter(string $status): void
     {
-        if (in_array($status, ['active', 'archived'], true)) {
+        if (in_array($status, ['active', 'archived', 'pending'], true)) {
             $this->statusFilter = $status;
             $this->resetPage();
         }
+    }
+
+    public function approveRequest(int $requestId): void
+    {
+        $request = ClassJoinRequest::whereHas('courseClass', function ($q) {
+            $q->where('owner_user_id', auth()->id());
+        })->findOrFail($requestId);
+
+        $exists = ClassMember::where('class_id', $request->class_id)
+            ->where('student_code', $request->student_code)
+            ->exists();
+
+        if ($exists) {
+            $member = ClassMember::where('class_id', $request->class_id)
+                ->where('student_code', $request->student_code)
+                ->first();
+            if (is_null($member->user_id)) {
+                $member->update(['user_id' => $request->user_id]);
+            }
+        } else {
+            $maxStudents = app(SubscriptionService::class)->maxStudentsPerClass(auth()->user());
+            $currentCount = ClassMember::where('class_id', $request->class_id)
+                ->where('status', 'active')
+                ->count();
+
+            if ($currentCount >= $maxStudents) {
+                $this->dispatch('toast', message: "Lớp đã đạt giới hạn {$maxStudents} sinh viên. Không thể duyệt thêm.", type: 'error');
+                return;
+            }
+
+            ClassMember::create([
+                'class_id' => $request->class_id,
+                'user_id' => $request->user_id,
+                'student_code' => $request->student_code,
+                'full_name' => $request->full_name,
+                'status' => 'active',
+            ]);
+        }
+
+        $request->update(['status' => 'approved']);
+        $this->dispatch('toast', message: 'Đã duyệt yêu cầu tham gia lớp của sinh viên.', type: 'success');
+    }
+
+    public function rejectRequest(int $requestId): void
+    {
+        $request = ClassJoinRequest::whereHas('courseClass', function ($q) {
+            $q->where('owner_user_id', auth()->id());
+        })->findOrFail($requestId);
+
+        $request->update(['status' => 'rejected']);
+        $this->dispatch('toast', message: 'Đã từ chối yêu cầu tham gia lớp của sinh viên.', type: 'success');
     }
 
     public function openEdit(int $memberId): void
@@ -280,19 +338,33 @@ class StudentIndex extends Component
 
     public function downloadFullTemplate()
     {
-        $csvContent = "Mã học viên,Họ và tên,Email,22/06,23/06\nHV001,Nguyễn Văn A,nva@email.com,c,m\nHV002,Trần Thị B,ttb@email.com,v,c";
+        $lines = [
+            "M\u00e3 h\u1ecdc vi\u00ean,H\u1ecd v\u00e0 t\u00ean,Email,22/06,23/06,24/06",
+            "HV001,Nguy\u1ec5n V\u0103n A,nva@email.com,c,m,c",
+            "HV002,Tr\u1ea7n Th\u1ecb B,ttb@email.com,k,c,v",
+            "HV003,L\u00ea V\u0103n C,lvc@email.com,c,c,k",
+            "",
+            "Ch\u00fa th\u00edch k\u00fd hi\u1ec7u:,c=C\u00f3 m\u1eb7t,m=\u0110i mu\u1ed9n,k=V\u1eafng kh\u00f4ng ph\u00e9p,v=V\u1eafng c\u00f3 ph\u00e9p",
+        ];
+        $csvContent = implode("\n", $lines);
 
         return response()->streamDownload(function () use ($csvContent) {
-            echo "\xEF\xBB\xBF".$csvContent; // UTF-8 BOM cho Excel
+            echo "\xEF\xBB\xBF" . $csvContent; // UTF-8 BOM cho Excel
         }, 'Danh_sach_hoc_vien_mau_day_du.csv');
     }
 
     public function downloadBasicTemplate()
     {
-        $csvContent = "Mã học viên,Họ và tên,Email\nHV001,Nguyễn Văn A,nva@email.com\nHV002,Trần Thị B,ttb@email.com";
+        $lines = [
+            "M\u00e3 h\u1ecdc vi\u00ean,H\u1ecd v\u00e0 t\u00ean,Email",
+            "HV001,Nguy\u1ec5n V\u0103n A,nva@email.com",
+            "HV002,Tr\u1ea7n Th\u1ecb B,ttb@email.com",
+            "HV003,L\u00ea V\u0103n C,lvc@email.com",
+        ];
+        $csvContent = implode("\n", $lines);
 
         return response()->streamDownload(function () use ($csvContent) {
-            echo "\xEF\xBB\xBF".$csvContent; // UTF-8 BOM cho Excel
+            echo "\xEF\xBB\xBF" . $csvContent; // UTF-8 BOM cho Excel
         }, 'Danh_sach_hoc_vien_mau_co_ban.csv');
     }
 
@@ -315,7 +387,7 @@ class StudentIndex extends Component
         $this->importProcessedRows = 0;
         $this->importQuietTicks = 0;
 
-        $import = new StudentsImport($courseClass->id, $this->importToken);
+        $import = new StudentsImport($courseClass->id, $this->importToken, $this->syncAttendance);
 
         $extension = $this->importFile->getClientOriginalExtension();
         $readerType = match (strtolower($extension)) {
@@ -331,28 +403,6 @@ class StudentIndex extends Component
             $this->importErrors = $import->errors;
 
             if (empty($this->importErrors)) {
-                if ($this->syncAttendance && $this->importClassId) {
-                    $sessions = \App\Models\ClassSession::where('class_id', $this->importClassId)->get();
-                    $members = \App\Models\ClassMember::where('class_id', $this->importClassId)->where('status', 'active')->get();
-                    $recordsToInsert = [];
-                    $now = now();
-                    foreach ($sessions as $session) {
-                        foreach ($members as $member) {
-                            $recordsToInsert[] = [
-                                'class_session_id' => $session->id,
-                                'class_member_id' => $member->id,
-                                'status' => 'pending',
-                                'is_verified' => $member->user_id !== null,
-                                'created_at' => $now,
-                                'updated_at' => $now,
-                            ];
-                        }
-                    }
-                    if (!empty($recordsToInsert)) {
-                        \App\Models\AttendanceRecord::insertOrIgnore($recordsToInsert);
-                    }
-                }
-
                 // Do not close import yet. We will poll progress.
             } else {
                 $this->isImportingStatus = false;
@@ -422,8 +472,12 @@ class StudentIndex extends Component
         $this->archivingMemberId = null;
     }
 
-    public function archiveMember(): void
+    public function archiveMember(?int $memberId = null): void
     {
+        if ($memberId !== null) {
+            $this->archivingMemberId = $memberId;
+        }
+
         if (! $this->archivingMemberId) {
             return;
         }
@@ -498,28 +552,48 @@ class StudentIndex extends Component
             ->orderBy('name') // Sắp xếp lớp theo tên để dropdown dễ nhìn.
             ->get(['id', 'name', 'code']); // Chỉ lấy cột cần dùng cho bộ lọc lớp.
 
-        $members = ClassMember::query()
-            ->with(['courseClass:id,name,code', 'user:id,email,avatar', 'attendanceSummary'])
-            ->whereHas('courseClass', fn (Builder $query) => $query->where('owner_user_id', auth()->id()))
-            ->when(
-                $this->statusFilter === 'archived',
-                fn (Builder $query) => $query->onlyTrashed(),
-                fn (Builder $query) => $query->where('status', 'active'),
-            )
-            ->when($this->classFilter !== 'all', fn (Builder $query) => $query->where('class_id', $this->classFilter))
-            ->when($this->search !== '', function (Builder $query): void {
-                $query->where(function (Builder $query): void {
-                    $query->where('full_name', 'like', '%'.$this->search.'%')
-                        ->orWhere('student_code', 'like', '%'.$this->search.'%')
-                        ->orWhereHas('user', fn (Builder $query) => $query->where('email', 'like', '%'.$this->search.'%'));
-                });
-            })
-            ->orderBy('full_name')
-            ->paginate(12);
+        if ($this->statusFilter === 'pending') {
+            $members = ClassJoinRequest::query()
+                ->with(['courseClass:id,name,code', 'user:id,email,avatar'])
+                ->whereHas('courseClass', fn (Builder $query) => $query->where('owner_user_id', auth()->id()))
+                ->where('status', 'pending')
+                ->when($this->classFilter !== 'all', fn (Builder $query) => $query->where('class_id', $this->classFilter))
+                ->when($this->search !== '', function (Builder $query): void {
+                    $query->where(function (Builder $query): void {
+                        $query->where('full_name', 'like', '%'.$this->search.'%')
+                            ->orWhere('student_code', 'like', '%'.$this->search.'%')
+                            ->orWhereHas('user', fn (Builder $query) => $query->where('email', 'like', '%'.$this->search.'%'));
+                    });
+                })
+                ->orderByDesc('created_at')
+                ->paginate(12);
+        } else {
+            $members = ClassMember::query()
+                ->with(['courseClass:id,name,code', 'user:id,email,avatar', 'attendanceSummary'])
+                ->whereHas('courseClass', fn (Builder $query) => $query->where('owner_user_id', auth()->id()))
+                ->when(
+                    $this->statusFilter === 'archived',
+                    fn (Builder $query) => $query->onlyTrashed(),
+                    fn (Builder $query) => $query->where('status', 'active'),
+                )
+                ->when($this->classFilter !== 'all', fn (Builder $query) => $query->where('class_id', $this->classFilter))
+                ->when($this->search !== '', function (Builder $query): void {
+                    $query->where(function (Builder $query): void {
+                        $query->where('full_name', 'like', '%'.$this->search.'%')
+                            ->orWhere('student_code', 'like', '%'.$this->search.'%')
+                            ->orWhereHas('user', fn (Builder $query) => $query->where('email', 'like', '%'.$this->search.'%'));
+                    });
+                })
+                ->orderBy('full_name')
+                ->paginate(12);
+        }
 
-        $attendanceStats = $studentService->getStudentsAttendanceStats( // Tính chuyên cần cho từng sinh viên đang hiển thị trên trang hiện tại.
-            $members->getCollection()->pluck('id') // Lấy id sinh viên trong page hiện tại sau khi phân trang.
-        );
+        $attendanceStats = [];
+        if ($this->statusFilter !== 'pending') {
+            $attendanceStats = $studentService->getStudentsAttendanceStats( // Tính chuyên cần cho từng sinh viên đang hiển thị trên trang hiện tại.
+                $members->getCollection()->pluck('id') // Lấy id sinh viên trong page hiện tại sau khi phân trang.
+            );
+        }
 
         $attendanceOverview = $studentService->getTotalAttendanceStats( // Tính tổng chuyên cần theo toàn bộ bộ lọc hiện tại.
             auth()->id(), // Giới hạn dữ liệu theo giảng viên đang đăng nhập.

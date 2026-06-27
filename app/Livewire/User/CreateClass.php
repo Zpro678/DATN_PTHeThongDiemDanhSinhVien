@@ -57,10 +57,6 @@ class CreateClass extends Component
         $this->generatedCode = $this->buildPreviewCode();
     }
 
-    public function updatedSemester(): void
-    {
-        $this->generatedCode = $this->buildPreviewCode();
-    }
 
     /**
      * Sinh preview mã với 4 số random đã tạo lúc load trang.
@@ -69,13 +65,12 @@ class CreateClass extends Component
     private function buildPreviewCode(): string
     {
         $subPart = strtoupper(substr(preg_replace('/[^A-Za-z0-9]/', '', $this->subjectCode), 0, 3));
-        $semPart = strtoupper(substr(preg_replace('/[^A-Za-z0-9]/', '', $this->semester), 0, 3));
 
-        if (blank($subPart) && blank($semPart)) {
+        if (blank($subPart)) {
             return '';
         }
 
-        return ($subPart ?: '???').($semPart ?: '???').$this->randomSuffix;
+        return ($subPart ?: 'CLS').$this->randomSuffix;
     }
 
     /**
@@ -84,8 +79,7 @@ class CreateClass extends Component
     private function generateUniqueCode(): string
     {
         $subPart = strtoupper(substr(preg_replace('/[^A-Za-z0-9]/', '', $this->subjectCode), 0, 3));
-        $semPart = strtoupper(substr(preg_replace('/[^A-Za-z0-9]/', '', $this->semester), 0, 3));
-        $prefix = ($subPart ?: 'CLS').($semPart ?: 'SEM');
+        $prefix = ($subPart ?: 'CLS');
 
         $attempts = 0;
         $suffix = $this->randomSuffix;

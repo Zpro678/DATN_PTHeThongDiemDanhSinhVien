@@ -42,6 +42,7 @@ class LeaveRequestEdit extends Component
     public function classes()
     {
         return ClassMember::with('courseClass')
+            ->whereHas('courseClass')
             ->where('user_id', auth()->id())
             ->where('status', 'active')
             ->get()

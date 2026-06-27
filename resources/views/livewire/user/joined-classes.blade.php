@@ -89,6 +89,9 @@
                 'ring-1 ring-outline-variant/20 shadow-md hover:shadow-xl' => ! $isPrimary && ! $isTertiary && !$isWarning,
                 'opacity-80 hover:opacity-100' => $isEnded,
             ])>
+                {{-- Phủ 1 link tàng hình lên toàn bộ thẻ để click được cả thẻ --}}
+                <a href="{{ route('student.classes.show', $class['id']) }}" class="absolute inset-0 z-10"><span class="sr-only">Vào thông tin lớp</span></a>
+
                 <!-- Classroom-style Header -->
                 <div @class([
                     'relative flex h-20 flex-col justify-between p-4',
@@ -108,8 +111,8 @@
                         </div>
 
                         <!-- Dropdown Menu -->
-                        <div class="absolute right-2 top-2" x-data="{ open: false }">
-                            <button type="button" x-on:click="open = ! open" class="rounded-full p-1.5 text-white transition-colors hover:bg-white/20">
+                        <div class="absolute right-2 top-2 z-20" x-data="{ open: false }">
+                            <button type="button" x-on:click="open = ! open" class="rounded-full p-1.5 text-white transition-colors hover:bg-white/20 relative z-20">
                                 <x-user.icon name="more-vertical" :size="18" />
                             </button>
                             <div x-cloak x-show="open" x-on:click.outside="open = false" class="absolute right-0 top-full z-50 mt-1 w-44 rounded-xl border border-outline-variant/20 bg-white py-2 shadow-lg">
@@ -172,9 +175,9 @@
                                 <p class="text-base font-black text-[#F59E0B] leading-none mt-1">{{ $class['late'] }}</p>
                             </div>
                         </div>
-                        <div class="text-right w-24 sm:w-28">
-                            <div class="mb-1.5 flex items-center justify-between">
-                                <span class="text-[10px] font-bold uppercase text-on-surface-variant">Chuyên cần</span>
+                        <div class="text-right w-28 sm:w-32 shrink-0">
+                            <div class="mb-1.5 flex items-center justify-between gap-2">
+                                <span class="text-[10px] font-bold uppercase text-on-surface-variant whitespace-nowrap">Chuyên cần</span>
                                 <span class="{{ $attendanceColor }} text-sm font-black">{{ $class['attendance'] }}%</span>
                             </div>
                             <div class="h-1.5 w-full overflow-hidden rounded-full bg-surface-container-highest">
@@ -189,7 +192,7 @@
                     </div>
 
                     <!-- Footer Actions -->
-                    <div class="mt-auto flex items-center justify-between border-t border-outline-variant/20 pt-3">
+                    <div class="mt-auto flex items-center justify-between border-t border-outline-variant/20 pt-3 relative z-20">
                         @if ($isEnded)
                             <span class="flex items-center gap-1.5 text-xs font-bold text-on-surface-variant">
                                 <x-user.icon name="check-square" :size="16" />

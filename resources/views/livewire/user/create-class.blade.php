@@ -16,13 +16,13 @@
     @php
         $previewName    = filled($name) ? $name : 'Tên lớp học';
         $previewSubject = filled($subjectCode) ? strtoupper($subjectCode) : 'Mã môn';
-        $previewSemester = filled($semester) ? $semester : 'Học kỳ';
+
     @endphp
 
     <div class="w-full max-w-none space-y-6">
         <div class="flex flex-col gap-4 rounded-[28px] border border-white/80 bg-white/80 p-5 shadow-sm shadow-slate-200/70 backdrop-blur sm:p-6 lg:flex-row lg:items-center lg:justify-between">
             <div class="flex items-start gap-4">
-                <div class="flex h-12 w-12 items-center justify-center rounded-2xl bg-blue-600 text-white shadow-lg shadow-blue-600/20">
+                <div class="flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl bg-blue-600 text-white shadow-lg shadow-blue-600/20">
                     <x-user.icon name="book-open" :size="24" />
                 </div>
                 <div>
@@ -53,11 +53,11 @@
         @endif
 
         <form wire:submit="save" class="grid grid-cols-1 gap-6 xl:grid-cols-12">
-            <div class="space-y-6 xl:col-span-8 2xl:col-span-9">
+            <div class="space-y-6 xl:col-span-7 2xl:col-span-7">
                 <section class="rounded-[26px] border border-slate-200/80 bg-white p-5 shadow-sm sm:p-8">
                     <div class="mb-7 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
                         <h2 class="flex items-center gap-3 text-xl font-extrabold text-slate-950">
-                            <span class="flex h-10 w-10 items-center justify-center rounded-2xl bg-blue-50 text-blue-600">
+                            <span class="flex h-10 w-10 shrink-0 items-center justify-center rounded-2xl bg-blue-50 text-blue-600">
                                 <x-user.icon name="book-open" :size="20" />
                             </span>
                             Thông tin cơ bản
@@ -65,16 +65,16 @@
                         <span class="rounded-full bg-slate-100 px-3 py-1 text-xs font-bold uppercase tracking-wide text-slate-500">không được để trống các trường</span>
                     </div>
 
-                    <div class="grid grid-cols-1 gap-6 lg:grid-cols-2">
+                    <div class="grid grid-cols-1 sm:grid-cols-2 gap-4 sm:gap-6">
                         {{-- Tên lớp --}}
-                        <label class="space-y-2 lg:col-span-2">
+                        <label class="space-y-2 sm:col-span-2">
                             <span class="block text-[13px] font-semibold text-slate-700">Tên lớp <span class="text-red-500">*</span></span>
                             <input wire:model.live.debounce.300ms="name" type="text" placeholder="Ví dụ: Công nghệ phần mềm 1" class="h-12 w-full rounded-2xl border border-slate-200 bg-white px-4 text-sm font-semibold text-slate-800 outline-none transition-all placeholder:text-slate-400 hover:border-slate-300 focus:border-blue-500 focus:ring-4 focus:ring-blue-500/10" autofocus>
                             @error('name') <span class="block text-xs font-medium text-red-600">{{ $message }}</span> @enderror
                         </label>
 
                         {{-- Mã môn học --}}
-                        <label class="space-y-2">
+                        <label class="space-y-2 sm:col-span-2">
                             <span class="block text-[13px] font-semibold text-slate-700">Mã môn học</span>
                             <input
                                 wire:model.live.debounce.300ms="subjectCode"
@@ -86,35 +86,24 @@
                             @error('subjectCode') <span class="block text-xs font-medium text-red-600">{{ $message }}</span> @enderror
                         </label>
 
-                        {{-- Học kỳ --}}
-                        <label class="space-y-2">
-                            <span class="block text-[13px] font-semibold text-slate-700">Học kỳ</span>
-                            <input
-                                wire:model.live.debounce.300ms="semester"
-                                type="text"
-                                placeholder="Ví dụ: HK1 2026-2027"
-                                oninput="cleanInput(this)"
-                                class="h-12 w-full rounded-2xl border border-slate-200 bg-white px-4 text-sm font-semibold uppercase text-slate-800 outline-none transition-all placeholder:text-slate-400 hover:border-slate-300 focus:border-blue-500 focus:ring-4 focus:ring-blue-500/10"
-                            >
-                            @error('semester') <span class="block text-xs font-medium text-red-600">{{ $message }}</span> @enderror
-                        </label>
+
 
                         {{-- Mã lớp: ẩn input, hiển thị preview sinh tự động --}}
-                        <div class="space-y-2 lg:col-span-2">
+                        <div class="space-y-2 sm:col-span-2">
                             <span class="block text-[13px] font-semibold text-slate-700">Mã lớp học <span class="ml-1.5 rounded-full bg-blue-50 px-2 py-0.5 text-[11px] font-bold text-blue-600">Tự động sinh</span></span>
                             <div class="flex h-12 w-full items-center gap-3 rounded-2xl border border-dashed border-slate-300 bg-slate-50 px-4">
                                 <x-user.icon name="key" :size="16" class="shrink-0 text-slate-400" />
                                 @if($generatedCode)
-                                    <span class="font-mono text-base font-black tracking-widest text-blue-600">{{ $generatedCode }}</span>
-                                    <span class="ml-auto text-xs text-slate-400">Mã sẽ được xác nhận khi lưu</span>
+                                    <span class="font-mono text-base font-black tracking-widest text-blue-600 truncate">{{ $generatedCode }}</span>
+                                    <span class="ml-auto text-xs text-slate-400 shrink-0">Mã sẽ được xác nhận khi lưu</span>
                                 @else
-                                    <span class="text-sm text-slate-400">Nhập mã môn học và học kỳ để xem trước mã lớp...</span>
+                                    <span class="text-sm text-slate-400 truncate">Nhập mã môn học để xem trước mã lớp...</span>
                                 @endif
                             </div>
                         </div>
 
                         {{-- Mô tả --}}
-                        <label class="space-y-2 lg:col-span-2">
+                        <label class="space-y-2 sm:col-span-2">
                             <span class="block text-[13px] font-semibold text-slate-700">Mô tả</span>
                             <textarea wire:model.blur="description" placeholder="Nhập mô tả thêm về lớp học..." rows="4" class="w-full rounded-2xl border border-slate-200 bg-white px-4 py-3 text-sm font-semibold text-slate-800 outline-none transition-all placeholder:text-slate-400 hover:border-slate-300 focus:border-blue-500 focus:ring-4 focus:ring-blue-500/10"></textarea>
                             @error('description') <span class="block text-xs font-medium text-red-600">{{ $message }}</span> @enderror
@@ -133,14 +122,8 @@
                         <span class="rounded-full bg-blue-50 px-3 py-1 text-xs font-bold uppercase tracking-wide text-blue-600">Theo dữ liệu hiện tại</span>
                     </div>
 
-                    <div class="grid grid-cols-1 gap-6 lg:grid-cols-2">
-                        <label class="space-y-2">
-                            <span class="block text-[13px] font-semibold text-slate-700">Tổng số tiết <span class="text-red-500">*</span></span>
-                            <input wire:model.live.debounce.300ms="totalLessons" type="number" min="1" max="300" class="h-12 w-full rounded-2xl border border-slate-200 bg-white px-4 text-sm font-semibold text-slate-800 outline-none transition-all hover:border-slate-300 focus:border-blue-500 focus:ring-4 focus:ring-blue-500/10">
-                            @error('totalLessons') <span class="block text-xs font-medium text-red-600">{{ $message }}</span> @enderror
-                        </label>
-
-                        <div class="space-y-2" x-data="{
+                    <div class="grid grid-cols-1 sm:grid-cols-2 gap-4 sm:gap-6">
+                        <div class="space-y-2 sm:col-span-2" x-data="{
                             open: false,
                             value: @entangle('lateThreshold'),
                             options: [
@@ -178,7 +161,7 @@
                             @error('lateThreshold') <span class="block text-xs font-medium text-red-600">{{ $message }}</span> @enderror
                         </div>
 
-                        <div class="space-y-2" x-data="{
+                        <div class="space-y-2 sm:col-span-2" x-data="{
                             open: false,
                             value: @entangle('latesPerAbsent'),
                             options: [
@@ -222,7 +205,7 @@
                     <div class="mt-7 space-y-4">
                         {{-- Toggle: Trừ chuyên cần khi vắng có phép --}}
                         <div class="rounded-2xl border border-slate-200 bg-slate-50/70 p-5">
-                            <div class="flex flex-col gap-5 sm:flex-row sm:items-center sm:justify-between">
+                            <div class="flex flex-row items-center justify-between gap-5">
                                 <div class="flex gap-3">
                                     <div class="flex h-10 w-10 items-center justify-center rounded-2xl bg-white text-amber-500 shadow-sm">
                                         <x-user.icon name="clock" :size="20" />
@@ -256,7 +239,7 @@
 
                         {{-- Toggle: Yêu cầu duyệt tham gia --}}
                         <div class="rounded-2xl border border-slate-200 bg-slate-50/70 p-5">
-                            <div class="flex flex-col gap-5 sm:flex-row sm:items-center sm:justify-between">
+                            <div class="flex flex-row items-center justify-between gap-5">
                                 <div class="flex gap-3">
                                     <div class="flex h-10 w-10 items-center justify-center rounded-2xl bg-white text-blue-600 shadow-sm">
                                         <x-user.icon name="shield-check" :size="20" />
@@ -290,9 +273,9 @@
                     </div>
                 </section>
 
-                <div class="flex flex-col-reverse gap-3 rounded-[24px] border border-slate-200/80 bg-white p-4 shadow-sm sm:flex-row sm:items-center sm:justify-end">
-                    <a href="{{ route('managed-classes') }}" class="inline-flex items-center justify-center rounded-2xl border border-slate-200 px-6 py-3 text-sm font-bold text-slate-700 transition-colors hover:bg-slate-50">Hủy</a>
-                    <button type="submit" wire:loading.attr="disabled" wire:target="save" class="inline-flex items-center justify-center gap-2 rounded-2xl bg-blue-600 px-6 py-3 text-sm font-bold text-white shadow-lg shadow-blue-600/20 transition-colors hover:bg-blue-700 disabled:cursor-wait disabled:opacity-60">
+                <div class="grid grid-cols-2 gap-3 rounded-[24px] border border-slate-200/80 bg-white p-4 shadow-sm sm:flex sm:flex-row sm:items-center sm:justify-end">
+                    <a href="{{ route('managed-classes') }}" class="inline-flex w-full sm:w-auto items-center justify-center rounded-2xl border border-slate-200 px-6 py-3 text-sm font-bold text-slate-700 transition-colors hover:bg-slate-50">Hủy</a>
+                    <button type="submit" wire:loading.attr="disabled" wire:target="save" class="inline-flex w-full sm:w-auto items-center justify-center gap-2 rounded-2xl bg-blue-600 px-6 py-3 text-sm font-bold text-white shadow-lg shadow-blue-600/20 transition-colors hover:bg-blue-700 disabled:cursor-wait disabled:opacity-60">
                         <x-user.icon name="save" :size="18" wire:loading.remove wire:target="save" />
                         <span wire:loading.remove wire:target="save">Lưu lớp học</span>
                         <span wire:loading wire:target="save">Đang lưu...</span>
@@ -300,7 +283,7 @@
                 </div>
             </div>
 
-            <aside class="space-y-6 xl:col-span-4 2xl:col-span-3">
+            <aside class="space-y-6 xl:col-span-5 2xl:col-span-5">
                 <div class="sticky top-6 space-y-6">
                     <section class="overflow-hidden rounded-[28px] border border-blue-100 bg-white shadow-sm">
                         <div class="bg-gradient-to-br from-blue-600 to-indigo-600 p-6 text-white">
@@ -309,7 +292,7 @@
                                 <x-user.icon name="eye" :size="22" class="text-white/90" />
                             </div>
                             <h3 class="mt-5 text-2xl font-extrabold leading-tight">{{ $previewName }}</h3>
-                            <p class="mt-2 text-sm font-medium text-blue-100">{{ $previewSubject }} · {{ $previewSemester }}</p>
+                            <p class="mt-2 text-sm font-medium text-blue-100">{{ $previewSubject }}</p>
                             @if($generatedCode)
                                 <div class="mt-3 inline-flex items-center gap-2 rounded-xl bg-white/15 px-3 py-1.5">
                                     <x-user.icon name="key" :size="14" class="text-white/80" />
@@ -319,12 +302,7 @@
                         </div>
 
                         <div class="space-y-4 p-6">
-                            <div class="grid grid-cols-1 gap-3">
-                                <div class="rounded-2xl bg-slate-50 p-4">
-                                    <p class="text-xs font-bold uppercase tracking-wide text-slate-400">Tổng số tiết</p>
-                                    <p class="mt-2 text-2xl font-extrabold text-slate-950">{{ $totalLessons ?: 0 }}</p>
-                                </div>
-                            </div>
+
 
                             <div class="rounded-2xl border border-slate-200 p-4">
                                 <div class="flex items-center gap-3">
@@ -362,10 +340,6 @@
                             </div>
                             <div class="flex gap-3">
                                 <span class="mt-0.5 flex h-6 w-6 items-center justify-center rounded-full bg-blue-50 text-xs font-extrabold text-blue-600">2</span>
-                                <p class="text-sm leading-6 text-slate-600">Tổng số tiết sẽ được dùng để tính tiến độ học trên dashboard.</p>
-                            </div>
-                            <div class="flex gap-3">
-                                <span class="mt-0.5 flex h-6 w-6 items-center justify-center rounded-full bg-blue-50 text-xs font-extrabold text-blue-600">3</span>
                                 <p class="text-sm leading-6 text-slate-600">Bật duyệt tham gia nếu lớp cần kiểm soát danh sách học viên trước.</p>
                             </div>
                         </div>

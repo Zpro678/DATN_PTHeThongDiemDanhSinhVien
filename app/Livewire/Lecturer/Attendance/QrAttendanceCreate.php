@@ -137,14 +137,19 @@ class QrAttendanceCreate extends Component
             $this->qrRefreshRate = $config['qrRefreshRate'] ?? 10;
             $this->deviceCheck = $config['deviceCheck'] ?? true;
             $this->gpsRadius = $config['gpsRadius'] ?? 100;
-        } else {
-            $this->gpsEnabled = false;
-            $this->gpsRadius = 100;
         }
 
-        // Tọa độ GPS sẽ luôn được lấy động từ vị trí hiện tại của thiết bị giáo viên khi bật
-        $this->gpsLatitude = null;
-        $this->gpsLongitude = null;
+        if ($selectedClass && $selectedClass->gps_latitude !== null) {
+            $this->gpsEnabled = true;
+            $this->gpsLatitude = (float) $selectedClass->gps_latitude;
+            $this->gpsLongitude = (float) $selectedClass->gps_longitude;
+            $this->gpsRadius = (int) ($selectedClass->gps_radius ?? 100);
+        } elseif (! $config) {
+            $this->gpsEnabled = false;
+            $this->gpsRadius = 100;
+            $this->gpsLatitude = null;
+            $this->gpsLongitude = null;
+        }
     }
 
     public function saveConfig(): void

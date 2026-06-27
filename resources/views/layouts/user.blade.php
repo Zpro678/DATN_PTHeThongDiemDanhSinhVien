@@ -316,18 +316,24 @@
 
                 <div
                     x-cloak
-                    x-bind:class="showFabMenu ? 'scale-100 opacity-100' : 'scale-0 opacity-0 pointer-events-none'"
-                    class="absolute bottom-16 left-1/2 mb-2 flex w-48 origin-bottom -translate-x-1/2 flex-col items-center gap-3 transition-all"
+                    x-show="showFabMenu"
+                    x-transition:enter="transition ease-out duration-200"
+                    x-transition:enter-start="opacity-0 scale-95"
+                    x-transition:enter-end="opacity-100 scale-100"
+                    x-transition:leave="transition ease-in duration-150"
+                    x-transition:leave-start="opacity-100 scale-100"
+                    x-transition:leave-end="opacity-0 scale-95"
+                    class="absolute bottom-16 left-1/2 mb-2 flex w-48 origin-bottom -translate-x-1/2 flex-col items-center gap-3"
                 >
-                    <a href="#" class="flex w-full items-center justify-center gap-2 rounded-full bg-white px-4 py-2 text-sm font-bold text-on-surface shadow-md transition-colors hover:bg-surface-container">
+                    <a href="{{ route('student.leave-requests.create') }}" class="flex w-full items-center justify-center gap-2 rounded-full bg-white px-4 py-2 text-sm font-bold text-on-surface shadow-md transition-colors hover:bg-surface-container">
                         <x-user.icon name="send" :size="16" class="text-secondary" />
                         Gửi đơn xin nghỉ
                     </a>
-                    <a href="{{ route('lecturer.attendance.create') }}" class="flex w-full items-center justify-center gap-2 rounded-full bg-white px-4 py-2 text-sm font-bold text-on-surface shadow-md transition-colors hover:bg-surface-container">
+                    <a href="{{ route('lecturer.attendance.index') }}" class="flex w-full items-center justify-center gap-2 rounded-full bg-white px-4 py-2 text-sm font-bold text-on-surface shadow-md transition-colors hover:bg-surface-container">
                         <x-user.icon name="check-square" :size="16" class="text-tertiary" />
-                        Tạo điểm danh
+                        Quản lý điểm danh
                     </a>
-                    <a href="{{ route('joined-classes') }}" class="flex w-full items-center justify-center gap-2 rounded-full bg-white px-4 py-2 text-sm font-bold text-on-surface shadow-md transition-colors hover:bg-surface-container">
+                    <a href="#" onclick="alert('Tính năng quét QR đang được phát triển')" class="flex w-full items-center justify-center gap-2 rounded-full bg-white px-4 py-2 text-sm font-bold text-on-surface shadow-md transition-colors hover:bg-surface-container">
                         <x-user.icon name="qr-code" :size="16" class="text-primary" />
                         Quét QR
                     </a>

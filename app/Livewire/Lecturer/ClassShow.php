@@ -116,12 +116,15 @@ class ClassShow extends Component
 
     protected function finalizeImport(): void
     {
+        $count = $this->importSuccess;
         $this->closeImport();
         
         // Cập nhật lại số sinh viên
         $this->studentsCount = $this->class->members()->where('status', 'active')->count();
         
-        session()->flash('success', "Đã nhập thành công {$this->importSuccess} sinh viên vào lớp.");
+        $message = "Đã nhập thành công {$count} sinh viên vào lớp.";
+        session()->flash('success', $message);
+        $this->dispatch('toast', message: $message, type: 'success');
         $this->reset(['importToken', 'isImportingStatus', 'importTotalRows', 'importProcessedRows', 'importQuietTicks']);
     }
 
@@ -150,7 +153,7 @@ class ClassShow extends Component
         $this->pendingLeaveRequests = LeaveRequest::whereHas('classSession', function ($q) use ($courseClass) {
             $q->where('class_id', $courseClass->id);
         })->where('status', 'pending')->count();
-        $this->pendingMembersCount = $courseClass->members()->where('status', 'pending')->count();
+        $this->pendingMembersCount = $courseClass->joinRequests()->where('status', 'pending')->count();
         
         if (request()->has('openImport')) {
             $this->openImport();
@@ -244,19 +247,33 @@ class ClassShow extends Component
 
     public function downloadFullTemplate()
     {
-        $csvContent = "Mã học viên,Họ và tên,Email,22/06,23/06\nHV001,Nguyễn Văn A,nva@email.com,c,m\nHV002,Trần Thị B,ttb@email.com,v,c";
+        $lines = [
+            "M\u00e3 h\u1ecdc vi\u00ean,H\u1ecd v\u00e0 t\u00ean,Email,22/06,23/06,24/06",
+            "HV001,Nguy\u1ec5n V\u0103n A,nva@email.com,c,m,c",
+            "HV002,Tr\u1ea7n Th\u1ecb B,ttb@email.com,k,c,v",
+            "HV003,L\u00ea V\u0103n C,lvc@email.com,c,c,k",
+            "",
+            "Ch\u00fa th\u00edch k\u00fd hi\u1ec7u:,c=C\u00f3 m\u1eb7t,m=\u0110i mu\u1ed9n,k=V\u1eafng kh\u00f4ng ph\u00e9p,v=V\u1eafng c\u00f3 ph\u00e9p",
+        ];
+        $csvContent = implode("\n", $lines);
 
         return response()->streamDownload(function () use ($csvContent) {
-            echo "\xEF\xBB\xBF".$csvContent; // UTF-8 BOM cho Excel
+            echo "\xEF\xBB\xBF" . $csvContent; // UTF-8 BOM cho Excel
         }, 'Danh_sach_hoc_vien_mau_day_du.csv');
     }
 
     public function downloadBasicTemplate()
     {
-        $csvContent = "Mã học viên,Họ và tên,Email\nHV001,Nguyễn Văn A,nva@email.com\nHV002,Trần Thị B,ttb@email.com";
+        $lines = [
+            "M\u00e3 h\u1ecdc vi\u00ean,H\u1ecd v\u00e0 t\u00ean,Email",
+            "HV001,Nguy\u1ec5n V\u0103n A,nva@email.com",
+            "HV002,Tr\u1ea7n Th\u1ecb B,ttb@email.com",
+            "HV003,L\u00ea V\u0103n C,lvc@email.com",
+        ];
+        $csvContent = implode("\n", $lines);
 
         return response()->streamDownload(function () use ($csvContent) {
-            echo "\xEF\xBB\xBF".$csvContent; // UTF-8 BOM cho Excel
+            echo "\xEF\xBB\xBF" . $csvContent; // UTF-8 BOM cho Excel
         }, 'Danh_sach_hoc_vien_mau_co_ban.csv');
     }
 
@@ -275,7 +292,7 @@ class ClassShow extends Component
         $this->importProcessedRows = 0;
         $this->importQuietTicks = 0;
 
-        $import = new StudentsImport($this->class->id, $this->importToken);
+        $import = new StudentsImport($this->class->id, $this->importToken, $this->syncAttendance);
         $extension = $this->importFile->getClientOriginalExtension();
         $readerType = match (strtolower($extension)) {
             'csv' => \Maatwebsite\Excel\Excel::CSV,
@@ -290,28 +307,6 @@ class ClassShow extends Component
             $this->importErrors = $import->errors;
 
             if (empty($this->importErrors)) {
-                if ($this->syncAttendance) {
-                    $sessions = \App\Models\ClassSession::where('class_id', $this->class->id)->get();
-                    $members = \App\Models\ClassMember::where('class_id', $this->class->id)->where('status', 'active')->get();
-                    $recordsToInsert = [];
-                    $now = now();
-                    foreach ($sessions as $session) {
-                        foreach ($members as $member) {
-                            $recordsToInsert[] = [
-                                'class_session_id' => $session->id,
-                                'class_member_id' => $member->id,
-                                'status' => 'pending',
-                                'is_verified' => $member->user_id !== null,
-                                'created_at' => $now,
-                                'updated_at' => $now,
-                            ];
-                        }
-                    }
-                    if (!empty($recordsToInsert)) {
-                        \App\Models\AttendanceRecord::insertOrIgnore($recordsToInsert);
-                    }
-                }
-
                 // Do not close import yet. We will poll progress.
             } else {
                 $this->isImportingStatus = false;

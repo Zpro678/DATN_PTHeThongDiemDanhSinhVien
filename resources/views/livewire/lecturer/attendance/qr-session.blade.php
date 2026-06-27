@@ -17,7 +17,7 @@
 @endphp
 
 <div
-    class="mx-auto max-w-[1400px] space-y-8 p-4 pb-24 sm:p-8"
+    class="mx-auto max-w-[1400px] space-y-5 sm:space-y-8 p-3 sm:p-8 pb-24"
     x-data="{
         isClosed: @entangle('isClosed').live,
         timeLeft: {{ $qrRefreshRate }},
@@ -63,6 +63,7 @@
         <div>
             <div class="flex flex-wrap items-center gap-3">
                 <h1 class="text-[30px] font-black leading-tight tracking-tight text-slate-900" title="{{ $session->name }}">
+                    <span class="sr-only">Trạm chờ điểm danh</span>
                     {{ Str::limit($session->name, 40) }}
                     @if($startLesson && $endLesson)
                         <span class="text-2xl font-bold text-slate-500 ml-1">(Tiết {{ $startLesson }} - Tiết {{ $endLesson }})</span>
@@ -126,28 +127,28 @@
 
 
 
-    <div class="grid gap-6 xl:grid-cols-12">
-        <section class="rounded-2xl border border-slate-200 bg-white p-6 shadow-sm xl:col-span-4">
-            <div class="flex h-full flex-col items-center">
+    <div class="grid gap-4 sm:gap-6 xl:grid-cols-12">
+        <section class="rounded-2xl border border-slate-200 bg-white p-4 sm:p-6 shadow-sm xl:col-span-4 flex flex-col min-w-0 overflow-hidden">
+            <div class="flex h-full w-full flex-col items-center flex-1 min-w-0">
                 @if(!$isClosed)
-                    <div class="mb-6 flex w-full items-center justify-between gap-3 rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3">
-                        <div class="min-w-0">
+                    <div class="mb-4 sm:mb-6 flex w-full items-center justify-between gap-2 sm:gap-3 rounded-2xl border border-slate-200 bg-slate-50 px-3 sm:px-4 py-2 sm:py-3 min-w-0">
+                        <div class="min-w-0 flex-1">
                             <p class="text-[11px] font-black uppercase tracking-wider text-slate-400">Liên kết</p>
                             <p class="mt-1 truncate text-sm font-bold text-blue-700">{{ $attendanceLink }}</p>
                         </div>
-                        <span class="shrink-0 rounded-xl bg-blue-50 px-3 py-2 text-xs font-black text-blue-700 ring-1 ring-blue-100">{{ \Illuminate\Support\Str::limit($session->qr_token, 8, '') }}</span>
+                        <span class="shrink-0 rounded-xl bg-blue-50 px-2 sm:px-3 py-1.5 sm:py-2 text-xs font-black text-blue-700 ring-1 ring-blue-100">{{ \Illuminate\Support\Str::limit($session->qr_token, 8, '') }}</span>
                     </div>
 
-                    <button type="button" @click="showQrModal = true" class="group relative my-4 flex h-64 w-64 items-center justify-center rounded-[28px] border border-slate-200 bg-white p-5 shadow-xl shadow-slate-900/10 transition hover:scale-[1.02]">
+                    <button type="button" @click="showQrModal = true" class="group relative my-4 flex h-52 w-52 sm:h-64 sm:w-64 items-center justify-center rounded-[24px] sm:rounded-[28px] border border-slate-200 bg-white p-4 sm:p-5 shadow-xl shadow-slate-900/10 transition hover:scale-[1.02]">
                         <span class="absolute -inset-4 rounded-[36px] bg-blue-500/10 blur-2xl transition group-hover:bg-blue-500/20"></span>
                         @if ($qrSvg)
-                            <span class="relative flex h-full w-full items-center justify-center rounded-2xl bg-white p-2 [&>svg]:h-full [&>svg]:w-full">
+                            <span class="relative flex h-full w-full min-w-0 min-h-0 items-center justify-center rounded-2xl bg-white p-2 [&>svg]:h-full [&>svg]:w-full [&>svg]:max-w-full [&>svg]:max-h-full">
                                 {!! $qrSvg !!}
                             </span>
                         @else
-                            <span class="relative grid h-full w-full gap-[3px] rounded-2xl bg-white p-3" style="grid-template-columns: repeat(29, minmax(0, 1fr));">
+                            <span class="relative grid h-full w-full gap-[1px] sm:gap-[3px] rounded-2xl bg-white p-1.5 sm:p-3" style="grid-template-columns: repeat(29, minmax(0, 1fr));">
                                 @foreach ($qrCells as $isDark)
-                                    <span class="{{ $isDark ? 'bg-slate-900' : 'bg-white' }} aspect-square rounded-[1px]"></span>
+                                    <span class="{{ $isDark ? 'bg-slate-900' : 'bg-white' }} w-full aspect-square rounded-[1px] sm:rounded-sm"></span>
                                 @endforeach
                             </span>
                         @endif
@@ -166,22 +167,22 @@
                 @endif
 
                 @if(!$isClosed)
-                    <div class="mt-auto w-full space-y-3 pt-7">
+                    <div class="mt-auto w-full space-y-2.5 sm:space-y-3 pt-4 sm:pt-7">
                         <div class="flex items-end justify-between">
-                            <span class="text-sm font-extrabold text-slate-500">Mã mới sau</span>
-                            <span class="text-3xl font-black leading-none text-blue-600" x-text="String(timeLeft).padStart(2, '0') + 's'"></span>
+                            <span class="text-xs sm:text-sm font-extrabold text-slate-500">Mã mới sau</span>
+                            <span class="text-2xl sm:text-3xl font-black leading-none text-blue-600" x-text="String(timeLeft).padStart(2, '0') + 's'"></span>
                         </div>
-                        <div class="h-2.5 overflow-hidden rounded-full bg-slate-100">
+                        <div class="h-2 sm:h-2.5 overflow-hidden rounded-full bg-slate-100">
                             <div class="h-full rounded-full bg-blue-600 transition-all duration-1000 ease-linear" :style="'width: ' + ((timeLeft / refreshRate) * 100) + '%'"></div>
                         </div>
-                        <div class="grid grid-cols-2 gap-3 pt-3 text-sm">
-                            <div class="rounded-xl border border-slate-200 bg-slate-50 p-3">
-                                <p class="text-[11px] font-bold uppercase tracking-wider text-slate-400">Thời lượng</p>
-                                <p class="mt-1 font-black text-slate-900" x-text="formatSessionTime()">{{ $openMinutes }} phút</p>
+                        <div class="grid grid-cols-2 gap-2 sm:gap-3 pt-2 sm:pt-3 text-sm">
+                            <div class="rounded-xl border border-slate-200 bg-slate-50 p-2 sm:p-3">
+                                <p class="text-[9px] sm:text-[11px] font-bold uppercase tracking-wider text-slate-400">Thời lượng</p>
+                                <p class="mt-0.5 sm:mt-1 text-xs sm:text-sm font-black text-slate-900" x-text="formatSessionTime()">{{ $openMinutes }} phút</p>
                             </div>
-                            <div class="rounded-xl border border-slate-200 bg-slate-50 p-3">
-                                <p class="text-[11px] font-bold uppercase tracking-wider text-slate-400">Làm mới QR</p>
-                                <p class="mt-1 font-black text-slate-900">{{ $qrRefreshRate }} giây</p>
+                            <div class="rounded-xl border border-slate-200 bg-slate-50 p-2 sm:p-3">
+                                <p class="text-[9px] sm:text-[11px] font-bold uppercase tracking-wider text-slate-400">Làm mới QR</p>
+                                <p class="mt-0.5 sm:mt-1 text-xs sm:text-sm font-black text-slate-900">{{ $qrRefreshRate }} giây</p>
                             </div>
                         </div>
                     </div>
@@ -189,8 +190,8 @@
             </div>
         </section>
 
-        <section class="space-y-6 xl:col-span-8">
-            <div class="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm">
+        <section class="space-y-4 sm:space-y-6 xl:col-span-8">
+            <div class="rounded-2xl border border-slate-200 bg-white p-4 sm:p-5 shadow-sm">
                 <div class="flex flex-col gap-5 md:flex-row md:items-center">
                     <div class="shrink-0 md:border-r md:border-slate-200 md:pr-6">
                         <div class="flex items-center gap-3">
@@ -200,32 +201,32 @@
                         <p class="mt-1.5 text-sm font-semibold text-slate-400">Hệ thống ghi nhận tức thời</p>
                     </div>
 
-                    <div class="grid flex-1 gap-4 sm:grid-cols-2">
-                        <div class="flex items-center gap-4 rounded-xl border border-rose-100 bg-rose-50 p-4">
-                            <span class="flex h-12 w-12 items-center justify-center rounded-xl bg-white text-rose-600 shadow-sm">
-                                <x-user.icon name="shield-alert" :size="24" />
+                    <div class="grid flex-1 gap-2 sm:gap-4 grid-cols-2">
+                        <div class="flex items-center gap-2 sm:gap-4 rounded-xl border border-rose-100 bg-rose-50 p-2 sm:p-4 overflow-hidden">
+                            <span class="flex h-7 w-7 sm:h-12 sm:w-12 shrink-0 items-center justify-center rounded-xl bg-white text-rose-600 shadow-sm">
+                                <x-user.icon name="shield-alert" :size="24" class="hidden sm:block" />
+                                <x-user.icon name="shield-alert" :size="14" class="block sm:hidden" />
                             </span>
-                            <div>
-                                <p class="text-base font-black text-rose-700">Sai GPS (0)</p>
-                                <p class="text-sm font-bold text-rose-500">Cần xem xét</p>
+                            <div class="min-w-0 flex-1">
+                                <p class="text-[10px] sm:text-base font-black text-rose-700 truncate">Sai GPS (0)</p>
+                                <p class="text-[9px] sm:text-sm font-bold text-rose-500 truncate">Cần xem xét</p>
                             </div>
                         </div>
 
-                        <div class="flex items-center gap-4 rounded-xl border border-amber-100 bg-amber-50 p-4">
-                            <span class="flex h-12 w-12 items-center justify-center rounded-xl bg-white text-amber-600 shadow-sm">
-                                <x-user.icon name="laptop" :size="24" />
+                        <div class="flex items-center gap-2 sm:gap-4 rounded-xl border border-amber-100 bg-amber-50 p-2 sm:p-4 overflow-hidden">
+                            <span class="flex h-7 w-7 sm:h-12 sm:w-12 shrink-0 items-center justify-center rounded-xl bg-white text-amber-600 shadow-sm">
+                                <x-user.icon name="laptop" :size="24" class="hidden sm:block" />
+                                <x-user.icon name="laptop" :size="14" class="block sm:hidden" />
                             </span>
-                            <div>
-                                <p class="text-base font-black text-amber-700">Trùng máy (0)</p>
-                                <p class="text-sm font-bold text-amber-500">Điểm danh hộ</p>
+                            <div class="min-w-0 flex-1">
+                                <p class="text-[10px] sm:text-base font-black text-amber-700 truncate">Trùng máy (0)</p>
+                                <p class="text-[9px] sm:text-sm font-bold text-amber-500 truncate">Điểm danh hộ</p>
                             </div>
                         </div>
                     </div>
                 </div>
-            </div>
-
-            <div class="rounded-[2rem] bg-gradient-to-br from-blue-600 to-blue-700 p-8 text-white shadow-xl shadow-blue-900/10 ring-1 ring-blue-800/50">
-                <div class="grid gap-8 lg:grid-cols-[minmax(0,1.2fr)_minmax(340px,0.8fr)] lg:items-end">
+            </div>            <div class="rounded-[1.5rem] sm:rounded-[2rem] bg-gradient-to-br from-blue-600 to-blue-700 p-5 sm:p-8 text-white shadow-xl shadow-blue-900/10 ring-1 ring-blue-800/50">
+                <div class="grid gap-6 sm:gap-8 lg:grid-cols-[minmax(0,1.2fr)_minmax(340px,0.8fr)] lg:items-end">
                     <div>
                         <div class="flex flex-wrap items-center gap-3">
                             <span class="text-[11px] font-bold uppercase tracking-widest text-blue-200">Sĩ số hiện diện</span>
@@ -233,8 +234,8 @@
                         </div>
 
                         <div class="mt-4 flex items-baseline gap-2">
-                            <span class="text-[4.5rem] font-black leading-none tracking-tighter text-white drop-shadow-sm lg:text-7xl">{{ number_format($summary['checked_in']) }}</span>
-                            <span class="text-2xl font-bold text-blue-300 drop-shadow-sm">/ {{ number_format($summary['total']) }}</span>
+                            <span class="text-6xl sm:text-[4.5rem] font-black leading-none tracking-tighter text-white drop-shadow-sm lg:text-7xl">{{ number_format($summary['checked_in']) }}</span>
+                            <span class="text-xl sm:text-2xl font-bold text-blue-300 drop-shadow-sm">/ {{ number_format($summary['total']) }}</span>
                         </div>
 
                         <div class="mt-6 max-w-xl">
@@ -248,61 +249,62 @@
                         </div>
                     </div>
 
-                    <div class="grid gap-4 sm:grid-cols-2">
-                        <div class="rounded-2xl bg-white/10 p-5 backdrop-blur-md ring-1 ring-inset ring-white/20 sm:col-span-2 shadow-sm">
-                            <p class="mb-4 text-[11px] font-bold uppercase tracking-widest text-blue-200">Thông tin phiên</p>
-                            <div class="grid gap-3 lg:grid-cols-[minmax(0,1.35fr)_minmax(0,0.9fr)]">
-                                <div class="min-w-0 rounded-xl bg-white/10 px-4 py-3 ring-1 ring-inset ring-white/10 transition-colors hover:bg-white/20">
-                                    <p class="text-[10px] font-bold uppercase tracking-widest text-blue-200">Buổi học</p>
-                                    <p class="mt-1 text-sm font-bold leading-snug text-white">{{ $session->name }}</p>
+                    <div class="grid gap-3 sm:gap-4 grid-cols-2">
+                        <div class="rounded-2xl bg-white/10 p-4 sm:p-5 backdrop-blur-md ring-1 ring-inset ring-white/20 col-span-2 shadow-sm">
+                            <p class="mb-3 sm:mb-4 text-[10px] sm:text-[11px] font-bold uppercase tracking-widest text-blue-200">Thông tin phiên</p>
+                            <div class="grid gap-2 sm:gap-3 grid-cols-2 lg:grid-cols-[minmax(0,1.35fr)_minmax(0,0.9fr)]">
+                                <div class="min-w-0 rounded-xl bg-white/10 px-3 sm:px-4 py-2.5 sm:py-3 ring-1 ring-inset ring-white/10 transition-colors hover:bg-white/20">
+                                    <p class="text-[9px] sm:text-[10px] font-bold uppercase tracking-widest text-blue-200 truncate">Buổi học</p>
+                                    <p class="mt-1 text-xs sm:text-sm font-bold leading-snug text-white truncate">{{ $session->name }}</p>
                                 </div>
 
-                                <div class="min-w-0 rounded-xl bg-white/10 px-4 py-3 ring-1 ring-inset ring-white/10 transition-colors hover:bg-white/20">
-                                    <p class="text-[10px] font-bold uppercase tracking-widest text-blue-200">Lớp / Tiết</p>
-                                    <p class="mt-1 text-sm font-bold leading-snug text-white">{{ $selectedSubject }} - Tiết {{ $startLesson }}-{{ $endLesson }}</p>
+                                <div class="min-w-0 rounded-xl bg-white/10 px-3 sm:px-4 py-2.5 sm:py-3 ring-1 ring-inset ring-white/10 transition-colors hover:bg-white/20">
+                                    <p class="text-[9px] sm:text-[10px] font-bold uppercase tracking-widest text-blue-200 truncate">Lớp / Tiết</p>
+                                    <p class="mt-1 text-xs sm:text-sm font-bold leading-snug text-white truncate">{{ $selectedSubject }} - Tiết {{ $startLesson }}-{{ $endLesson }}</p>
                                 </div>
                             </div>
                         </div>
 
-                        <div class="rounded-2xl bg-white/10 p-5 backdrop-blur-md ring-1 ring-inset ring-white/20 shadow-sm">
-                            <p class="text-[11px] font-bold uppercase tracking-widest text-blue-200">Mở phiên</p>
-                            <p class="mt-1.5 text-lg font-bold text-white drop-shadow-sm" x-text="formatSessionTime()">{{ $openMinutes }} phút</p>
+                        <div class="rounded-2xl bg-white/10 p-4 sm:p-5 backdrop-blur-md ring-1 ring-inset ring-white/20 shadow-sm min-w-0">
+                            <p class="text-[9px] sm:text-[11px] font-bold uppercase tracking-widest text-blue-200 truncate">Mở phiên</p>
+                            <p class="mt-1.5 text-sm sm:text-lg font-bold text-white drop-shadow-sm truncate" x-text="formatSessionTime()">{{ $openMinutes }} phút</p>
                         </div>
 
-                        <div class="rounded-2xl bg-white/10 p-5 backdrop-blur-md ring-1 ring-inset ring-white/20 shadow-sm">
-                            <p class="text-[11px] font-bold uppercase tracking-widest text-blue-200">Làm mới mã</p>
-                            <p class="mt-1.5 text-lg font-bold text-white drop-shadow-sm">{{ $qrRefreshRate }}s / lần</p>
+                        <div class="rounded-2xl bg-white/10 p-4 sm:p-5 backdrop-blur-md ring-1 ring-inset ring-white/20 shadow-sm min-w-0">
+                            <p class="text-[9px] sm:text-[11px] font-bold uppercase tracking-widest text-blue-200 truncate">Làm mới mã</p>
+                            <p class="mt-1.5 text-sm sm:text-lg font-bold text-white drop-shadow-sm truncate">{{ $qrRefreshRate }}s/lần</p>
                         </div>
                     </div>
                 </div>
             </div>
 
-            <div class="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
-                <button type="button" wire:click="setStatusFilter('pending')" @class(['rounded-2xl border border-slate-200 bg-white p-5 text-left shadow-sm transition hover:-translate-y-0.5', 'ring-2 ring-primary/30' => $statusFilter === 'pending'])>
-                    <p class="text-[11px] font-black uppercase tracking-wider text-slate-500">Đang chờ</p>
-                    <p class="mt-2 text-4xl font-black text-slate-900">{{ number_format($summary['pending']) }}</p>
-                    <p class="mt-1 text-xs font-semibold text-slate-500">Chưa quét QR</p>
+            <div class="grid gap-3 sm:gap-4 grid-cols-2 xl:grid-cols-4">
+                <button type="button" wire:click="setStatusFilter('pending')" @class(['rounded-2xl border border-slate-200 bg-white p-2.5 sm:p-5 text-left shadow-sm transition hover:-translate-y-0.5 min-w-0', 'ring-2 ring-primary/30' => $statusFilter === 'pending'])>
+                    <p class="text-[9px] sm:text-[11px] font-black uppercase tracking-wider text-slate-500 truncate">Đang chờ</p>
+                    <p class="mt-1 sm:mt-2 text-xl sm:text-4xl font-black text-slate-900">{{ number_format($summary['pending']) }}</p>
+                    <p class="mt-0.5 sm:mt-1 text-[8px] sm:text-xs font-semibold text-slate-500 truncate">Chưa quét QR</p>
                 </button>
 
-                <button type="button" wire:click="setStatusFilter('late')" @class(['rounded-2xl border border-amber-100 bg-amber-50 p-5 text-left transition hover:-translate-y-0.5', 'ring-2 ring-amber-300' => $statusFilter === 'late'])>
-                    <p class="text-[11px] font-black uppercase tracking-wider text-amber-700">Đi muộn</p>
-                    <p class="mt-2 text-4xl font-black text-amber-700">{{ number_format($summary['late']) }}</p>
-                    <p class="mt-1 text-xs font-semibold text-amber-600">Cần ghi chú</p>
+                <button type="button" wire:click="setStatusFilter('late')" @class(['rounded-2xl border border-amber-100 bg-amber-50 p-2.5 sm:p-5 text-left transition hover:-translate-y-0.5 min-w-0', 'ring-2 ring-amber-300' => $statusFilter === 'late'])>
+                    <p class="text-[9px] sm:text-[11px] font-black uppercase tracking-wider text-amber-700 truncate">Đi muộn</p>
+                    <p class="mt-1 sm:mt-2 text-xl sm:text-4xl font-black text-amber-700">{{ number_format($summary['late']) }}</p>
+                    <p class="mt-0.5 sm:mt-1 text-[8px] sm:text-xs font-semibold text-amber-600 truncate">Cần ghi chú</p>
                 </button>
 
-                <button type="button" wire:click="setStatusFilter('absent')" @class(['rounded-2xl border border-rose-100 bg-rose-50 p-5 text-left transition hover:-translate-y-0.5', 'ring-2 ring-rose-300' => $statusFilter === 'absent'])>
-                    <p class="text-[11px] font-black uppercase tracking-wider text-rose-700">Vắng</p>
-                    <p class="mt-2 text-4xl font-black text-rose-700">{{ number_format($summary['absent']) }}</p>
-                    <p class="mt-1 text-xs font-semibold text-rose-600">Chưa xác nhận</p>
+                <button type="button" wire:click="setStatusFilter('absent')" @class(['rounded-2xl border border-rose-100 bg-rose-50 p-2.5 sm:p-5 text-left transition hover:-translate-y-0.5 min-w-0', 'ring-2 ring-rose-300' => $statusFilter === 'absent'])>
+                    <p class="text-[9px] sm:text-[11px] font-black uppercase tracking-wider text-rose-700 truncate">Vắng</p>
+                    <p class="mt-1 sm:mt-2 text-xl sm:text-4xl font-black text-rose-700">{{ number_format($summary['absent']) }}</p>
+                    <p class="mt-0.5 sm:mt-1 text-[8px] sm:text-xs font-semibold text-rose-600 truncate">Chưa xác nhận</p>
                 </button>
 
-                <button type="button" wire:click="setStatusFilter('excused')" @class(['rounded-2xl border border-sky-100 bg-sky-50 p-5 text-left transition hover:-translate-y-0.5', 'ring-2 ring-sky-300' => $statusFilter === 'excused'])>
-                    <p class="text-[11px] font-black uppercase tracking-wider text-sky-800">Có phép</p>
-                    <p class="mt-2 text-4xl font-black text-sky-800">{{ number_format($summary['excused']) }}</p>
-                    <p class="mt-1 text-xs font-semibold text-sky-700">Đã gửi lý do</p>
+                <button type="button" wire:click="setStatusFilter('excused')" @class(['rounded-2xl border border-sky-100 bg-sky-50 p-2.5 sm:p-5 text-left transition hover:-translate-y-0.5 min-w-0', 'ring-2 ring-sky-300' => $statusFilter === 'excused'])>
+                    <p class="text-[9px] sm:text-[11px] font-black uppercase tracking-wider text-sky-800 truncate">Có phép</p>
+                    <p class="mt-1 sm:mt-2 text-xl sm:text-4xl font-black text-sky-800">{{ number_format($summary['excused']) }}</p>
+                    <p class="mt-0.5 sm:mt-1 text-[8px] sm:text-xs font-semibold text-sky-700 truncate">Đã gửi lý do</p>
                 </button>
             </div>
         </section>
+
     </div>
 
     <section class="overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm">

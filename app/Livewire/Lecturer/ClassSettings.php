@@ -45,6 +45,12 @@ class ClassSettings extends Component
     // Trạng thái của lớp học (active, archived, ended)
     public string $status = 'active';
 
+    // Cấu hình GPS mặc định
+    public bool $gpsEnabled = false;
+    public ?float $gpsLatitude = null;
+    public ?float $gpsLongitude = null;
+    public ?int $gpsRadius = null;
+
 
 
     // Trạng thái hiển thị modal xác nhận xóa lớp học
@@ -73,7 +79,10 @@ class ClassSettings extends Component
         $this->requireApproval = $courseClass->require_approval;
         $this->status = $courseClass->status;
 
-
+        $this->gpsEnabled = $courseClass->gps_latitude !== null;
+        $this->gpsLatitude = $courseClass->gps_latitude ? (float) $courseClass->gps_latitude : null;
+        $this->gpsLongitude = $courseClass->gps_longitude ? (float) $courseClass->gps_longitude : null;
+        $this->gpsRadius = $courseClass->gps_radius ? (int) $courseClass->gps_radius : null;
     }
 
     public function save()
@@ -90,7 +99,10 @@ class ClassSettings extends Component
             'deductExcusedAbsence' => ['boolean'],
             'requireApproval' => ['boolean'],
             'status' => ['required', 'string', Rule::in(['active', 'archived', 'ended'])],
-
+            'gpsEnabled' => ['boolean'],
+            'gpsLatitude' => ['nullable', 'numeric'],
+            'gpsLongitude' => ['nullable', 'numeric'],
+            'gpsRadius' => ['nullable', 'integer', 'min:10', 'max:5000'],
         ], [
             'name.required' => 'Vui lòng nhập tên lớp.',
             'code.required' => 'Mã lớp không được để trống.',
@@ -111,7 +123,9 @@ class ClassSettings extends Component
             'total_lessons' => $validated['totalLessons'],
             'require_approval' => $validated['requireApproval'],
             'status' => $validated['status'],
-
+            'gps_latitude' => $validated['gpsEnabled'] ? ($validated['gpsLatitude'] ?? null) : null,
+            'gps_longitude' => $validated['gpsEnabled'] ? ($validated['gpsLongitude'] ?? null) : null,
+            'gps_radius' => $validated['gpsEnabled'] ? ($validated['gpsRadius'] ?? null) : null,
         ]);
 
         session()->flash('status', 'Cài đặt lớp học đã được cập nhật.');
@@ -143,7 +157,7 @@ class ClassSettings extends Component
 
         $this->courseClass->delete();
         session()->flash('status', 'Đã xóa lớp học thành công.');
-        $this->redirectRoute('managed-classes', navigate: true);
+        $this->redirectRoute('managed-classes');
     }
 
     public function render(): View

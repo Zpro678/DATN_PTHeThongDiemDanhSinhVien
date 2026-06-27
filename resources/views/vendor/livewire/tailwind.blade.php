@@ -13,30 +13,8 @@ $scrollIntoViewJsSnippet = ($scrollTo !== false)
 <div>
     @if ($paginator->hasPages())
         <nav role="navigation" aria-label="Pagination Navigation" class="flex flex-col items-center justify-between gap-4 sm:flex-row">
-            <div class="flex w-full justify-between sm:hidden">
-                @if ($paginator->onFirstPage())
-                    <span class="relative inline-flex items-center rounded-xl bg-slate-50 px-4 py-2 text-sm font-medium text-slate-400 border border-slate-200 cursor-not-allowed">
-                        {!! __('pagination.previous') !!}
-                    </span>
-                @else
-                    <button type="button" wire:click="previousPage('{{ $paginator->getPageName() }}')" x-on:click="{{ $scrollIntoViewJsSnippet }}" wire:loading.attr="disabled" class="relative inline-flex items-center rounded-xl bg-white px-4 py-2 text-sm font-bold text-slate-700 border border-slate-200 shadow-sm transition-all hover:bg-slate-50 hover:text-primary focus:outline-none focus:ring-2 focus:ring-primary/20 active:bg-slate-100">
-                        {!! __('pagination.previous') !!}
-                    </button>
-                @endif
-
-                @if ($paginator->hasMorePages())
-                    <button type="button" wire:click="nextPage('{{ $paginator->getPageName() }}')" x-on:click="{{ $scrollIntoViewJsSnippet }}" wire:loading.attr="disabled" class="relative inline-flex items-center rounded-xl bg-white px-4 py-2 text-sm font-bold text-slate-700 border border-slate-200 shadow-sm transition-all hover:bg-slate-50 hover:text-primary focus:outline-none focus:ring-2 focus:ring-primary/20 active:bg-slate-100">
-                        {!! __('pagination.next') !!}
-                    </button>
-                @else
-                    <span class="relative inline-flex items-center rounded-xl bg-slate-50 px-4 py-2 text-sm font-medium text-slate-400 border border-slate-200 cursor-not-allowed">
-                        {!! __('pagination.next') !!}
-                    </span>
-                @endif
-            </div>
-
-            <div class="hidden sm:flex sm:flex-1 sm:items-center sm:justify-between">
-                <div>
+            <div class="flex flex-col w-full gap-4 sm:flex-row sm:flex-1 sm:items-center sm:justify-between">
+                <div class="text-center sm:text-left">
                     <p class="text-sm text-slate-500">
                         Hiển thị
                         <span class="font-bold text-slate-900">{{ $paginator->firstItem() }}</span>
@@ -48,7 +26,7 @@ $scrollIntoViewJsSnippet = ($scrollTo !== false)
                     </p>
                 </div>
 
-                <div class="flex items-center gap-6">
+                <div class="flex flex-col sm:flex-row items-center justify-center gap-4 sm:gap-6 w-full sm:w-auto">
                     @if (property_exists($this, 'perPage'))
                         <div class="flex items-center gap-2">
                             <span class="text-[13px] font-medium text-slate-500">Hiển thị:</span>
@@ -61,7 +39,7 @@ $scrollIntoViewJsSnippet = ($scrollTo !== false)
                         </div>
                     @endif
 
-                    <nav class="flex items-center gap-1">
+                    <nav class="flex items-center justify-center gap-1">
                         {{-- Previous Page Link --}}
                         @if ($paginator->onFirstPage())
                             <span aria-disabled="true" aria-label="{{ __('pagination.previous') }}" class="inline-flex h-9 min-w-[36px] items-center justify-center rounded-lg text-slate-300">

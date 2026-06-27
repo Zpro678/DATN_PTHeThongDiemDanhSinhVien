@@ -77,7 +77,7 @@
                 <table class="w-full text-left text-sm whitespace-nowrap">
                     <thead>
                         <tr>
-                            <th scope="col" class="sticky left-0 z-20 w-[280px] min-w-[280px] bg-white px-8 py-6 shadow-[8px_0_24px_-12px_rgba(0,0,0,0.1)] border-b border-slate-100">
+                            <th scope="col" class="sticky left-0 z-20 w-[160px] min-w-[160px] max-w-[160px] sm:w-[280px] sm:min-w-[280px] sm:max-w-none bg-white px-3 sm:px-8 py-4 sm:py-6 shadow-[8px_0_24px_-12px_rgba(0,0,0,0.1)] border-b border-slate-100">
                                 <span class="text-[13px] font-black uppercase tracking-widest text-slate-700">Sinh viên</span>
                             </th>
                             @foreach($groupedSessionsInfo as $groupKey => $info)
@@ -95,7 +95,7 @@
                     <tbody class="divide-y divide-slate-50">
                         @forelse($members as $member)
                             <tr class="transition-colors hover:bg-slate-50 group/row">
-                                <td class="sticky left-0 z-10 w-[280px] min-w-[280px] bg-white px-6 py-4 shadow-[8px_0_24px_-12px_rgba(0,0,0,0.1)] group-hover/row:bg-slate-50 transition-colors">
+                                <td class="sticky left-0 z-10 w-[160px] min-w-[160px] max-w-[160px] sm:w-[280px] sm:min-w-[280px] sm:max-w-none bg-white px-3 sm:px-6 py-3 sm:py-4 shadow-[8px_0_24px_-12px_rgba(0,0,0,0.1)] group-hover/row:bg-slate-50 transition-colors">
                                     <div class="flex items-center justify-between gap-3">
                                         <div class="flex min-w-0 items-center gap-3">
                                             @php

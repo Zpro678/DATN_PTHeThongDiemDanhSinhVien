@@ -1,5 +1,23 @@
-@if (session('success') || session('error') || $errors->any())
-<div id="toast-container" style="position: fixed; top: 20px; right: 20px; z-index: 9999; display: flex; flex-direction: column; gap: 10px; pointer-events: none;">
+<div id="toast-container" 
+	style="position: fixed; top: 20px; right: 20px; z-index: 9999; display: flex; flex-direction: column; gap: 10px; pointer-events: none;"
+	x-data="{
+		toasts: [],
+		addToast(message, type = 'success') {
+			const id = Math.random().toString(36).substring(2, 9);
+			this.toasts.push({ id, message, type });
+			setTimeout(() => {
+				this.removeToast(id);
+			}, 5000);
+		},
+		removeToast(id) {
+			const index = this.toasts.findIndex(t => t.id === id);
+			if (index !== -1) {
+				this.toasts.splice(index, 1);
+			}
+		}
+	}"
+	@toast.window="addToast($event.detail.message, $event.detail.type || 'success')"
+>
 	@php $toastId = \Illuminate\Support\Str::random(10); @endphp
 
 	{{-- Success Messages --}}
@@ -61,8 +79,24 @@
 	</div>
 	@endif
 
+	{{-- Dynamic Client-side Toasts --}}
+	<template x-for="toast in toasts" :key="toast.id">
+		<div x-transition:leave="hiding" class="custom-toast server-toast" :class="toast.type === 'success' ? 'toast-success' : 'toast-error'">
+			<div class="toast-content">
+				<div class="toast-icon">
+					<svg style="flex-shrink: 0; min-width: 24px; min-height: 24px; display: block;" viewBox="0 0 24 24" width="24" height="24">
+						<circle cx="12" cy="12" r="11" fill="#ffffff" />
+						<path x-show="toast.type === 'success'" d="M7.5 12.5l3 3 6-6" stroke="#15803d" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" fill="none" />
+						<path x-show="toast.type !== 'success'" d="M15 9l-6 6m0-6l6 6" stroke="#dc2626" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" fill="none" />
+					</svg>
+				</div>
+				<div class="toast-message" x-text="toast.message"></div>
+			</div>
+			<span class="toast-close" @click="removeToast(toast.id)">&times;</span>
+		</div>
+	</template>
+
 </div>
-@endif
 
 <style>
 	.custom-toast.server-toast {

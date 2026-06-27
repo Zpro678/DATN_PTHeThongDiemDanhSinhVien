@@ -242,15 +242,15 @@
                     <p class="mt-1 text-body-md text-on-surface-variant">Quản lý lớp học, học viên, buổi điểm danh, báo cáo và cảnh báo chuyên cần.</p>
                 </div>
 
-                <div class="grid grid-cols-1 gap-4 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-6">
+                <div class="grid grid-cols-2 gap-3 md:grid-cols-3 lg:grid-cols-6">
                     @foreach ($adminStats as $stat)
-                        <div class="flex items-center gap-4 rounded-2xl bg-white p-4 shadow-sm ring-1 ring-outline-variant/10 transition-shadow hover:shadow-md">
-                            <div class="{{ $stat['bg'] }} {{ $stat['color'] }} flex h-12 w-12 shrink-0 items-center justify-center rounded-full">
-                                <x-user.icon :name="$stat['icon']" :size="24" />
+                        <div class="flex items-center gap-3 rounded-2xl bg-white p-3 shadow-sm ring-1 ring-outline-variant/10 transition-shadow hover:shadow-md overflow-hidden">
+                            <div class="{{ $stat['bg'] }} {{ $stat['color'] }} flex h-10 w-10 sm:h-12 sm:w-12 shrink-0 items-center justify-center rounded-full">
+                                <x-user.icon :name="$stat['icon']" :size="20" class="sm:w-6 sm:h-6" />
                             </div>
-                            <div>
-                                <p class="text-xs font-semibold text-on-surface-variant">{{ $stat['label'] }}</p>
-                                <h3 class="text-2xl font-bold text-on-surface leading-tight">{{ $stat['value'] }}</h3>
+                            <div class="min-w-0 flex-1">
+                                <p class="truncate text-[11px] sm:text-xs font-semibold text-on-surface-variant" title="{{ $stat['label'] }}">{{ $stat['label'] }}</p>
+                                <h3 class="truncate text-xl sm:text-2xl font-bold text-on-surface leading-tight">{{ $stat['value'] }}</h3>
                             </div>
                         </div>
                     @endforeach
@@ -258,7 +258,7 @@
 
                 <div>
                     <h4 class="mb-4 text-[16px] font-bold text-on-surface">Thao tác nhanh</h4>
-                    <div class="grid grid-cols-2 gap-3 md:grid-cols-3 lg:grid-cols-6">
+                    <div class="grid grid-cols-3 gap-2 sm:gap-3 md:grid-cols-3 lg:grid-cols-6">
                         @foreach ($adminActions as $action)
                             <a href="{{ $action['href'] }}" class="group flex flex-col items-center justify-center rounded-2xl p-3 transition-all hover:bg-surface-container-lowest hover:shadow-sm">
                                 <div class="mb-3 flex h-12 w-12 items-center justify-center rounded-full bg-white text-on-surface-variant shadow-sm ring-1 ring-outline-variant/20 group-hover:text-primary transition-all group-hover:scale-105">
@@ -293,8 +293,6 @@
                                         <span class="font-bold">{{ $class['code'] }}</span>
                                         <span class="h-1 w-1 rounded-full bg-outline-variant"></span>
                                         <span>{{ $class['subject_code'] }}</span>
-                                        <span class="h-1 w-1 rounded-full bg-outline-variant"></span>
-                                        <span>{{ $class['semester'] }}</span>
                                     </p>
                                     <div class="mb-6 space-y-3 rounded-2xl border border-outline-variant/20 bg-surface-container-low p-4">
                                         <div class="flex justify-between text-sm text-on-surface">
@@ -302,7 +300,6 @@
                                                 <x-user.icon name="users" :size="16" class="text-on-surface-variant" />
                                                 {{ $class['students'] }} học viên
                                             </span>
-                                            <span class="font-bold text-on-surface-variant">{{ $class['lessons'] }} tiết</span>
                                         </div>
                                         <div>
                                             <div class="mb-1 flex justify-between text-sm">
@@ -408,7 +405,7 @@
 
                 <div>
                     <h4 class="mb-4 text-[16px] font-bold text-on-surface">Thao tác nhanh</h4>
-                    <div class="grid grid-cols-2 gap-3 md:grid-cols-4 lg:grid-cols-8">
+                    <div class="grid grid-cols-3 gap-2 sm:gap-3 md:grid-cols-4 lg:grid-cols-8">
                         @foreach ($studentActions as $action)
                             @if(isset($action['action']))
                                 <button type="button" x-on:click="{{ $action['action'] }}" class="group flex flex-col items-center justify-center rounded-2xl p-3 transition-all hover:bg-surface-container-lowest hover:shadow-sm">
@@ -446,8 +443,6 @@
                                     <p class="mb-4 text-sm text-on-surface-variant">Giảng viên: <span class="font-bold">{{ $class['teacher'] }}</span></p>
                                     <p class="mb-4 flex items-center gap-2 text-sm text-on-surface-variant">
                                         <span class="font-bold">{{ $class['code'] }}</span>
-                                        <span class="h-1 w-1 rounded-full bg-outline-variant"></span>
-                                        <span>{{ $class['semester'] ?? 'Chưa cập nhật' }}</span>
                                     </p>
                                     <div class="mb-6 space-y-3 rounded-2xl border border-outline-variant/20 bg-surface-container-low p-4">
                                         <div class="flex justify-between text-sm text-on-surface">
@@ -514,14 +509,11 @@
                             <span class="mb-2 block text-sm font-bold text-on-surface">Tên lớp / môn học *</span>
                             <input type="text" class="w-full rounded-xl border border-outline-variant/30 bg-surface-container-lowest px-4 py-3 outline-none transition-all focus:border-primary focus:ring-2 focus:ring-primary/20" placeholder="Nhập tên môn học">
                         </label>
-                        <label class="block">
+                        <label class="col-span-2 block">
                             <span class="mb-2 block text-sm font-bold text-on-surface">Mã môn học</span>
                             <input type="text" class="w-full rounded-xl border border-outline-variant/30 bg-surface-container-lowest px-4 py-3 outline-none transition-all focus:border-primary focus:ring-2 focus:ring-primary/20" placeholder="WEB301">
                         </label>
-                        <label class="block">
-                            <span class="mb-2 block text-sm font-bold text-on-surface">Học kỳ</span>
-                            <input type="text" class="w-full rounded-xl border border-outline-variant/30 bg-surface-container-lowest px-4 py-3 outline-none transition-all focus:border-primary focus:ring-2 focus:ring-primary/20" placeholder="HK2 2025-2026">
-                        </label>
+
                         <label class="col-span-2 block">
                             <span class="mb-2 block text-sm font-bold text-on-surface">Mô tả lớp học</span>
                             <textarea class="h-24 w-full resize-none rounded-xl border border-outline-variant/30 bg-surface-container-lowest px-4 py-3 outline-none transition-all focus:border-primary focus:ring-2 focus:ring-primary/20" placeholder="Nhập mô tả..."></textarea>

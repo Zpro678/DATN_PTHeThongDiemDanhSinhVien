@@ -98,7 +98,7 @@
             </h1>
         </div>
 
-        <div class="flex shrink-0 flex-col gap-3 sm:flex-row xl:col-span-4 xl:justify-end">
+        <div class="hidden md:flex shrink-0 flex-col gap-3 sm:flex-row xl:col-span-4 xl:justify-end">
             <button type="button" wire:click="saveConfig" class="inline-flex items-center justify-center rounded-xl border border-slate-200 bg-white px-6 py-3 text-sm font-bold text-slate-700 shadow-sm transition-all hover:border-slate-300 hover:bg-slate-50 hover:shadow">
                 Lưu cấu hình
             </button>
@@ -510,5 +510,16 @@
         </aside>
     </div>
 
+    {{-- Mobile action buttons (bottom of page) --}}
+    <div class="flex md:hidden flex-col gap-3 mt-4">
+        <button type="button" wire:click="saveConfig" class="inline-flex items-center justify-center rounded-xl border border-slate-200 bg-white px-6 py-3.5 text-sm font-bold text-slate-700 shadow-sm transition-all hover:border-slate-300 hover:bg-slate-50 hover:shadow">
+            Lưu cấu hình
+        </button>
+
+        <button type="submit" form="qr-setup-form" class="group inline-flex items-center justify-center gap-2 rounded-xl bg-gradient-to-r from-blue-600 to-indigo-600 px-8 py-3.5 text-sm font-bold text-white shadow-lg shadow-blue-500/30 transition-all hover:from-blue-700 hover:to-indigo-700">
+            {{ $editSessionId ? 'Cập nhật thiết lập' : 'Bắt đầu phát mã' }}
+            <x-user.icon name="qr-code" :size="18" />
+        </button>
+    </div>
 
 </div>

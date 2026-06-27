@@ -25,11 +25,12 @@ class ImportStudentsChunkJob implements ShouldQueue
     protected int $emailColIndex;
     protected int $authUserId;
     protected ?string $importToken;
+    protected bool $syncAttendance;
 
     /**
      * Create a new job instance.
      */
-    public function __construct(int $classId, array $rows, array $dateHeaders, int $emailColIndex, int $authUserId, ?string $importToken = null)
+    public function __construct(int $classId, array $rows, array $dateHeaders, int $emailColIndex, int $authUserId, ?string $importToken = null, bool $syncAttendance = false)
     {
         $this->classId = $classId;
         $this->rows = $rows;
@@ -37,6 +38,7 @@ class ImportStudentsChunkJob implements ShouldQueue
         $this->emailColIndex = $emailColIndex;
         $this->authUserId = $authUserId;
         $this->importToken = $importToken;
+        $this->syncAttendance = $syncAttendance;
     }
 
     /**
@@ -47,6 +49,11 @@ class ImportStudentsChunkJob implements ShouldQueue
         $courseClass = CourseClass::with('owner')->find($this->classId);
         if (!$courseClass) {
             return;
+        }
+
+        $allSessionIds = [];
+        if ($this->syncAttendance) {
+            $allSessionIds = ClassSession::where('class_id', $this->classId)->pluck('id')->all();
         }
 
         $maxStudents = $courseClass->owner
@@ -129,6 +136,7 @@ class ImportStudentsChunkJob implements ShouldQueue
             }
 
             // Xử lý điểm danh
+            $processedSessionIds = [];
             foreach ($this->dateHeaders as $colIndex => $sessionId) {
                 $statusChar = mb_strtolower(trim((string) ($row[$colIndex] ?? '')));
                 
@@ -138,9 +146,9 @@ class ImportStudentsChunkJob implements ShouldQueue
                 } elseif ($statusChar === 'm') {
                     $status = 'late';
                 } elseif ($statusChar === 'v') {
-                    $status = 'absent';
+                    $status = 'absent';   // vắng không phép (ký hiệu theo công thức)
                 } elseif ($statusChar === 'p') {
-                    $status = 'excused';
+                    $status = 'excused';  // vắng có phép
                 } elseif ($statusChar === '') {
                     continue;
                 }
@@ -152,6 +160,23 @@ class ImportStudentsChunkJob implements ShouldQueue
                     'status' => $status,
                     'is_verified' => $member->user_id !== null,
                 ]);
+                
+                $processedSessionIds[] = $sessionId;
+            }
+
+            // Đồng bộ các buổi điểm danh đã có nhưng không được cấu hình từ cột trong Excel
+            if ($this->syncAttendance) {
+                foreach ($allSessionIds as $sessId) {
+                    if (!in_array($sessId, $processedSessionIds)) {
+                        AttendanceRecord::firstOrCreate([
+                            'class_session_id' => $sessId,
+                            'class_member_id' => $member->id,
+                        ], [
+                            'status' => 'pending',
+                            'is_verified' => $member->user_id !== null,
+                        ]);
+                    }
+                }
             }
         }
 

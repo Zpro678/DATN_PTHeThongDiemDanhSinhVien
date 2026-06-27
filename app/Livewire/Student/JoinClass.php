@@ -46,6 +46,12 @@ class JoinClass extends Component
             'class_code' => 'required|string',
             'student_code' => 'required|string|max:50',
             'full_name' => 'required|string|max:255',
+        ], [
+            'class_code.required' => 'Vui lòng nhập mã lớp.',
+            'student_code.required' => 'Vui lòng nhập mã học viên.',
+            'student_code.max' => 'Mã học viên không được vượt quá 50 ký tự.',
+            'full_name.required' => 'Vui lòng nhập họ và tên.',
+            'full_name.max' => 'Họ và tên không được vượt quá 255 ký tự.',
         ]);
 
         $courseClass = CourseClass::where('code', $this->class_code)->first();

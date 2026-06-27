@@ -2,18 +2,22 @@
 
     {{-- Header --}}
     <div class="mb-6 flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
-        <div>
-            <h1 class="flex items-center gap-3 text-2xl font-bold uppercase text-slate-800">
-                <span class="flex h-10 w-10 items-center justify-center rounded-xl bg-blue-50 text-blue-600">
+        <div class="flex items-center justify-between w-full sm:w-auto gap-4">
+            <h1 class="flex items-center gap-3 text-2xl font-bold uppercase text-slate-800 min-w-0">
+                <span class="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-blue-50 text-blue-600">
                     <x-user.icon name="book-open" :size="20" />
                 </span>
-                {{ $class->name }}
+                <span class="truncate">{{ $class->name }}</span>
             </h1>
+            <a href="{{ route('managed-classes') }}" class="inline-flex sm:hidden shrink-0 items-center justify-center gap-2 rounded-lg bg-blue-600 px-3 py-2 text-sm font-medium text-white transition-colors hover:bg-blue-700">
+                <x-user.icon name="arrow-left" :size="16" />
+                Trở về
+            </a>
         </div>
-        <div class="flex flex-wrap items-center gap-2">
+        <div class="grid grid-cols-2 gap-2 sm:flex sm:flex-wrap sm:items-center">
             <button
                 type="button"
-                class="inline-flex items-center gap-2 rounded-lg border border-slate-200 bg-white px-4 py-2 text-sm font-medium text-slate-600 transition-colors hover:bg-slate-50 hover:text-slate-900"
+                class="inline-flex w-full sm:w-auto justify-center items-center gap-2 rounded-lg border border-slate-200 bg-white px-4 py-2 text-sm font-medium text-slate-600 transition-colors hover:bg-slate-50 hover:text-slate-900"
                 wire:click="openImport"
             >
                 <x-user.icon name="upload" :size="16" />
@@ -22,14 +26,14 @@
             <a
                 href="{{ route('lecturer.students.index', ['class_id' => $class->id, 'action' => 'export']) }}"
                 wire:navigate
-                class="inline-flex items-center gap-2 rounded-lg border border-slate-200 bg-white px-4 py-2 text-sm font-medium text-slate-600 transition-colors hover:bg-slate-50 hover:text-slate-900"
+                class="inline-flex w-full sm:w-auto justify-center items-center gap-2 rounded-lg border border-slate-200 bg-white px-4 py-2 text-sm font-medium text-slate-600 transition-colors hover:bg-slate-50 hover:text-slate-900"
             >
                 <x-user.icon name="download" :size="16" />
                 <span>Xuất Excel</span>
             </a>
             <button
                 type="button"
-                class="inline-flex items-center gap-2 rounded-lg border border-slate-200 bg-white px-4 py-2 text-sm font-medium text-slate-600 transition-colors hover:bg-slate-50 hover:text-slate-900"
+                class="inline-flex w-full sm:w-auto justify-center items-center gap-2 rounded-lg border border-slate-200 bg-white px-4 py-2 text-sm font-medium text-slate-600 transition-colors hover:bg-slate-50 hover:text-slate-900"
                 x-on:click="showShareModal = true"
             >
                 <x-user.icon name="send" :size="16" />
@@ -38,12 +42,12 @@
             <a
                 href="{{ route('lecturer.classes.settings', $class) }}"
                 wire:navigate
-                class="inline-flex items-center gap-2 rounded-lg border border-slate-200 bg-white px-4 py-2 text-sm font-medium text-slate-600 transition-colors hover:bg-slate-50 hover:text-slate-900"
+                class="inline-flex w-full sm:w-auto justify-center items-center gap-2 rounded-lg border border-slate-200 bg-white px-4 py-2 text-sm font-medium text-slate-600 transition-colors hover:bg-slate-50 hover:text-slate-900"
             >
                 <x-user.icon name="settings" :size="18" />
                 Cài đặt lớp
             </a>
-            <a href="{{ route('managed-classes') }}" class="inline-flex items-center gap-2 rounded-lg bg-blue-600 px-4 py-2 text-sm font-medium text-white transition-colors hover:bg-blue-700">
+            <a href="{{ route('managed-classes') }}" class="hidden sm:inline-flex w-full sm:w-auto justify-center items-center gap-2 rounded-lg bg-blue-600 px-4 py-2 text-sm font-medium text-white transition-colors hover:bg-blue-700">
                 <x-user.icon name="arrow-left" :size="16" />
                 Trở về
             </a>
@@ -67,41 +71,32 @@
                 @endif
             </div>
             
-            <div class="grid grid-cols-2 gap-x-6 gap-y-8 sm:grid-cols-4 pr-16 sm:pr-0">
-                <div>
+            <div class="grid grid-cols-2 gap-x-4 gap-y-6 sm:grid-cols-4">
+                <div class="min-w-0">
                     <span class="text-sm text-slate-500">Sinh viên</span>
-                    <p class="mt-1 text-[28px] font-bold text-slate-800 leading-none">{{ $studentsCount }}</p>
+                    <p class="mt-1 text-2xl sm:text-[28px] font-bold text-slate-800 leading-none">{{ $studentsCount }}</p>
                 </div>
-                <div>
+                <div class="min-w-0">
                     <span class="text-sm text-slate-500">Điểm danh</span>
-                    <p class="mt-1 text-[28px] font-bold text-slate-800 leading-none">{{ $sessionsCompleted }}<span class="text-base font-medium text-slate-500">/{{ $sessionsCount }}</span></p>
+                    <p class="mt-1 text-2xl sm:text-[28px] font-bold text-slate-800 leading-none">{{ $sessionsCompleted }} <span class="text-base font-medium text-slate-500">buổi</span></p>
                 </div>
-                <div>
-                    <span class="text-sm text-slate-500">Tiến độ</span>
-                    <p class="mt-1 text-[28px] font-bold text-slate-800 leading-none">{{ $sessionsCount > 0 ? round(($sessionsCompleted / $sessionsCount) * 100) : 0 }}%</p>
-                </div>
-                <div>
-                    <span class="text-sm text-slate-500">Tổng số tiết</span>
-                    <p class="mt-1 text-[28px] font-bold text-slate-800 leading-none">{{ $class->total_lessons }} <span class="text-base font-medium text-slate-500">tiết</span></p>
+                <div class="min-w-0">
+                    <span class="text-sm text-slate-500">Mã lớp</span>
+                    <p class="mt-1 text-base font-bold text-slate-800 truncate" title="{{ $class->code }}">{{ $class->code }}</p>
                 </div>
 
-                @if($class->semester)
-                <div>
-                    <span class="text-sm text-slate-500">Học kỳ</span>
-                    <p class="mt-1 text-base font-bold text-slate-800">{{ $class->semester }}</p>
-                </div>
-                @endif
-                <div>
-                    <span class="text-sm text-slate-500">Mã lớp</span>
-                    <p class="mt-1 text-base font-bold text-slate-800">{{ $class->code }}</p>
-                </div>
                 @if($class->subject_code)
-                <div>
+                <div class="min-w-0">
                     <span class="text-sm text-slate-500">Mã học phần</span>
-                    <p class="mt-1 text-base font-bold text-slate-800">{{ $class->subject_code }}</p>
+                    <p class="mt-1 text-base font-bold text-slate-800 truncate" title="{{ $class->subject_code }}">{{ $class->subject_code }}</p>
                 </div>
+                @else
+                <div class="min-w-0 hidden sm:block"></div>
                 @endif
-                <div class="flex items-end sm:justify-end">
+
+
+
+                <div class="col-span-2 sm:col-span-1 flex items-end sm:justify-end">
                     <a href="{{ route('lecturer.classes.attendance', $class->id) }}" wire:navigate class="inline-flex w-full sm:w-auto whitespace-nowrap items-center justify-center gap-2 rounded-lg border border-slate-300 bg-slate-200 px-4 py-2 text-sm font-bold text-slate-800 transition-colors hover:bg-slate-300 hover:text-slate-900 shadow-sm">
                         <x-user.icon name="clock" :size="16" />
                         Lịch sử điểm danh
@@ -142,12 +137,12 @@
         </div>
     </div>
 
-    {{-- Danh sách sinh viên --}}
+    {{-- Danh sách học viên --}}
     <div class="mt-8 mb-4 flex items-center justify-between px-1">
-        <h2 class="text-lg font-bold text-slate-800">Danh sách sinh viên ({{ $studentsCount }})</h2>
-        <a href="{{ route('lecturer.students.index', ['class_id' => $class->id]) }}" wire:navigate class="relative inline-flex items-center gap-2 rounded-lg bg-blue-50 px-3 py-1.5 text-sm font-bold text-blue-600 transition-colors hover:bg-blue-100">
+        <h2 class="text-lg font-bold text-slate-800">Danh sách học viên ({{ $studentsCount }})</h2>
+        <a href="{{ route('lecturer.students.index', ['class_id' => $class->id, 'status' => 'pending']) }}" wire:navigate class="relative inline-flex items-center gap-2 rounded-lg bg-blue-50 px-3 py-1.5 text-sm font-bold text-blue-600 transition-colors hover:bg-blue-100">
             <x-user.icon name="user-check" :size="16" />
-            Duyệt sinh viên
+            Duyệt học viên
             @if($pendingMembersCount > 0)
                 <span class="absolute -right-2 -top-2 flex h-5 w-5 items-center justify-center rounded-full bg-rose-500 text-[10px] font-bold text-white shadow-sm ring-2 ring-white">
                     {{ $pendingMembersCount }}
@@ -162,12 +157,12 @@
                 <div class="mb-4 flex h-14 w-14 items-center justify-center rounded-full bg-slate-100 text-slate-400">
                     <x-user.icon name="users" :size="28" />
                 </div>
-                <h3 class="text-base font-bold text-slate-700">Chưa có sinh viên</h3>
+                <h3 class="text-base font-bold text-slate-700">Chưa học viên</h3>
                 <p class="mt-1 text-sm text-slate-500">Lớp học này hiện chưa có sinh viên nào.</p>
             </div>
         @else
             <div class="overflow-x-auto">
-                <table class="w-full table-fixed text-left text-sm whitespace-nowrap">
+                <table class="w-full min-w-[750px] table-fixed text-left text-sm whitespace-nowrap">
                     <thead class="border-b border-slate-200 bg-slate-50 text-sm uppercase text-black">
                         <tr>
                             <th scope="col" class="w-[15%] px-6 py-4 font-bold text-center">MSSV</th>
@@ -262,9 +257,9 @@
                             <x-user.icon name="upload" :size="24" />
                         </div>
                         <div>
-                            <h3 class="text-[20px] font-bold text-slate-800">Import danh sách sinh viên</h3>
+                            <h3 class="text-[20px] font-bold text-slate-800">Import danh sách học viên</h3>
                             <p class="mt-1 text-[14px] text-slate-500">
-                                Tải lên tệp Excel hoặc CSV chứa danh sách sinh viên. Bạn có thể tải: 
+                                Tải lên tệp Excel hoặc CSV chứa danh sách học viên. Bạn có thể tải: 
                                 <button type="button" wire:click="downloadBasicTemplate" class="font-bold text-blue-600 hover:underline">Mẫu cơ bản</button> hoặc 
                                 <button type="button" wire:click="downloadFullTemplate" class="font-bold text-blue-600 hover:underline">Mẫu đầy đủ</button>.
                             </p>

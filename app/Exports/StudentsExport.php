@@ -2,10 +2,7 @@
 
 namespace App\Exports;
 
-use App\Models\ClassMember;
 use App\Models\CourseClass;
-use App\Services\LectureManageStudentService;
-use Illuminate\Database\Eloquent\Builder;
 use Maatwebsite\Excel\Concerns\Exportable;
 use Maatwebsite\Excel\Concerns\WithMultipleSheets;
 
@@ -21,11 +18,11 @@ class StudentsExport implements WithMultipleSheets
 
     public function __construct(int $ownerUserId, string $classFilter, string $statusFilter, string $search, string $formula)
     {
-        $this->ownerUserId = $ownerUserId;
-        $this->classFilter = $classFilter;
+        $this->ownerUserId  = $ownerUserId;
+        $this->classFilter  = $classFilter;
         $this->statusFilter = $statusFilter;
-        $this->search = $search;
-        $this->formula = $formula;
+        $this->search       = $search;
+        $this->formula      = $formula;
     }
 
     public function sheets(): array
@@ -40,10 +37,13 @@ class StudentsExport implements WithMultipleSheets
                 $sheets[] = new StudentsSheet($this->ownerUserId, 'all', $this->statusFilter, $this->search, $this->formula);
             } else {
                 foreach ($classes as $class) {
-                    $sheets[] = new StudentsSheet($this->ownerUserId, (string)$class->id, $this->statusFilter, $this->search, $this->formula);
+                    $sheets[] = new StudentsSheet($this->ownerUserId, (string) $class->id, $this->statusFilter, $this->search, $this->formula);
                 }
             }
         }
+
+        // Thêm sheet chú thích ký hiệu (giống file mẫu)
+        $sheets[] = new LegendSheet();
 
         return $sheets;
     }

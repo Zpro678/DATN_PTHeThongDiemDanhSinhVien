@@ -48,25 +48,6 @@
                     </button>
                 @endforeach
             </div>
-
-            <!-- Semester Filter -->
-            <label class="relative flex shrink-0 items-center group">
-                <select
-                    wire:model.live="semesterFilter"
-                    class="min-w-[180px] cursor-pointer appearance-none bg-none rounded-full bg-white py-3.5 pl-12 pr-10 text-sm font-bold text-on-surface shadow-sm ring-1 ring-outline-variant/20 outline-none transition-all hover:shadow-md focus:ring-2 focus:ring-primary/30"
-                >
-                    <option value="Tất cả học kỳ">Tất cả học kỳ</option>
-                    @foreach($semesters as $sem)
-                        <option value="{{ $sem }}">{{ $sem }}</option>
-                    @endforeach
-                </select>
-                <div class="pointer-events-none absolute left-5 flex items-center justify-center text-on-surface-variant transition-colors group-hover:text-primary">
-                    <x-user.icon name="filter" :size="18" />
-                </div>
-                <div class="pointer-events-none absolute right-4 flex items-center justify-center text-on-surface-variant">
-                    <x-user.icon name="chevron-down" :size="16" />
-                </div>
-            </label>
         </div>
     </section>
 
@@ -126,7 +107,7 @@
                 'ring-1 ring-outline-variant/20 shadow-md hover:shadow-xl opacity-80 hover:opacity-100' => $isEnded,
             ])>
                 {{-- Phủ 1 link tàng hình lên toàn bộ thẻ để click được cả thẻ --}}
-                <a href="{{ route('lecturer.classes.show', $class->id) }}" class="absolute inset-0 z-0"><span class="sr-only">Xem chi tiết lớp</span></a>
+                <a href="{{ route('lecturer.classes.show', $class->id) }}" class="absolute inset-0 z-10"><span class="sr-only">Xem chi tiết lớp</span></a>
 
                 <!-- Classroom-style Header -->
                 <div @class([
@@ -140,15 +121,13 @@
                                 <a href="{{ route('lecturer.classes.show', $class->id) }}">{{ $class->name }}</a>
                             </h4>
                             <div class="mt-1 flex items-center gap-2 text-sm text-white/90">
-                                <span>{{ $class->semester ?? 'Chưa xác định' }}</span>
-                                <span class="h-1 w-1 rounded-full bg-white/50"></span>
                                 <span>{{ $class->subject_code ?? 'N/A' }}</span>
                             </div>
                         </div>
 
                         <!-- Dropdown Menu -->
-                        <div class="absolute right-2 top-2 z-10" x-data="{ open: false }">
-                            <button type="button" x-on:click="open = ! open" class="rounded-full p-2 text-white transition-colors hover:bg-white/20 relative z-10">
+                        <div class="absolute right-2 top-2 z-20" x-data="{ open: false }">
+                            <button type="button" x-on:click="open = ! open" class="rounded-full p-2 text-white transition-colors hover:bg-white/20 relative z-20">
                                 <x-user.icon name="more-vertical" :size="20" />
                             </button>
                             <div x-cloak x-show="open" x-on:click.outside="open = false" class="absolute right-0 top-full z-50 mt-1 w-44 rounded-xl border border-outline-variant/20 bg-white py-2 shadow-lg">
@@ -219,9 +198,9 @@
                 </div>
 
                 <!-- Footer Actions -->
-                <div class="flex items-center justify-end gap-1 px-4 py-3 bg-surface-container-lowest/50">
+                <div class="flex items-center justify-end gap-1 px-4 py-3 bg-surface-container-lowest/50 relative z-20">
                     {{-- Nút Copy mã lớp --}}
-                    <div x-data="{ copied: false }" class="relative">
+                    <div x-data="{ copied: false }" class="relative z-20">
                         <button
                             type="button"
                             title="Sao chép mã lớp: {{ $class->code }}"

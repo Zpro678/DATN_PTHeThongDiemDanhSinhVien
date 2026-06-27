@@ -148,6 +148,8 @@ Route::middleware(['auth', 'verified', 'user.route'])->group(function () {
 
 Route::middleware('auth')->group(function () {
     Route::get('/profile', \App\Livewire\Profile\EditProfile::class)->name('profile.edit');
+    Route::patch('/profile', [\App\Http\Controllers\ProfileController::class, 'update'])->name('profile.update');
+    Route::delete('/profile', [\App\Http\Controllers\ProfileController::class, 'destroy'])->name('profile.destroy');
     Route::get('/support', \App\Livewire\User\SupportPage::class)->name('support');
 
     // Đánh dấu tất cả thông báo của người dùng hiện tại là đã đọc.

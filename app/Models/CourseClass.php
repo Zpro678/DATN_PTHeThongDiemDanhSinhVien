@@ -96,8 +96,7 @@ class CourseClass extends Model
     public static function generateUniqueCode(string $subjectCode = '', string $semester = '', ?int $excludeId = null): string
     {
         $subPart = strtoupper(substr(preg_replace('/[^A-Za-z0-9]/', '', $subjectCode), 0, 3));
-        $semPart = strtoupper(substr(preg_replace('/[^A-Za-z0-9]/', '', $semester), 0, 3));
-        $prefix = ($subPart ?: 'CLS').($semPart ?: 'SEM');
+        $prefix = ($subPart ?: 'CLS');
 
         $attempts = 0;
         do {

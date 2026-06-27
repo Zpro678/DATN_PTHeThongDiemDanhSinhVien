@@ -20,7 +20,7 @@
                 <p class="mt-1 ml-[52px] text-sm text-on-surface-variant">Chỉnh sửa thông tin và thiết lập cho lớp <span class="font-bold text-primary">{{ $courseClass->code }}</span></p>
             </div>
             <a href="{{ route('lecturer.classes.show', $courseClass) }}" wire:navigate
-               class="inline-flex items-center gap-2 rounded-xl border border-outline-variant/30 bg-white px-4 py-2 text-sm font-bold text-on-surface-variant transition-colors hover:bg-surface-container">
+               class="inline-flex shrink-0 whitespace-nowrap items-center gap-2 rounded-xl border border-outline-variant/30 bg-white px-4 py-2 text-sm font-bold text-on-surface-variant transition-colors hover:bg-surface-container">
                 <x-user.icon name="arrow-left" :size="16" />
                 Quay lại
             </a>
@@ -55,17 +55,13 @@
                             @error('name') <span class="text-error text-xs mt-1 block">{{ $message }}</span> @enderror
                         </label>
 
-                        <label class="block">
+                        <label class="col-span-1 md:col-span-2 block">
                             <span class="mb-2 block text-sm font-bold text-on-surface">Mã môn học <span class="text-xs font-normal text-on-surface-variant">(Tùy chọn)</span></span>
                             <input type="text" wire:model="subjectCode" class="w-full rounded-xl border border-outline-variant/30 bg-surface-container-lowest px-4 py-3 outline-none uppercase transition-all focus:border-primary focus:ring-2 focus:ring-primary/20" placeholder="VD: WEB301">
                             @error('subjectCode') <span class="text-error text-xs mt-1 block">{{ $message }}</span> @enderror
                         </label>
 
-                        <label class="block">
-                            <span class="mb-2 block text-sm font-bold text-on-surface">Học kỳ <span class="text-xs font-normal text-on-surface-variant">(Tùy chọn)</span></span>
-                            <input type="text" wire:model="semester" class="w-full rounded-xl border border-outline-variant/30 bg-surface-container-lowest px-4 py-3 outline-none transition-all focus:border-primary focus:ring-2 focus:ring-primary/20" placeholder="VD: HK2 2025-2026">
-                            @error('semester') <span class="text-error text-xs mt-1 block">{{ $message }}</span> @enderror
-                        </label>
+
 
                         <label class="col-span-1 md:col-span-2 block">
                             <span class="mb-2 block text-sm font-bold text-on-surface">Mô tả lớp học <span class="text-xs font-normal text-on-surface-variant">(Tùy chọn)</span></span>
@@ -109,14 +105,7 @@
                         <h2 class="text-base font-bold text-on-surface">Cấu hình điểm danh</h2>
                     </div>
                     <div class="p-6 space-y-5">
-                        <div class="grid grid-cols-1 sm:grid-cols-3 gap-5">
-
-                            {{-- Tổng số tiết --}}
-                            <label class="block">
-                                <span class="mb-2 block text-sm font-bold text-on-surface">Tổng số tiết <span class="text-error">*</span></span>
-                                <input type="number" wire:model="totalLessons" class="w-full rounded-xl border border-outline-variant/30 bg-surface-container-lowest px-4 py-3 outline-none transition-all focus:border-primary focus:ring-2 focus:ring-primary/20">
-                                @error('totalLessons') <span class="text-error text-xs mt-1 block">{{ $message }}</span> @enderror
-                            </label>
+                        <div class="grid grid-cols-1 sm:grid-cols-2 gap-5">
 
                             {{-- Ngưỡng đi muộn - Custom Dropdown --}}
                             <div x-data="{
