@@ -16,11 +16,9 @@
     x-data="{
         step: @entangle('step').live,
         selectedClassId: @entangle('classId').live,
-        startLesson: @entangle('startLesson').live,
-        endLesson: @entangle('endLesson').live,
-        startTime: @entangle('startTime').live,
-        endTime: @entangle('endTime').live,
-        
+        meetingEndTime: @entangle('meetingEndTime').live,
+        timeOpen: false,
+
         // QR variables
         qrRefreshRate: @entangle('qrRefreshRate').live,
         openMinutes: @entangle('durationMinutes').live,
@@ -30,38 +28,48 @@
         deviceCheck: @entangle('deviceCheck').live,
         
         classDropdownOpen: false,
-        startLessonDropdownOpen: false,
-        endLessonDropdownOpen: false,
         classes: @js($classOptions),
-        
+
         get selectedClass() {
             return this.classes.find((item) => String(item.id) === String(this.selectedClassId)) || this.classes[0] || {};
         },
-        get periodLabel() {
-            return `Tiết ${this.startLesson} - ${this.endLesson}`;
-        },
         get timeRangeLabel() {
-            return `${this.startTime || '--:--'} - ${this.endTime || '--:--'}`;
-        },
-        get durationMinutesStr() {
-            if (! this.startTime || ! this.endTime) {
-                return 0;
-            }
-
-            const [startHour, startMinute] = this.startTime.split(':').map(Number);
-            const [endHour, endMinute] = this.endTime.split(':').map(Number);
-            const start = (startHour * 60) + startMinute;
-            const end = (endHour * 60) + endMinute;
-
-            return end > start ? end - start : 0;
+            return this.meetingEndTime ? ('Kết thúc lúc ' + this.meetingEndTime) : 'Chưa đặt giờ';
         },
         get durationLabel() {
-            return this.durationMinutesStr ? `${this.durationMinutesStr} phút` : 'Chưa xác định';
-        },
-        syncEndLesson() {
-            if (Number(this.endLesson) < Number(this.startLesson)) {
-                this.endLesson = Number(this.startLesson);
+            if (! this.meetingEndTime) {
+                return 'Chưa xác định';
             }
+            const now = new Date();
+            const [endHour, endMinute] = this.meetingEndTime.split(':').map(Number);
+            const end = new Date(now);
+            end.setHours(endHour, endMinute, 0, 0);
+            const diff = Math.round((end - now) / 60000);
+            if (diff <= 0) {
+                return 'Giờ kết thúc đã qua';
+            }
+            return 'Mở điểm danh ~' + diff + ' phút';
+        },
+        get endHour() {
+            return parseInt((this.meetingEndTime || '00:00').split(':')[0]) || 0;
+        },
+        get endMinute() {
+            return parseInt((this.meetingEndTime || '00:00').split(':')[1]) || 0;
+        },
+        get endMeridiem() {
+            return this.endHour < 12 ? 'SA' : 'CH';
+        },
+        applyTime(h, m) {
+            const hh = String(((h % 24) + 24) % 24).padStart(2, '0');
+            const mm = String(((m % 60) + 60) % 60).padStart(2, '0');
+            this.meetingEndTime = hh + ':' + mm;
+        },
+        addPreset(mins) {
+            const d = new Date();
+            d.setSeconds(0, 0);
+            d.setMinutes(d.getMinutes() + mins);
+            const rounded = Math.round(d.getMinutes() / 5) * 5;
+            this.applyTime(d.getHours() + Math.floor(rounded / 60), rounded % 60);
         },
         initGps() {
             if (this.gpsEnabled && (!this.gpsLatitude || !this.gpsLongitude)) {
@@ -126,7 +134,7 @@
     <div x-show="step === 1" x-transition.opacity.duration.300ms class="grid grid-cols-1 gap-8 lg:grid-cols-12">
         <div class="lg:col-span-8">
             <div class="relative h-full overflow-visible rounded-[2rem] border border-slate-100 bg-white p-8 shadow-[0_8px_30px_rgb(0,0,0,0.04)] sm:p-10">
-                <form id="step1-form" wire:submit="createSession" class="relative z-10 space-y-8">
+                <form id="step1-form" wire:submit.prevent class="relative z-10 space-y-8">
                     <div class="grid grid-cols-1 gap-x-6 gap-y-8 md:grid-cols-2">
                         <div class="group space-y-3">
                             <label for="class_id" class="flex items-center gap-2 text-[13px] font-bold uppercase tracking-wider text-slate-600">
@@ -208,175 +216,95 @@
                             @error('name')<span class="text-sm font-medium text-red-600">{{ $message }}</span>@enderror
                         </div>
 
-                        <div class="group space-y-3">
-                            <label for="session_date" class="flex items-center gap-2 text-[13px] font-bold uppercase tracking-wider text-slate-600">
-                                Ngày học <span class="text-lg leading-none text-red-500">*</span>
-                            </label>
-                            <div class="relative">
-                                <div class="pointer-events-none absolute inset-y-0 left-0 flex items-center pl-4">
-                                    <x-user.icon name="calendar" :size="20" class="text-slate-400 transition-colors group-focus-within:text-blue-500" />
-                                </div>
-                                @if($sessionId || $cloneSessionId)
-                                    <input
-                                        id="session_date"
-                                        type="date"
-                                        readonly
-                                        value="{{ $date }}"
-                                        class="w-full cursor-default rounded-2xl border-2 border-slate-100 bg-slate-50 py-4 pl-12 pr-4 font-semibold text-slate-700 outline-none"
-                                    >
-                                @else
-                                    <input
-                                        id="session_date"
-                                        wire:model="date"
-                                        type="date"
-                                        class="w-full rounded-2xl border-2 border-transparent bg-slate-50 py-4 pl-12 pr-4 font-semibold text-slate-900 shadow-sm outline-none transition-all focus:border-blue-500 focus:bg-white focus:ring-4 focus:ring-blue-500/10"
-                                        required
-                                    >
-                                @endif
-                            </div>
-                            @error('date')<span class="text-sm font-medium text-red-600">{{ $message }}</span>@enderror
-                        </div>
-
-                        <div class="group space-y-4 md:col-span-2">
+                        <div class="group space-y-3 md:col-span-2">
                             <div class="flex items-center justify-between gap-3">
-                                <label class="flex items-center gap-2 text-[13px] font-bold uppercase tracking-wider text-slate-600">
-                                    Thời gian (Tiết) <span class="text-lg leading-none text-red-500">*</span>
+                                <label for="meeting_end_time" class="flex items-center gap-2 text-[13px] font-bold uppercase tracking-wider text-slate-600">
+                                    Giờ kết thúc điểm danh <span class="text-lg leading-none text-red-500">*</span>
                                 </label>
-                                <span class="rounded-full bg-blue-50 px-3 py-1 text-xs font-bold text-blue-600" x-text="periodLabel + ' • ' + timeRangeLabel"></span>
+                                <span class="rounded-full bg-blue-50 px-3 py-1 text-xs font-bold text-blue-600" x-text="timeRangeLabel"></span>
                             </div>
 
-                            <div class="grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-4">
-                                <div class="space-y-2">
-                                    <label class="block text-[11px] font-bold uppercase tracking-wider text-slate-500">Tiết bắt đầu</label>
-                                    <div class="relative" x-data="{ position: 'bottom' }" @click.outside="startLessonDropdownOpen = false">
-                                        @if($sessionId || $cloneSessionId)
-                                            <div class="flex w-full cursor-default items-center justify-between gap-3 rounded-2xl border-2 border-slate-100 bg-slate-50 py-4 pl-4 pr-4 text-left font-semibold text-slate-700">
-                                                <span>Tiết {{ $startLesson }}</span>
-                                            </div>
-                                        @else
-                                            <button
-                                                type="button"
-                                                x-ref="btnStart"
-                                                class="flex w-full items-center justify-between gap-3 rounded-2xl border-2 border-transparent bg-slate-50 py-4 pl-4 pr-4 text-left font-semibold text-slate-900 shadow-sm outline-none transition-all hover:border-slate-200 focus:border-blue-500 focus:bg-white focus:ring-4 focus:ring-blue-500/10"
-                                                @click="
-                                                    startLessonDropdownOpen = ! startLessonDropdownOpen;
-                                                    if (startLessonDropdownOpen) {
-                                                        $nextTick(() => {
-                                                            let rect = $refs.btnStart.getBoundingClientRect();
-                                                            let menuRect = $refs.menuStart.getBoundingClientRect();
-                                                            let spaceBelow = window.innerHeight - rect.bottom;
-                                                            let spaceAbove = rect.top;
-                                                            position = (spaceBelow < menuRect.height && spaceAbove > spaceBelow) ? 'top' : 'bottom';
-                                                        });
-                                                    }
-                                                "
-                                            >
-                                                <span x-text="'Tiết ' + startLesson"></span>
-                                                <x-user.icon name="chevron-down" :size="20" class="shrink-0 text-slate-500 transition-transform duration-200" x-bind:class="startLessonDropdownOpen ? 'rotate-180' : ''" />
-                                            </button>
-                                        @endif
+                            <div class="relative" @click.outside="timeOpen = false" @keydown.escape.window="timeOpen = false">
+                                {{-- Nút hiển thị giờ đã chọn --}}
+                                <button
+                                    type="button"
+                                    @click="timeOpen = !timeOpen"
+                                    class="group/clock flex w-full items-center justify-between gap-3 rounded-2xl border-2 bg-slate-50 px-4 py-3 text-left shadow-sm outline-none transition-all duration-200 hover:border-slate-200"
+                                    :class="timeOpen ? 'border-blue-500 bg-white ring-4 ring-blue-500/10' : 'border-transparent'"
+                                >
+                                    <span class="flex items-center gap-3">
+                                        <span class="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-blue-100 text-blue-600 transition-all duration-300 group-hover/clock:scale-105"
+                                              :class="timeOpen ? 'scale-105 bg-blue-500 text-white shadow-md shadow-blue-500/25' : ''">
+                                            <x-user.icon name="clock" :size="22" />
+                                        </span>
+                                        <span class="leading-tight">
+                                            <span class="block text-2xl font-extrabold tabular-nums tracking-tight text-slate-900" x-text="meetingEndTime || '--:--'"></span>
+                                            <span class="block text-[11px] font-bold uppercase tracking-wider text-slate-400" x-text="endMeridiem === 'SA' ? 'Buổi sáng' : 'Buổi chiều / tối'"></span>
+                                        </span>
+                                    </span>
+                                    <x-user.icon name="chevron-down" :size="20" class="shrink-0 text-slate-400 transition-transform duration-300" x-bind:class="timeOpen ? 'rotate-180 text-blue-500' : ''" />
+                                </button>
 
-                                        <div
-                                            x-cloak
-                                            x-ref="menuStart"
-                                            x-show="startLessonDropdownOpen"
-                                            x-transition.origin.top.duration.150ms
-                                            :class="position === 'top' ? 'bottom-full mb-2 origin-bottom' : 'top-full mt-2 origin-top'"
-                                            class="absolute left-0 right-0 z-50 grid max-h-64 grid-cols-3 gap-1 overflow-y-auto rounded-2xl border border-slate-200 bg-white p-2 shadow-xl shadow-slate-900/10"
-                                        >
-                                            @for ($lesson = 1; $lesson <= 15; $lesson++)
-                                                <button
-                                                    type="button"
-                                                    class="rounded-xl px-3 py-2.5 text-sm font-bold transition-all hover:bg-blue-50"
-                                                    @click="startLesson = {{ $lesson }}; syncEndLesson(); startLessonDropdownOpen = false"
-                                                    :class="Number(startLesson) === {{ $lesson }} ? 'bg-blue-600 text-white shadow-sm shadow-blue-500/20' : 'text-slate-700'"
-                                                >
-                                                    {{ $lesson }}
-                                                </button>
-                                            @endfor
+                                {{-- Bảng chọn giờ tùy biến --}}
+                                <div
+                                    x-show="timeOpen"
+                                    x-cloak
+                                    x-transition:enter="transition ease-out duration-200"
+                                    x-transition:enter-start="opacity-0 -translate-y-2 scale-95"
+                                    x-transition:enter-end="opacity-100 translate-y-0 scale-100"
+                                    x-transition:leave="transition ease-in duration-150"
+                                    x-transition:leave-start="opacity-100 translate-y-0 scale-100"
+                                    x-transition:leave-end="opacity-0 -translate-y-2 scale-95"
+                                    class="absolute left-0 right-0 z-40 mt-2 origin-top rounded-2xl border border-slate-200 bg-white p-4 shadow-2xl shadow-slate-900/10"
+                                >
+                                    {{-- Chọn nhanh tương đối từ hiện tại --}}
+                                    <p class="mb-2 text-[11px] font-bold uppercase tracking-wider text-slate-400">Chọn nhanh từ bây giờ</p>
+                                    <div class="mb-4 flex flex-wrap gap-2">
+                                        <template x-for="preset in [{l:'+30 phút',v:30},{l:'+1 giờ',v:60},{l:'+1 giờ 30',v:90},{l:'+2 giờ',v:120}]" :key="preset.v">
+                                            <button type="button" @click="addPreset(preset.v)"
+                                                class="rounded-full border border-slate-200 bg-white px-3.5 py-1.5 text-xs font-bold text-slate-600 transition-all duration-200 hover:-translate-y-0.5 hover:border-blue-300 hover:bg-blue-50 hover:text-blue-600 active:scale-95"
+                                                x-text="preset.l"></button>
+                                        </template>
+                                    </div>
+
+                                    <div class="grid grid-cols-2 gap-4">
+                                        {{-- Cột giờ --}}
+                                        <div>
+                                            <p class="mb-2 text-[11px] font-bold uppercase tracking-wider text-slate-400">Giờ</p>
+                                            <div class="grid grid-cols-4 gap-1.5">
+                                                <template x-for="h in 24" :key="h">
+                                                    <button type="button" @click="applyTime(h - 1, endMinute)"
+                                                        class="rounded-lg py-2 text-sm font-bold tabular-nums transition-all duration-150 hover:bg-blue-50 hover:text-blue-600 active:scale-90"
+                                                        :class="endHour === (h - 1) ? 'scale-105 bg-blue-500 text-white shadow-md shadow-blue-500/30' : 'text-slate-600'"
+                                                        x-text="String(h - 1).padStart(2, '0')"></button>
+                                                </template>
+                                            </div>
+                                        </div>
+                                        {{-- Cột phút --}}
+                                        <div>
+                                            <p class="mb-2 text-[11px] font-bold uppercase tracking-wider text-slate-400">Phút</p>
+                                            <div class="grid grid-cols-3 gap-1.5">
+                                                <template x-for="i in 12" :key="i">
+                                                    <button type="button" @click="applyTime(endHour, (i - 1) * 5)"
+                                                        class="rounded-lg py-2 text-sm font-bold tabular-nums transition-all duration-150 hover:bg-indigo-50 hover:text-indigo-600 active:scale-90"
+                                                        :class="endMinute === ((i - 1) * 5) ? 'scale-105 bg-indigo-500 text-white shadow-md shadow-indigo-500/30' : 'text-slate-600'"
+                                                        x-text="String((i - 1) * 5).padStart(2, '0')"></button>
+                                                </template>
+                                            </div>
                                         </div>
                                     </div>
-                                </div>
 
-                                <div class="space-y-2">
-                                    <label class="block text-[11px] font-bold uppercase tracking-wider text-slate-500">Tiết kết thúc</label>
-                                    <div class="relative" x-data="{ position: 'bottom' }" @click.outside="endLessonDropdownOpen = false">
-                                        @if($sessionId || $cloneSessionId)
-                                            <div class="flex w-full cursor-default items-center justify-between gap-3 rounded-2xl border-2 border-slate-100 bg-slate-50 py-4 pl-4 pr-4 text-left font-semibold text-slate-700">
-                                                <span>Tiết {{ $endLesson }}</span>
-                                            </div>
-                                        @else
-                                            <button
-                                                type="button"
-                                                x-ref="btnEnd"
-                                                class="flex w-full items-center justify-between gap-3 rounded-2xl border-2 border-transparent bg-slate-50 py-4 pl-4 pr-4 text-left font-semibold text-slate-900 shadow-sm outline-none transition-all hover:border-slate-200 focus:border-blue-500 focus:bg-white focus:ring-4 focus:ring-blue-500/10"
-                                                @click="
-                                                    endLessonDropdownOpen = ! endLessonDropdownOpen;
-                                                    if (endLessonDropdownOpen) {
-                                                        $nextTick(() => {
-                                                            let rect = $refs.btnEnd.getBoundingClientRect();
-                                                            let menuRect = $refs.menuEnd.getBoundingClientRect();
-                                                            let spaceBelow = window.innerHeight - rect.bottom;
-                                                            let spaceAbove = rect.top;
-                                                            position = (spaceBelow < menuRect.height && spaceAbove > spaceBelow) ? 'top' : 'bottom';
-                                                        });
-                                                    }
-                                                "
-                                            >
-                                                <span x-text="'Tiết ' + endLesson"></span>
-                                                <x-user.icon name="chevron-down" :size="20" class="shrink-0 text-slate-500 transition-transform duration-200" x-bind:class="endLessonDropdownOpen ? 'rotate-180' : ''" />
-                                            </button>
-                                        @endif
-
-                                        <div
-                                            x-cloak
-                                            x-ref="menuEnd"
-                                            x-show="endLessonDropdownOpen"
-                                            x-transition.origin.top.duration.150ms
-                                            :class="position === 'top' ? 'bottom-full mb-2 origin-bottom' : 'top-full mt-2 origin-top'"
-                                            class="absolute left-0 right-0 z-50 grid max-h-64 grid-cols-3 gap-1 overflow-y-auto rounded-2xl border border-slate-200 bg-white p-2 shadow-xl shadow-slate-900/10"
-                                        >
-                                            @for ($lesson = 1; $lesson <= 15; $lesson++)
-                                                <button
-                                                    type="button"
-                                                    class="rounded-xl px-3 py-2.5 text-sm font-bold transition-all disabled:cursor-not-allowed disabled:opacity-40"
-                                                    @click="endLesson = {{ $lesson }}; syncEndLesson(); endLessonDropdownOpen = false"
-                                                    :disabled="{{ $lesson }} < Number(startLesson)"
-                                                    :class="Number(endLesson) === {{ $lesson }} ? 'bg-blue-600 text-white shadow-sm shadow-blue-500/20' : ({{ $lesson }} < Number(startLesson) ? 'text-slate-300' : 'text-slate-700 hover:bg-blue-50')"
-                                                >
-                                                    {{ $lesson }}
-                                                </button>
-                                            @endfor
-                                        </div>
-                                    </div>
-                                </div>
-
-                                <div class="space-y-2">
-                                    <label for="start_time" class="block text-[11px] font-bold uppercase tracking-wider text-slate-500">Giờ bắt đầu</label>
-                                    <input
-                                        id="start_time"
-                                        type="time"
-                                        x-model="startTime"
-                                        class="w-full cursor-pointer rounded-2xl border-2 border-transparent bg-slate-50 px-4 py-4 font-semibold text-slate-900 shadow-sm outline-none transition-all hover:border-slate-200 focus:border-blue-500 focus:bg-white focus:ring-4 focus:ring-blue-500/10"
-                                        required
-                                    >
-                                    @error('startTime')<span class="text-sm font-medium text-red-600">{{ $message }}</span>@enderror
-                                </div>
-
-                                <div class="space-y-2">
-                                    <label for="end_time" class="block text-[11px] font-bold uppercase tracking-wider text-slate-500">Giờ kết thúc</label>
-                                    <input
-                                        id="end_time"
-                                        type="time"
-                                        x-model="endTime"
-                                        class="w-full cursor-pointer rounded-2xl border-2 border-transparent bg-slate-50 px-4 py-4 font-semibold text-slate-900 shadow-sm outline-none transition-all hover:border-slate-200 focus:border-blue-500 focus:bg-white focus:ring-4 focus:ring-blue-500/10"
-                                        required
-                                    >
-                                    @error('endTime')<span class="text-sm font-medium text-red-600">{{ $message }}</span>@enderror
+                                    <button type="button" @click="timeOpen = false"
+                                        class="mt-4 w-full rounded-xl bg-gradient-to-r from-blue-500 to-indigo-600 py-2.5 text-sm font-bold text-white shadow-sm transition-all hover:from-blue-600 hover:to-indigo-700 active:scale-[0.98]">
+                                        Xong
+                                    </button>
                                 </div>
                             </div>
-
-                            @error('endLesson')<span class="text-sm font-medium text-red-600">{{ $message }}</span>@enderror
+                            <p class="flex items-center gap-1.5 text-xs font-medium text-slate-500">
+                                <x-user.icon name="info" :size="14" />
+                                Buổi diễn ra hôm nay, bắt đầu ngay khi tạo. Giờ kết thúc phải cách hiện tại tối thiểu 10 phút. Hết giờ buổi sẽ tự động chốt.
+                            </p>
+                            @error('meetingEndTime')<span class="text-sm font-medium text-red-600">{{ $message }}</span>@enderror
                         </div>
                     </div>
                 </form>
@@ -406,11 +334,9 @@
                     <div class="rounded-2xl border border-blue-100 bg-blue-50 p-4">
                         <p class="flex items-center gap-2 text-sm font-bold text-blue-700">
                             <x-user.icon name="clock" :size="20" />
-                            <span x-text="periodLabel"></span>
+                            <span x-text="timeRangeLabel"></span>
                         </p>
                         <p class="ml-7 mt-1.5 text-xs leading-relaxed text-blue-800/80">
-                            <span x-text="timeRangeLabel"></span>
-                            <span class="mx-1">•</span>
                             <span x-text="durationLabel"></span>
                         </p>
                     </div>

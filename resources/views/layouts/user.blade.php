@@ -98,7 +98,7 @@
                     </a>
                 </div>
 
-                <nav class="flex-1 space-y-4 overflow-y-auto overflow-x-hidden px-3 py-2">
+                <nav class="scrollbar-custom flex-1 space-y-4 overflow-y-auto overflow-x-hidden px-3 py-2">
                     <div class="space-y-2">
                         @foreach ($navData as $nav)
                             @if($nav['type'] === 'link')
@@ -261,9 +261,9 @@
                     </div>
                 </header>
 
-                <div id="main-scroll-area" class="relative flex-1 overflow-auto pb-24 md:pb-0">
+                <x-scroll-area id="main-scroll-area" class="relative flex-1 pb-24 md:pb-0">
                     {{ $slot }}
-                </div>
+                </x-scroll-area>
             </main>
 
             <nav class="pb-safe fixed bottom-0 left-0 right-0 z-40 flex h-16 items-center justify-around border-t border-outline-variant/20 bg-surface/90 px-2 backdrop-blur-lg md:hidden">

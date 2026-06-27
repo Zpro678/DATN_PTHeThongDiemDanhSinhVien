@@ -5,106 +5,94 @@ namespace App\Services;
 /**
  * Tính toán chuyên cần dùng chung cho toàn hệ thống.
  *
- * Quy ước:
- * - Vắng có phép (excused) bị loại khỏi mẫu số, không tính là vắng cũng không tính có mặt.
- * - Đi muộn được đếm theo số LẦN; cứ đủ 3 lần muộn thì quy đổi thành 1 tiết vắng.
- * - Phần muộn lẻ chưa đủ 3 lần vẫn được tính là có đi học.
- *
+ * Đơn vị tính là BUỔI (mỗi buổi = 1 đơn vị). Quy ước:
+ * - Mỗi buổi đã diễn ra (có phiên đã chốt) được gộp trạng thái của sinh viên qua các phiên:
+ *   có mặt nếu present/late ở bất kỳ phiên nào; vắng phép nếu excused và không có mặt;
+ *   vắng nếu absent và không có mặt.
+ * - Đi muộn được tính như có đi học (KHÔNG quy đổi thành vắng).
+ * - Vắng có phép (excused) bị loại khỏi mẫu số nếu lớp bật trừ chuyên cần khi vắng có phép.
  */
 class AttendanceCalculator
 {
-    /** Cứ đủ 3 lần đi muộn thì quy đổi thành 1 tiết vắng. */
-    public const LATE_TO_ABSENT_RATIO = 3;
-
     /** Ngưỡng chuyên cần tối thiểu (%) trước khi cảnh báo nguy cơ cấm thi. */
     public const MIN_ATTENDANCE_PERCENT = 80;
 
-    /** Tỉ lệ số tiết được phép vắng trên tổng số tiết kế hoạch của lớp (20%). */
+    /** Ngưỡng cảnh báo nhẹ (%). */
+    public const WARNING_PERCENT = 85;
+
+    /** Tỉ lệ số buổi được phép vắng trên tổng số buổi dự kiến của lớp (20%). */
     public const ABSENCE_LIMIT_RATIO = 0.2;
 
     /**
-     * Quy đổi số lần đi muộn thành số tiết vắng.
-     * Nếu $latesPerAbsent <= 0 thì không quy đổi (luôn trả về 0).
-     */
-    public static function lateAbsentLessons(int $lateCount, int $latesPerAbsent = self::LATE_TO_ABSENT_RATIO): int
-    {
-        if ($lateCount <= 0 || $latesPerAbsent <= 0) {
-            return 0;
-        }
-
-        return intdiv($lateCount, $latesPerAbsent);
-    }
-
-    /**
-     * Tổng tiết được tính chuyên cần (nếu $deductExcusedAbsence = true thì trừ đi vắng có phép).
-     */
-    public static function countedLessons(int $totalLessons, int $excusedLessons, bool $deductExcusedAbsence = true): int
-    {
-        return $deductExcusedAbsence ? max($totalLessons - $excusedLessons, 0) : $totalLessons;
-    }
-
-    /**
-     * Số tiết vắng dùng để xét quỹ vắng/cảnh báo: vắng thật + muộn quy đổi.
-     */
-    public static function effectiveAbsentLessons(int $absentLessons, int $lateCount, int $latesPerAbsent = self::LATE_TO_ABSENT_RATIO): int
-    {
-        return max($absentLessons, 0) + self::lateAbsentLessons($lateCount, $latesPerAbsent);
-    }
-
-    /**
-     * Số tiết được tính là có chuyên cần (có mặt + muộn còn lại sau quy đổi).
-     */
-    public static function attendedLessons(int $presentLessons, int $lateLessons, int $lateCount, int $latesPerAbsent = self::LATE_TO_ABSENT_RATIO): int
-    {
-        return max($presentLessons + $lateLessons - self::lateAbsentLessons($lateCount, $latesPerAbsent), 0);
-    }
-
-    /**
-     * Phần trăm chuyên cần tính trên các tiết ĐÃ CHỐT làm tròn về số nguyên.
-     */
-    public static function percent(
-        int $presentLessons,
-        int $lateLessons,
-        int $excusedLessons,
-        int $totalLessons,
-        int $lateCount,
-        int $latesPerAbsent = self::LATE_TO_ABSENT_RATIO,
-        bool $deductExcusedAbsence = true,
-    ): int {
-        $counted = self::countedLessons($totalLessons, $excusedLessons, $deductExcusedAbsence);
-
-        if ($counted <= 0) {
-            return 100;
-        }
-
-        $attended = self::attendedLessons($presentLessons, $lateLessons, $lateCount, $latesPerAbsent);
-
-        return (int) round(($attended / $counted) * 100);
-    }
-
-    /**
-     * Phần trăm chuyên cần tính trên TỔNG TIẾT KẾ HOẠCH của lớp (cả khóa):
-     *   (tổng kế hoạch − vắng có phép − vắng hiệu dụng) / (tổng kế hoạch − vắng có phép).
+     * Gộp trạng thái điểm danh của MỘT sinh viên theo từng buổi.
      *
-     * Coi như sinh viên sẽ tham gia các tiết còn lại; mẫu số là cả khóa chứ không
-     * chỉ các buổi đã chốt, nên nhất quán với "quỹ vắng" (vắng vs 20% tổng tiết).
+     * @param  iterable  $rows  Mỗi phần tử có thuộc tính ->meeting_id và ->status (chỉ gồm phiên đã chốt).
+     * @return array{present: int, late: int, excused: int, absent: int, total: int}
+     *         present/late/excused/absent là SỐ BUỔI; total = tổng buổi đã diễn ra.
+     */
+    public static function consolidateByMeeting(iterable $rows): array
+    {
+        $byMeeting = [];
+        foreach ($rows as $row) {
+            $meetingId = $row->meeting_id ?? null;
+            if ($meetingId === null) {
+                continue;
+            }
+            $byMeeting[$meetingId][] = $row->status;
+        }
+
+        $counts = ['present' => 0, 'late' => 0, 'excused' => 0, 'absent' => 0, 'total' => 0];
+
+        foreach ($byMeeting as $statuses) {
+            $counts['total']++;
+            if (in_array('present', $statuses, true)) {
+                $counts['present']++;
+            } elseif (in_array('late', $statuses, true)) {
+                $counts['late']++;
+            } elseif (in_array('excused', $statuses, true)) {
+                $counts['excused']++;
+            } elseif (in_array('absent', $statuses, true)) {
+                $counts['absent']++;
+            }
+            // các trạng thái khác (pending/invalid) không tính vào 4 nhóm.
+        }
+
+        return $counts;
+    }
+
+    /**
+     * Tổng số buổi được tính chuyên cần (trừ vắng có phép nếu lớp bật trừ).
+     */
+    public static function countedSessions(int $plannedSessions, int $excusedSessions, bool $deductExcusedAbsence = true): int
+    {
+        return $deductExcusedAbsence ? max($plannedSessions - $excusedSessions, 0) : $plannedSessions;
+    }
+
+    /**
+     * Số buổi được phép vắng (20% tổng buổi dự kiến).
+     */
+    public static function allowedAbsentSessions(int $plannedSessions): int
+    {
+        return (int) floor($plannedSessions * self::ABSENCE_LIMIT_RATIO);
+    }
+
+    /**
+     * Phần trăm chuyên cần tính trên TỔNG SỐ BUỔI dự kiến của lớp:
+     *   (counted − vắng) / counted, với counted = tổng dự kiến − vắng có phép (nếu bật trừ).
      */
     public static function percentOfPlanned(
-        int $plannedLessons,
-        int $excusedLessons,
-        int $absentLessons,
-        int $lateCount,
-        int $latesPerAbsent = self::LATE_TO_ABSENT_RATIO,
+        int $plannedSessions,
+        int $excusedSessions,
+        int $absentSessions,
         bool $deductExcusedAbsence = true,
     ): int {
-        $counted = self::countedLessons($plannedLessons, $excusedLessons, $deductExcusedAbsence);
+        $counted = self::countedSessions($plannedSessions, $excusedSessions, $deductExcusedAbsence);
 
         if ($counted <= 0) {
             return 100;
         }
 
-        $effectiveAbsent = self::effectiveAbsentLessons($absentLessons, $lateCount, $latesPerAbsent);
-        $attended = max($counted - $effectiveAbsent, 0);
+        $attended = max($counted - max($absentSessions, 0), 0);
 
         return (int) round(($attended / $counted) * 100);
     }

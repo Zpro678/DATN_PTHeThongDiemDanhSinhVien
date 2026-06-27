@@ -32,8 +32,6 @@
         sessionDate: @entangle('date').live,
         qrRefreshRate: @entangle('qrRefreshRate').live,
         openMinutes: @entangle('durationMinutes').live,
-        startLesson: @entangle('startLesson').live,
-        endLesson: @entangle('endLesson').live,
         gpsEnabled: @entangle('gpsEnabled').live,
         gpsLatitude: @entangle('gpsLatitude'),
         gpsLongitude: @entangle('gpsLongitude'),
@@ -127,7 +125,7 @@
                         </span>
                         <div>
                             <h2 class="text-lg font-black text-slate-900">Buổi học hôm nay</h2>
-                            <p class="mt-0.5 text-[13px] font-semibold text-slate-500">Thông tin chi tiết về lớp và tiết học</p>
+                            <p class="mt-0.5 text-[13px] font-semibold text-slate-500">Thông tin chi tiết về lớp và buổi học</p>
                         </div>
                     </div>
 
@@ -216,145 +214,6 @@
                             @endif
                         </div>
 
-                        <div>
-                            <label class="mb-2 block text-sm font-bold text-slate-600">Tiết học</label>
-                            <div class="grid grid-cols-[minmax(0,1fr)_auto_minmax(0,1fr)] items-center gap-3 rounded-2xl border border-slate-100 bg-slate-50 p-3">
-                                <div>
-                                    <span class="mb-1 block text-xs font-bold text-slate-400">Bắt đầu</span>
-                                    @if($cloneSessionId || $editSessionId)
-                                    <div class="relative">
-                                        <div class="flex w-full cursor-default items-center gap-2 rounded-xl border-2 border-slate-100 bg-white px-3 py-3 text-sm font-extrabold text-slate-800 transition hover:border-blue-300 hover:bg-slate-50">
-                                            <x-user.icon name="clock" :size="16" class="text-blue-500" />
-                                            <span x-text="'Tiết ' + startLesson"></span>
-                                        </div>
-                                    </div>
-                                    @else
-                                    <div class="relative" x-data="{ openStart: false, position: 'bottom' }" @click.outside="openStart = false">
-                                        <button 
-                                            type="button" 
-                                            x-ref="btnStart"
-                                            @click="
-                                                openStart = !openStart;
-                                                if(openStart) {
-                                                    $nextTick(() => {
-                                                        let rect = $refs.btnStart.getBoundingClientRect();
-                                                        let menuRect = $refs.menuStart.getBoundingClientRect();
-                                                        let spaceBelow = window.innerHeight - rect.bottom;
-                                                        let spaceAbove = rect.top;
-                                                        position = (spaceBelow < menuRect.height && spaceAbove > spaceBelow) ? 'top' : 'bottom';
-                                                    });
-                                                }
-                                            " 
-                                            class="flex w-full items-center justify-between gap-2 rounded-xl border-2 bg-white px-3 py-3 text-sm font-extrabold text-slate-800 outline-none transition focus:border-blue-500 focus:ring-4 focus:ring-blue-500/10" 
-                                            :class="openStart ? 'border-blue-500 ring-4 ring-blue-500/10' : 'border-slate-100'"
-                                        >
-                                            <div class="flex items-center gap-2">
-                                                <x-user.icon name="clock" :size="16" class="text-blue-500" />
-                                                <span x-text="'Tiết ' + startLesson"></span>
-                                            </div>
-                                            <x-user.icon name="chevron-down" :size="16" class="text-slate-400 transition" x-bind:class="openStart ? 'rotate-180 text-blue-500' : ''" />
-                                        </button>
-                                        
-                                        <div 
-                                            x-show="openStart" 
-                                            x-cloak 
-                                            x-ref="menuStart"
-                                            x-transition.opacity
-                                            class="absolute left-0 z-[60] w-full min-w-[140px] rounded-2xl border border-slate-200 bg-white p-3 shadow-xl shadow-slate-900/10"
-                                            :class="position === 'top' ? 'bottom-full mb-2' : 'top-full mt-2'"
-                                        >
-                                            <div class="grid grid-cols-3 gap-1">
-                                                @for ($lesson = 1; $lesson <= 15; $lesson++)
-                                                    <button 
-                                                        type="button" 
-                                                        @click="
-                                                            startLesson = {{ $lesson }};
-                                                            if (startLesson > endLesson) endLesson = startLesson;
-                                                            openStart = false;
-                                                        " 
-                                                        class="flex h-10 w-full items-center justify-center rounded-xl text-sm font-bold transition" 
-                                                        :class="startLesson == {{ $lesson }} ? 'bg-blue-600 text-white shadow-sm shadow-blue-500/30' : 'text-slate-700 hover:bg-slate-100'"
-                                                    >
-                                                        {{ $lesson }}
-                                                    </button>
-                                                @endfor
-                                            </div>
-                                        </div>
-                                    </div>
-                                    @endif
-                                </div>
-
-                                <span class="mt-4 text-lg font-black text-slate-300">-</span>
-
-                                <div>
-                                    <span class="mb-1 block text-xs font-bold text-slate-400">Kết thúc</span>
-                                    @if($cloneSessionId || $editSessionId)
-                                    <div class="relative">
-                                        <div class="flex w-full cursor-default items-center gap-2 rounded-xl border-2 border-slate-100 bg-white px-3 py-3 text-sm font-extrabold text-slate-800 transition hover:border-blue-300 hover:bg-slate-50">
-                                            <x-user.icon name="clock" :size="16" class="text-blue-500" />
-                                            <span x-text="'Tiết ' + endLesson"></span>
-                                        </div>
-                                    </div>
-                                    @else
-                                    <div class="relative" x-data="{ openEnd: false, position: 'bottom' }" @click.outside="openEnd = false">
-                                        <button 
-                                            type="button" 
-                                            x-ref="btnEnd"
-                                            @click="
-                                                openEnd = !openEnd;
-                                                if(openEnd) {
-                                                    $nextTick(() => {
-                                                        let rect = $refs.btnEnd.getBoundingClientRect();
-                                                        let menuRect = $refs.menuEnd.getBoundingClientRect();
-                                                        let spaceBelow = window.innerHeight - rect.bottom;
-                                                        let spaceAbove = rect.top;
-                                                        position = (spaceBelow < menuRect.height && spaceAbove > spaceBelow) ? 'top' : 'bottom';
-                                                    });
-                                                }
-                                            " 
-                                            class="flex w-full items-center justify-between gap-2 rounded-xl border-2 bg-white px-3 py-3 text-sm font-extrabold text-slate-800 outline-none transition focus:border-blue-500 focus:ring-4 focus:ring-blue-500/10" 
-                                            :class="openEnd ? 'border-blue-500 ring-4 ring-blue-500/10' : 'border-slate-100'"
-                                        >
-                                            <div class="flex items-center gap-2">
-                                                <x-user.icon name="clock" :size="16" class="text-blue-500" />
-                                                <span x-text="'Tiết ' + endLesson"></span>
-                                            </div>
-                                            <x-user.icon name="chevron-down" :size="16" class="text-slate-400 transition" x-bind:class="openEnd ? 'rotate-180 text-blue-500' : ''" />
-                                        </button>
-                                        
-                                        <div 
-                                            x-show="openEnd" 
-                                            x-cloak 
-                                            x-ref="menuEnd"
-                                            x-transition.opacity 
-                                            class="absolute right-0 z-[60] w-full min-w-[140px] rounded-2xl border border-slate-200 bg-white p-3 shadow-xl shadow-slate-900/10"
-                                            :class="position === 'top' ? 'bottom-full mb-2' : 'top-full mt-2'"
-                                        >
-                                            <div class="grid grid-cols-3 gap-1">
-                                                @for ($lesson = 1; $lesson <= 15; $lesson++)
-                                                    <button 
-                                                        type="button" 
-                                                        @click="
-                                                            endLesson = {{ $lesson }};
-                                                            if (endLesson < startLesson) startLesson = endLesson;
-                                                            openEnd = false;
-                                                        " 
-                                                        class="flex h-10 w-full items-center justify-center rounded-xl text-sm font-bold transition" 
-                                                        :class="endLesson == {{ $lesson }} ? 'bg-blue-600 text-white shadow-sm shadow-blue-500/30' : 'text-slate-700 hover:bg-slate-100'"
-                                                    >
-                                                        {{ $lesson }}
-                                                    </button>
-                                                @endfor
-                                            </div>
-                                        </div>
-                                    </div>
-                                    @endif
-                                </div>
-                            </div>
-                            @error('endLesson')
-                                <span class="mt-2 block text-sm font-medium text-red-600">{{ $message }}</span>
-                            @enderror
-                        </div>
                     </div>
                 </div>
 
@@ -486,12 +345,6 @@
                             <p class="mt-2 text-3xl font-black text-slate-900" x-text="selectedClass.members_count || @js($studentCount)"></p>
                         </div>
 
-                        <div class="rounded-2xl border border-slate-200 bg-slate-50 p-5">
-                            <p class="text-xs font-extrabold uppercase tracking-widest text-slate-500">Tiết</p>
-                            <p class="mt-2 text-3xl font-black text-slate-900">
-                                <span x-text="startLesson"></span>-<span x-text="endLesson"></span>
-                            </p>
-                        </div>
                     </div>
 
                     <div class="rounded-2xl border border-slate-200 bg-slate-50 p-5">

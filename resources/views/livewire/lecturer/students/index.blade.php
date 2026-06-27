@@ -40,9 +40,9 @@
     <section class="grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-5">
         @foreach ([
             ['label' => 'Tổng học viên', 'value' => $attendanceOverview['total_students'], 'color' => 'text-primary'],
-            ['label' => 'Có mặt', 'value' => $attendanceOverview['present_lessons'], 'color' => 'text-emerald-600'],
-            ['label' => 'Muộn', 'value' => $attendanceOverview['late_lessons'], 'color' => 'text-amber-600'],
-            ['label' => 'Vắng', 'value' => $attendanceOverview['absent_lessons'], 'color' => 'text-red-600'],
+            ['label' => 'Có mặt', 'value' => $attendanceOverview['present_sessions'], 'color' => 'text-emerald-600'],
+            ['label' => 'Muộn', 'value' => $attendanceOverview['late_sessions'], 'color' => 'text-amber-600'],
+            ['label' => 'Vắng', 'value' => $attendanceOverview['absent_sessions'], 'color' => 'text-red-600'],
             ['label' => 'TB chuyên cần', 'value' => $attendanceOverview['attendance_percent'].'%', 'color' => 'text-primary'],
         ] as $overviewItem)
             <div @class([
@@ -91,9 +91,9 @@
                     @forelse ($members as $member)
                         @php
                             $stats = $attendanceStats[$member->id] ?? [
-                                'present_lessons' => 0,
-                                'late_lessons' => 0,
-                                'absent_lessons' => 0,
+                                'present_sessions' => 0,
+                                'late_sessions' => 0,
+                                'absent_sessions' => 0,
                                 'attendance_percent' => 0,
                                 'is_warning' => false,
                                 'is_banned' => false,
@@ -121,9 +121,9 @@
                                 <span class="block text-sm font-semibold text-slate-700">{{ $member->courseClass->name }}</span>
                                 <span class="text-xs text-slate-500">{{ $member->courseClass->code }}</span>
                             </td>
-                            <td class="px-4 py-4 text-center text-sm font-bold text-emerald-600">{{ $stats['present_lessons'] }}</td>
-                            <td class="px-4 py-4 text-center text-sm font-bold text-amber-600">{{ $stats['late_lessons'] }}</td>
-                            <td class="px-4 py-4 text-center text-sm font-bold text-red-600">{{ $stats['absent_lessons'] }}</td>
+                            <td class="px-4 py-4 text-center text-sm font-bold text-emerald-600">{{ $stats['present_sessions'] }}</td>
+                            <td class="px-4 py-4 text-center text-sm font-bold text-amber-600">{{ $stats['late_sessions'] }}</td>
+                            <td class="px-4 py-4 text-center text-sm font-bold text-red-600">{{ $stats['absent_sessions'] }}</td>
                             <td class="px-4 py-4 text-center">
                                 @if($member->user_id)
                                     <span class="inline-flex items-center gap-1 rounded-full bg-green-50 px-2.5 py-1 text-xs font-bold text-green-700">

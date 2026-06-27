@@ -144,18 +144,18 @@ class AttendanceHistory extends Component
     {
         // Tổng hợp TIẾT từ service — chỉ buổi đã chốt, tính theo lesson_count.
         // Đồng nhất với trang giảng viên và trang "Lớp tôi tham gia".
-        $presentLessons = (int) array_sum(array_column($statsMap, 'present_lessons'));
-        $lateLessons    = (int) array_sum(array_column($statsMap, 'late_lessons'));
-        $absentLessons  = (int) array_sum(array_column($statsMap, 'absent_lessons'));
-        $excusedLessons = (int) array_sum(array_column($statsMap, 'excused_lessons'));
-        $studiedLessons = (int) array_sum(array_column($statsMap, 'studied_lessons'));
+        $presentSessions = (int) array_sum(array_column($statsMap, 'present_sessions'));
+        $lateSessions    = (int) array_sum(array_column($statsMap, 'late_sessions'));
+        $absentSessions  = (int) array_sum(array_column($statsMap, 'absent_sessions'));
+        $excusedSessions = (int) array_sum(array_column($statsMap, 'excused_sessions'));
+        $studiedSessions = (int) array_sum(array_column($statsMap, 'studied_sessions'));
 
         return [
-            'total'   => $studiedLessons,   // Tổng tiết đã chốt (mẫu số).
-            'present' => $presentLessons,   // Tiết có mặt đúng giờ.
-            'late'    => $lateLessons,       // Tiết đi muộn.
-            'excused' => $excusedLessons,   // Tiết vắng có phép.
-            'absent'  => $absentLessons,    // Tiết vắng không phép.
+            'total'   => $studiedSessions,   // Tổng tiết đã chốt (mẫu số).
+            'present' => $presentSessions,   // Tiết có mặt đúng giờ.
+            'late'    => $lateSessions,       // Tiết đi muộn.
+            'excused' => $excusedSessions,   // Tiết vắng có phép.
+            'absent'  => $absentSessions,    // Tiết vắng không phép.
             'pending' => $records->where('status', 'pending')->count(), // Buổi chưa điểm danh (vẫn đếm bản ghi).
         ];
     }

@@ -107,6 +107,13 @@
                     <div class="p-6 space-y-5">
                         <div class="grid grid-cols-1 sm:grid-cols-2 gap-5">
 
+                            {{-- Tổng số buổi dự kiến --}}
+                            <label class="block">
+                                <span class="mb-2 block text-sm font-bold text-on-surface">Tổng số buổi dự kiến <span class="text-error">*</span></span>
+                                <input type="number" wire:model="totalSessions" min="1" max="200" class="w-full rounded-xl border border-outline-variant/30 bg-surface-container-lowest px-4 py-3 outline-none transition-all focus:border-primary focus:ring-2 focus:ring-primary/20">
+                                @error('totalSessions') <span class="text-error text-xs mt-1 block">{{ $message }}</span> @enderror
+                            </label>
+
                             {{-- Ngưỡng đi muộn - Custom Dropdown --}}
                             <div x-data="{
                                 open: false,
@@ -155,57 +162,6 @@
                                     </div>
                                 </div>
                                 @error('lateThreshold') <span class="text-error text-xs mt-1 block">{{ $message }}</span> @enderror
-                            </div>
-
-                            {{-- Quy đổi đi muộn - Custom Dropdown --}}
-                            <div x-data="{
-                                open: false,
-                                value: @entangle('latesPerAbsent'),
-                                position: 'bottom',
-                                options: [
-                                    { value: 0, label: 'Không quy đổi' },
-                                    { value: 1, label: '1 muộn = 1 vắng' },
-                                    { value: 2, label: '2 muộn = 1 vắng' },
-                                    { value: 3, label: '3 muộn = 1 vắng' },
-                                    { value: 4, label: '4 muộn = 1 vắng' },
-                                    { value: 5, label: '5 muộn = 1 vắng' },
-                                ],
-                                get label() { return this.options.find(o => o.value == this.value)?.label ?? 'Chọn...' },
-                                checkPosition() {
-                                    this.$nextTick(() => {
-                                        let rect = this.$refs.btn.getBoundingClientRect();
-                                        let menuRect = this.$refs.menu.getBoundingClientRect();
-                                        let spaceBelow = window.innerHeight - rect.bottom;
-                                        let spaceAbove = rect.top;
-                                        this.position = (spaceBelow < menuRect.height && spaceAbove > spaceBelow) ? 'top' : 'bottom';
-                                    });
-                                }
-                            }" @click.outside="open = false" @keydown.escape.window="open = false">
-                                <span class="mb-2 block text-sm font-bold text-on-surface">Quy đổi đi muộn <span class="text-error">*</span></span>
-                                <div class="relative">
-                                    <button type="button" @click="open = !open; if(open) checkPosition();" x-ref="btn"
-                                        class="flex w-full items-center justify-between gap-3 rounded-xl border border-outline-variant/30 bg-surface-container-lowest px-4 py-3 text-left text-sm font-bold text-on-surface outline-none transition-all hover:border-primary focus:border-primary focus:ring-2 focus:ring-primary/20"
-                                        :class="open ? 'border-primary ring-2 ring-primary/20' : ''">
-                                        <span x-text="label"></span>
-                                        <x-user.icon name="chevron-down" :size="16" class="shrink-0 text-on-surface-variant transition-transform duration-200" x-bind:class="open ? 'rotate-180 text-primary' : ''" />
-                                    </button>
-                                    <div x-show="open" x-cloak x-ref="menu" x-transition:enter="transition ease-out duration-150" x-transition:enter-start="opacity-0 -translate-y-2" x-transition:enter-end="opacity-100 translate-y-0" x-transition:leave="transition ease-in duration-100" x-transition:leave-start="opacity-100 translate-y-0" x-transition:leave-end="opacity-0 -translate-y-2"
-                                        class="absolute left-0 right-0 z-50 overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-xl shadow-slate-900/10"
-                                        :class="position === 'top' ? 'bottom-full mb-1.5' : 'top-full mt-1.5'">
-                                        <template x-for="option in options" :key="option.value">
-                                            <button type="button"
-                                                @click="value = option.value; open = false"
-                                                class="flex w-full items-center justify-between px-4 py-3 text-sm font-bold transition-colors hover:bg-slate-50"
-                                                :class="value == option.value ? 'text-primary bg-primary/5' : 'text-slate-700'">
-                                                <span x-text="option.label"></span>
-                                                <span x-show="value == option.value" class="flex h-4 w-4 items-center justify-center rounded-full bg-primary">
-                                                    <x-user.icon name="check" :size="10" class="text-white" />
-                                                </span>
-                                            </button>
-                                        </template>
-                                    </div>
-                                </div>
-                                @error('latesPerAbsent') <span class="text-error text-xs mt-1 block">{{ $message }}</span> @enderror
                             </div>
 
                         </div>

@@ -63,10 +63,10 @@ class JoinedClasses extends Component
             $stats   = $statsMap[$member?->id] ?? null;
 
             // Số TIẾT (lesson_count-weighted), chỉ buổi đã chốt — đồng nhất với trang giảng viên.
-            $present = (int) ($stats['present_lessons'] ?? 0); // Tiết có mặt đúng giờ.
-            $late    = (int) ($stats['late_lessons']    ?? 0); // Tiết đi muộn.
-            $absent  = (int) ($stats['absent_lessons']  ?? 0); // Tiết vắng không phép.
-            $excused = (int) ($stats['excused_lessons'] ?? 0); // Tiết vắng có phép.
+            $present = (int) ($stats['present_sessions'] ?? 0); // Tiết có mặt đúng giờ.
+            $late    = (int) ($stats['late_sessions']    ?? 0); // Tiết đi muộn.
+            $absent  = (int) ($stats['absent_sessions']  ?? 0); // Tiết vắng không phép.
+            $excused = (int) ($stats['excused_sessions'] ?? 0); // Tiết vắng có phép.
 
             // % chuyên cần đã được tính sẵn qua AttendanceCalculator::percentOfPlanned trong service.
             $attendance = (int) ($stats['attendance_percent'] ?? 100);

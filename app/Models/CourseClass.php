@@ -21,13 +21,12 @@ class CourseClass extends Model
         'name', // Tên lớp học.
         'description', // Mô tả môn học.
         'late_threshold', // Ngưỡng thời gian trễ.
-        'lates_per_absent', // Số lần muộn bằng 1 lần vắng.
         'deduct_excused_absence', // Trừ chuyên cần khi vắng có phép.
         'subject_code', // Mã môn học.
         'semester', // Học kỳ.
         'require_approval', // Bật/tắt yêu cầu duyệt khi xin vào lớp.
         'status', // Trạng thái lớp active/archived.
-        'total_lessons', // Tổng số tiết của môn học.
+        'total_sessions', // Tổng số buổi dự kiến của môn học.
         'gps_latitude', // Vĩ độ định vị GPS mặc định.
         'gps_longitude', // Kinh độ định vị GPS mặc định.
         'gps_radius', // Bán kính GPS mặc định.
@@ -38,8 +37,7 @@ class CourseClass extends Model
         return [
             'require_approval' => 'boolean', // Ép kiểu cờ yêu cầu duyệt.
             'deduct_excused_absence' => 'boolean', // Ép kiểu boolean.
-            'total_lessons' => 'integer', // Ép kiểu tổng số tiết.
-            'lates_per_absent' => 'integer',
+            'total_sessions' => 'integer', // Ép kiểu tổng số buổi dự kiến.
             'gps_latitude' => 'float',
             'gps_longitude' => 'float',
             'gps_radius' => 'integer',
@@ -72,6 +70,11 @@ class CourseClass extends Model
     public function sessions(): HasMany
     {
         return $this->hasMany(ClassSession::class, 'class_id');
+    }
+
+    public function meetings(): HasMany
+    {
+        return $this->hasMany(ClassMeeting::class, 'class_id');
     }
 
     public function attendanceSummaries(): HasMany

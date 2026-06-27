@@ -37,7 +37,7 @@ class CreateClassTest extends TestCase
             ->set('subjectCode', 'SWE401')
             ->set('semester', 'HK1 2026-2027')
             ->set('description', 'Lớp học được tạo từ Livewire.')
-            ->set('totalLessons', 36)
+            ->set('totalSessions', 36)
             ->set('requireApproval', true)
             ->call('save')
             ->assertHasNoErrors()
@@ -49,7 +49,7 @@ class CreateClassTest extends TestCase
             'code' => 'TEST-2026-01',
             'subject_code' => 'SWE401',
             'semester' => 'HK1 2026-2027',
-            'total_lessons' => 36,
+            'total_sessions' => 36,
             'require_approval' => true,
             'status' => 'active',
         ]);

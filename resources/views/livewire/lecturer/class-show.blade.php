@@ -81,8 +81,13 @@
                     <p class="mt-1 text-2xl sm:text-[28px] font-bold text-slate-800 leading-none">{{ $sessionsCompleted }} <span class="text-base font-medium text-slate-500">buổi</span></p>
                 </div>
                 <div class="min-w-0">
-                    <span class="text-sm text-slate-500">Mã lớp</span>
-                    <p class="mt-1 text-base font-bold text-slate-800 truncate" title="{{ $class->code }}">{{ $class->code }}</p>
+                    <span class="text-sm text-slate-500">Tiến độ</span>
+                    <p class="mt-1 text-2xl sm:text-[28px] font-bold text-slate-800 leading-none">{{ $sessionsCount > 0 ? round(($sessionsCompleted / $sessionsCount) * 100) : 0 }}%</p>
+                </div>
+                <div class="min-w-0">
+                    <span class="text-sm text-slate-500">Tổng số buổi</span>
+                    <p class="mt-1 text-2xl sm:text-[28px] font-bold text-slate-800 leading-none">{{ $class->total_sessions }} <span class="text-base font-medium text-slate-500">buổi</span></p>
+                </div>
                 </div>
 
                 @if($class->subject_code)

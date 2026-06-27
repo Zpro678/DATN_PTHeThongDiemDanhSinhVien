@@ -290,14 +290,13 @@ class NotificationService
     public function attendanceSessionCreated(int $lecturerUserId, ClassSession $session, bool $isQr): void
     {
         $className = $session->courseClass?->name ?? 'lớp học';
-        $lessons = max(1, (int) $session->lesson_count);
         $url = $this->sessionUrl($lecturerUserId, $session, $isQr);
 
         $this->push(
             $lecturerUserId,
             $isQr ? 'App\\Notifications\\QrSessionOpened' : 'App\\Notifications\\AttendanceSessionCreated',
             $isQr ? 'Đã mở buổi điểm danh QR' : 'Đã tạo buổi điểm danh thủ công',
-            "Buổi \"{$session->name}\" ({$lessons} tiết) của lớp {$className} đã được tạo thành công.",
+            "Buổi \"{$session->name}\" của lớp {$className} đã được tạo thành công.",
             $url,
             'success',
         );
@@ -353,63 +352,57 @@ class NotificationService
             return;
         }
 
-        $totalLessons = max((int) ($class->total_lessons ?? 0), 0);
-        $allowed = (int) floor($totalLessons * self::ABSENCE_LIMIT_RATIO);
+        $totalSessions = max((int) ($class->total_sessions ?? 0), 0);
+        $allowed = AttendanceCalculator::allowedAbsentSessions($totalSessions);
 
         if ($allowed <= 0) {
             return;
         }
 
-        $lessonCount = 'COALESCE(NULLIF(cs.lesson_count, 0), 1)';
-
-        $rows = DB::table('attendance_records as ar')
+        // Lấy bản ghi điểm danh ở phiên đã chốt của các sinh viên có tài khoản, gộp theo buổi.
+        $rowsByUser = DB::table('attendance_records as ar')
             ->join('class_sessions as cs', 'cs.id', '=', 'ar.class_session_id')
             ->join('class_members as cm', 'cm.id', '=', 'ar.class_member_id')
             ->where('cs.class_id', $class->id)
             ->where('cs.status', 'closed')
+            ->whereNotNull('cs.meeting_id')
             ->whereNull('ar.deleted_at')
             ->whereNull('cs.deleted_at')
             ->where('cm.status', 'active')
             ->whereNotNull('cm.user_id')
-            ->selectRaw("
-                cm.user_id,
-                COALESCE(SUM(CASE WHEN ar.status = 'late' THEN 1 ELSE 0 END), 0) as late_count,
-                COALESCE(SUM(CASE WHEN ar.status = 'excused' THEN {$lessonCount} ELSE 0 END), 0) as excused_lessons,
-                COALESCE(SUM(CASE WHEN ar.status IN ('absent', 'pending', 'invalid') THEN {$lessonCount} ELSE 0 END), 0) as absent_lessons
-            ")
-            ->groupBy('cm.user_id')
-            ->get();
+            ->get(['cm.user_id', 'cs.meeting_id', 'ar.status'])
+            ->groupBy('user_id');
 
-        foreach ($rows as $row) {
-            $userId = (int) $row->user_id;
-            $excused = (int) $row->excused_lessons;
-            $latesPerAbsent = (int) ($class->lates_per_absent ?? \App\Services\AttendanceCalculator::LATE_TO_ABSENT_RATIO);
-            $effectiveAbsent = AttendanceCalculator::effectiveAbsentLessons((int) $row->absent_lessons, (int) $row->late_count, $latesPerAbsent);
+        foreach ($rowsByUser as $userId => $userRows) {
+            $userId = (int) $userId;
+            $counts = AttendanceCalculator::consolidateByMeeting($userRows);
+            $excused = $counts['excused'];
+            $effectiveAbsent = $counts['absent'];
             $remaining = $allowed - $effectiveAbsent;
             $url = route('student.classes.show', ['ma_user' => $userId, 'courseClass' => $class->id]);
 
-            // Vắng (gồm muộn quy đổi) sắp chạm quỹ cho phép nhưng chưa vượt.
+            // Vắng sắp chạm quỹ buổi cho phép nhưng chưa vượt.
             if ($remaining >= 0 && $remaining <= self::NEAR_ABSENCE_LESSONS
                 && ! $this->hasUnreadLike($userId, 'App\\Notifications\\AbsenceWarning', $class->id)) {
                 $this->push(
                     $userId,
                     'App\\Notifications\\AbsenceWarning',
                     'Sắp vượt ngưỡng vắng',
-                    "Lớp {$class->name}: bạn đã vắng {$effectiveAbsent}/{$allowed} tiết được phép (đã tính muộn quy đổi). Chỉ còn {$remaining} tiết trước khi có nguy cơ cấm thi.",
+                    "Lớp {$class->name}: bạn đã vắng {$effectiveAbsent}/{$allowed} buổi được phép. Chỉ còn {$remaining} buổi trước khi có nguy cơ cấm thi.",
                     $url,
                     'warning',
                     ['class_id' => $class->id],
                 );
             }
 
-            // Vắng có phép vượt quỹ tiết được phép.
+            // Vắng có phép vượt quỹ buổi được phép.
             if ($excused > $allowed
                 && ! $this->hasUnreadLike($userId, 'App\\Notifications\\ExcusedAbsenceWarning', $class->id)) {
                 $this->push(
                     $userId,
                     'App\\Notifications\\ExcusedAbsenceWarning',
                     'Vắng có phép quá nhiều',
-                    "Lớp {$class->name}: bạn đã vắng có phép {$excused} tiết, vượt mức {$allowed} tiết khuyến nghị. Hãy sắp xếp tham gia học đầy đủ hơn.",
+                    "Lớp {$class->name}: bạn đã vắng có phép {$excused} buổi, vượt mức {$allowed} buổi khuyến nghị. Hãy sắp xếp tham gia học đầy đủ hơn.",
                     $url,
                     'warning',
                     ['class_id' => $class->id],

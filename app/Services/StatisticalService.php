@@ -57,8 +57,8 @@ class StatisticalService
      */
     public function emptyStudentClassAttendanceDetail(CourseClass $courseClass): array
     {
-        $plannedLessons = max((int) ($courseClass->total_lessons ?? 0), 0);
-        $allowedAbsentLessons = (int) floor($plannedLessons * self::ABSENCE_LIMIT_RATIO);
+        $plannedSessions = max((int) ($courseClass->total_sessions ?? 0), 0);
+        $allowedAbsentSessions = AttendanceCalculator::allowedAbsentSessions($plannedSessions);
 
         return [
             'id' => null,
@@ -68,23 +68,23 @@ class StatisticalService
             'name' => $courseClass->name ?? 'Lớp học',
             'teacher' => $courseClass->owner?->name ?? 'Chưa cập nhật',
             'semester' => $courseClass->semester ?? 'Chưa cập nhật',
-            'total_lessons' => (int) ($courseClass->total_lessons ?? 0),
-            'planned_lessons' => $plannedLessons,
+            'total_sessions' => (int) ($courseClass->total_sessions ?? 0),
+            'planned_sessions' => $plannedSessions,
             'total' => 0,
             'counted_total' => 0,
             'attended' => 0,
             'present' => 0,
             'late' => 0,
             'late_count' => 0,
-            'late_absent_lessons' => 0,
+            'late_absent_sessions' => 0,
             'excused' => 0,
             'absent' => 0,
             'effective_absent' => 0,
-            'allowed_absent_lessons' => $allowedAbsentLessons,
-            'safe_absence_lessons' => $allowedAbsentLessons,
-            'exceeded_absent_lessons' => 0,
-            'absence_budget_label' => $this->absenceBudgetLabel($allowedAbsentLessons, 0),
-            'absence_budget_state' => $this->absenceBudgetState($allowedAbsentLessons, 0),
+            'allowed_absent_sessions' => $allowedAbsentSessions,
+            'safe_absence_sessions' => $allowedAbsentSessions,
+            'exceeded_absent_sessions' => 0,
+            'absence_budget_label' => $this->absenceBudgetLabel($allowedAbsentSessions, 0),
+            'absence_budget_state' => $this->absenceBudgetState($allowedAbsentSessions, 0),
             'percent' => 100,
             'warning' => false,
             'demo' => false,
@@ -103,18 +103,18 @@ class StatisticalService
             'totals' => [
                 'records' => 0,
                 'counted_total' => 0,
-                'planned_lessons' => 0,
+                'planned_sessions' => 0,
                 'attended' => 0,
                 'present' => 0,
                 'late' => 0,
                 'late_count' => 0,
-                'late_absent_lessons' => 0,
+                'late_absent_sessions' => 0,
                 'excused' => 0,
                 'absent' => 0,
                 'effective_absent' => 0,
-                'allowed_absent_lessons' => 0,
-                'safe_absence_lessons' => 0,
-                'exceeded_absent_lessons' => 0,
+                'allowed_absent_sessions' => 0,
+                'safe_absence_sessions' => 0,
+                'exceeded_absent_sessions' => 0,
                 'percent' => 100,
                 'warning_count' => 0,
             ],
@@ -149,27 +149,31 @@ class StatisticalService
             return collect();
         }
 
-        $lessonCount = 'COALESCE(NULLIF(cs.lesson_count, 0), 1)';
-
-        return DB::table('attendance_records as ar')
+        // Lấy bản ghi điểm danh thuộc các phiên đã chốt, kèm meeting_id để gộp theo buổi.
+        $rows = DB::table('attendance_records as ar')
             ->join('class_sessions as cs', 'cs.id', '=', 'ar.class_session_id')
             ->whereIn('ar.class_member_id', $memberIds)
             ->where('cs.status', 'closed')
+            ->whereNotNull('cs.meeting_id')
             ->whereNull('ar.deleted_at')
             ->whereNull('cs.deleted_at')
-            ->selectRaw("
-                ar.class_member_id,
-                COUNT(ar.id) as records_count,
-                COALESCE(SUM({$lessonCount}), 0) as total_lessons,
-                COALESCE(SUM(CASE WHEN ar.status = 'present' THEN {$lessonCount} ELSE 0 END), 0) as present_lessons,
-                COALESCE(SUM(CASE WHEN ar.status = 'late' THEN {$lessonCount} ELSE 0 END), 0) as late_lessons,
-                COALESCE(SUM(CASE WHEN ar.status = 'late' THEN 1 ELSE 0 END), 0) as late_count,
-                COALESCE(SUM(CASE WHEN ar.status = 'excused' THEN {$lessonCount} ELSE 0 END), 0) as excused_lessons,
-                COALESCE(SUM(CASE WHEN ar.status IN ('absent', 'pending', 'invalid') THEN {$lessonCount} ELSE 0 END), 0) as absent_lessons
-            ")
-            ->groupBy('ar.class_member_id')
-            ->get()
-            ->keyBy('class_member_id');
+            ->get(['ar.class_member_id', 'cs.meeting_id', 'ar.status']);
+
+        // Gộp theo buổi cho từng sinh viên (mỗi buổi = 1 đơn vị).
+        return $rows
+            ->groupBy('class_member_id')
+            ->map(function ($memberRows) {
+                $counts = AttendanceCalculator::consolidateByMeeting($memberRows);
+
+                return (object) [
+                    'total_sessions' => $counts['total'],
+                    'present_sessions' => $counts['present'],
+                    'late_sessions' => $counts['late'],
+                    'late_count' => $counts['late'],
+                    'excused_sessions' => $counts['excused'],
+                    'absent_sessions' => $counts['absent'],
+                ];
+            });
     }
 
     /**
@@ -186,29 +190,28 @@ class StatisticalService
                 $courseClass = $member->courseClass;
                 $row = $attendanceRows->get($member->id);
 
-                $total = (int) ($row->total_lessons ?? 0);
-                $present = (int) ($row->present_lessons ?? 0);
-                $late = (int) ($row->late_lessons ?? 0);
+                $total = (int) ($row->total_sessions ?? 0);
+                $present = (int) ($row->present_sessions ?? 0);
+                $late = (int) ($row->late_sessions ?? 0);
                 $lateCount = (int) ($row->late_count ?? 0);
-                $excused = (int) ($row->excused_lessons ?? 0);
-                $absent = (int) ($row->absent_lessons ?? 0);
+                $excused = (int) ($row->excused_sessions ?? 0);
+                $absent = (int) ($row->absent_sessions ?? 0);
 
-                $latesPerAbsent = (int) ($courseClass?->lates_per_absent ?? AttendanceCalculator::LATE_TO_ABSENT_RATIO);
                 $deductExcusedAbsence = (bool) ($courseClass?->deduct_excused_absence ?? true);
 
-                // Vắng có phép bị loại khỏi mẫu số; mỗi lates_per_absent lần muộn quy thành 1 tiết vắng.
-                $plannedLessons = max((int) ($courseClass?->total_lessons ?? 0), $total);
-                $countedTotal = AttendanceCalculator::countedLessons($total, $excused, $deductExcusedAbsence);
-                $lateAbsentLessons = AttendanceCalculator::lateAbsentLessons($lateCount, $latesPerAbsent);
-                $effectiveAbsent = AttendanceCalculator::effectiveAbsentLessons($absent, $lateCount, $latesPerAbsent);
-                $attended = AttendanceCalculator::attendedLessons($present, $late, $lateCount, $latesPerAbsent);
-                // % chuyên cần tính trên tổng tiết kế hoạch (cả khóa) để nhất quán với quỹ vắng.
-                $percent = AttendanceCalculator::percentOfPlanned($plannedLessons, $excused, $absent, $lateCount, $latesPerAbsent, $deductExcusedAbsence);
+                // Đơn vị là buổi; vắng có phép bị loại khỏi mẫu số (nếu bật). Không quy đổi muộn.
+                $plannedSessions = max((int) ($courseClass?->total_sessions ?? 0), $total);
+                $countedTotal = AttendanceCalculator::countedSessions($total, $excused, $deductExcusedAbsence);
+                $lateAbsentSessions = 0;
+                $effectiveAbsent = max($absent, 0);
+                $attended = $present + $late;
+                // % chuyên cần tính trên tổng số buổi dự kiến (cả khóa) để nhất quán với quỹ vắng.
+                $percent = AttendanceCalculator::percentOfPlanned($plannedSessions, $excused, $absent, $deductExcusedAbsence);
 
-                $allowedAbsentLessons = (int) floor($plannedLessons * self::ABSENCE_LIMIT_RATIO);
-                $safeAbsenceLessons = max($allowedAbsentLessons - $effectiveAbsent, 0);
-                $exceededAbsentLessons = max($effectiveAbsent - $allowedAbsentLessons, 0);
-                $absenceBudgetState = $this->absenceBudgetState($allowedAbsentLessons, $effectiveAbsent);
+                $allowedAbsentSessions = AttendanceCalculator::allowedAbsentSessions($plannedSessions);
+                $safeAbsenceSessions = max($allowedAbsentSessions - $effectiveAbsent, 0);
+                $exceededAbsentSessions = max($effectiveAbsent - $allowedAbsentSessions, 0);
+                $absenceBudgetState = $this->absenceBudgetState($allowedAbsentSessions, $effectiveAbsent);
 
                 return [
                     'id' => $member->id,
@@ -218,22 +221,22 @@ class StatisticalService
                     'name' => $courseClass?->name ?? 'Lớp học',
                     'teacher' => $courseClass?->owner?->name ?? 'Chưa cập nhật',
                     'semester' => $courseClass?->semester ?? 'Chưa cập nhật',
-                    'total_lessons' => (int) ($courseClass?->total_lessons ?? 0),
-                    'planned_lessons' => $plannedLessons,
+                    'total_sessions' => (int) ($courseClass?->total_sessions ?? 0),
+                    'planned_sessions' => $plannedSessions,
                     'total' => $total,
                     'counted_total' => $countedTotal,
                     'attended' => $attended,
                     'present' => $present,
                     'late' => $late,
                     'late_count' => $lateCount,
-                    'late_absent_lessons' => $lateAbsentLessons,
+                    'late_absent_sessions' => $lateAbsentSessions,
                     'excused' => $excused,
                     'absent' => $absent,
                     'effective_absent' => $effectiveAbsent,
-                    'allowed_absent_lessons' => $allowedAbsentLessons,
-                    'safe_absence_lessons' => $safeAbsenceLessons,
-                    'exceeded_absent_lessons' => $exceededAbsentLessons,
-                    'absence_budget_label' => $this->absenceBudgetLabel($allowedAbsentLessons, $effectiveAbsent),
+                    'allowed_absent_sessions' => $allowedAbsentSessions,
+                    'safe_absence_sessions' => $safeAbsenceSessions,
+                    'exceeded_absent_sessions' => $exceededAbsentSessions,
+                    'absence_budget_label' => $this->absenceBudgetLabel($allowedAbsentSessions, $effectiveAbsent),
                     'absence_budget_state' => $absenceBudgetState,
                     'percent' => $percent,
                     'warning' => $total > 0 && $percent < self::MIN_ATTENDANCE_PERCENT,
@@ -257,24 +260,24 @@ class StatisticalService
         $totals = [
             'records' => (int) $subjectsCollection->sum('total'),
             'counted_total' => (int) $subjectsCollection->sum('counted_total'),
-            'planned_lessons' => (int) $subjectsCollection->sum('planned_lessons'),
+            'planned_sessions' => (int) $subjectsCollection->sum('planned_sessions'),
             'attended' => (int) $subjectsCollection->sum('attended'),
             'present' => (int) $subjectsCollection->sum('present'),
             'late' => (int) $subjectsCollection->sum('late'),
             'late_count' => (int) $subjectsCollection->sum('late_count'),
-            'late_absent_lessons' => (int) $subjectsCollection->sum('late_absent_lessons'),
+            'late_absent_sessions' => (int) $subjectsCollection->sum('late_absent_sessions'),
             'excused' => (int) $subjectsCollection->sum('excused'),
             'absent' => (int) $subjectsCollection->sum('absent'),
             'effective_absent' => (int) $subjectsCollection->sum('effective_absent'),
-            'allowed_absent_lessons' => (int) $subjectsCollection->sum('allowed_absent_lessons'),
-            'safe_absence_lessons' => (int) $subjectsCollection->sum('safe_absence_lessons'),
-            'exceeded_absent_lessons' => (int) $subjectsCollection->sum('exceeded_absent_lessons'),
+            'allowed_absent_sessions' => (int) $subjectsCollection->sum('allowed_absent_sessions'),
+            'safe_absence_sessions' => (int) $subjectsCollection->sum('safe_absence_sessions'),
+            'exceeded_absent_sessions' => (int) $subjectsCollection->sum('exceeded_absent_sessions'),
             'warning_count' => (int) $subjectsCollection->where('warning', true)->count(),
         ];
 
         // % tổng tính trên tổng tiết kế hoạch của tất cả môn (đã bỏ vắng có phép),
         // trừ đi vắng hiệu dụng (gồm muộn quy đổi) — nhất quán với từng môn.
-        $plannedCounted = max($totals['planned_lessons'] - $totals['excused'], 0);
+        $plannedCounted = max($totals['planned_sessions'] - $totals['excused'], 0);
         $totals['percent'] = $plannedCounted > 0
             ? (int) round((($plannedCounted - $totals['effective_absent']) / $plannedCounted) * 100)
             : 100;
@@ -285,27 +288,27 @@ class StatisticalService
     /**
      * Tạo nhãn hiển thị cho quỹ vắng dựa trên số tiết vắng đã ghi nhận.
      */
-    private function absenceBudgetLabel(int $allowedAbsentLessons, int $absent): string
+    private function absenceBudgetLabel(int $allowedAbsentSessions, int $absent): string
     {
-        $remaining = $allowedAbsentLessons - $absent;
+        $remaining = $allowedAbsentSessions - $absent;
 
         if ($remaining < 0) {
-            return 'Đã vượt '.abs($remaining).' tiết';
+            return 'Đã vượt '.abs($remaining).' buổi';
         }
 
         if ($remaining === 0) {
             return 'Hết quỹ vắng';
         }
 
-        return 'Còn vắng '.$remaining.' tiết';
+        return 'Còn vắng '.$remaining.' buổi';
     }
 
     /**
      * Phân loại trạng thái để view chỉ quyết định màu, không tự tính dữ liệu.
      */
-    private function absenceBudgetState(int $allowedAbsentLessons, int $absent): string
+    private function absenceBudgetState(int $allowedAbsentSessions, int $absent): string
     {
-        $remaining = $allowedAbsentLessons - $absent;
+        $remaining = $allowedAbsentSessions - $absent;
 
         if ($remaining < 0) {
             return 'danger';

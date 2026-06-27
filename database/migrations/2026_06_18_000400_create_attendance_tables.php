@@ -16,9 +16,6 @@ return new class extends Migration
             $table->date('date');
             $table->time('start_time')->nullable();
             $table->time('end_time')->nullable();
-            $table->unsignedInteger('start_lesson')->nullable();
-            $table->unsignedInteger('end_lesson')->nullable();
-            $table->unsignedInteger('lesson_count')->default(3);
             $table->string('qr_token')->nullable()->unique();
             $table->timestamp('token_expires_at')->nullable();
             $table->decimal('gps_latitude', 10, 8)->nullable();

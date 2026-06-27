@@ -9,18 +9,19 @@ return new class extends Migration
     public function up(): void
     {
         Schema::table('class_sessions', function (Blueprint $table) {
-            if (! Schema::hasColumn('class_sessions', 'lesson_count')) {
-                $table->unsignedInteger('lesson_count')->default(3)->after('end_time');
-            }
+            $table->foreignId('meeting_id')
+                ->nullable()
+                ->after('id')
+                ->constrained('class_meetings')
+                ->cascadeOnDelete();
         });
     }
 
     public function down(): void
     {
         Schema::table('class_sessions', function (Blueprint $table) {
-            if (Schema::hasColumn('class_sessions', 'lesson_count')) {
-                $table->dropColumn('lesson_count');
-            }
+            $table->dropForeign(['meeting_id']);
+            $table->dropColumn('meeting_id');
         });
     }
 };

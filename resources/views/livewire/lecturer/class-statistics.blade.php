@@ -22,10 +22,10 @@
         $cards = [
             ['label' => 'Tổng học viên',    'value' => $totalStudents,                             'sub' => 'đang hoạt động',                    'icon' => 'users',         'color' => 'text-tertiary',  'bg' => 'bg-tertiary/10'],
             ['label' => 'Buổi đã chốt',     'value' => "{$closedCount}/{$totalSessions}",          'sub' => 'buổi đã chốt sổ',                   'icon' => 'calendar-check','color' => 'text-secondary', 'bg' => 'bg-secondary/10'],
-            ['label' => 'Tiến độ tiết học', 'value' => "{$studiedLessons}/{$plannedLessons}",      'sub' => 'tiết đã học / kế hoạch',            'icon' => 'book-open',     'color' => 'text-primary',   'bg' => 'bg-primary/10'],
+            ['label' => 'Tiến độ buổi học', 'value' => "{$studiedSessions}/{$plannedSessions}",      'sub' => 'buổi đã học / kế hoạch',            'icon' => 'book-open',     'color' => 'text-primary',   'bg' => 'bg-primary/10'],
             ['label' => 'CC trung bình',    'value' => "{$avgAttendance}%",                        'sub' => 'chuyên cần toàn lớp',               'icon' => 'bar-chart-2',   'color' => ($avgAttendance < 80 ? 'text-error' : ($avgAttendance < 85 ? 'text-secondary' : 'text-tertiary')), 'bg' => ($avgAttendance < 80 ? 'bg-error/10' : ($avgAttendance < 85 ? 'bg-secondary/10' : 'bg-tertiary/10'))],
             ['label' => 'Cần chú ý',        'value' => $bannedCount + $warningCount,               'sub' => "{$bannedCount} cấm thi · {$warningCount} cảnh báo", 'icon' => 'alert-triangle','color' => ($bannedCount > 0 ? 'text-error' : ($warningCount > 0 ? 'text-secondary' : 'text-tertiary')), 'bg' => ($bannedCount > 0 ? 'bg-error/10' : ($warningCount > 0 ? 'bg-secondary/10' : 'bg-tertiary/10'))],
-            ['label' => 'Phép vắng / SV',   'value' => $allowedAbsent,                            'sub' => 'tiết được phép vắng (20%)',         'icon' => 'shield',        'color' => 'text-primary',   'bg' => 'bg-primary/10'],
+            ['label' => 'Phép vắng / SV',   'value' => $allowedAbsent,                            'sub' => 'buổi được phép vắng (20%)',         'icon' => 'shield',        'color' => 'text-primary',   'bg' => 'bg-primary/10'],
         ];
     @endphp
     <div class="grid grid-cols-2 gap-3 md:grid-cols-3 lg:grid-cols-6">
@@ -70,9 +70,9 @@
                                 $m       = $row['member'];
                                 $banned  = $s['is_banned'];
                                 $pct     = $s['attendance_percent'];
-                                $present = $s['present_lessons'];
-                                $absent  = $s['absent_lessons'];
-                                $planned = $s['planned_lessons'];
+                                $present = $s['present_sessions'];
+                                $absent  = $s['absent_sessions'];
+                                $planned = $s['planned_sessions'];
                             @endphp
                             <a href="{{ route('lecturer.students.show', $m->id) }}" wire:navigate
                                 class="flex items-center gap-3 rounded-xl border p-3 transition-all hover:shadow-sm {{ $banned ? 'border-error/20 bg-error/5 hover:border-error/40' : 'border-secondary/20 bg-secondary/5 hover:border-secondary/40' }}">
@@ -93,7 +93,7 @@
                                             <x-user.icon name="alert-circle" :size="10" /> Cảnh báo
                                         </span>
                                     @endif
-                                    <p class="mt-0.5 text-[10px] text-on-surface-variant">Vắng {{ $absent }}/{{ $planned }} tiết</p>
+                                    <p class="mt-0.5 text-[10px] text-on-surface-variant">Vắng {{ $absent }}/{{ $planned }} buổi</p>
                                 </div>
                             </a>
                         @endforeach
@@ -247,7 +247,7 @@
                                             </div>
                                         </div>
                                     </td>
-                                    <td class="px-4 py-3 text-center font-medium text-on-surface">{{ $s ? $s['present_lessons'] : '—' }}<span class="text-on-surface-variant/60">/{{ $s ? $s['planned_lessons'] : '—' }}</span></td>
+                                    <td class="px-4 py-3 text-center font-medium text-on-surface">{{ $s ? $s['present_sessions'] : '—' }}<span class="text-on-surface-variant/60">/{{ $s ? $s['planned_sessions'] : '—' }}</span></td>
                                     <td class="px-4 py-3 text-center">
                                         @if ($s && $s['late_count'] > 0)
                                             <span class="font-medium text-secondary">{{ $s['late_count'] }}x</span>
@@ -256,15 +256,15 @@
                                         @endif
                                     </td>
                                     <td class="px-4 py-3 text-center">
-                                        @if ($s && $s['absent_lessons'] > 0)
-                                            <span class="font-medium text-error">{{ $s['absent_lessons'] }}</span>
+                                        @if ($s && $s['absent_sessions'] > 0)
+                                            <span class="font-medium text-error">{{ $s['absent_sessions'] }}</span>
                                         @else
                                             <span class="text-on-surface-variant/40">0</span>
                                         @endif
                                     </td>
                                     <td class="px-4 py-3 text-center">
-                                        @if ($s && $s['excused_lessons'] > 0)
-                                            <span class="font-medium text-primary">{{ $s['excused_lessons'] }}</span>
+                                        @if ($s && $s['excused_sessions'] > 0)
+                                            <span class="font-medium text-primary">{{ $s['excused_sessions'] }}</span>
                                         @else
                                             <span class="text-on-surface-variant/40">0</span>
                                         @endif

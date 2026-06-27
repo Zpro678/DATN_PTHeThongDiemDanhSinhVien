@@ -23,7 +23,7 @@
 
             <div class="flex gap-2 sm:gap-3 overflow-x-auto pb-2 md:pb-0 hide-scrollbar">
                 <div class="flex flex-col items-center justify-center rounded-2xl border border-outline-variant/20 bg-surface-container-lowest px-3 py-2 min-w-[90px] shrink-0">
-                    <span class="text-[11px] font-bold uppercase tracking-wider text-on-surface-variant">Tổng tiết</span>
+                    <span class="text-[11px] font-bold uppercase tracking-wider text-on-surface-variant">Tổng buổi</span>
                     <span class="text-2xl font-black text-primary">{{ $summary['total'] }}</span>
                 </div>
                 <div class="flex flex-col items-center justify-center rounded-2xl border border-slate-200 bg-slate-50 px-3 py-2 min-w-[90px] shrink-0">

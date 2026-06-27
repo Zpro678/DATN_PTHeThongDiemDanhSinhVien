@@ -121,14 +121,14 @@ class ClassAttendanceHistory extends Component
                     $finalText = 'Có mặt';
                 }
 
-                $lessonCount = $daySessions->max('lesson_count') ?? 0;
-                $attendedLessons = 0;
-                $absentLessons = 0;
+                // Mỗi buổi = 1 đơn vị (đã bỏ khái niệm tiết).
+                $attendedSessions = 0;
+                $absentSessions = 0;
 
                 if ($finalStatus === 'present' || $finalStatus === 'late') {
-                    $attendedLessons = $lessonCount;
+                    $attendedSessions = 1;
                 } elseif ($finalStatus === 'absent') {
-                    $absentLessons = $lessonCount;
+                    $absentSessions = 1;
                 }
 
                 $tooltipStr = collect($dayDetailsArr)
@@ -140,11 +140,11 @@ class ClassAttendanceHistory extends Component
                     'text' => $finalText,
                     'details' => $dayDetailsArr,
                     'tooltip' => $tooltipStr,
-                    'attendedLessons' => $attendedLessons,
-                    'absentLessons' => $absentLessons
+                    'attendedSessions' => $attendedSessions,
+                    'absentSessions' => $absentSessions
                 ];
                 
-                $totalAttended[$member->id] += $attendedLessons;
+                $totalAttended[$member->id] += $attendedSessions;
             }
         }
 
@@ -168,9 +168,6 @@ class ClassAttendanceHistory extends Component
                 'name' => 'Buổi ' . $dayIndex++,
                 'date' => $first->date->format('d/m/Y'),
                 'timeStr' => $timeStr,
-                'startLesson' => $first->start_lesson,
-                'endLesson' => $first->end_lesson,
-                'lessonCount' => $first->lesson_count,
                 'columns' => $sessionCols
             ];
         });
@@ -188,9 +185,9 @@ class ClassAttendanceHistory extends Component
             ['bg' => 'bg-pink-100', 'text' => 'text-pink-700', 'border' => 'border-pink-200/60'],
         ];
 
-        $totalCourseLessons = $this->courseClass->total_lessons ?? 0;
+        $totalCourseSessions = $this->courseClass->total_sessions ?? 0;
 
-        $membersData = collect($members->items())->map(function($m) use ($colors, $totalAttended, $totalCourseLessons) {
+        $membersData = collect($members->items())->map(function($m) use ($colors, $totalAttended, $totalCourseSessions) {
             $color = $colors[$m->id % count($colors)];
             return [
                 'id' => $m->id, 
@@ -199,8 +196,8 @@ class ClassAttendanceHistory extends Component
                 'avatar_bg' => $color['bg'],
                 'avatar_text' => $color['text'],
                 'avatar_border' => $color['border'],
-                'total_attended_lessons' => $totalAttended[$m->id] ?? 0,
-                'total_course_lessons' => $totalCourseLessons
+                'total_attended_sessions' => $totalAttended[$m->id] ?? 0,
+                'total_course_sessions' => $totalCourseSessions
             ];
         })->keyBy('id');
 

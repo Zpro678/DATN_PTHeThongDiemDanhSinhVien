@@ -57,7 +57,7 @@ class="relative w-full"
     <!-- Dropdown menu -->
     <div x-show="open" 
          x-transition.opacity.duration.200ms
-         class="absolute z-50 mt-2 w-full rounded-xl border border-slate-100 bg-white shadow-xl max-h-60 overflow-y-auto p-1.5"
+         class="scrollbar-custom absolute z-50 mt-2 w-full rounded-xl border border-slate-100 bg-white shadow-xl max-h-60 overflow-y-auto p-1.5"
          style="display: none;">
          
         @if($placeholder)

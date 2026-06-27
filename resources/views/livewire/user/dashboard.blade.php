@@ -30,13 +30,13 @@
         $isExceeded   = ($student['status'] ?? null) === 'exceeded';
         $absenceRatio = $student['absence_ratio_percent'] ?? 0;
         $present      = $student['present_of_planned'] ?? 0;
-        $planned      = $student['planned_lessons'] ?? 0;
+        $planned      = $student['planned_sessions'] ?? 0;
 
         $alerts->push([
             'title'  => $isExceeded
-                ? "{$student['full_name']} vắng {$absenceRatio}% tổng tiết"
+                ? "{$student['full_name']} vắng {$absenceRatio}% tổng buổi"
                 : "{$student['full_name']} sắp vượt ngưỡng nghỉ",
-            'meta'   => "{$student['student_code']} - {$student['class_name']} · Có mặt {$present}/{$planned} tiết",
+            'meta'   => "{$student['student_code']} - {$student['class_name']} · Có mặt {$present}/{$planned} buổi",
             'icon'   => $isExceeded ? 'alert-triangle' : 'alert-circle',
             'color'  => $isExceeded ? 'text-error' : 'text-secondary',
             'bg'     => $isExceeded ? 'bg-error/10' : 'bg-secondary/10',
@@ -107,7 +107,7 @@
     $studentJoinedCards = $studentDashboard['joined_cards'] ?? [];
     $studentJoinedClassesCount = $studentDashboardStats['joined_classes'] ?? 0;
     $studentAverageAttendance = $studentDashboardStats['attendance_percent'] ?? 100;
-    $studentAbsentLessons = $studentDashboardStats['absent_lessons'] ?? 0;
+    $studentAbsentSessions = $studentDashboardStats['absent_sessions'] ?? 0;
     $studentWarningCount = $studentDashboardStats['warning_count'] ?? 0;
     $studentPendingLeaveRequests = $studentDashboardStats['pending_leave_requests'] ?? 0;
     $studentLatestAttendanceLabel = $studentDashboardStats['latest_attendance_label'] ?? 'Chưa có';
@@ -115,7 +115,7 @@
     $studentStats = [
         ['label' => 'Lớp tham gia', 'value' => $studentJoinedClassesCount, 'icon' => 'users', 'color' => 'text-tertiary', 'bg' => 'bg-tertiary/10'],
         ['label' => 'CC trung bình', 'value' => "{$studentAverageAttendance}%", 'icon' => 'check-circle', 'color' => 'text-primary', 'bg' => 'bg-primary/10'],
-        ['label' => 'Tiết vắng', 'value' => $studentAbsentLessons, 'icon' => 'clock', 'color' => 'text-error', 'bg' => 'bg-error/10'],
+        ['label' => 'Buổi vắng', 'value' => $studentAbsentSessions, 'icon' => 'clock', 'color' => 'text-error', 'bg' => 'bg-error/10'],
         ['label' => 'Cảnh báo', 'value' => $studentWarningCount, 'icon' => 'alert-triangle', 'color' => 'text-error', 'bg' => 'bg-error/10'],
         ['label' => 'Đơn chờ duyệt', 'value' => $studentPendingLeaveRequests, 'icon' => 'file-text', 'color' => 'text-secondary', 'bg' => 'bg-secondary/10'],
         ['label' => 'Buổi gần nhất', 'value' => $studentLatestAttendanceLabel, 'icon' => 'calendar-check', 'color' => 'text-primary', 'bg' => 'bg-primary/10'],
@@ -300,6 +300,7 @@
                                                 <x-user.icon name="users" :size="16" class="text-on-surface-variant" />
                                                 {{ $class['students'] }} học viên
                                             </span>
+                                            <span class="font-bold text-on-surface-variant">{{ $class['sessions'] }} buổi</span>
                                         </div>
                                         <div>
                                             <div class="mb-1 flex justify-between text-sm">
@@ -446,7 +447,7 @@
                                     </p>
                                     <div class="mb-6 space-y-3 rounded-2xl border border-outline-variant/20 bg-surface-container-low p-4">
                                         <div class="flex justify-between text-sm text-on-surface">
-                                            <span class="text-on-surface-variant">Tổng tiết vắng</span>
+                                            <span class="text-on-surface-variant">Tổng buổi vắng</span>
                                             <span class="font-bold text-on-surface-variant">{{ $class['absent'] }}</span>
                                         </div>
                                         <div>
@@ -477,7 +478,7 @@
                                     <x-user.icon name="book-open" :size="24" />
                                 </div>
                                 <h5 class="text-base font-bold text-on-surface">Chưa tham gia lớp nào</h5>
-                                <p class="mt-2 text-sm text-on-surface-variant">Khi bạn tham gia lớp, thông tin chuyên cần và số tiết vắng sẽ hiển thị tại đây.</p>
+                                <p class="mt-2 text-sm text-on-surface-variant">Khi bạn tham gia lớp, thông tin chuyên cần và số buổi vắng sẽ hiển thị tại đây.</p>
                                 <button type="button" x-on:click="$dispatch('open-join-class-modal')" class="mt-4 inline-flex items-center justify-center rounded-xl bg-tertiary px-4 py-2 text-sm font-bold text-white shadow-sm transition-colors hover:bg-tertiary/90">
                                     Tham gia lớp
                                 </button>
@@ -521,10 +522,6 @@
                         <label class="block">
                             <span class="mb-2 block text-sm font-bold text-on-surface">Tổng số buổi</span>
                             <input type="number" value="15" class="w-full rounded-xl border border-outline-variant/30 bg-surface-container-lowest px-4 py-3 outline-none transition-all focus:border-primary focus:ring-2 focus:ring-primary/20">
-                        </label>
-                        <label class="block">
-                            <span class="mb-2 block text-sm font-bold text-on-surface">Số tiết mỗi buổi</span>
-                            <input type="number" value="3" class="w-full rounded-xl border border-outline-variant/30 bg-surface-container-lowest px-4 py-3 outline-none transition-all focus:border-primary focus:ring-2 focus:ring-primary/20">
                         </label>
                         <label class="block">
                             <span class="mb-2 block text-sm font-bold text-on-surface">Ngưỡng cảnh báo vắng (%)</span>

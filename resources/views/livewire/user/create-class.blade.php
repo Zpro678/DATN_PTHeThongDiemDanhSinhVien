@@ -123,7 +123,13 @@
                     </div>
 
                     <div class="grid grid-cols-1 sm:grid-cols-2 gap-4 sm:gap-6">
-                        <div class="space-y-2 sm:col-span-2" x-data="{
+                        <label class="space-y-2 sm:col-span-2 md:col-span-1">
+                            <span class="block text-[13px] font-semibold text-slate-700">Tổng số buổi dự kiến <span class="text-red-500">*</span></span>
+                            <input wire:model.live.debounce.300ms="totalSessions" type="number" min="1" max="200" class="h-12 w-full rounded-2xl border border-slate-200 bg-white px-4 text-sm font-semibold text-slate-800 outline-none transition-all hover:border-slate-300 focus:border-blue-500 focus:ring-4 focus:ring-blue-500/10">
+                            @error('totalSessions') <span class="block text-xs font-medium text-red-600">{{ $message }}</span> @enderror
+                        </label>
+
+                        <div class="space-y-2 sm:col-span-2 md:col-span-1" x-data="{
                             open: false,
                             value: @entangle('lateThreshold'),
                             options: [
@@ -302,7 +308,12 @@
                         </div>
 
                         <div class="space-y-4 p-6">
-
+                            <div class="grid grid-cols-1 gap-3">
+                                <div class="rounded-2xl bg-slate-50 p-4">
+                                    <p class="text-xs font-bold uppercase tracking-wide text-slate-400">Tổng số buổi</p>
+                                    <p class="mt-2 text-2xl font-extrabold text-slate-950">{{ $totalSessions ?: 0 }}</p>
+                                </div>
+                            </div>
 
                             <div class="rounded-2xl border border-slate-200 p-4">
                                 <div class="flex items-center gap-3">
@@ -340,6 +351,10 @@
                             </div>
                             <div class="flex gap-3">
                                 <span class="mt-0.5 flex h-6 w-6 items-center justify-center rounded-full bg-blue-50 text-xs font-extrabold text-blue-600">2</span>
+                                <p class="text-sm leading-6 text-slate-600">Tổng số buổi sẽ được dùng để tính tiến độ học trên dashboard.</p>
+                            </div>
+                            <div class="flex gap-3">
+                                <span class="mt-0.5 flex h-6 w-6 items-center justify-center rounded-full bg-blue-50 text-xs font-extrabold text-blue-600">3</span>
                                 <p class="text-sm leading-6 text-slate-600">Bật duyệt tham gia nếu lớp cần kiểm soát danh sách học viên trước.</p>
                             </div>
                         </div>

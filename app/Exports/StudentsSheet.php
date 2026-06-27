@@ -99,11 +99,31 @@ class StudentsSheet implements FromArray, ShouldAutoSize, WithStyles, WithTitle
             ->get()
             ->groupBy('class_member_id');
 
-        // ── Attendance stats ──
-        $studentService   = app(LectureManageStudentService::class);
-        $attendanceStats  = collect($studentService->getStudentsAttendanceStats($members->pluck('id')));
+        $headers = [
+            'STT', 
+            'MSSV', 
+            'Họ và tên', 
+            'Email',
+            'Lớp học'
+        ];
 
-        // ── Header rows (4 dòng thông tin + 1 dòng trắng) ──
+        foreach ($sessions as $session) {
+            $headers[] = $session->date->format('d/m');
+        }
+
+        $formulaName = 'Kết quả công thức (%)';
+
+        $headers = array_merge($headers, [
+            'Tổng số tiết đã học',
+            'Có mặt', 
+            'Đi muộn', 
+            'Vắng không phép', 
+            'Vắng có phép',
+            'Muộn quy đổi (tiết)',
+            'Chuyên cần (% cài đặt lớp)',
+            $formulaName
+        ]);
+
         $rows[] = ['BÁO CÁO CHUYÊN CẦN SINH VIÊN'];
         $rows[] = ['Lớp:', $className];
         $rows[] = ['Trạng thái:', $this->statusFilter === 'active' ? 'Đang học' : 'Lưu trữ'];
@@ -129,15 +149,68 @@ class StudentsSheet implements FromArray, ShouldAutoSize, WithStyles, WithTitle
 
         foreach ($members as $member) {
             $stats = $attendanceStats->get($member->id, [
-                'studied_lessons'  => 0,
-                'present_lessons'  => 0,
-                'late_lessons'     => 0,
-                'absent_lessons'   => 0,
-                'excused_lessons'  => 0,
-                'late_count'       => 0,
-                'lates_per_absent' => 0,
-                'deduct_excused_absence' => false,
+                'studied_lessons' => 0,
+                'present_lessons' => 0,
+                'late_lessons' => 0,
+                'absent_lessons' => 0,
+                'excused_lessons' => 0,
             ]);
+
+            // Tính chuyên cần theo cài đặt lớp (lấy từ stats, do LectureManageStudentService đã join classes)
+            $latesPerAbsent     = (int) ($stats['lates_per_absent'] ?? 0);
+            $deductExcused      = (bool) ($stats['deduct_excused_absence'] ?? false);
+            $lateCount          = (int) ($stats['late_count'] ?? 0);
+            $presentLessons     = (int) ($stats['present_lessons'] ?? 0);
+            $lateLessons        = (int) ($stats['late_lessons'] ?? 0);
+            $absentLessons      = (int) ($stats['absent_lessons'] ?? 0);
+            $excusedLessons     = (int) ($stats['excused_lessons'] ?? 0);
+            $studied            = (int) ($stats['studied_lessons'] ?? 0);
+
+            $lateConvertedLessons = AttendanceCalculator::lateAbsentLessons($lateCount, $latesPerAbsent);
+            $classPercent = AttendanceCalculator::percent(
+                $presentLessons,
+                $lateLessons,
+                $excusedLessons,
+                $studied,
+                $lateCount,
+                $latesPerAbsent,
+                $deductExcused,
+            );
+
+            // Tính phần trăm theo công thức tự nhập
+            $percent = 0;
+            if ($studied > 0) {
+                // Ensure the formula only contains safe characters and allowed math functions
+                $formulaStr = strtolower($this->formula);
+                
+                // Chỉ giữ lại các biến và hàm toán học hợp lệ
+                $formulaStr = preg_replace_callback('/[a-z]+/', function($matches) {
+                    $word = $matches[0];
+                    $allowed = ['c', 'm', 'v', 'p', 't', 'floor', 'ceil', 'round', 'max', 'min', 'abs'];
+                    return in_array($word, $allowed) ? $word : '';
+                }, $formulaStr);
+
+                // Loại bỏ các ký tự đặc biệt nguy hiểm (chỉ cho phép a-z, số, toán tử, khoảng trắng, dấu phẩy)
+                $formulaStr = preg_replace('/[^a-z0-9\+\-\*\/\(\)\.\s,]/', '', $formulaStr);
+                
+                // Map variables to their values using word boundaries
+                $formulaStr = preg_replace('/\bc\b/', $presentLessons, $formulaStr);
+                $formulaStr = preg_replace('/\bm\b/', $lateLessons, $formulaStr);
+                $formulaStr = preg_replace('/\bv\b/', $absentLessons, $formulaStr);
+                $formulaStr = preg_replace('/\bp\b/', $excusedLessons, $formulaStr);
+                $formulaStr = preg_replace('/\bt\b/', $studied, $formulaStr);
+
+                if (!empty($formulaStr)) {
+                    try {
+                        $result = @eval("return $formulaStr;");
+                        if (is_numeric($result)) {
+                            $percent = round((float) $result, 2);
+                        }
+                    } catch (\Throwable $e) {
+                        $percent = 0;
+                    }
+                }
+            }
 
             $row = [
                 $member->student_code,
@@ -167,26 +240,16 @@ class StudentsSheet implements FromArray, ShouldAutoSize, WithStyles, WithTitle
                 }
             }
 
-            // Cột tổng kết: dùng Excel COUNTIF formulas (giống file mẫu)
-            // Cột D = index 4, session bắt đầu từ D, kết thúc ở cột (3 + sessionCount)
-            $sessionStartCol = Coordinate::stringFromColumnIndex(4); // D
-            $sessionEndCol   = Coordinate::stringFromColumnIndex(3 + $this->sessionCount); // tuỳ số buổi
-
-            $row[] = "=COUNTIF({$sessionStartCol}{$currentRow}:{$sessionEndCol}{$currentRow},\"c\")"; // Có mặt
-            $row[] = "=COUNTIF({$sessionStartCol}{$currentRow}:{$sessionEndCol}{$currentRow},\"m\")"; // Đi muộn
-            $row[] = "=COUNTIF({$sessionStartCol}{$currentRow}:{$sessionEndCol}{$currentRow},\"p\")"; // Có phép
-            $row[] = "=COUNTIF({$sessionStartCol}{$currentRow}:{$sessionEndCol}{$currentRow},\"v\")"; // Vắng không phép
-            // Chuyên cần: tỉ lệ tham dự = (c+m+v) / tổng buổi
-            $totalSessions = $this->sessionCount ?: 1;
-            $cColIdx = 3 + $this->sessionCount + 1; // cột "Số buổi có mặt"
-            $mColIdx = $cColIdx + 1;
-            $vColIdx = $mColIdx + 1;
-            $cCol = Coordinate::stringFromColumnIndex($cColIdx);
-            $mCol = Coordinate::stringFromColumnIndex($mColIdx);
-            $vCol = Coordinate::stringFromColumnIndex($vColIdx);
-
-            $row[] = "=IFERROR(({$cCol}{$currentRow}+{$mCol}{$currentRow}+{$vCol}{$currentRow})/{$totalSessions},0)";
-            $row[] = $this->calcFormulaForRow($stats, $member->id);
+            $row = array_merge($row, [
+                $stats['studied_lessons'],
+                $stats['present_lessons'],
+                $stats['late_lessons'],
+                $stats['absent_lessons'],
+                $stats['excused_lessons'],
+                $lateConvertedLessons > 0 ? $lateConvertedLessons : '-',
+                $classPercent . '%',
+                $percent . '%',
+            ]);
 
             $rows[] = $row;
             $currentRow++;

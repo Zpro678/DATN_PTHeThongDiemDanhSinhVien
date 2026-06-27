@@ -110,8 +110,8 @@
                                             </div>
                                         </div>
                                         @php
-                                            $totalAtt = $mInfo['total_attended_lessons'] ?? 0;
-                                            $totalCourse = $mInfo['total_course_lessons'] ?? 1;
+                                            $totalAtt = $mInfo['total_attended_sessions'] ?? 0;
+                                            $totalCourse = $mInfo['total_course_sessions'] ?? 1;
                                             $perc = $totalCourse > 0 ? round(($totalAtt / $totalCourse) * 100) : 0;
                                             if ($perc > 80) {
                                                 $badgeClass = 'bg-teal-50 text-teal-700 border-teal-100 shadow-[0_0_10px_rgba(15,118,110,0.1)]';
@@ -184,9 +184,9 @@
                 <div class="flex flex-col md:flex-row md:items-center justify-between gap-6">
                     <div>
                         <div class="flex items-center gap-3 mb-2">
-                            <span class="inline-flex items-center rounded-full bg-indigo-50 px-3 py-1 text-xs font-bold text-indigo-600 uppercase tracking-widest" 
+                            <span class="inline-flex items-center rounded-full bg-indigo-50 px-3 py-1 text-xs font-bold text-indigo-600 uppercase tracking-widest"
                                   x-show="groupedSessionsInfo[selectedGroupKey]"
-                                  x-text="groupedSessionsInfo[selectedGroupKey]?.startLesson && groupedSessionsInfo[selectedGroupKey]?.endLesson ? 'Tiết ' + groupedSessionsInfo[selectedGroupKey].startLesson + ' - ' + groupedSessionsInfo[selectedGroupKey].endLesson : groupedSessionsInfo[selectedGroupKey]?.lessonCount + ' tiết'"></span>
+                                  x-text="(groupedSessionsInfo[selectedGroupKey]?.columns?.length ?? 1) + ' phiên'"></span>
                             <span class="flex items-center gap-1.5 text-sm font-medium text-slate-500" x-show="groupedSessionsInfo[selectedGroupKey]?.timeStr">
                                 <x-user.icon name="clock" :size="16" class="text-slate-400" />
                                 <span x-text="groupedSessionsInfo[selectedGroupKey]?.timeStr"></span>
@@ -230,7 +230,7 @@
                                 </template>
                             </template>
 
-                            <th scope="col" class="px-8 py-6 text-center text-[13px] font-black uppercase tracking-widest text-slate-700" x-show="sessionFilter === 'merged'">Số tiết tính</th>
+                            <th scope="col" class="px-8 py-6 text-center text-[13px] font-black uppercase tracking-widest text-slate-700" x-show="sessionFilter === 'merged'">Buổi tính</th>
                             <th scope="col" class="px-8 py-6 text-center text-[13px] font-black uppercase tracking-widest text-slate-700">Trạng thái chốt</th>
                         </tr>
                     </thead>
@@ -270,7 +270,7 @@
                                 </template>
 
                                 <td class="px-8 py-5 text-center align-middle" x-show="sessionFilter === 'merged'">
-                                    <span class="inline-flex h-9 w-9 items-center justify-center rounded-xl bg-slate-50 text-sm font-black text-slate-700 border border-slate-200 shadow-sm" x-text="student.cell.attendedLessons"></span>
+                                    <span class="inline-flex h-9 w-9 items-center justify-center rounded-xl bg-slate-50 text-sm font-black text-slate-700 border border-slate-200 shadow-sm" x-text="student.cell.attendedSessions"></span>
                                 </td>
 
                                 <td class="px-8 py-5 text-center align-middle">
@@ -331,12 +331,12 @@
                                         <p class="text-[15px] font-bold text-slate-700" x-text="modalData.sessionInfo.date"></p>
                                     </div>
                                     <div class="rounded-2xl border border-slate-100 bg-slate-50/50 p-3 text-center">
-                                        <p class="text-[11px] font-bold uppercase tracking-wide text-slate-400 mb-1 whitespace-nowrap">Số tiết ghi nhận</p>
-                                        <p class="text-[15px] font-bold text-slate-700" x-text="modalData.cell.attendedLessons + ' tiết'"></p>
+                                        <p class="text-[11px] font-bold uppercase tracking-wide text-slate-400 mb-1 whitespace-nowrap">Buổi ghi nhận</p>
+                                        <p class="text-[15px] font-bold text-slate-700" x-text="modalData.cell.attendedSessions + ' buổi'"></p>
                                     </div>
                                     <div class="rounded-2xl border border-slate-100 bg-slate-50/50 p-3 text-center">
                                         <p class="text-[11px] font-bold uppercase tracking-wide text-slate-400 mb-1 whitespace-nowrap">Đã điểm danh</p>
-                                        <p class="text-[15px] font-bold text-indigo-600" x-text="modalData.student.total_attended_lessons + '/' + modalData.student.total_course_lessons + ' tiết'"></p>
+                                        <p class="text-[15px] font-bold text-indigo-600" x-text="modalData.student.total_attended_sessions + '/' + modalData.student.total_course_sessions + ' buổi'"></p>
                                     </div>
                                 </div>
 

@@ -24,7 +24,7 @@ class AttendanceDataModelTest extends TestCase
         $this->assertCount(3, $teacher->ownedClasses);
         $this->assertCount(11, $courseClass->members);
         $this->assertCount(11, $courseClass->users);
-        $this->assertCount(4, $courseClass->sessions);
+        $this->assertCount(5, $courseClass->sessions);
         $this->assertCount(12, $courseClass->attendanceSummaries);
         $this->assertTrue($student->joinedClasses->contains($courseClass));
         $this->assertSame($teacher->id, $courseClass->owner->id);
