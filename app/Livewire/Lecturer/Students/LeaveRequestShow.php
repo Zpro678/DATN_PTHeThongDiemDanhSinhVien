@@ -16,6 +16,7 @@ class LeaveRequestShow extends Component
     public int $leaveRequestId;
 
     public bool $showRejectForm = false;
+    public bool $showApproveForm = false;
 
     public string $rejectedReason = '';
 
@@ -24,10 +25,12 @@ class LeaveRequestShow extends Component
         $this->leaveRequestId = $this->ownedRequest($leaveRequest)->id;
     }
 
-    public function approve(LeaveRequestReviewService $reviewService): void
+    public function confirmApprove(LeaveRequestReviewService $reviewService): void
     {
-        $reviewService->approve($this->ownedRequest($this->leaveRequestId), $this->reviewer());
-        session()->flash('status', 'Đơn xin nghỉ đã được duyệt.');
+        $leaveRequest = $this->ownedRequest($this->leaveRequestId);
+        $reviewService->approve($leaveRequest, $this->reviewer());
+        $this->showApproveForm = false;
+        $this->dispatch('toast', message: 'Bạn đã duyệt đơn xin nghỉ phép của sinh viên ' . $leaveRequest->classMember->student_code . ' thành công.', type: 'success');
     }
 
     public function reject(LeaveRequestReviewService $reviewService): void
@@ -39,9 +42,10 @@ class LeaveRequestShow extends Component
             'rejectedReason.min' => 'Lý do từ chối phải có ít nhất 5 ký tự.',
         ]);
 
-        $reviewService->reject($this->ownedRequest($this->leaveRequestId), $this->reviewer(), $validated['rejectedReason']);
+        $leaveRequest = $this->ownedRequest($this->leaveRequestId);
+        $reviewService->reject($leaveRequest, $this->reviewer(), $validated['rejectedReason']);
         $this->showRejectForm = false;
-        session()->flash('status', 'Đơn xin nghỉ đã bị từ chối.');
+        $this->dispatch('toast', message: 'Bạn đã từ chối đơn xin nghỉ phép của sinh viên ' . $leaveRequest->classMember->student_code . ' thành công.', type: 'success');
     }
 
     private function ownedRequest(int $requestId): LeaveRequest

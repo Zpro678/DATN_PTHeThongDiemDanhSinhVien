@@ -163,11 +163,12 @@
                                                             'X-CSRF-TOKEN': csrfToken
                                                         },
                                                         body: JSON.stringify({
-                                                            token: verificationToken,
-                                                            lat: position.coords.latitude,
-                                                            lng: position.coords.longitude,
-                                                            accuracy: position.coords.accuracy
-                                                        })
+    token: verificationToken,
+    lat: position.coords.latitude,
+    lng: position.coords.longitude,
+    accuracy: position.coords.accuracy,
+    altitude: position.coords.altitude // Bổ sung bắt độ cao cho Lớp 2
+})
                                                     });
                                                     const verifyData = await verifyResp.json();
                                                     if (!verifyData.success) {

@@ -26,7 +26,7 @@
     ];
 @endphp
 
-<div class="relative" x-data="{ openNotification: false }" @click.away="openNotification = false">
+<div class="relative" x-data="{ openNotification: false, showAll: false }" @click.away="openNotification = false; showAll = false">
     <button
         type="button"
         @click="openNotification = !openNotification"
@@ -61,7 +61,7 @@
             @endif
         </div>
 
-        <div class="scrollbar-custom max-h-[360px] overflow-y-auto overscroll-contain">
+        <div class="scrollbar-custom max-h-[500px] overflow-y-auto overscroll-contain">
             @forelse ($notifications as $notification)
                 @php
                     $isUnread = (bool) ($notification['unread'] ?? false);
@@ -74,6 +74,7 @@
 
                 <a
                     href="{{ $notification['href'] ?? '#' }}"
+                    x-show="showAll || {{ $loop->index }} < 5"
                     @class([
                         'flex items-start gap-4 px-4 py-3 transition-colors hover:bg-slate-50',
                         'border-b border-slate-50' => ! $loop->last,
@@ -101,10 +102,15 @@
             @endforelse
         </div>
 
-        <div class="border-t border-slate-100 bg-slate-50/50 p-2 text-center">
-            <a href="{{ $allUrl }}" class="inline-block w-full rounded-lg px-4 py-2 text-xs font-bold text-slate-600 transition-colors hover:bg-slate-200/50 hover:text-slate-900">
-                {{ $allLabel }}
-            </a>
-        </div>
+        @if(count($notifications) > 5)
+            <div class="border-t border-slate-100 bg-slate-50/50 p-2 text-center">
+                <button x-show="!showAll" type="button" @click="showAll = true" class="inline-block w-full rounded-lg px-4 py-2 text-xs font-bold text-slate-600 transition-colors hover:bg-slate-200/50 hover:text-slate-900">
+                    Xem thêm
+                </button>
+                <button x-show="showAll" type="button" @click="showAll = false" class="inline-block w-full rounded-lg px-4 py-2 text-xs font-bold text-slate-600 transition-colors hover:bg-slate-200/50 hover:text-slate-900">
+                    Thu gọn
+                </button>
+            </div>
+        @endif
     </div>
 </div>

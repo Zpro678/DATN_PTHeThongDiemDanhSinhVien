@@ -10,10 +10,10 @@
 <div class="mx-auto max-w-[1100px] space-y-6 p-4 pb-24 sm:p-8">
     <div class="flex flex-col justify-between gap-4 sm:flex-row sm:items-center">
         <div><h1 class="text-3xl font-extrabold uppercase tracking-tight text-slate-900">Chi tiết đơn xin nghỉ</h1><p class="mt-1 text-base text-slate-500">Mã đơn #{{ $leaveRequest->id }}</p></div>
-        <div class="flex flex-wrap gap-2">@if($leaveRequest->status === 'pending')<button type="button" wire:click="approve" wire:confirm="Duyệt đơn xin nghỉ này?" class="inline-flex items-center gap-2 rounded-xl bg-emerald-600 px-4 py-2.5 text-base font-bold text-white hover:bg-emerald-700"><x-user.icon name="check-circle" :size="20" />Duyệt đơn</button><button type="button" wire:click="$set('showRejectForm', true)" class="inline-flex items-center gap-2 rounded-xl border border-red-200 bg-white px-4 py-2.5 text-base font-bold text-red-600 hover:bg-red-50"><x-user.icon name="x" :size="20" />Từ chối</button>@endif<a href="{{ route('lecturer.leave-requests.index') }}" class="inline-flex items-center gap-2 rounded-xl border border-slate-200 bg-white px-4 py-2.5 text-base font-bold text-slate-600 hover:bg-slate-50">Quay lại</a></div>
+        <div class="flex flex-wrap gap-2">@if($leaveRequest->status === 'pending')<button type="button" wire:click="$set('showApproveForm', true)" class="inline-flex items-center gap-2 rounded-xl bg-emerald-600 px-4 py-2.5 text-base font-bold text-white hover:bg-emerald-700"><x-user.icon name="check-circle" :size="20" />Duyệt đơn</button><button type="button" wire:click="$set('showRejectForm', true)" class="inline-flex items-center gap-2 rounded-xl border border-red-200 bg-white px-4 py-2.5 text-base font-bold text-red-600 hover:bg-red-50"><x-user.icon name="x" :size="20" />Từ chối</button>@endif<a href="{{ route('lecturer.leave-requests.index') }}" class="inline-flex items-center gap-2 rounded-xl border border-slate-200 bg-white px-4 py-2.5 text-base font-bold text-slate-600 hover:bg-slate-50">Quay lại</a></div>
     </div>
 
-    @if(session('status'))<div class="rounded-2xl border border-emerald-200 bg-emerald-50 px-5 py-3 text-sm font-semibold text-emerald-700">{{ session('status') }}</div>@endif
+
 
     <section class="grid gap-6 lg:grid-cols-[1fr_1.25fr]">
         <div class="flex h-full flex-col gap-6">
@@ -77,6 +77,30 @@
     </section>
 
     @if($showRejectForm)
-        <div class="fixed inset-0 z-[100] flex items-center justify-center bg-slate-900/50 p-4 backdrop-blur-sm"><form wire:submit="reject" class="w-full max-w-lg rounded-2xl bg-white p-6 shadow-2xl"><div class="mb-5 flex items-center justify-between"><h3 class="text-lg font-bold text-slate-900">Từ chối đơn xin nghỉ</h3><button type="button" wire:click="$set('showRejectForm', false)" class="rounded-full p-2 text-slate-400 hover:bg-slate-100"><x-user.icon name="x" :size="18" /></button></div><label class="block space-y-2"><span class="text-sm font-semibold text-slate-700">Lý do từ chối</span><textarea wire:model="rejectedReason" rows="4" class="w-full rounded-xl border-slate-200 focus:border-red-500 focus:ring-red-500/20"></textarea>@error('rejectedReason')<span class="text-xs text-red-600">{{ $message }}</span>@enderror</label><div class="mt-6 flex justify-end gap-3"><button type="button" wire:click="$set('showRejectForm', false)" class="rounded-xl px-5 py-2.5 text-sm font-bold text-slate-600 hover:bg-slate-100">Hủy</button><button type="submit" class="rounded-xl bg-red-600 px-5 py-2.5 text-sm font-bold text-white">Xác nhận từ chối</button></div></form></div>
+        <template x-teleport="body">
+            <div class="fixed inset-0 z-[100] flex items-center justify-center bg-slate-900/50 p-4 backdrop-blur-sm"><form wire:submit="reject" class="w-full max-w-lg rounded-2xl bg-white p-6 shadow-2xl"><div class="mb-5 flex items-center justify-between"><h3 class="text-lg font-bold text-slate-900">Từ chối đơn xin nghỉ</h3><button type="button" wire:click="$set('showRejectForm', false)" class="rounded-full p-2 text-slate-400 hover:bg-slate-100"><x-user.icon name="x" :size="18" /></button></div><label class="block space-y-2"><span class="text-sm font-semibold text-slate-700">Lý do từ chối</span><textarea wire:model="rejectedReason" rows="4" class="w-full rounded-xl border-slate-200 focus:border-red-500 focus:ring-red-500/20"></textarea>@error('rejectedReason')<span class="text-xs text-red-600">{{ $message }}</span>@enderror</label><div class="mt-6 flex justify-end gap-3"><button type="button" wire:click="$set('showRejectForm', false)" class="rounded-xl px-5 py-2.5 text-sm font-bold text-slate-600 hover:bg-slate-100">Hủy</button><button type="submit" class="rounded-xl bg-red-600 px-5 py-2.5 text-sm font-bold text-white">Xác nhận từ chối</button></div></form></div>
+        </template>
+    @endif
+
+    @if($showApproveForm)
+        <template x-teleport="body">
+            <div class="fixed inset-0 z-[100] flex items-center justify-center bg-slate-900/50 p-4 backdrop-blur-sm">
+                <div class="w-full max-w-md rounded-2xl bg-white p-6 shadow-2xl">
+                    <div class="mb-4 flex items-center gap-3">
+                        <div class="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-emerald-50">
+                            <x-user.icon name="check-circle" :size="20" class="text-emerald-600" />
+                        </div>
+                        <h3 class="text-lg font-bold text-slate-900">Xác nhận duyệt</h3>
+                    </div>
+                    <p class="text-sm text-slate-600">Bạn có chắc chắn muốn duyệt đơn xin nghỉ phép này không?</p>
+                    <div class="mt-6 flex justify-end gap-3">
+                        <button type="button" wire:click="$set('showApproveForm', false)"
+                            class="rounded-xl border border-slate-200 px-5 py-2.5 text-sm font-bold text-slate-600 hover:bg-slate-50 transition-colors">Hủy</button>
+                        <button type="button" wire:click="confirmApprove"
+                            class="rounded-xl bg-emerald-600 px-5 py-2.5 text-sm font-bold text-white hover:bg-emerald-700 transition-colors">Duyệt đơn</button>
+                    </div>
+                </div>
+            </div>
+        </template>
     @endif
 </div>

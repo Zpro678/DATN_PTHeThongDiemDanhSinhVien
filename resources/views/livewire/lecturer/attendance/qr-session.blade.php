@@ -121,12 +121,28 @@
         <section class="rounded-2xl border border-slate-200 bg-white p-4 sm:p-6 shadow-sm xl:col-span-4 flex flex-col min-w-0 overflow-hidden">
             <div class="flex h-full w-full flex-col items-center flex-1 min-w-0">
                 @if(!$isClosed)
-                    <div class="mb-4 sm:mb-6 flex w-full items-center justify-between gap-2 sm:gap-3 rounded-2xl border border-slate-200 bg-slate-50 px-3 sm:px-4 py-2 sm:py-3 min-w-0">
-                        <div class="min-w-0 flex-1">
-                            <p class="text-[11px] font-black uppercase tracking-wider text-slate-400">Liên kết</p>
-                            <p class="mt-1 truncate text-sm font-bold text-blue-700">{{ $attendanceLink }}</p>
+                    <div class="mb-4 sm:mb-6 flex w-full gap-2 sm:gap-3">
+                        <div class="flex flex-1 items-center justify-between rounded-2xl border border-slate-200 bg-slate-50 px-3 sm:px-4 py-2 sm:py-3 min-w-0">
+                            <div class="min-w-0 flex-1">
+                                <div class="flex items-center justify-between">
+                                    <p class="text-[11px] font-black uppercase tracking-wider text-slate-400">Liên kết</p>
+                                    <button type="button" @click="copyShareCode()" class="shrink-0 rounded-md p-1 text-slate-400 transition hover:bg-slate-200 hover:text-blue-600" :title="shareCopied ? 'Đã sao chép' : 'Sao chép liên kết'">
+                                        <x-user.icon name="copy" :size="14" x-show="!shareCopied" />
+                                        <x-user.icon name="check" :size="14" x-show="shareCopied" class="text-emerald-500" x-cloak />
+                                    </button>
+                                </div>
+                                <div class="mt-0.5 flex items-center gap-2">
+                                    <p class="truncate text-sm font-bold text-blue-700">{{ $attendanceLink }}</p>
+                                </div>
+                            </div>
                         </div>
-                        <span class="shrink-0 rounded-xl bg-blue-50 px-2 sm:px-3 py-1.5 sm:py-2 text-xs font-black text-blue-700 ring-1 ring-blue-100">{{ \Illuminate\Support\Str::limit($session->qr_token, 8, '') }}</span>
+                        
+                        <div class="flex flex-1 items-center justify-between rounded-2xl border border-slate-200 bg-slate-50 px-3 sm:px-4 py-2 sm:py-3 min-w-0">
+                            <div class="min-w-0 flex-1">
+                                <p class="text-[11px] font-black uppercase tracking-wider text-slate-400">Mã phiên</p>
+                                <p class="mt-1 text-sm font-black tracking-widest text-blue-700">{{ \Illuminate\Support\Str::limit($session->qr_token, 8, '') }}</p>
+                            </div>
+                        </div>
                     </div>
 
                     <button type="button" @click="showQrModal = true" class="group relative my-4 flex h-52 w-52 sm:h-64 sm:w-64 items-center justify-center rounded-[24px] sm:rounded-[28px] border border-slate-200 bg-white p-4 sm:p-5 shadow-xl shadow-slate-900/10 transition hover:scale-[1.02]">

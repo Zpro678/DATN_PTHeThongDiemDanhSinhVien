@@ -15,9 +15,6 @@
         <a href="{{ route('lecturer.students.index') }}" class="inline-flex items-center justify-center gap-2 rounded-full border border-slate-200 px-5 py-2.5 text-sm font-bold text-slate-600 hover:bg-slate-50"><x-user.icon name="users" :size="18" />Quản lý học viên</a>
     </section>
 
-    @if (session('status'))
-        <div class="rounded-2xl border border-emerald-200 bg-emerald-50 px-5 py-3 text-sm font-semibold text-emerald-700">{{ session('status') }}</div>
-    @endif
 
     <section class="overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm">
         <nav class="grid grid-cols-3 border-b border-slate-200">
@@ -91,7 +88,7 @@
                             <td class="px-4 py-4"><span class="block text-sm font-semibold text-slate-700">{{ $request->classSession->name }}</span><span class="block mt-0.5 text-xs text-slate-400">Ngày gửi: {{ $request->created_at?->format('d/m/Y H:i') }}</span></td>
                             <td class="max-w-[280px] px-4 py-4"><p class="truncate text-sm text-slate-600" title="{{ $request->reason }}">{{ $request->reason }}</p>@if(!empty($request->proof_image))<div class="mt-1 flex flex-wrap gap-3">@foreach($request->proof_image as $img)<a href="{{ asset('storage/'.$img) }}" target="_blank" class="inline-flex items-center gap-1 text-xs font-bold text-primary hover:underline"><x-user.icon name="image" :size="14" />Ảnh {{ $loop->iteration }}</a>@endforeach</div>@endif</td>
                             <td class="px-4 py-4"><span @class(['inline-flex rounded-full px-3 py-1.5 text-xs font-bold whitespace-nowrap', 'bg-amber-50 text-amber-700' => $request->status === 'pending', 'bg-emerald-50 text-emerald-700' => $request->status === 'approved', 'bg-red-50 text-red-700' => $request->status === 'rejected'])>{{ $request->status === 'pending' ? 'Chờ duyệt' : ($request->status === 'approved' ? 'Đã duyệt' : 'Đã từ chối') }}</span></td>
-                            <td class="px-6 py-4"><div class="flex items-center justify-end gap-2"><div x-data="{ open: false }" class="relative" @click.outside="open = false"><button @click="open = !open" type="button" class="flex h-8 w-8 items-center justify-center rounded-lg text-slate-500 transition-colors hover:bg-slate-100 hover:text-slate-900"><x-user.icon name="more-vertical" :size="18" /></button><div x-show="open" style="display: none;" x-transition class="absolute right-0 {{ ($loop->index > 0 && $loop->remaining < 2) ? 'bottom-full mb-1' : 'top-full mt-1' }} z-[50] w-36 overflow-hidden rounded-xl border border-slate-200 bg-white py-1 shadow-lg"><a href="{{ route('lecturer.leave-requests.show', $request) }}" class="flex w-full items-center gap-2 px-3 py-2 text-left text-sm font-semibold text-slate-600 hover:bg-slate-50 hover:text-primary"><x-user.icon name="eye" :size="16" />Xem</a>@if($request->status === 'pending')<button type="button" wire:click="approve({{ $request->id }})" wire:confirm="Duyệt đơn xin nghỉ này?" class="flex w-full items-center gap-2 px-3 py-2 text-left text-sm font-semibold text-emerald-600 hover:bg-emerald-50"><x-user.icon name="check" :size="16" />Duyệt</button><button type="button" wire:click="openReject({{ $request->id }})" class="flex w-full items-center gap-2 px-3 py-2 text-left text-sm font-semibold text-red-600 hover:bg-red-50"><x-user.icon name="x" :size="16" />Từ chối</button>@endif</div></div></div></td>
+                            <td class="px-6 py-4"><div class="flex items-center justify-end gap-2"><div x-data="{ open: false }" class="relative" @click.outside="open = false"><button @click="open = !open" type="button" class="flex h-8 w-8 items-center justify-center rounded-lg text-slate-500 transition-colors hover:bg-slate-100 hover:text-slate-900"><x-user.icon name="more-vertical" :size="18" /></button><div x-show="open" style="display: none;" x-transition class="absolute right-0 {{ ($loop->index > 0 && $loop->remaining < 2) ? 'bottom-full mb-1' : 'top-full mt-1' }} z-[50] w-36 overflow-hidden rounded-xl border border-slate-200 bg-white py-1 shadow-lg"><a href="{{ route('lecturer.leave-requests.show', $request) }}" class="flex w-full items-center gap-2 px-3 py-2 text-left text-sm font-semibold text-slate-600 hover:bg-slate-50 hover:text-primary"><x-user.icon name="eye" :size="16" />Xem</a>@if($request->status === 'pending')<button type="button" wire:click="openApprove({{ $request->id }})" class="flex w-full items-center gap-2 px-3 py-2 text-left text-sm font-semibold text-emerald-600 hover:bg-emerald-50"><x-user.icon name="check" :size="16" />Duyệt</button><button type="button" wire:click="openReject({{ $request->id }})" class="flex w-full items-center gap-2 px-3 py-2 text-left text-sm font-semibold text-red-600 hover:bg-red-50"><x-user.icon name="x" :size="16" />Từ chối</button>@endif</div></div></div></td>
                         </tr>
                     @empty
                         <tr><td colspan="6" class="px-6 py-16 text-center text-sm text-slate-500">Không có đơn xin nghỉ ở trạng thái này.</td></tr>
@@ -103,12 +100,36 @@
     </section>
 
     @if ($rejectingRequestId)
-        <div class="fixed inset-0 z-[100] flex items-center justify-center bg-slate-900/50 p-4 backdrop-blur-sm">
-            <form wire:submit="reject" class="w-full max-w-lg rounded-2xl bg-white p-6 shadow-2xl">
-                <div class="mb-5 flex items-center justify-between"><h3 class="text-lg font-bold text-slate-900">Từ chối đơn xin nghỉ</h3><button type="button" wire:click="closeReject" class="rounded-full p-2 text-slate-400 hover:bg-slate-100"><x-user.icon name="x" :size="18" /></button></div>
-                <label class="block space-y-2"><span class="text-sm font-semibold text-slate-700">Lý do từ chối</span><textarea wire:model="rejectedReason" rows="4" class="w-full rounded-xl border-slate-200 focus:border-red-500 focus:ring-red-500/20" placeholder="Nhập lý do để học viên biết..."></textarea>@error('rejectedReason')<span class="text-xs text-red-600">{{ $message }}</span>@enderror</label>
-                <div class="mt-6 flex justify-end gap-3"><button type="button" wire:click="closeReject" class="rounded-xl px-5 py-2.5 text-sm font-bold text-slate-600 hover:bg-slate-100">Hủy</button><button type="submit" class="rounded-xl bg-red-600 px-5 py-2.5 text-sm font-bold text-white hover:bg-red-700">Xác nhận từ chối</button></div>
-            </form>
-        </div>
+        <template x-teleport="body">
+            <div class="fixed inset-0 z-[100] flex items-center justify-center bg-slate-900/50 p-4 backdrop-blur-sm">
+                <form wire:submit="reject" class="w-full max-w-lg rounded-2xl bg-white p-6 shadow-2xl">
+                    <div class="mb-5 flex items-center justify-between"><h3 class="text-lg font-bold text-slate-900">Từ chối đơn xin nghỉ</h3><button type="button" wire:click="closeReject" class="rounded-full p-2 text-slate-400 hover:bg-slate-100"><x-user.icon name="x" :size="18" /></button></div>
+                    <label class="block space-y-2"><span class="text-sm font-semibold text-slate-700">Lý do từ chối</span><textarea wire:model="rejectedReason" rows="4" class="w-full rounded-xl border-slate-200 focus:border-red-500 focus:ring-red-500/20" placeholder="Nhập lý do để học viên biết..."></textarea>@error('rejectedReason')<span class="text-xs text-red-600">{{ $message }}</span>@enderror</label>
+                    <div class="mt-6 flex justify-end gap-3"><button type="button" wire:click="closeReject" class="rounded-xl px-5 py-2.5 text-sm font-bold text-slate-600 hover:bg-slate-100">Hủy</button><button type="submit" class="rounded-xl bg-red-600 px-5 py-2.5 text-sm font-bold text-white hover:bg-red-700">Xác nhận từ chối</button></div>
+                </form>
+            </div>
+        </template>
+    @endif
+
+    @if ($approvingRequestId)
+        <template x-teleport="body">
+            <div class="fixed inset-0 z-[100] flex items-center justify-center bg-slate-900/50 p-4 backdrop-blur-sm">
+                <div class="w-full max-w-md rounded-2xl bg-white p-6 shadow-2xl">
+                    <div class="mb-4 flex items-center gap-3">
+                        <div class="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-emerald-50">
+                            <x-user.icon name="check-circle" :size="20" class="text-emerald-600" />
+                        </div>
+                        <h3 class="text-lg font-bold text-slate-900">Xác nhận duyệt</h3>
+                    </div>
+                    <p class="text-sm text-slate-600">Bạn có chắc chắn muốn duyệt đơn xin nghỉ phép này không?</p>
+                    <div class="mt-6 flex justify-end gap-3">
+                        <button type="button" wire:click="closeApprove"
+                            class="rounded-xl border border-slate-200 px-5 py-2.5 text-sm font-bold text-slate-600 hover:bg-slate-50 transition-colors">Hủy</button>
+                        <button type="button" wire:click="confirmApprove"
+                            class="rounded-xl bg-emerald-600 px-5 py-2.5 text-sm font-bold text-white hover:bg-emerald-700 transition-colors">Duyệt đơn</button>
+                    </div>
+                </div>
+            </div>
+        </template>
     @endif
 </div>

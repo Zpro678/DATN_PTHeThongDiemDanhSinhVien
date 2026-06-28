@@ -54,14 +54,12 @@
         ],
         ['type' => 'link', 'label' => 'Cảnh báo', 'icon' => 'alert-triangle', 'route' => 'student.warnings', 'active' => 'student.warnings'],
         ['type' => 'link', 'label' => 'Nâng cấp gói', 'icon' => 'zap', 'route' => 'upgrade', 'active' => 'upgrade'],
-        ['type' => 'link', 'label' => 'Thông báo', 'icon' => 'bell', 'route' => 'notifications', 'active' => 'notifications'],
     ];
 
     $mobileItems = [
         ['label' => 'Tổng quan', 'icon' => 'home', 'route' => 'dashboard', 'active' => 'dashboard'],
         ['label' => 'Chủ lớp', 'icon' => 'shield', 'route' => 'managed-classes', 'active' => ['managed-classes', 'lecturer.classes.*', 'lecturer.class.*', 'lecturer.attendance.*', 'lecturer.students.*', 'lecturer.leave-requests.*']],
         ['label' => 'Học viên', 'icon' => 'user', 'route' => 'joined-classes', 'active' => ['joined-classes', 'student.classes.*', 'student.attendance.*', 'student.leave-requests.*']],
-        ['label' => 'Thông báo', 'icon' => 'bell', 'route' => 'notifications', 'active' => 'notifications'],
     ];
 @endphp
 
@@ -198,7 +196,6 @@
 
                         <div class="flex items-center gap-1 md:ml-4 md:border-l md:border-outline-variant/30 md:pl-4">
                             <x-notification-dropdown
-                                :all-url="route('notifications')"
                                 :notifications="$notificationData['items']"
                                 :show-indicator="$notificationData['has_unread']"
                             />
@@ -294,14 +291,7 @@
                     <x-user.icon :name="$mobileItems[2]['icon']" :size="20" />
                     <span class="mt-1 text-[10px] font-bold">{{ $mobileItems[2]['label'] }}</span>
                 </a>
-                <a href="{{ route($mobileItems[3]['route']) }}" wire:navigate @class([
-                    'flex h-full w-full flex-col items-center justify-center transition-colors',
-                    'text-primary' => $matchesActive($mobileItems[3]['active']),
-                    'text-on-surface-variant hover:text-primary' => ! $matchesActive($mobileItems[3]['active']),
-                ])>
-                    <x-user.icon :name="$mobileItems[3]['icon']" :size="20" />
-                    <span class="mt-1 text-[10px] font-bold">{{ $mobileItems[3]['label'] }}</span>
-                </a>
+
             </nav>
 
             <div class="fixed bottom-6 left-1/2 z-50 -translate-x-1/2 md:hidden">

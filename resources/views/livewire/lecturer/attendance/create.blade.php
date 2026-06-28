@@ -118,9 +118,6 @@
             <button x-show="step > 1" x-cloak wire:click="backToStep(step - 1)" class="inline-flex shrink-0 items-center gap-2 rounded-xl border border-slate-200 bg-white px-5 py-2.5 text-sm font-bold text-slate-700 shadow-sm transition hover:border-slate-300 hover:bg-slate-50 hover:text-slate-900">
                 <x-user.icon name="arrow-left" :size="18" /> Quay lại
             </button>
-            <a x-show="step === 1" href="{{ route('lecturer.attendance.index') }}" class="inline-flex shrink-0 items-center gap-2 rounded-xl border border-slate-200 bg-white px-5 py-2.5 text-sm font-bold text-slate-700 shadow-sm transition hover:border-slate-300 hover:bg-slate-50 hover:text-slate-900">
-                <x-user.icon name="arrow-left" :size="18" /> Hủy bỏ
-            </a>
         </div>
     </div>
 
@@ -245,59 +242,123 @@
                                     <x-user.icon name="chevron-down" :size="20" class="shrink-0 text-slate-400 transition-transform duration-300" x-bind:class="timeOpen ? 'rotate-180 text-blue-500' : ''" />
                                 </button>
 
-                                {{-- Bảng chọn giờ tùy biến --}}
+                                {{-- Bảng chọn giờ kiểu scroll wheel (Thiết kế mới) --}}
                                 <div
                                     x-show="timeOpen"
                                     x-cloak
+                                    x-init="
+                                        $watch('timeOpen', opened => {
+                                            if (!opened) return;
+                                            $nextTick(() => {
+                                                if ($refs.hourWheel)   $refs.hourWheel.scrollTop   = endHour   * 44;
+                                                if ($refs.minuteWheel) $refs.minuteWheel.scrollTop = endMinute * 44;
+                                            });
+                                        });
+                                    "
                                     x-transition:enter="transition ease-out duration-200"
-                                    x-transition:enter-start="opacity-0 -translate-y-2 scale-95"
+                                    x-transition:enter-start="opacity-0 -translate-y-3 scale-95"
                                     x-transition:enter-end="opacity-100 translate-y-0 scale-100"
                                     x-transition:leave="transition ease-in duration-150"
                                     x-transition:leave-start="opacity-100 translate-y-0 scale-100"
-                                    x-transition:leave-end="opacity-0 -translate-y-2 scale-95"
-                                    class="absolute left-0 right-0 z-40 mt-2 origin-top rounded-2xl border border-slate-200 bg-white p-4 shadow-2xl shadow-slate-900/10"
+                                    x-transition:leave-end="opacity-0 -translate-y-3 scale-95"
+                                    class="absolute left-0 top-full z-50 mt-3 w-full origin-top overflow-hidden rounded-[2rem] border border-slate-200/80 bg-white p-2 shadow-2xl shadow-slate-900/10"
                                 >
-                                    {{-- Chọn nhanh tương đối từ hiện tại --}}
-                                    <p class="mb-2 text-[11px] font-bold uppercase tracking-wider text-slate-400">Chọn nhanh từ bây giờ</p>
-                                    <div class="mb-4 flex flex-wrap gap-2">
-                                        <template x-for="preset in [{l:'+30 phút',v:30},{l:'+1 giờ',v:60},{l:'+1 giờ 30',v:90},{l:'+2 giờ',v:120}]" :key="preset.v">
-                                            <button type="button" @click="addPreset(preset.v)"
-                                                class="rounded-full border border-slate-200 bg-white px-3.5 py-1.5 text-xs font-bold text-slate-600 transition-all duration-200 hover:-translate-y-0.5 hover:border-blue-300 hover:bg-blue-50 hover:text-blue-600 active:scale-95"
-                                                x-text="preset.l"></button>
+                                    <style>
+                                        .tw-wheel::-webkit-scrollbar { display: none; }
+                                        .tw-wheel { -ms-overflow-style: none; scrollbar-width: none; }
+                                        .fade-mask {
+                                            -webkit-mask-image: linear-gradient(to bottom, transparent, rgba(0,0,0,1) 15%, rgba(0,0,0,1) 85%, transparent);
+                                            mask-image: linear-gradient(to bottom, transparent, rgba(0,0,0,1) 15%, rgba(0,0,0,1) 85%, transparent);
+                                        }
+                                    </style>
+
+                                    {{-- Header --}}
+                                    <div class="flex items-center justify-between rounded-t-2xl bg-slate-50/80 px-4 py-2 border-b border-slate-100">
+                                        <div>
+                                            <p class="text-[10px] font-black uppercase tracking-widest text-slate-400">Giờ kết thúc</p>
+                                            <p class="mt-1 text-2xl font-black tabular-nums tracking-tight text-slate-900" x-text="meetingEndTime || '--:--'"></p>
+                                        </div>
+                                        <div class="text-right">
+                                            <p class="text-[10px] font-black uppercase tracking-widest text-slate-400">Trạng thái</p>
+                                            <p class="mt-1 text-sm font-bold text-blue-600" x-text="durationLabel"></p>
+                                        </div>
+                                    </div>
+
+                                    {{-- Quick presets --}}
+                                    <div class="mt-2 grid grid-cols-4 gap-2 px-2">
+                                        <template x-for="preset in [{l:'+30p',v:30},{l:'+1h',v:60},{l:'+1.5h',v:90},{l:'+2h',v:120}]" :key="preset.v">
+                                            <button type="button"
+                                                @click="addPreset(preset.v); $nextTick(() => {
+                                                    $refs.hourWheel.scrollTo({top: endHour * 28, behavior: 'smooth'});
+                                                    $refs.minuteWheel.scrollTo({top: endMinute * 28, behavior: 'smooth'});
+                                                })"
+                                                class="flex items-center justify-center rounded-lg bg-slate-50 px-2 py-1.5 text-[11px] font-bold text-slate-600 transition-colors hover:bg-blue-50 hover:text-blue-700 active:scale-95"
+                                                x-text="preset.l">
+                                            </button>
                                         </template>
                                     </div>
 
-                                    <div class="grid grid-cols-2 gap-4">
-                                        {{-- Cột giờ --}}
-                                        <div>
-                                            <p class="mb-2 text-[11px] font-bold uppercase tracking-wider text-slate-400">Giờ</p>
-                                            <div class="grid grid-cols-4 gap-1.5">
+                                    {{-- Scroll wheels --}}
+                                    <div class="relative mt-2 px-4 py-2">
+                                        {{-- Wheel container --}}
+                                        <div class="relative flex h-[84px] items-center justify-center fade-mask">
+                                            
+                                            {{-- Selection highlight strip --}}
+                                            <div class="pointer-events-none absolute inset-x-2 rounded-xl bg-blue-50/60 ring-1 ring-blue-500/20"
+                                                 style="top: calc(50% - 14px); height: 28px;"></div>
+
+                                            {{-- Hour wheel --}}
+                                            <div class="relative flex-1 h-full tw-wheel overflow-y-scroll"
+                                                 x-ref="hourWheel"
+                                                 @scroll.passive.debounce.50ms="applyTime(Math.min(23, Math.max(0, Math.round($event.target.scrollTop / 28))), endMinute)"
+                                                 style="scroll-snap-type: y mandatory;">
+                                                <div style="height: 28px; flex-shrink: 0;"></div>
                                                 <template x-for="h in 24" :key="h">
-                                                    <button type="button" @click="applyTime(h - 1, endMinute)"
-                                                        class="rounded-lg py-2 text-sm font-bold tabular-nums transition-all duration-150 hover:bg-blue-50 hover:text-blue-600 active:scale-90"
-                                                        :class="endHour === (h - 1) ? 'scale-105 bg-blue-500 text-white shadow-md shadow-blue-500/30' : 'text-slate-600'"
-                                                        x-text="String(h - 1).padStart(2, '0')"></button>
+                                                    <div @click="applyTime(h-1, endMinute); $refs.hourWheel.scrollTo({top:(h-1)*28, behavior:'smooth'})"
+                                                         style="height: 28px; scroll-snap-align: center;"
+                                                         class="flex cursor-pointer select-none items-center justify-center tabular-nums transition-all duration-200"
+                                                         :class="endHour === (h-1)
+                                                             ? 'text-blue-600 text-xl font-black scale-110'
+                                                             : 'text-slate-400 text-sm font-bold opacity-60 hover:opacity-100 hover:text-slate-600'">
+                                                        <span x-text="String(h-1).padStart(2,'0')"></span>
+                                                    </div>
                                                 </template>
+                                                <div style="height: 28px; flex-shrink: 0;"></div>
                                             </div>
-                                        </div>
-                                        {{-- Cột phút --}}
-                                        <div>
-                                            <p class="mb-2 text-[11px] font-bold uppercase tracking-wider text-slate-400">Phút</p>
-                                            <div class="grid grid-cols-3 gap-1.5">
-                                                <template x-for="i in 12" :key="i">
-                                                    <button type="button" @click="applyTime(endHour, (i - 1) * 5)"
-                                                        class="rounded-lg py-2 text-sm font-bold tabular-nums transition-all duration-150 hover:bg-indigo-50 hover:text-indigo-600 active:scale-90"
-                                                        :class="endMinute === ((i - 1) * 5) ? 'scale-105 bg-indigo-500 text-white shadow-md shadow-indigo-500/30' : 'text-slate-600'"
-                                                        x-text="String((i - 1) * 5).padStart(2, '0')"></button>
+
+                                            {{-- Colon separator --}}
+                                            <div class="relative z-10 flex w-4 shrink-0 items-center justify-center pb-1 text-lg font-black text-slate-300">
+                                                :
+                                            </div>
+
+                                            {{-- Minute wheel --}}
+                                            <div class="relative flex-1 h-full tw-wheel overflow-y-scroll"
+                                                 x-ref="minuteWheel"
+                                                 @scroll.passive.debounce.50ms="applyTime(endHour, Math.min(59, Math.max(0, Math.round($event.target.scrollTop / 28))))"
+                                                 style="scroll-snap-type: y mandatory;">
+                                                <div style="height: 28px; flex-shrink: 0;"></div>
+                                                <template x-for="m in 60" :key="m">
+                                                    <div @click="applyTime(endHour, m-1); $refs.minuteWheel.scrollTo({top:(m-1)*28, behavior:'smooth'})"
+                                                         style="height: 28px; scroll-snap-align: center;"
+                                                         class="flex cursor-pointer select-none items-center justify-center tabular-nums transition-all duration-200"
+                                                         :class="endMinute === (m-1)
+                                                             ? 'text-blue-600 text-xl font-black scale-110'
+                                                             : 'text-slate-400 text-sm font-bold opacity-60 hover:opacity-100 hover:text-slate-600'">
+                                                        <span x-text="String(m-1).padStart(2,'0')"></span>
+                                                    </div>
                                                 </template>
+                                                <div style="height: 28px; flex-shrink: 0;"></div>
                                             </div>
                                         </div>
                                     </div>
 
-                                    <button type="button" @click="timeOpen = false"
-                                        class="mt-4 w-full rounded-xl bg-gradient-to-r from-blue-500 to-indigo-600 py-2.5 text-sm font-bold text-white shadow-sm transition-all hover:from-blue-600 hover:to-indigo-700 active:scale-[0.98]">
-                                        Xong
-                                    </button>
+                                    {{-- Confirm Button --}}
+                                    <div class="p-2 pt-0">
+                                        <button type="button" @click="timeOpen = false"
+                                            class="flex w-full items-center justify-center gap-2 rounded-xl bg-slate-900 py-2.5 text-sm font-bold text-white shadow-md shadow-slate-900/20 transition-all hover:bg-slate-800 active:scale-[0.98]">
+                                            Xác nhận thời gian
+                                        </button>
+                                    </div>
                                 </div>
                             </div>
                             <p class="flex items-center gap-1.5 text-xs font-medium text-slate-500">
@@ -308,6 +369,26 @@
                         </div>
                     </div>
                 </form>
+
+                {{-- Nút hành động trong card --}}
+                <div class="mt-16 flex items-center justify-end gap-3 border-t border-slate-100 pt-6">
+                    <a
+                        href="{{ route('lecturer.attendance.index') }}"
+                        class="inline-flex shrink-0 items-center rounded-xl border border-slate-200 bg-white px-5 py-2.5 text-sm font-bold text-slate-700 shadow-sm transition hover:border-slate-300 hover:bg-slate-50 hover:text-slate-900"
+                    >
+                        Hủy bỏ
+                    </a>
+                    <button
+                        type="button"
+                        wire:click="createManualSession"
+                        wire:loading.attr="disabled"
+                        class="group inline-flex shrink-0 items-center gap-2 rounded-xl bg-gradient-to-r from-blue-500 to-indigo-600 px-5 py-2.5 text-sm font-bold text-white shadow-sm transition hover:from-blue-600 hover:to-indigo-700 active:scale-[0.98] disabled:cursor-wait disabled:opacity-70"
+                    >
+                        <x-user.icon name="calendar-plus" :size="18" class="transition-transform group-hover:scale-110" />
+                        Tạo buổi điểm danh
+                        <span wire:loading wire:target="createManualSession" class="inline-block h-4 w-4 animate-spin rounded-full border-2 border-white/30 border-t-white"></span>
+                    </button>
+                </div>
             </div>
         </div>
 
@@ -368,8 +449,6 @@
             </div>
         </div>
     </div>
-
-
 
     {{-- BƯỚC 3: CẤU HÌNH QR --}}
     <div x-show="step === 3" x-cloak x-transition.opacity.duration.300ms class="grid gap-6 xl:grid-cols-12">

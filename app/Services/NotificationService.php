@@ -22,7 +22,7 @@ use Illuminate\Support\Str;
 class NotificationService
 {
     /** Số thông báo tối đa hiển thị trong dropdown thanh điều hướng. */
-    private const DROPDOWN_LIMIT = 5;
+    private const DROPDOWN_LIMIT = 50;
 
     /**
      * Danh mục thông báo cho rail lọc ở trang "Tất cả thông báo".

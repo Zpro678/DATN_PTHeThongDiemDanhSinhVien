@@ -84,7 +84,7 @@ class LeaveRequestCreate extends Component
         $proofPaths = [];
         if (! empty($this->proof_images)) {
             foreach ($this->proof_images as $image) {
-                $proofPaths[] = $image->store('leave_proofs', 'public');
+                $proofPaths[] = $image->storeAs('leave_proofs', $image->getClientOriginalName(), 'public');
             }
         }
 

@@ -6,6 +6,7 @@ use App\Models\AttendanceRecord;
 use App\Models\ClassSession;
 use Illuminate\Http\Request;
 use Carbon\Carbon;
+use Illuminate\Support\Str;
 
 class AttendanceCheckInController extends Controller
 {
@@ -118,12 +119,12 @@ class AttendanceCheckInController extends Controller
             return back()->with('success', 'Bạn đã điểm danh thành công trước đó.');
         }
 
-        // Kiểm tra chống gian lận (Điểm danh hộ trên cùng 1 thiết bị/trình duyệt)
+        // Lớp 3: Fingerprinting - Kiểm tra chống gian lận (Điểm danh hộ)
         $deviceId = $request->cookie('device_fingerprint');
         $isNewDevice = false;
         
         if (!$deviceId) {
-            $deviceId = \Illuminate\Support\Str::uuid()->toString();
+            $deviceId = Str::uuid()->toString();
             $isNewDevice = true;
         } else {
             $originalCheaterRecord = AttendanceRecord::query()
@@ -157,9 +158,16 @@ class AttendanceCheckInController extends Controller
             }
         }
 
+        // Lấy tọa độ và Metadata từ request
         $lat = $request->input('latitude');
         $lng = $request->input('longitude');
+        $accuracy = $request->input('accuracy'); // Metadata Lớp 2
+        $altitude = $request->input('altitude'); // Metadata Lớp 2
         $distanceMeters = 0;
+        
+        // Khởi tạo cờ kiểm tra Lớp 2
+        $isSuspiciousGps = false;
+        $suspiciousNote = '';
 
         if ($session->gps_radius && $session->gps_latitude && $session->gps_longitude) {
             if (empty($lat) || empty($lng)) {
@@ -170,8 +178,20 @@ class AttendanceCheckInController extends Controller
             if ($distanceMeters > $session->gps_radius) {
                 return back()->with('error', 'Vị trí của bạn quá xa lớp học (' . round($distanceMeters) . 'm). Bán kính cho phép là ' . $session->gps_radius . 'm.');
             }
+            
+            // Logic Lớp 2: Phân tích Metadata bắt Fake GPS
+            if ($accuracy !== null && fmod((float) $accuracy, 1) === 0.0) {
+                $isSuspiciousGps = true;
+                $suspiciousNote .= 'Nghi ngờ Fake GPS (Sai số cố định ' . $accuracy . 'm). ';
+            }
+
+            if ($altitude !== null && (float) $altitude === 0.0) {
+                $isSuspiciousGps = true;
+                $suspiciousNote .= 'Nghi ngờ Fake GPS (Độ cao = 0). ';
+            }
         }
 
+        // Xác định trạng thái Đúng giờ / Đi muộn
         $status = 'present';
         if ($session->start_time) {
             $startTime = Carbon::parse($session->date->format('Y-m-d') . ' ' . $session->start_time);
@@ -180,10 +200,20 @@ class AttendanceCheckInController extends Controller
             }
         }
 
+        // Cập nhật note nếu phát hiện gian lận Lớp 2
+        $finalNote = $record->note;
+        if ($isSuspiciousGps) {
+            $finalNote = ($finalNote ? $finalNote . ' | ' : '') . trim($suspiciousNote);
+        }
+
+        // Lưu toàn bộ thông tin (bao gồm cả dữ liệu Lớp 2) vào database
         $record->update([
             'status' => $status,
             'check_in_time' => now(),
             'distance_meters' => $distanceMeters,
+            'accuracy' => $accuracy,      // Lưu vào DB
+            'altitude' => $altitude,      // Lưu vào DB
+            'note' => $finalNote,         // Cập nhật lưu vết cảnh báo
             'is_verified' => true,
             'ip_address' => $request->ip(),
             'device_fingerprint' => $deviceId,

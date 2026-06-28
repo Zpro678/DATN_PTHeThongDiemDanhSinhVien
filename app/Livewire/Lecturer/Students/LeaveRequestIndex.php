@@ -24,6 +24,7 @@ class LeaveRequestIndex extends Component
     public int $perPage = 10;
 
     public ?int $rejectingRequestId = null;
+    public ?int $approvingRequestId = null;
 
     public string $rejectedReason = '';
 
@@ -48,12 +49,25 @@ class LeaveRequestIndex extends Component
         $this->resetPage();
     }
 
-    public function approve(int $requestId, LeaveRequestReviewService $reviewService): void
+    public function openApprove(int $requestId): void
     {
-        $leaveRequest = $this->ownedRequest($requestId);
+        $this->ownedRequest($requestId);
+        $this->approvingRequestId = $requestId;
+    }
+
+    public function closeApprove(): void
+    {
+        $this->reset('approvingRequestId');
+    }
+
+    public function confirmApprove(LeaveRequestReviewService $reviewService): void
+    {
+        abort_unless($this->approvingRequestId, 403);
+        $leaveRequest = $this->ownedRequest($this->approvingRequestId);
         $reviewService->approve($leaveRequest, $this->reviewer());
 
-        session()->flash('status', 'Đơn xin nghỉ đã được duyệt.');
+        $this->closeApprove();
+        $this->dispatch('toast', message: 'Bạn đã duyệt đơn xin nghỉ phép của sinh viên ' . $leaveRequest->classMember->student_code . ' thành công.', type: 'success');
     }
 
     public function openReject(int $requestId): void
@@ -84,7 +98,7 @@ class LeaveRequestIndex extends Component
         $reviewService->reject($leaveRequest, $this->reviewer(), $validated['rejectedReason']);
 
         $this->closeReject();
-        session()->flash('status', 'Đơn xin nghỉ đã bị từ chối.');
+        $this->dispatch('toast', message: 'Bạn đã từ chối đơn xin nghỉ phép của sinh viên ' . $leaveRequest->classMember->student_code . ' thành công.', type: 'success');
     }
 
     private function reviewer(): User
