@@ -40,7 +40,7 @@ class StudentsService
                 'attendanceRecords' => fn ($query) => $query
                     // Chỉ tính các bản ghi thuộc buổi điểm danh đã chốt.
                     ->whereHas('classSession', fn ($sessionQuery) => $sessionQuery->where('status', 'closed'))
-                    ->with('classSession:id,class_id,date,status,meeting_id'),
+                    ->with('classSession:id,class_id,date,status,meeting_id,qr_token'),
                 'leaveRequests.classSession:id,class_id,name,date',
             ])
             ->where('user_id', $studentUserId)
@@ -86,12 +86,16 @@ class StudentsService
         // Gộp theo buổi (mỗi buổi = 1 đơn vị).
         $rows = $records->map(fn (AttendanceRecord $record) => (object) [
             'meeting_id' => $record->classSession?->meeting_id,
+            'class_session_id' => $record->class_session_id,
+            'qr_token' => $record->classSession?->qr_token,
             'status' => $record->status,
         ]);
         $counts = AttendanceCalculator::consolidateByMeeting($rows);
         $totalSessions = $counts['total'];
+        // Gộp hiển thị: vắng giữa giờ ~ muộn; về sớm ~ vắng.
+        $lateSessions = $counts['late'] + $counts['partial'];
         $excusedSessions = $counts['excused'];
-        $absentSessions = $counts['absent'];
+        $absentSessions = $counts['absent'] + $counts['early_leave'];
 
         // % tính trên tổng số buổi dự kiến của lớp để nhất quán với quỹ vắng.
         $plannedSessions = max((int) ($member->courseClass?->total_sessions ?? 0), $totalSessions);
@@ -101,8 +105,7 @@ class StudentsService
         $effectiveAbsentSessions = $absentSessions;
         $attendancePercent = AttendanceCalculator::percentOfPlanned(
             $plannedSessions,
-            $excusedSessions,
-            $absentSessions,
+            $counts,
             $deductExcusedAbsence
         );
 
@@ -325,7 +328,7 @@ class StudentsService
             ->whereNull('cs.deleted_at')
             ->where('cs.status', 'closed')
             ->whereNotNull('cs.meeting_id')
-            ->get(['ar.class_member_id', 'cs.meeting_id', 'ar.status', 'cs.date'])
+            ->get(['ar.class_member_id', 'cs.meeting_id', 'ar.class_session_id', 'cs.qr_token', 'ar.status', 'cs.date'])
             ->groupBy('class_member_id');
 
         // Gộp theo buổi cho mỗi sinh viên (đơn vị buổi).
@@ -335,10 +338,11 @@ class StudentsService
             return (object) [
                 'total_sessions' => $counts['total'],
                 'present_sessions' => $counts['present'],
-                'late_sessions' => $counts['late'],
+                'late_sessions' => $counts['late'] + $counts['partial'],          // gộp vắng giữa giờ
                 'excused_sessions' => $counts['excused'],
-                'absent_sessions' => $counts['absent'],
+                'absent_sessions' => $counts['absent'] + $counts['early_leave'],  // gộp về sớm
                 'late_count' => $counts['late'],
+                'counts' => $counts, // counts đầy đủ 6 trạng thái để tính % chính xác
                 'latest_session_date' => $memberRows->max('date'),
             ];
         });
@@ -372,14 +376,13 @@ class StudentsService
             $deductExcusedAbsence = (bool) ($courseClass?->deduct_excused_absence ?? true);
 
             $counted = AttendanceCalculator::countedSessions($planned, (int) $row->excused_sessions, $deductExcusedAbsence);
-            $effectiveAbsent = (int) $row->absent_sessions;
 
             $plannedCounted += $counted;
-            $projectedAttended += max($counted - $effectiveAbsent, 0);
+            $projectedAttended += AttendanceCalculator::attendedWeight($counted, $row->counts);
             $absentSessions += (int) $row->absent_sessions;
 
             if ((int) $row->total_sessions > 0
-                && AttendanceCalculator::percentOfPlanned($planned, (int) $row->excused_sessions, (int) $row->absent_sessions, $deductExcusedAbsence) < AttendanceCalculator::MIN_ATTENDANCE_PERCENT) {
+                && AttendanceCalculator::percentOfPlanned($planned, $row->counts, $deductExcusedAbsence) < AttendanceCalculator::MIN_ATTENDANCE_PERCENT) {
                 $warningCount++;
             }
         }
@@ -409,8 +412,7 @@ class StudentsService
                 // % chuyên cần tính trên tổng buổi dự kiến để nhất quán với quỹ vắng.
                 $attendancePercent = AttendanceCalculator::percentOfPlanned(
                     $totalCourseSessions,
-                    (int) ($row->excused_sessions ?? 0),
-                    $absentSessions,
+                    $row->counts ?? [],
                     $deductExcusedAbsence
                 );
 
