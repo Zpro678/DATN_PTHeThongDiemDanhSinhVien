@@ -71,6 +71,10 @@ class AttendanceCreate extends Component
             // Buổi luôn diễn ra hôm nay, bắt đầu tại thời điểm tạo; chỉ cần nhập giờ kết thúc.
             $this->date = now()->toDateString();
             $defaultEnd = now()->addMinutes(90)->second(0);
+            // Nếu +90 phút vượt sang ngày hôm sau (tạo buổi tối muộn) thì kẹp về 23:55 hôm nay.
+            if (! $defaultEnd->isSameDay(now())) {
+                $defaultEnd = now()->copy()->setTime(23, 55, 0);
+            }
             $defaultEnd->minute(intdiv($defaultEnd->minute, 5) * 5); // Làm tròn xuống bội số 5 phút cho khớp lưới chọn.
             $this->meetingEndTime = $defaultEnd->format('H:i');
 

@@ -3,7 +3,7 @@
 namespace App\Exports;
 
 use App\Models\ClassMeeting;
-use App\Services\MeetingConsolidationService;
+use App\Services\AttendanceCalculator;
 use Maatwebsite\Excel\Concerns\FromArray;
 use Maatwebsite\Excel\Concerns\ShouldAutoSize;
 use Maatwebsite\Excel\Concerns\WithStyles;
@@ -30,12 +30,10 @@ class MeetingSummaryExport implements FromArray, ShouldAutoSize, WithStyles
 
     public function array(): array
     {
-        $service = app(MeetingConsolidationService::class);
-
         $sessions = $this->meeting->sessions()->orderBy('id')->get(['id']);
         $sessionCount = $sessions->count();
 
-        $consolidated = $service->consolidateMeeting($this->meeting)->keyBy(fn ($row) => $row['member']->id);
+        $consolidated = AttendanceCalculator::consolidateMeeting($this->meeting)->keyBy(fn ($row) => $row['member']->id);
         $summaries = $this->meeting->summaries()->with(['classMember' => fn ($q) => $q->withTrashed()])->get();
 
         $sessionStatusLabel = [
@@ -84,7 +82,7 @@ class MeetingSummaryExport implements FromArray, ShouldAutoSize, WithStyles
                 [$member->student_code, $member->full_name],
                 $sessionCells,
                 [
-                    $service->statusLabel($summary->status),
+                    AttendanceCalculator::statusLabel($summary->status),
                     $deduction > 0 ? '-'.rtrim(rtrim(number_format($deduction, 1), '0'), '.') : '0',
                     $summary->note ?? '',
                 ],

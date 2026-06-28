@@ -99,7 +99,7 @@ class DashboardStatisticService
             ->whereNotNull('cs.meeting_id')
             ->whereNull('ar.deleted_at')
             ->whereNull('cs.deleted_at')
-            ->get(['ar.class_member_id', 'cs.meeting_id', 'ar.status'])
+            ->get(['ar.class_member_id', 'cs.meeting_id', 'ar.class_session_id', 'cs.qr_token', 'ar.status'])
             ->groupBy('class_member_id');
 
         $warningStudents = $members
@@ -108,18 +108,19 @@ class DashboardStatisticService
 
                 $plannedSessions  = (int) $student->planned_sessions;
                 $absentSessions   = $counts['absent'];
+                $lateSessions     = $counts['late'];
                 $excusedSessions  = $counts['excused'];
                 $deduct          = (bool) $student->deduct_excused_absence;
 
                 $counted         = AttendanceCalculator::countedSessions($plannedSessions, $excusedSessions, $deduct);
-                $effectiveAbsent = $absentSessions; // Không quy đổi muộn.
+                $effectiveAbsent = AttendanceCalculator::effectiveAbsence($counts); // Vắng quy đổi (đủ 6 trạng thái).
 
                 if ($counted <= 0 || $plannedSessions <= 0) {
                     return null;
                 }
 
                 $absenceRatio      = $effectiveAbsent / $counted;
-                $attendancePercent = AttendanceCalculator::percentOfPlanned($plannedSessions, $excusedSessions, $absentSessions, $deduct);
+                $attendancePercent = AttendanceCalculator::percentOfPlanned($plannedSessions, $counts, $deduct);
 
                 if ($absenceRatio < $warningLimitRatio) {
                     return null;
@@ -506,6 +507,8 @@ class DashboardStatisticService
             ->get([
                 'attendance_records.class_member_id as class_member_id',
                 'class_sessions.meeting_id as meeting_id',
+                'attendance_records.class_session_id as class_session_id',
+                'class_sessions.qr_token as qr_token',
                 'attendance_records.status as status',
             ])
             ->groupBy('class_member_id');

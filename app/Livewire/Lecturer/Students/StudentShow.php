@@ -3,16 +3,14 @@
 namespace App\Livewire\Lecturer\Students;
 
 use App\Models\ClassMember;
+use App\Services\AttendanceCalculator;
 use App\Services\LectureManageStudentService;
 use Illuminate\Contracts\View\View;
 use Illuminate\Database\Eloquent\Builder;
 use Livewire\Component;
-use Livewire\WithPagination;
 
 class StudentShow extends Component
 {
-    use WithPagination;
-
     public int $memberId;
 
     public function mount(int $member): void
@@ -37,13 +35,48 @@ class StudentShow extends Component
         $stats = app(LectureManageStudentService::class)
             ->getStudentsAttendanceStats([$this->memberId])[$this->memberId] ?? null;
 
-        $records = $member->attendanceRecords()
-            ->with('classSession:id,name,date,start_time,end_time')
-            ->whereHas('classSession', fn ($q) => $q->where('status', 'closed'))
-            ->orderByDesc('created_at')
-            ->paginate(10);
+        // Lịch sử điểm danh GỘP THEO BUỔI (cùng quy tắc với thẻ tổng hợp), không liệt kê từng phiên thô.
+        $deductExcused = (bool) $member->courseClass?->deduct_excused_absence;
 
-        return view('livewire.lecturer.students.show', compact('member', 'records', 'stats'))
+        $records = $member->attendanceRecords()
+            ->with('classSession:id,name,date,meeting_id,qr_token')
+            ->whereHas('classSession', fn ($q) => $q->where('status', 'closed')->whereNotNull('meeting_id'))
+            ->get();
+
+        $history = $records
+            ->filter(fn ($record) => $record->classSession !== null)
+            ->groupBy(fn ($record) => $record->classSession->meeting_id)
+            ->map(function ($group) use ($deductExcused) {
+                // Sắp theo id phiên (~ thời gian) để xác định "phiên cuối"; diễn giải pending theo loại phiên.
+                $ordered = $group->sortBy('class_session_id')->values();
+                $statuses = $ordered
+                    ->map(fn ($record) => AttendanceCalculator::interpretStatus(
+                        $record->status,
+                        $record->classSession->qr_token !== null,
+                    ))
+                    ->all();
+
+                $result = AttendanceCalculator::consolidateStatuses($statuses, $deductExcused);
+
+                // Lấy giờ/khoảng cách của phiên đã có mặt/đi muộn (nếu có) để hiển thị.
+                $attended = $ordered->first(
+                    fn ($record) => in_array($record->status, ['present', 'late'], true) && $record->check_in_time,
+                );
+                $first = $ordered->first();
+
+                return [
+                    'name' => $first->classSession->name,
+                    'date' => $first->classSession->date,
+                    'check_in_time' => $attended?->check_in_time,
+                    'distance_meters' => $attended?->distance_meters,
+                    'status' => $result['status'],
+                    'label' => $result['label'],
+                ];
+            })
+            ->sortByDesc('date')
+            ->values();
+
+        return view('livewire.lecturer.students.show', compact('member', 'history', 'stats'))
             ->layout('layouts.user', ['title' => 'Chi tiết sinh viên']);
     }
 }

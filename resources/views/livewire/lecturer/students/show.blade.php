@@ -68,15 +68,28 @@
             <table class="w-full min-w-[760px] text-left">
                 <thead class="bg-slate-50 text-xs font-bold uppercase text-slate-500"><tr><th class="px-6 py-4">Buổi học</th><th class="px-4 py-4">Ngày</th><th class="px-4 py-4">Giờ điểm danh</th><th class="px-4 py-4">Khoảng cách</th><th class="px-6 py-4 text-right">Trạng thái</th></tr></thead>
                 <tbody class="divide-y divide-slate-100">
-                    @forelse ($records as $record)
-                        @php $statusLabels = ['present' => 'Có mặt', 'late' => 'Đi muộn', 'absent' => 'Vắng', 'excused' => 'Có phép', 'pending' => 'Chờ xác nhận', 'invalid' => 'Không hợp lệ']; @endphp
-                        <tr><td class="px-6 py-4 text-sm font-bold text-slate-800">{{ $record->classSession?->name }}</td><td class="px-4 py-4 text-sm text-slate-600">{{ $record->classSession?->date?->format('d/m/Y') }}</td><td class="px-4 py-4 text-sm text-slate-600">{{ $record->check_in_time?->format('H:i:s') ?? '—' }}</td><td class="px-4 py-4 text-sm text-slate-600">{{ $record->distance_meters ? $record->distance_meters.' m' : '—' }}</td><td class="px-6 py-4 text-right"><span @class(['rounded-full px-3 py-1 text-xs font-bold', 'bg-emerald-50 text-emerald-700' => $record->status === 'present', 'bg-amber-50 text-amber-700' => $record->status === 'late', 'bg-red-50 text-red-700' => in_array($record->status, ['absent', 'invalid'], true), 'bg-blue-50 text-blue-700' => $record->status === 'excused', 'bg-slate-100 text-slate-600' => $record->status === 'pending'])>{{ $statusLabels[$record->status] ?? $record->status }}</span></td></tr>
+                    @forelse ($history as $row)
+                        <tr>
+                            <td class="px-6 py-4 text-sm font-bold text-slate-800">{{ $row['name'] }}</td>
+                            <td class="px-4 py-4 text-sm text-slate-600">{{ $row['date']?->format('d/m/Y') }}</td>
+                            <td class="px-4 py-4 text-sm text-slate-600">{{ $row['check_in_time']?->format('H:i:s') ?? '—' }}</td>
+                            <td class="px-4 py-4 text-sm text-slate-600">{{ $row['distance_meters'] ? $row['distance_meters'].' m' : '—' }}</td>
+                            <td class="px-6 py-4 text-right">
+                                <span @class([
+                                    'rounded-full px-3 py-1 text-xs font-bold',
+                                    'bg-emerald-50 text-emerald-700' => $row['status'] === 'present',
+                                    'bg-amber-50 text-amber-700' => $row['status'] === 'late',
+                                    'bg-orange-50 text-orange-700' => $row['status'] === 'partial',
+                                    'bg-red-50 text-red-700' => in_array($row['status'], ['absent', 'early_leave'], true),
+                                    'bg-blue-50 text-blue-700' => $row['status'] === 'excused',
+                                ])>{{ $row['label'] }}</span>
+                            </td>
+                        </tr>
                     @empty
                         <tr><td colspan="5" class="px-6 py-14 text-center text-sm text-slate-500">Chưa có lịch sử điểm danh.</td></tr>
                     @endforelse
                 </tbody>
             </table>
         </div>
-        @if ($records->hasPages())<div class="border-t border-slate-100 px-6 py-4">{{ $records->links() }}</div>@endif
     </section>
 </div>

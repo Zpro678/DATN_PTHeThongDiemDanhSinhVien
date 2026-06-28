@@ -4,6 +4,7 @@ namespace App\Livewire\Lecturer;
 
 use App\Models\ClassSession;
 use App\Models\CourseClass;
+use App\Services\AttendanceCalculator;
 use Illuminate\Contracts\View\View;
 use Illuminate\Database\Eloquent\Builder;
 use Livewire\Component;
@@ -55,9 +56,9 @@ class ClassAttendanceHistory extends Component
             ->orderBy('created_at', 'asc')
             ->get();
         
-        $groupedSessions = $sessions->groupBy(function ($s) {
-            return $s->date->format('Y-m-d') . '_' . $s->start_time . '_' . $s->end_time;
-        });
+        // Gộp theo BUỔI (meeting_id) — mỗi buổi là 1 cột trong lưới.
+        $groupedSessions = $sessions->groupBy('meeting_id');
+        $deductExcused = (bool) $this->courseClass->deduct_excused_absence;
 
         $records = \App\Models\AttendanceRecord::query()
             ->whereIn('class_session_id', $sessions->pluck('id'))
@@ -67,69 +68,51 @@ class ClassAttendanceHistory extends Component
 
         $matrix = [];
         $totalAttended = [];
+        $memberStats = [];
         foreach ($members as $member) {
             $memberRecords = $records->get($member->id, collect())->keyBy('class_session_id');
-            $totalAttended[$member->id] = 0;
+            $counts = ['present' => 0, 'late' => 0, 'partial' => 0, 'early_leave' => 0, 'excused' => 0, 'absent' => 0];
+
             foreach ($groupedSessions as $groupKey => $daySessions) {
+                // Sắp phiên theo id (~ thời gian) để xác định "phiên cuối quyết định".
+                $ordered = $daySessions->sortBy('id')->values();
                 $dayDetailsArr = [];
-                $presentCount = 0;
-                $absentCount = 0;
-                $lateCount = 0;
-                
+                $statuses = [];
+                $hasRecord = false;
+
                 $iteration = 1;
-                foreach ($daySessions as $session) {
+                foreach ($ordered as $session) {
                     $record = $memberRecords->get($session->id);
-                    $status = $record ? $record->status : 'pending';
-                    
-                    if (in_array($status, ['present', 'excused'])) {
-                        $presentCount++;
-                        $statusText = 'Có mặt';
-                    } elseif ($status === 'late') {
-                        $lateCount++;
-                        $statusText = 'Đi trễ';
-                    } elseif ($status === 'absent') {
-                        $absentCount++;
-                        $statusText = 'Vắng';
-                    } else {
-                        $statusText = 'Chưa điểm danh';
+                    if ($record) {
+                        $hasRecord = true;
                     }
 
-                    $timeStr = $session->start_time ? \Carbon\Carbon::parse($session->start_time)->format('H:i') : 'Lần '.$iteration;
-                    $typeStr = $session->qr_token ? 'Quét QR' : 'Thủ công';
-                    
+                    // Diễn giải "chưa điểm danh": phiên thủ công -> có mặt; phiên QR chưa quét -> vắng.
+                    $status = AttendanceCalculator::interpretStatus($record?->status ?? 'pending', $session->qr_token !== null);
+                    $statuses[] = $status;
+
                     $dayDetailsArr[] = [
                         'iteration' => $iteration,
-                        'time' => $timeStr,
-                        'type' => $typeStr,
+                        'time' => $session->start_time ? \Carbon\Carbon::parse($session->start_time)->format('H:i') : 'Lần '.$iteration,
+                        'type' => $session->qr_token ? 'Quét QR' : 'Thủ công',
                         'status' => $status,
-                        'statusText' => $statusText
+                        'statusText' => AttendanceCalculator::statusLabel($status),
                     ];
                     $iteration++;
                 }
-                
-                if ($presentCount == 0 && $absentCount == 0 && $lateCount == 0) {
-                    $finalStatus = 'pending';
-                    $finalText = 'Chưa điểm danh';
-                } elseif ($absentCount > 0) {
-                    $finalStatus = 'absent';
-                    $finalText = 'Vắng';
-                } elseif ($lateCount > 0) {
-                    $finalStatus = 'late';
-                    $finalText = 'Đi trễ';
-                } else {
-                    $finalStatus = 'present';
-                    $finalText = 'Có mặt';
+
+                // Gộp cả buổi theo quy tắc tổng kết (phiên cuối quyết định).
+                $result = AttendanceCalculator::consolidateStatuses($statuses, $deductExcused);
+                $finalStatus = $result['status']; // present / late / absent / excused
+                $finalText = $result['label'];     // Có mặt / Đi muộn / Về sớm / Vắng / Có phép
+
+                // Chỉ tính vào chuyên cần các buổi mà sinh viên thực sự có bản ghi.
+                if ($hasRecord) {
+                    $counts[$finalStatus] = ($counts[$finalStatus] ?? 0) + 1;
                 }
 
-                // Mỗi buổi = 1 đơn vị (đã bỏ khái niệm tiết).
-                $attendedSessions = 0;
-                $absentSessions = 0;
-
-                if ($finalStatus === 'present' || $finalStatus === 'late') {
-                    $attendedSessions = 1;
-                } elseif ($finalStatus === 'absent') {
-                    $absentSessions = 1;
-                }
+                $attendedSessions = in_array($finalStatus, ['present', 'late', 'excused'], true) ? 1 : 0;
+                $absentSessions = in_array($finalStatus, ['absent', 'early_leave'], true) ? 1 : 0;
 
                 $tooltipStr = collect($dayDetailsArr)
                     ->map(fn($d) => "Lần {$d['iteration']} ({$d['time']}): {$d['statusText']}")
@@ -141,11 +124,15 @@ class ClassAttendanceHistory extends Component
                     'details' => $dayDetailsArr,
                     'tooltip' => $tooltipStr,
                     'attendedSessions' => $attendedSessions,
-                    'absentSessions' => $absentSessions
+                    'absentSessions' => $absentSessions,
                 ];
-                
-                $totalAttended[$member->id] += $attendedSessions;
             }
+
+            // % chuyên cần chuẩn (suy từ điểm trừ, đủ 6 trạng thái).
+            $studied = array_sum($counts);
+            $planned = max((int) ($this->courseClass->total_sessions ?? 0), $studied);
+            $totalAttended[$member->id] = $counts['present'] + $counts['late'] + $counts['partial'] + $counts['excused'];
+            $memberStats[$member->id] = AttendanceCalculator::percentOfPlanned($planned, $counts, $deductExcused);
         }
 
         $dayIndex = 1;
@@ -187,17 +174,18 @@ class ClassAttendanceHistory extends Component
 
         $totalCourseSessions = $this->courseClass->total_sessions ?? 0;
 
-        $membersData = collect($members->items())->map(function($m) use ($colors, $totalAttended, $totalCourseSessions) {
+        $membersData = collect($members->items())->map(function($m) use ($colors, $totalAttended, $totalCourseSessions, $memberStats) {
             $color = $colors[$m->id % count($colors)];
             return [
-                'id' => $m->id, 
-                'full_name' => $m->full_name, 
+                'id' => $m->id,
+                'full_name' => $m->full_name,
                 'student_code' => $m->student_code,
                 'avatar_bg' => $color['bg'],
                 'avatar_text' => $color['text'],
                 'avatar_border' => $color['border'],
                 'total_attended_sessions' => $totalAttended[$m->id] ?? 0,
-                'total_course_sessions' => $totalCourseSessions
+                'total_course_sessions' => $totalCourseSessions,
+                'attendance_percent' => $memberStats[$m->id] ?? 100,
             ];
         })->keyBy('id');
 

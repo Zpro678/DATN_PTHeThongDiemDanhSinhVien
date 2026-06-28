@@ -69,11 +69,10 @@
                 $totalStudied   = $present + $late + $absent + $excused;
                 $plannedSessions = max((int) ($class->total_sessions ?? 0), $totalStudied);
 
-                // % trung bình chuyên cần lớp = (planned − excused − absent) / (planned − excused).
+                // % trung bình chuyên cần lớp (suy từ điểm trừ: vắng −1, muộn −0.5).
                 $attendancePct = \App\Services\AttendanceCalculator::percentOfPlanned(
                     $plannedSessions,
-                    $excused,
-                    $absent,
+                    ['late' => $late, 'absent' => $absent, 'excused' => $excused],
                 );
 
                 // Số buổi tối đa được phép vắng (20% tổng buổi dự kiến).

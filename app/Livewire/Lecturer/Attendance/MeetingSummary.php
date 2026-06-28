@@ -5,7 +5,7 @@ namespace App\Livewire\Lecturer\Attendance;
 use App\Exports\MeetingSummaryExport;
 use App\Models\ClassMeeting;
 use App\Models\MeetingSummary as MeetingSummaryModel;
-use App\Services\MeetingConsolidationService;
+use App\Services\AttendanceCalculator;
 use App\Services\SubscriptionService;
 use Illuminate\Contracts\View\View;
 use Illuminate\Support\Str;
@@ -29,7 +29,7 @@ class MeetingSummary extends Component
 
         // Hết giờ thì chốt buổi; sau đó dựng/đồng bộ bảng tổng kết từ các phiên.
         $meeting->closeIfExpired();
-        app(MeetingConsolidationService::class)->syncSummaries($meeting);
+        AttendanceCalculator::syncSummaries($meeting);
 
         $this->meeting = $meeting;
         $this->loadDrafts();
@@ -47,7 +47,7 @@ class MeetingSummary extends Component
 
     public function setStatus(int $memberId, string $status): void
     {
-        abort_unless(in_array($status, ['present', 'late', 'absent', 'excused'], true), 422);
+        abort_unless(in_array($status, ['present', 'late', 'partial', 'early_leave', 'absent', 'excused'], true), 422);
 
         if (array_key_exists($memberId, $this->draftStatuses)) {
             $this->draftStatuses[$memberId] = $status;
@@ -59,7 +59,6 @@ class MeetingSummary extends Component
      */
     public function save(): void
     {
-        $service = app(MeetingConsolidationService::class);
         $deductExcused = (bool) $this->meeting->courseClass->deduct_excused_absence;
 
         $summaries = $this->meeting->summaries()->get()->keyBy('class_member_id');
@@ -74,7 +73,7 @@ class MeetingSummary extends Component
 
             $summary->update([
                 'status' => $status,
-                'deduction' => $service->deductionForStatus($status, $deductExcused),
+                'deduction' => AttendanceCalculator::deductionForStatus($status, $deductExcused),
                 'is_overridden' => $status !== $summary->auto_status,
                 'note' => $note !== '' ? $note : null,
             ]);
@@ -92,7 +91,7 @@ class MeetingSummary extends Component
             ->where('meeting_id', $this->meeting->id)
             ->update(['is_overridden' => false]);
 
-        app(MeetingConsolidationService::class)->syncSummaries($this->meeting);
+        AttendanceCalculator::syncSummaries($this->meeting);
 
         $this->draftStatuses = [];
         $this->draftNotes = [];
@@ -121,13 +120,12 @@ class MeetingSummary extends Component
 
     public function render(): View
     {
-        $service = app(MeetingConsolidationService::class);
         $deductExcused = (bool) $this->meeting->courseClass->deduct_excused_absence;
 
         $sessions = $this->meeting->sessions()->orderBy('id')->get(['id', 'name', 'qr_token']);
-        $consolidated = $service->consolidateMeeting($this->meeting)->keyBy(fn ($row) => $row['member']->id);
+        $consolidated = AttendanceCalculator::consolidateMeeting($this->meeting)->keyBy(fn ($row) => $row['member']->id);
 
-        $rows = $consolidated->map(function ($row) use ($service, $deductExcused) {
+        $rows = $consolidated->map(function ($row) use ($deductExcused) {
             $memberId = $row['member']->id;
             $status = $this->draftStatuses[$memberId] ?? $row['status'];
 
@@ -137,7 +135,7 @@ class MeetingSummary extends Component
                 'auto_label' => $row['label'],
                 'auto_status' => $row['status'],
                 'status' => $status,
-                'deduction' => $service->deductionForStatus($status, $deductExcused),
+                'deduction' => AttendanceCalculator::deductionForStatus($status, $deductExcused),
                 'edited' => $status !== $row['status'],
             ];
         })->values();

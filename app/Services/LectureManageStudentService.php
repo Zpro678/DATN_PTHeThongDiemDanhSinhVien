@@ -37,7 +37,7 @@ class LectureManageStudentService
             ->whereNotNull('cs.meeting_id')
             ->whereNull('ar.deleted_at')
             ->whereNull('cs.deleted_at')
-            ->get(['ar.class_member_id', 'cs.meeting_id', 'ar.status'])
+            ->get(['ar.class_member_id', 'cs.meeting_id', 'ar.class_session_id', 'cs.qr_token', 'ar.status'])
             ->groupBy('class_member_id');
 
         return $members->mapWithKeys(function (ClassMember $member) use ($rowsByMember, $classes): array {
@@ -45,8 +45,9 @@ class LectureManageStudentService
 
             $studiedSessions = $counts['total']; // Số buổi đã diễn ra của sinh viên.
             $presentSessions = $counts['present'];
-            $lateSessions = $counts['late'];
-            $absentSessions = $counts['absent'];
+            // Gộp để hiển thị 4 nhóm: vắng giữa giờ ~ muộn (−0.5); về sớm ~ vắng (−1).
+            $lateSessions = $counts['late'] + $counts['partial'];
+            $absentSessions = $counts['absent'] + $counts['early_leave'];
             $excusedSessions = $counts['excused'];
 
             $class = $classes->get($member->class_id);
@@ -57,19 +58,19 @@ class LectureManageStudentService
             $effectivePlanned = $plannedSessions > 0 ? $plannedSessions : $studiedSessions;
 
             $countedSessions = AttendanceCalculator::countedSessions($effectivePlanned, $excusedSessions, $deductExcusedAbsence);
-            $attendedSessions = $presentSessions + $lateSessions; // Muộn tính như có đi học.
-            $effectiveAbsent = $absentSessions; // Không quy đổi muộn.
+            $attendedSessions = $presentSessions + $lateSessions; // Số buổi có đến lớp (gồm cả muộn).
+            $effectiveAbsent = $absentSessions; // Số buổi vắng (hiển thị).
+            $absenceForBan = AttendanceCalculator::effectiveAbsence($counts); // Vắng quy đổi (đủ 6 trạng thái).
 
             $attendancePercent = AttendanceCalculator::percentOfPlanned(
                 $effectivePlanned,
-                $excusedSessions,
-                $absentSessions,
+                $counts,
                 $deductExcusedAbsence
             );
 
             $allowedAbsent = AttendanceCalculator::allowedAbsentSessions($effectivePlanned);
-            // Cấm thi: vắng vượt 20% tổng buổi hoặc chuyên cần < 80%.
-            $isBanned = $effectivePlanned > 0 && ($effectiveAbsent > $allowedAbsent || $attendancePercent < AttendanceCalculator::MIN_ATTENDANCE_PERCENT);
+            // Cấm thi: vắng quy đổi vượt 20% tổng buổi hoặc chuyên cần < 80%.
+            $isBanned = $effectivePlanned > 0 && ($absenceForBan > $allowedAbsent || $attendancePercent < AttendanceCalculator::MIN_ATTENDANCE_PERCENT);
             // Cảnh báo: chuyên cần dưới 85% nhưng chưa bị cấm.
             $isWarning = ! $isBanned && $attendancePercent < AttendanceCalculator::WARNING_PERCENT;
 
