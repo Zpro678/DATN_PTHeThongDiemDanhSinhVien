@@ -73,12 +73,15 @@
                                 type="password"
                                 name="password"
                                 required
-                                class="w-full bg-slate-50 text-slate-900 border text-base font-medium rounded-xl outline-none transition-all duration-200 pl-12 py-4 @error('password') pr-10 border-rose-400 focus:border-rose-500 focus:ring-4 focus:ring-rose-500/10 bg-rose-50/20 @else pr-4 border-slate-200 focus:border-blue-500 focus:ring-4 focus:ring-blue-500/10 @enderror placeholder:text-slate-400"
+                                class="w-full bg-slate-50 text-slate-900 border text-base font-medium rounded-xl outline-none transition-all duration-200 pl-12 py-4 @error('password') pr-12 border-rose-400 focus:border-rose-500 focus:ring-4 focus:ring-rose-500/10 bg-rose-50/20 @else pr-12 border-slate-200 focus:border-blue-500 focus:ring-4 focus:ring-blue-500/10 @enderror placeholder:text-slate-400"
                                 placeholder="••••••••"
                             />
+                            <button type="button" onclick="togglePasswordVisibility('password', 'togglePasswordIcon')" class="absolute inset-y-0 right-0 pr-4 flex items-center text-slate-400 hover:text-slate-600 focus:outline-none cursor-pointer z-10">
+                                <i data-lucide="eye" id="togglePasswordIcon" class="w-5 h-5"></i>
+                            </button>
                             @error('password')
-                                <div class="absolute inset-y-0 right-0 pr-4 flex items-center pointer-events-none text-rose-500">
-                                    <i data-lucide="alert-circle" class="w-6 h-6"></i>
+                                <div class="absolute inset-y-0 right-0 pr-12 flex items-center pointer-events-none text-rose-500">
+                                    <i data-lucide="alert-circle" class="w-5 h-5"></i>
                                 </div>
                             @enderror
                         </div>
@@ -139,6 +142,19 @@
     </div>
 
     <script>
+        function togglePasswordVisibility(inputId, iconId) {
+            const input = document.getElementById(inputId);
+            const icon = document.getElementById(iconId);
+            if (input.type === 'password') {
+                input.type = 'text';
+                icon.setAttribute('data-lucide', 'eye-off');
+            } else {
+                input.type = 'password';
+                icon.setAttribute('data-lucide', 'eye');
+            }
+            window.lucide?.createIcons();
+        }
+
         window.lucide?.createIcons();
 
         document.addEventListener('wheel', function(e) {

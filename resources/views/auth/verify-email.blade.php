@@ -1,31 +1,76 @@
-<x-guest-layout>
-    <div class="mb-4 text-sm text-gray-600">
-        {{ __('Thanks for signing up! Before getting started, could you verify your email address by clicking on the link we just emailed to you? If you didn\'t receive the email, we will gladly send you another.') }}
-    </div>
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Xác thực Email - SmartAttendance</title>
+    @vite(['resources/css/app.css', 'resources/js/app.js'])
+    <script src="https://unpkg.com/lucide@latest"></script>
+    <style>
+        .scrollbar-hide::-webkit-scrollbar {
+            display: none;
+        }
 
-    @if (session('status') == 'verification-link-sent')
-        <div class="mb-4 font-medium text-sm text-green-600">
-            {{ __('A new verification link has been sent to the email address you provided during registration.') }}
-        </div>
-    @endif
+        .scrollbar-hide {
+            -ms-overflow-style: none;
+            scrollbar-width: none;
+        }
+    </style>
+</head>
+<body class="bg-white antialiased overflow-hidden">
+    <div class="h-screen flex">
+        @include('auth.partials.auth-illustration')
 
-    <div class="mt-4 flex items-center justify-between">
-        <form method="POST" action="{{ route('verification.send') }}">
-            @csrf
+        <div class="w-full lg:w-1/2 flex flex-col justify-center items-center px-8 py-6 xl:py-8 bg-white h-screen">
+            <div class="w-full max-w-md my-auto text-center">
+                
+                <div class="mb-6 flex justify-center">
+                    <div class="bg-blue-100 p-4 rounded-full text-blue-600">
+                        <i data-lucide="mail-open" class="w-12 h-12"></i>
+                    </div>
+                </div>
 
-            <div>
-                <x-primary-button>
-                    {{ __('Resend Verification Email') }}
-                </x-primary-button>
+                <h2 class="text-3xl font-extrabold text-slate-900 tracking-tight mb-4">XÁC THỰC EMAIL</h2>
+                
+                <p class="text-sm text-slate-600 mb-6 leading-relaxed">
+                    Cảm ơn bạn đã đăng ký tài khoản! Trước khi bắt đầu, vui lòng xác thực địa chỉ email bằng cách nhấn vào đường link chúng tôi vừa gửi đến hộp thư của bạn. 
+                    <br><br>
+                    Nếu bạn không nhận được email, hãy nhấn nút bên dưới để chúng tôi gửi lại nhé.
+                </p>
+
+                @if (session('status') == 'verification-link-sent')
+                    <div class="mb-6 p-4 rounded-xl bg-emerald-50 border border-emerald-200">
+                        <p class="font-bold text-sm text-emerald-600 flex items-center justify-center gap-2">
+                            <i data-lucide="check-circle" class="w-5 h-5"></i>
+                            Một đường link xác thực mới đã được gửi!
+                        </p>
+                    </div>
+                @endif
+
+                <div class="mt-8 space-y-4">
+                    <form method="POST" action="{{ route('verification.send') }}">
+                        @csrf
+                        <button type="submit" class="w-full flex items-center justify-center gap-2 bg-blue-600 hover:bg-blue-700 text-white font-bold text-sm px-4 py-3 rounded-xl transition-all shadow-md hover:shadow-lg focus:ring-4 focus:ring-blue-500/50">
+                            <i data-lucide="send" class="w-4 h-4"></i>
+                            Gửi lại email xác thực
+                        </button>
+                    </form>
+
+                    <form method="POST" action="{{ route('logout') }}">
+                        @csrf
+                        <button type="submit" class="w-full flex items-center justify-center gap-2 bg-white border-2 border-slate-200 hover:border-slate-300 hover:bg-slate-50 text-slate-700 font-bold text-sm px-4 py-3 rounded-xl transition-all">
+                            <i data-lucide="log-out" class="w-4 h-4"></i>
+                            Đăng xuất
+                        </button>
+                    </form>
+                </div>
+
             </div>
-        </form>
-
-        <form method="POST" action="{{ route('logout') }}">
-            @csrf
-
-            <button type="submit" class="underline text-sm text-gray-600 hover:text-gray-900 rounded-md focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500">
-                {{ __('Log Out') }}
-            </button>
-        </form>
+        </div>
     </div>
-</x-guest-layout>
+
+    <script>
+        window.lucide?.createIcons();
+    </script>
+</body>
+</html>
