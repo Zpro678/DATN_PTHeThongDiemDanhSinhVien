@@ -264,7 +264,7 @@
                         $ongoingSession = \App\Models\ClassSession::query()
                             ->where('status', 'active')
                             ->whereHas('meeting.courseClass', fn ($q) => $q->where('owner_user_id', auth()->id()))
-                            ->with(['meeting.courseClass:id,name,code,owner_user_id'])
+                            ->with(['meeting.courseClass:id,name,join_key,owner_user_id'])
                             ->latest()
                             ->first();
                     @endphp
