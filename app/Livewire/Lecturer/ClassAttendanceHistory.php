@@ -58,7 +58,7 @@ class ClassAttendanceHistory extends Component
         
         // Gộp theo BUỔI (meeting_id) — mỗi buổi là 1 cột trong lưới.
         $groupedSessions = $sessions->groupBy('meeting_id');
-        $deductExcused = (bool) $this->courseClass->deduct_excused_absence;
+        $rules = $this->courseClass->getAttendanceRules();
 
         $records = \App\Models\AttendanceRecord::query()
             ->whereIn('class_session_id', $sessions->pluck('id'))
@@ -102,7 +102,7 @@ class ClassAttendanceHistory extends Component
                 }
 
                 // Gộp cả buổi theo quy tắc tổng kết (phiên cuối quyết định).
-                $result = AttendanceCalculator::consolidateStatuses($statuses, $deductExcused);
+                $result = AttendanceCalculator::consolidateStatuses($statuses, $rules);
                 $finalStatus = $result['status']; // present / late / absent / excused
                 $finalText = $result['label'];     // Có mặt / Đi muộn / Về sớm / Vắng / Có phép
 
@@ -132,7 +132,7 @@ class ClassAttendanceHistory extends Component
             $studied = array_sum($counts);
             $planned = max((int) ($this->courseClass->total_sessions ?? 0), $studied);
             $totalAttended[$member->id] = $counts['present'] + $counts['late'] + $counts['partial'] + $counts['excused'];
-            $memberStats[$member->id] = AttendanceCalculator::percentOfPlanned($planned, $counts, $deductExcused);
+            $memberStats[$member->id] = AttendanceCalculator::percentOfPlanned($planned, $counts, $rules);
         }
 
         $dayIndex = 1;

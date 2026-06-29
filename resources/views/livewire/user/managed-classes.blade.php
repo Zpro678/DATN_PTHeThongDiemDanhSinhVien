@@ -83,78 +83,139 @@
                 // Cảnh báo: chuyên cần trung bình 80–84%.
                 $isWarning = ! $isBanned && $attendancePct < 85;
 
-                // Màu progress bar và text theo trạng thái.
-                if ($isEnded) {
-                    $barClass  = 'bg-slate-400';
-                    $textClass = 'text-slate-500';
-                } elseif ($isBanned) {
-                    $barClass  = 'bg-red-500';
-                    $textClass = 'text-red-600';
-                } elseif ($isWarning) {
-                    $barClass  = 'bg-amber-400';
-                    $textClass = 'text-amber-600';
+                // Màu progress bar và text theo chuyên cần
+                if ($attendancePct < 70) {
+                    $barClass  = 'bg-[#EF4444]';
+                    $textClass = 'text-[#EF4444]';
+                } elseif ($attendancePct < 90) {
+                    $barClass  = 'bg-[#F59E0B]';
+                    $textClass = 'text-[#F59E0B]';
                 } else {
-                    $barClass  = 'bg-blue-500';
-                    $textClass = 'text-blue-600';
+                    $barClass  = 'bg-[#22C55E]';
+                    $textClass = 'text-[#22C55E]';
                 }
+                
+                if ($isEnded) {
+                    $barClass  = 'bg-[#F1F5F9]';
+                    $textClass = 'text-[#64748B]';
+                }
+
+                $colorOptions = [
+                    'bg-[#475569]', // slate-600
+                    'bg-[#1D4ED8]', // blue-700
+                    'bg-[#0F766E]', // teal-700
+                    'bg-[#4338CA]', // indigo-700
+                    'bg-[#047857]', // emerald-700
+                    'bg-[#0369A1]', // sky-700
+                    'bg-[#6D28D9]', // violet-700
+                    'bg-[#B45309]', // amber-700
+                ];
+                $themeColor = $colorOptions[$class->id % count($colorOptions)];
+
+                $decorations = [
+                    // 1: Orange Book with subtle background circles
+                    '<svg class="absolute -right-2 -bottom-2 h-28 w-28 transform rotate-[10deg] opacity-90" viewBox="0 0 100 100" fill="none" xmlns="http://www.w3.org/2000/svg">
+                        <circle cx="85" cy="30" r="15" stroke="rgba(255,255,255,0.15)" stroke-width="4"/>
+                        <circle cx="85" cy="55" r="10" stroke="rgba(255,255,255,0.15)" stroke-width="4"/>
+                        <!-- Book -->
+                        <rect x="25" y="25" width="55" height="70" rx="4" fill="#FF7A59"/>
+                        <!-- Spine/Ribbon -->
+                        <path d="M65 25 h12 v25 l-6 -6 l-6 6 z" fill="#D94025"/>
+                        <!-- Lines -->
+                        <rect x="35" y="45" width="20" height="4" rx="2" fill="#D94025"/>
+                        <rect x="35" y="55" width="12" height="4" rx="2" fill="#D94025"/>
+                        <!-- Edge -->
+                        <path d="M25 25 h4 v70 h-4 z" fill="#FF9A85"/>
+                    </svg>',
+
+                    // 2: Tablet & Code
+                    '<svg class="absolute -right-2 top-2 h-28 w-28 transform -rotate-12 opacity-90" viewBox="0 0 100 100" fill="none" xmlns="http://www.w3.org/2000/svg">
+                        <rect x="15" y="20" width="70" height="50" rx="6" fill="#1A2B4C"/>
+                        <rect x="20" y="25" width="60" height="40" rx="2" fill="#38BDF8"/>
+                        <circle cx="50" cy="74" r="2" fill="#94A3B8"/>
+                        <!-- Code lines -->
+                        <rect x="25" y="35" width="20" height="3" rx="1.5" fill="#F97316"/>
+                        <rect x="25" y="42" width="15" height="3" rx="1.5" fill="#F0F9FF"/>
+                        <rect x="25" y="49" width="30" height="3" rx="1.5" fill="#F0F9FF"/>
+                    </svg>',
+
+                    // 3: Notebook & Pen
+                    '<svg class="absolute right-0 -bottom-4 h-32 w-32 transform rotate-[15deg] opacity-90" viewBox="0 0 100 100" fill="none" xmlns="http://www.w3.org/2000/svg">
+                        <!-- Notebook -->
+                        <rect x="40" y="30" width="50" height="60" rx="2" fill="#A3E635"/>
+                        <rect x="45" y="35" width="40" height="50" fill="#D9F99D"/>
+                        <rect x="50" y="45" width="20" height="2" fill="#65A30D"/>
+                        <rect x="50" y="55" width="30" height="2" fill="#65A30D"/>
+                        <rect x="50" y="65" width="25" height="2" fill="#65A30D"/>
+                        <!-- Pen -->
+                        <path d="M20 70 L60 30 L65 35 L25 75 Z" fill="#3B82F6"/>
+                        <path d="M60 30 L65 25 L70 30 L65 35 Z" fill="#1D4ED8"/>
+                        <path d="M20 70 L15 78 L25 75 Z" fill="#FCA5A5"/>
+                        <circle cx="17" cy="76" r="2" fill="#1E40AF"/>
+                    </svg>',
+
+                    // 4: Science Flask
+                    '<svg class="absolute -right-2 top-0 h-32 w-32 transform rotate-6 opacity-90" viewBox="0 0 100 100" fill="none" xmlns="http://www.w3.org/2000/svg">
+                        <path d="M45 20 h10 v20 l15 30 a5 5 0 0 1 -4 8 h-32 a5 5 0 0 1 -4 -8 l15 -30 z" fill="#E2E8F0" opacity="0.9"/>
+                        <path d="M36 60 h28 l5 10 a5 5 0 0 1 -4 8 h-32 a5 5 0 0 1 -4 -8 l5 -10 z" fill="#10B981"/>
+                        <circle cx="45" cy="65" r="3" fill="#ffffff"/>
+                        <circle cx="55" cy="70" r="2" fill="#ffffff"/>
+                        <circle cx="50" cy="55" r="2.5" fill="#ffffff"/>
+                        <rect x="42" y="15" width="16" height="5" rx="2" fill="#94A3B8"/>
+                    </svg>',
+                ];
+                $themeDecoration = $decorations[$class->id % count($decorations)];
             @endphp
             <article @class([
-                'group relative flex flex-col overflow-hidden rounded-3xl bg-white transition-all duration-300 hover:-translate-y-1 cursor-pointer',
-                'ring-1 ring-blue-500/20 shadow-lg shadow-blue-500/5 hover:shadow-xl hover:shadow-blue-500/10' => ! $isEnded,
-                'ring-1 ring-outline-variant/20 shadow-md hover:shadow-xl opacity-80 hover:opacity-100' => $isEnded,
+                'group relative flex flex-col overflow-hidden rounded-xl bg-white border border-gray-200 transition-shadow duration-200',
+                "hover:shadow-md" => ! $isEnded,
+                'opacity-80' => $isEnded,
             ])>
                 {{-- Phủ 1 link tàng hình lên toàn bộ thẻ để click được cả thẻ --}}
                 <a href="{{ route('lecturer.classes.show', $class->id) }}" class="absolute inset-0 z-10"><span class="sr-only">Xem chi tiết lớp</span></a>
 
                 <!-- Classroom-style Header -->
                 <div @class([
-                    'relative flex h-28 flex-col justify-between p-5',
-                    'bg-blue-600/95' => ! $isEnded,
-                    'bg-slate-600/95' => $isEnded,
+                    'relative overflow-hidden flex h-28 flex-col p-4',
+                    "$themeColor" => ! $isEnded,
+                    'bg-slate-500' => $isEnded,
                 ])>
-                    <div class="flex items-start justify-between">
-                        <div class="pr-6">
-                            <h4 class="line-clamp-2 text-[22px] font-medium text-white hover:underline cursor-pointer" title="{{ $class->name }}">
+                    <!-- Background Decoration -->
+                    {!! $themeDecoration !!}
+                    <div class="relative z-10 flex items-start justify-between">
+                        <div class="pr-8">
+                            <h4 class="line-clamp-2 text-3xl font-extrabold text-white hover:underline cursor-pointer" title="{{ $class->name }}">
                                 <a href="{{ route('lecturer.classes.show', $class->id) }}">{{ $class->name }}</a>
                             </h4>
-                            <div class="mt-1 flex items-center gap-2 text-sm text-white/90">
+                            <div class="mt-1 flex items-center gap-2 text-xl font-semibold text-white/90">
                                 <span>{{ $class->subject_code ?? 'N/A' }}</span>
-                            </div>
-                        </div>
-
-                        <!-- Dropdown Menu -->
-                        <div class="absolute right-2 top-2 z-20" x-data="{ open: false }">
-                            <button type="button" x-on:click="open = ! open" class="rounded-full p-2 text-white transition-colors hover:bg-white/20 relative z-20">
-                                <x-user.icon name="more-vertical" :size="20" />
-                            </button>
-                            <div x-cloak x-show="open" x-on:click.outside="open = false" class="absolute right-0 top-full z-50 mt-1 w-44 rounded-xl border border-outline-variant/20 bg-white py-2 shadow-lg">
-                                <a href="{{ route('lecturer.classes.show', $class->id) }}" class="block w-full px-4 py-2 text-left text-sm font-medium hover:bg-surface-container">Xem lớp học</a>
-                                @if (! $isEnded)
-                                    <a href="{{ route('lecturer.classes.settings', $class->id) }}" class="block w-full px-4 py-2 text-left text-sm font-medium hover:bg-surface-container">Cài đặt lớp</a>
-                                    <button type="button" wire:click="confirmEndClass({{ $class->id }})" class="block w-full px-4 py-2 text-left text-sm font-medium text-error hover:bg-error/10">Kết thúc lớp</button>
-                                @endif
                             </div>
                         </div>
                     </div>
                 </div>
-                
-                <div class="flex flex-1 flex-col p-4 pt-3">
+
+                <div class="flex flex-1 flex-col p-4 pt-3 relative">
+                    <!-- Classroom Avatar Overlap -->
+                    <div class="absolute -top-7 right-4 flex h-16 w-16 items-center justify-center rounded-full bg-blue-600 text-2xl font-normal text-white shadow-sm ring-2 ring-white">
+                        {{ mb_strtoupper(mb_substr($class->name, 0, 1)) }}
+                    </div>
+
                     <!-- Tags & Class Code -->
-                    <div class="flex items-center justify-between gap-2 min-w-0">
+                    <div class="flex items-center justify-between gap-2 min-w-0 mt-8 px-4">
                         <div class="flex items-center gap-1.5 shrink-0">
                             <span @class([
                                 'whitespace-nowrap rounded-full px-2.5 py-0.5 text-[10px] font-bold uppercase tracking-wider',
-                                'bg-blue-100 text-blue-700' => ! $isEnded,
-                                'bg-surface-container text-on-surface-variant' => $isEnded,
+                                'bg-[#DBEAFE] text-[#2563EB]' => ! $isEnded,
+                                'bg-[#F1F5F9] text-[#64748B]' => $isEnded,
                             ])>
                                 @if($isEnded) ĐÃ KẾT THÚC @else ĐANG HOẠT ĐỘNG @endif
                             </span>
-                            <span class="whitespace-nowrap flex items-center gap-1 rounded-full bg-[#F59E0B]/10 px-2.5 py-0.5 text-[10px] font-bold uppercase tracking-wider text-[#F59E0B]">
+                            <span class="whitespace-nowrap flex items-center gap-1 rounded-full bg-[#FEF3C7] px-2.5 py-0.5 text-[10px] font-bold uppercase tracking-wider text-[#D97706]">
                                 <x-user.icon name="shield" :size="10" />
                                 Chủ lớp
                             </span>
                         </div>
-                        <span class="whitespace-nowrap text-[11px] font-medium text-on-surface-variant shrink-0">Mã lớp: <span class="font-bold text-on-surface">{{ $class->code }}</span></span>
+                        <span class="whitespace-nowrap text-sm font-semibold text-on-surface-variant shrink-0">Mã lớp: <span class="font-bold text-on-surface">{{ $class->code }}</span></span>
                     </div>
 
                     <!-- Stats Row -->
@@ -166,11 +227,11 @@
                                 <span class="text-xl font-black leading-none text-on-surface">{{ $class->students_count }}</span>
                             </p>
                         </div>
-                        <div>
+                        <div class="flex-1 border-l border-outline-variant/30 pl-4">
                             <p class="text-[9px] font-bold uppercase tracking-wider text-on-surface-variant">Đã học</p>
                             <p class="mt-1 flex items-center gap-1.5">
                                 <x-user.icon name="check-square" class="text-tertiary" :size="16"/>
-                                <span class="text-xl font-black leading-none text-on-surface">{{ $class->studied_sessions ?? 0 }}/{{ $class->total_sessions }}</span>
+                                <span class="text-xl font-black leading-none text-on-surface">{{ $class->studied_sessions ?? 0 }}</span>
                             </p>
                         </div>
                     </div>
@@ -188,37 +249,29 @@
                             </div>
                             <span class="{{ $textClass }} text-xs font-black">{{ $attendancePct }}%</span>
                         </div>
-                        <div class="h-1 w-full overflow-hidden rounded-full bg-surface-container-highest">
-                            <div class="{{ $barClass }} h-full rounded-full transition-all duration-1000" style="width: {{ $attendancePct }}%"></div>
+                        <div class="h-1.5 w-full bg-gray-100">
+                            <div class="{{ $barClass }} h-full" style="width: {{ $attendancePct }}%"></div>
                         </div>
                     </div>
                 </div>
 
                 <!-- Footer Actions -->
-                <div class="flex items-center justify-end gap-1 px-4 py-3 bg-surface-container-lowest/50 relative z-20">
+                <div class="flex items-center justify-end gap-1 px-4 py-2 border-t border-gray-100 bg-white relative z-20">
                     {{-- Nút Copy mã lớp --}}
                     <div x-data="{ copied: false }" class="relative z-20">
                         <button
                             type="button"
                             title="Sao chép mã lớp: {{ $class->code }}"
-                            class="group/action relative rounded-full p-2.5 transition-colors hover:bg-surface-container-low"
+                            class="group/action relative rounded-full p-2.5 transition-colors hover:bg-black/5"
                             x-on:click="navigator.clipboard.writeText('{{ $class->code }}'); copied = true; setTimeout(() => copied = false, 2000); $event.stopPropagation()"
                         >
                             <template x-if="!copied">
-                                <x-user.icon name="copy" :size="18" class="text-on-surface-variant transition-colors group-hover/action:text-primary" />
+                                <x-user.icon name="copy" :size="20" class="text-[#5F6368] transition-colors group-hover/action:text-primary" />
                             </template>
                             <template x-if="copied">
-                                <x-user.icon name="check-circle" :size="18" class="text-green-600" />
+                                <x-user.icon name="check-circle" :size="20" class="text-green-600" />
                             </template>
                         </button>
-                        <span
-                            x-show="copied"
-                            x-cloak
-                            x-transition:enter="transition ease-out duration-200"
-                            x-transition:enter-start="opacity-0 -translate-y-1"
-                            x-transition:enter-end="opacity-100 translate-y-0"
-                            class="pointer-events-none absolute -top-8 left-1/2 -translate-x-1/2 whitespace-nowrap rounded-lg bg-slate-800 px-2 py-1 text-[10px] font-bold text-white"
-                        >Đã copy!</span>
                     </div>
                     @foreach ([
                         ['label' => 'Điểm danh QR', 'icon' => 'qr-code'],
@@ -227,12 +280,26 @@
                         ['label' => 'Thống kê', 'icon' => 'bar-chart'],
                     ] as $action)
                         <a href="{{ match ($action['label']) { 'Điểm danh QR' => route('lecturer.attendance.create', ['class_id' => $class->id]), 'Thủ công' => route('lecturer.attendance.create', ['class_id' => $class->id]), 'Quản lý SV' => route('lecturer.students.index', ['class_id' => $class->id]), 'Thống kê' => route('lecturer.class.statistics', ['class_id' => $class->id]), default => '#' } }}" @class([
-                            'group/action relative rounded-full p-2.5 transition-colors hover:bg-surface-container-low',
+                            'group/action relative rounded-full p-2.5 transition-colors hover:bg-black/5',
                             'cursor-not-allowed opacity-50' => $isEnded && in_array($action['icon'], ['qr-code', 'check-square'], true),
                         ]) title="{{ $action['label'] }}">
-                            <x-user.icon :name="$action['icon']" :size="18" class="text-on-surface-variant transition-colors group-hover/action:text-primary" />
+                            <x-user.icon :name="$action['icon']" class="text-[#5F6368] transition-colors group-hover/action:text-primary" :size="20"/>
                         </a>
                     @endforeach
+
+                    <!-- Classroom style 3-dots menu -->
+                    <div class="relative z-20 ml-1" x-data="{ open: false }">
+                        <button type="button" x-on:click.stop="open = ! open" class="rounded-full p-2.5 text-[#5F6368] transition-colors hover:bg-black/5">
+                            <x-user.icon name="more-vertical" :size="20" />
+                        </button>
+                        <div x-cloak x-show="open" x-on:click.outside="open = false" class="absolute right-0 bottom-full z-50 mb-1 w-44 rounded-md border border-gray-200 bg-white py-2 shadow-lg">
+                            <a href="{{ route('lecturer.classes.show', $class->id) }}" class="block w-full px-4 py-2 text-left text-sm text-gray-700 hover:bg-gray-100">Xem lớp học</a>
+                            @if (! $isEnded)
+                                <a href="{{ route('lecturer.classes.settings', $class->id) }}" class="block w-full px-4 py-2 text-left text-sm text-gray-700 hover:bg-gray-100">Cài đặt lớp</a>
+                                <button type="button" wire:click.stop.prevent="confirmEndClass({{ $class->id }})" class="block w-full px-4 py-2 text-left text-sm text-red-600 hover:bg-red-50">Kết thúc lớp</button>
+                            @endif
+                        </div>
+                    </div>
                 </div>
             </article>
             @empty

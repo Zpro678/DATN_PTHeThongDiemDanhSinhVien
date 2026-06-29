@@ -107,63 +107,48 @@
                     <div class="p-6 space-y-5">
                         <div class="grid grid-cols-1 sm:grid-cols-2 gap-5">
 
-                            {{-- Tổng số buổi dự kiến --}}
+                            {{-- Ngưỡng đi muộn --}}
                             <label class="block">
-                                <span class="mb-2 block text-sm font-bold text-on-surface">Tổng số buổi dự kiến <span class="text-error">*</span></span>
-                                <input type="number" wire:model="totalSessions" min="1" max="200" class="w-full rounded-xl border border-outline-variant/30 bg-surface-container-lowest px-4 py-3 outline-none transition-all focus:border-primary focus:ring-2 focus:ring-primary/20">
-                                @error('totalSessions') <span class="text-error text-xs mt-1 block">{{ $message }}</span> @enderror
+                                <span class="mb-2 block text-sm font-bold text-on-surface">Ngưỡng đi muộn (phút) <span class="text-error">*</span></span>
+                                <input type="number" wire:model.live.debounce.300ms="lateThreshold" min="0" max="300" class="w-full rounded-xl border border-outline-variant/30 bg-surface-container-lowest px-4 py-3 outline-none transition-all focus:border-primary focus:ring-2 focus:ring-primary/20">
+                                @error('lateThreshold') <span class="text-error text-xs mt-1 block">{{ $message }}</span> @enderror
                             </label>
 
-                            {{-- Ngưỡng đi muộn - Custom Dropdown --}}
-                            <div x-data="{
-                                open: false,
-                                value: @entangle('lateThreshold'),
-                                position: 'bottom',
-                                options: [
-                                    { value: 5,  label: '5 phút' },
-                                    { value: 10, label: '10 phút' },
-                                    { value: 15, label: '15 phút' },
-                                    { value: 20, label: '20 phút' },
-                                    { value: 30, label: '30 phút' },
-                                ],
-                                get label() { return this.options.find(o => o.value == this.value)?.label ?? 'Chọn...' },
-                                checkPosition() {
-                                    this.$nextTick(() => {
-                                        let rect = this.$refs.btn.getBoundingClientRect();
-                                        let menuRect = this.$refs.menu.getBoundingClientRect();
-                                        let spaceBelow = window.innerHeight - rect.bottom;
-                                        let spaceAbove = rect.top;
-                                        this.position = (spaceBelow < menuRect.height && spaceAbove > spaceBelow) ? 'top' : 'bottom';
-                                    });
-                                }
-                            }" @click.outside="open = false" @keydown.escape.window="open = false">
-                                <span class="mb-2 block text-sm font-bold text-on-surface">Ngưỡng đi muộn <span class="text-error">*</span></span>
-                                <div class="relative">
-                                    <button type="button" @click="open = !open; if(open) checkPosition();" x-ref="btn"
-                                        class="flex w-full items-center justify-between gap-3 rounded-xl border border-outline-variant/30 bg-surface-container-lowest px-4 py-3 text-left text-sm font-bold text-on-surface outline-none transition-all hover:border-primary focus:border-primary focus:ring-2 focus:ring-primary/20"
-                                        :class="open ? 'border-primary ring-2 ring-primary/20' : ''">
-                                        <span x-text="label"></span>
-                                        <x-user.icon name="chevron-down" :size="16" class="shrink-0 text-on-surface-variant transition-transform duration-200" x-bind:class="open ? 'rotate-180 text-primary' : ''" />
-                                    </button>
-                                    <div x-show="open" x-cloak x-ref="menu" x-transition:enter="transition ease-out duration-150" x-transition:enter-start="opacity-0 -translate-y-2" x-transition:enter-end="opacity-100 translate-y-0" x-transition:leave="transition ease-in duration-100" x-transition:leave-start="opacity-100 translate-y-0" x-transition:leave-end="opacity-0 -translate-y-2"
-                                        class="absolute left-0 right-0 z-50 overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-xl shadow-slate-900/10"
-                                        :class="position === 'top' ? 'bottom-full mb-1.5' : 'top-full mt-1.5'">
-                                        <template x-for="option in options" :key="option.value">
-                                            <button type="button"
-                                                @click="value = option.value; open = false"
-                                                class="flex w-full items-center justify-between px-4 py-3 text-sm font-bold transition-colors hover:bg-slate-50"
-                                                :class="value == option.value ? 'text-primary bg-primary/5' : 'text-slate-700'">
-                                                <span x-text="option.label"></span>
-                                                <span x-show="value == option.value" class="flex h-4 w-4 items-center justify-center rounded-full bg-primary">
-                                                    <x-user.icon name="check" :size="10" class="text-white" />
-                                                </span>
-                                            </button>
-                                        </template>
-                                    </div>
-                                </div>
-                                @error('lateThreshold') <span class="text-error text-xs mt-1 block">{{ $message }}</span> @enderror
-                            </div>
+                        </div>
 
+                        {{-- Bảng cấu hình điểm trừ chuyên cần --}}
+                        <div class="rounded-xl border border-outline-variant/20 bg-surface-container-lowest/60 p-5 mt-5">
+                            <div class="mb-4">
+                                <span class="block text-sm font-bold text-on-surface">Bảng cấu hình điểm trừ chuyên cần (Quy đổi đi muộn)</span>
+                                <span class="text-xs text-on-surface-variant block mt-1">Thiết lập mức điểm trừ cho từng trạng thái (ví dụ: 0.5 điểm trừ = 2 lần vi phạm thành 1 buổi vắng).</span>
+                            </div>
+                            
+                            <div class="grid grid-cols-2 md:grid-cols-3 gap-4">
+                                <div>
+                                    <label class="block text-xs font-bold text-on-surface mb-1">Có mặt</label>
+                                    <input wire:model="attendanceRules.present" type="number" step="0.5" max="0" class="w-full rounded-xl border border-outline-variant/30 px-3 py-2 text-sm focus:border-primary focus:ring-1 focus:ring-primary">
+                                </div>
+                                <div>
+                                    <label class="block text-xs font-bold text-on-surface mb-1">Đi muộn</label>
+                                    <input wire:model="attendanceRules.late" type="number" step="0.5" class="w-full rounded-xl border border-outline-variant/30 px-3 py-2 text-sm focus:border-primary focus:ring-1 focus:ring-primary">
+                                </div>
+                                <div>
+                                    <label class="block text-xs font-bold text-on-surface mb-1">Vắng giữa giờ</label>
+                                    <input wire:model="attendanceRules.partial" type="number" step="0.5" class="w-full rounded-xl border border-outline-variant/30 px-3 py-2 text-sm focus:border-primary focus:ring-1 focus:ring-primary">
+                                </div>
+                                <div>
+                                    <label class="block text-xs font-bold text-on-surface mb-1">Về sớm</label>
+                                    <input wire:model="attendanceRules.early_leave" type="number" step="0.5" class="w-full rounded-xl border border-outline-variant/30 px-3 py-2 text-sm focus:border-primary focus:ring-1 focus:ring-primary">
+                                </div>
+                                <div>
+                                    <label class="block text-xs font-bold text-on-surface mb-1">Vắng</label>
+                                    <input wire:model="attendanceRules.absent" type="number" step="0.5" class="w-full rounded-xl border border-outline-variant/30 px-3 py-2 text-sm focus:border-primary focus:ring-1 focus:ring-primary">
+                                </div>
+                                <div>
+                                    <label class="block text-xs font-bold text-on-surface mb-1">Có phép</label>
+                                    <input wire:model="attendanceRules.excused" type="number" step="0.5" class="w-full rounded-xl border border-outline-variant/30 px-3 py-2 text-sm focus:border-primary focus:ring-1 focus:ring-primary">
+                                </div>
+                            </div>
                         </div>
 
                         {{-- Toggle: Trừ chuyên cần khi vắng có phép --}}
@@ -271,16 +256,12 @@
 
                 {{-- Nút lưu --}}
                 <div class="rounded-2xl border border-outline-variant/20 bg-white shadow-sm p-4 space-y-3">
-                    <button type="submit" form="class-settings-form"
-                        class="flex w-full items-center justify-center gap-2 rounded-xl bg-primary px-5 py-3 font-bold text-white shadow-md shadow-primary/20 transition-all hover:bg-primary/90 active:scale-95">
-                        <span wire:loading.remove wire:target="save" class="inline-flex items-center gap-2">
-                            <x-user.icon name="save" :size="18" />
-                            Lưu thay đổi
-                        </span>
-                        <span wire:loading wire:target="save" class="inline-flex items-center gap-2">
-                            <x-user.icon name="loader" :size="16" class="animate-spin" />
-                            Đang lưu...
-                        </span>
+                    <button type="submit" form="class-settings-form" wire:loading.attr="disabled" wire:target="save"
+                        class="flex w-full items-center justify-center gap-2 rounded-xl bg-primary px-5 py-3 font-bold text-white shadow-md shadow-primary/20 transition-all hover:bg-primary/90 active:scale-95 disabled:opacity-75 disabled:cursor-not-allowed">
+                        <x-user.icon name="loader" :size="18" class="hidden animate-spin" wire:loading.class.remove="hidden" wire:target="save" />
+                        <x-user.icon name="save" :size="18" wire:loading.class="hidden" wire:target="save" />
+                        <span wire:loading.class="hidden" wire:target="save">Lưu thay đổi</span>
+                        <span class="hidden" wire:loading.class.remove="hidden" wire:target="save">Đang lưu...</span>
                     </button>
                     <button type="button" wire:click="confirmDelete"
                         class="flex w-full items-center justify-center gap-2 rounded-xl border border-error/25 bg-error/5 px-5 py-2.5 text-sm font-bold text-error transition-colors hover:bg-error hover:text-white">

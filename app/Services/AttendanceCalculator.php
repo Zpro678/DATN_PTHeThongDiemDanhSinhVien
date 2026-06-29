@@ -54,7 +54,7 @@ class AttendanceCalculator
     public const ABSENCE_LIMIT_RATIO = 0.2;
 
     /** PRESENTISH: các trạng thái PHIÊN được coi là "đã có mặt" khi nhị phân hoá (-> bit 1). */
-    private const PRESENTISH = ['present', 'late', 'excused'];
+    private const PRESENTISH = ['present', 'late', 'partial', 'early_leave', 'excused'];
 
     /**
      * DEDUCTIONS — BẢNG ĐIỂM TRỪ theo trạng thái TỔNG KẾT BUỔI (số dương: càng lớn càng mất nhiều điểm).
@@ -127,19 +127,19 @@ class AttendanceCalculator
      *   6) buildResult(): bọc {status, deduction, label}.
      *
      * @param  array<int, string>  $statuses     Trạng thái từng phiên (đã interpretStatus, đã sắp theo thời gian).
-     * @param  bool                $deductExcused  Lớp có bật "trừ chuyên cần khi vắng có phép" không.
+     * @param  array               $rules        Mảng luật cấu hình chuyên cần động.
      * @return array{status: string, deduction: float, label: string}
      */
-    public static function consolidateStatuses(array $statuses, bool $deductExcused = false): array
+    public static function consolidateStatuses(array $statuses, array $rules = []): array
     {
         // (1) Không có dữ liệu phiên -> vắng.
         if ($statuses === []) {
-            return self::buildResult('absent', $deductExcused);
+            return self::buildResult('absent', $rules);
         }
 
         // (2) Có phép CẢ buổi -> EXCUSED.
         if (collect($statuses)->every(fn (string $s) => $s === 'excused')) {
-            return self::buildResult('excused', $deductExcused);
+            return self::buildResult('excused', $rules);
         }
 
         // (3) $bits: chuỗi nhị phân 0/1 tương ứng từng phiên (1 = có mặt, 0 = vắng).
@@ -148,13 +148,19 @@ class AttendanceCalculator
         // (4) Phân loại theo MẪU bit.
         $state = self::classifyPattern($bits);
 
-        // (5) Giữ "đi muộn" được đánh dấu tường minh (vd thủ công đánh muộn): mẫu 'present' + có phiên 'late' -> 'late'.
-        if ($state === 'present' && in_array('late', $statuses, true)) {
-            $state = 'late';
+        // (5) Giữ các trạng thái phạt (nhưng vẫn tính là có mặt) được đánh dấu tường minh:
+        if ($state === 'present') {
+            if (in_array('partial', $statuses, true)) {
+                $state = 'partial';
+            } elseif (in_array('early_leave', $statuses, true)) {
+                $state = 'early_leave';
+            } elseif (in_array('late', $statuses, true)) {
+                $state = 'late';
+            }
         }
 
         // (6) Bọc kết quả {status, deduction, label}.
-        return self::buildResult($state, $deductExcused);
+        return self::buildResult($state, $rules);
     }
 
     /**
@@ -245,14 +251,14 @@ class AttendanceCalculator
      * buildResult(): bọc 1 trạng thái thành cấu trúc chuẩn {status, deduction, label}.
      *
      * @param  string  $state          Trạng thái tổng kết (present/late/partial/early_leave/absent/excused).
-     * @param  bool    $deductExcused  Lớp có trừ vắng có phép không (ảnh hưởng deduction của 'excused').
+     * @param  array   $rules          Cấu hình điểm trừ.
      * @return array{status: string, deduction: float, label: string}
      */
-    private static function buildResult(string $state, bool $deductExcused = false): array
+    private static function buildResult(string $state, array $rules = []): array
     {
         return [
             'status' => $state,
-            'deduction' => self::deductionForStatus($state, $deductExcused),
+            'deduction' => self::deductionForStatus($state, $rules),
             'label' => self::LABELS[$state] ?? 'Vắng',
         ];
     }
@@ -263,16 +269,12 @@ class AttendanceCalculator
      *  - Trạng thái không có trong bảng -> mặc định trừ 1.0 (coi như vắng).
      *
      * @param  string  $status         Trạng thái tổng kết.
-     * @param  bool    $deductExcused  Lớp có bật trừ vắng có phép không.
+     * @param  array   $rules          Cấu hình điểm trừ.
      * @return float   Điểm trừ (số dương).
      */
-    public static function deductionForStatus(string $status, bool $deductExcused = false): float
+    public static function deductionForStatus(string $status, array $rules = []): float
     {
-        if ($status === 'excused') {
-            return $deductExcused ? 1.0 : (self::DEDUCTIONS['excused'] ?? 0.0);
-        }
-
-        return self::DEDUCTIONS[$status] ?? 1.0;
+        return (float) ($rules[$status] ?? self::DEDUCTIONS[$status] ?? 1.0);
     }
 
     /**
@@ -300,10 +302,10 @@ class AttendanceCalculator
      *
      * @param  iterable  $rows  Mỗi phần tử (object) cần có: ->meeting_id, ->status, và nên có
      *                          ->class_session_id, ->qr_token. CHỈ truyền record của phiên đã chốt.
-     * @param  bool      $deductExcused
+     * @param  array     $rules
      * @return array{present:int, late:int, partial:int, early_leave:int, excused:int, absent:int, total:int, deduction:float}
      */
-    public static function consolidateByMeeting(iterable $rows, bool $deductExcused = false): array
+    public static function consolidateByMeeting(iterable $rows, array $rules = []): array
     {
         // (1) Gom record về dạng [buổi][phiên] = trạng thái.
         $byMeeting = [];
@@ -326,7 +328,7 @@ class AttendanceCalculator
         // (2)+(3) Tổng kết từng buổi rồi cộng dồn.
         foreach ($byMeeting as $sessions) {
             ksort($sessions); // sắp theo id phiên để xác định đúng "phiên đầu/cuối".
-            $result = self::consolidateStatuses(array_values($sessions), $deductExcused);
+            $result = self::consolidateStatuses(array_values($sessions), $rules);
 
             $counts['total']++;
             $counts[$result['status']] = ($counts[$result['status']] ?? 0) + 1;
@@ -347,11 +349,12 @@ class AttendanceCalculator
      *
      * @param  int   $plannedSessions   Tổng số buổi dự kiến của lớp.
      * @param  int   $excusedSessions   Số buổi vắng có phép.
-     * @param  bool  $deductExcusedAbsence
+     * @param  array $rules
      */
-    public static function countedSessions(int $plannedSessions, int $excusedSessions, bool $deductExcusedAbsence = true): int
+    public static function countedSessions(int $plannedSessions, int $excusedSessions, array $rules = []): int
     {
-        return $deductExcusedAbsence ? max($plannedSessions - $excusedSessions, 0) : $plannedSessions;
+        $excusedDeduction = (float) ($rules['excused'] ?? self::DEDUCTIONS['excused'] ?? 0.0);
+        return $excusedDeduction > 0 ? max($plannedSessions - $excusedSessions, 0) : $plannedSessions;
     }
 
     /**
@@ -369,12 +372,13 @@ class AttendanceCalculator
      *  vd: vắng 1.0 + về sớm 1.0 + đi muộn 0.5 + vắng giữa giờ 0.5.
      *
      * @param  array<string, int>  $counts
+     * @param  array               $rules
      */
-    public static function lostFromCounts(array $counts): float
+    public static function lostFromCounts(array $counts, array $rules = []): float
     {
         $lost = 0.0;
         foreach (['present', 'late', 'partial', 'early_leave', 'absent'] as $state) {
-            $lost += (int) ($counts[$state] ?? 0) * self::DEDUCTIONS[$state];
+            $lost += (int) ($counts[$state] ?? 0) * (float) ($rules[$state] ?? self::DEDUCTIONS[$state] ?? 1.0);
         }
 
         return $lost;
@@ -384,10 +388,11 @@ class AttendanceCalculator
      * effectiveAbsence(): số buổi vắng QUY ĐỔI dùng để xét QUỸ VẮNG / CẤM THI (= tổng điểm trừ, bỏ có phép).
      *
      * @param  array<string, int>  $counts
+     * @param  array               $rules
      */
-    public static function effectiveAbsence(array $counts): float
+    public static function effectiveAbsence(array $counts, array $rules = []): float
     {
-        return self::lostFromCounts($counts);
+        return self::lostFromCounts($counts, $rules);
     }
 
     /**
@@ -399,18 +404,18 @@ class AttendanceCalculator
      *
      * @param  int                  $plannedSessions  Tổng buổi dự kiến của lớp.
      * @param  array<string, int>   $counts           Kết quả consolidateByMeeting (đủ 6 trạng thái).
-     * @param  bool                 $deductExcusedAbsence
+     * @param  array                $rules
      * @return int   % chuyên cần (0..100).
      */
-    public static function percentOfPlanned(int $plannedSessions, array $counts, bool $deductExcusedAbsence = true): int
+    public static function percentOfPlanned(int $plannedSessions, array $counts, array $rules = []): int
     {
-        $counted = self::countedSessions($plannedSessions, (int) ($counts['excused'] ?? 0), $deductExcusedAbsence);
+        $counted = self::countedSessions($plannedSessions, (int) ($counts['excused'] ?? 0), $rules);
 
         if ($counted <= 0) {
             return 100;
         }
 
-        $attended = max($counted - self::lostFromCounts($counts), 0);
+        $attended = max($counted - self::lostFromCounts($counts, $rules), 0);
 
         return (int) round(($attended / $counted) * 100);
     }
@@ -421,10 +426,11 @@ class AttendanceCalculator
      *
      * @param  int                 $countedSessions  Mẫu số (đã trừ vắng có phép nếu cần) của sinh viên.
      * @param  array<string, int>  $counts
+     * @param  array               $rules
      */
-    public static function attendedWeight(int $countedSessions, array $counts): float
+    public static function attendedWeight(int $countedSessions, array $counts, array $rules = []): float
     {
-        return max($countedSessions - self::lostFromCounts($counts), 0);
+        return max($countedSessions - self::lostFromCounts($counts, $rules), 0);
     }
 
     // ===================================================================
@@ -446,7 +452,7 @@ class AttendanceCalculator
      */
     public static function consolidateMeeting(ClassMeeting $meeting): Collection
     {
-        $deductExcused = (bool) $meeting->courseClass->deduct_excused_absence;
+        $rules = $meeting->courseClass->getAttendanceRules();
 
         // Các phiên của buổi (theo id) + qr_token để biết phiên QR hay thủ công.
         $sessions = $meeting->sessions()->orderBy('id')->get(['id', 'qr_token']);
@@ -464,7 +470,7 @@ class AttendanceCalculator
             ->get(['class_member_id', 'class_session_id', 'status'])
             ->groupBy('class_member_id');
 
-        return $members->map(function ($member) use ($sessions, $records, $deductExcused) {
+        return $members->map(function ($member) use ($sessions, $records, $rules) {
             // $bySession: record của sinh viên này, tra nhanh theo class_session_id.
             $bySession = ($records->get($member->id) ?? collect())->keyBy('class_session_id');
 
@@ -477,7 +483,7 @@ class AttendanceCalculator
                 })
                 ->all();
 
-            $result = self::consolidateStatuses($statuses, $deductExcused);
+            $result = self::consolidateStatuses($statuses, $rules);
 
             return [
                 'member' => $member,          // model ClassMember

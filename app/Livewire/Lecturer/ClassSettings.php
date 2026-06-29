@@ -27,14 +27,14 @@ class ClassSettings extends Component
     // Mô tả chi tiết về lớp học
     public string $description = '';
 
-    // Tổng số buổi học dự kiến
-    public int $totalSessions = 15;
-
     // Ngưỡng thời gian đi muộn (phút)
     public int $lateThreshold = 15;
 
-    // Có trừ điểm chuyên cần khi vắng có phép hay không
+    // Có trừ điểm chuyên cần khi vắng có phép hay không (giữ nguyên cờ cũ hoặc đồng bộ với attendanceRules)
     public bool $deductExcusedAbsence = false;
+
+    // Cấu hình bảng điểm trừ chuyên cần
+    public array $attendanceRules = [];
 
     // Yêu cầu duyệt khi sinh viên tham gia
     public bool $requireApproval = false;
@@ -69,9 +69,10 @@ class ClassSettings extends Component
         $this->subjectCode = $courseClass->subject_code ?? '';
         $this->semester = $courseClass->semester ?? '';
         $this->description = $courseClass->description ?? '';
-        $this->totalSessions = $courseClass->total_sessions;
         $this->lateThreshold = $courseClass->late_threshold ?? 15;
-        $this->deductExcusedAbsence = (bool) $courseClass->deduct_excused_absence;
+        $rules = $courseClass->getAttendanceRules();
+        $this->deductExcusedAbsence = ($rules['excused'] ?? 0) > 0;
+        $this->attendanceRules = $rules;
         $this->requireApproval = $courseClass->require_approval;
         $this->status = $courseClass->status;
 
@@ -89,8 +90,14 @@ class ClassSettings extends Component
             'subjectCode' => ['nullable', 'string', 'max:50'],
             'semester' => ['nullable', 'string', 'max:50'],
             'description' => ['nullable', 'string', 'max:5000'],
-            'totalSessions' => ['required', 'integer', 'min:1', 'max:200'],
-            'lateThreshold' => ['required', 'integer', 'in:5,10,15,20,30'],
+            'lateThreshold' => ['required', 'integer', 'min:0', 'max:300'],
+            'attendanceRules' => ['required', 'array'],
+            'attendanceRules.present' => ['required', 'numeric', 'max:0'],
+            'attendanceRules.late' => ['required', 'numeric'],
+            'attendanceRules.partial' => ['required', 'numeric'],
+            'attendanceRules.early_leave' => ['required', 'numeric'],
+            'attendanceRules.absent' => ['required', 'numeric'],
+            'attendanceRules.excused' => ['required', 'numeric'],
             'deductExcusedAbsence' => ['boolean'],
             'requireApproval' => ['boolean'],
             'status' => ['required', 'string', Rule::in(['active', 'archived', 'ended'])],
@@ -102,9 +109,11 @@ class ClassSettings extends Component
             'name.required' => 'Vui lòng nhập tên lớp.',
             'code.required' => 'Mã lớp không được để trống.',
             'code.unique' => 'Mã lớp đã tồn tại.',
-            'totalSessions.min' => 'Tổng số buổi phải lớn hơn 0.',
 
         ]);
+
+        $rules = $this->attendanceRules;
+        $rules['excused'] = $validated['deductExcusedAbsence'] ? 1.0 : 0.0;
 
         $this->courseClass->update([
             'name' => $validated['name'],
@@ -113,8 +122,8 @@ class ClassSettings extends Component
             'semester' => $validated['semester'] ?: null,
             'description' => $validated['description'] ?: null,
             'late_threshold' => $validated['lateThreshold'],
-            'deduct_excused_absence' => $validated['deductExcusedAbsence'],
-            'total_sessions' => $validated['totalSessions'],
+            'attendance_rules' => $rules,
+            'total_sessions' => 0,
             'require_approval' => $validated['requireApproval'],
             'status' => $validated['status'],
             'gps_latitude' => $validated['gpsEnabled'] ? ($validated['gpsLatitude'] ?? null) : null,

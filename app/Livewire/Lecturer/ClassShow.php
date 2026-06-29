@@ -44,7 +44,7 @@ class ClassShow extends Component
 
     // Thống kê hiển thị trên trang
     public int $studentsCount = 0;
-
+    
     // Tổng số buổi học dự kiến của lớp
     public int $sessionsCount = 0;
 
@@ -71,8 +71,6 @@ class ClassShow extends Component
     public int $importSuccess = 0;
 
     public bool $showNoStudentsPopup = false;
-
-    public bool $syncAttendance = false;
 
     public bool $isEditingCode = false;
     public string $newClassCode = '';
@@ -106,8 +104,8 @@ class ClassShow extends Component
                 return;
             }
 
-            // Nếu sau 3 giây (6 lần poll 500ms) không thấy tiến trình chạy (do Queue Worker không chạy)
-            if ($this->importQuietTicks >= 6) {
+            // Nếu sau 30 giây (60 lần poll 500ms) không thấy tiến trình chạy (do Queue Worker không chạy)
+            if ($this->importQuietTicks >= 60) {
                 // Tự động chuyển sang xử lý đồng bộ để tránh bị treo
                 $this->finalizeImport();
             }
@@ -117,14 +115,28 @@ class ClassShow extends Component
     protected function finalizeImport(): void
     {
         $count = $this->importSuccess;
-        $this->closeImport();
         
-        // Cập nhật lại số sinh viên
+        // Cập nhật lại số sinh viên và số buổi
         $this->studentsCount = $this->class->members()->where('status', 'active')->count();
+        $this->sessionsCount = $this->class->sessions()->count();
+        $this->sessionsCompleted = $this->class->sessions()->whereIn('status', ['closed', 'active'])->count();
         
-        $message = "Đã nhập thành công {$count} sinh viên vào lớp.";
-        session()->flash('success', $message);
-        $this->dispatch('toast', message: $message, type: 'success');
+        if (empty($this->importErrors)) {
+            $progress = $this->importToken ? \Illuminate\Support\Facades\Cache::get("import_progress_{$this->importToken}") : null;
+            if ($progress && $progress['status'] !== 'completed') {
+                $message = "Hệ thống đang xử lý ngầm {$count} sinh viên. Vui lòng tải lại trang sau ít phút.";
+                $this->dispatch('toast', message: $message, type: 'info');
+            } else {
+                $message = "Đã nhập thành công {$count} sinh viên vào lớp.";
+                $this->dispatch('toast', message: $message, type: 'success');
+            }
+        } else {
+            // Có cảnh báo/lỗi thì mở lại modal để người dùng đọc
+            $this->isImporting = true;
+            $message = "Đã tiếp nhận {$count} sinh viên, nhưng có một số lỗi. Vui lòng xem chi tiết.";
+            $this->dispatch('toast', message: $message, type: 'warning');
+        }
+
         $this->reset(['importToken', 'isImportingStatus', 'importTotalRows', 'importProcessedRows', 'importQuietTicks']);
     }
 
@@ -148,7 +160,7 @@ class ClassShow extends Component
         }]);
 
         $this->studentsCount   = $courseClass->members()->where('status', 'active')->count();
-        $this->sessionsCount = $courseClass->total_sessions;
+        $this->sessionsCount = $courseClass->sessions()->count();
         $this->sessionsCompleted = $courseClass->sessions()->whereIn('status', ['closed', 'active'])->count();
         $this->pendingLeaveRequests = LeaveRequest::whereHas('classSession', function ($q) use ($courseClass) {
             $q->where('class_id', $courseClass->id);
@@ -250,10 +262,10 @@ class ClassShow extends Component
         $lines = [
             "M\u00e3 h\u1ecdc vi\u00ean,H\u1ecd v\u00e0 t\u00ean,Email,22/06,23/06,24/06",
             "HV001,Nguy\u1ec5n V\u0103n A,nva@email.com,c,m,c",
-            "HV002,Tr\u1ea7n Th\u1ecb B,ttb@email.com,k,c,v",
-            "HV003,L\u00ea V\u0103n C,lvc@email.com,c,c,k",
+            "HV002,Tr\u1ea7n Th\u1ecb B,ttb@email.com,vg,c,v",
+            "HV003,L\u00ea V\u0103n C,lvc@email.com,c,vs,p",
             "",
-            "Ch\u00fa th\u00edch k\u00fd hi\u1ec7u:,c=C\u00f3 m\u1eb7t,m=\u0110i mu\u1ed9n,k=V\u1eafng kh\u00f4ng ph\u00e9p,v=V\u1eafng c\u00f3 ph\u00e9p",
+            "Ch\u00fa th\u00edch k\u00fd hi\u1ec7u:,c=C\u00f3 m\u1eb7t,m=\u0110i mu\u1ed9n,vg=V\u1eafng gi\u1eefa gi\u1edd,vs=V\u1ec1 s\u1edbm,v=V\u1eafng kh\u00f4ng ph\u00e9p,p=V\u1eafng c\u00f3 ph\u00e9p",
         ];
         $csvContent = implode("\n", $lines);
 
@@ -292,7 +304,7 @@ class ClassShow extends Component
         $this->importProcessedRows = 0;
         $this->importQuietTicks = 0;
 
-        $import = new StudentsImport($this->class->id, $this->importToken, $this->syncAttendance);
+        $import = new StudentsImport($this->class->id, $this->importToken, false);
         $extension = $this->importFile->getClientOriginalExtension();
         $readerType = match (strtolower($extension)) {
             'csv' => \Maatwebsite\Excel\Excel::CSV,
@@ -306,8 +318,9 @@ class ClassShow extends Component
             $this->importSuccess = $import->successCount;
             $this->importErrors = $import->errors;
 
-            if (empty($this->importErrors)) {
-                // Do not close import yet. We will poll progress.
+            if ($this->importSuccess > 0) {
+                // Đóng popup để người dùng rảnh tay, hiện thanh tiến trình chạy ngầm
+                $this->isImporting = false;
             } else {
                 $this->isImportingStatus = false;
                 $this->importToken = null;

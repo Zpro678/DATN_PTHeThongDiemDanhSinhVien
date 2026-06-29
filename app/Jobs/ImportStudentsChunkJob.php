@@ -22,6 +22,7 @@ class ImportStudentsChunkJob implements ShouldQueue
     protected int $classId;
     protected array $rows;
     protected array $dateHeaders;
+    protected array $meetingHeaders;
     protected int $emailColIndex;
     protected int $authUserId;
     protected ?string $importToken;
@@ -30,11 +31,12 @@ class ImportStudentsChunkJob implements ShouldQueue
     /**
      * Create a new job instance.
      */
-    public function __construct(int $classId, array $rows, array $dateHeaders, int $emailColIndex, int $authUserId, ?string $importToken = null, bool $syncAttendance = false)
+    public function __construct(int $classId, array $rows, array $dateHeaders, array $meetingHeaders, int $emailColIndex, int $authUserId, ?string $importToken = null, bool $syncAttendance = false)
     {
         $this->classId = $classId;
         $this->rows = $rows;
         $this->dateHeaders = $dateHeaders;
+        $this->meetingHeaders = $meetingHeaders;
         $this->emailColIndex = $emailColIndex;
         $this->authUserId = $authUserId;
         $this->importToken = $importToken;
@@ -89,6 +91,7 @@ class ImportStudentsChunkJob implements ShouldQueue
                 $user = User::where('email', $email)->first();
             }
 
+            $isNewMember = false;
             if ($member) {
                 $updateData = [
                     'full_name' => $fullName,
@@ -107,6 +110,7 @@ class ImportStudentsChunkJob implements ShouldQueue
                     continue;
                 }
 
+                $isNewMember = true;
                 $member = ClassMember::create([
                     'class_id' => $this->classId,
                     'full_name' => $fullName,
@@ -117,8 +121,8 @@ class ImportStudentsChunkJob implements ShouldQueue
                 ]);
             }
 
-            // Gửi email mời tạo tài khoản
-            if ($email && !$user) {
+            // Gửi email thông báo được thêm vào lớp học
+            if ($email && $isNewMember) {
                 try {
                     Mail::to($email)->send(
                         new StudentImportNotificationMail(
@@ -145,8 +149,12 @@ class ImportStudentsChunkJob implements ShouldQueue
                     $status = 'present';
                 } elseif ($statusChar === 'm') {
                     $status = 'late';
+                } elseif ($statusChar === 'vg') {
+                    $status = 'partial';
+                } elseif ($statusChar === 'vs') {
+                    $status = 'early_leave';
                 } elseif ($statusChar === 'v') {
-                    $status = 'absent';   // vắng không phép (ký hiệu theo công thức)
+                    $status = 'absent';   // vắng không phép
                 } elseif ($statusChar === 'p') {
                     $status = 'excused';  // vắng có phép
                 } elseif ($statusChar === '') {
@@ -178,17 +186,40 @@ class ImportStudentsChunkJob implements ShouldQueue
                     }
                 }
             }
+
+            // Cập nhật thanh tiến trình ngay sau khi xong 1 sinh viên (tránh frontend bị timeout vì tưởng job chết)
+            if ($this->importToken) {
+                $progress = \Illuminate\Support\Facades\Cache::get("import_progress_{$this->importToken}");
+                if ($progress) {
+                    $progress['processed_rows'] += 1;
+                    \Illuminate\Support\Facades\Cache::put("import_progress_{$this->importToken}", $progress, now()->addMinutes(15));
+                }
+            }
         }
 
         if ($this->importToken) {
             $progress = \Illuminate\Support\Facades\Cache::get("import_progress_{$this->importToken}");
             if ($progress) {
                 $progress['completed_chunks']++;
-                $progress['processed_rows'] += count($this->rows);
                 if ($progress['completed_chunks'] >= $progress['total_chunks']) {
                     $progress['status'] = 'completed';
+                    // Đồng bộ tổng kết buổi học sau khi toàn bộ job hoàn thành
+                    foreach (array_unique($this->meetingHeaders) as $meetingId) {
+                        $meeting = \App\Models\ClassMeeting::with(['courseClass', 'sessions'])->find($meetingId);
+                        if ($meeting) {
+                            \App\Services\AttendanceCalculator::syncSummaries($meeting);
+                        }
+                    }
                 }
                 \Illuminate\Support\Facades\Cache::put("import_progress_{$this->importToken}", $progress, now()->addMinutes(15));
+            }
+        } else {
+            // Không có token -> chỉ chạy 1 lần
+            foreach (array_unique($this->meetingHeaders) as $meetingId) {
+                $meeting = \App\Models\ClassMeeting::with(['courseClass', 'sessions'])->find($meetingId);
+                if ($meeting) {
+                    \App\Services\AttendanceCalculator::syncSummaries($meeting);
+                }
             }
         }
     }

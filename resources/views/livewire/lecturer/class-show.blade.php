@@ -84,23 +84,15 @@
                     <span class="text-sm text-slate-500">Tiến độ</span>
                     <p class="mt-1 text-2xl sm:text-[28px] font-bold text-slate-800 leading-none">{{ $sessionsCount > 0 ? round(($sessionsCompleted / $sessionsCount) * 100) : 0 }}%</p>
                 </div>
-                <div class="min-w-0">
-                    <span class="text-sm text-slate-500">Tổng số buổi</span>
-                    <p class="mt-1 text-2xl sm:text-[28px] font-bold text-slate-800 leading-none">{{ $class->total_sessions }} <span class="text-base font-medium text-slate-500">buổi</span></p>
-                </div>
-
                 @if($class->subject_code)
                 <div class="min-w-0">
                     <span class="text-sm text-slate-500">Mã học phần</span>
-                    <p class="mt-1 text-base font-bold text-slate-800 truncate" title="{{ $class->subject_code }}">{{ $class->subject_code }}</p>
+                    <p class="mt-1 text-2xl sm:text-[28px] font-bold text-slate-800 truncate leading-none" title="{{ $class->subject_code }}">{{ $class->subject_code }}</p>
                 </div>
                 @else
                 <div class="min-w-0 hidden sm:block"></div>
                 @endif
-
-
-
-                <div class="col-span-2 sm:col-span-1 flex items-end sm:justify-end">
+                <div class="col-span-2 sm:col-span-4 flex items-end sm:justify-end mt-2">
                     <a href="{{ route('lecturer.classes.attendance', $class->id) }}" wire:navigate class="inline-flex w-full sm:w-auto whitespace-nowrap items-center justify-center gap-2 rounded-lg border border-slate-300 bg-slate-200 px-4 py-2 text-sm font-bold text-slate-800 transition-colors hover:bg-slate-300 hover:text-slate-900 shadow-sm">
                         <x-user.icon name="clock" :size="16" />
                         Lịch sử điểm danh
@@ -140,6 +132,25 @@
             </a>
         </div>
     </div>
+
+    {{-- Progress Bar Chạy Ngầm --}}
+    @if($isImportingStatus)
+        <div class="mx-1 mt-6 p-4 bg-blue-50/80 rounded-[20px] border border-blue-100 flex flex-col gap-2 shadow-sm" wire:poll.500ms="checkImportProgress">
+            <div class="flex justify-between text-[13px] font-bold text-blue-700">
+                <span class="flex items-center gap-2">
+                    <svg class="animate-spin h-4 w-4 text-blue-600" fill="none" viewBox="0 0 24 24">
+                        <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+                        <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                    </svg>
+                    Đang import học viên chạy ngầm...
+                </span>
+                <span>{{ $importProcessedRows }}/{{ $importTotalRows }}</span>
+            </div>
+            <div class="w-full bg-blue-100 rounded-full h-2 mt-1">
+                <div class="bg-blue-600 h-2 rounded-full transition-all duration-300" style="width: {{ $importTotalRows > 0 ? ($importProcessedRows / $importTotalRows) * 100 : 0 }}%"></div>
+            </div>
+        </div>
+    @endif
 
     {{-- Danh sách học viên --}}
     <div class="mt-8 mb-4 flex items-center justify-between px-1">
@@ -307,30 +318,6 @@
                     </label>
                     @error('importFile')<span class="mt-1 block text-center text-sm text-red-500">{{ $message }}</span>@enderror
                     
-                    <div class="mt-4 flex items-center gap-2">
-                        <input type="checkbox" id="syncAttendanceShow" wire:model="syncAttendance" @if($isImportingStatus) disabled @endif class="h-4 w-4 rounded border-slate-300 text-blue-600 focus:ring-blue-600">
-                        <label for="syncAttendanceShow" class="text-[14px] text-slate-700 font-medium">Tự động thêm vào các buổi điểm danh đã có</label>
-                    </div>
-
-                    {{-- Progress Bar --}}
-                    @if($isImportingStatus)
-                        <div class="mt-4 p-4 bg-blue-50 rounded-2xl flex flex-col gap-2 shadow-inner" wire:poll.500ms="checkImportProgress">
-                            <div class="flex justify-between text-sm font-semibold text-blue-700">
-                                <span class="flex items-center gap-2">
-                                    <svg class="animate-spin h-4 w-4 text-blue-600" fill="none" viewBox="0 0 24 24">
-                                        <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
-                                        <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
-                                    </svg>
-                                    Đang ghi nhận học viên...
-                                </span>
-                                <span>{{ $importProcessedRows }}/{{ $importTotalRows }}</span>
-                            </div>
-                            <div class="w-full bg-blue-100 rounded-full h-2">
-                                <div class="bg-blue-600 h-2 rounded-full transition-all duration-300" style="width: {{ $importTotalRows > 0 ? ($importProcessedRows / $importTotalRows) * 100 : 0 }}%"></div>
-                            </div>
-                        </div>
-                    @endif
- 
                     {{-- Error Summary --}}
                     @if(!empty($importErrors))
                         <div class="rounded-xl border border-red-200 bg-red-50 p-4">
@@ -347,13 +334,19 @@
                 {{-- Footer Buttons --}}
                 <div class="mt-6 flex justify-end gap-3">
                     @if(!$isImportingStatus)
-                        <button type="button" wire:click="closeImport" class="rounded-full border border-slate-300 bg-white px-6 py-2.5 text-[14px] font-semibold text-slate-700 transition-colors hover:bg-slate-50">
-                            Hủy bỏ
-                        </button>
-                        <button type="submit" class="flex items-center gap-2 rounded-full bg-blue-600 px-8 py-2.5 text-[14px] font-semibold text-white transition-colors hover:bg-blue-700">
-                            <span wire:loading.remove wire:target="processImport">Import</span>
-                            <span wire:loading wire:target="processImport">Đang xử lý...</span>
-                        </button>
+                        @if($importSuccess > 0)
+                            <button type="button" wire:click="closeImport" class="rounded-full bg-blue-600 px-8 py-2.5 text-[14px] font-semibold text-white transition-colors hover:bg-blue-700">
+                                Đóng
+                            </button>
+                        @else
+                            <button type="button" wire:click="closeImport" class="rounded-full border border-slate-300 bg-white px-6 py-2.5 text-[14px] font-semibold text-slate-700 transition-colors hover:bg-slate-50">
+                                Hủy bỏ
+                            </button>
+                            <button type="submit" class="flex items-center gap-2 rounded-full bg-blue-600 px-8 py-2.5 text-[14px] font-semibold text-white transition-colors hover:bg-blue-700">
+                                <span wire:loading.remove wire:target="processImport">Import</span>
+                                <span wire:loading wire:target="processImport">Đang xử lý...</span>
+                            </button>
+                        @endif
                     @else
                         <button type="button" disabled class="flex items-center gap-2 rounded-full bg-slate-100 px-8 py-2.5 text-[14px] font-semibold text-slate-400 cursor-not-allowed">
                             Đang xử lý...

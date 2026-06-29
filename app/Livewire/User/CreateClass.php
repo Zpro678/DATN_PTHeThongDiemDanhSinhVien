@@ -28,14 +28,11 @@ class CreateClass extends Component
     // Mô tả thêm về lớp học
     public string $description = '';
 
-    // Tổng số buổi học dự kiến của lớp
-    public int $totalSessions = 15;
-
     // Ngưỡng thời gian đi muộn (phút)
     public int $lateThreshold = 15;
 
-    // Có trừ chuyên cần khi vắng có phép hay không
-    public bool $deductExcusedAbsence = false;
+    // Cấu hình bảng điểm trừ chuyên cần
+    public array $attendanceRules = [];
 
     // Yêu cầu giảng viên duyệt khi sinh viên tham gia lớp bằng mã
     public bool $requireApproval = false;
@@ -43,6 +40,7 @@ class CreateClass extends Component
     public function mount(): void
     {
         $this->randomSuffix = str_pad((string) random_int(0, 9999), 4, '0', STR_PAD_LEFT);
+        $this->attendanceRules = (new CourseClass())->getAttendanceRules();
     }
 
     /**
@@ -112,13 +110,17 @@ class CreateClass extends Component
             'subjectCode' => ['nullable', 'string', 'max:50'],
             'semester' => ['nullable', 'string', 'max:50'],
             'description' => ['nullable', 'string', 'max:5000'],
-            'totalSessions' => ['required', 'integer', 'min:1', 'max:200'],
-            'lateThreshold' => ['required', 'integer', 'in:5,10,15,20,30'],
-            'deductExcusedAbsence' => ['boolean'],
+            'lateThreshold' => ['required', 'integer', 'min:0', 'max:300'],
+            'attendanceRules' => ['required', 'array'],
+            'attendanceRules.present' => ['required', 'numeric', 'max:0'],
+            'attendanceRules.late' => ['required', 'numeric'],
+            'attendanceRules.partial' => ['required', 'numeric'],
+            'attendanceRules.early_leave' => ['required', 'numeric'],
+            'attendanceRules.absent' => ['required', 'numeric'],
+            'attendanceRules.excused' => ['required', 'numeric'],
             'requireApproval' => ['boolean'],
         ], [
             'name.required' => 'Vui lòng nhập tên lớp.',
-            'totalSessions.min' => 'Tổng số buổi phải lớn hơn 0.',
         ]);
 
         $code = $this->generateUniqueCode();
@@ -131,8 +133,8 @@ class CreateClass extends Component
             'semester' => $this->semester ?: null,
             'description' => $this->description ?: null,
             'late_threshold' => $this->lateThreshold,
-            'deduct_excused_absence' => $this->deductExcusedAbsence,
-            'total_sessions' => $this->totalSessions,
+            'attendance_rules' => $this->attendanceRules,
+            'total_sessions' => 0,
             'require_approval' => $this->requireApproval,
             'status' => 'active',
         ]);

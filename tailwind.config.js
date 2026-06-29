@@ -10,6 +10,19 @@ export default {
         './resources/js/**/*.js',
         './app/Livewire/**/*.php',
     ],
+    safelist: [
+        'bg-blue-600', 'bg-violet-600', 'bg-orange-600', 'bg-green-600', 'bg-pink-600',
+        'hover:bg-blue-700', 'hover:bg-violet-700', 'hover:bg-orange-700', 'hover:bg-green-700', 'hover:bg-pink-700',
+        'ring-blue-500/20', 'ring-violet-500/20', 'ring-orange-500/20', 'ring-green-500/20', 'ring-pink-500/20',
+        'shadow-blue-500/5', 'shadow-violet-500/5', 'shadow-orange-500/5', 'shadow-green-500/5', 'shadow-pink-500/5',
+        'shadow-blue-500/10', 'shadow-violet-500/10', 'shadow-orange-500/10', 'shadow-green-500/10', 'shadow-pink-500/10',
+        'bg-[#DBEAFE]', 'text-[#2563EB]', 
+        'bg-[#FEF3C7]', 'text-[#D97706]',
+        'bg-[#F1F5F9]', 'text-[#64748B]',
+        'bg-[#22C55E]', 'text-[#22C55E]',
+        'bg-[#F59E0B]', 'text-[#F59E0B]',
+        'bg-[#EF4444]', 'text-[#EF4444]',
+    ],
 
     theme: {
         extend: {

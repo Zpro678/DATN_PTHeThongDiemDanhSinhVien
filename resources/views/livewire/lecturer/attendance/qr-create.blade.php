@@ -279,20 +279,22 @@
                     </div>
 
                     <div class="space-y-3 pt-1">
-                        <label class="group relative flex items-center justify-between gap-3 rounded-2xl border-2 px-4 py-3 transition-all duration-300 border-red-500 bg-red-50/50 shadow-sm shadow-red-500/10">
+                        <label class="group relative flex cursor-pointer items-center justify-between gap-3 rounded-2xl border-2 px-4 py-3 transition-all duration-300"
+                            :class="gpsEnabled ? 'border-red-500 bg-red-50/50 shadow-sm shadow-red-500/10' : 'border-slate-100 bg-white hover:border-red-200'">
                             <div class="flex items-center gap-3">
-                                <span class="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl transition-colors duration-300 bg-red-500 text-white shadow-md shadow-red-500/20">
+                                <span class="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl transition-colors duration-300"
+                                    :class="gpsEnabled ? 'bg-red-500 text-white shadow-md shadow-red-500/20' : 'bg-red-50 text-red-500 group-hover:bg-red-100'">
                                     <x-user.icon name="shield-alert" :size="18" />
                                 </span>
                                 <div>
-                                    <p class="text-[13px] font-black transition-colors duration-300 text-red-900">Xác minh tọa độ GPS</p>
-                                    <p class="text-[11px] font-semibold leading-tight transition-colors duration-300 text-red-700/80">Luôn luôn bật</p>
+                                    <p class="text-[13px] font-black transition-colors duration-300" :class="gpsEnabled ? 'text-red-900' : 'text-slate-800'">Xác minh tọa độ GPS</p>
+                                    <p class="text-[11px] font-semibold leading-tight transition-colors duration-300" :class="gpsEnabled ? 'text-red-700/80' : 'text-slate-400'">Giới hạn khoảng cách</p>
                                 </div>
                             </div>
                             <div class="relative inline-flex shrink-0 items-center">
-                                <input type="checkbox" checked disabled class="peer sr-only" />
-                                <span class="h-6 w-10 rounded-full bg-red-500 transition-colors duration-300"></span>
-                                <span class="absolute left-1 top-1 h-4 w-4 rounded-full bg-white shadow-sm transition-transform duration-300 translate-x-4"></span>
+                                <input type="checkbox" wire:model.live="gpsEnabled" class="peer sr-only" />
+                                <span class="h-6 w-10 rounded-full bg-slate-200 transition-colors duration-300 peer-checked:bg-red-500"></span>
+                                <span class="absolute left-1 top-1 h-4 w-4 rounded-full bg-white shadow-sm transition-transform duration-300 peer-checked:translate-x-4"></span>
                             </div>
                         </label>
 
