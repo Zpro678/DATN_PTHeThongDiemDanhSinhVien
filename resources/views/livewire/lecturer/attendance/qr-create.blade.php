@@ -4,8 +4,8 @@
             'id' => (string) $class->id,
             'label' => trim($class->name.($class->subject_code ? ' - '.$class->subject_code : '')),
             'name' => $class->name,
-            'code' => $class->code,
-            'subject_code' => $class->subject_code ?: $class->code,
+            'code' => $class->join_key,
+            'subject_code' => $class->subject_code ?: $class->join_key,
             'semester' => $class->semester ?: 'Chưa gán học kỳ',
             'members_count' => (int) ($class->members_count ?? 0),
         ])
@@ -19,7 +19,7 @@
         ->values();
 
     $studentCount = (int) ($selectedClass?->members_count ?? $studentRows->count());
-    $selectedSubject = $selectedClass?->subject_code ?: $selectedClass?->code ?: 'QR101';
+    $selectedSubject = $selectedClass?->subject_code ?: $selectedClass?->join_key ?: 'QR101';
     $selectedSemester = $selectedClass?->semester ?: 'HK2 2025-2026';
 @endphp
 
@@ -274,6 +274,12 @@
                             </div>
                         </div>
                         @error('gpsRadius')
+                            <span class="mt-2 block text-sm font-medium text-red-600">{{ $message }}</span>
+                        @enderror
+                        @error('gpsLatitude')
+                            <span class="mt-2 block text-sm font-medium text-red-600">{{ $message }}</span>
+                        @enderror
+                        @error('gpsLongitude')
                             <span class="mt-2 block text-sm font-medium text-red-600">{{ $message }}</span>
                         @enderror
                     </div>

@@ -25,7 +25,7 @@ class LeaveRequestApproved extends Notification
 
         return [
             'title'            => 'Đơn xin nghỉ được duyệt',
-            'message'          => "Đơn xin nghỉ của bạn cho lớp " . ($class?->code ?? '') . " ngày {$date} đã được duyệt.",
+            'message'          => "Đơn xin nghỉ của bạn cho lớp " . ($class?->join_key ?? '') . " ngày {$date} đã được duyệt.",
             'leave_request_id' => $this->leaveRequest->id,
             'class_id'         => $class?->id,
             'type'             => 'leave_request_approved',

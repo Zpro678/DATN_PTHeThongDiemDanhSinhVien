@@ -46,7 +46,7 @@ class LeaveRequestSubmitted extends Notification
 
         return [
             'title' => 'Đơn xin phép mới',
-            'message' => "Sinh viên {$student->name} đã gửi đơn xin phép cho lớp " . ($class ? $class->code : '') . " vào ngày {$date}.",
+            'message' => "Sinh viên {$student->name} đã gửi đơn xin phép cho lớp " . ($class ? $class->join_key : '') . " vào ngày {$date}.",
             'leave_request_id' => $this->leaveRequest->id,
             'class_id' => $class ? $class->id : null,
             'type' => 'leave_request',

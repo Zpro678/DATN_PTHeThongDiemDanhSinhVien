@@ -101,8 +101,8 @@
                                         <div class="truncate text-sm font-medium text-gray-900" title="{{ $user->name }}">{{ $user->name }}</div>
                                         <div class="truncate text-sm text-gray-500" title="{{ $user->email }}">
                                             {{ $user->email }}
-                                            @if($user->code)
-                                                <span class="text-gray-400">• {{ $user->code }}</span>
+                                            @if($user->member_id)
+                                                <span class="text-gray-400">• {{ $user->member_id }}</span>
                                             @endif
                                         </div>
                                     </div>

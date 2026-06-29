@@ -34,7 +34,7 @@
                     options: [
                         { value: 'all', label: 'Tất cả lớp học' },
                         @foreach($classes as $class)
-                            { value: '{{ $class->id }}', label: '{{ $class->code }} - {{ $class->name }}' },
+                            { value: '{{ $class->id }}', label: '{{ $class->join_key }} - {{ $class->name }}' },
                         @endforeach
                     ],
                     get selectedLabel() {
@@ -69,7 +69,7 @@
                     
                     @foreach($classes as $class)
                         <button @click="select('{{ $class->id }}')" type="button" class="flex w-full items-center rounded-lg px-3 py-2 text-left text-sm font-medium transition-colors hover:bg-slate-50 hover:text-primary" :class="$wire.classFilter == '{{ $class->id }}' ? 'bg-primary/5 text-primary' : 'text-slate-600'">
-                            <span class="truncate">{{ $class->code }} - {{ $class->name }}</span>
+                            <span class="truncate">{{ $class->join_key }} - {{ $class->name }}</span>
                             <x-user.icon name="check" :size="14" class="ml-auto shrink-0" x-show="$wire.classFilter == '{{ $class->id }}'" />
                         </button>
                     @endforeach
@@ -84,7 +84,7 @@
                     @forelse ($leaveRequests as $request)
                         <tr class="transition-colors hover:bg-slate-50/70 cursor-pointer" onclick="if(!event.target.closest('a, button')) window.location.href='{{ route('lecturer.leave-requests.show', $request) }}'">
                             <td class="px-6 py-4"><div class="flex items-center gap-3"><span class="flex h-10 w-10 items-center justify-center rounded-full bg-primary/10 font-bold text-primary">{{ mb_strtoupper(mb_substr($request->classMember->full_name, 0, 1)) }}</span><span><a href="{{ route('lecturer.students.show', $request->classMember) }}" class="block text-sm font-bold text-slate-900 hover:text-primary">{{ $request->classMember->full_name }}</a><span class="text-xs text-slate-500">{{ $request->classMember->student_code }}</span></span></div></td>
-                            <td class="px-4 py-4"><span class="block text-sm font-semibold text-slate-700">{{ $request->classMember->courseClass->name }}</span><span class="text-xs text-slate-500">{{ $request->classMember->courseClass->code }}</span></td>
+                            <td class="px-4 py-4"><span class="block text-sm font-semibold text-slate-700">{{ $request->classMember->courseClass->name }}</span><span class="text-xs text-slate-500">{{ $request->classMember->courseClass->join_key }}</span></td>
                             <td class="px-4 py-4"><span class="block text-sm font-semibold text-slate-700">{{ $request->classSession->name }}</span><span class="block mt-0.5 text-xs text-slate-400">Ngày gửi: {{ $request->created_at?->format('d/m/Y H:i') }}</span></td>
                             <td class="max-w-[280px] px-4 py-4"><p class="truncate text-sm text-slate-600" title="{{ $request->reason }}">{{ $request->reason }}</p>@if(!empty($request->proof_image))<div class="mt-1 flex flex-wrap gap-3">@foreach($request->proof_image as $img)<a href="{{ asset('storage/'.$img) }}" target="_blank" class="inline-flex items-center gap-1 text-xs font-bold text-primary hover:underline"><x-user.icon name="image" :size="14" />Ảnh {{ $loop->iteration }}</a>@endforeach</div>@endif</td>
                             <td class="px-4 py-4"><span @class(['inline-flex rounded-full px-3 py-1.5 text-xs font-bold whitespace-nowrap', 'bg-amber-50 text-amber-700' => $request->status === 'pending', 'bg-emerald-50 text-emerald-700' => $request->status === 'approved', 'bg-red-50 text-red-700' => $request->status === 'rejected'])>{{ $request->status === 'pending' ? 'Chờ duyệt' : ($request->status === 'approved' ? 'Đã duyệt' : 'Đã từ chối') }}</span></td>

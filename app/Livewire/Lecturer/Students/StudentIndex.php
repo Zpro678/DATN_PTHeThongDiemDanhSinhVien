@@ -550,11 +550,11 @@ class StudentIndex extends Component
         $classes = CourseClass::query()
             ->where('owner_user_id', auth()->id()) // Chỉ lấy các lớp do giảng viên hiện tại quản lý.
             ->orderBy('name') // Sắp xếp lớp theo tên để dropdown dễ nhìn.
-            ->get(['id', 'name', 'code']); // Chỉ lấy cột cần dùng cho bộ lọc lớp.
+            ->get(['id', 'name', 'join_key']); // Chỉ lấy cột cần dùng cho bộ lọc lớp.
 
         if ($this->statusFilter === 'pending') {
             $members = ClassJoinRequest::query()
-                ->with(['courseClass:id,name,code', 'user:id,email,avatar'])
+                ->with(['courseClass:id,name,join_key', 'user:id,email,avatar'])
                 ->whereHas('courseClass', fn (Builder $query) => $query->where('owner_user_id', auth()->id()))
                 ->where('status', 'pending')
                 ->when($this->classFilter !== 'all', fn (Builder $query) => $query->where('class_id', $this->classFilter))
@@ -569,7 +569,7 @@ class StudentIndex extends Component
                 ->paginate(12);
         } else {
             $members = ClassMember::query()
-                ->with(['courseClass:id,name,code', 'user:id,email,avatar', 'attendanceSummary'])
+                ->with(['courseClass:id,name,join_key', 'user:id,email,avatar', 'attendanceSummary'])
                 ->whereHas('courseClass', fn (Builder $query) => $query->where('owner_user_id', auth()->id()))
                 ->when(
                     $this->statusFilter === 'archived',

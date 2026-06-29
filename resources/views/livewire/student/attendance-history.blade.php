@@ -114,7 +114,7 @@
                     <select wire:model.live="classFilter" class="w-full rounded-xl border border-outline-variant/30 bg-surface-container-lowest px-3 py-2.5 text-[15px] font-medium text-on-surface-variant shadow-sm outline-none transition focus:border-primary focus:ring-2 focus:ring-primary/20">
                         <option value="all">Tất cả lớp học</option>
                         @foreach ($classes as $class)
-                            <option value="{{ $class->id }}">{{ $class->code }} - {{ $class->name }}</option>
+                            <option value="{{ $class->id }}">{{ $class->join_key }} - {{ $class->name }}</option>
                         @endforeach
                     </select>
                 </div>

@@ -154,7 +154,7 @@
                                 Chủ lớp
                             </span>
                         </div>
-                        <span class="whitespace-nowrap text-[11px] font-medium text-on-surface-variant shrink-0">Mã lớp: <span class="font-bold text-on-surface">{{ $class->code }}</span></span>
+                        <span class="whitespace-nowrap text-[11px] font-medium text-on-surface-variant shrink-0">Mã lớp: <span class="font-bold text-on-surface">{{ $class->join_key }}</span></span>
                     </div>
 
                     <!-- Stats Row -->
@@ -200,9 +200,9 @@
                     <div x-data="{ copied: false }" class="relative z-20">
                         <button
                             type="button"
-                            title="Sao chép mã lớp: {{ $class->code }}"
+                            title="Sao chép mã lớp: {{ $class->join_key }}"
                             class="group/action relative rounded-full p-2.5 transition-colors hover:bg-surface-container-low"
-                            x-on:click="navigator.clipboard.writeText('{{ $class->code }}'); copied = true; setTimeout(() => copied = false, 2000); $event.stopPropagation()"
+                            x-on:click="navigator.clipboard.writeText('{{ $class->join_key }}'); copied = true; setTimeout(() => copied = false, 2000); $event.stopPropagation()"
                         >
                             <template x-if="!copied">
                                 <x-user.icon name="copy" :size="18" class="text-on-surface-variant transition-colors group-hover/action:text-primary" />

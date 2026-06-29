@@ -2,9 +2,9 @@
     $classOptions = $classes
         ->map(fn ($class) => [
             'id' => (string) $class->id,
-            'label' => $class->name.' - '.$class->code,
+            'label' => $class->name.' - '.$class->join_key,
             'name' => $class->name,
-            'code' => $class->code,
+            'code' => $class->join_key,
             'subject_code' => $class->subject_code,
             'members_count' => (int) ($class->members_count ?? 0),
         ])

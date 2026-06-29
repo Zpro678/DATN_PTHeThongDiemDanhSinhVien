@@ -333,7 +333,7 @@ class NotificationService
             $lecturerUserId,
             'App\\Notifications\\ClassCreated',
             'Tạo lớp thành công',
-            "Lớp {$class->name} ({$class->code}) đã được tạo. Hãy import danh sách sinh viên để bắt đầu điểm danh.",
+            "Lớp {$class->name} ({$class->join_key}) đã được tạo. Hãy import danh sách sinh viên để bắt đầu điểm danh.",
             $url,
             'success',
         );

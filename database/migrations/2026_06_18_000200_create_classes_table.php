@@ -11,7 +11,7 @@ return new class extends Migration
         Schema::create('classes', function (Blueprint $table) {
             $table->id();
             $table->foreignId('owner_user_id')->constrained('users')->restrictOnDelete();
-            $table->string('code', 50)->unique();
+            $table->string('join_key', 50)->unique();
             $table->string('name');
             $table->text('description')->nullable();
             $table->string('subject_code', 50)->nullable();

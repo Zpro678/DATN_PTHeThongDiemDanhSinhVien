@@ -54,7 +54,7 @@
                                 </div>
                             </td>
                             <td class="pl-10 pr-4 py-4 text-sm text-slate-600 text-left">
-                                <span class="font-bold text-slate-700">{{ $meeting->courseClass->code }}</span>
+                                <span class="font-bold text-slate-700">{{ $meeting->courseClass->join_key }}</span>
                                 <span class="block text-xs text-slate-500 mt-0.5">{{ $meeting->courseClass->name }}</span>
                             </td>
                             <td class="px-4 py-4 text-center">
@@ -75,7 +75,7 @@
                                             <a href="{{ route('lecturer.attendance.meeting.summary', ['ma_user' => auth()->id(), 'meeting' => $meeting->id]) }}" class="whitespace-nowrap rounded-xl bg-slate-900 px-4 py-2 text-xs font-bold text-white shadow-sm transition-all hover:bg-slate-700">Tổng kết</a>
                                             <a href="{{ route('lecturer.attendance.meeting.sessions', $meeting) }}" class="whitespace-nowrap rounded-xl bg-white px-4 py-2 text-xs font-bold text-slate-700 shadow-sm ring-1 ring-inset ring-slate-300 transition-all hover:bg-slate-50 hover:text-slate-900">Xem phiên</a>
                                             @if($meeting->canAddSession())
-                                                <button type="button" @click="showTypePopup = true; cloneMeetingId = {{ $meeting->id }}; cloneClassId = {{ $meeting->class_id }}; cloneClassName = '{{ addslashes($meeting->courseClass->code . ' - ' . $meeting->courseClass->name) }}'; cloneSessionName = '{{ addslashes($meeting->name) }}'; cloneFormattedDate = '{{ $meeting->date->format('d/m/Y') }}';" class="whitespace-nowrap rounded-xl bg-amber-100 px-4 py-2 text-xs font-bold text-amber-700 shadow-sm ring-1 ring-inset ring-amber-200 transition-all hover:bg-amber-200 hover:text-amber-800 hover:shadow">Thêm phiên</button>
+                                                <button type="button" @click="showTypePopup = true; cloneMeetingId = {{ $meeting->id }}; cloneClassId = {{ $meeting->class_id }}; cloneClassName = '{{ addslashes($meeting->courseClass->join_key . ' - ' . $meeting->courseClass->name) }}'; cloneSessionName = '{{ addslashes($meeting->name) }}'; cloneFormattedDate = '{{ $meeting->date->format('d/m/Y') }}';" class="whitespace-nowrap rounded-xl bg-amber-100 px-4 py-2 text-xs font-bold text-amber-700 shadow-sm ring-1 ring-inset ring-amber-200 transition-all hover:bg-amber-200 hover:text-amber-800 hover:shadow">Thêm phiên</button>
                                             @endif
                                         @endif
                                     </div>

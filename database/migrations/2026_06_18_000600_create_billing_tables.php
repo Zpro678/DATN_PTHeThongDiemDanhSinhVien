@@ -10,7 +10,7 @@ return new class extends Migration
     {
         Schema::create('plans', function (Blueprint $table) {
             $table->id();
-            $table->string('code', 50)->unique();
+            $table->string('plan_tier', 50)->unique();
             $table->string('name');
             $table->decimal('price', 10, 2);
             $table->unsignedInteger('max_classes');

@@ -28,7 +28,7 @@
                 <x-user.icon name="clipboard-check" class="text-primary" />Tổng kết: {{ $meeting->name }}
             </h1>
             <p class="mt-2 text-sm text-slate-500">
-                <span class="font-bold text-slate-700">{{ $meeting->courseClass->code }}</span> · {{ $meeting->courseClass->name }} ·
+                <span class="font-bold text-slate-700">{{ $meeting->courseClass->join_key }}</span> · {{ $meeting->courseClass->name }} ·
                 {{ $meeting->date->format('d/m/Y') }}
                 @if($meeting->end_time) · Kết thúc {{ \Carbon\Carbon::parse($meeting->end_time)->format('H:i') }}@endif
                 <span class="ml-2 inline-flex items-center rounded-md px-2 py-0.5 text-[11px] font-medium ring-1 ring-inset {{ $meeting->status === 'closed' ? 'bg-sky-50 text-sky-700 ring-sky-600/20' : 'bg-emerald-50 text-emerald-700 ring-emerald-600/20' }}">{{ $meeting->status === 'closed' ? 'Đã kết thúc' : 'Đang mở' }}</span>

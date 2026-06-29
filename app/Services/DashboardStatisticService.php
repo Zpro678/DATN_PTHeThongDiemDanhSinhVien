@@ -179,7 +179,7 @@ class DashboardStatisticService
                 'class_sessions.class_id',
                 'class_sessions.qr_token',
                 'classes.name as class_name',
-                'classes.code as class_code',
+                'classes.join_key as class_code',
             ])
             ->orderByDesc('class_sessions.date')
             ->take($limit)

@@ -58,7 +58,7 @@ class AttendanceIndex extends Component
     public function render(): View
     {
         $meetings = ClassMeeting::query()
-            ->with(['courseClass:id,name,code,owner_user_id', 'sessions'])
+            ->with(['courseClass:id,name,join_key,owner_user_id', 'sessions'])
             ->whereHas('courseClass', fn (Builder $query) => $query->where('owner_user_id', auth()->id()))
             ->orderByDesc('created_at')
             ->orderByDesc('date')

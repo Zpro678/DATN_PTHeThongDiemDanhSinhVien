@@ -19,7 +19,7 @@ class AttendanceDataModelTest extends TestCase
 
         $teacher = User::query()->where('email', 'teacher@example.com')->firstOrFail();
         $student = User::query()->where('email', 'student1@example.com')->firstOrFail();
-        $courseClass = CourseClass::query()->where('code', 'WEB-2026-01')->firstOrFail();
+        $courseClass = CourseClass::query()->where('join_key', 'WEB-2026-01')->firstOrFail();
 
         $this->assertCount(3, $teacher->ownedClasses);
         $this->assertCount(11, $courseClass->members);
@@ -47,7 +47,7 @@ class AttendanceDataModelTest extends TestCase
 
         $teacher = User::query()->where('email', 'teacher@example.com')->firstOrFail();
 
-        $this->assertSame('PRO', $teacher->subscriptions()->firstOrFail()->plan->code);
+        $this->assertSame('PRO', $teacher->subscriptions()->firstOrFail()->plan->plan_tier);
         $this->assertSame('success', $teacher->transactions()->firstOrFail()->status);
         $this->assertCount(1, $teacher->notifications);
         $this->assertGreaterThan(0, $teacher->auditLogs()->count());

@@ -52,7 +52,7 @@
                             <div>
                                 <p class="text-[11px] font-black uppercase tracking-widest text-slate-400">Môn học</p>
                                 <p class="mt-1 text-lg font-black text-slate-900 leading-tight">{{ $session->courseClass->name }}</p>
-                                <p class="mt-1 inline-flex items-center rounded-lg bg-blue-50 px-2 py-1 text-xs font-bold text-blue-700">{{ $session->courseClass->code }}</p>
+                                <p class="mt-1 inline-flex items-center rounded-lg bg-blue-50 px-2 py-1 text-xs font-bold text-blue-700">{{ $session->courseClass->join_key }}</p>
                             </div>
                         </div>
 

@@ -89,7 +89,7 @@ class AttendanceDemoSeeder extends Seeder
         ClassJoinRequest::query()->updateOrCreate(
             [
                 'class_id' => $webClass->id,
-                'student_code' => $applicant->code,
+                'student_code' => $applicant->member_id,
             ],
             [
                 'user_id' => $applicant->id,
@@ -193,7 +193,7 @@ class AttendanceDemoSeeder extends Seeder
     {
         $user = User::withTrashed()->firstOrNew(['email' => $attributes['email']]);
         $user->forceFill([
-            'code' => $attributes['code'],
+            'member_id' => $attributes['code'],
             'name' => $attributes['name'],
             'email' => $attributes['email'],
             'email_verified_at' => now(),
@@ -214,10 +214,10 @@ class AttendanceDemoSeeder extends Seeder
      */
     private function demoClass(User $teacher, string $code, array $attributes): CourseClass
     {
-        $courseClass = CourseClass::withTrashed()->firstOrNew(['code' => $code]);
+        $courseClass = CourseClass::withTrashed()->firstOrNew(['join_key' => $code]);
         $courseClass->fill([
             'owner_user_id' => $teacher->id,
-            'code' => $code,
+            'join_key' => $code,
             ...$attributes,
         ]);
         $courseClass->save();
@@ -230,11 +230,11 @@ class AttendanceDemoSeeder extends Seeder
     {
         $member = ClassMember::withTrashed()->firstOrNew([
             'class_id' => $courseClass->id,
-            'student_code' => $student->code,
+            'student_code' => $student->member_id,
         ]);
         $member->fill([
             'class_id' => $courseClass->id,
-            'student_code' => $student->code,
+            'student_code' => $student->member_id,
             'full_name' => $student->name,
             'user_id' => $student->id,
             'status' => $status,
@@ -481,7 +481,7 @@ class AttendanceDemoSeeder extends Seeder
             ],
         );
 
-        $proPlan = Plan::query()->where('code', 'PRO')->firstOrFail();
+        $proPlan = Plan::query()->where('plan_tier', 'PRO')->firstOrFail();
 
         Subscription::query()->updateOrCreate(
             [

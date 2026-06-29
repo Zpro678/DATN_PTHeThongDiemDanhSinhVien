@@ -17,7 +17,7 @@ class EditProfile extends Component
 
     public $email;
 
-    public $code;
+    public $member_id;
 
     public $avatar;
 
@@ -32,7 +32,7 @@ class EditProfile extends Component
         $user = Auth::user();
         $this->name = $user->name;
         $this->email = $user->email;
-        $this->code = $user->code;
+        $this->member_id = $user->member_id;
     }
 
     public function updateProfileInformation()
@@ -41,14 +41,14 @@ class EditProfile extends Component
 
         $this->validate([
             'name' => ['required', 'string', 'max:255'],
-            'code' => ['nullable', 'string', 'max:50', Rule::unique('users')->ignore($user->id)],
+            'member_id' => ['nullable', 'string', 'max:50', Rule::unique('users')->ignore($user->id)],
             'email' => ['required', 'string', 'lowercase', 'email', 'max:255', Rule::unique('users')->ignore($user->id)],
             'avatar' => ['nullable', 'image', 'max:1024'], // 1MB Max
         ]);
 
         $user->fill([
             'name' => $this->name,
-            'code' => $this->code,
+            'member_id' => $this->member_id,
             'email' => $this->email,
         ]);
 
