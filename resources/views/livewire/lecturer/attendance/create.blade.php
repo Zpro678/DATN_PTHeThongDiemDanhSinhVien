@@ -19,14 +19,6 @@
         meetingEndTime: @entangle('meetingEndTime').live,
         timeOpen: false,
 
-        // QR variables
-        qrRefreshRate: @entangle('qrRefreshRate').live,
-        openMinutes: @entangle('durationMinutes').live,
-        gpsEnabled: @entangle('gpsEnabled').live,
-        gpsLatitude: @entangle('gpsLatitude'),
-        gpsLongitude: @entangle('gpsLongitude'),
-        deviceCheck: @entangle('deviceCheck').live,
-        
         classDropdownOpen: false,
         classes: @js($classOptions),
 
@@ -70,35 +62,8 @@
             d.setMinutes(d.getMinutes() + mins);
             const rounded = Math.round(d.getMinutes() / 5) * 5;
             this.applyTime(d.getHours() + Math.floor(rounded / 60), rounded % 60);
-        },
-        initGps() {
-            if (this.gpsEnabled && (!this.gpsLatitude || !this.gpsLongitude)) {
-                this.fetchLocation();
-            }
-            this.$watch('gpsEnabled', value => {
-                if (value) this.fetchLocation();
-            });
-        },
-        fetchLocation() {
-            if (navigator.geolocation) {
-                navigator.geolocation.getCurrentPosition(
-                    (position) => {
-                        this.gpsLatitude = position.coords.latitude;
-                        this.gpsLongitude = position.coords.longitude;
-                    },
-                    (error) => {
-                        console.warn('Cannot get location', error);
-                        alert('Không thể lấy tọa độ GPS. Vui lòng cấp quyền vị trí cho trình duyệt.');
-                        this.gpsEnabled = false;
-                    }
-                );
-            } else {
-                alert('Trình duyệt của bạn không hỗ trợ định vị.');
-                this.gpsEnabled = false;
-            }
         }
     }"
-    x-init="initGps()"
 >
     <div class="mb-10 flex flex-col items-start justify-between gap-4 sm:flex-row sm:items-center sm:gap-5">
         <div class="flex items-center gap-5">
@@ -130,9 +95,9 @@
     {{-- BƯỚC 1: THÔNG TIN CƠ BẢN --}}
     <div x-show="step === 1" x-transition.opacity.duration.300ms class="grid grid-cols-1 gap-8 lg:grid-cols-12">
         <div class="lg:col-span-8">
-            <div class="relative h-full overflow-visible rounded-[2rem] border border-slate-100 bg-white p-8 shadow-[0_8px_30px_rgb(0,0,0,0.04)] sm:p-10">
-                <form id="step1-form" wire:submit.prevent class="relative z-10 space-y-8">
-                    <div class="grid grid-cols-1 gap-x-6 gap-y-8 md:grid-cols-2">
+            <div class="relative h-full overflow-visible rounded-[2rem] border border-slate-100 bg-white p-6 shadow-[0_8px_30px_rgb(0,0,0,0.04)] sm:p-8">
+                <form id="step1-form" wire:submit.prevent class="relative z-10 space-y-6">
+                    <div class="grid grid-cols-1 gap-x-6 gap-y-6 md:grid-cols-2">
                         <div class="group space-y-3">
                             <label for="class_id" class="flex items-center gap-2 text-[13px] font-bold uppercase tracking-wider text-slate-600">
                                 Chọn lớp học
@@ -371,7 +336,7 @@
                 </form>
 
                 {{-- Nút hành động trong card --}}
-                <div class="mt-16 flex items-center justify-end gap-3 border-t border-slate-100 pt-6">
+                <div class="mt-8 flex items-center justify-end gap-3 border-t border-slate-100 pt-6">
                     <a
                         href="{{ route('lecturer.attendance.index') }}"
                         class="inline-flex shrink-0 items-center rounded-xl border border-slate-200 bg-white px-5 py-2.5 text-sm font-bold text-slate-700 shadow-sm transition hover:border-slate-300 hover:bg-slate-50 hover:text-slate-900"
@@ -393,20 +358,32 @@
         </div>
 
         <div class="lg:col-span-4">
-            <div class="relative flex h-full flex-col overflow-hidden rounded-[2rem] border border-slate-100 bg-white p-7 shadow-[0_8px_30px_rgb(0,0,0,0.04)]">
-                <div class="mb-8 flex items-center justify-between gap-3">
+            <div class="relative flex h-full flex-col overflow-hidden rounded-[2rem] border border-slate-100 bg-white p-6 shadow-[0_8px_30px_rgb(0,0,0,0.04)]">
+                <div class="mb-6 flex items-center justify-between gap-3">
                     <h2 class="text-xl font-bold text-slate-900">Tổng quan</h2>
                 </div>
 
-                <div class="relative z-10 mb-8 flex flex-1 flex-col justify-center gap-6">
+                <div class="relative z-10 mb-4 flex flex-1 flex-col justify-start gap-5">
+                    <div class="flex items-center justify-between rounded-2xl border border-slate-200 bg-slate-50 p-5 transition-colors hover:border-slate-300">
+                        <div class="flex min-w-0 items-center gap-4">
+                            <div class="flex h-12 w-12 shrink-0 items-center justify-center rounded-xl bg-white text-indigo-500 shadow-sm">
+                                <x-user.icon name="book-open" :size="24" />
+                            </div>
+                            <div class="min-w-0">
+                                <span class="block truncate text-sm font-bold text-slate-700" x-text="selectedClass.name || 'Chưa chọn lớp'"></span>
+                                <span class="block truncate text-[11px] font-medium text-slate-500" x-text="selectedClass.subject_code ? 'Mã môn: ' + selectedClass.subject_code : 'Chưa có mã môn'"></span>
+                            </div>
+                        </div>
+                    </div>
+
                     <div class="flex items-center justify-between rounded-2xl border border-slate-200 bg-slate-50 p-5 transition-colors hover:border-slate-300">
                         <div class="flex min-w-0 items-center gap-4">
                             <div class="flex h-12 w-12 shrink-0 items-center justify-center rounded-xl bg-white text-blue-500 shadow-sm">
                                 <x-user.icon name="users" :size="24" />
                             </div>
                             <div class="min-w-0">
-                                <span class="block text-sm font-semibold text-slate-500">Sĩ số dự kiến</span>
-                                <span class="block truncate text-[11px] font-medium text-slate-400" x-text="selectedClass.code ? 'Lớp ' + selectedClass.code : 'Chưa chọn lớp'"></span>
+                                <span class="block text-sm font-bold text-slate-700">Sĩ số dự kiến</span>
+                                <span class="block truncate text-[11px] font-medium text-slate-500" x-text="selectedClass.code ? 'Lớp ' + selectedClass.code : 'Chưa chọn lớp'"></span>
                             </div>
                         </div>
                         <span class="text-4xl font-extrabold text-slate-900 drop-shadow-sm" x-text="selectedClass.members_count || 0"></span>
@@ -423,176 +400,10 @@
                     </div>
                 </div>
 
-                <div class="mt-auto space-y-3">
-                    <button
-                        type="button"
-                        wire:click="createManualSession"
-                        wire:loading.attr="disabled"
-                        class="group relative flex w-full items-center justify-center gap-3 overflow-hidden rounded-2xl bg-amber-100 px-6 py-3.5 text-base font-bold text-amber-700 shadow-sm transition-all hover:bg-amber-200 hover:shadow-md active:scale-[0.98] disabled:cursor-wait disabled:opacity-70 border border-amber-200"
-                    >
-                        <x-user.icon name="check-square" :size="20" class="transition-transform group-hover:scale-110" />
-                        Điểm danh thủ công
-                    </button>
-                    
-                    <button
-                        type="button"
-                        wire:click="createQrSession"
-                        wire:loading.attr="disabled"
-                        class="group relative flex w-full items-center justify-center gap-3 overflow-hidden rounded-2xl bg-gradient-to-r from-blue-500 to-indigo-600 px-6 py-4 text-lg font-bold text-white shadow-[0_8px_20px_rgba(59,130,246,0.25)] transition-all hover:from-blue-600 hover:to-indigo-700 active:scale-[0.98] disabled:cursor-wait disabled:opacity-70"
-                    >
-                        <span class="relative z-10 flex items-center gap-2">
-                            <x-user.icon name="qr-code" :size="24" class="transition-transform group-hover:scale-110" />
-                            Điểm danh QR / Link
-                        </span>
-                    </button>
-                </div>
+
             </div>
         </div>
     </div>
 
-    {{-- BƯỚC 3: CẤU HÌNH QR --}}
-    <div x-show="step === 3" x-cloak x-transition.opacity.duration.300ms class="grid gap-6 xl:grid-cols-12">
-        <section class="rounded-3xl border border-slate-200/60 bg-white p-6 shadow-xl shadow-slate-200/40 sm:p-8 xl:col-span-8">
-            <form id="step3-form" wire:submit="setupQr" class="grid gap-10 lg:grid-cols-2">
-                <div class="space-y-6">
-                    <div class="flex items-center gap-4 border-b border-slate-100 pb-5">
-                        <span class="flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl bg-gradient-to-br from-blue-50 to-indigo-50 text-blue-600 shadow-sm ring-1 ring-inset ring-blue-100/50">
-                            <x-user.icon name="shield-check" :size="24" />
-                        </span>
-                        <div>
-                            <h2 class="text-lg font-black text-slate-900">Bảo mật & Quy tắc</h2>
-                            <p class="mt-0.5 text-[13px] font-semibold text-slate-500">Thiết lập kiểm soát mã QR</p>
-                        </div>
-                    </div>
 
-                    <div>
-                        <label class="mb-2 block text-sm font-bold text-slate-600">Thời gian làm mới mã QR</label>
-                        <div class="grid grid-cols-4 gap-2">
-                            @foreach ([5, 10, 15, 30] as $seconds)
-                                <label class="relative">
-                                    <input type="radio" wire:model.live="qrRefreshRate" value="{{ $seconds }}" class="peer sr-only" />
-                                    <span class="flex cursor-pointer items-center justify-center rounded-xl border-2 border-slate-100 bg-slate-50 px-3 py-2.5 text-sm font-bold text-slate-500 transition peer-checked:border-indigo-500 peer-checked:bg-indigo-50 peer-checked:text-indigo-700 hover:border-slate-200">
-                                        {{ $seconds }}s
-                                    </span>
-                                </label>
-                            @endforeach
-                        </div>
-                    </div>
-
-                    <div>
-                        <label class="mb-2 block text-sm font-bold text-slate-600">Thời lượng mở điểm danh (phút)</label>
-                        <div class="grid grid-cols-3 gap-2">
-                            @foreach ([10, 15, 20] as $minutes)
-                                <label class="relative">
-                                    <input type="radio" wire:model.live="durationMinutes" value="{{ $minutes }}" class="peer sr-only" />
-                                    <span class="flex cursor-pointer items-center justify-center rounded-xl border-2 border-slate-100 bg-slate-50 px-3 py-2.5 text-sm font-bold text-slate-500 transition peer-checked:border-indigo-500 peer-checked:bg-indigo-50 peer-checked:text-indigo-700 hover:border-slate-200">
-                                        {{ $minutes }}p
-                                    </span>
-                                </label>
-                            @endforeach
-                        </div>
-                        @error('durationMinutes')<span class="mt-2 block text-sm font-medium text-red-600">{{ $message }}</span>@enderror
-                    </div>
-                </div>
-
-                <div class="space-y-6">
-                    <div>
-                        <label class="mb-2 block text-sm font-bold text-slate-600">Bán kính GPS (m)</label>
-                        <div class="flex items-center gap-3">
-                            <div class="relative flex-1">
-                                <input type="number" wire:model.live="gpsRadius" placeholder="Nhập bán kính (m)" class="w-full rounded-xl border-2 border-slate-100 bg-slate-50 px-4 py-2.5 text-sm font-bold text-slate-800 outline-none transition focus:border-indigo-500 focus:ring-4 focus:ring-indigo-500/10" />
-                                <span class="absolute right-4 top-1/2 -translate-y-1/2 text-sm font-bold text-slate-400">mét</span>
-                            </div>
-                            <div class="flex gap-1.5" x-data>
-                                @foreach ([50, 100, 200] as $r)
-                                    <button type="button" @click="$wire.set('gpsRadius', {{ $r }})" class="rounded-xl border border-slate-200 bg-white px-3 py-2.5 text-xs font-bold text-slate-600 hover:bg-slate-50 hover:border-indigo-300 transition-all">
-                                        {{ $r }}m
-                                    </button>
-                                @endforeach
-                            </div>
-                        </div>
-                        @error('gpsRadius')<span class="mt-2 block text-sm font-medium text-red-600">{{ $message }}</span>@enderror
-                    </div>
-
-                    <div class="space-y-3 pt-1">
-                        <label class="group relative flex cursor-pointer items-center justify-between gap-3 rounded-2xl border-2 px-4 py-3 transition-all duration-300"
-                            :class="gpsEnabled ? 'border-red-500 bg-red-50/50 shadow-sm shadow-red-500/10' : 'border-slate-100 bg-white hover:border-red-200'">
-                            <div class="flex items-center gap-3">
-                                <span class="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl transition-colors duration-300"
-                                    :class="gpsEnabled ? 'bg-red-500 text-white shadow-md shadow-red-500/20' : 'bg-red-50 text-red-500 group-hover:bg-red-100'">
-                                    <x-user.icon name="shield-alert" :size="18" />
-                                </span>
-                                <div>
-                                    <p class="text-[13px] font-black transition-colors duration-300" :class="gpsEnabled ? 'text-red-900' : 'text-slate-800'">Xác minh tọa độ GPS</p>
-                                    <p class="text-[11px] font-semibold leading-tight transition-colors duration-300" :class="gpsEnabled ? 'text-red-700/80' : 'text-slate-400'">Giới hạn khoảng cách</p>
-                                </div>
-                            </div>
-                            <div class="relative inline-flex shrink-0 items-center">
-                                <input type="checkbox" wire:model.live="gpsEnabled" class="peer sr-only" />
-                                <span class="h-6 w-10 rounded-full bg-slate-200 transition-colors duration-300 peer-checked:bg-red-500"></span>
-                                <span class="absolute left-1 top-1 h-4 w-4 rounded-full bg-white shadow-sm transition-transform duration-300 peer-checked:translate-x-4"></span>
-                            </div>
-                        </label>
-
-                        <label class="group relative flex cursor-pointer items-center justify-between gap-3 rounded-2xl border-2 px-4 py-3 transition-all duration-300"
-                            :class="deviceCheck ? 'border-sky-500 bg-sky-50/50 shadow-sm shadow-sky-500/10' : 'border-slate-100 bg-white hover:border-sky-200'">
-                            <div class="flex items-center gap-3">
-                                <span class="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl transition-colors duration-300"
-                                    :class="deviceCheck ? 'bg-sky-500 text-white shadow-md shadow-sky-500/20' : 'bg-sky-50 text-sky-500 group-hover:bg-sky-100'">
-                                    <x-user.icon name="laptop" :size="18" />
-                                </span>
-                                <div>
-                                    <p class="text-[13px] font-black transition-colors duration-300" :class="deviceCheck ? 'text-sky-900' : 'text-slate-800'">Khóa thiết bị</p>
-                                    <p class="text-[11px] font-semibold leading-tight transition-colors duration-300" :class="deviceCheck ? 'text-sky-700/80' : 'text-slate-400'">Ngăn 1 máy dùng nhiều tài khoản</p>
-                                </div>
-                            </div>
-                            <div class="relative inline-flex shrink-0 items-center">
-                                <input type="checkbox" wire:model.live="deviceCheck" class="peer sr-only" />
-                                <span class="h-6 w-10 rounded-full bg-slate-200 transition-colors duration-300 peer-checked:bg-sky-500"></span>
-                                <span class="absolute left-1 top-1 h-4 w-4 rounded-full bg-white shadow-sm transition-transform duration-300 peer-checked:translate-x-4"></span>
-                            </div>
-                        </label>
-                    </div>
-                </div>
-            </form>
-        </section>
-
-        <aside class="h-full xl:col-span-4">
-            <div class="flex h-full flex-col rounded-3xl border border-slate-200/60 bg-white p-6 text-slate-900 shadow-xl shadow-slate-200/40 sm:p-8">
-                <div class="flex items-center justify-between gap-4 border-b border-slate-100 pb-5">
-                    <div>
-                        <h2 class="text-lg font-black text-slate-900">Tóm tắt cấu hình</h2>
-                    </div>
-
-                    <span class="flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl bg-gradient-to-br from-indigo-50 to-violet-50 text-indigo-600 shadow-sm ring-1 ring-inset ring-indigo-100/50">
-                        <x-user.icon name="qr-code" :size="24" />
-                    </span>
-                </div>
-
-                <div class="mt-6 space-y-5">
-                    <div class="rounded-2xl border border-slate-200 bg-slate-50 p-5">
-                        <p class="text-xs font-extrabold uppercase tracking-widest text-slate-500">Thời gian mở QR</p>
-                        <p class="mt-2 text-base font-black text-slate-900" x-text="openMinutes + ' phút (Làm mới ' + qrRefreshRate + 's)'"></p>
-                    </div>
-
-                    <div class="flex flex-wrap gap-2 pt-2 text-xs font-bold">
-                        <span x-show="gpsEnabled" class="rounded-full bg-red-50 px-3.5 py-1.5 text-red-600 ring-1 ring-red-100">GPS bật</span>
-                        <span x-show="deviceCheck" class="rounded-full bg-sky-50 px-3.5 py-1.5 text-sky-600 ring-1 ring-sky-100">Khóa thiết bị</span>
-                    </div>
-                </div>
-
-                <button
-                    type="submit"
-                    form="step3-form"
-                    wire:loading.attr="disabled"
-                    class="group relative mt-auto flex w-full items-center justify-center gap-3 overflow-hidden rounded-2xl bg-gradient-to-r from-indigo-600 to-violet-600 px-6 py-4 text-lg font-bold text-white shadow-[0_8px_20px_rgba(79,70,229,0.25)] transition-all hover:from-indigo-700 hover:to-violet-700 active:scale-[0.98] disabled:cursor-wait disabled:opacity-70"
-                >
-                    <span class="relative z-10 flex items-center gap-2">
-                        Bắt đầu phát mã
-                        <x-user.icon name="qr-code" :size="24" class="transition-transform group-hover:scale-110" />
-                    </span>
-                </button>
-            </div>
-        </aside>
-    </div>
 </div>

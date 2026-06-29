@@ -120,9 +120,9 @@ class QrAttendanceSession extends Component
         $classId = $session->class_id;
         $session->delete();
 
-        session()->flash('status', 'Buổi điểm danh đã được xóa thành công.');
+        session()->flash('success', 'Phiên điểm danh đã được xóa thành công.');
 
-        return redirect()->route('lecturer.classes.show', $classId);
+        return redirect()->route('lecturer.attendance.index', ['ma_user' => auth()->id()]);
     }
 
     public function exportExcel()

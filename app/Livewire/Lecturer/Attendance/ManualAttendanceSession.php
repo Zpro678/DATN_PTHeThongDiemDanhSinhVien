@@ -168,9 +168,9 @@ class ManualAttendanceSession extends Component
         // vì khi truy vấn session đã xóa thì record sẽ ẩn. (Tùy logic hệ thống, nhưng xóa session là đủ).
         $session->delete();
 
-        session()->flash('success', 'Buổi điểm danh đã được xóa thành công.');
+        session()->flash('success', 'Phiên điểm danh đã được xóa thành công.');
 
-        return redirect()->route('lecturer.classes.show', $classId);
+        return redirect()->route('lecturer.attendance.index', ['ma_user' => auth()->id()]);
     }
 
     public function createDuplicateManualSession(): void

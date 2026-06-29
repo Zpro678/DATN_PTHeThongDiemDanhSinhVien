@@ -4,8 +4,10 @@ namespace App\Livewire\Lecturer\Attendance;
 
 use App\Models\AttendanceRecord;
 use App\Models\ClassMeeting;
+use App\Models\ClassSession;
 use Illuminate\Contracts\View\View;
 use Illuminate\Database\Eloquent\Builder;
+use Livewire\Attributes\Computed;
 use Livewire\Component;
 use Livewire\WithPagination;
 
@@ -14,6 +16,59 @@ class AttendanceIndex extends Component
     use WithPagination;
 
     public $perPage = 10;
+
+    public bool $showQuickStart = false;
+    public string $quickStartType = 'manual';
+    public string $quickClassId = '';
+    public string $quickMeetingId = '';
+
+    public function updatedQuickClassId()
+    {
+        $this->quickMeetingId = '';
+    }
+
+    #[Computed]
+    public function activeClasses()
+    {
+        return \App\Models\CourseClass::where('owner_user_id', auth()->id())
+            ->where('status', 'active')
+            ->get();
+    }
+
+    #[Computed]
+    public function classMeetings()
+    {
+        if (!$this->quickClassId) {
+            return collect();
+        }
+        return \App\Models\ClassMeeting::where('class_id', $this->quickClassId)
+            ->orderBy('date', 'desc')
+            ->get()
+            ->filter(fn ($meeting) => !$meeting->isExpired());
+    }
+
+    public function openQuickStart(string $type)
+    {
+        $this->quickStartType = $type;
+        $this->showQuickStart = true;
+    }
+
+    public function startQuick()
+    {
+        $this->validate([
+            'quickClassId' => 'required',
+            'quickMeetingId' => 'required',
+        ], [
+            'quickClassId.required' => 'Vui lòng chọn lớp học.',
+            'quickMeetingId.required' => 'Vui lòng chọn buổi điểm danh.',
+        ]);
+        
+        if ($this->quickStartType === 'manual') {
+            $this->cloneAndStartManual((int) $this->quickMeetingId);
+        } else {
+            $this->redirectRoute('lecturer.attendance.qr.create', ['meeting' => $this->quickMeetingId], navigate: true);
+        }
+    }
 
     public function closeSession(int $sessionId): void
     {
