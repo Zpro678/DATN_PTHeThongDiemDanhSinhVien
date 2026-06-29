@@ -54,8 +54,8 @@ class StudentIndex extends Component
     // Thao tác với Modal Export
     public bool $isExporting = false;
     public string $exportClassId = 'all';
-    public string $exportFormula = '(c + m) / t * 100';
-    public string $selectedTemplate = '(c + m) / t * 100';
+    public string $exportFormula = '(c + m + p) / t * 100';
+    public string $selectedTemplate = '(c + m + p) / t * 100';
     public bool $isCustomFormula = false;
 
     // Biến cho các thao tác mảng
@@ -95,8 +95,6 @@ class StudentIndex extends Component
     public int $importSuccess = 0;
 
     public bool $showBackButton = false;
-
-    public bool $syncAttendance = false;
 
     // Các thuộc tính phục vụ theo dõi tiến trình import dạng chunk qua Cache/Polling
     public ?string $importToken = null;
@@ -341,10 +339,10 @@ class StudentIndex extends Component
         $lines = [
             "M\u00e3 h\u1ecdc vi\u00ean,H\u1ecd v\u00e0 t\u00ean,Email,22/06,23/06,24/06",
             "HV001,Nguy\u1ec5n V\u0103n A,nva@email.com,c,m,c",
-            "HV002,Tr\u1ea7n Th\u1ecb B,ttb@email.com,k,c,v",
-            "HV003,L\u00ea V\u0103n C,lvc@email.com,c,c,k",
+            "HV002,Tr\u1ea7n Th\u1ecb B,ttb@email.com,vg,c,v",
+            "HV003,L\u00ea V\u0103n C,lvc@email.com,c,vs,p",
             "",
-            "Ch\u00fa th\u00edch k\u00fd hi\u1ec7u:,c=C\u00f3 m\u1eb7t,m=\u0110i mu\u1ed9n,k=V\u1eafng kh\u00f4ng ph\u00e9p,v=V\u1eafng c\u00f3 ph\u00e9p",
+            "Ch\u00fa th\u00edch k\u00fd hi\u1ec7u:,c=C\u00f3 m\u1eb7t,m=\u0110i mu\u1ed9n,vg=V\u1eafng gi\u1eefa gi\u1edd,vs=V\u1ec1 s\u1edbm,v=V\u1eafng kh\u00f4ng ph\u00e9p,p=V\u1eafng c\u00f3 ph\u00e9p",
         ];
         $csvContent = implode("\n", $lines);
 
@@ -387,7 +385,7 @@ class StudentIndex extends Component
         $this->importProcessedRows = 0;
         $this->importQuietTicks = 0;
 
-        $import = new StudentsImport($courseClass->id, $this->importToken, $this->syncAttendance);
+        $import = new StudentsImport($courseClass->id, $this->importToken);
 
         $extension = $this->importFile->getClientOriginalExtension();
         $readerType = match (strtolower($extension)) {
@@ -502,9 +500,8 @@ class StudentIndex extends Component
     public function openExport()
     {
         $this->exportClassId = $this->classFilter;
-        $this->exportFormula = '(c + m) / t * 100';
-        $this->selectedTemplate = '(c + m) / t * 100';
-        $this->isCustomFormula = false;
+        $this->exportFormula = '(c + m + p) / t * 100';
+        $this->selectedTemplate = '(c + m + p) / t * 100';
         $this->isExporting = true;
     }
 
@@ -523,7 +520,7 @@ class StudentIndex extends Component
             return $this->redirectRoute('upgrade', navigate: true);
         }
 
-        $formulaToUse = $this->isCustomFormula ? $this->exportFormula : $this->selectedTemplate;
+        $formulaToUse = $this->selectedTemplate;
 
         $fileName = 'danh_sach_sinh_vien_' . date('Ymd_His') . '.xlsx';
         $this->isExporting = false;

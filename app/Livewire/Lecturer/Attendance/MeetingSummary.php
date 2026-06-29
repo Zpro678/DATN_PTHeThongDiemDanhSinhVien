@@ -59,7 +59,7 @@ class MeetingSummary extends Component
      */
     public function save(): void
     {
-        $deductExcused = (bool) $this->meeting->courseClass->deduct_excused_absence;
+        $rules = $this->meeting->courseClass->getAttendanceRules();
 
         $summaries = $this->meeting->summaries()->get()->keyBy('class_member_id');
 
@@ -73,7 +73,7 @@ class MeetingSummary extends Component
 
             $summary->update([
                 'status' => $status,
-                'deduction' => AttendanceCalculator::deductionForStatus($status, $deductExcused),
+                'deduction' => AttendanceCalculator::deductionForStatus($status, $rules),
                 'is_overridden' => $status !== $summary->auto_status,
                 'note' => $note !== '' ? $note : null,
             ]);
@@ -120,12 +120,12 @@ class MeetingSummary extends Component
 
     public function render(): View
     {
-        $deductExcused = (bool) $this->meeting->courseClass->deduct_excused_absence;
+        $rules = $this->meeting->courseClass->getAttendanceRules();
 
         $sessions = $this->meeting->sessions()->orderBy('id')->get(['id', 'name', 'qr_token']);
         $consolidated = AttendanceCalculator::consolidateMeeting($this->meeting)->keyBy(fn ($row) => $row['member']->id);
 
-        $rows = $consolidated->map(function ($row) use ($deductExcused) {
+        $rows = $consolidated->map(function ($row) use ($rules) {
             $memberId = $row['member']->id;
             $status = $this->draftStatuses[$memberId] ?? $row['status'];
 
@@ -135,7 +135,7 @@ class MeetingSummary extends Component
                 'auto_label' => $row['label'],
                 'auto_status' => $row['status'],
                 'status' => $status,
-                'deduction' => AttendanceCalculator::deductionForStatus($status, $deductExcused),
+                'deduction' => AttendanceCalculator::deductionForStatus($status, $rules),
                 'edited' => $status !== $row['status'],
             ];
         })->values();

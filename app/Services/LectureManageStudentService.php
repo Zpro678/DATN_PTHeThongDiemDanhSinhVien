@@ -23,10 +23,10 @@ class LectureManageStudentService
             ->whereIn('id', $memberIds)
             ->get(['id', 'class_id']);
 
-        // Cài đặt lớp: tổng buổi dự kiến + có trừ chuyên cần khi vắng có phép.
+        // Cài đặt lớp: tổng buổi dự kiến + cấu hình điểm trừ.
         $classes = CourseClass::query()
             ->whereIn('id', $members->pluck('class_id')->unique()->filter())
-            ->get(['id', 'total_sessions', 'deduct_excused_absence'])
+            ->get(['id', 'total_sessions', 'attendance_rules'])
             ->keyBy('id');
 
         // Bản ghi điểm danh ở phiên đã chốt, kèm meeting_id để gộp theo buổi.
@@ -51,21 +51,21 @@ class LectureManageStudentService
             $excusedSessions = $counts['excused'];
 
             $class = $classes->get($member->class_id);
-            $deductExcusedAbsence = (bool) ($class?->deduct_excused_absence ?? true);
+            $rules = $class ? $class->getAttendanceRules() : (new CourseClass())->getAttendanceRules();
             $plannedSessions = (int) ($class?->total_sessions ?? 0);
 
             // Mẫu số là tổng buổi dự kiến; fallback về số buổi đã diễn ra nếu chưa cấu hình.
             $effectivePlanned = $plannedSessions > 0 ? $plannedSessions : $studiedSessions;
 
-            $countedSessions = AttendanceCalculator::countedSessions($effectivePlanned, $excusedSessions, $deductExcusedAbsence);
+            $countedSessions = $effectivePlanned; // Trong hệ thống mới, luôn là tổng số buổi dự kiến, trừ điểm qua $rules
             $attendedSessions = $presentSessions + $lateSessions; // Số buổi có đến lớp (gồm cả muộn).
             $effectiveAbsent = $absentSessions; // Số buổi vắng (hiển thị).
-            $absenceForBan = AttendanceCalculator::effectiveAbsence($counts); // Vắng quy đổi (đủ 6 trạng thái).
+            $absenceForBan = AttendanceCalculator::effectiveAbsence($counts, $rules); // Vắng quy đổi (đủ 6 trạng thái).
 
             $attendancePercent = AttendanceCalculator::percentOfPlanned(
                 $effectivePlanned,
                 $counts,
-                $deductExcusedAbsence
+                $rules
             );
 
             $allowedAbsent = AttendanceCalculator::allowedAbsentSessions($effectivePlanned);

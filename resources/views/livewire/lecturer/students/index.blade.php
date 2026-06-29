@@ -306,11 +306,6 @@
                     </label>
                     @error('importFile')<span class="mt-1 block text-center text-sm text-red-500">{{ $message }}</span>@enderror
                     
-                    <div class="mt-4 flex items-center gap-2">
-                        <input type="checkbox" id="syncAttendanceIndex" wire:model="syncAttendance" @if($isImportingStatus) disabled @endif class="h-4 w-4 rounded border-slate-300 text-blue-600 focus:ring-blue-600">
-                        <label for="syncAttendanceIndex" class="text-[15px] text-slate-700 font-medium">Tự động thêm vào các buổi điểm danh đã có</label>
-                    </div>
-
                     {{-- Progress Bar --}}
                     @if($isImportingStatus)
                         <div class="mt-4 p-4 bg-blue-50 rounded-2xl flex flex-col gap-2 shadow-inner" wire:poll.500ms="checkImportProgress">
@@ -477,10 +472,10 @@
                                     value: @entangle('selectedTemplate'),
                                     position: 'bottom',
                                     options: [
-                                        { value: '(c + m) / t * 100', label: 'Mặc định' },
+                                        { value: '(c + m + p) / t * 100', label: 'Mặc định' },
                                         { value: 'v / t * 100', label: 'Tính tỷ lệ vắng' },
-                                        { value: '(c + m + v) / t * 100', label: 'Điểm danh đầy đủ' },
-                                        { value: '(c + m - floor(m / 3)) / t * 100', label: 'Phạt đi muộn (3 lần muộn = 1 lần vắng)' },
+                                        { value: '(c + m + vg + vs + v + p) / t * 100', label: 'Điểm danh đầy đủ' },
+                                        { value: '(c + m + p - floor(m / 3)) / t * 100', label: 'Phạt đi muộn (3 lần muộn = 1 lần vắng)' },
                                     ],
                                     get label() { return this.options.find(o => o.value == this.value)?.label ?? 'Chọn...' },
                                     checkPosition() {
@@ -514,21 +509,7 @@
                                                     </span>
                                                 </button>
                                             </template>
-                                        </div>
                                     </div>
-                                </div>
-                            @endif
-
-                            <!-- Checkbox Nhập công thức tùy chỉnh -->
-                            <div class="mb-3 flex items-center gap-2">
-                                <input type="checkbox" id="customFormulaCheck" wire:model.live="isCustomFormula" class="rounded border-slate-300 text-primary focus:ring-primary">
-                                <label for="customFormulaCheck" class="text-[14px] font-semibold text-slate-700 cursor-pointer">Nhập công thức tùy chỉnh</label>
-                            </div>
-
-                            <!-- Ô text nhập công thức tùy chỉnh (Chỉ hiển thị khi tích chọn) -->
-                            @if ($isCustomFormula)
-                                <div class="mt-3">
-                                    <input type="text" wire:model="exportFormula" class="w-full rounded-xl border-slate-200 bg-slate-50 py-3 px-4 text-[15px] font-medium text-slate-700 focus:border-primary focus:ring-primary/20" placeholder="VD: (c + m) / t * 100">
                                 </div>
                             @endif
                         </div>
@@ -578,7 +559,7 @@
                             <ul class="space-y-1.5">
                                 <li class="flex flex-col gap-0.5">
                                     <span class="font-semibold text-slate-700">Mặc định</span>
-                                    <code class="bg-slate-100 rounded px-1.5 py-0.5 text-[11px] text-primary font-mono">(c + m) / t * 100</code>
+                                    <code class="bg-slate-100 rounded px-1.5 py-0.5 text-[11px] text-primary font-mono">(c + m + p) / t * 100</code>
                                 </li>
                                 <li class="flex flex-col gap-0.5">
                                     <span class="font-semibold text-slate-700">Tính tỷ lệ vắng</span>
@@ -586,11 +567,11 @@
                                 </li>
                                 <li class="flex flex-col gap-0.5">
                                     <span class="font-semibold text-slate-700">Điểm danh đầy đủ</span>
-                                    <code class="bg-slate-100 rounded px-1.5 py-0.5 text-[11px] text-primary font-mono">(c + m + v) / t * 100</code>
+                                    <code class="bg-slate-100 rounded px-1.5 py-0.5 text-[11px] text-primary font-mono">(c + m + vg + vs + v + p) / t * 100</code>
                                 </li>
                                 <li class="flex flex-col gap-0.5">
                                     <span class="font-semibold text-slate-700">Phạt đi muộn</span>
-                                    <code class="bg-slate-100 rounded px-1.5 py-0.5 text-[11px] text-primary font-mono">(c + m - floor(m/3)) / t * 100</code>
+                                    <code class="bg-slate-100 rounded px-1.5 py-0.5 text-[11px] text-primary font-mono">(c + m + p - floor(m/3)) / t * 100</code>
                                 </li>
                             </ul>
                         </div>
@@ -605,6 +586,14 @@
                                 <li class="flex items-center gap-2">
                                     <code class="bg-amber-50 text-amber-700 rounded px-1.5 py-0.5 font-mono text-[11px] min-w-[20px] text-center">m</code>
                                     <span>Số buổi đi muộn</span>
+                                </li>
+                                <li class="flex items-center gap-2">
+                                    <code class="bg-orange-50 text-orange-700 rounded px-1.5 py-0.5 font-mono text-[11px] min-w-[20px] text-center">vg</code>
+                                    <span>Vắng giữa giờ</span>
+                                </li>
+                                <li class="flex items-center gap-2">
+                                    <code class="bg-pink-50 text-pink-700 rounded px-1.5 py-0.5 font-mono text-[11px] min-w-[20px] text-center">vs</code>
+                                    <span>Về sớm</span>
                                 </li>
                                 <li class="flex items-center gap-2">
                                     <code class="bg-red-50 text-red-700 rounded px-1.5 py-0.5 font-mono text-[11px] min-w-[20px] text-center">v</code>

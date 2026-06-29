@@ -35,8 +35,7 @@ class StudentShow extends Component
         $stats = app(LectureManageStudentService::class)
             ->getStudentsAttendanceStats([$this->memberId])[$this->memberId] ?? null;
 
-        // Lịch sử điểm danh GỘP THEO BUỔI (cùng quy tắc với thẻ tổng hợp), không liệt kê từng phiên thô.
-        $deductExcused = (bool) $member->courseClass?->deduct_excused_absence;
+        $rules = $member->courseClass ? $member->courseClass->getAttendanceRules() : (new \App\Models\CourseClass())->getAttendanceRules();
 
         $records = $member->attendanceRecords()
             ->with('classSession:id,name,date,meeting_id,qr_token')
@@ -46,7 +45,7 @@ class StudentShow extends Component
         $history = $records
             ->filter(fn ($record) => $record->classSession !== null)
             ->groupBy(fn ($record) => $record->classSession->meeting_id)
-            ->map(function ($group) use ($deductExcused) {
+            ->map(function ($group) use ($rules) {
                 // Sắp theo id phiên (~ thời gian) để xác định "phiên cuối"; diễn giải pending theo loại phiên.
                 $ordered = $group->sortBy('class_session_id')->values();
                 $statuses = $ordered
@@ -56,7 +55,7 @@ class StudentShow extends Component
                     ))
                     ->all();
 
-                $result = AttendanceCalculator::consolidateStatuses($statuses, $deductExcused);
+                $result = AttendanceCalculator::consolidateStatuses($statuses, $rules);
 
                 // Lấy giờ/khoảng cách của phiên đã có mặt/đi muộn (nếu có) để hiển thị.
                 $attended = $ordered->first(

@@ -21,7 +21,7 @@ class CourseClass extends Model
         'name', // Tên lớp học.
         'description', // Mô tả môn học.
         'late_threshold', // Ngưỡng thời gian trễ.
-        'deduct_excused_absence', // Trừ chuyên cần khi vắng có phép.
+        'attendance_rules', // Cấu hình bảng điểm trừ chuyên cần.
         'subject_code', // Mã môn học.
         'semester', // Học kỳ.
         'require_approval', // Bật/tắt yêu cầu duyệt khi xin vào lớp.
@@ -36,7 +36,7 @@ class CourseClass extends Model
     {
         return [
             'require_approval' => 'boolean', // Ép kiểu cờ yêu cầu duyệt.
-            'deduct_excused_absence' => 'boolean', // Ép kiểu boolean.
+            'attendance_rules' => 'array', // Ép kiểu mảng.
             'total_sessions' => 'integer', // Ép kiểu tổng số buổi dự kiến.
             'gps_latitude' => 'float',
             'gps_longitude' => 'float',
@@ -114,5 +114,23 @@ class CourseClass extends Model
         } while ($exists && $attempts < 20);
 
         return $code;
+    }
+
+    /**
+     * Lấy cấu hình điểm trừ chuyên cần.
+     * Trả về giá trị mặc định nếu lớp chưa cấu hình.
+     */
+    public function getAttendanceRules(): array
+    {
+        $defaultRules = [
+            'present' => 0.0,
+            'late' => 0.5,
+            'partial' => 0.5,
+            'early_leave' => 1.0,
+            'absent' => 1.0,
+            'excused' => 0.0,
+        ];
+
+        return array_merge($defaultRules, $this->attendance_rules ?? []);
     }
 }

@@ -87,7 +87,7 @@ class Dashboard extends Component
                     'subject_code' => $courseClass->subject_code ?: 'N/A', // Mã học phần nếu có.
                     'semester' => $courseClass->semester ?: 'Chưa xác định', // Học kỳ của lớp.
                     'students' => (int) $courseClass->students_count, // Tổng sinh viên active trong lớp.
-                    'sessions' => $studiedSessions.'/'.$courseClass->total_sessions, // Tiến độ số buổi đã học/tổng số buổi.
+                    'sessions' => $courseClass->total_sessions > 0 ? $studiedSessions.'/'.$courseClass->total_sessions : $studiedSessions.' buổi', // Tiến độ số buổi đã học/tổng số buổi.
                     'attendance' => $attendance['attendance_percent'], // Chuyên cần trung bình của cả lớp.
                     'status_label' => in_array($courseClass->status, ['ended', 'archived'], true) ? 'Đã kết thúc' : 'Đang học',
                     ...$style,

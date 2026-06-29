@@ -278,7 +278,7 @@
                                     </span>
                                     <p class="truncate text-sm font-bold text-blue-900">
                                         Phiên điểm danh đang diễn ra
-                                        <span class="font-medium text-blue-600">— {{ $ongoingSession->meeting->courseClass->code ?? '' }} · {{ $ongoingSession->name }}</span>
+                                        <span class="font-medium text-blue-600">— {{ $ongoingSession->meeting->courseClass->join_key ?? '' }} · {{ $ongoingSession->name }}</span>
                                     </p>
                                 </div>
                                 <a href="{{ $ongoingSession->qr_token ? route('lecturer.attendance.qr.session', $ongoingSession) : route('lecturer.attendance.manual.session', $ongoingSession) }}" class="inline-flex shrink-0 items-center gap-1.5 rounded-lg bg-blue-600 px-4 py-1.5 text-xs font-bold text-white shadow-sm transition-all hover:bg-blue-700 hover:shadow-md active:scale-[0.97]">

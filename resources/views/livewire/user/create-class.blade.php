@@ -124,122 +124,50 @@
 
                     <div class="grid grid-cols-1 sm:grid-cols-2 gap-4 sm:gap-6">
                         <label class="space-y-2 sm:col-span-2 md:col-span-1">
-                            <span class="block text-[13px] font-semibold text-slate-700">Tổng số buổi dự kiến <span class="text-red-500">*</span></span>
-                            <input wire:model.live.debounce.300ms="totalSessions" type="number" min="1" max="200" class="h-12 w-full rounded-2xl border border-slate-200 bg-white px-4 text-sm font-semibold text-slate-800 outline-none transition-all hover:border-slate-300 focus:border-blue-500 focus:ring-4 focus:ring-blue-500/10">
-                            @error('totalSessions') <span class="block text-xs font-medium text-red-600">{{ $message }}</span> @enderror
-                        </label>
-
-                        <div class="space-y-2 sm:col-span-2 md:col-span-1" x-data="{
-                            open: false,
-                            value: @entangle('lateThreshold'),
-                            options: [
-                                { value: 5,  label: '5 phút' },
-                                { value: 10, label: '10 phút' },
-                                { value: 15, label: '15 phút' },
-                                { value: 20, label: '20 phút' },
-                                { value: 30, label: '30 phút' },
-                            ],
-                            get label() { return this.options.find(o => o.value == this.value)?.label ?? 'Chọn...' }
-                        }" @click.outside="open = false" @keydown.escape.window="open = false">
-                            <span class="block text-[13px] font-semibold text-slate-700">Ngưỡng đi muộn <span class="text-red-500">*</span></span>
-                            <div class="relative">
-                                <button type="button" @click="open = !open"
-                                    class="flex w-full items-center justify-between gap-3 rounded-2xl border border-slate-200 bg-white px-4 h-12 text-left text-sm font-semibold text-slate-800 outline-none transition-all hover:border-slate-300 focus:border-blue-500 focus:ring-4 focus:ring-blue-500/10"
-                                    :class="open ? 'border-blue-500 ring-4 ring-blue-500/10' : ''">
-                                    <span x-text="label"></span>
-                                    <x-user.icon name="chevron-down" :size="16" class="shrink-0 text-slate-400 transition-transform duration-200" x-bind:class="open ? 'rotate-180 text-blue-500' : ''" />
-                                </button>
-                                <div x-show="open" x-cloak x-transition:enter="transition ease-out duration-150" x-transition:enter-start="opacity-0 -translate-y-2" x-transition:enter-end="opacity-100 translate-y-0" x-transition:leave="transition ease-in duration-100" x-transition:leave-start="opacity-100 translate-y-0" x-transition:leave-end="opacity-0 -translate-y-2"
-                                    class="absolute left-0 right-0 top-full z-50 mt-1.5 overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-xl shadow-slate-900/10">
-                                    <template x-for="option in options" :key="option.value">
-                                        <button type="button"
-                                            @click="value = option.value; open = false"
-                                            class="flex w-full items-center justify-between px-4 py-3 text-sm font-bold transition-colors hover:bg-slate-50"
-                                            :class="value == option.value ? 'text-blue-600 bg-blue-50/50' : 'text-slate-700'">
-                                            <span x-text="option.label"></span>
-                                            <span x-show="value == option.value" class="flex h-4 w-4 items-center justify-center rounded-full bg-blue-600">
-                                                <x-user.icon name="check" :size="10" class="text-white" />
-                                            </span>
-                                        </button>
-                                    </template>
-                                </div>
-                            </div>
+                            <span class="block text-[13px] font-semibold text-slate-700">Ngưỡng đi muộn (phút) <span class="text-red-500">*</span></span>
+                            <input wire:model.live.debounce.300ms="lateThreshold" type="number" min="0" max="300" class="h-12 w-full rounded-2xl border border-slate-200 bg-white px-4 text-sm font-semibold text-slate-800 outline-none transition-all hover:border-slate-300 focus:border-blue-500 focus:ring-4 focus:ring-blue-500/10">
                             @error('lateThreshold') <span class="block text-xs font-medium text-red-600">{{ $message }}</span> @enderror
-                        </div>
-
-                        <div class="space-y-2 sm:col-span-2" x-data="{
-                            open: false,
-                            value: @entangle('latesPerAbsent'),
-                            options: [
-                                { value: 0, label: 'Không quy đổi' },
-                                { value: 1, label: '1 lần muộn = 1 vắng' },
-                                { value: 2, label: '2 lần muộn = 1 vắng' },
-                                { value: 3, label: '3 lần muộn = 1 vắng' },
-                                { value: 4, label: '4 lần muộn = 1 vắng' },
-                                { value: 5, label: '5 lần muộn = 1 vắng' },
-                            ],
-                            get label() { return this.options.find(o => o.value == this.value)?.label ?? 'Chọn...' }
-                        }" @click.outside="open = false" @keydown.escape.window="open = false">
-                            <span class="block text-[13px] font-semibold text-slate-700">Quy đổi đi muộn <span class="text-red-500">*</span></span>
-                            <div class="relative">
-                                <button type="button" @click="open = !open"
-                                    class="flex w-full items-center justify-between gap-3 rounded-2xl border border-slate-200 bg-white px-4 h-12 text-left text-sm font-semibold text-slate-800 outline-none transition-all hover:border-slate-300 focus:border-blue-500 focus:ring-4 focus:ring-blue-500/10"
-                                    :class="open ? 'border-blue-500 ring-4 ring-blue-500/10' : ''">
-                                    <span x-text="label"></span>
-                                    <x-user.icon name="chevron-down" :size="16" class="shrink-0 text-slate-400 transition-transform duration-200" x-bind:class="open ? 'rotate-180 text-blue-500' : ''" />
-                                </button>
-                                <div x-show="open" x-cloak x-transition:enter="transition ease-out duration-150" x-transition:enter-start="opacity-0 -translate-y-2" x-transition:enter-end="opacity-100 translate-y-0" x-transition:leave="transition ease-in duration-100" x-transition:leave-start="opacity-100 translate-y-0" x-transition:leave-end="opacity-0 -translate-y-2"
-                                    class="absolute left-0 right-0 top-full z-50 mt-1.5 overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-xl shadow-slate-900/10">
-                                    <template x-for="option in options" :key="option.value">
-                                        <button type="button"
-                                            @click="value = option.value; open = false"
-                                            class="flex w-full items-center justify-between px-4 py-3 text-sm font-bold transition-colors hover:bg-slate-50"
-                                            :class="value == option.value ? 'text-blue-600 bg-blue-50/50' : 'text-slate-700'">
-                                            <span x-text="option.label"></span>
-                                            <span x-show="value == option.value" class="flex h-4 w-4 items-center justify-center rounded-full bg-blue-600">
-                                                <x-user.icon name="check" :size="10" class="text-white" />
-                                            </span>
-                                        </button>
-                                    </template>
-                                </div>
-                            </div>
-                            <p class="text-[12px] text-slate-400">Số lần đi muộn tích lũy để quy ra 1 buổi vắng khi tính chuyên cần.</p>
-                            @error('latesPerAbsent') <span class="block text-xs font-medium text-red-600">{{ $message }}</span> @enderror
-                        </div>
+                        </label>
                     </div>
 
                     <div class="mt-7 space-y-4">
-                        {{-- Toggle: Trừ chuyên cần khi vắng có phép --}}
+                        {{-- Cấu hình điểm trừ chuyên cần --}}
                         <div class="rounded-2xl border border-slate-200 bg-slate-50/70 p-5">
-                            <div class="flex flex-row items-center justify-between gap-5">
-                                <div class="flex gap-3">
-                                    <div class="flex h-10 w-10 items-center justify-center rounded-2xl bg-white text-amber-500 shadow-sm">
-                                        <x-user.icon name="clock" :size="20" />
-                                    </div>
-                                    <div>
-                                        <span class="block text-sm font-extrabold text-slate-950">Trừ chuyên cần khi vắng có phép</span>
-                                        <p class="mt-1 max-w-2xl text-[13px] leading-5 text-slate-500">Nếu bật, buổi vắng có phép vẫn sẽ được tính vào tỷ lệ vắng khi xết chuyên cần.</p>
-                                    </div>
+                            <div class="flex items-center gap-3 mb-4">
+                                <div class="flex h-10 w-10 items-center justify-center rounded-2xl bg-white text-indigo-500 shadow-sm">
+                                    <x-user.icon name="check-square" :size="20" />
                                 </div>
-
-                                <button
-                                    type="button"
-                                    wire:click="$toggle('deductExcusedAbsence')"
-                                    role="switch"
-                                    aria-label="Trừ chuyên cần khi vắng có phép"
-                                    aria-checked="{{ $deductExcusedAbsence ? 'true' : 'false' }}"
-                                    @class([
-                                        'relative inline-flex h-8 w-14 shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 focus:outline-none focus:ring-4 focus:ring-amber-500/20',
-                                        'bg-amber-500' => $deductExcusedAbsence,
-                                        'bg-slate-300' => ! $deductExcusedAbsence,
-                                    ])
-                                >
-                                    <span @class([
-                                        'pointer-events-none inline-block h-7 w-7 transform rounded-full bg-white shadow ring-0 transition duration-200',
-                                        'translate-x-6' => $deductExcusedAbsence,
-                                        'translate-x-0' => ! $deductExcusedAbsence,
-                                    ])></span>
-                                </button>
+                                <div>
+                                    <span class="block text-sm font-extrabold text-slate-950">Bảng cấu hình điểm trừ chuyên cần</span>
+                                    <p class="mt-1 max-w-2xl text-[13px] leading-5 text-slate-500">Thiết lập mức điểm trừ cho từng trạng thái (ví dụ: -0.5, -1, 0).</p>
+                                </div>
+                            </div>
+                            
+                            <div class="grid grid-cols-2 md:grid-cols-3 gap-4">
+                                <div>
+                                    <label class="block text-xs font-semibold text-slate-700 mb-1">Có mặt</label>
+                                    <input wire:model="attendanceRules.present" type="number" step="0.5" max="0" class="w-full rounded-xl border border-slate-200 px-3 py-2 text-sm focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500">
+                                </div>
+                                <div>
+                                    <label class="block text-xs font-semibold text-slate-700 mb-1">Đi muộn</label>
+                                    <input wire:model="attendanceRules.late" type="number" step="0.5" class="w-full rounded-xl border border-slate-200 px-3 py-2 text-sm focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500">
+                                </div>
+                                <div>
+                                    <label class="block text-xs font-semibold text-slate-700 mb-1">Vắng giữa giờ</label>
+                                    <input wire:model="attendanceRules.partial" type="number" step="0.5" class="w-full rounded-xl border border-slate-200 px-3 py-2 text-sm focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500">
+                                </div>
+                                <div>
+                                    <label class="block text-xs font-semibold text-slate-700 mb-1">Về sớm</label>
+                                    <input wire:model="attendanceRules.early_leave" type="number" step="0.5" class="w-full rounded-xl border border-slate-200 px-3 py-2 text-sm focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500">
+                                </div>
+                                <div>
+                                    <label class="block text-xs font-semibold text-slate-700 mb-1">Vắng</label>
+                                    <input wire:model="attendanceRules.absent" type="number" step="0.5" class="w-full rounded-xl border border-slate-200 px-3 py-2 text-sm focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500">
+                                </div>
+                                <div>
+                                    <label class="block text-xs font-semibold text-slate-700 mb-1">Có phép</label>
+                                    <input wire:model="attendanceRules.excused" type="number" step="0.5" class="w-full rounded-xl border border-slate-200 px-3 py-2 text-sm focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500">
+                                </div>
                             </div>
                         </div>
 
@@ -309,10 +237,7 @@
 
                         <div class="space-y-4 p-6">
                             <div class="grid grid-cols-1 gap-3">
-                                <div class="rounded-2xl bg-slate-50 p-4">
-                                    <p class="text-xs font-bold uppercase tracking-wide text-slate-400">Tổng số buổi</p>
-                                    <p class="mt-2 text-2xl font-extrabold text-slate-950">{{ $totalSessions ?: 0 }}</p>
-                                </div>
+                                <!-- Đã bỏ Tổng số buổi dự kiến -->
                             </div>
 
                             <div class="rounded-2xl border border-slate-200 p-4">
@@ -330,12 +255,6 @@
                                     </div>
                                 </div>
                             </div>
-
-                            <button type="submit" wire:loading.attr="disabled" wire:target="save" class="flex w-full items-center justify-center gap-2 rounded-2xl bg-blue-600 px-5 py-3 text-sm font-bold text-white shadow-lg shadow-blue-600/20 transition-colors hover:bg-blue-700 disabled:cursor-wait disabled:opacity-60">
-                                <x-user.icon name="save" :size="18" wire:loading.remove wire:target="save" />
-                                <span wire:loading.remove wire:target="save">Lưu lớp học</span>
-                                <span wire:loading wire:target="save">Đang lưu...</span>
-                            </button>
                         </div>
                     </section>
 
@@ -351,10 +270,6 @@
                             </div>
                             <div class="flex gap-3">
                                 <span class="mt-0.5 flex h-6 w-6 items-center justify-center rounded-full bg-blue-50 text-xs font-extrabold text-blue-600">2</span>
-                                <p class="text-sm leading-6 text-slate-600">Tổng số buổi sẽ được dùng để tính tiến độ học trên dashboard.</p>
-                            </div>
-                            <div class="flex gap-3">
-                                <span class="mt-0.5 flex h-6 w-6 items-center justify-center rounded-full bg-blue-50 text-xs font-extrabold text-blue-600">3</span>
                                 <p class="text-sm leading-6 text-slate-600">Bật duyệt tham gia nếu lớp cần kiểm soát danh sách học viên trước.</p>
                             </div>
                         </div>

@@ -198,16 +198,16 @@ class StatisticalService
                 $excused = (int) ($row->excused_sessions ?? 0);
                 $absent = (int) ($row->absent_sessions ?? 0);
 
-                $deductExcusedAbsence = (bool) ($courseClass?->deduct_excused_absence ?? true);
+                $rules = $courseClass ? $courseClass->getAttendanceRules() : (new \App\Models\CourseClass())->getAttendanceRules();
 
                 // Đơn vị là buổi; vắng có phép bị loại khỏi mẫu số (nếu bật). Không quy đổi muộn.
                 $plannedSessions = max((int) ($courseClass?->total_sessions ?? 0), $total);
-                $countedTotal = AttendanceCalculator::countedSessions($total, $excused, $deductExcusedAbsence);
+                $countedTotal = AttendanceCalculator::countedSessions($total, $excused, $rules);
                 $lateAbsentSessions = 0;
                 $effectiveAbsent = max($absent, 0);
                 $attended = $present + $late;
                 // % chuyên cần tính trên tổng số buổi dự kiến (cả khóa) để nhất quán với quỹ vắng.
-                $percent = AttendanceCalculator::percentOfPlanned($plannedSessions, $row->counts ?? [], $deductExcusedAbsence);
+                $percent = AttendanceCalculator::percentOfPlanned($plannedSessions, $row->counts ?? [], $rules);
 
                 $allowedAbsentSessions = AttendanceCalculator::allowedAbsentSessions($plannedSessions);
                 $safeAbsenceSessions = max($allowedAbsentSessions - $effectiveAbsent, 0);

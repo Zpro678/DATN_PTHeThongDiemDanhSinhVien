@@ -84,7 +84,7 @@ class DashboardStatisticService
                 'class_members.full_name',
                 'classes.name as class_name',
                 'classes.total_sessions as planned_sessions',
-                'classes.deduct_excused_absence as deduct_excused_absence',
+                'classes.attendance_rules as attendance_rules',
             ]);
 
         if ($members->isEmpty()) {
@@ -110,17 +110,18 @@ class DashboardStatisticService
                 $absentSessions   = $counts['absent'];
                 $lateSessions     = $counts['late'];
                 $excusedSessions  = $counts['excused'];
-                $deduct          = (bool) $student->deduct_excused_absence;
+                $rules            = is_string($student->attendance_rules) ? (json_decode($student->attendance_rules, true) ?? []) : (array) ($student->attendance_rules ?? []);
+                $rules            = array_merge((new \App\Models\CourseClass())->getAttendanceRules(), $rules);
 
-                $counted         = AttendanceCalculator::countedSessions($plannedSessions, $excusedSessions, $deduct);
-                $effectiveAbsent = AttendanceCalculator::effectiveAbsence($counts); // Vắng quy đổi (đủ 6 trạng thái).
+                $counted         = AttendanceCalculator::countedSessions($plannedSessions, $excusedSessions, $rules);
+                $effectiveAbsent = AttendanceCalculator::effectiveAbsence($counts, $rules); // Vắng quy đổi (đủ 6 trạng thái).
 
                 if ($counted <= 0 || $plannedSessions <= 0) {
                     return null;
                 }
 
                 $absenceRatio      = $effectiveAbsent / $counted;
-                $attendancePercent = AttendanceCalculator::percentOfPlanned($plannedSessions, $counts, $deduct);
+                $attendancePercent = AttendanceCalculator::percentOfPlanned($plannedSessions, $counts, $rules);
 
                 if ($absenceRatio < $warningLimitRatio) {
                     return null;

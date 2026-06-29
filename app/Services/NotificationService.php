@@ -373,12 +373,13 @@ class NotificationService
             ->get(['cm.user_id', 'cs.meeting_id', 'ar.class_session_id', 'cs.qr_token', 'ar.status'])
             ->groupBy('user_id');
 
+        $rules = $class->getAttendanceRules();
         foreach ($rowsByUser as $userId => $userRows) {
             $userId = (int) $userId;
-            $counts = AttendanceCalculator::consolidateByMeeting($userRows);
+            $counts = AttendanceCalculator::consolidateByMeeting($userRows, $rules);
             $excused = $counts['excused'];
             // Vắng quy đổi (đủ 6 trạng thái) để xét quỹ vắng — làm tròn xuống cho thông báo.
-            $effectiveAbsent = (int) AttendanceCalculator::effectiveAbsence($counts);
+            $effectiveAbsent = (int) AttendanceCalculator::effectiveAbsence($counts, $rules);
             $remaining = $allowed - $effectiveAbsent;
             $url = route('student.classes.show', ['ma_user' => $userId, 'courseClass' => $class->id]);
 

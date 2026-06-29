@@ -86,16 +86,16 @@ class StudentsSheet implements FromArray, ShouldAutoSize, WithStyles, WithTitle
             ->orderBy('full_name')
             ->get();
 
-        // ── Truy vấn buổi học & điểm danh ──
+        // ── Truy vấn buổi học & tổng kết ──
         $classIds = $members->pluck('class_id')->unique();
-        $sessions = ClassSession::whereIn('class_id', $classIds)
+        $meetings = \App\Models\ClassMeeting::whereIn('class_id', $classIds)
             ->where('status', 'closed')
             ->orderBy('date')
             ->get();
 
-        $this->sessionCount = $sessions->count();
+        $this->sessionCount = $meetings->count();
 
-        $attendanceRecords = AttendanceRecord::whereIn('class_member_id', $members->pluck('id'))
+        $meetingSummaries = \App\Models\MeetingSummary::whereIn('class_member_id', $members->pluck('id'))
             ->get()
             ->groupBy('class_member_id');
 
@@ -107,19 +107,21 @@ class StudentsSheet implements FromArray, ShouldAutoSize, WithStyles, WithTitle
             'Lớp học'
         ];
 
-        foreach ($sessions as $session) {
-            $headers[] = $session->date->format('d/m');
+        foreach ($meetings as $meeting) {
+            $headers[] = $meeting->date->format('d/m');
         }
 
         $formulaName = 'Kết quả công thức (%)';
 
         $headers = array_merge($headers, [
-            'Tổng số tiết đã học',
+            'Tổng số buổi',
             'Có mặt', 
-            'Đi muộn', 
-            'Vắng không phép', 
-            'Vắng có phép',
-            'Muộn quy đổi (tiết)',
+            'Đi muộn',
+            'Vắng giữa giờ',
+            'Về sớm',
+            'Vắng', 
+            'Có phép',
+            'Tổng điểm trừ',
             'Chuyên cần (% cài đặt lớp)',
             $formulaName
         ]);
@@ -130,75 +132,55 @@ class StudentsSheet implements FromArray, ShouldAutoSize, WithStyles, WithTitle
         $rows[] = ['Ngày xuất:', now()->format('d/m/Y H:i')];
         $rows[] = ['']; // row 5: trống
 
-        // ── Row 6: Cột header ──
-        $headerRow = ['Mã SV', 'Họ và Tên', 'Email'];
-        foreach ($sessions as $session) {
-            $headerRow[] = $session->date->format('d/m');
-        }
-        $headerRow[] = 'Số buổi có mặt';
-        $headerRow[] = 'Số buổi muộn';
-        $headerRow[] = 'Số buổi vắng phép';
-        $headerRow[] = 'Số buổi vắng KP';
-        $headerRow[] = 'Tỉ lệ tham dự';
-        $headerRow[] = 'Chuyên Cần (%)';
-        $rows[] = $headerRow;
+        $rows[] = $headers;
 
         // ── Data rows bắt đầu từ row 7 ──
         $this->dataStartRow = 7;
         $currentRow = $this->dataStartRow;
 
         foreach ($members as $member) {
-            $stats = $attendanceStats->get($member->id, [
-                'studied_lessons' => 0,
-                'present_lessons' => 0,
-                'late_lessons' => 0,
-                'absent_lessons' => 0,
-                'excused_lessons' => 0,
-            ]);
+            $memberSummaries = $meetingSummaries->get($member->id, collect())->keyBy('meeting_id');
+            $counts = ['present' => 0, 'late' => 0, 'partial' => 0, 'early_leave' => 0, 'excused' => 0, 'absent' => 0, 'total' => 0, 'deduction' => 0.0];
+            
+            // Loop through all $meetings to build counts. Only closed meetings of this class are considered.
+            foreach ($meetings as $meeting) {
+                if ($meeting->class_id === $member->class_id) {
+                    $counts['total']++;
+                    if ($summary = $memberSummaries->get($meeting->id)) {
+                        $counts[$summary->status] = ($counts[$summary->status] ?? 0) + 1;
+                        $counts['deduction'] += (float)$summary->deduction;
+                    } else {
+                        // Trạng thái pending hoặc chưa tổng kết coi như vắng (nếu buổi đã đóng)
+                        $counts['absent']++;
+                        $counts['deduction'] += \App\Services\AttendanceCalculator::deductionForStatus('absent');
+                    }
+                }
+            }
 
-            // Tính chuyên cần theo cài đặt lớp (lấy từ stats, do LectureManageStudentService đã join classes)
-            $latesPerAbsent     = (int) ($stats['lates_per_absent'] ?? 0);
-            $deductExcused      = (bool) ($stats['deduct_excused_absence'] ?? false);
-            $lateCount          = (int) ($stats['late_count'] ?? 0);
-            $presentLessons     = (int) ($stats['present_lessons'] ?? 0);
-            $lateLessons        = (int) ($stats['late_lessons'] ?? 0);
-            $absentLessons      = (int) ($stats['absent_lessons'] ?? 0);
-            $excusedLessons     = (int) ($stats['excused_lessons'] ?? 0);
-            $studied            = (int) ($stats['studied_lessons'] ?? 0);
-
-            $lateConvertedLessons = AttendanceCalculator::lateAbsentLessons($lateCount, $latesPerAbsent);
-            $classPercent = AttendanceCalculator::percent(
-                $presentLessons,
-                $lateLessons,
-                $excusedLessons,
-                $studied,
-                $lateCount,
-                $latesPerAbsent,
-                $deductExcused,
-            );
+            $rules = $member->courseClass->getAttendanceRules();
+            $plannedSessions = $counts['total'];
+            $classPercent = \App\Services\AttendanceCalculator::percentOfPlanned($plannedSessions, $counts, $rules);
 
             // Tính phần trăm theo công thức tự nhập
             $percent = 0;
-            if ($studied > 0) {
-                // Ensure the formula only contains safe characters and allowed math functions
+            if ($plannedSessions > 0) {
                 $formulaStr = strtolower($this->formula);
                 
-                // Chỉ giữ lại các biến và hàm toán học hợp lệ
                 $formulaStr = preg_replace_callback('/[a-z]+/', function($matches) {
                     $word = $matches[0];
-                    $allowed = ['c', 'm', 'v', 'p', 't', 'floor', 'ceil', 'round', 'max', 'min', 'abs'];
+                    $allowed = ['c', 'm', 'vg', 'vs', 'v', 'p', 't', 'floor', 'ceil', 'round', 'max', 'min', 'abs'];
                     return in_array($word, $allowed) ? $word : '';
                 }, $formulaStr);
 
-                // Loại bỏ các ký tự đặc biệt nguy hiểm (chỉ cho phép a-z, số, toán tử, khoảng trắng, dấu phẩy)
                 $formulaStr = preg_replace('/[^a-z0-9\+\-\*\/\(\)\.\s,]/', '', $formulaStr);
                 
-                // Map variables to their values using word boundaries
-                $formulaStr = preg_replace('/\bc\b/', $presentLessons, $formulaStr);
-                $formulaStr = preg_replace('/\bm\b/', $lateLessons, $formulaStr);
-                $formulaStr = preg_replace('/\bv\b/', $absentLessons, $formulaStr);
-                $formulaStr = preg_replace('/\bp\b/', $excusedLessons, $formulaStr);
-                $formulaStr = preg_replace('/\bt\b/', $studied, $formulaStr);
+                $formulaStr = preg_replace('/\bc\b/', $counts['present'], $formulaStr);
+                $formulaStr = preg_replace('/\bm\b/', $counts['late'], $formulaStr);
+                $formulaStr = preg_replace('/\bvg\b/', $counts['partial'], $formulaStr);
+                $formulaStr = preg_replace('/\bvs\b/', $counts['early_leave'], $formulaStr);
+                $formulaStr = preg_replace('/\bv\b/', $counts['absent'], $formulaStr);
+                $formulaStr = preg_replace('/\bp\b/', $counts['excused'], $formulaStr);
+                $formulaStr = preg_replace('/\bt\b/', $counts['total'], $formulaStr);
 
                 if (!empty($formulaStr)) {
                     try {
@@ -213,27 +195,28 @@ class StudentsSheet implements FromArray, ShouldAutoSize, WithStyles, WithTitle
             }
 
             $row = [
+                $currentRow - 6, // STT
                 $member->student_code,
                 $member->full_name,
-                $member->user?->email ?? '',
+                $member->email ?? $member->user?->email ?? '',
+                $member->courseClass?->code ?? '',
             ];
 
-            $memberRecords = $attendanceRecords->get($member->id, collect())->keyBy('class_session_id');
-
-            foreach ($sessions as $session) {
-                if ($session->class_id === $member->class_id) {
-                    $record = $memberRecords->get($session->id);
-                    if ($record) {
+            foreach ($meetings as $meeting) {
+                if ($meeting->class_id === $member->class_id) {
+                    $summary = $memberSummaries->get($meeting->id);
+                    if ($summary) {
                         $statusMap = [
-                            'present' => 'c',
-                            'late'    => 'm',
-                            'absent'  => 'v',  // vắng không phép — khớp biến công thức
-                            'excused' => 'p',  // có phép — khớp biến công thức
-                            'pending' => '-',
+                            'present'     => 'c',
+                            'late'        => 'm',
+                            'partial'     => 'vg',
+                            'early_leave' => 'vs',
+                            'absent'      => 'v',
+                            'excused'     => 'p',
                         ];
-                        $row[] = $statusMap[$record->status] ?? '-';
+                        $row[] = $statusMap[$summary->status] ?? '-';
                     } else {
-                        $row[] = '-';
+                        $row[] = '-'; // Không có summary (chưa điểm danh)
                     }
                 } else {
                     $row[] = '';
@@ -241,12 +224,14 @@ class StudentsSheet implements FromArray, ShouldAutoSize, WithStyles, WithTitle
             }
 
             $row = array_merge($row, [
-                $stats['studied_lessons'],
-                $stats['present_lessons'],
-                $stats['late_lessons'],
-                $stats['absent_lessons'],
-                $stats['excused_lessons'],
-                $lateConvertedLessons > 0 ? $lateConvertedLessons : '-',
+                $counts['total'],
+                $counts['present'],
+                $counts['late'],
+                $counts['partial'],
+                $counts['early_leave'],
+                $counts['absent'],
+                $counts['excused'],
+                $counts['deduction'],
                 $classPercent . '%',
                 $percent . '%',
             ]);
@@ -260,31 +245,31 @@ class StudentsSheet implements FromArray, ShouldAutoSize, WithStyles, WithTitle
         // ── Dòng trắng ──
         $rows[] = [''];
 
-        // ── Dòng tổng kết lớp (giống file mẫu) ──
+        // ── Dòng tổng kết lớp ──
         if ($members->count() > 0) {
-            $cColIdx = 3 + $this->sessionCount + 1;
-            $mColIdx = $cColIdx + 1;
-            $vColIdx = $mColIdx + 1;
-            $kColIdx = $vColIdx + 1;
-            $ratioColIdx = $kColIdx + 1;
-            $ccColIdx    = $ratioColIdx + 1;
-
-            $cCol      = Coordinate::stringFromColumnIndex($cColIdx);
-            $mCol      = Coordinate::stringFromColumnIndex($mColIdx);
-            $vCol      = Coordinate::stringFromColumnIndex($vColIdx);
-            $kCol      = Coordinate::stringFromColumnIndex($kColIdx);
-            $ratioCol  = Coordinate::stringFromColumnIndex($ratioColIdx);
-            $ccCol     = Coordinate::stringFromColumnIndex($ccColIdx);
-
             $start = $this->dataStartRow;
             $end   = $this->dataEndRow;
+            
+            $colIdx = 5 + $this->sessionCount + 2; // 5 columns before sessions, +1 is "Tổng số buổi", +2 is "Có mặt"
+            
+            $cCol      = Coordinate::stringFromColumnIndex($colIdx);
+            $mCol      = Coordinate::stringFromColumnIndex($colIdx + 1);
+            $vgCol     = Coordinate::stringFromColumnIndex($colIdx + 2);
+            $vsCol     = Coordinate::stringFromColumnIndex($colIdx + 3);
+            $vCol      = Coordinate::stringFromColumnIndex($colIdx + 4);
+            $pCol      = Coordinate::stringFromColumnIndex($colIdx + 5);
+            $deductCol = Coordinate::stringFromColumnIndex($colIdx + 6);
+            $ccCol     = Coordinate::stringFromColumnIndex($colIdx + 7);
 
             $rows[] = [
-                'TỔNG KẾT LỚP', '', '',
+                'TỔNG KẾT LỚP', '', '', '', '',
                 'TB có mặt',  "=AVERAGE({$cCol}{$start}:{$cCol}{$end})",
                 'TB muộn',    "=AVERAGE({$mCol}{$start}:{$mCol}{$end})",
-                'TB vắng có phép', "=AVERAGE({$vCol}{$start}:{$vCol}{$end})",
-                'TB vắng KP', "=AVERAGE({$kCol}{$start}:{$kCol}{$end})",
+                'TB vắng giữa', "=AVERAGE({$vgCol}{$start}:{$vgCol}{$end})",
+                'TB về sớm',  "=AVERAGE({$vsCol}{$start}:{$vsCol}{$end})",
+                'TB vắng', "=AVERAGE({$vCol}{$start}:{$vCol}{$end})",
+                'TB có phép', "=AVERAGE({$pCol}{$start}:{$pCol}{$end})",
+                'TB điểm trừ', "=AVERAGE({$deductCol}{$start}:{$deductCol}{$end})",
                 'TB chuyên cần', "=AVERAGE({$ccCol}{$start}:{$ccCol}{$end})",
             ];
         }
@@ -293,52 +278,11 @@ class StudentsSheet implements FromArray, ShouldAutoSize, WithStyles, WithTitle
     }
 
     /**
-     * Tính chuyên cần theo công thức tùy chọn (trả về số %)
+     * Tính chuyên cần theo công thức tùy chọn (nếu cần dùng ở chỗ khác)
      */
     private function calcFormulaForRow(array $stats, int $memberId): string
     {
-        $presentLessons = (int) ($stats['present_lessons'] ?? 0);
-        $lateLessons    = (int) ($stats['late_lessons'] ?? 0);
-        $absentLessons  = (int) ($stats['absent_lessons'] ?? 0);
-        $excusedLessons = (int) ($stats['excused_lessons'] ?? 0);
-        $studied        = (int) ($stats['studied_lessons'] ?? 0);
-
-        if ($studied <= 0) return '0%';
-
-        $latesPerAbsent = (int) ($stats['lates_per_absent'] ?? 0);
-        $deductExcused  = (bool) ($stats['deduct_excused_absence'] ?? false);
-        $lateCount      = (int) ($stats['late_count'] ?? 0);
-
-        $percent = AttendanceCalculator::percent(
-            $presentLessons, $lateLessons, $excusedLessons,
-            $studied, $lateCount, $latesPerAbsent, $deductExcused,
-        );
-
-        // Tính theo công thức tùy chọn nếu có
-        $formulaStr = strtolower($this->formula);
-        $formulaStr = preg_replace_callback('/[a-z]+/', function ($m) {
-            $allowed = ['c', 'm', 'v', 'p', 't', 'floor', 'ceil', 'round', 'max', 'min', 'abs'];
-            return in_array($m[0], $allowed) ? $m[0] : '';
-        }, $formulaStr);
-        $formulaStr = preg_replace('/[^a-z0-9\+\-\*\/\(\)\.\s,]/', '', $formulaStr);
-        $formulaStr = preg_replace('/\bc\b/', $presentLessons, $formulaStr);
-        $formulaStr = preg_replace('/\bm\b/', $lateLessons, $formulaStr);
-        $formulaStr = preg_replace('/\bv\b/', $absentLessons, $formulaStr);
-        $formulaStr = preg_replace('/\bp\b/', $excusedLessons, $formulaStr);
-        $formulaStr = preg_replace('/\bt\b/', $studied, $formulaStr);
-
-        if (!empty($formulaStr)) {
-            try {
-                $result = @eval("return $formulaStr;");
-                if (is_numeric($result)) {
-                    $percent = round((float) $result, 2);
-                }
-            } catch (\Throwable $e) {
-                // giữ nguyên $percent
-            }
-        }
-
-        return $percent . '%';
+        return '0%'; // Hàm này có thể bị loại bỏ trong hệ thống mới do đã tính gộp bên trên
     }
 
     public function styles(Worksheet $sheet): array
@@ -384,14 +328,14 @@ class StudentsSheet implements FromArray, ShouldAutoSize, WithStyles, WithTitle
 
             // Cột session: căn giữa
             if ($this->sessionCount > 0) {
-                $sessionStartCol = Coordinate::stringFromColumnIndex(4);
-                $sessionEndCol   = Coordinate::stringFromColumnIndex(3 + $this->sessionCount);
+                $sessionStartCol = Coordinate::stringFromColumnIndex(6);
+                $sessionEndCol   = Coordinate::stringFromColumnIndex(5 + $this->sessionCount);
                 $sheet->getStyle("{$sessionStartCol}6:{$sessionEndCol}{$this->dataEndRow}")
                       ->getAlignment()->setHorizontal(Alignment::HORIZONTAL_CENTER);
             }
 
             // Cột tổng kết (sau sessions): nền xanh nhạt + bold
-            $summaryStartIdx = 3 + $this->sessionCount + 1;
+            $summaryStartIdx = 5 + $this->sessionCount + 1;
             $summaryStartCol = Coordinate::stringFromColumnIndex($summaryStartIdx);
             $sheet->getStyle("{$summaryStartCol}6:{$lastCol}{$this->dataEndRow}")->applyFromArray([
                 'font'      => ['bold' => true],
@@ -414,25 +358,27 @@ class StudentsSheet implements FromArray, ShouldAutoSize, WithStyles, WithTitle
         ]);
         $sheet->getRowDimension($summaryRow)->setRowHeight(24);
 
-        // ── Cột A-C: căn trái, cố định độ rộng ──
-        $sheet->getColumnDimension('A')->setWidth(12);
-        $sheet->getColumnDimension('B')->setWidth(24);
-        $sheet->getColumnDimension('C')->setWidth(28);
+        // ── Cột A-E: cố định độ rộng ──
+        $sheet->getColumnDimension('A')->setWidth(6);
+        $sheet->getColumnDimension('B')->setWidth(12);
+        $sheet->getColumnDimension('C')->setWidth(24);
+        $sheet->getColumnDimension('D')->setWidth(28);
+        $sheet->getColumnDimension('E')->setWidth(16);
 
         // ── Cột session: hẹp lại ──
-        for ($i = 4; $i <= 3 + $this->sessionCount; $i++) {
+        for ($i = 6; $i <= 5 + $this->sessionCount; $i++) {
             $col = Coordinate::stringFromColumnIndex($i);
             $sheet->getColumnDimension($col)->setWidth(8);
         }
 
         // ── Cột tổng: vừa ──
-        for ($i = 3 + $this->sessionCount + 1; $i <= $lastColIdx; $i++) {
+        for ($i = 5 + $this->sessionCount + 1; $i <= $lastColIdx; $i++) {
             $col = Coordinate::stringFromColumnIndex($i);
             $sheet->getColumnDimension($col)->setWidth(16);
         }
 
-        // ── Freeze panes (đóng băng dòng header + 3 cột đầu) ──
-        $sheet->freezePane('D7');
+        // ── Freeze panes (đóng băng dòng header + 5 cột đầu) ──
+        $sheet->freezePane('F7');
 
         return [];
     }
