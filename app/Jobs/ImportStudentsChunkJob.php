@@ -127,7 +127,7 @@ class ImportStudentsChunkJob implements ShouldQueue
                     Mail::to($email)->send(
                         new StudentImportNotificationMail(
                             $courseClass->name,
-                            $courseClass->code,
+                            $courseClass->join_key,
                             strtoupper($studentCode),
                             $fullName,
                             $email

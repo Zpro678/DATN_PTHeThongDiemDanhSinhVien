@@ -1,7 +1,4 @@
 <div class="mx-auto max-w-[1300px] space-y-6 p-4 pb-24 sm:p-8">
-    <a href="{{ route('lecturer.attendance.index') }}" class="inline-flex items-center gap-2 text-sm font-semibold text-slate-500 transition hover:text-slate-800">
-        <x-user.icon name="arrow-left" :size="16" />Quay lại danh sách buổi
-    </a>
 
     <section class="flex flex-col justify-between gap-4 rounded-[2rem] border border-outline-variant/10 bg-white p-6 shadow-sm md:flex-row md:items-end">
         <div>
@@ -9,7 +6,7 @@
                 <x-user.icon name="calendar-check" class="text-primary" />{{ $meeting->name }}
             </h1>
             <p class="mt-2 text-sm text-slate-500">
-                <span class="font-bold text-slate-700">{{ $meeting->courseClass->code }}</span> · {{ $meeting->courseClass->name }} ·
+                <span class="font-bold text-slate-700">{{ $meeting->courseClass->join_key }}</span> · {{ $meeting->courseClass->name }} ·
                 {{ $meeting->date->format('d/m/Y') }}@if($meeting->start_time) · {{ \Carbon\Carbon::parse($meeting->start_time)->format('H:i') }} - {{ \Carbon\Carbon::parse($meeting->end_time)->format('H:i') }}@endif
             </p>
         </div>
@@ -82,4 +79,10 @@
             </table>
         </div>
     </section>
+
+    <div class="mt-4 flex justify-start">
+        <a href="{{ route('lecturer.attendance.index') }}" class="inline-flex items-center gap-2 rounded-full bg-white px-5 py-2.5 text-sm font-bold text-slate-700 shadow-sm ring-1 ring-inset ring-slate-300 transition hover:bg-slate-50 hover:text-slate-900">
+            <x-user.icon name="arrow-left" :size="18" />Quay lại
+        </a>
+    </div>
 </div>

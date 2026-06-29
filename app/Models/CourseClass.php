@@ -17,7 +17,7 @@ class CourseClass extends Model
 
     protected $fillable = [
         'owner_user_id', // ID của chủ lớp tạo lớp học.
-        'code', // Mã lớp học duy nhất.
+        'join_key', // Mã lớp (SV nhập để vào lớp).
         'name', // Tên lớp học.
         'description', // Mô tả môn học.
         'late_threshold', // Ngưỡng thời gian trễ.
@@ -105,7 +105,7 @@ class CourseClass extends Model
         do {
             $suffix = str_pad((string) random_int(0, 9999), 4, '0', STR_PAD_LEFT);
             $code = $prefix.$suffix;
-            $query = self::withTrashed()->where('code', $code);
+            $query = self::withTrashed()->where('join_key', $code);
             if ($excludeId) {
                 $query->where('id', '!=', $excludeId);
             }

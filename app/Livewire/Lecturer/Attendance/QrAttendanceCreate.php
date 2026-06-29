@@ -258,8 +258,6 @@ class QrAttendanceCreate extends Component
             $meetingFields = [
                 'name' => $validated['name'],
                 'date' => $validated['date'],
-                'start_time' => $validated['startTime'] ?: null,
-                'end_time' => $validated['endTime'] ?: null,
             ];
 
             $session->update(array_merge($meetingFields, $qrFields));
@@ -289,14 +287,14 @@ class QrAttendanceCreate extends Component
             return;
         }
 
-        // Buổi luôn diễn ra hôm nay, bắt đầu lúc tạo; giờ kết thúc phải cách hiện tại >= 10 phút.
+        // Buổi luôn diễn ra hôm nay, bắt đầu lúc tạo; giờ kết thúc tự động tính (mặc định +90 phút).
         $date = now()->toDateString();
         $startTime = now()->format('H:i');
-        $endTime = $validated['endTime'] ?: now()->addMinutes(90)->format('H:i');
+        $endTime = now()->addMinutes(max(90, (int)$validated['durationMinutes']))->format('H:i');
         $endsAt = \Carbon\Carbon::parse($date.' '.$endTime.':00');
 
         if ($endsAt->lessThanOrEqualTo(now()->addMinutes(10))) {
-            $this->addError('endTime', 'Giờ kết thúc phải sau thời điểm hiện tại ít nhất 10 phút.');
+            $this->addError('name', 'Giờ kết thúc không hợp lệ, vui lòng thử lại.');
             return;
         }
 
@@ -348,7 +346,7 @@ class QrAttendanceCreate extends Component
         $code = 'DEMO-'.$userId.'-QR';
 
         $courseClass = CourseClass::withTrashed()->firstOrCreate(
-            ['code' => $code],
+            ['join_key' => $code],
             [
                 'owner_user_id' => $userId,
                 'name' => 'Lớp demo điểm danh QR',

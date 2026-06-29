@@ -9,3 +9,4 @@ $import = new \App\Imports\StudentsImport(4);
 echo "Success count: " . $import->successCount . "\n";
 echo "Errors:\n";
 print_r($import->errors);
+

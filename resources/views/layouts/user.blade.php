@@ -258,6 +258,39 @@
                     </div>
                 </header>
 
+                @auth
+                    @if(request()->routeIs('managed-classes', 'lecturer.*', 'create-class'))
+                    @php
+                        $ongoingSession = \App\Models\ClassSession::query()
+                            ->where('status', 'active')
+                            ->whereHas('meeting.courseClass', fn ($q) => $q->where('owner_user_id', auth()->id()))
+                            ->with(['meeting.courseClass:id,name,code,owner_user_id'])
+                            ->latest()
+                            ->first();
+                    @endphp
+                    @if($ongoingSession)
+                        <div class="z-30 border-b border-blue-200 bg-gradient-to-r from-blue-50 via-blue-50 to-indigo-50 px-5 py-2.5 sm:px-8">
+                            <div class="mx-auto flex max-w-[1300px] items-center justify-between gap-3">
+                                <div class="flex items-center gap-3 min-w-0">
+                                    <span class="relative flex h-2.5 w-2.5 shrink-0">
+                                        <span class="absolute inline-flex h-full w-full animate-ping rounded-full bg-blue-400 opacity-75"></span>
+                                        <span class="relative inline-flex h-2.5 w-2.5 rounded-full bg-blue-500"></span>
+                                    </span>
+                                    <p class="truncate text-sm font-bold text-blue-900">
+                                        Phiên điểm danh đang diễn ra
+                                        <span class="font-medium text-blue-600">— {{ $ongoingSession->meeting->courseClass->code ?? '' }} · {{ $ongoingSession->name }}</span>
+                                    </p>
+                                </div>
+                                <a href="{{ $ongoingSession->qr_token ? route('lecturer.attendance.qr.session', $ongoingSession) : route('lecturer.attendance.manual.session', $ongoingSession) }}" class="inline-flex shrink-0 items-center gap-1.5 rounded-lg bg-blue-600 px-4 py-1.5 text-xs font-bold text-white shadow-sm transition-all hover:bg-blue-700 hover:shadow-md active:scale-[0.97]">
+                                    Xem ngay
+                                    <x-user.icon name="arrow-right" :size="14" />
+                                </a>
+                            </div>
+                        </div>
+                    @endif
+                    @endif
+                @endauth
+
                 <x-scroll-area id="main-scroll-area" class="relative flex-1 pb-24 md:pb-0">
                     {{ $slot }}
                 </x-scroll-area>

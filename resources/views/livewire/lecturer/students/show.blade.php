@@ -42,7 +42,7 @@
     <section class="overflow-hidden rounded-3xl bg-gradient-to-br from-primary to-[#003184] p-7 text-white shadow-lg shadow-primary/20">
         <div class="flex flex-col gap-6 md:flex-row md:items-center">
             <div class="flex h-20 w-20 items-center justify-center rounded-2xl bg-white/15 text-3xl font-extrabold ring-1 ring-white/20">{{ mb_strtoupper(mb_substr($member->full_name, 0, 1)) }}</div>
-            <div class="flex-1"><h2 class="text-2xl font-extrabold">{{ $member->full_name }}</h2><p class="mt-2 text-sm text-blue-100">{{ $member->student_code }} · {{ $member->user?->email ?? 'Chưa liên kết tài khoản' }}</p><p class="mt-1 text-sm font-semibold text-white">{{ $member->courseClass->code }} - {{ $member->courseClass->name }}</p></div>
+            <div class="flex-1"><h2 class="text-2xl font-extrabold">{{ $member->full_name }}</h2><p class="mt-2 text-sm text-blue-100">{{ $member->student_code }} · {{ $member->user?->email ?? 'Chưa liên kết tài khoản' }}</p><p class="mt-1 text-sm font-semibold text-white">{{ $member->courseClass->join_key }} - {{ $member->courseClass->name }}</p></div>
             <span class="self-start rounded-full bg-white/15 px-4 py-2 text-xs font-bold uppercase ring-1 ring-white/20">{{ $member->trashed() ? 'Lưu trữ' : 'Đang học' }}</span>
         </div>
     </section>

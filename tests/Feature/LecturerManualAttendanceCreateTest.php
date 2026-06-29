@@ -30,7 +30,7 @@ class LecturerManualAttendanceCreateTest extends TestCase
 
         $courseClass = CourseClass::query()
             ->where('owner_user_id', $user->id)
-            ->where('code', 'DEMO-'.$user->id.'-MANUAL')
+            ->where('join_key', 'DEMO-'.$user->id.'-MANUAL')
             ->firstOrFail();
 
         $this->assertSame(8, ClassMember::query()->where('class_id', $courseClass->id)->count());

@@ -80,7 +80,7 @@ class CreateClass extends Component
         $suffix = $this->randomSuffix;
         do {
             $code = $prefix.$suffix;
-            $exists = CourseClass::withTrashed()->where('code', $code)->exists();
+            $exists = CourseClass::withTrashed()->where('join_key', $code)->exists();
             if ($exists) {
                 $suffix = str_pad((string) random_int(0, 9999), 4, '0', STR_PAD_LEFT);
             }
@@ -128,7 +128,7 @@ class CreateClass extends Component
         $courseClass = CourseClass::query()->create([
             'owner_user_id' => auth()->id(),
             'name' => $this->name,
-            'code' => $code,
+            'join_key' => $code,
             'subject_code' => filled($this->subjectCode) ? strtoupper($this->subjectCode) : null,
             'semester' => $this->semester ?: null,
             'description' => $this->description ?: null,

@@ -22,7 +22,7 @@
             @forelse ($packages as $index => $package)
                 @php
                     $isFree = (float) $package->price <= 0;
-                    $isEnterprise = strtolower($package->code) === 'enterprise';
+                    $isEnterprise = strtolower($package->plan_tier) === 'enterprise';
                     
                     if ($isEnterprise) {
                         $accent = 'from-purple-500 via-fuchsia-500 to-pink-500';
@@ -93,7 +93,7 @@
                         </div>
                         <div class="mb-3 flex items-center gap-2.5 overflow-hidden whitespace-nowrap h-[26px]">
                             <span class="inline-flex items-center rounded-lg border px-2.5 py-1 text-[11px] font-bold uppercase tracking-wide {{ $badgeClass }}">
-                                {{ $package->code }}
+                                {{ $package->plan_tier }}
                             </span>
                             @if($package->is_active)
                                 <span class="inline-flex items-center rounded-lg border border-emerald-100 bg-emerald-50 px-2.5 py-1 text-[11px] font-bold text-emerald-600">

@@ -32,15 +32,6 @@ class AttendanceCreate extends Component
     // Giờ kết thúc buổi (chỉ nhập giờ kết thúc; ngày = hôm nay, bắt đầu = lúc tạo).
     public string $meetingEndTime = '';
 
-    // --- STEP 3: CẤU HÌNH QR ---
-    public int $durationMinutes = 15;
-    public int $gpsRadius = 100;
-    public int $qrRefreshRate = 10;
-    public bool $gpsEnabled = true;
-    public bool $deviceCheck = true;
-    public ?float $gpsLatitude = null;
-    public ?float $gpsLongitude = null;
-
     public ?int $cloneSessionId = null;
 
     public function mount(): void
@@ -92,22 +83,28 @@ class AttendanceCreate extends Component
     public function createManualSession(): void
     {
         $session = $this->createBaseSession('active');
-        if (!$session) return;
+        if (!$session) {
+            $this->dispatch('toast', message: 'Bạn đã tạo buổi điểm danh thất bại.', type: 'error');
+            return;
+        }
         
-        $this->redirectRoute('lecturer.attendance.manual.session', ['ma_user' => auth()->id(), 'session' => $session->id], navigate: true);
+        session()->flash('success', 'Bạn đã tạo buổi điểm danh thành công.');
+        $this->redirectRoute('lecturer.attendance.index', navigate: true);
     }
 
     public function createQrSession(): void
     {
-        $session = $this->createBaseSession('pending');
-        if (!$session) return;
+        $meeting = $this->createBaseMeeting();
+        if (!$meeting) {
+            $this->dispatch('toast', message: 'Bạn đã tạo buổi điểm danh thất bại.', type: 'error');
+            return;
+        }
 
-        $this->sessionId = $session->id;
-        $this->loadConfigForClass($this->classId);
-        $this->step = 3; // Chuyển thẳng sang bước cấu hình QR
+        session()->flash('success', 'Bạn đã tạo buổi điểm danh thành công.');
+        $this->redirectRoute('lecturer.attendance.qr.create', ['ma_user' => auth()->id(), 'meeting' => $meeting->id], navigate: true);
     }
 
-    private function createBaseSession(string $status): ?ClassSession
+    private function createBaseMeeting(): ?ClassMeeting
     {
         $validated = $this->validate([
             'classId' => ['required', 'integer'],
@@ -139,17 +136,8 @@ class AttendanceCreate extends Component
             return null;
         }
 
-        // Giới hạn theo SỐ BUỔI dự kiến của lớp.
-        $totalSessions = (int) $courseClass->total_sessions;
-        $createdMeetings = (int) $courseClass->meetings()->count();
-
-        if ($totalSessions > 0 && $createdMeetings >= $totalSessions) {
-            $this->addError('name', "Đã tạo đủ {$createdMeetings}/{$totalSessions} buổi dự kiến. Vui lòng tăng tổng số buổi trong cài đặt lớp nếu cần tạo thêm.");
-            return null;
-        }
-
-        // Mỗi lần "Tạo buổi điểm danh" tạo một BUỔI mới và phiên đầu tiên của buổi đó.
-        $meeting = ClassMeeting::query()->create([
+        // Mỗi lần "Tạo buổi điểm danh" tạo một BUỔI mới.
+        return ClassMeeting::query()->create([
             'class_id' => $courseClass->id,
             'created_by' => auth()->id(),
             'name' => $validated['name'],
@@ -158,22 +146,27 @@ class AttendanceCreate extends Component
             'end_time' => $validated['meetingEndTime'],
             'status' => 'active',
         ]);
+    }
+
+    private function createBaseSession(string $status): ?ClassSession
+    {
+        $meeting = $this->createBaseMeeting();
+        if (!$meeting) return null;
 
         $session = ClassSession::query()->create([
-            'class_id' => $courseClass->id,
+            'class_id' => $meeting->class_id,
             'meeting_id' => $meeting->id,
-            'created_by' => auth()->id(),
-            'name' => $validated['name'],
-            'date' => $date,
-            'start_time' => $startTime,
-            'end_time' => $validated['meetingEndTime'],
+            'created_by' => $meeting->created_by,
+            'name' => $meeting->name,
+            'date' => $meeting->date,
+            'start_time' => $meeting->start_time,
+            'end_time' => $meeting->end_time,
             'status' => $status,
         ]);
 
-        // Phiên thủ công (status 'active') mặc định "Có mặt"; phiên QR (status 'pending') giữ "chưa điểm danh".
         $defaultStatus = $status === 'pending' ? 'pending' : 'present';
 
-        $courseClass->members()->where('status', 'active')->get()->each(fn ($member) => AttendanceRecord::query()->firstOrCreate([
+        $meeting->courseClass->members()->where('status', 'active')->get()->each(fn ($member) => AttendanceRecord::query()->firstOrCreate([
             'class_session_id' => $session->id,
             'class_member_id' => $member->id,
         ], [
@@ -182,87 +175,6 @@ class AttendanceCreate extends Component
         ]));
 
         return $session;
-    }
-
-    private function loadConfigForClass(string $classId): void
-    {
-        $selectedClass = $this->ownedClass((int) $classId);
-
-        $config = cache()->get('qr_config_class_'.$classId);
-        if ($config) {
-            $this->durationMinutes = $config['durationMinutes'] ?? 15;
-            $this->qrRefreshRate = $config['qrRefreshRate'] ?? 10;
-            $this->gpsEnabled = $config['gpsEnabled'] ?? true;
-            $this->deviceCheck = $config['deviceCheck'] ?? true;
-            $this->gpsRadius = $config['gpsRadius'] ?? 100;
-        }
-
-        if ($selectedClass->gps_latitude !== null && $selectedClass->gps_longitude !== null) {
-            $this->gpsLatitude = $selectedClass->gps_latitude;
-            $this->gpsLongitude = $selectedClass->gps_longitude;
-            $this->gpsRadius = $selectedClass->gps_radius ?? 100;
-            $this->gpsEnabled = true;
-        } else {
-            if (! $config || ! isset($config['gpsEnabled'])) {
-                $this->gpsEnabled = false;
-                $this->gpsLatitude = null;
-                $this->gpsLongitude = null;
-            }
-        }
-    }
-
-    public function saveConfig(): void
-    {
-        if (! $this->classId) {
-            return;
-        }
-
-        cache()->put('qr_config_class_'.$this->classId, [
-            'durationMinutes' => $this->durationMinutes,
-            'gpsRadius' => $this->gpsRadius,
-            'qrRefreshRate' => $this->qrRefreshRate,
-            'gpsEnabled' => $this->gpsEnabled,
-            'deviceCheck' => $this->deviceCheck,
-        ], now()->addDays(30));
-
-        session()->flash('success_config', 'Đã lưu cấu hình làm mặc định.');
-    }
-
-    // ========== BƯỚC 3: CẤU HÌNH QR VÀ BẮT ĐẦU ==========
-    public function setupQr(): void
-    {
-        $validated = $this->validate([
-            'durationMinutes' => ['required', 'integer', 'in:10,15,20'],
-            'gpsRadius' => ['required', 'integer', 'min:5', 'max:2500'],
-            'qrRefreshRate' => ['required', 'integer', 'in:5,10,15,30'],
-            'gpsEnabled' => ['boolean'],
-            'gpsLatitude' => ['nullable', 'numeric'],
-            'gpsLongitude' => ['nullable', 'numeric'],
-            'deviceCheck' => ['boolean'],
-        ]);
-
-        if ($validated['gpsEnabled']) {
-            $maxRadius = app(SubscriptionService::class)->maxGpsRadius(auth()->user());
-            if ((int) $validated['gpsRadius'] > $maxRadius) {
-                $this->addError('gpsRadius', "Gói hiện tại chỉ cho phép bán kính GPS tối đa {$maxRadius}m. Vui lòng giảm bán kính hoặc nâng cấp gói.");
-                return;
-            }
-        }
-
-        $this->saveConfig();
-
-        $session = ClassSession::query()->findOrFail($this->sessionId);
-        $session->update([
-            'qr_token' => Str::upper(Str::random(24)),
-            'token_expires_at' => now()->addMinutes($validated['durationMinutes']),
-            'qr_refresh_rate' => $validated['qrRefreshRate'],
-            'gps_latitude' => $validated['gpsEnabled'] ? $this->gpsLatitude : null,
-            'gps_longitude' => $validated['gpsEnabled'] ? $this->gpsLongitude : null,
-            'gps_radius' => $validated['gpsEnabled'] ? $validated['gpsRadius'] : null,
-            'status' => 'active',
-        ]);
-
-        $this->redirectRoute('lecturer.attendance.qr.session', ['ma_user' => auth()->id(), 'session' => $session->id], navigate: true);
     }
 
     public function backToStep(int $step): void
@@ -301,7 +213,7 @@ class AttendanceCreate extends Component
         $code = 'DEMO-'.$userId.'-ATT';
 
         $courseClass = CourseClass::withTrashed()->firstOrCreate(
-            ['code' => $code],
+            ['join_key' => $code],
             [
                 'owner_user_id' => $userId,
                 'name' => 'Lớp demo điểm danh',

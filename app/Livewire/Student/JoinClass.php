@@ -54,7 +54,7 @@ class JoinClass extends Component
             'full_name.max' => 'Họ và tên không được vượt quá 255 ký tự.',
         ]);
 
-        $courseClass = CourseClass::where('code', $this->class_code)->first();
+        $courseClass = CourseClass::where('join_key', $this->class_code)->first();
 
         if (! $courseClass) {
             $this->addError('class_code', 'Không tìm thấy lớp học với mã này.');

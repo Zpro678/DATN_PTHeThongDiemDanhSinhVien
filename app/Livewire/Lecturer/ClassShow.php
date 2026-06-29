@@ -192,7 +192,7 @@ class ClassShow extends Component
     {
         $this->isEditingCode = !$this->isEditingCode;
         if ($this->isEditingCode) {
-            $this->newClassCode = $this->class->code;
+            $this->newClassCode = $this->class->join_key;
         } else {
             $this->resetValidation('newClassCode');
         }
@@ -201,7 +201,7 @@ class ClassShow extends Component
     public function updateClassCode(): void
     {
         $this->validate([
-            'newClassCode' => 'required|string|max:50|unique:classes,code,' . $this->class->id,
+            'newClassCode' => 'required|string|max:50|unique:classes,join_key,' . $this->class->id,
         ], [
             'newClassCode.required' => 'Mã lớp không được để trống.',
             'newClassCode.unique' => 'Mã lớp này đã tồn tại trong hệ thống.',
@@ -209,7 +209,7 @@ class ClassShow extends Component
         ]);
 
         $this->class->update([
-            'code' => $this->newClassCode,
+            'join_key' => $this->newClassCode,
         ]);
 
         $this->isEditingCode = false;
@@ -220,7 +220,7 @@ class ClassShow extends Component
     {
         do {
             $code = strtoupper(Str::random(8));
-        } while (CourseClass::where('code', $code)->where('id', '!=', $this->class->id)->exists());
+        } while (CourseClass::where('join_key', $code)->where('id', '!=', $this->class->id)->exists());
 
         $this->newClassCode = $code;
     }

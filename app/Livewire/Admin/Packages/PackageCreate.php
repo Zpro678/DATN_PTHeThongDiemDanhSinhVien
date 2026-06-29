@@ -59,7 +59,7 @@ class PackageCreate extends Component
         if ($this->hasApi) $features[] = 'Tích hợp API (SSO, LMS)';
 
         Plan::create([
-            'code' => Str::slug($this->name) . '-' . rand(1000, 9999),
+            'plan_tier' => Str::slug($this->name) . '-' . rand(1000, 9999),
             'name' => $this->name,
             'description' => $this->description,
             'price' => $finalPrice,

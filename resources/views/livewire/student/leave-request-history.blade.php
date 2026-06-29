@@ -45,7 +45,7 @@
                             <td class="px-4 py-4 min-w-[150px]">
                                 <p class="text-sm font-bold text-on-surface group-hover:text-primary transition-colors">{{ $request->classSession->courseClass->name ?? '' }}</p>
                                 <p class="mt-1 flex items-center gap-1.5 text-xs font-medium text-on-surface-variant">
-                                    <span>{{ $request->classSession->courseClass->code ?? '' }}</span>
+                                    <span>{{ $request->classSession->courseClass->join_key ?? '' }}</span>
                                 </p>
                             </td>
                             <td class="px-4 py-4 whitespace-nowrap">

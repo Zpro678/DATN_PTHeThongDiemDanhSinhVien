@@ -29,7 +29,7 @@
             </div>
             <h1 class="text-2xl font-bold text-on-surface">{{ $class->name }}</h1>
             <p class="mt-1 text-sm text-on-surface-variant">
-                Mã lớp <span class="font-bold text-on-surface">{{ $class->code }}</span>
+                Mã lớp <span class="font-bold text-on-surface">{{ $class->join_key }}</span>
 
                 @if($class->subject_code)
                     <span class="mx-1.5 opacity-40">•</span>Mã học phần <span class="font-bold text-on-surface">{{ $class->subject_code }}</span>

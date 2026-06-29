@@ -38,7 +38,7 @@
                 </span>
                 <span class="inline-flex items-center gap-2 rounded-xl border border-slate-200 bg-white px-3 py-2 shadow-sm">
                     <x-user.icon name="school" :size="16" class="text-blue-600" />
-                    {{ $session->courseClass->code }} - {{ $session->courseClass->name }}
+                    {{ $session->courseClass->join_key }} - {{ $session->courseClass->name }}
                 </span>
                 <span class="inline-flex items-center gap-2 rounded-xl border border-slate-200 bg-white px-3 py-2 shadow-sm">
                     <x-user.icon name="clock" :size="16" class="text-amber-500" />
@@ -305,7 +305,7 @@
                     <div class="flex flex-col gap-2.5 text-left bg-slate-50 p-4 rounded-xl border border-slate-200 shadow-sm">
                         <div class="flex justify-between items-center border-b border-slate-200/60 pb-2.5">
                             <span class="font-medium text-slate-500">Lớp:</span>
-                            <span class="font-bold text-slate-900 text-right max-w-[65%] truncate" title="{{ $session->courseClass->code }} - {{ $session->courseClass->name }}">{{ $session->courseClass->code }} - {{ $session->courseClass->name }}</span>
+                            <span class="font-bold text-slate-900 text-right max-w-[65%] truncate" title="{{ $session->courseClass->join_key }} - {{ $session->courseClass->name }}">{{ $session->courseClass->join_key }} - {{ $session->courseClass->name }}</span>
                         </div>
                         <div class="flex justify-between items-center border-b border-slate-200/60 pb-2.5">
                             <span class="font-medium text-slate-500">Buổi:</span>

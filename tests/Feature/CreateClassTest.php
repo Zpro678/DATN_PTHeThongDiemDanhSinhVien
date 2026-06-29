@@ -46,7 +46,7 @@ class CreateClassTest extends TestCase
         $this->assertDatabaseHas('classes', [
             'owner_user_id' => $user->id,
             'name' => 'Kiểm thử phần mềm',
-            'code' => 'TEST-2026-01',
+            'join_key' => 'TEST-2026-01',
             'subject_code' => 'SWE401',
             'semester' => 'HK1 2026-2027',
             'total_sessions' => 36,

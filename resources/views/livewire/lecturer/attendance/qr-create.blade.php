@@ -4,8 +4,8 @@
             'id' => (string) $class->id,
             'label' => trim($class->name.($class->subject_code ? ' - '.$class->subject_code : '')),
             'name' => $class->name,
-            'code' => $class->code,
-            'subject_code' => $class->subject_code ?: $class->code,
+            'code' => $class->join_key,
+            'subject_code' => $class->subject_code ?: $class->join_key,
             'semester' => $class->semester ?: 'Chưa gán học kỳ',
             'members_count' => (int) ($class->members_count ?? 0),
         ])
@@ -19,7 +19,7 @@
         ->values();
 
     $studentCount = (int) ($selectedClass?->members_count ?? $studentRows->count());
-    $selectedSubject = $selectedClass?->subject_code ?: $selectedClass?->code ?: 'QR101';
+    $selectedSubject = $selectedClass?->subject_code ?: $selectedClass?->join_key ?: 'QR101';
     $selectedSemester = $selectedClass?->semester ?: 'HK2 2025-2026';
 @endphp
 
@@ -101,8 +101,12 @@
                 Lưu cấu hình
             </button>
 
-            <button type="submit" form="qr-setup-form" class="group inline-flex items-center justify-center gap-2 rounded-xl bg-gradient-to-r from-blue-600 to-indigo-600 px-8 py-3 text-sm font-bold text-white shadow-lg shadow-blue-500/30 transition-all hover:-translate-y-0.5 hover:from-blue-700 hover:to-indigo-700 hover:shadow-blue-500/40">
-                {{ $editSessionId ? 'Cập nhật thiết lập' : 'Bắt đầu phát mã' }}
+            <button type="submit" form="qr-setup-form"
+                x-bind:disabled="gpsEnabled && (!gpsLatitude || !gpsLongitude)"
+                :class="(gpsEnabled && (!gpsLatitude || !gpsLongitude)) ? 'opacity-70 cursor-not-allowed' : 'hover:-translate-y-0.5 hover:from-blue-700 hover:to-indigo-700 hover:shadow-blue-500/40'"
+                class="group inline-flex items-center justify-center gap-2 rounded-xl bg-gradient-to-r from-blue-600 to-indigo-600 px-8 py-3 text-sm font-bold text-white shadow-lg shadow-blue-500/30 transition-all">
+                <span x-show="gpsEnabled && (!gpsLatitude || !gpsLongitude)">Đang lấy tọa độ...</span>
+                <span x-show="!(gpsEnabled && (!gpsLatitude || !gpsLongitude))">{{ $editSessionId ? 'Cập nhật thiết lập' : 'Bắt đầu phát mã' }}</span>
                 <x-user.icon name="qr-code" :size="18" class="transition-transform group-hover:scale-110" />
             </button>
         </div>
@@ -276,6 +280,12 @@
                         @error('gpsRadius')
                             <span class="mt-2 block text-sm font-medium text-red-600">{{ $message }}</span>
                         @enderror
+                        @error('gpsLatitude')
+                            <span class="mt-2 block text-sm font-medium text-red-600">{{ $message }}</span>
+                        @enderror
+                        @error('gpsLongitude')
+                            <span class="mt-2 block text-sm font-medium text-red-600">{{ $message }}</span>
+                        @enderror
                     </div>
 
                     <div class="space-y-3 pt-1">
@@ -297,6 +307,9 @@
                                 <span class="absolute left-1 top-1 h-4 w-4 rounded-full bg-white shadow-sm transition-transform duration-300 peer-checked:translate-x-4"></span>
                             </div>
                         </label>
+                        @error('gpsLatitude')
+                            <span class="mt-2 block text-sm font-medium text-red-600">{{ $message }}</span>
+                        @enderror
 
                         <label class="group relative flex cursor-pointer items-center justify-between gap-3 rounded-2xl border-2 px-4 py-3 transition-all duration-300"
                             :class="deviceCheck ? 'border-sky-500 bg-sky-50/50 shadow-sm shadow-sky-500/10' : 'border-slate-100 bg-white hover:border-sky-200'">
@@ -371,8 +384,12 @@
             Lưu cấu hình
         </button>
 
-        <button type="submit" form="qr-setup-form" class="group inline-flex items-center justify-center gap-2 rounded-xl bg-gradient-to-r from-blue-600 to-indigo-600 px-8 py-3.5 text-sm font-bold text-white shadow-lg shadow-blue-500/30 transition-all hover:from-blue-700 hover:to-indigo-700">
-            {{ $editSessionId ? 'Cập nhật thiết lập' : 'Bắt đầu phát mã' }}
+        <button type="submit" form="qr-setup-form"
+            x-bind:disabled="gpsEnabled && (!gpsLatitude || !gpsLongitude)"
+            :class="(gpsEnabled && (!gpsLatitude || !gpsLongitude)) ? 'opacity-70 cursor-not-allowed' : 'hover:from-blue-700 hover:to-indigo-700'"
+            class="group inline-flex items-center justify-center gap-2 rounded-xl bg-gradient-to-r from-blue-600 to-indigo-600 px-8 py-3.5 text-sm font-bold text-white shadow-lg shadow-blue-500/30 transition-all">
+            <span x-show="gpsEnabled && (!gpsLatitude || !gpsLongitude)">Đang lấy tọa độ...</span>
+            <span x-show="!(gpsEnabled && (!gpsLatitude || !gpsLongitude))">{{ $editSessionId ? 'Cập nhật thiết lập' : 'Bắt đầu phát mã' }}</span>
             <x-user.icon name="qr-code" :size="18" />
         </button>
     </div>

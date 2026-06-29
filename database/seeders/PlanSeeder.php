@@ -10,7 +10,7 @@ class PlanSeeder extends Seeder
     public function run(): void
     {
         Plan::query()->updateOrCreate(
-            ['code' => 'FREE'],
+            ['plan_tier' => 'FREE'],
             [
                 'name' => 'Miễn phí',
                 'description' => 'Gói cơ bản trải nghiệm tính năng điểm danh cốt lõi.',
@@ -35,7 +35,7 @@ class PlanSeeder extends Seeder
         );
 
         Plan::query()->updateOrCreate(
-            ['code' => 'PRO'],
+            ['plan_tier' => 'PRO'],
             [
                 'name' => 'Chuyên nghiệp',
                 'description' => 'Phù hợp cho giảng viên độc lập cần quản lý nhiều lớp.',
@@ -60,7 +60,7 @@ class PlanSeeder extends Seeder
         );
 
         Plan::query()->updateOrCreate(
-            ['code' => 'ENTERPRISE'],
+            ['plan_tier' => 'ENTERPRISE'],
             [
                 'name' => 'Doanh nghiệp',
                 'description' => 'Giải pháp toàn diện cho tổ chức giáo dục quy mô lớn.',

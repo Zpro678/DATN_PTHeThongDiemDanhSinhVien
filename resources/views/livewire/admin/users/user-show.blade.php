@@ -45,7 +45,7 @@
 
                     <div class="mt-4 text-center">
                         <h2 class="text-xl font-black text-slate-900">{{ $user->name }}</h2>
-                        <p class="text-sm font-medium text-slate-500">{{ $user->code ?: 'Chưa có mã định danh' }}</p>
+                        <p class="text-sm font-medium text-slate-500">{{ $user->member_id ?: 'Chưa có mã định danh' }}</p>
                         <div class="mt-4 flex flex-wrap justify-center gap-2">
                             <span class="rounded-lg border px-3 py-1 text-[10px] font-bold uppercase tracking-wider {{ $user->is_admin ? 'border-blue-100 bg-blue-50 text-blue-700' : 'border-slate-100 bg-slate-50 text-slate-600' }}">
                                 {{ $roleLabel }}
@@ -128,7 +128,7 @@
                             </div>
                             <div>
                                 <dt class="text-[10px] font-bold uppercase tracking-widest text-slate-400">Mã số sinh viên</dt>
-                                <dd class="mt-1 rounded-xl border border-slate-200 bg-white/75 px-4 py-3 font-bold text-slate-900">{{ $user->code ?: 'Chưa cập nhật' }}</dd>
+                                <dd class="mt-1 rounded-xl border border-slate-200 bg-white/75 px-4 py-3 font-bold text-slate-900">{{ $user->member_id ?: 'Chưa cập nhật' }}</dd>
                             </div>
                             <div>
                                 <dt class="text-[10px] font-bold uppercase tracking-widest text-slate-400">Email</dt>

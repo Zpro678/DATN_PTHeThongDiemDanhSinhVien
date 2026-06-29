@@ -16,7 +16,7 @@ class ClassSettings extends Component
     public string $name = '';
 
     // Mã lớp học (duy nhất để tham gia lớp)
-    public string $code = '';
+    public string $join_key = '';
 
     // Mã môn học
     public string $subjectCode = '';
@@ -65,7 +65,7 @@ class ClassSettings extends Component
         $this->courseClass = $courseClass;
 
         $this->name = $courseClass->name;
-        $this->code = $courseClass->code;
+        $this->join_key = $courseClass->join_key;
         $this->subjectCode = $courseClass->subject_code ?? '';
         $this->semester = $courseClass->semester ?? '';
         $this->description = $courseClass->description ?? '';
@@ -86,7 +86,7 @@ class ClassSettings extends Component
     {
         $validated = $this->validate([
             'name' => ['required', 'string', 'max:255'],
-            'code' => ['required', 'string', 'max:20', Rule::unique('classes', 'code')->ignore($this->courseClass->id)],
+            'join_key' => ['required', 'string', 'max:20', Rule::unique('classes', 'join_key')->ignore($this->courseClass->id)],
             'subjectCode' => ['nullable', 'string', 'max:50'],
             'semester' => ['nullable', 'string', 'max:50'],
             'description' => ['nullable', 'string', 'max:5000'],
@@ -107,8 +107,8 @@ class ClassSettings extends Component
             'gpsRadius' => ['nullable', 'integer', 'min:10', 'max:5000'],
         ], [
             'name.required' => 'Vui lòng nhập tên lớp.',
-            'code.required' => 'Mã lớp không được để trống.',
-            'code.unique' => 'Mã lớp đã tồn tại.',
+            'join_key.required' => 'Mã lớp không được để trống.',
+            'join_key.unique' => 'Mã lớp đã tồn tại.',
 
         ]);
 
@@ -117,7 +117,7 @@ class ClassSettings extends Component
 
         $this->courseClass->update([
             'name' => $validated['name'],
-            'code' => strtoupper($validated['code']),
+            'join_key' => strtoupper($validated['join_key']),
             'subject_code' => filled($validated['subjectCode']) ? strtoupper($validated['subjectCode']) : null,
             'semester' => $validated['semester'] ?: null,
             'description' => $validated['description'] ?: null,
@@ -137,7 +137,7 @@ class ClassSettings extends Component
 
     public function regenerateCode(): void
     {
-        $this->code = CourseClass::generateUniqueCode($this->subjectCode, $this->semester, $this->courseClass->id);
+        $this->join_key = CourseClass::generateUniqueCode($this->subjectCode, $this->semester, $this->courseClass->id);
     }
 
     // ─── Xoá lớp ────────────────────────────────────────────────────────────────

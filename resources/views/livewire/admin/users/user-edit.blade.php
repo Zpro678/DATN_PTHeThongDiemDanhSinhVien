@@ -87,8 +87,8 @@
 
                             <div>
                                 <label class="mb-2 block text-[10px] font-bold uppercase tracking-widest text-slate-400">Mã số sinh viên (nếu có)</label>
-                                <input type="text" wire:model="code" class="w-full rounded-xl border border-slate-200 bg-white px-4 py-3 text-sm font-bold text-slate-900 focus:border-blue-500 focus:ring-2 focus:ring-blue-500">
-                                @error('code')<p class="mt-1 text-xs text-red-500">{{ $message }}</p>@enderror
+                                <input type="text" wire:model="member_id" class="w-full rounded-xl border border-slate-200 bg-white px-4 py-3 text-sm font-bold text-slate-900 focus:border-blue-500 focus:ring-2 focus:ring-blue-500">
+                                @error('member_id')<p class="mt-1 text-xs text-red-500">{{ $message }}</p>@enderror
                             </div>
 
                             <div>

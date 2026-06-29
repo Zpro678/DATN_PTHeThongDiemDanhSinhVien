@@ -63,7 +63,7 @@
         <select wire:model.live="classFilter" class="rounded-xl border-slate-200 text-sm font-semibold text-slate-700 focus:border-primary focus:ring-primary/20">
             <option value="all">Tất cả lớp học</option>
             @foreach ($classes as $class)
-                <option value="{{ $class->id }}">{{ $class->code }} - {{ $class->name }}</option>
+                <option value="{{ $class->id }}">{{ $class->join_key }} - {{ $class->name }}</option>
             @endforeach
         </select>
         <div class="inline-flex w-max ml-auto rounded-xl bg-slate-100 p-1">
@@ -119,7 +119,7 @@
                             </td>
                             <td class="px-4 py-4">
                                 <span class="block text-sm font-semibold text-slate-700">{{ $member->courseClass->name }}</span>
-                                <span class="text-xs text-slate-500">{{ $member->courseClass->code }}</span>
+                                <span class="text-xs text-slate-500">{{ $member->courseClass->join_key }}</span>
                             </td>
                             <td class="px-4 py-4 text-center text-sm font-bold text-emerald-600">{{ $stats['present_sessions'] }}</td>
                             <td class="px-4 py-4 text-center text-sm font-bold text-amber-600">{{ $stats['late_sessions'] }}</td>
@@ -217,7 +217,7 @@
                             <select wire:model="newClassId" class="w-full rounded-xl border-slate-200 focus:border-primary focus:ring-primary/20">
                                 <option value="">-- Chọn lớp học --</option>
                                 @foreach ($classes as $class)
-                                    <option value="{{ $class->id }}">{{ $class->code }} - {{ $class->name }}</option>
+                                    <option value="{{ $class->id }}">{{ $class->join_key }} - {{ $class->name }}</option>
                                 @endforeach
                             </select>
                             @error('newClassId')<span class="text-xs text-red-600">{{ $message }}</span>@enderror
@@ -269,7 +269,7 @@
                         <select wire:model="importClassId" class="w-full rounded-xl border-slate-200 bg-slate-50 py-3 text-[15px] font-medium text-slate-700 focus:border-blue-500 focus:ring-blue-500/20">
                             <option value="">-- Chọn lớp học để import --</option>
                             @foreach ($classes as $class)
-                                <option value="{{ $class->id }}">{{ $class->code }} - {{ $class->name }}</option>
+                                <option value="{{ $class->id }}">{{ $class->join_key }} - {{ $class->name }}</option>
                             @endforeach
                         </select>
                         @error('importClassId')<span class="mt-1 block text-sm text-red-500">{{ $message }}</span>@enderror
@@ -416,7 +416,7 @@
                                 options: [
                                     { value: 'all', label: 'Tất cả lớp học (Chia nhiều Sheet)' },
                                     @foreach ($classes as $class)
-                                        { value: '{{ $class->id }}', label: '{{ $class->code }} - {{ $class->name }}' },
+                                        { value: '{{ $class->id }}', label: '{{ $class->join_key }} - {{ $class->name }}' },
                                     @endforeach
                                 ],
                                 get selectedOption() { return this.options.find(o => o.value == this.value) ?? this.options[0] },

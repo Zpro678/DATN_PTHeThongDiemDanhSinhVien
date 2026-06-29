@@ -14,8 +14,8 @@
     @if(session('status'))<div class="rounded-2xl border border-emerald-200 bg-emerald-50 px-5 py-3 text-sm font-semibold text-emerald-700">{{ session('status') }}</div>@endif
 
     <section class="grid gap-5 md:grid-cols-2">
-        <a href="{{ route('lecturer.attendance.create') }}" class="group overflow-hidden rounded-2xl border-2 border-amber-200 bg-white p-6 shadow-sm transition hover:-translate-y-1 hover:border-amber-400 hover:shadow-xl"><div class="mb-4 flex h-12 w-12 items-center justify-center rounded-2xl bg-amber-100 text-amber-700"><x-user.icon name="check-square" /></div><h2 class="text-xl font-extrabold text-slate-900">Điểm danh thủ công</h2><p class="mt-2 text-sm text-slate-500">Tạo phiên và đánh dấu có mặt, muộn, vắng, có phép trực tiếp trên danh sách học viên.</p></a>
-        <a href="{{ route('lecturer.attendance.create') }}" class="group overflow-hidden rounded-2xl border-2 border-blue-200 bg-white p-6 shadow-sm transition hover:-translate-y-1 hover:border-blue-400 hover:shadow-xl"><div class="mb-4 flex h-12 w-12 items-center justify-center rounded-2xl bg-blue-100 text-blue-700"><x-user.icon name="qr-code" /></div><h2 class="text-xl font-extrabold text-slate-900">Điểm danh QR</h2><p class="mt-2 text-sm text-slate-500">Sinh mã QR/token, cấu hình thời hạn và theo dõi học viên check-in theo thời gian thực.</p></a>
+        <button type="button" @click="$wire.openQuickStart('manual')" class="text-left group overflow-hidden rounded-2xl border-2 border-amber-200 bg-white p-6 shadow-sm transition hover:-translate-y-1 hover:border-amber-400 hover:shadow-xl"><div class="mb-4 flex h-12 w-12 items-center justify-center rounded-2xl bg-amber-100 text-amber-700"><x-user.icon name="check-square" /></div><h2 class="text-xl font-extrabold text-slate-900">Điểm danh thủ công</h2><p class="mt-2 text-sm text-slate-500">Tạo phiên và đánh dấu có mặt, muộn, vắng, có phép trực tiếp trên danh sách học viên.</p></button>
+        <button type="button" @click="$wire.openQuickStart('qr')" class="text-left group overflow-hidden rounded-2xl border-2 border-blue-200 bg-white p-6 shadow-sm transition hover:-translate-y-1 hover:border-blue-400 hover:shadow-xl"><div class="mb-4 flex h-12 w-12 items-center justify-center rounded-2xl bg-blue-100 text-blue-700"><x-user.icon name="qr-code" /></div><h2 class="text-xl font-extrabold text-slate-900">Điểm danh QR</h2><p class="mt-2 text-sm text-slate-500">Sinh mã QR/token, cấu hình thời hạn và theo dõi học viên check-in theo thời gian thực.</p></button>
     </section>
 
     <section class="overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm">
@@ -54,7 +54,7 @@
                                 </div>
                             </td>
                             <td class="pl-10 pr-4 py-4 text-sm text-slate-600 text-left">
-                                <span class="font-bold text-slate-700">{{ $meeting->courseClass->code }}</span>
+                                <span class="font-bold text-slate-700">{{ $meeting->courseClass->join_key }}</span>
                                 <span class="block text-xs text-slate-500 mt-0.5">{{ $meeting->courseClass->name }}</span>
                             </td>
                             <td class="px-4 py-4 text-center">
@@ -75,7 +75,7 @@
                                             <a href="{{ route('lecturer.attendance.meeting.summary', ['ma_user' => auth()->id(), 'meeting' => $meeting->id]) }}" class="whitespace-nowrap rounded-xl bg-slate-900 px-4 py-2 text-xs font-bold text-white shadow-sm transition-all hover:bg-slate-700">Tổng kết</a>
                                             <a href="{{ route('lecturer.attendance.meeting.sessions', $meeting) }}" class="whitespace-nowrap rounded-xl bg-white px-4 py-2 text-xs font-bold text-slate-700 shadow-sm ring-1 ring-inset ring-slate-300 transition-all hover:bg-slate-50 hover:text-slate-900">Xem phiên</a>
                                             @if($meeting->canAddSession())
-                                                <button type="button" @click="showTypePopup = true; cloneMeetingId = {{ $meeting->id }}; cloneClassId = {{ $meeting->class_id }}; cloneClassName = '{{ addslashes($meeting->courseClass->code . ' - ' . $meeting->courseClass->name) }}'; cloneSessionName = '{{ addslashes($meeting->name) }}'; cloneFormattedDate = '{{ $meeting->date->format('d/m/Y') }}';" class="whitespace-nowrap rounded-xl bg-amber-100 px-4 py-2 text-xs font-bold text-amber-700 shadow-sm ring-1 ring-inset ring-amber-200 transition-all hover:bg-amber-200 hover:text-amber-800 hover:shadow">Thêm phiên</button>
+                                                <button type="button" @click="showTypePopup = true; cloneMeetingId = {{ $meeting->id }}; cloneClassId = {{ $meeting->class_id }}; cloneClassName = '{{ addslashes($meeting->courseClass->join_key . ' - ' . $meeting->courseClass->name) }}'; cloneSessionName = '{{ addslashes($meeting->name) }}'; cloneFormattedDate = '{{ $meeting->date->format('d/m/Y') }}';" class="whitespace-nowrap rounded-xl bg-amber-100 px-4 py-2 text-xs font-bold text-amber-700 shadow-sm ring-1 ring-inset ring-amber-200 transition-all hover:bg-amber-200 hover:text-amber-800 hover:shadow">Thêm phiên</button>
                                             @endif
                                         @endif
                                     </div>
@@ -130,6 +130,123 @@
                     <x-user.icon name="qr-code" :size="18" />
                     QR/Link
                 </a>
+            </div>
+        </div>
+    </div>
+
+    <!-- Quick Manual Start Modal -->
+    <div x-cloak x-show="$wire.showQuickStart" class="fixed inset-0 z-[100] flex items-center justify-center p-4">
+        <div x-show="$wire.showQuickStart" x-transition.opacity.duration.200ms class="absolute inset-0 bg-slate-950/45 backdrop-blur-sm" @click="$wire.set('showQuickStart', false)" aria-label="Đóng"></div>
+        <div x-show="$wire.showQuickStart" x-transition.scale.origin.center.duration.200ms class="relative w-full max-w-[420px] overflow-visible rounded-2xl border border-slate-200 bg-white shadow-2xl">
+            <button type="button" @click="$wire.set('showQuickStart', false)" class="absolute right-3 top-3 flex h-8 w-8 items-center justify-center rounded-full text-slate-400 transition hover:bg-slate-100 hover:text-slate-600">
+                <x-user.icon name="x" :size="20" />
+            </button>
+            <div class="p-6">
+                <div class="mb-4 flex items-center gap-3">
+                    <div class="flex h-12 w-12 items-center justify-center rounded-xl" :class="$wire.quickStartType === 'manual' ? 'bg-amber-100 text-amber-700' : 'bg-blue-100 text-blue-700'">
+                        <x-user.icon name="check-square" :size="24" x-show="$wire.quickStartType === 'manual'" />
+                        <x-user.icon name="qr-code" :size="24" x-show="$wire.quickStartType === 'qr'" />
+                    </div>
+                    <div>
+                        <h3 class="text-lg font-extrabold text-slate-900" x-text="$wire.quickStartType === 'manual' ? 'Điểm danh thủ công' : 'Điểm danh QR'"></h3>
+                        <p class="text-sm text-slate-500">Chọn lớp và buổi để bắt đầu</p>
+                    </div>
+                </div>
+                
+                <div class="space-y-4">
+                    <div x-data="{
+                        open: false,
+                        search: '',
+                        selectedLabel: '{{ $quickClassId && $this->activeClasses->firstWhere('id', (int)$quickClassId) ? addslashes($this->activeClasses->firstWhere('id', (int)$quickClassId)->code . ' - ' . $this->activeClasses->firstWhere('id', (int)$quickClassId)->name) : '' }}'
+                    }" class="relative" @click.outside="open = false; search = ''">
+                        <label class="mb-1.5 block text-sm font-bold text-slate-700">Chọn lớp học</label>
+                        <div class="relative">
+                            <input
+                                type="text"
+                                x-ref="searchInput"
+                                :value="open ? search : selectedLabel"
+                                @input="search = $event.target.value; open = true"
+                                @focus="open = true; search = ''; $event.target.value = ''"
+                                @keydown.escape="open = false"
+                                placeholder="Nhập tên, mã lớp..."
+                                class="w-full rounded-xl border-2 border-slate-200 bg-slate-50 px-4 py-2.5 pr-10 text-sm font-semibold text-slate-900 shadow-sm outline-none transition-all hover:border-slate-300 focus:border-amber-500 focus:bg-white focus:ring-4 focus:ring-amber-500/10"
+                                :class="$wire.quickStartType === 'qr' ? 'focus:border-blue-500 focus:ring-blue-500/10' : ''"
+                                autocomplete="off"
+                            />
+                            <div class="pointer-events-none absolute inset-y-0 right-0 flex items-center pr-3">
+                                <x-user.icon name="chevron-down" :size="16" class="shrink-0 text-slate-400 transition-transform" ::class="open ? 'rotate-180' : ''" />
+                            </div>
+                        </div>
+
+                        <div x-cloak x-show="open" x-transition.opacity.duration.200ms class="absolute left-0 right-0 z-40 mt-2 overflow-hidden rounded-xl border border-slate-200 bg-white p-2 shadow-xl shadow-slate-900/10">
+                            <div class="max-h-48 overflow-y-auto pr-1">
+                                @foreach($this->activeClasses as $cClass)
+                                    <button type="button" x-show="search === '' || '{{ strtolower($cClass->code . ' ' . $cClass->name) }}'.includes(search.toLowerCase())" @click="$wire.set('quickClassId', '{{ $cClass->id }}'); selectedLabel = '{{ addslashes($cClass->code . ' - ' . $cClass->name) }}'; open = false; search = ''" class="flex w-full items-center justify-between gap-3 rounded-lg px-3 py-2 text-left transition-all hover:bg-slate-50 {{ $quickClassId == $cClass->id ? 'bg-amber-50 text-amber-700' : 'text-slate-700' }}" :class="$wire.quickStartType === 'qr' && '{{ $quickClassId }}' == '{{ $cClass->id }}' ? '!bg-blue-50 !text-blue-700' : ''">
+                                        <span class="min-w-0">
+                                            <span class="block truncate text-sm {{ $quickClassId == $cClass->id ? 'font-bold' : 'font-semibold' }}">{{ $cClass->code }}</span>
+                                            <span class="mt-0.5 block truncate text-xs text-slate-500">{{ $cClass->name }}</span>
+                                        </span>
+                                        @if($quickClassId == $cClass->id)
+                                            <x-user.icon name="check" :size="16" class="shrink-0" />
+                                        @endif
+                                    </button>
+                                @endforeach
+                            </div>
+                        </div>
+                        @error('quickClassId') <span class="mt-1 block text-xs font-medium text-red-500">{{ $message }}</span> @enderror
+                    </div>
+
+                    <div x-data="{
+                        open: false,
+                        search: '',
+                        selectedLabel: '{{ $quickMeetingId && $this->classMeetings->firstWhere('id', (int)$quickMeetingId) ? addslashes($this->classMeetings->firstWhere('id', (int)$quickMeetingId)->name . ' (' . $this->classMeetings->firstWhere('id', (int)$quickMeetingId)->date->format('d/m/Y') . ')') : '' }}'
+                    }" class="relative" @click.outside="open = false; search = ''">
+                        <label class="mb-1.5 block text-sm font-bold text-slate-700">Chọn buổi điểm danh</label>
+                        <div class="relative">
+                            <input
+                                type="text"
+                                x-ref="searchInput"
+                                :value="open ? search : selectedLabel"
+                                @input="search = $event.target.value; open = true"
+                                @focus="open = true; search = ''; $event.target.value = ''"
+                                @keydown.escape="open = false"
+                                placeholder="Nhập tên buổi, ngày..."
+                                class="w-full rounded-xl border-2 border-slate-200 bg-slate-50 px-4 py-2.5 pr-10 text-sm font-semibold text-slate-900 shadow-sm outline-none transition-all hover:border-slate-300 focus:border-amber-500 focus:bg-white focus:ring-4 focus:ring-amber-500/10 disabled:opacity-60"
+                                :class="$wire.quickStartType === 'qr' ? 'focus:border-blue-500 focus:ring-blue-500/10' : ''"
+                                autocomplete="off"
+                                @if(!$quickClassId || ($quickClassId && $this->classMeetings->isEmpty())) disabled @endif
+                            />
+                            <div class="pointer-events-none absolute inset-y-0 right-0 flex items-center pr-3">
+                                <x-user.icon name="chevron-down" :size="16" class="shrink-0 text-slate-400 transition-transform" ::class="open ? 'rotate-180' : ''" />
+                            </div>
+                        </div>
+
+                        <div x-cloak x-show="open" x-transition.opacity.duration.200ms class="absolute left-0 right-0 z-40 mt-2 overflow-hidden rounded-xl border border-slate-200 bg-white p-2 shadow-xl shadow-slate-900/10">
+                            <div class="max-h-48 overflow-y-auto pr-1">
+                                @foreach($this->classMeetings as $cMeeting)
+                                    <button type="button" x-show="search === '' || '{{ strtolower($cMeeting->name . ' ' . $cMeeting->date->format('d/m/Y')) }}'.includes(search.toLowerCase())" @click="$wire.set('quickMeetingId', '{{ $cMeeting->id }}'); selectedLabel = '{{ addslashes($cMeeting->name . ' (' . $cMeeting->date->format('d/m/Y') . ')') }}'; open = false; search = ''" class="flex w-full items-center justify-between gap-3 rounded-lg px-3 py-2 text-left transition-all hover:bg-slate-50 {{ $quickMeetingId == $cMeeting->id ? 'bg-amber-50 text-amber-700' : 'text-slate-700' }}" :class="$wire.quickStartType === 'qr' && '{{ $quickMeetingId }}' == '{{ $cMeeting->id }}' ? '!bg-blue-50 !text-blue-700' : ''">
+                                        <span class="min-w-0">
+                                            <span class="block truncate text-sm {{ $quickMeetingId == $cMeeting->id ? 'font-bold' : 'font-semibold' }}">{{ $cMeeting->name }}</span>
+                                            <span class="mt-0.5 block truncate text-xs text-slate-500">{{ $cMeeting->date->format('d/m/Y') }}</span>
+                                        </span>
+                                        @if($quickMeetingId == $cMeeting->id)
+                                            <x-user.icon name="check" :size="16" class="shrink-0" />
+                                        @endif
+                                    </button>
+                                @endforeach
+                            </div>
+                        </div>
+                        @error('quickMeetingId') <span class="mt-1 block text-xs font-medium text-red-500">{{ $message }}</span> @enderror
+                        @if($quickClassId && $this->classMeetings->isEmpty())
+                            <p class="mt-1 text-xs text-slate-500">Lớp này chưa có buổi điểm danh nào cần tạo phiên. <a href="{{ route('lecturer.attendance.create') }}" class="font-bold text-blue-600 hover:underline">Tạo mới</a></p>
+                        @endif
+                    </div>
+                </div>
+
+                <div class="mt-6 flex gap-3">
+                    <button type="button" @click="$wire.set('showQuickStart', false)" class="flex-1 rounded-xl bg-slate-100 py-2.5 text-sm font-bold text-slate-700 transition hover:bg-slate-200">Hủy</button>
+                    <button type="button" wire:click="startQuick" class="flex-1 rounded-xl py-2.5 text-sm font-bold text-white shadow-sm transition" :class="$wire.quickStartType === 'manual' ? 'bg-amber-500 hover:bg-amber-600' : 'bg-blue-600 hover:bg-blue-700'">Bắt đầu</button>
+                </div>
             </div>
         </div>
     </div>

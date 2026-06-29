@@ -41,7 +41,7 @@
         <div class="space-y-1">
             <p class="text-sm font-semibold tracking-widest text-indigo-500 uppercase">Quản lý điểm danh</p>
             <h1 class="text-3xl font-black tracking-tight text-slate-900 flex items-center gap-3">
-                {{ $courseClass->code }} 
+                {{ $courseClass->join_key }} 
                 <span class="text-slate-300 font-light">|</span> 
                 <span class="text-2xl text-slate-700">{{ $courseClass->name }}</span>
             </h1>

@@ -44,7 +44,7 @@ class JoinedClasses extends Component
             $search = str($this->search)->lower()->toString();
             $query->where(function ($q) use ($search) {
                 $q->whereRaw('LOWER(name) LIKE ?', ["%{$search}%"])
-                    ->orWhereRaw('LOWER(code) LIKE ?', ["%{$search}%"])
+                    ->orWhereRaw('LOWER(join_key) LIKE ?', ["%{$search}%"])
                     ->orWhereRaw('LOWER(subject_code) LIKE ?', ["%{$search}%"]);
             });
         }
@@ -83,8 +83,8 @@ class JoinedClasses extends Component
             return [
                 'id' => $class->id,
                 'title' => $class->name,
-                'code' => $class->subject_code ?? $class->code,
-                'join_code' => $class->code,
+                'code' => $class->subject_code ?? $class->join_key,
+                'join_code' => $class->join_key,
                 'teacher' => $class->owner->name ?? 'Không xác định',
                 'schedule' => $class->semester ?? 'Không xác định',
                 'attendance' => $attendance,

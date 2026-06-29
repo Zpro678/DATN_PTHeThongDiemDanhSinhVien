@@ -73,7 +73,7 @@ class Dashboard extends Component
             ->withCount(['meetings as studied_sessions' => fn ($query) => $query->whereHas('sessions', fn ($s) => $s->where('status', 'closed'))])
             ->orderByDesc('updated_at') // Lớp nào vừa có tương tác mới nhất (tạo phiên, sửa thông tin, thêm học viên...) sẽ lên đầu
             ->take(3)
-            ->get(['id', 'code', 'name', 'subject_code', 'semester', 'status', 'total_sessions'])
+            ->get(['id', 'join_key', 'name', 'subject_code', 'semester', 'status', 'total_sessions'])
             ->values()
             ->map(function (CourseClass $courseClass, int $index) use ($studentService, $cardStyles, $userId) {
                 $style = $cardStyles[$index % count($cardStyles)];
@@ -83,7 +83,7 @@ class Dashboard extends Component
                 return [
                     'id' => $courseClass->id, // ID lớp để điều hướng sang chi tiết/điểm danh.
                     'title' => $courseClass->name, // Tên lớp hiển thị trên thẻ.
-                    'code' => $courseClass->code, // Mã lớp.
+                    'code' => $courseClass->join_key, // Mã lớp.
                     'subject_code' => $courseClass->subject_code ?: 'N/A', // Mã học phần nếu có.
                     'semester' => $courseClass->semester ?: 'Chưa xác định', // Học kỳ của lớp.
                     'students' => (int) $courseClass->students_count, // Tổng sinh viên active trong lớp.

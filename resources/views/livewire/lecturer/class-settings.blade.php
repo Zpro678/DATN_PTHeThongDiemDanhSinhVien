@@ -17,7 +17,7 @@
                     </span>
                     Cài đặt lớp học
                 </h1>
-                <p class="mt-1 ml-[52px] text-sm text-on-surface-variant">Chỉnh sửa thông tin và thiết lập cho lớp <span class="font-bold text-primary">{{ $courseClass->code }}</span></p>
+                <p class="mt-1 ml-[52px] text-sm text-on-surface-variant">Chỉnh sửa thông tin và thiết lập cho lớp <span class="font-bold text-primary">{{ $courseClass->join_key }}</span></p>
             </div>
             <a href="{{ route('lecturer.classes.show', $courseClass) }}" wire:navigate
                class="inline-flex shrink-0 whitespace-nowrap items-center gap-2 rounded-xl border border-outline-variant/30 bg-white px-4 py-2 text-sm font-bold text-on-surface-variant transition-colors hover:bg-surface-container">
@@ -81,7 +81,7 @@
                     </div>
                     <div class="p-6">
                         <div class="flex items-center gap-3">
-                            <input type="text" wire:model="code"
+                            <input type="text" wire:model="join_key"
                                 class="w-full rounded-xl border border-outline-variant/30 bg-surface-container-lowest px-4 py-3 outline-none uppercase font-mono tracking-widest text-lg font-bold transition-all focus:border-primary focus:ring-2 focus:ring-primary/20"
                                 placeholder="Mã lớp">
                             <button type="button" wire:click="regenerateCode"
@@ -92,7 +92,7 @@
                             </button>
                         </div>
                         <p class="mt-2 text-xs text-on-surface-variant">Sinh viên dùng mã này để tham gia lớp. Đổi mã nếu bị lộ — mã cũ sẽ hết hiệu lực ngay.</p>
-                        @error('code') <span class="text-error text-xs mt-1 block">{{ $message }}</span> @enderror
+                        @error('join_key') <span class="text-error text-xs mt-1 block">{{ $message }}</span> @enderror
                     </div>
                 </div>
 

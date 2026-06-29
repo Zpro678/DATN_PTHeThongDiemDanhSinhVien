@@ -62,7 +62,7 @@ class ManagedClasses extends Component
             $search = str($this->search)->lower()->toString();
             $query->where(function ($q) use ($search) {
                 $q->whereRaw('LOWER(name) LIKE ?', ["%{$search}%"])
-                    ->orWhereRaw('LOWER(code) LIKE ?', ["%{$search}%"])
+                    ->orWhereRaw('LOWER(join_key) LIKE ?', ["%{$search}%"])
                     ->orWhereRaw('LOWER(subject_code) LIKE ?', ["%{$search}%"]);
             });
         }

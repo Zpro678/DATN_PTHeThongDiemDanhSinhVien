@@ -433,12 +433,12 @@
                         <label class="mb-2 block text-sm font-semibold text-slate-700">Mã tham gia lớp</label>
                         <div class="flex items-center gap-2">
                             <div class="flex-1 rounded-xl bg-slate-50 px-4 py-3 font-mono text-lg font-bold tracking-widest text-blue-600 text-center border border-slate-200">
-                                {{ $class->code }}
+                                {{ $class->join_key }}
                             </div>
                             <button 
                                 type="button" 
                                 x-data="{ copiedCode: false }"
-                                @click="navigator.clipboard.writeText('{{ $class->code }}'); copiedCode = true; setTimeout(() => copiedCode = false, 2000)"
+                                @click="navigator.clipboard.writeText('{{ $class->join_key }}'); copiedCode = true; setTimeout(() => copiedCode = false, 2000)"
                                 class="flex h-12 w-12 shrink-0 items-center justify-center rounded-xl bg-slate-100 text-slate-500 transition-colors hover:bg-blue-50 hover:text-blue-600"
                                 :class="copiedCode ? '!bg-green-500 !text-white' : ''"
                                 title="Sao chép mã lớp"
@@ -454,12 +454,12 @@
                         <label class="mb-2 block text-sm font-semibold text-slate-700">Đường dẫn tham gia</label>
                         <div class="flex items-center gap-2">
                             <div class="flex-1 overflow-hidden rounded-xl bg-slate-50 px-4 py-3 text-sm text-slate-600 border border-slate-200 whitespace-nowrap text-ellipsis">
-                                {{ url('/student/join-class?code=' . $class->code) }}
+                                {{ url('/student/join-class?code=' . $class->join_key) }}
                             </div>
                             <button 
                                 type="button" 
                                 x-data="{ copiedLink: false }"
-                                @click="navigator.clipboard.writeText('{{ url('/student/join-class?code=' . $class->code) }}'); copiedLink = true; setTimeout(() => copiedLink = false, 2000)"
+                                @click="navigator.clipboard.writeText('{{ url('/student/join-class?code=' . $class->join_key) }}'); copiedLink = true; setTimeout(() => copiedLink = false, 2000)"
                                 class="flex h-12 w-12 shrink-0 items-center justify-center rounded-xl bg-slate-100 text-slate-500 transition-colors hover:bg-blue-50 hover:text-blue-600"
                                 :class="copiedLink ? '!bg-green-500 !text-white' : ''"
                                 title="Sao chép đường dẫn"

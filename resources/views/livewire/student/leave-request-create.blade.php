@@ -40,7 +40,7 @@
                                 <span class="truncate">
                                     @if($class_id)
                                         @php $selectedClass = collect($this->classes())->firstWhere('id', $class_id); @endphp
-                                        {{ $selectedClass ? $selectedClass->code . ' - ' . $selectedClass->name : '-- Chọn lớp --' }}
+                                        {{ $selectedClass ? $selectedClass->join_key . ' - ' . $selectedClass->name : '-- Chọn lớp --' }}
                                     @else
                                         -- Chọn lớp --
                                     @endif
@@ -61,7 +61,7 @@
                                         <li>
                                             <button @click="$wire.set('class_id', '{{ $class->id }}'); open = false;" type="button" 
                                                 class="flex w-full items-center justify-between rounded-lg px-3 py-2.5 text-left text-base transition-colors {{ $class_id == $class->id ? 'bg-primary/10 text-primary font-bold' : 'text-slate-700 hover:bg-slate-50' }}">
-                                                <span>{{ $class->code }} - {{ $class->name }}</span>
+                                                <span>{{ $class->join_key }} - {{ $class->name }}</span>
                                                 @if($class_id == $class->id) <x-user.icon name="check" class="h-4 w-4" /> @endif
                                             </button>
                                         </li>
