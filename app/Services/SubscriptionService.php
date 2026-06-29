@@ -31,7 +31,7 @@ class SubscriptionService
         $user->subscriptions()->where('status', 'active')->update(['status' => 'expired']);
 
         // FREE là gói mặc định (currentPlan() tự fallback) nên không tạo bản ghi.
-        if ($plan->code === 'FREE') {
+        if ($plan->plan_tier === 'FREE') {
             return null;
         }
 
@@ -49,7 +49,7 @@ class SubscriptionService
     public function planFor(User $user): Plan
     {
         return $user->currentPlan() ?? new Plan([
-            'code' => 'FREE',
+            'plan_tier' => 'FREE',
             'name' => 'Miễn phí',
             'max_classes' => 2,
             'max_students_per_class' => 50,

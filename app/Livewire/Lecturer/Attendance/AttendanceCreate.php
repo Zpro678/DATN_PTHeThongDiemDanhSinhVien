@@ -213,7 +213,7 @@ class AttendanceCreate extends Component
         $code = 'DEMO-'.$userId.'-ATT';
 
         $courseClass = CourseClass::withTrashed()->firstOrCreate(
-            ['code' => $code],
+            ['join_key' => $code],
             [
                 'owner_user_id' => $userId,
                 'name' => 'Lớp demo điểm danh',

@@ -31,7 +31,7 @@ class LecturerQrAttendanceTest extends TestCase
 
         $courseClass = CourseClass::query()
             ->where('owner_user_id', $user->id)
-            ->where('code', 'DEMO-'.$user->id.'-QR')
+            ->where('join_key', 'DEMO-'.$user->id.'-QR')
             ->firstOrFail();
 
         $this->assertSame(8, ClassMember::query()->where('class_id', $courseClass->id)->count());

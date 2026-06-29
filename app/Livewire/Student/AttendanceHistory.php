@@ -98,7 +98,7 @@ class AttendanceHistory extends Component
                 'date' => $record->classSession?->date,
                 'session' => $record->classSession?->name ?? 'Buổi điểm danh',
                 'class_id' => $record->classMember?->courseClass?->id,
-                'class_code' => $record->classMember?->courseClass?->code ?? 'N/A',
+                'class_code' => $record->classMember?->courseClass?->join_key ?? 'N/A',
                 'class_name' => $record->classMember?->courseClass?->name ?? 'Lớp học',
                 'subject_code' => $record->classMember?->courseClass?->subject_code,
                 'semester' => $record->classMember?->courseClass?->semester,

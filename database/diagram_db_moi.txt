@@ -1,0 +1,448 @@
+// ======================================================
+// HỆ THỐNG QUẢN LÝ ĐIỂM DANH SINH VIÊN
+// DIAGRAM (DBML) - ĐỒNG BỘ THEO MIGRATION THỰC TẾ TRONG SOURCE
+// Cập nhật: 2026-06-29
+// ------------------------------------------------------
+// LƯU Ý KHÁC BIỆT SO VỚI DIAGRAM CŨ:
+//  - ĐÃ BỎ multi-tenant: không còn bảng tenants, tenant_settings
+//    và không còn cột tenant_id ở bất kỳ bảng nào.
+//  - ĐÃ BỎ: attendance_methods, attendance_rules, system_settings.
+//  - THÊM MỚI: class_meetings (buổi), meeting_summaries (tổng kết buổi),
+//    gps_verifications (chống gian lận GPS).
+//  - classes.owner_user_id (thay cho owner_id), classes.code unique toàn cục.
+// ======================================================
+
+// ======================================================
+// 1. USERS & AUTHENTICATION
+// ======================================================
+
+Table users {
+  id bigint [pk, increment]
+  is_admin boolean [not null, default: false]
+  google_id varchar [null, unique, note: 'Đăng nhập Google OAuth']
+  member_id varchar(50) [null, note: 'Mã số cá nhân/MSSV (tuỳ chọn)']
+  name varchar [not null]
+  email varchar [unique, not null]
+  email_verified_at timestamp [null]
+  password varchar [null]
+  avatar varchar [null]
+  status varchar(50) [not null, default: 'active']
+  remember_token varchar [null]
+  created_at timestamp
+  updated_at timestamp
+  deleted_at timestamp [null]
+}
+
+Table password_reset_tokens {
+  email varchar [pk]
+  token varchar [not null]
+  created_at timestamp [null]
+}
+
+Table sessions {
+  id varchar [pk]
+  user_id bigint [null]
+  ip_address varchar(45) [null]
+  user_agent text [null]
+  payload longtext [not null]
+  last_activity int [not null]
+}
+
+// ----- Spatie Permission -----
+Table roles {
+  id bigint [pk, increment]
+  name varchar [not null]
+  guard_name varchar [not null]
+  created_at timestamp
+  updated_at timestamp
+  indexes { (name, guard_name) [unique] }
+}
+
+Table permissions {
+  id bigint [pk, increment]
+  name varchar [not null]
+  guard_name varchar [not null]
+  created_at timestamp
+  updated_at timestamp
+  indexes { (name, guard_name) [unique] }
+}
+
+Table model_has_roles {
+  role_id bigint [not null, ref: > roles.id]
+  model_type varchar [not null]
+  model_id bigint [not null]
+  indexes { (role_id, model_id, model_type) [pk] }
+}
+
+Table model_has_permissions {
+  permission_id bigint [not null, ref: > permissions.id]
+  model_type varchar [not null]
+  model_id bigint [not null]
+  indexes { (permission_id, model_id, model_type) [pk] }
+}
+
+Table role_has_permissions {
+  permission_id bigint [not null, ref: > permissions.id]
+  role_id bigint [not null, ref: > roles.id]
+  indexes { (permission_id, role_id) [pk] }
+}
+
+// ======================================================
+// 2. CLASSES & ENROLLMENT
+// ======================================================
+
+Table classes {
+  id bigint [pk, increment]
+  owner_user_id bigint [not null, ref: > users.id, note: 'restrictOnDelete']
+  join_key varchar(50) [unique, not null, note: 'Mã lớp SV nhập để vào lớp']
+  name varchar [not null]
+  description text [null]
+  late_threshold int [not null, default: 15, note: 'Số phút trễ tối đa để tính đi muộn']
+  deduct_excused_absence boolean [not null, default: false, note: 'Có trừ chuyên cần khi vắng có phép']
+  subject_code varchar(50) [null]
+  semester varchar(50) [null]
+  require_approval boolean [not null, default: false]
+  status varchar(50) [not null, default: 'active']
+  total_sessions int [not null, default: 15, note: 'Tổng số buổi dự kiến']
+  gps_latitude decimal(10,8) [null]
+  gps_longitude decimal(11,8) [null]
+  gps_radius int [null, default: 100]
+  created_at timestamp
+  updated_at timestamp
+  deleted_at timestamp [null]
+}
+
+Table class_members {
+  id bigint [pk, increment]
+  class_id bigint [not null, ref: > classes.id, note: 'cascadeOnDelete']
+  student_code varchar(50) [not null]
+  full_name varchar [not null]
+  email varchar [null]
+  user_id bigint [null, ref: > users.id, note: 'Late binding khi SV đăng nhập; nullOnDelete']
+  status varchar(50) [not null, default: 'active']
+  created_at timestamp
+  updated_at timestamp
+  deleted_at timestamp [null]
+
+  indexes {
+    (class_id, student_code) [unique]
+    (class_id, user_id) [unique]
+    user_id
+  }
+}
+
+Table class_join_requests {
+  id bigint [pk, increment]
+  class_id bigint [not null, ref: > classes.id]
+  user_id bigint [null, ref: > users.id]
+  student_code varchar(50) [not null]
+  full_name varchar [not null]
+  status varchar(50) [not null, default: 'pending']
+  created_at timestamp
+  updated_at timestamp
+  indexes { (class_id, status) }
+}
+
+// ======================================================
+// 3. ATTENDANCE CORE (BUỔI -> PHIÊN -> RECORD)
+// ======================================================
+
+// [MỚI] Buổi học - là cha của class_sessions (phiên điểm danh)
+Table class_meetings {
+  id bigint [pk, increment]
+  class_id bigint [not null, ref: > classes.id]
+  created_by bigint [not null, ref: > users.id, note: 'restrictOnDelete']
+  name varchar [not null]
+  date date [not null]
+  start_time time [null]
+  end_time time [null]
+  status varchar(50) [not null, default: 'active', note: 'active | closed']
+  created_at timestamp
+  updated_at timestamp
+  deleted_at timestamp [null]
+  indexes { (class_id, date) }
+}
+
+Table class_sessions {
+  id bigint [pk, increment]
+  meeting_id bigint [null, ref: > class_meetings.id, note: 'Phiên thuộc buổi nào; cascadeOnDelete']
+  class_id bigint [not null, ref: > classes.id]
+  created_by bigint [not null, ref: > users.id, note: 'restrictOnDelete']
+  name varchar [not null]
+  date date [not null]
+  start_time time [null]
+  end_time time [null]
+  qr_token varchar [unique, null]
+  token_expires_at timestamp [null]
+  qr_refresh_rate int [not null, default: 10, note: 'Số giây làm mới QR']
+  gps_latitude decimal(10,8) [null]
+  gps_longitude decimal(11,8) [null]
+  gps_radius int [null]
+  status varchar(50) [not null, default: 'pending']
+  created_at timestamp
+  updated_at timestamp
+  deleted_at timestamp [null]
+
+  indexes {
+    (class_id, date)
+    (class_id, created_at)
+    (qr_token, token_expires_at)
+  }
+}
+
+Table attendance_records {
+  id bigint [pk, increment]
+  class_session_id bigint [not null, ref: > class_sessions.id]
+  class_member_id bigint [not null, ref: > class_members.id]
+  status varchar(50) [not null, default: 'pending', note: 'pending | present | late | absent | excused | invalid']
+  is_verified boolean [not null, default: false, note: 'True: SV có tài khoản; False: điền form']
+  check_in_time timestamp [null]
+  ip_address varchar(45) [null]
+  device_fingerprint varchar [null]
+  distance_meters decimal(8,2) [null]
+  gps_accuracy_meters decimal(8,2) [null]
+  gps_latitude_recorded decimal(10,8) [null]
+  gps_longitude_recorded decimal(11,8) [null]
+  gps_fraud_flag varchar [null, note: 'Cờ nghi ngờ gian lận GPS']
+  note text [null]
+  created_at timestamp
+  updated_at timestamp
+  deleted_at timestamp [null]
+
+  indexes {
+    (class_session_id, class_member_id) [unique]
+    (class_session_id, status)
+  }
+}
+
+// Vé GPS một lần - chống gian lận vị trí
+Table gps_verifications {
+  id bigint [pk, increment]
+  session_id bigint [not null, ref: > class_sessions.id]
+  member_id bigint [not null, ref: > class_members.id]
+  token varchar(64) [unique, not null]
+  check_token varchar(64) [unique, null]
+  ip_address varchar(45) [not null]
+  lat decimal(10,8) [null]
+  lng decimal(11,8) [null]
+  accuracy decimal(8,2) [null]
+  is_used boolean [not null, default: false]
+  expires_at timestamp [not null]
+  created_at timestamp
+  updated_at timestamp
+}
+
+// Tổng hợp theo buổi (MATERIALIZED): present/late/absent/excused + điểm trừ
+Table meeting_summaries {
+  id bigint [pk, increment]
+  meeting_id bigint [not null, ref: > class_meetings.id]
+  class_member_id bigint [not null, ref: > class_members.id]
+  status varchar(50) [not null, default: 'absent', note: 'present | late | absent | excused']
+  deduction decimal(3,1) [not null, default: 0, note: 'Điểm trừ chuyên cần: 0 / 0.5 / 1']
+  auto_status varchar(50) [null, note: 'Trạng thái hệ thống tự tính để đối chiếu']
+  is_overridden boolean [not null, default: false, note: 'GV đã chỉnh tay hay chưa']
+  note text [null]
+  created_at timestamp
+  updated_at timestamp
+  indexes { (meeting_id, class_member_id) [unique] }
+}
+
+// Tổng hợp theo lớp (MATERIALIZED)
+Table attendance_summaries {
+  id bigint [pk, increment]
+  class_id bigint [not null, ref: > classes.id]
+  class_member_id bigint [not null, ref: > class_members.id]
+  total_present int [not null, default: 0]
+  total_late int [not null, default: 0]
+  total_absent int [not null, default: 0]
+  total_excused int [not null, default: 0]
+  is_banned_from_exam boolean [not null, default: false]
+  updated_at timestamp [null]
+  indexes { (class_id, class_member_id) [unique] }
+}
+
+// ======================================================
+// 4. AUDIT & SCAN (IMMUTABLE)
+// ======================================================
+
+Table audit_logs {
+  id bigint [pk, increment]
+  user_id bigint [null, ref: > users.id, note: 'Người thực hiện; nullOnDelete']
+  class_id bigint [null, ref: > classes.id, note: 'nullOnDelete']
+  action varchar [not null]
+  table_name varchar [null]
+  row_id bigint [null]
+  old_values json [null]
+  new_values json [null]
+  ip_address varchar(45) [null]
+  user_agent text [null]
+  created_at timestamp [not null] // IMMUTABLE (useCurrent)
+
+  indexes {
+    (user_id, created_at)
+    (class_id, created_at)
+    (table_name, row_id)
+  }
+}
+
+Table check_in_scans {
+  id bigint [pk, increment]
+  class_session_id bigint [not null, ref: > class_sessions.id]
+  user_id bigint [null, ref: > users.id, note: 'Nếu đã login']
+  student_code_attempt varchar(50) [null, note: 'Mã SV nhập tay nếu là guest']
+  scan_type varchar(50) [not null, note: 'qr | gps | link']
+  payload_signature varchar [not null, note: 'HMAC chống Replay']
+  is_valid boolean [not null, default: true]
+  fail_reason varchar(100) [null, note: 'timeout | invalid_signature | out_of_range | not_enrolled']
+  ip_address varchar(45) [null]
+  device_fingerprint varchar [null]
+  scanned_at timestamp [not null] // IMMUTABLE
+
+  indexes {
+    (class_session_id, scanned_at)
+    (user_id, scanned_at)
+    (device_fingerprint, scanned_at)
+  }
+}
+
+// ======================================================
+// 5. MONETIZATION (SAAS) & THANH TOÁN
+// ======================================================
+
+Table plans {
+  id bigint [pk, increment]
+  plan_tier varchar(50) [unique, not null, note: 'Hạng gói: FREE/PRO/ENTERPRISE']
+  name varchar [not null]
+  description text [null]
+  price decimal(10,2) [not null]
+  duration_days int [not null, default: 30, note: '0 = vĩnh viễn']
+  max_classes int [not null]
+  max_students_per_class int [not null, default: 50]
+  max_gps_radius int [not null, default: 100]
+  api_access boolean [not null, default: false]
+  support_level varchar [not null, default: 'Cơ bản']
+  is_active boolean [not null, default: true]
+  can_export_excel boolean [not null, default: false]
+  features json [null]
+  created_at timestamp [null]
+  updated_at timestamp [null]
+  deleted_at timestamp [null]
+}
+
+Table subscriptions {
+  id bigint [pk, increment]
+  user_id bigint [not null, ref: > users.id, note: 'cascadeOnDelete']
+  plan_id bigint [not null, ref: > plans.id, note: 'restrictOnDelete']
+  start_date timestamp [not null]
+  end_date timestamp [null]
+  status varchar(50) [not null, default: 'active']
+  created_at timestamp
+  updated_at timestamp
+  indexes { (user_id, status) }
+}
+
+Table transactions {
+  id bigint [pk, increment]
+  user_id bigint [not null, ref: > users.id, note: 'restrictOnDelete']
+  plan_id bigint [null, ref: > plans.id, note: 'Gói được thanh toán; nullOnDelete']
+  amount decimal(10,2) [not null]
+  payment_method varchar(50) [not null, note: 'VD: PayOS, VNPay...']
+  transaction_code varchar(100) [unique, not null]
+  partner_reference_id varchar [null]
+  status varchar(50) [not null, default: 'pending']
+  created_at timestamp [null]
+  indexes { (user_id, created_at) }
+}
+
+// ======================================================
+// 6. CÁC BẢNG HỆ THỐNG KHÁC
+// ======================================================
+
+Table user_devices {
+  id bigint [pk, increment]
+  user_id bigint [not null, ref: > users.id, note: 'cascadeOnDelete']
+  fcm_token varchar [unique, not null]
+  device_name varchar [null]
+  last_active_at timestamp [null]
+  created_at timestamp [null]
+  indexes { (user_id, last_active_at) }
+}
+
+Table notifications {
+  id uuid [pk]
+  type varchar [not null]
+  notifiable_type varchar [not null]
+  notifiable_id bigint [not null]
+  data json [not null]
+  read_at timestamp [null]
+  created_at timestamp
+  updated_at timestamp
+}
+
+Table leave_requests {
+  id bigint [pk, increment]
+  class_member_id bigint [not null, ref: > class_members.id]
+  class_session_id bigint [not null, ref: > class_sessions.id]
+  reason text [not null]
+  proof_image text [null]
+  status varchar(50) [not null, default: 'pending']
+  rejected_reason text [null]
+  reviewed_by bigint [null, ref: > users.id, note: 'nullOnDelete']
+  reviewed_at timestamp [null]
+  created_at timestamp [not null] // useCurrent
+  deleted_at timestamp [null]
+
+  indexes {
+    (class_member_id, class_session_id) [unique]
+    (class_session_id, status)
+  }
+}
+
+// ======================================================
+// 7. INFRASTRUCTURE (Laravel mặc định)
+// ======================================================
+
+Table cache {
+  key varchar [pk]
+  value mediumtext [not null]
+  expiration int [not null]
+}
+
+Table cache_locks {
+  key varchar [pk]
+  owner varchar [not null]
+  expiration int [not null]
+}
+
+Table jobs {
+  id bigint [pk, increment]
+  queue varchar [not null]
+  payload longtext [not null]
+  attempts tinyint [not null]
+  reserved_at int [null]
+  available_at int [not null]
+  created_at int [not null]
+}
+
+Table job_batches {
+  id varchar [pk]
+  name varchar [not null]
+  total_jobs int [not null]
+  pending_jobs int [not null]
+  failed_jobs int [not null]
+  failed_job_ids longtext [not null]
+  options mediumtext [null]
+  cancelled_at int [null]
+  created_at int [not null]
+  finished_at int [null]
+}
+
+Table failed_jobs {
+  id bigint [pk, increment]
+  uuid varchar [unique, not null]
+  connection text [not null]
+  queue text [not null]
+  payload longtext [not null]
+  exception longtext [not null]
+  failed_at timestamp [not null]
+}

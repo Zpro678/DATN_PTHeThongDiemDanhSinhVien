@@ -1,7 +1,7 @@
 <div>
     @php
         $isFree = (float) $package->price <= 0;
-        $isEnterprise = strtolower($package->code) === 'enterprise';
+        $isEnterprise = strtolower($package->plan_tier) === 'enterprise';
         
         if ($isEnterprise) {
             $accent = 'from-purple-500 via-fuchsia-500 to-pink-500';

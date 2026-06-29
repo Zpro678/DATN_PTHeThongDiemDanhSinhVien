@@ -14,7 +14,7 @@ class UserEdit extends Component
     
     public $name = '';
     public $email = '';
-    public $code = '';
+    public $member_id = '';
     public $status = 'active';
 
     public function mount(User $user)
@@ -24,7 +24,7 @@ class UserEdit extends Component
         $this->user = $user;
         $this->name = $user->name;
         $this->email = $user->email;
-        $this->code = $user->code;
+        $this->member_id = $user->member_id;
         $this->status = $user->status;
     }
 
@@ -35,7 +35,7 @@ class UserEdit extends Component
         $validatedData = $this->validate([
             'name' => ['required', 'string', 'max:255'],
             'email' => ['required', 'string', 'email', 'max:255', Rule::unique('users')->ignore($this->user->id)],
-            'code' => ['nullable', 'string', 'max:50', Rule::unique('users')->ignore($this->user->id)],
+            'member_id' => ['nullable', 'string', 'max:50', Rule::unique('users')->ignore($this->user->id)],
             'status' => ['required', 'in:active,blocked'],
         ]);
 

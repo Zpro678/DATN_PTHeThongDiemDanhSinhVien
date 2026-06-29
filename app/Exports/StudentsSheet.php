@@ -47,7 +47,7 @@ class StudentsSheet implements FromArray, ShouldAutoSize, WithStyles, WithTitle
         if ($this->classFilter !== 'all') {
             $courseClass = CourseClass::find($this->classFilter);
             if ($courseClass) {
-                return substr(preg_replace('/[\/\\\?\*\[\]:]/', '', $courseClass->code), 0, 31) ?: 'Class';
+                return substr(preg_replace('/[\/\\\?\*\[\]:]/', '', $courseClass->join_key), 0, 31) ?: 'Class';
             }
         }
         return 'Tất cả lớp học';
@@ -62,13 +62,13 @@ class StudentsSheet implements FromArray, ShouldAutoSize, WithStyles, WithTitle
         if ($this->classFilter !== 'all') {
             $courseClass = CourseClass::find($this->classFilter);
             if ($courseClass) {
-                $className = $courseClass->code . ' - ' . $courseClass->name;
+                $className = $courseClass->join_key . ' - ' . $courseClass->name;
             }
         }
 
         // ── Truy vấn học viên ──
         $members = ClassMember::query()
-            ->with(['courseClass:id,name,code', 'user:id,email'])
+            ->with(['courseClass:id,name,join_key', 'user:id,email'])
             ->whereHas('courseClass', fn (Builder $q) => $q->where('owner_user_id', $this->ownerUserId))
             ->when(
                 $this->statusFilter === 'archived',

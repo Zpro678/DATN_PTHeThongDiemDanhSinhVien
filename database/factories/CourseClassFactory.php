@@ -11,7 +11,7 @@ class CourseClassFactory extends Factory
     {
         return [
             'owner_user_id' => User::factory(),
-            'code' => 'CLS-'.fake()->unique()->numerify('######'),
+            'join_key' => 'CLS-'.fake()->unique()->numerify('######'),
             'name' => fake()->randomElement(['Lập trình Web', 'Cơ sở dữ liệu', 'Công nghệ phần mềm', 'Mạng máy tính']),
             'description' => fake()->sentence(),
             'subject_code' => fake()->bothify('???###'),

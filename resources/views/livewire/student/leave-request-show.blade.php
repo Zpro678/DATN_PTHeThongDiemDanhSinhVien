@@ -48,7 +48,7 @@
                 <dl class="space-y-5 text-sm">
                     <div>
                         <dt class="text-xs font-bold uppercase text-slate-400 mb-1">Lớp học</dt>
-                        <dd class="font-bold text-slate-800">{{ $leaveRequest->classMember->courseClass->code }} - {{ $leaveRequest->classMember->courseClass->name }}</dd>
+                        <dd class="font-bold text-slate-800">{{ $leaveRequest->classMember->courseClass->join_key }} - {{ $leaveRequest->classMember->courseClass->name }}</dd>
                     </div>
                     <div>
                         <dt class="text-xs font-bold uppercase text-slate-400 mb-1">Buổi xin nghỉ</dt>

@@ -61,7 +61,7 @@ class Upgrade extends Component
         $user = auth()->user();
 
         // Gói miễn phí: kích hoạt ngay, không qua thanh toán.
-        if ($plan->code === 'FREE' || (float) $plan->price <= 0) {
+        if ($plan->plan_tier === 'FREE' || (float) $plan->price <= 0) {
             $subscriptions->activate($user, $plan);
             $this->confirmingPlanId = null;
             session()->flash('status', 'Đã chuyển về gói Miễn phí.');
@@ -117,7 +117,7 @@ class Upgrade extends Component
             ->latest('start_date')
             ->first();
 
-        $currentPlanCode = $activeSubscription?->plan?->code ?? 'FREE';
+        $currentPlanCode = $activeSubscription?->plan?->plan_tier ?? 'FREE';
 
         return view('livewire.user.upgrade', [
             'plans' => $plans,

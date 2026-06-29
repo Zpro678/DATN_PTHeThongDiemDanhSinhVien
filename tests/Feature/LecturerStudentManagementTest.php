@@ -141,7 +141,7 @@ class LecturerStudentManagementTest extends TestCase
         $member = ClassMember::factory()->create([
             'class_id' => $courseClass->id,
             'user_id' => $student->id,
-            'student_code' => $student->code,
+            'student_code' => $student->member_id,
             'full_name' => $student->name,
         ]);
         $session = ClassSession::factory()->create([

@@ -63,8 +63,8 @@ class StatisticalService
         return [
             'id' => null,
             'class_id' => $courseClass->id,
-            'code' => $courseClass->subject_code ?: $courseClass->code,
-            'class_code' => $courseClass->code,
+            'code' => $courseClass->subject_code ?: $courseClass->join_key,
+            'class_code' => $courseClass->join_key,
             'name' => $courseClass->name ?? 'Lớp học',
             'teacher' => $courseClass->owner?->name ?? 'Chưa cập nhật',
             'semester' => $courseClass->semester ?? 'Chưa cập nhật',
@@ -217,8 +217,8 @@ class StatisticalService
                 return [
                     'id' => $member->id,
                     'class_id' => $member->class_id,
-                    'code' => $courseClass?->subject_code ?: $courseClass?->code,
-                    'class_code' => $courseClass?->code,
+                    'code' => $courseClass?->subject_code ?: $courseClass?->join_key,
+                    'class_code' => $courseClass?->join_key,
                     'name' => $courseClass?->name ?? 'Lớp học',
                     'teacher' => $courseClass?->owner?->name ?? 'Chưa cập nhật',
                     'semester' => $courseClass?->semester ?? 'Chưa cập nhật',

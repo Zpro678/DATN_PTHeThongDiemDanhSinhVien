@@ -26,7 +26,7 @@ class LeaveRequestRejected extends Notification
 
         return [
             'title'            => 'Đơn xin nghỉ bị từ chối',
-            'message'          => "Đơn xin nghỉ của bạn cho lớp " . ($class?->code ?? '') . " ngày {$date} đã bị từ chối." . ($reason ? " Lý do: {$reason}" : ''),
+            'message'          => "Đơn xin nghỉ của bạn cho lớp " . ($class?->join_key ?? '') . " ngày {$date} đã bị từ chối." . ($reason ? " Lý do: {$reason}" : ''),
             'leave_request_id' => $this->leaveRequest->id,
             'class_id'         => $class?->id,
             'type'             => 'leave_request_rejected',

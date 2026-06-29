@@ -36,7 +36,7 @@ class StudentsService
         // Mỗi ClassMember là quan hệ của học viên với một lớp học cụ thể.
         $members = ClassMember::query()
             ->with([
-                'courseClass:id,code,name,subject_code,semester,total_sessions,deduct_excused_absence',
+                'courseClass:id,join_key,name,subject_code,semester,total_sessions,deduct_excused_absence',
                 'attendanceRecords' => fn ($query) => $query
                     // Chỉ tính các bản ghi thuộc buổi điểm danh đã chốt.
                     ->whereHas('classSession', fn ($sessionQuery) => $sessionQuery->where('status', 'closed'))
@@ -195,7 +195,7 @@ class StudentsService
             return 'Lớp học';
         }
 
-        $code = $courseClass->subject_code ?: $courseClass->code;
+        $code = $courseClass->subject_code ?: $courseClass->join_key;
 
         return $code
             ? "{$courseClass->name} ({$code})"
@@ -307,7 +307,7 @@ class StudentsService
 
         $members = ClassMember::query()
             ->with([
-                'courseClass:id,owner_user_id,code,name,subject_code,semester,status,total_sessions,deduct_excused_absence',
+                'courseClass:id,owner_user_id,join_key,name,subject_code,semester,status,total_sessions,deduct_excused_absence',
                 'courseClass.owner:id,name',
             ])
             ->where('user_id', $studentUserId)
@@ -428,9 +428,9 @@ class StudentsService
                     // Tên giảng viên/chủ lớp; nếu chưa nạp được owner thì hiển thị trạng thái chưa cập nhật.
                     'teacher' => $courseClass?->owner?->name ?? 'Chưa cập nhật',
                     // Mã học phần ưu tiên subject_code, nếu không có thì dùng mã lớp.
-                    'code' => $courseClass?->subject_code ?: ($courseClass?->code ?? 'N/A'),
+                    'code' => $courseClass?->subject_code ?: ($courseClass?->join_key ?? 'N/A'),
                     // Mã lớp riêng, thường dùng cho hiển thị hoặc tham gia lớp.
-                    'class_code' => $courseClass?->code ?? 'N/A',
+                    'class_code' => $courseClass?->join_key ?? 'N/A',
                     // Học kỳ của lớp để sinh viên biết lớp thuộc kỳ học nào.
                     'semester' => $courseClass?->semester ?? 'Chưa cập nhật',
                     // Nhãn trạng thái chuyên cần, ví dụ: Bình thường, Cảnh báo nhẹ, Nguy cơ cấm thi.

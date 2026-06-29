@@ -1,6 +1,6 @@
 @php
     $isClosed = $session->status === 'closed';
-    $selectedSubject = $session->courseClass->subject_code ?: $session->courseClass->code;
+    $selectedSubject = $session->courseClass->subject_code ?: $session->courseClass->join_key;
     $sessionDateLabel = $session->date->format('d/m/Y');
     $openMinutes = max(1, (int) now()->diffInMinutes($session->token_expires_at ?? now()->addMinutes(15), false));
     $qrRefreshRate = $session->qr_refresh_rate ?? 10;
@@ -453,7 +453,7 @@
                     <div class="rounded-2xl border border-slate-200 bg-slate-50 p-4">
                         <p class="text-[11px] font-black uppercase tracking-wider text-slate-400">Lớp học</p>
                         <p class="mt-2 text-base font-black text-slate-900">{{ $session->courseClass->name }}</p>
-                        <p class="mt-1 text-sm font-semibold text-slate-500">{{ $session->courseClass->code }} - {{ $selectedSubject }}</p>
+                        <p class="mt-1 text-sm font-semibold text-slate-500">{{ $session->courseClass->join_key }} - {{ $selectedSubject }}</p>
                     </div>
 
                     <div class="rounded-2xl border border-slate-200 bg-slate-50 p-4">

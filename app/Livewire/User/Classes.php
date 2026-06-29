@@ -66,7 +66,7 @@ class Classes extends Component
             return [
                 'id' => $class->id,
                 'title' => $class->name,
-                'code' => $class->code,
+                'code' => $class->join_key,
                 'semester' => $class->semester ?? 'Không xác định',
                 'students' => $class->students_count,
                 'attendance' => $attendancePct,

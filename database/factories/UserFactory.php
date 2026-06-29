@@ -27,7 +27,7 @@ class UserFactory extends Factory
         return [
             'is_admin' => false,
             'google_id' => null,
-            'code' => 'SV'.fake()->unique()->numerify('########'),
+            'member_id' => 'SV'.fake()->unique()->numerify('########'),
             'name' => fake()->name(),
             'email' => fake()->unique()->safeEmail(),
             'email_verified_at' => now(),

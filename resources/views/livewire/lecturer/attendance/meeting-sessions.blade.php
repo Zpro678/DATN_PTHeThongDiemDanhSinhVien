@@ -6,7 +6,7 @@
                 <x-user.icon name="calendar-check" class="text-primary" />{{ $meeting->name }}
             </h1>
             <p class="mt-2 text-sm text-slate-500">
-                <span class="font-bold text-slate-700">{{ $meeting->courseClass->code }}</span> · {{ $meeting->courseClass->name }} ·
+                <span class="font-bold text-slate-700">{{ $meeting->courseClass->join_key }}</span> · {{ $meeting->courseClass->name }} ·
                 {{ $meeting->date->format('d/m/Y') }}@if($meeting->start_time) · {{ \Carbon\Carbon::parse($meeting->start_time)->format('H:i') }} - {{ \Carbon\Carbon::parse($meeting->end_time)->format('H:i') }}@endif
             </p>
         </div>

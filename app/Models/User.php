@@ -30,7 +30,7 @@ class User extends Authenticatable implements MustVerifyEmail
     protected $fillable = [
         'is_admin', // Lọc nhanh quyền quản trị tối cao.
         'google_id', // ID Google phục vụ đăng nhập OAuth.
-        'code', // Mã số cá nhân tùy chọn.
+        'member_id', // Mã số cá nhân/MSSV tùy chọn.
         'name', // Họ và tên.
         'email', // Email đăng nhập duy nhất.
         'password', // Mật khẩu đã hash.
@@ -136,7 +136,7 @@ class User extends Authenticatable implements MustVerifyEmail
     public function currentPlan(): ?Plan
     {
         return $this->activeSubscription?->plan
-            ?? Plan::where('code', 'FREE')->first();
+            ?? Plan::where('plan_tier', 'FREE')->first();
     }
 
     public function transactions(): HasMany

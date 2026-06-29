@@ -98,9 +98,9 @@
         <div class="mx-auto grid max-w-5xl grid-cols-1 gap-5 md:grid-cols-3">
             @foreach ($plans as $plan)
                 @php
-                    $style     = $planStyles[$plan->code] ?? $planStyles['FREE'];
-                    $isCurrent = $plan->code === $currentPlanCode;
-                    $isRec     = $plan->code === $recommended;
+                    $style     = $planStyles[$plan->plan_tier] ?? $planStyles['FREE'];
+                    $isCurrent = $plan->plan_tier === $currentPlanCode;
+                    $isRec     = $plan->plan_tier === $recommended;
                 @endphp
 
                 <article @class([
@@ -147,7 +147,7 @@
                         @else
                             <button type="button" wire:click="selectPlan({{ $plan->id }})"
                                 class="w-full rounded-xl py-3 text-sm font-bold transition-all {{ $style['btnClass'] }}">
-                                {{ $plan->code === 'FREE' ? 'Chuyển về Miễn phí' : 'Nâng cấp lên '.$plan->name }}
+                                {{ $plan->plan_tier === 'FREE' ? 'Chuyển về Miễn phí' : 'Nâng cấp lên '.$plan->name }}
                             </button>
                         @endif
                     </div>
@@ -173,7 +173,7 @@
 
     {{-- Modal xác nhận --}}
     @if ($confirmingPlan)
-        @php $mStyle = $planStyles[$confirmingPlan->code] ?? $planStyles['FREE']; @endphp
+        @php $mStyle = $planStyles[$confirmingPlan->plan_tier] ?? $planStyles['FREE']; @endphp
         <div class="fixed inset-0 z-[100] flex items-end justify-center p-4 sm:items-center"
              wire:click.self="cancel">
             <div class="absolute inset-0 bg-slate-900/40 backdrop-blur-sm"></div>

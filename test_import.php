@@ -1,4 +1,4 @@
-﻿<?php
+<?php
 require __DIR__."/vendor/autoload.php";
 $app = require_once __DIR__."/bootstrap/app.php";
 $kernel = $app->make(Illuminate\Contracts\Console\Kernel::class);
@@ -19,7 +19,7 @@ if (!$user) {
 $class = CourseClass::create([
     "owner_user_id" => $user->id,
     "name" => "Test Class Import",
-    "code" => "TEST-IMP-" . time(),
+    "join_key" => "TEST-IMP-" . time(),
     "status" => "active",
     "total_lessons" => 15,
 ]);

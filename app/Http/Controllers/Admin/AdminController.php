@@ -43,7 +43,7 @@ class AdminController extends Controller
             return [
                 'mssv' => $summary->classMember->student_code ?? 'N/A',
                 'name' => $summary->classMember->full_name ?? 'N/A',
-                'class' => $summary->courseClass->code ?? 'N/A',
+                'class' => $summary->courseClass->join_key ?? 'N/A',
                 'subject' => $summary->courseClass->name ?? 'N/A',
                 'attendanceRate' => $rate,
                 'level' => $rate < 70 ? 'Nguy cấp' : 'Cảnh cáo',
@@ -63,7 +63,7 @@ class AdminController extends Controller
                 $percentage = $total > 0 ? round(($session->checked_in_count / $total) * 100, 1) : 0;
                 return [
                     'className' => $session->courseClass->name ?? 'N/A',
-                    'room' => $session->courseClass->code ?? 'N/A', // Using code as room/identifier
+                    'room' => $session->courseClass->join_key ?? 'N/A', // Using code as room/identifier
                     'instructor' => $session->courseClass->owner->name ?? 'N/A',
                     'checkedIn' => $session->checked_in_count,
                     'total' => $total,

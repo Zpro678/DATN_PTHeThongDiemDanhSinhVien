@@ -15,7 +15,7 @@ class Plan extends Model
     public $timestamps = false;
 
     protected $fillable = [
-        'code', // Mã gói dịch vụ duy nhất.
+        'plan_tier', // Hạng gói dịch vụ (FREE/PRO/ENTERPRISE).
         'name', // Tên gói dịch vụ.
         'description', // Mô tả gói dịch vụ.
         'price', // Giá gói dịch vụ.
