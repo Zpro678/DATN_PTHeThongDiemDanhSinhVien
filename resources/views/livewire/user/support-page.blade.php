@@ -25,8 +25,8 @@
                 </div>
             </a>
 
-            <a href="#" class="group flex items-center gap-4 rounded-2xl bg-white p-4 shadow-sm ring-1 ring-outline-variant/20 transition-all hover:-translate-y-1 hover:shadow-md hover:ring-green-500/30">
-                <div class="flex h-12 w-12 shrink-0 items-center justify-center rounded-full bg-green-100 text-green-600 transition-colors group-hover:bg-green-500 group-hover:text-white">
+            <a href="#" class="group flex items-center gap-4 rounded-2xl bg-white p-4 shadow-sm ring-1 ring-outline-variant/20 transition-all hover:-translate-y-1 hover:shadow-md hover:ring-tertiary/30">
+                <div class="flex h-12 w-12 shrink-0 items-center justify-center rounded-full bg-tertiary/10 text-tertiary transition-colors group-hover:bg-tertiary group-hover:text-white">
                     <x-user.icon name="phone-call" :size="24" />
                 </div>
                 <div>
@@ -57,7 +57,7 @@
                 </h2>
                 
                 <form class="space-y-5" x-data="{ sending: false, sent: false }" @submit.prevent="sending = true; setTimeout(() => { sending = false; sent = true; }, 1500)">
-                    <div x-show="sent" x-transition class="rounded-2xl bg-green-50 p-4 text-green-700 ring-1 ring-green-200">
+                    <div x-show="sent" x-transition class="rounded-2xl bg-tertiary/10 p-4 text-tertiary ring-1 ring-tertiary/20">
                         <p class="flex items-center gap-2 font-bold">
                             <x-user.icon name="check-circle" :size="20" />
                             Gửi yêu cầu thành công!

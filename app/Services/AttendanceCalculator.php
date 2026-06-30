@@ -441,7 +441,7 @@ class AttendanceCalculator
      * consolidateMeeting(): tính tổng kết cho TẤT CẢ thành viên đang hoạt động của 1 buổi (KHÔNG ghi DB).
      *
      * Cách hoạt động:
-     *   1) $deductExcused: đọc cấu hình lớp (deduct_excused_absence).
+     *   1) $rules: đọc cấu hình điểm trừ của lớp (attendance_rules) qua getAttendanceRules().
      *   2) $sessions: các phiên của buổi, sắp theo id (≈ thời gian) — kèm qr_token để diễn giải pending.
      *   3) $members: thành viên active của lớp, sắp theo tên.
      *   4) $records: nạp record điểm danh của các phiên này, gom theo class_member_id.

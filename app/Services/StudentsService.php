@@ -36,7 +36,7 @@ class StudentsService
         // Mỗi ClassMember là quan hệ của học viên với một lớp học cụ thể.
         $members = ClassMember::query()
             ->with([
-                'courseClass:id,join_key,name,subject_code,semester,total_sessions,deduct_excused_absence',
+                'courseClass:id,join_key,name,subject_code,semester,total_sessions,attendance_rules',
                 'attendanceRecords' => fn ($query) => $query
                     // Chỉ tính các bản ghi thuộc buổi điểm danh đã chốt.
                     ->whereHas('classSession', fn ($sessionQuery) => $sessionQuery->where('status', 'closed'))
@@ -312,7 +312,7 @@ class StudentsService
 
         $members = ClassMember::query()
             ->with([
-                'courseClass:id,owner_user_id,join_key,name,subject_code,semester,status,total_sessions,deduct_excused_absence',
+                'courseClass:id,owner_user_id,join_key,name,subject_code,semester,status,total_sessions,attendance_rules',
                 'courseClass.owner:id,name',
             ])
             ->where('user_id', $studentUserId)

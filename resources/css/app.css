@@ -15,11 +15,10 @@
 
     body {
         background-color: theme('colors.background');
-        background-image:
-            linear-gradient(135deg, rgba(37, 99, 235, 0.04), transparent 42%),
-            linear-gradient(225deg, rgba(20, 184, 166, 0.035), transparent 44%);
         color: theme('colors.on-surface');
-        font-family: 'Plus Jakarta Sans', theme('fontFamily.sans');
+        font-family: theme('fontFamily.sans');
+        -webkit-font-smoothing: antialiased;
+        text-rendering: optimizeLegibility;
     }
 
     /* Thanh cuộn mặc định toàn hệ thống: mảnh, bo tròn, theo tông màu, bỏ nút mũi tên. */
