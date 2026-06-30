@@ -1,8 +1,9 @@
 <div class="mx-auto max-w-[1400px] space-y-6 p-4 pb-24 sm:p-8">
-    <section class="flex flex-col justify-between gap-4 rounded-[2rem] border border-outline-variant/10 bg-white p-6 shadow-sm md:flex-row md:items-end">
+    <section class="flex flex-col justify-between gap-4 rounded-2xl border border-outline-variant/10 bg-white p-6 shadow-sm md:flex-row md:items-end">
         <div class="flex-1 w-full min-w-0">
+            <x-user.workspace-badge type="owner" />
             <div class="flex items-center justify-between gap-4">
-                <h1 class="flex items-center gap-3 text-2xl font-extrabold uppercase tracking-tight text-slate-900 truncate">
+                <h1 class="flex items-center gap-3 text-2xl font-bold tracking-tight text-slate-900 truncate">
                     <x-user.icon name="users" class="text-primary shrink-0" />
                     <span class="truncate">Học viên</span>
                 </h1>

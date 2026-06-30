@@ -1,14 +1,14 @@
 <div class="mx-auto max-w-[1400px] space-y-6 p-4 pb-24 sm:p-8 animate-in fade-in slide-in-from-bottom-4 duration-500">
     <div class="w-full max-w-none space-y-6">
         <!-- Header & Alerts -->
-        <section class="overflow-hidden rounded-[2.5rem] border border-outline-variant/10 bg-white shadow-sm flex flex-col">
+        <section class="overflow-hidden rounded-2xl border border-outline-variant/10 bg-white shadow-sm flex flex-col">
             <div class="flex flex-col justify-between gap-4 p-4 sm:p-5 md:flex-row md:items-center">
                 <div>
-                    <div class="mb-2 inline-flex items-center gap-1.5 rounded-full border border-primary/20 bg-primary/10 px-3 py-1 text-[11px] font-bold uppercase tracking-widest text-primary">
-                        <x-user.icon name="bar-chart" :size="14" />
-                        Học bạ chuyên cần
+                    <div class="mb-2 inline-flex items-center gap-1.5 rounded-full border border-tertiary/20 bg-tertiary/10 px-3 py-1 text-[11px] font-bold uppercase tracking-widest text-tertiary">
+                        <x-user.icon name="user" :size="14" />
+                        Không gian Học viên
                     </div>
-                    <h1 class="text-2xl font-extrabold uppercase tracking-tight text-slate-900">Thống kê chuyên cần</h1>
+                    <h1 class="text-2xl font-bold tracking-tight text-slate-900">Thống kê chuyên cần</h1>
                 </div>
                 <a href="{{ route('student.attendance.history', ['ma_user' => auth()->id()]) }}" class="inline-flex items-center justify-center gap-2 rounded-2xl bg-surface-container-lowest border border-outline-variant/20 px-5 py-2.5 text-[13px] font-bold text-on-surface transition hover:bg-surface-container-low hover:shadow-sm shrink-0">
                     <x-user.icon name="history" :size="16" />
@@ -35,7 +35,7 @@
                                 <x-user.icon name="alert-triangle" :size="20" stroke-width="2.5" />
                             </div>
                             <div class="pt-1">
-                                <h3 class="text-[15px] font-black uppercase tracking-tight text-rose-900">
+                                <h3 class="text-[15px] font-bold tracking-tight text-rose-900">
                                     Cảnh báo: Có {{ $totals['warning_count'] }} môn học nguy cơ cấm thi
                                 </h3>
                                 <p class="mt-1 max-w-2xl text-[13px] font-medium leading-relaxed text-rose-800/80">
@@ -60,7 +60,7 @@
                 ['label' => 'Số buổi vắng', 'value' => $totals['absent'], 'hint' => 'Vắng không phép/chưa hợp lệ', 'bg' => 'bg-rose-50', 'text' => 'text-rose-600', 'border' => 'border-rose-100'],
                 ['label' => 'Số buổi đi muộn', 'value' => $totals['late'], 'hint' => 'Đi trễ quá giờ quy định', 'bg' => 'bg-amber-50', 'text' => 'text-amber-600', 'border' => 'border-amber-100'],
             ] as $card)
-                <article class="flex flex-col justify-between overflow-hidden rounded-[2.5rem] border {{ $card['border'] }} bg-white shadow-sm transition hover:shadow-md">
+                <article class="flex flex-col justify-between overflow-hidden rounded-2xl border {{ $card['border'] }} bg-white shadow-sm transition hover:shadow-md">
                     <div class="p-5">
                         <span class="text-[11px] font-bold uppercase tracking-wider text-on-surface-variant">{{ $card['label'] }}</span>
                         <div class="mt-2 flex items-center justify-between">
@@ -86,7 +86,7 @@
                 ->values();
         @endphp
         @if ($ranked->isNotEmpty())
-            <section class="overflow-hidden rounded-[2.5rem] border border-outline-variant/10 bg-white shadow-sm">
+            <section class="overflow-hidden rounded-2xl border border-outline-variant/10 bg-white shadow-sm">
                 <div class="flex flex-col gap-1 border-b border-outline-variant/10 p-5 sm:flex-row sm:items-center sm:justify-between">
                     <div>
                         <h2 class="text-[22px] font-black text-on-surface">Quỹ vắng an toàn theo môn</h2>
@@ -147,7 +147,7 @@
 
         {{-- Empty state khi chưa có dữ liệu chuyên cần --}}
         @if (empty($subjects))
-            <section class="rounded-[2.5rem] border border-outline-variant/10 bg-white p-8 text-center shadow-sm">
+            <section class="rounded-2xl border border-outline-variant/10 bg-white p-8 text-center shadow-sm">
                 <div class="mx-auto mb-4 flex h-14 w-14 items-center justify-center rounded-full bg-primary/10 text-primary">
                     <x-user.icon name="bar-chart" :size="24" />
                 </div>

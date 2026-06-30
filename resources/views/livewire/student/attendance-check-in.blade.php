@@ -1,9 +1,9 @@
 <div class="mx-auto max-w-lg p-4 py-12 relative">
     <!-- Main Card -->
-    <div class="group relative rounded-[2.5rem] bg-white shadow-2xl shadow-slate-200/50 ring-1 ring-slate-100 transition-all duration-500 hover:shadow-blue-900/5">
+    <div class="group relative rounded-2xl bg-white shadow-2xl shadow-slate-200/50 ring-1 ring-slate-100 transition-all duration-500 hover:shadow-blue-900/5">
         
         <!-- Header Gradient Area -->
-        <div class="relative overflow-hidden rounded-t-[2.5rem] bg-gradient-to-br from-blue-600 via-indigo-600 to-purple-600 px-6 py-6 sm:px-8">
+        <div class="relative overflow-hidden rounded-t-[2.5rem] bg-primary px-6 py-6 sm:px-8">
             <!-- Glass effect overlay pattern -->
             <div class="absolute inset-0 opacity-10 bg-[url('data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMjAiIGhlaWdodD0iMjAiIHhtbG5zPSJodHRwOi8vd3d3LnczLm9yZy8yMDAwL3N2ZyI+PGNpcmNsZSBjeD0iMSIgY3k9IjEiIHI9IjEiIGZpbGw9IiNmZmYiLz48L3N2Zz4=')]"></div>
             
@@ -23,7 +23,7 @@
         <!-- Body Area -->
         <div class="relative bg-white px-6 sm:px-8 pb-10 pt-8 rounded-b-[2.5rem]">
             @if(session('success'))
-                <div class="mb-8 rounded-3xl border border-emerald-100 bg-emerald-50 p-6 text-center shadow-inner">
+                <div class="mb-8 rounded-2xl border border-emerald-100 bg-emerald-50 p-6 text-center shadow-inner">
                     <div class="mx-auto flex h-16 w-16 items-center justify-center rounded-2xl bg-emerald-100 text-emerald-600 mb-4 shadow-sm">
                         <x-user.icon name="check-circle-2" :size="32" />
                     </div>
@@ -32,7 +32,7 @@
             @endif
 
             @if($statusMessage && !$isSuccess && !session('success'))
-                <div class="mb-8 rounded-3xl border border-rose-100 bg-rose-50 p-6 text-center shadow-inner">
+                <div class="mb-8 rounded-2xl border border-rose-100 bg-rose-50 p-6 text-center shadow-inner">
                     <div class="mx-auto flex h-16 w-16 items-center justify-center rounded-2xl bg-rose-100 text-rose-600 mb-4 shadow-sm">
                         <x-user.icon name="alert-triangle" :size="32" />
                     </div>
@@ -41,7 +41,7 @@
             @endif
 
             @if($session)
-                <div class="relative mb-8 overflow-hidden rounded-3xl border border-slate-100 bg-gradient-to-b from-slate-50 to-white p-6 shadow-sm ring-1 ring-slate-900/5">
+                <div class="relative mb-8 overflow-hidden rounded-2xl border border-slate-100 bg-gradient-to-b from-slate-50 to-white p-6 shadow-sm ring-1 ring-slate-900/5">
                     <div class="absolute right-0 top-0 -mr-8 -mt-8 h-32 w-32 rounded-full bg-blue-50 blur-3xl"></div>
                     
                     <div class="relative z-10">
@@ -100,7 +100,7 @@
                                 <input type="text" wire:model="fullName" class="w-full rounded-2xl border-slate-200 bg-slate-50 py-3.5 pl-12 pr-4 font-bold text-slate-900 transition focus:border-blue-500 focus:bg-white focus:ring-4 focus:ring-blue-500/10" placeholder="Nhập họ tên của bạn">
                             </div>
                         </div>
-                        <button type="submit" class="group relative inline-flex w-full items-center justify-center overflow-hidden rounded-[1.5rem] bg-gradient-to-r from-blue-600 to-indigo-600 px-8 py-4 text-lg font-black text-white shadow-xl shadow-blue-600/20 transition-all hover:scale-[1.02] hover:shadow-2xl hover:shadow-blue-600/40 active:scale-[0.98]">
+                        <button type="submit" class="group relative inline-flex w-full items-center justify-center overflow-hidden rounded-xl bg-primary px-8 py-4 text-lg font-black text-white shadow-xl shadow-blue-600/20 transition-all hover:scale-[1.02] hover:shadow-2xl hover:shadow-blue-600/40 active:scale-[0.98]">
                             <div class="absolute inset-0 -translate-x-full bg-gradient-to-r from-transparent via-white/20 to-transparent transition-transform duration-1000 group-hover:translate-x-full"></div>
                             <span class="relative z-10">Tiếp tục điểm danh</span>
                         </button>
@@ -216,7 +216,7 @@
                         <button 
                             @click="performCheckIn"
                             x-bind:disabled="isCheckingIn"
-                            class="group relative inline-flex w-full items-center justify-center overflow-hidden rounded-[1.5rem] bg-gradient-to-r from-blue-600 to-indigo-600 px-8 py-5 text-lg font-black text-white shadow-xl shadow-blue-600/20 transition-all hover:scale-[1.02] hover:shadow-2xl hover:shadow-blue-600/40 active:scale-[0.98] disabled:pointer-events-none disabled:opacity-70"
+                            class="group relative inline-flex w-full items-center justify-center overflow-hidden rounded-xl bg-primary px-8 py-5 text-lg font-black text-white shadow-xl shadow-blue-600/20 transition-all hover:scale-[1.02] hover:shadow-2xl hover:shadow-blue-600/40 active:scale-[0.98] disabled:pointer-events-none disabled:opacity-70"
                         >
                             <!-- Shimmer effect -->
                             <div class="absolute inset-0 -translate-x-full bg-gradient-to-r from-transparent via-white/20 to-transparent transition-transform duration-1000 group-hover:translate-x-full"></div>

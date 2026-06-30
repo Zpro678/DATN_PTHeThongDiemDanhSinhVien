@@ -5,13 +5,13 @@
     $attendanceWarningStudentsCount = $overview['attendance_warning_students_count'] ?? 0;
     $pendingLeaveRequestsCount = $overview['pending_leave_requests_count'] ?? 0;
 
+    // KPI tổng quan (4 thẻ) — số liệu "quy mô". Các việc cần làm (chưa chốt sổ, đơn nghỉ)
+    // được đưa vào panel "Cần xử lý" ở hero nên không lặp lại ở đây.
     $adminStats = [
         ['label' => 'Lớp quản lý', 'value' => $totalClasses, 'icon' => 'book-open', 'color' => 'text-primary', 'bg' => 'bg-primary/10'],
         ['label' => 'Tổng học viên', 'value' => $overview['total_students'] ?? 0, 'icon' => 'users', 'color' => 'text-tertiary', 'bg' => 'bg-tertiary/10'],
-        ['label' => 'Buổi điểm danh hôm nay', 'value' => $todayAttendanceSessions, 'icon' => 'calendar-check', 'color' => 'text-secondary', 'bg' => 'bg-secondary/10'],
-        ['label' => 'Buổi chưa chốt sổ', 'value' => $unclosedAttendanceSessions, 'icon' => 'clock', 'color' => 'text-error', 'bg' => 'bg-error/10'],
+        ['label' => 'Buổi điểm danh hôm nay', 'value' => $todayAttendanceSessions, 'icon' => 'calendar-check', 'color' => 'text-primary', 'bg' => 'bg-primary/10'],
         ['label' => 'SV gần/vượt ngưỡng', 'value' => $attendanceWarningStudentsCount, 'icon' => 'alert-triangle', 'color' => 'text-error', 'bg' => 'bg-error/10'],
-        ['label' => 'Đơn nghỉ chờ duyệt', 'value' => $pendingLeaveRequestsCount, 'icon' => 'file-text', 'color' => 'text-secondary', 'bg' => 'bg-secondary/10'],
     ];
 
     $adminActions = [
@@ -112,13 +112,12 @@
     $studentPendingLeaveRequests = $studentDashboardStats['pending_leave_requests'] ?? 0;
     $studentLatestAttendanceLabel = $studentDashboardStats['latest_attendance_label'] ?? 'Chưa có';
 
+    // KPI học viên (4 thẻ). Đơn chờ duyệt + buổi gần nhất nằm trong panel "Chuyên cần của bạn".
     $studentStats = [
         ['label' => 'Lớp tham gia', 'value' => $studentJoinedClassesCount, 'icon' => 'users', 'color' => 'text-tertiary', 'bg' => 'bg-tertiary/10'],
         ['label' => 'CC trung bình', 'value' => "{$studentAverageAttendance}%", 'icon' => 'check-circle', 'color' => 'text-primary', 'bg' => 'bg-primary/10'],
         ['label' => 'Buổi vắng', 'value' => $studentAbsentSessions, 'icon' => 'clock', 'color' => 'text-error', 'bg' => 'bg-error/10'],
         ['label' => 'Cảnh báo', 'value' => $studentWarningCount, 'icon' => 'alert-triangle', 'color' => 'text-error', 'bg' => 'bg-error/10'],
-        ['label' => 'Đơn chờ duyệt', 'value' => $studentPendingLeaveRequests, 'icon' => 'file-text', 'color' => 'text-secondary', 'bg' => 'bg-secondary/10'],
-        ['label' => 'Buổi gần nhất', 'value' => $studentLatestAttendanceLabel, 'icon' => 'calendar-check', 'color' => 'text-primary', 'bg' => 'bg-primary/10'],
     ];
 
     $studentActions = [
@@ -135,83 +134,263 @@
     $joinedCards = $studentJoinedCards;
 @endphp
 
-<div class="mx-auto max-w-[1400px] p-4 pb-24 md:p-8 md:pb-12">
+<div class="dashboard-canvas min-h-[calc(100vh-4rem)] w-full">
+    <div class="w-full px-4 py-6 pb-24 sm:px-6 md:py-8 lg:px-8 xl:px-12">
     @php
         $heroName = Auth::user()?->name ?? 'bạn';
-        $heroTiles = [
-            ['label' => 'Lớp quản lý', 'value' => $totalClasses, 'icon' => 'book-open', 'tone' => 'text-primary', 'ring' => 'bg-primary/10'],
-            ['label' => 'Buổi đang mở', 'value' => $unclosedAttendanceSessions, 'icon' => 'clock', 'tone' => 'text-secondary', 'ring' => 'bg-secondary/10'],
-            ['label' => 'Cần xử lý', 'value' => $attendanceWarningStudentsCount, 'icon' => 'alert-triangle', 'tone' => 'text-error', 'ring' => 'bg-error/10'],
-            ['label' => 'Lớp tham gia', 'value' => $studentJoinedClassesCount, 'icon' => 'users', 'tone' => 'text-tertiary', 'ring' => 'bg-tertiary/10'],
+        $isAdminWs = $workspace === 'admin';
+
+        // Dữ liệu gói cước (dùng cho thẻ nhắc gói ở workspace Chủ lớp).
+        $currentPlan = Auth::user()?->currentPlan();
+        $planName = $currentPlan->name ?? 'Miễn phí';
+        $planTier = $currentPlan->plan_tier ?? 'FREE';
+        $planMax = (int) ($currentPlan->max_classes ?? 2);
+        $planUsedPercent = $planMax > 0 ? min(100, (int) round($totalClasses / max(1, $planMax) * 100)) : 0;
+        $planNearLimit = $planMax > 0 && $totalClasses >= $planMax;
+
+        // Tổng việc cần xử lý phía Chủ lớp.
+        $adminNeedsCount = $unclosedAttendanceSessions + $pendingLeaveRequestsCount + $attendanceWarningStudentsCount;
+
+        $adminNeedRows = [
+            ['label' => 'Buổi chưa chốt sổ', 'value' => $unclosedAttendanceSessions, 'icon' => 'clock', 'tone' => 'text-error', 'bg' => 'bg-error/10', 'href' => route('lecturer.attendance.index')],
+            ['label' => 'Đơn nghỉ chờ duyệt', 'value' => $pendingLeaveRequestsCount, 'icon' => 'file-text', 'tone' => 'text-primary', 'bg' => 'bg-primary/10', 'href' => route('lecturer.leave-requests.index')],
+            ['label' => 'Học viên cảnh báo', 'value' => $attendanceWarningStudentsCount, 'icon' => 'alert-triangle', 'tone' => 'text-[#D97706]', 'bg' => 'bg-[#FEF3C7]', 'href' => route('lecturer.students.index')],
+        ];
+
+        $studentNeedRows = [
+            ['label' => 'Buổi vắng', 'value' => $studentAbsentSessions, 'icon' => 'clock', 'tone' => 'text-error', 'bg' => 'bg-error/10'],
+            ['label' => 'Nguy cơ cấm thi', 'value' => $studentWarningCount, 'icon' => 'alert-triangle', 'tone' => 'text-error', 'bg' => 'bg-error/10'],
+            ['label' => 'Buổi gần nhất', 'value' => $studentLatestAttendanceLabel, 'icon' => 'calendar-check', 'tone' => 'text-tertiary', 'bg' => 'bg-tertiary/10'],
+        ];
+
+        // Lối tắt điều hướng trong thẻ "Bắt đầu nhanh" — lấp khoảng trống bằng thao tác hữu ích.
+        $adminShortcuts = [
+            ['label' => 'Quản lý học viên', 'hint' => ($overview['total_students'] ?? 0) . ' học viên', 'icon' => 'users', 'href' => route('lecturer.students.index')],
+            ['label' => 'Buổi điểm danh', 'hint' => 'Danh sách buổi', 'icon' => 'calendar-check', 'href' => route('lecturer.attendance.index')],
+            ['label' => 'Đơn xin nghỉ', 'hint' => $pendingLeaveRequestsCount > 0 ? "{$pendingLeaveRequestsCount} chờ duyệt" : 'Đã xử lý hết', 'icon' => 'file-text', 'href' => route('lecturer.leave-requests.index')],
+        ];
+
+        $studentShortcuts = [
+            ['label' => 'Lịch sử điểm danh', 'hint' => 'Xem các buổi', 'icon' => 'history', 'href' => route('student.attendance.history')],
+            ['label' => 'Chuyên cần của tôi', 'hint' => "{$studentAverageAttendance}% trung bình", 'icon' => 'bar-chart', 'href' => route('student.attendance.stats')],
+            ['label' => 'Gửi đơn xin nghỉ', 'hint' => 'Tạo đơn mới', 'icon' => 'send', 'href' => route('student.leave-requests.create')],
         ];
     @endphp
-    <section class="mb-8">
-        <div class="overflow-hidden rounded-2xl border border-outline-variant bg-white shadow-sm">
-            <div class="grid gap-8 p-6 md:grid-cols-[1.5fr_1fr] md:p-8">
+    {{-- ===== Header chào: badge + lời chào + ngày/tóm tắt (trái) · công tắc workspace (phải) ===== --}}
+    <section class="mb-6 flex flex-wrap items-start justify-between gap-4">
+        <div class="min-w-0">
+            @if ($isAdminWs)
+                <span class="inline-flex items-center gap-1.5 rounded-full bg-primary/10 px-3 py-1 text-xs font-semibold text-primary">
+                    <x-user.icon name="shield-check" :size="14" /> Không gian Chủ lớp
+                </span>
+            @else
+                <span class="inline-flex items-center gap-1.5 rounded-full bg-tertiary/10 px-3 py-1 text-xs font-semibold text-tertiary">
+                    <x-user.icon name="user" :size="14" /> Không gian Học viên
+                </span>
+            @endif
+
+            <h2 class="mt-3 text-2xl font-bold leading-tight tracking-tight text-on-surface md:text-3xl">
+                Xin chào, {{ $heroName }} 👋
+            </h2>
+            <p class="mt-1.5 text-sm text-on-surface-variant">
+                Hôm nay, {{ \Carbon\Carbon::now()->format('d/m/Y') }}
+                @if ($isAdminWs)
+                    @if ($adminNeedsCount > 0)
+                        · Bạn có <span class="font-semibold text-on-surface">{{ $adminNeedsCount }} việc</span> cần xử lý
+                    @else
+                        · Mọi việc đang ổn định, không có gì cần xử lý
+                    @endif
+                @else
+                    · Chuyên cần trung bình <span class="font-semibold {{ $studentAverageAttendance >= 80 ? 'text-tertiary' : 'text-error' }}">{{ $studentAverageAttendance }}%</span>
+                @endif
+            </p>
+        </div>
+
+        {{-- Công tắc workspace (giữ nguyên cơ chế Livewire) --}}
+        <div class="inline-flex shrink-0 rounded-xl border border-outline-variant bg-surface-container p-1">
+            <button
+                type="button"
+                wire:click="setWorkspace('admin')"
+                @class([
+                    'flex items-center gap-2 rounded-lg px-4 py-2 text-sm font-semibold transition-all',
+                    'bg-white text-primary shadow-sm' => $workspace === 'admin',
+                    'text-on-surface-variant hover:text-on-surface' => $workspace !== 'admin',
+                ])
+            >
+                <x-user.icon name="shield" :size="16" />
+                Chủ lớp
+            </button>
+            <button
+                type="button"
+                wire:click="setWorkspace('student')"
+                @class([
+                    'flex items-center gap-2 rounded-lg px-4 py-2 text-sm font-semibold transition-all',
+                    'bg-white text-tertiary shadow-sm' => $workspace === 'student',
+                    'text-on-surface-variant hover:text-on-surface' => $workspace !== 'student',
+                ])
+            >
+                <x-user.icon name="user" :size="16" />
+                Học viên
+            </button>
+        </div>
+    </section>
+
+    {{-- ===== Hàng spotlight: thẻ bắt đầu nhanh (trái) + panel theo workspace (phải) ===== --}}
+    <section class="mb-8 grid gap-4 md:grid-cols-[1.5fr_1fr]">
+        {{-- Bắt đầu nhanh: CTA chính + lối tắt điều hướng --}}
+        <div class="dash-card flex flex-col rounded-2xl p-5 md:p-6">
+            <div class="flex items-start gap-3">
+                <span class="grid h-11 w-11 shrink-0 place-items-center rounded-xl {{ $isAdminWs ? 'bg-primary/10 text-primary' : 'bg-tertiary/10 text-tertiary' }}">
+                    <x-user.icon :name="$isAdminWs ? 'zap' : 'sparkles'" :size="22" />
+                </span>
                 <div class="min-w-0">
-                    <span class="inline-flex items-center gap-1.5 rounded-full bg-primary/10 px-3 py-1 text-xs font-semibold text-primary">
-                        <x-user.icon name="layout-dashboard" :size="14" />
-                        Bảng điều khiển
-                    </span>
-                    <h2 class="mt-4 text-2xl font-bold leading-tight tracking-tight text-on-surface md:text-3xl">
-                        Xin chào, {{ $heroName }} 👋
-                    </h2>
-                    <p class="mt-2 max-w-xl text-sm leading-relaxed text-on-surface-variant md:text-base">
-                        Quản lý lớp học, tổ chức điểm danh, theo dõi chuyên cần và tham gia lớp — tất cả trong một nơi.
+                    <p class="text-sm text-on-surface-variant">Bắt đầu nhanh</p>
+                    <p class="mt-0.5 text-base font-semibold leading-snug text-on-surface md:text-lg">
+                        @if ($isAdminWs)
+                            Tổ chức một buổi điểm danh hoặc mở lớp mới
+                        @else
+                            Tham gia lớp bằng mã hoặc theo dõi chuyên cần của bạn
+                        @endif
                     </p>
-
-                    <div class="mt-6 inline-flex rounded-xl border border-outline-variant bg-surface-container p-1">
-                        <button
-                            type="button"
-                            wire:click="setWorkspace('admin')"
-                            @class([
-                                'flex items-center gap-2 rounded-lg px-4 py-2 text-sm font-semibold transition-all',
-                                'bg-white text-primary shadow-sm' => $workspace === 'admin',
-                                'text-on-surface-variant hover:text-on-surface' => $workspace !== 'admin',
-                            ])
-                        >
-                            <x-user.icon name="shield" :size="16" />
-                            Chủ lớp
-                        </button>
-                        <button
-                            type="button"
-                            wire:click="setWorkspace('student')"
-                            @class([
-                                'flex items-center gap-2 rounded-lg px-4 py-2 text-sm font-semibold transition-all',
-                                'bg-white text-tertiary shadow-sm' => $workspace === 'student',
-                                'text-on-surface-variant hover:text-on-surface' => $workspace !== 'student',
-                            ])
-                        >
-                            <x-user.icon name="user" :size="16" />
-                            Học viên
-                        </button>
-                    </div>
-
-                    <div class="mt-6 flex flex-wrap items-center gap-3">
-                        <a href="{{ route('create-class') }}" class="inline-flex items-center gap-2 rounded-lg bg-primary px-4 py-2.5 text-sm font-semibold text-white shadow-sm transition-colors hover:bg-primary-container">
-                            <x-user.icon name="plus" :size="18" />
-                            Tạo lớp mới
-                        </a>
-                        <button type="button" x-on:click="$dispatch('open-join-class-modal')" class="inline-flex items-center gap-2 rounded-lg border border-outline-variant bg-white px-4 py-2.5 text-sm font-semibold text-on-surface-variant transition-colors hover:bg-surface-container hover:text-on-surface">
-                            <x-user.icon name="key" :size="18" />
-                            Tham gia bằng mã
-                        </button>
-                    </div>
                 </div>
+            </div>
 
-                <div class="grid grid-cols-2 content-start gap-3">
-                    @foreach ($heroTiles as $tile)
-                        <div class="rounded-xl border border-outline-variant bg-surface-container-low p-4">
-                            <span class="{{ $tile['ring'] }} {{ $tile['tone'] }} mb-3 inline-flex h-9 w-9 items-center justify-center rounded-lg">
-                                <x-user.icon :name="$tile['icon']" :size="18" />
+            <div class="mt-5 flex flex-wrap items-center gap-3">
+                @if ($isAdminWs)
+                    <a href="{{ route('lecturer.attendance.create') }}" class="inline-flex items-center gap-2 rounded-xl bg-primary px-4 py-2.5 text-sm font-semibold text-white shadow-sm transition-colors hover:bg-primary-container">
+                        <x-user.icon name="calendar-plus" :size="18" />
+                        Tạo buổi điểm danh
+                    </a>
+                    <a href="{{ route('create-class') }}" class="inline-flex items-center gap-2 rounded-xl border border-outline-variant bg-white px-4 py-2.5 text-sm font-semibold text-on-surface-variant transition-colors hover:bg-surface-container hover:text-on-surface">
+                        <x-user.icon name="plus" :size="18" />
+                        Tạo lớp mới
+                    </a>
+                @else
+                    <button type="button" x-on:click="$dispatch('open-join-class-modal')" class="inline-flex items-center gap-2 rounded-xl bg-tertiary px-4 py-2.5 text-sm font-semibold text-white shadow-sm transition-colors hover:bg-tertiary/90">
+                        <x-user.icon name="log-in" :size="18" />
+                        Tham gia bằng mã
+                    </button>
+                    <a href="{{ route('student.attendance.stats') }}" class="inline-flex items-center gap-2 rounded-xl border border-outline-variant bg-white px-4 py-2.5 text-sm font-semibold text-on-surface-variant transition-colors hover:bg-surface-container hover:text-on-surface">
+                        <x-user.icon name="bar-chart" :size="18" />
+                        Xem chuyên cần
+                    </a>
+                @endif
+            </div>
+
+            {{-- Lối tắt — lấp khoảng trống, đồng bộ chiều cao với panel phải --}}
+            <div class="mt-auto pt-5">
+                <p class="mb-2 text-xs font-semibold uppercase tracking-wide text-on-surface-variant">Lối tắt</p>
+                <div class="grid gap-2 sm:grid-cols-3">
+                    @foreach (($isAdminWs ? $adminShortcuts : $studentShortcuts) as $sc)
+                        <a href="{{ $sc['href'] }}" wire:navigate class="group flex items-center gap-3 rounded-xl border border-outline-variant/60 bg-surface-container-low p-3 transition hover:bg-white sm:flex-col sm:items-start sm:gap-2 {{ $isAdminWs ? 'hover:border-primary/30' : 'hover:border-tertiary/30' }}">
+                            <span class="grid h-9 w-9 shrink-0 place-items-center rounded-lg bg-white text-on-surface-variant shadow-sm ring-1 ring-outline-variant/30 transition {{ $isAdminWs ? 'group-hover:text-primary' : 'group-hover:text-tertiary' }}">
+                                <x-user.icon :name="$sc['icon']" :size="18" />
                             </span>
-                            <p class="text-2xl font-bold leading-none text-on-surface">{{ $tile['value'] }}</p>
-                            <p class="mt-1.5 text-xs font-medium text-on-surface-variant">{{ $tile['label'] }}</p>
-                        </div>
+                            <span class="min-w-0">
+                                <span class="block truncate text-sm font-semibold text-on-surface">{{ $sc['label'] }}</span>
+                                <span class="block truncate text-xs text-on-surface-variant">{{ $sc['hint'] }}</span>
+                            </span>
+                        </a>
                     @endforeach
                 </div>
             </div>
         </div>
+
+        {{-- ===== Panel spotlight theo workspace ===== --}}
+        @if ($isAdminWs)
+            <div class="dash-card rounded-2xl p-5">
+                <div class="flex items-center justify-between">
+                    <p class="flex items-center gap-2 text-sm font-bold text-on-surface">
+                        <x-user.icon name="alert-circle" :size="16" class="text-primary" />
+                        Cần xử lý
+                    </p>
+                    @if ($adminNeedsCount > 0)
+                        <span class="inline-flex items-center gap-1 rounded-full bg-error/10 px-2.5 py-0.5 text-xs font-bold text-error">{{ $adminNeedsCount }} việc</span>
+                    @else
+                        <span class="inline-flex items-center gap-1 rounded-full bg-tertiary/10 px-2.5 py-0.5 text-xs font-bold text-tertiary">
+                            <x-user.icon name="check" :size="12" /> Ổn định
+                        </span>
+                    @endif
+                </div>
+                <div class="mt-3 divide-y divide-outline-variant/50">
+                    @foreach ($adminNeedRows as $row)
+                        <a href="{{ $row['href'] }}" wire:navigate class="group -mx-2 flex items-center gap-3 rounded-xl px-2 py-2.5 transition hover:bg-surface-container-low">
+                            <span class="{{ $row['bg'] }} {{ $row['tone'] }} grid h-9 w-9 shrink-0 place-items-center rounded-lg">
+                                <x-user.icon :name="$row['icon']" :size="18" />
+                            </span>
+                            <span class="flex-1 text-sm font-medium text-on-surface">{{ $row['label'] }}</span>
+                            <span @class([
+                                'grid h-7 min-w-7 place-items-center rounded-lg px-2 text-sm font-bold tabular-nums',
+                                $row['bg'].' '.$row['tone'] => $row['value'] > 0,
+                                'text-on-surface-variant' => ! ($row['value'] > 0),
+                            ])>{{ $row['value'] }}</span>
+                            <x-user.icon name="chevron-right" :size="16" class="-ml-1 text-on-surface-variant transition group-hover:translate-x-0.5" />
+                        </a>
+                    @endforeach
+                </div>
+                <div class="mt-4 rounded-xl border border-outline-variant/60 bg-surface-container-low p-3.5">
+                    <div class="flex items-center justify-between">
+                        <span class="inline-flex items-center gap-1.5 text-sm font-semibold text-on-surface">
+                            <x-user.icon name="zap" :size="15" class="text-primary" /> Gói {{ $planName }}
+                        </span>
+                        <span class="text-xs font-semibold text-on-surface-variant">{{ $totalClasses }}/{{ $planMax }} lớp</span>
+                    </div>
+                    <div class="mt-2.5 h-2 w-full overflow-hidden rounded-full bg-surface-container-highest">
+                        <div class="{{ $planNearLimit ? 'bg-error' : 'bg-primary' }} h-full rounded-full transition-all" style="width: {{ $planUsedPercent }}%"></div>
+                    </div>
+                    <div class="mt-2 flex items-center justify-between text-xs">
+                        <span class="text-on-surface-variant">
+                            @if ($planNearLimit)
+                                Đã đạt giới hạn lớp của gói
+                            @else
+                                Còn {{ max(0, $planMax - $totalClasses) }} lớp có thể tạo
+                            @endif
+                        </span>
+                        <a href="{{ route('upgrade') }}" wire:navigate class="font-semibold text-primary hover:underline">Nâng cấp</a>
+                    </div>
+                </div>
+            </div>
+                @else
+            <div class="dash-card rounded-2xl p-5">
+                <p class="flex items-center gap-2 text-sm font-bold text-on-surface">
+                    <x-user.icon name="bar-chart" :size="16" class="text-tertiary" />
+                    Chuyên cần của bạn
+                </p>
+                <div class="mt-3 flex items-end justify-between">
+                    <div class="flex items-end gap-2">
+                        <span class="text-4xl font-bold leading-none {{ $studentAverageAttendance >= 80 ? 'text-tertiary' : 'text-error' }}">{{ $studentAverageAttendance }}%</span>
+                        <span class="pb-1 text-xs font-medium text-on-surface-variant">trung bình {{ $studentJoinedClassesCount }} lớp</span>
+                    </div>
+                    <span @class([
+                        'rounded-full px-2.5 py-0.5 text-xs font-semibold',
+                        'bg-tertiary/10 text-tertiary' => $studentAverageAttendance >= 80,
+                        'bg-error/10 text-error' => $studentAverageAttendance < 80,
+                    ])>{{ $studentAverageAttendance >= 80 ? 'An toàn' : 'Cần chú ý' }}</span>
+                </div>
+                <div class="mt-2.5 h-2 w-full overflow-hidden rounded-full bg-surface-container-highest">
+                    <div class="h-full rounded-full transition-all {{ $studentAverageAttendance >= 80 ? 'bg-tertiary' : 'bg-error' }}" style="width: {{ min(100, (int) $studentAverageAttendance) }}%"></div>
+                </div>
+                <div class="mt-3 divide-y divide-outline-variant/50 border-t border-outline-variant/60">
+                    @foreach ($studentNeedRows as $row)
+                        <div class="flex items-center gap-3 py-2.5">
+                            <span class="{{ $row['bg'] }} {{ $row['tone'] }} grid h-9 w-9 shrink-0 place-items-center rounded-lg">
+                                <x-user.icon :name="$row['icon']" :size="18" />
+                            </span>
+                            <span class="flex-1 text-sm font-medium text-on-surface">{{ $row['label'] }}</span>
+                            @if (is_numeric($row['value']))
+                                <span @class([
+                                    'grid h-7 min-w-7 place-items-center rounded-lg px-2 text-sm font-bold tabular-nums',
+                                    $row['bg'].' '.$row['tone'] => $row['value'] > 0,
+                                    'text-on-surface-variant' => ! ($row['value'] > 0),
+                                ])>{{ $row['value'] }}</span>
+                            @else
+                                <span class="text-sm font-semibold text-on-surface-variant">{{ $row['value'] }}</span>
+                            @endif
+                        </div>
+                    @endforeach
+                </div>
+            </div>
+                @endif
     </section>
 
     <div id="admin" class="relative">
@@ -225,16 +404,14 @@
                     <p class="mt-1 text-body-md text-on-surface-variant">Quản lý lớp học, học viên, buổi điểm danh, báo cáo và cảnh báo chuyên cần.</p>
                 </div>
 
-                <div class="grid grid-cols-2 gap-3 md:grid-cols-3 lg:grid-cols-6">
+                <div class="grid grid-cols-2 gap-3 lg:grid-cols-4">
                     @foreach ($adminStats as $stat)
-                        <div class="flex items-center gap-3 rounded-2xl bg-white p-3 shadow-sm ring-1 ring-outline-variant/10 transition-shadow hover:shadow-md overflow-hidden">
-                            <div class="{{ $stat['bg'] }} {{ $stat['color'] }} flex h-10 w-10 sm:h-12 sm:w-12 shrink-0 items-center justify-center rounded-full">
-                                <x-user.icon :name="$stat['icon']" :size="20" class="sm:w-6 sm:h-6" />
-                            </div>
-                            <div class="min-w-0 flex-1">
-                                <p class="truncate text-[11px] sm:text-xs font-semibold text-on-surface-variant" title="{{ $stat['label'] }}">{{ $stat['label'] }}</p>
-                                <h3 class="truncate text-xl sm:text-2xl font-bold text-on-surface leading-tight">{{ $stat['value'] }}</h3>
-                            </div>
+                        <div class="dash-card dash-card-hover rounded-2xl p-4 sm:p-5">
+                            <span class="{{ $stat['bg'] }} {{ $stat['color'] }} mb-3 grid h-10 w-10 place-items-center rounded-xl">
+                                <x-user.icon :name="$stat['icon']" :size="20" />
+                            </span>
+                            <div class="text-2xl font-bold leading-none text-on-surface sm:text-3xl">{{ $stat['value'] }}</div>
+                            <p class="mt-1.5 text-xs text-on-surface-variant sm:text-sm">{{ $stat['label'] }}</p>
                         </div>
                     @endforeach
                 </div>
@@ -255,10 +432,9 @@
 
                 <div>
                     <h4 class="mb-4 text-[16px] font-bold text-on-surface">Lớp tôi quản lý</h4>
-                    <div class="grid grid-cols-1 gap-6 md:grid-cols-2 lg:grid-cols-2">
+                    <div class="grid grid-cols-1 gap-6 md:grid-cols-2 xl:grid-cols-3">
                         @forelse ($managedClassCards as $class)
-                            <article class="group relative flex flex-col overflow-hidden rounded-2xl bg-white p-5 shadow-sm ring-1 ring-outline-variant/20 transition-all duration-300 hover:-translate-y-1 hover:shadow-lg hover:ring-outline-variant/40">
-                                <div class="absolute inset-x-0 top-0 h-1 {{ $class['bar'] }}"></div>
+                            <article class="dash-card dash-card-hover group flex flex-col rounded-2xl p-5">
                                 <div class="mb-4 flex items-start justify-between">
                                     <div class="flex h-12 w-12 items-center justify-center rounded-xl bg-surface-container-lowest shadow-sm ring-1 ring-outline-variant/20 {{ $class['color'] }}">
                                         <x-user.icon :name="$class['icon']" :size="24" />
@@ -344,7 +520,7 @@
                             <x-user.icon name="activity" class="text-tertiary" />
                             Hoạt động gần đây
                         </h4>
-                        <div class="relative rounded-3xl border border-outline-variant/10 bg-white p-6">
+                        <div class="relative rounded-2xl border border-outline-variant/10 bg-white p-6">
                             <div class="absolute bottom-8 left-10 top-8 w-[2px] bg-surface-container-high"></div>
                             <div class="relative z-10 space-y-6">
                                 @foreach ($activities as $activity)
@@ -373,16 +549,14 @@
                     <p class="mt-1 text-body-md text-on-surface-variant">Theo dõi lớp đã tham gia, lịch sử điểm danh cá nhân, chuyên cần và đơn xin nghỉ.</p>
                 </div>
 
-                <div class="grid grid-cols-2 gap-3 md:grid-cols-3 lg:grid-cols-6">
+                <div class="grid grid-cols-2 gap-3 lg:grid-cols-4">
                     @foreach ($studentStats as $stat)
-                        <div class="flex items-center gap-3 rounded-2xl bg-white p-3 shadow-sm ring-1 ring-outline-variant/10 transition-shadow hover:shadow-md overflow-hidden">
-                            <div class="{{ $stat['bg'] }} {{ $stat['color'] }} flex h-10 w-10 shrink-0 items-center justify-center rounded-full">
+                        <div class="dash-card dash-card-hover rounded-2xl p-4 sm:p-5">
+                            <span class="{{ $stat['bg'] }} {{ $stat['color'] }} mb-3 grid h-10 w-10 place-items-center rounded-xl">
                                 <x-user.icon :name="$stat['icon']" :size="20" />
-                            </div>
-                            <div class="min-w-0 flex-1">
-                                <p class="truncate text-[11px] font-semibold uppercase tracking-wide text-on-surface-variant">{{ $stat['label'] }}</p>
-                                <h3 class="truncate text-xl font-bold text-on-surface leading-tight">{{ $stat['value'] }}</h3>
-                            </div>
+                            </span>
+                            <div class="text-2xl font-bold leading-none text-on-surface sm:text-3xl">{{ $stat['value'] }}</div>
+                            <p class="mt-1.5 text-xs text-on-surface-variant sm:text-sm">{{ $stat['label'] }}</p>
                         </div>
                     @endforeach
                 </div>
@@ -414,8 +588,7 @@
                     <h4 class="mb-4 text-[16px] font-bold text-on-surface">Lớp tôi tham gia</h4>
                     <div class="grid grid-cols-1 gap-6 md:grid-cols-2 lg:grid-cols-3">
                         @forelse ($joinedCards as $class)
-                            <article class="group relative flex flex-col overflow-hidden rounded-2xl bg-white p-5 shadow-sm ring-1 ring-outline-variant/20 transition-all duration-300 hover:-translate-y-1 hover:shadow-lg hover:ring-outline-variant/40">
-                                <div class="absolute inset-x-0 top-0 h-1 {{ $class['bar'] }}"></div>
+                            <article class="dash-card dash-card-hover group flex flex-col rounded-2xl p-5">
                                 <div class="mb-4 flex items-start justify-between">
                                     <div class="flex h-12 w-12 items-center justify-center rounded-xl bg-surface-container-lowest shadow-sm ring-1 ring-outline-variant/20 {{ $class['color'] }}">
                                         <span class="text-xl font-bold uppercase">{{ substr($class['title'], 0, 1) }}</span>
@@ -477,7 +650,7 @@
 
     @if ($showCreateModal)
         <div class="fixed inset-0 z-[100] flex items-center justify-center bg-on-background/40 p-4 backdrop-blur-sm" wire:click.self="closeCreateModal">
-            <div class="flex max-h-[90vh] w-full max-w-2xl animate-in zoom-in-95 flex-col overflow-y-auto rounded-[2rem] bg-white shadow-2xl duration-200">
+            <div class="flex max-h-[90vh] w-full max-w-2xl animate-in zoom-in-95 flex-col overflow-y-auto rounded-2xl bg-white shadow-2xl duration-200">
                 <div class="sticky top-0 z-10 flex items-center justify-between border-b border-outline-variant/20 bg-white/90 p-6 backdrop-blur">
                     <h3 class="flex items-center gap-2 text-xl font-bold text-on-surface">
                         <x-user.icon name="plus" class="text-primary" />
@@ -532,5 +705,5 @@
         </div>
     @endif
 
-
+    </div>
 </div>

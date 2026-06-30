@@ -231,7 +231,7 @@
                         </div>
                     </div>
                 </div>
-            </div>            <div class="rounded-[1.5rem] sm:rounded-[2rem] bg-gradient-to-br from-blue-600 to-blue-700 p-5 sm:p-8 text-white shadow-xl shadow-blue-900/10 ring-1 ring-blue-800/50">
+            </div>            <div class="rounded-xl sm:rounded-2xl bg-primary p-5 sm:p-8 text-white shadow-xl shadow-blue-900/10 ring-1 ring-blue-800/50">
                 <div class="grid gap-6 sm:gap-8 lg:grid-cols-[minmax(0,1.2fr)_minmax(340px,0.8fr)] lg:items-end">
                     <div>
                         <div class="flex flex-wrap items-center gap-3">
@@ -433,7 +433,7 @@
 
     <template x-teleport="body">
         <div x-cloak x-show="showClassSettingsModal" x-transition.opacity class="fixed inset-0 z-[9999] flex items-center justify-center bg-slate-900/40 p-4">
-            <div @click.outside="showClassSettingsModal = false" x-transition.scale class="w-full max-w-2xl overflow-hidden rounded-[1.75rem] bg-white shadow-2xl">
+            <div @click.outside="showClassSettingsModal = false" x-transition.scale class="w-full max-w-2xl overflow-hidden rounded-2xl bg-white shadow-2xl">
                 <div class="flex items-start justify-between gap-4 border-b border-slate-100 p-6">
                     <div class="flex gap-4">
                         <span class="flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl bg-blue-50 text-blue-600">
@@ -491,7 +491,7 @@
 
     <template x-teleport="body">
         <div x-cloak x-show="showShareCodeModal" x-transition.opacity class="fixed inset-0 z-[9999] flex items-center justify-center bg-slate-900/40 p-4">
-            <div @click.outside="showShareCodeModal = false" x-transition.scale class="w-full max-w-xl overflow-hidden rounded-[1.75rem] bg-white shadow-2xl">
+            <div @click.outside="showShareCodeModal = false" x-transition.scale class="w-full max-w-xl overflow-hidden rounded-2xl bg-white shadow-2xl">
                 <div class="flex items-start justify-between gap-4 border-b border-slate-100 p-6">
                     <div class="flex gap-4">
                         <span class="flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl bg-blue-50 text-blue-600">

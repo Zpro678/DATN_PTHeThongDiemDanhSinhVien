@@ -74,7 +74,7 @@
                 {{-- Mã lớp học --}}
                 <div class="rounded-2xl border border-outline-variant/20 bg-white shadow-sm">
                     <div class="flex items-center gap-3 rounded-t-2xl border-b border-outline-variant/10 bg-surface-container-lowest/50 px-6 py-4">
-                        <span class="flex h-8 w-8 items-center justify-center rounded-lg bg-violet-100 text-violet-600">
+                        <span class="flex h-8 w-8 items-center justify-center rounded-lg bg-blue-100 text-blue-600">
                             <x-user.icon name="key" :size="16" />
                         </span>
                         <h2 class="text-base font-bold text-on-surface">Mã tham gia lớp</h2>
@@ -235,7 +235,7 @@
                 {{-- Bảo mật tham gia --}}
                 <div class="rounded-2xl border border-outline-variant/20 bg-white shadow-sm overflow-hidden">
                     <div class="flex items-center gap-3 border-b border-outline-variant/10 bg-surface-container-lowest/50 px-5 py-3.5">
-                        <span class="flex h-7 w-7 items-center justify-center rounded-lg bg-indigo-100 text-indigo-600">
+                        <span class="flex h-7 w-7 items-center justify-center rounded-lg bg-blue-100 text-blue-600">
                             <x-user.icon name="shield" :size="15" />
                         </span>
                         <h2 class="text-sm font-bold text-on-surface">Bảo mật tham gia</h2>

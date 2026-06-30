@@ -67,7 +67,7 @@
 >
     <div class="mb-10 flex flex-col items-start justify-between gap-4 sm:flex-row sm:items-center sm:gap-5">
         <div class="flex items-center gap-5">
-            <div class="flex h-16 w-16 shrink-0 items-center justify-center rounded-[20px] border border-blue-300 bg-gradient-to-br from-blue-100 to-blue-200 text-blue-600 shadow-md transition-transform hover:-translate-y-1">
+            <div class="flex h-16 w-16 shrink-0 items-center justify-center rounded-[20px] border border-blue-300 bg-primary/10 text-blue-600 shadow-md transition-transform hover:-translate-y-1">
                 <x-user.icon name="calendar-plus" :size="30" />
             </div>
             <div>
@@ -95,7 +95,7 @@
     {{-- BƯỚC 1: THÔNG TIN CƠ BẢN --}}
     <div x-show="step === 1" x-transition.opacity.duration.300ms class="grid grid-cols-1 gap-8 lg:grid-cols-12">
         <div class="lg:col-span-8">
-            <div class="relative h-full overflow-visible rounded-[2rem] border border-slate-100 bg-white p-6 shadow-[0_8px_30px_rgb(0,0,0,0.04)] sm:p-8">
+            <div class="relative h-full overflow-visible rounded-2xl border border-slate-100 bg-white p-6 shadow-[0_8px_30px_rgb(0,0,0,0.04)] sm:p-8">
                 <form id="step1-form" wire:submit.prevent class="relative z-10 space-y-6">
                     <div class="grid grid-cols-1 gap-x-6 gap-y-6 md:grid-cols-2">
                         <div class="group space-y-3">
@@ -226,7 +226,7 @@
                                     x-transition:leave="transition ease-in duration-150"
                                     x-transition:leave-start="opacity-100 translate-y-0 scale-100"
                                     x-transition:leave-end="opacity-0 -translate-y-3 scale-95"
-                                    class="absolute left-0 top-full z-50 mt-3 w-full origin-top overflow-hidden rounded-[2rem] border border-slate-200/80 bg-white p-2 shadow-2xl shadow-slate-900/10"
+                                    class="absolute left-0 top-full z-50 mt-3 w-full origin-top overflow-hidden rounded-2xl border border-slate-200/80 bg-white p-2 shadow-2xl shadow-slate-900/10"
                                 >
                                     <style>
                                         .tw-wheel::-webkit-scrollbar { display: none; }
@@ -347,7 +347,7 @@
                         type="button"
                         wire:click="createManualSession"
                         wire:loading.attr="disabled"
-                        class="group inline-flex shrink-0 items-center gap-2 rounded-xl bg-gradient-to-r from-blue-500 to-indigo-600 px-5 py-2.5 text-sm font-bold text-white shadow-sm transition hover:from-blue-600 hover:to-indigo-700 active:scale-[0.98] disabled:cursor-wait disabled:opacity-70"
+                        class="group inline-flex shrink-0 items-center gap-2 rounded-xl bg-primary px-5 py-2.5 text-sm font-bold text-white shadow-sm transition hover:bg-primary-container active:scale-[0.98] disabled:cursor-wait disabled:opacity-70"
                     >
                         <x-user.icon name="calendar-plus" :size="18" class="transition-transform group-hover:scale-110" />
                         Tạo buổi điểm danh
@@ -358,7 +358,7 @@
         </div>
 
         <div class="lg:col-span-4">
-            <div class="relative flex h-full flex-col overflow-hidden rounded-[2rem] border border-slate-100 bg-white p-6 shadow-[0_8px_30px_rgb(0,0,0,0.04)]">
+            <div class="relative flex h-full flex-col overflow-hidden rounded-2xl border border-slate-100 bg-white p-6 shadow-[0_8px_30px_rgb(0,0,0,0.04)]">
                 <div class="mb-6 flex items-center justify-between gap-3">
                     <h2 class="text-xl font-bold text-slate-900">Tổng quan</h2>
                 </div>
@@ -366,7 +366,7 @@
                 <div class="relative z-10 mb-4 flex flex-1 flex-col justify-start gap-5">
                     <div class="flex items-center justify-between rounded-2xl border border-slate-200 bg-slate-50 p-5 transition-colors hover:border-slate-300">
                         <div class="flex min-w-0 items-center gap-4">
-                            <div class="flex h-12 w-12 shrink-0 items-center justify-center rounded-xl bg-white text-indigo-500 shadow-sm">
+                            <div class="flex h-12 w-12 shrink-0 items-center justify-center rounded-xl bg-white text-blue-500 shadow-sm">
                                 <x-user.icon name="book-open" :size="24" />
                             </div>
                             <div class="min-w-0">

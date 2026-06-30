@@ -39,7 +39,7 @@
 
     <section class="flex flex-col justify-between gap-6 md:flex-row md:items-end px-2">
         <div class="space-y-1">
-            <p class="text-sm font-semibold tracking-widest text-indigo-500 uppercase">Quản lý điểm danh</p>
+            <p class="text-sm font-semibold tracking-widest text-blue-500 uppercase">Quản lý điểm danh</p>
             <h1 class="text-3xl font-black tracking-tight text-slate-900 flex items-center gap-3">
                 {{ $courseClass->join_key }} 
                 <span class="text-slate-300 font-light">|</span> 
@@ -50,7 +50,7 @@
         
         <div class="flex items-center gap-3">
             <template x-if="viewMode !== 'matrix'">
-                <button @click="viewMode = 'matrix'; scrollToTop()" class="group inline-flex items-center justify-center gap-2 rounded-2xl bg-white px-5 py-2.5 text-sm font-bold text-slate-700 shadow-sm ring-1 ring-inset ring-slate-200 transition-all hover:bg-slate-50 hover:text-indigo-600 hover:ring-indigo-200">
+                <button @click="viewMode = 'matrix'; scrollToTop()" class="group inline-flex items-center justify-center gap-2 rounded-2xl bg-white px-5 py-2.5 text-sm font-bold text-slate-700 shadow-sm ring-1 ring-inset ring-slate-200 transition-all hover:bg-slate-50 hover:text-blue-600 hover:ring-blue-200">
                     <x-user.icon name="arrow-left" :size="18" class="transition-transform group-hover:-translate-x-1" />
                     Trở về
                 </button>
@@ -72,7 +72,7 @@
     @endif
 
     <section x-show="viewMode === 'matrix'" x-transition:enter="transition ease-out duration-500" x-transition:enter-start="opacity-0 translate-y-2" x-transition:enter-end="opacity-100 translate-y-0">
-        <div class="rounded-3xl border border-slate-100 bg-white shadow-[0_8px_30px_rgb(0,0,0,0.04)] overflow-hidden">
+        <div class="rounded-2xl border border-slate-100 bg-white shadow-[0_8px_30px_rgb(0,0,0,0.04)] overflow-hidden">
             <div class="overflow-x-auto">
                 <table class="w-full text-left text-sm whitespace-nowrap">
                     <thead>
@@ -83,10 +83,10 @@
                             @foreach($groupedSessionsInfo as $groupKey => $info)
                                 <th scope="col" 
                                     @click="selectedGroupKey = '{{ $groupKey }}'; viewMode = 'session'; scrollToTop()"
-                                    class="min-w-[140px] px-4 py-4 text-center cursor-pointer transition-all hover:bg-indigo-50/50 group border-b border-slate-100">
+                                    class="min-w-[140px] px-4 py-4 text-center cursor-pointer transition-all hover:bg-blue-50/50 group border-b border-slate-100">
                                     <div class="flex flex-col items-center justify-center gap-1">
-                                        <span class="inline-flex items-center rounded-full bg-slate-100 px-2.5 py-0.5 text-[10px] font-bold uppercase tracking-wider text-slate-500 group-hover:bg-indigo-100 group-hover:text-indigo-600 transition-colors">{{ $info['name'] }}</span>
-                                        <span class="text-[14px] font-black text-slate-800 group-hover:text-indigo-900">{{ $info['date'] }}</span>
+                                        <span class="inline-flex items-center rounded-full bg-slate-100 px-2.5 py-0.5 text-[10px] font-bold uppercase tracking-wider text-slate-500 group-hover:bg-blue-100 group-hover:text-blue-600 transition-colors">{{ $info['name'] }}</span>
+                                        <span class="text-[14px] font-black text-slate-800 group-hover:text-blue-900">{{ $info['date'] }}</span>
                                     </div>
                                 </th>
                             @endforeach
@@ -170,7 +170,7 @@
                         @empty
                             <tr>
                                 <td colspan="{{ count($groupedSessionsInfo) + 1 }}" class="px-8 py-20 text-center">
-                                    <div class="mx-auto mb-4 flex h-16 w-16 items-center justify-center rounded-3xl bg-slate-50 text-slate-300">
+                                    <div class="mx-auto mb-4 flex h-16 w-16 items-center justify-center rounded-2xl bg-slate-50 text-slate-300">
                                         <x-user.icon name="users" :size="32" />
                                     </div>
                                     <p class="text-sm text-slate-500">Chưa có dữ liệu sinh viên hoặc điểm danh.</p>
@@ -190,12 +190,12 @@
     </section>
 
     <section x-cloak x-show="viewMode === 'session'" x-transition:enter="transition ease-out duration-500" x-transition:enter-start="opacity-0 translate-y-4" x-transition:enter-end="opacity-100 translate-y-0">
-        <div class="rounded-3xl bg-white shadow-[0_8px_30px_rgb(0,0,0,0.04)] border border-slate-100 overflow-hidden">
+        <div class="rounded-2xl bg-white shadow-[0_8px_30px_rgb(0,0,0,0.04)] border border-slate-100 overflow-hidden">
             <div class="px-8 py-8 md:px-10 border-b border-slate-50">
                 <div class="flex flex-col md:flex-row md:items-center justify-between gap-6">
                     <div>
                         <div class="flex items-center gap-3 mb-2">
-                            <span class="inline-flex items-center rounded-full bg-indigo-50 px-3 py-1 text-xs font-bold text-indigo-600 uppercase tracking-widest"
+                            <span class="inline-flex items-center rounded-full bg-blue-50 px-3 py-1 text-xs font-bold text-blue-600 uppercase tracking-widest"
                                   x-show="groupedSessionsInfo[selectedGroupKey]"
                                   x-text="(groupedSessionsInfo[selectedGroupKey]?.columns?.length ?? 1) + ' phiên'"></span>
                             <span class="flex items-center gap-1.5 text-sm font-medium text-slate-500" x-show="groupedSessionsInfo[selectedGroupKey]?.timeStr">
@@ -204,18 +204,18 @@
                             </span>
                         </div>
                         <h2 class="text-2xl font-black text-slate-900">
-                            <span class="capitalize" x-text="groupedSessionsInfo[selectedGroupKey]?.name"></span> ngày <span class="text-indigo-600" x-text="groupedSessionsInfo[selectedGroupKey]?.date"></span>
+                            <span class="capitalize" x-text="groupedSessionsInfo[selectedGroupKey]?.name"></span> ngày <span class="text-blue-600" x-text="groupedSessionsInfo[selectedGroupKey]?.date"></span>
                         </h2>
                     </div>
                     
                     <div class="flex rounded-2xl bg-slate-100 p-1.5 shadow-inner w-full md:w-auto">
                         <button @click="sessionFilter = 'merged'" 
-                                :class="{'bg-white text-indigo-600 shadow-sm': sessionFilter === 'merged', 'text-slate-500 hover:text-slate-700': sessionFilter !== 'merged'}" 
+                                :class="{'bg-white text-blue-600 shadow-sm': sessionFilter === 'merged', 'text-slate-500 hover:text-slate-700': sessionFilter !== 'merged'}" 
                                 class="flex-1 md:flex-none rounded-xl px-6 py-2.5 text-sm font-bold transition-all duration-300">
                             Kết quả chốt
                         </button>
                         <button @click="sessionFilter = 'detailed'" 
-                                :class="{'bg-white text-indigo-600 shadow-sm': sessionFilter === 'detailed', 'text-slate-500 hover:text-slate-700': sessionFilter !== 'detailed'}" 
+                                :class="{'bg-white text-blue-600 shadow-sm': sessionFilter === 'detailed', 'text-slate-500 hover:text-slate-700': sessionFilter !== 'detailed'}" 
                                 class="flex-1 md:flex-none rounded-xl px-6 py-2.5 text-sm font-bold transition-all duration-300">
                             Chi tiết từng phiên
                         </button>
@@ -312,7 +312,7 @@
         <div x-show="showModal" x-transition:enter="ease-out duration-300" x-transition:enter-start="opacity-0" x-transition:enter-end="opacity-100" x-transition:leave="ease-in duration-200" x-transition:leave-start="opacity-100" x-transition:leave-end="opacity-0" class="fixed inset-0 bg-slate-900/40 backdrop-blur-sm transition-opacity"></div>
         <div class="fixed inset-0 z-10 w-screen overflow-y-auto">
             <div class="flex min-h-full items-end justify-center p-4 text-center sm:items-center sm:p-0">
-                <div x-show="showModal" @click.away="showModal = false" x-transition:enter="ease-out duration-300" x-transition:enter-start="opacity-0 translate-y-4 sm:translate-y-0 sm:scale-95" x-transition:enter-end="opacity-100 translate-y-0 sm:scale-100" x-transition:leave="ease-in duration-200" x-transition:leave-start="opacity-100 translate-y-0 sm:scale-100" x-transition:leave-end="opacity-0 translate-y-4 sm:translate-y-0 sm:scale-95" class="relative transform overflow-hidden rounded-3xl bg-white text-left shadow-xl transition-all sm:my-8 sm:w-full sm:max-w-md">
+                <div x-show="showModal" @click.away="showModal = false" x-transition:enter="ease-out duration-300" x-transition:enter-start="opacity-0 translate-y-4 sm:translate-y-0 sm:scale-95" x-transition:enter-end="opacity-100 translate-y-0 sm:scale-100" x-transition:leave="ease-in duration-200" x-transition:leave-start="opacity-100 translate-y-0 sm:scale-100" x-transition:leave-end="opacity-0 translate-y-4 sm:translate-y-0 sm:scale-95" class="relative transform overflow-hidden rounded-2xl bg-white text-left shadow-xl transition-all sm:my-8 sm:w-full sm:max-w-md">
                     
                     <template x-if="modalData">
                         <div>
@@ -350,7 +350,7 @@
                                     </div>
                                     <div class="rounded-2xl border border-slate-100 bg-slate-50/50 p-3 text-center">
                                         <p class="text-[11px] font-bold uppercase tracking-wide text-slate-400 mb-1 whitespace-nowrap">Đã điểm danh</p>
-                                        <p class="text-[15px] font-bold text-indigo-600" x-text="modalData.student.total_attended_sessions + '/' + modalData.student.total_course_sessions + ' buổi'"></p>
+                                        <p class="text-[15px] font-bold text-blue-600" x-text="modalData.student.total_attended_sessions + '/' + modalData.student.total_course_sessions + ' buổi'"></p>
                                     </div>
                                 </div>
 

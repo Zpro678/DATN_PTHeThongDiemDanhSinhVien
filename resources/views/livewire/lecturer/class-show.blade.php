@@ -3,7 +3,7 @@
     {{-- Header --}}
     <div class="mb-6 flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
         <div class="flex items-center justify-between w-full sm:w-auto gap-4">
-            <h1 class="flex items-center gap-3 text-2xl font-bold uppercase text-slate-800 min-w-0">
+            <h1 class="flex items-center gap-3 text-2xl font-bold text-slate-800 min-w-0">
                 <span class="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-blue-50 text-blue-600">
                     <x-user.icon name="book-open" :size="20" />
                 </span>

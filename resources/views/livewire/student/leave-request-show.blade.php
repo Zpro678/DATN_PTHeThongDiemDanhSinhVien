@@ -8,13 +8,13 @@
 @endphp
 
 <div class="mx-auto max-w-[1400px] space-y-4 p-4 pt-4 sm:px-8 sm:pb-8 sm:pt-4 animate-in fade-in slide-in-from-bottom-4 duration-500">
-    <div class="flex flex-col justify-between gap-4 sm:flex-row sm:items-center rounded-[2rem] border border-outline-variant/10 bg-white p-6 shadow-sm">
+    <div class="flex flex-col justify-between gap-4 sm:flex-row sm:items-center rounded-2xl border border-outline-variant/10 bg-white p-6 shadow-sm">
         <div>
             <div class="mb-2 inline-flex items-center gap-1.5 rounded-full border border-primary/20 bg-primary/10 px-3 py-1 text-[11px] font-bold uppercase tracking-widest text-primary">
                 <x-user.icon name="file-text" :size="14" />
                 Đơn xin phép
             </div>
-            <h1 class="text-2xl font-extrabold uppercase tracking-tight text-slate-900">Chi tiết đơn xin nghỉ</h1>
+            <h1 class="text-2xl font-bold tracking-tight text-slate-900">Chi tiết đơn xin nghỉ</h1>
             <p class="mt-1 text-sm text-slate-500">Mã đơn #{{ $leaveRequest->id }}</p>
         </div>
         <div class="flex flex-wrap gap-2 shrink-0">
@@ -40,7 +40,7 @@
 
     <section class="grid gap-6 lg:grid-cols-[1fr_1.5fr]">
         <div class="flex h-full flex-col gap-6">
-            <div class="rounded-[2rem] border border-outline-variant/10 bg-white p-6 shadow-sm">
+            <div class="rounded-2xl border border-outline-variant/10 bg-white p-6 shadow-sm">
                 <div class="mb-5 flex items-center justify-between border-b border-slate-100 pb-4">
                     <h2 class="text-sm font-extrabold uppercase tracking-wider text-slate-900">Thông tin chung</h2>
                     <span class="rounded-full border px-3 py-1 text-xs font-bold whitespace-nowrap {{ $statusClass }}">{{ $statusLabel }}</span>
@@ -64,7 +64,7 @@
                 </dl>
             </div>
 
-            <div class="flex flex-1 flex-col rounded-[2rem] border border-outline-variant/10 bg-white p-6 shadow-sm">
+            <div class="flex flex-1 flex-col rounded-2xl border border-outline-variant/10 bg-white p-6 shadow-sm">
                 <h2 class="mb-4 text-sm font-extrabold uppercase tracking-wider text-slate-900 border-b border-slate-100 pb-4">Trạng thái xét duyệt</h2>
                 @if($leaveRequest->reviewer)
                     <p class="text-sm text-slate-600 mb-2">Được xử lý bởi <strong class="text-slate-900">{{ $leaveRequest->reviewer->name }}</strong> lúc {{ $leaveRequest->reviewed_at?->format('H:i d/m/Y') }}.</p>
@@ -90,7 +90,7 @@
         </div>
 
         <div class="space-y-6">
-            <div class="rounded-[2rem] border border-outline-variant/10 bg-white p-6 shadow-sm h-full flex flex-col">
+            <div class="rounded-2xl border border-outline-variant/10 bg-white p-6 shadow-sm h-full flex flex-col">
                 <h2 class="mb-4 text-sm font-extrabold uppercase tracking-wider text-slate-900 border-b border-slate-100 pb-4">Nội dung đơn xin nghỉ</h2>
                 <div class="bg-surface-container-lowest p-5 rounded-xl border border-outline-variant/20 shadow-inner flex-1">
                     <p class="whitespace-pre-line text-base leading-relaxed text-slate-700">{{ $leaveRequest->reason }}</p>

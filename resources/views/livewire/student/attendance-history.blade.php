@@ -10,15 +10,15 @@
 
 <div class="mx-auto max-w-[1400px] space-y-6 p-4 pb-24 sm:p-8 animate-in fade-in slide-in-from-bottom-4 duration-500">
     <!-- Header & Stats Card (Combined) -->
-    <section class="overflow-hidden rounded-[2.5rem] border border-outline-variant/10 bg-white shadow-sm">
+    <section class="overflow-hidden rounded-2xl border border-outline-variant/10 bg-white shadow-sm">
         <!-- Top Header -->
         <div class="flex flex-col justify-between gap-3 p-5 sm:px-6 sm:py-5 md:flex-row md:items-center">
             <div>
-                <div class="mb-2 inline-flex items-center gap-1.5 rounded-full border border-primary/20 bg-primary/10 px-3 py-1 text-[11px] font-bold uppercase tracking-widest text-primary">
-                    <x-user.icon name="history" :size="14" />
-                    Lịch sử
+                <div class="mb-2 inline-flex items-center gap-1.5 rounded-full border border-tertiary/20 bg-tertiary/10 px-3 py-1 text-[11px] font-bold uppercase tracking-widest text-tertiary">
+                    <x-user.icon name="user" :size="14" />
+                    Không gian Học viên
                 </div>
-                <h1 class="text-2xl font-extrabold uppercase tracking-tight text-slate-900">Nhật ký điểm danh</h1>
+                <h1 class="text-2xl font-bold tracking-tight text-slate-900">Nhật ký điểm danh</h1>
             </div>
 
             <div class="flex gap-2 sm:gap-3 overflow-x-auto pb-2 md:pb-0 hide-scrollbar">
@@ -67,7 +67,7 @@
 
             <!-- Nhắc nhở (Nested Small Card) -->
             <div class="flex flex-col border-t border-outline-variant/10 lg:border-l lg:border-t-0 p-5 sm:p-6 bg-surface-container-lowest/30">
-                <div class="flex h-full flex-col justify-center rounded-[2rem] border border-amber-200/60 bg-gradient-to-br from-amber-50 via-amber-50/50 to-orange-50/80 p-6 sm:p-7 relative overflow-hidden shadow-sm">
+                <div class="flex h-full flex-col justify-center rounded-2xl border border-amber-200/60 bg-gradient-to-br from-amber-50 via-amber-50/50 to-orange-50/80 p-6 sm:p-7 relative overflow-hidden shadow-sm">
                     <div class="absolute -right-4 -top-4 text-amber-500 opacity-[0.08] rotate-12 pointer-events-none transition-transform duration-700 hover:rotate-45 hover:scale-110">
                         <x-user.icon name="bell" :size="130" />
                     </div>
@@ -84,7 +84,7 @@
                             Gửi minh chứng sớm để được duyệt điểm danh bù.
                         </p>
                         <div class="mt-5">
-                            <a href="{{ route('student.leave-requests.create') }}" class="group inline-flex items-center gap-2 rounded-xl bg-gradient-to-r from-amber-500 to-orange-500 px-5 py-2.5 text-[14px] font-bold text-white shadow-md shadow-amber-500/20 transition-all hover:shadow-lg hover:shadow-amber-500/30 active:scale-95 w-fit">
+                            <a href="{{ route('student.leave-requests.create') }}" class="group inline-flex items-center gap-2 rounded-xl bg-amber-500 px-5 py-2.5 text-[14px] font-bold text-white shadow-md shadow-amber-500/20 transition-all hover:shadow-lg hover:shadow-amber-500/30 active:scale-95 w-fit">
                                 <x-user.icon name="plus" :size="18" />
                                 Tạo đơn
                             </a>
@@ -95,7 +95,7 @@
     </section>
 
     <!-- Main Content: Table + Filters in one Card -->
-    <section class="overflow-hidden rounded-[2rem] border border-outline-variant/10 bg-white shadow-sm w-full">
+    <section class="overflow-hidden rounded-2xl border border-outline-variant/10 bg-white shadow-sm w-full">
         <!-- Table Header -->
         <div class="flex items-center justify-between border-b border-outline-variant/10 p-5 sm:px-8 sm:py-5 bg-surface-container-lowest/30">
             <div>

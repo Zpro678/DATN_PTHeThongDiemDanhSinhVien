@@ -1,10 +1,21 @@
 @php
     $statuses = ['Tất cả', 'Đang hoạt động', 'Đã kết thúc'];
+
+    // Thông tin gói cước để nhắc giới hạn lớp ngay tại nơi tạo lớp (Concept 1).
+    $mcPlan = Auth::user()?->currentPlan();
+    $mcPlanName = $mcPlan->name ?? 'Miễn phí';
+    $mcPlanMax = (int) ($mcPlan->max_classes ?? 2);
+    $mcOwnedCount = (int) (Auth::user()?->ownedClasses()->count() ?? 0);
+    $mcUsedPercent = $mcPlanMax > 0 ? min(100, (int) round($mcOwnedCount / max(1, $mcPlanMax) * 100)) : 0;
+    $mcNearLimit = $mcPlanMax > 0 && $mcOwnedCount >= $mcPlanMax;
 @endphp
 
 <div class="mx-auto max-w-7xl space-y-6 p-4 pb-24 sm:p-6 lg:p-8">
     <header class="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
         <div>
+            <span class="mb-2 inline-flex items-center gap-1.5 rounded-full bg-primary/10 px-3 py-1 text-xs font-semibold text-primary">
+                <x-user.icon name="shield" :size="14" /> Không gian Chủ lớp
+            </span>
             <h1 class="text-2xl font-bold tracking-tight text-on-surface">Lớp tôi quản lý</h1>
             <p class="mt-1 text-sm text-on-surface-variant">Danh sách các lớp bạn đang làm chủ lớp.</p>
         </div>
@@ -13,6 +24,31 @@
             Tạo lớp mới
         </a>
     </header>
+
+    {{-- Nhắc gói cước trong ngữ cảnh (Concept 1) --}}
+    <div class="flex flex-col gap-3 rounded-2xl border border-outline-variant bg-white p-4 shadow-sm sm:flex-row sm:items-center sm:justify-between">
+        <div class="flex items-center gap-3">
+            <span class="grid h-10 w-10 shrink-0 place-items-center rounded-xl bg-primary/10 text-primary">
+                <x-user.icon name="zap" :size="20" />
+            </span>
+            <div>
+                <p class="text-sm font-bold text-on-surface">Gói {{ $mcPlanName }}</p>
+                <p class="text-xs text-on-surface-variant">Đã dùng {{ $mcOwnedCount }}/{{ $mcPlanMax }} lớp</p>
+            </div>
+        </div>
+        <div class="flex items-center gap-3 sm:w-72">
+            <div class="h-2 flex-1 overflow-hidden rounded-full bg-surface-container-highest">
+                <div class="{{ $mcNearLimit ? 'bg-error' : 'bg-primary' }} h-full rounded-full" style="width: {{ $mcUsedPercent }}%"></div>
+            </div>
+            @if ($mcNearLimit)
+                <a href="{{ route('upgrade') }}" wire:navigate class="inline-flex shrink-0 items-center gap-1.5 rounded-lg bg-primary px-3 py-1.5 text-xs font-bold text-white transition-colors hover:bg-primary-container">
+                    <x-user.icon name="zap" :size="14" /> Nâng cấp
+                </a>
+            @else
+                <a href="{{ route('upgrade') }}" wire:navigate class="shrink-0 text-xs font-bold text-primary hover:underline">Xem gói</a>
+            @endif
+        </div>
+    </div>
 
     <div class="flex flex-col gap-3 sm:flex-row sm:items-center">
         <label class="relative flex-1">

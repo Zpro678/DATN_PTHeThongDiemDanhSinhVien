@@ -1,9 +1,10 @@
 <div class="mx-auto max-w-[1400px] space-y-6 p-4 pb-24 sm:p-8">
-    <section class="flex flex-col justify-between gap-4 rounded-[2rem] border border-outline-variant/10 bg-white p-6 shadow-sm md:flex-row md:items-center">
+    <section class="flex flex-col justify-between gap-4 rounded-2xl border border-outline-variant/10 bg-white p-6 shadow-sm md:flex-row md:items-center">
         <div>
-            <h1 class="flex items-center gap-3 text-2xl font-extrabold uppercase tracking-tight text-slate-900">
-                <x-user.icon name="file-text" class="text-primary" />
-                {{ $isEdit ?? false ? 'CHỈNH SỬA ĐƠN XIN PHÉP' : 'XIN NGHỈ PHÉP' }}
+            <x-user.workspace-badge type="student" />
+            <h1 class="flex items-center gap-3 text-2xl font-bold tracking-tight text-slate-900">
+                <x-user.icon name="file-text" class="text-tertiary" />
+                {{ $isEdit ?? false ? 'Chỉnh sửa đơn xin phép' : 'Xin nghỉ phép' }}
             </h1>
             <p class="mt-2 text-sm text-slate-500">
                 Điền thông tin và gửi minh chứng để xin phép nghỉ học một buổi cụ thể.

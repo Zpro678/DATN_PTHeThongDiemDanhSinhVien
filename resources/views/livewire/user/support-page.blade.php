@@ -1,7 +1,7 @@
 <div class="mx-auto max-w-5xl p-4 sm:p-6 lg:p-8 animate-in fade-in slide-in-from-bottom-4 duration-500">
     
     {{-- Hero Section --}}
-    <div class="mb-8 rounded-3xl bg-gradient-to-br from-primary to-primary/80 px-8 py-12 text-center text-white shadow-lg shadow-primary/20">
+    <div class="mb-8 rounded-2xl bg-primary px-8 py-12 text-center text-white shadow-lg shadow-primary/20">
         <div class="mx-auto mb-6 flex h-20 w-20 items-center justify-center rounded-full bg-white/20 backdrop-blur-md">
             <x-user.icon name="headphones" :size="40" class="text-white" />
         </div>
@@ -50,7 +50,7 @@
         <div class="flex flex-col gap-8 md:col-span-2">
             
             {{-- Form Gửi Yêu Cầu --}}
-            <div class="rounded-3xl bg-white p-6 shadow-sm ring-1 ring-outline-variant/20 sm:p-8">
+            <div class="rounded-2xl bg-white p-6 shadow-sm ring-1 ring-outline-variant/20 sm:p-8">
                 <h2 class="mb-6 flex items-center gap-3 text-xl font-bold text-on-surface">
                     <x-user.icon name="message-square" :size="24" class="text-primary" />
                     Gửi yêu cầu hỗ trợ
@@ -102,7 +102,7 @@
             </div>
 
             {{-- FAQs --}}
-            <div class="rounded-3xl bg-white p-6 shadow-sm ring-1 ring-outline-variant/20 sm:p-8">
+            <div class="rounded-2xl bg-white p-6 shadow-sm ring-1 ring-outline-variant/20 sm:p-8">
                 <h2 class="mb-6 flex items-center gap-3 text-xl font-bold text-on-surface">
                     <x-user.icon name="help-circle" :size="24" class="text-primary" />
                     Câu hỏi thường gặp

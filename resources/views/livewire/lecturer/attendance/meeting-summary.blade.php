@@ -22,7 +22,7 @@
         <x-user.icon name="arrow-left" :size="16" />Quay lại danh sách phiên
     </a>
 
-    <section class="flex flex-col justify-between gap-4 rounded-[2rem] border border-outline-variant/10 bg-white p-6 shadow-sm md:flex-row md:items-end">
+    <section class="flex flex-col justify-between gap-4 rounded-2xl border border-outline-variant/10 bg-white p-6 shadow-sm md:flex-row md:items-end">
         <div>
             <h1 class="flex items-center gap-3 text-2xl font-extrabold tracking-tight text-slate-900">
                 <x-user.icon name="clipboard-check" class="text-primary" />Tổng kết: {{ $meeting->name }}

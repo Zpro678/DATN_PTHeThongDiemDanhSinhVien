@@ -5,10 +5,13 @@
 <div class="mx-auto max-w-7xl space-y-6 p-4 pb-24 sm:p-6 lg:p-8">
     <header class="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
         <div>
+            <span class="mb-2 inline-flex items-center gap-1.5 rounded-full bg-tertiary/10 px-3 py-1 text-xs font-semibold text-tertiary">
+                <x-user.icon name="user" :size="14" /> Không gian Học viên
+            </span>
             <h1 class="text-2xl font-bold tracking-tight text-on-surface">Lớp tôi tham gia</h1>
             <p class="mt-1 text-sm text-on-surface-variant">Các lớp bạn đang học và theo dõi điểm danh.</p>
         </div>
-        <button type="button" x-on:click="$dispatch('open-join-class-modal')" class="inline-flex items-center justify-center gap-2 rounded-lg bg-primary px-4 py-2.5 text-sm font-semibold text-white shadow-sm transition-colors hover:bg-primary-container">
+        <button type="button" x-on:click="$dispatch('open-join-class-modal')" class="inline-flex items-center justify-center gap-2 rounded-lg bg-tertiary px-4 py-2.5 text-sm font-semibold text-white shadow-sm transition-colors hover:bg-tertiary/90">
             <x-user.icon name="plus" :size="18" />
             Tham gia bằng mã
         </button>

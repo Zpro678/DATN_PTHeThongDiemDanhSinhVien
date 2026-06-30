@@ -220,7 +220,7 @@
             <aside class="space-y-6 xl:col-span-5 2xl:col-span-5">
                 <div class="sticky top-6 space-y-6">
                     <section class="overflow-hidden rounded-2xl border border-outline-variant/20 bg-white shadow-sm">
-                        <div class="bg-gradient-to-br from-primary to-primary-container p-6 text-white">
+                        <div class="bg-primary p-6 text-white">
                             <div class="flex items-center justify-between gap-4">
                                 <span class="rounded-full bg-white/15 px-3 py-1 text-xs font-bold uppercase tracking-wide">Xem trước</span>
                                 <x-user.icon name="eye" :size="22" class="text-white/90" />

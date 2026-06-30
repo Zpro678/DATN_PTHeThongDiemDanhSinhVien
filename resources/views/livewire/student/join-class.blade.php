@@ -1,7 +1,7 @@
 <div>
     @if ($showModal)
         <div class="fixed inset-0 z-[100] flex items-center justify-center bg-on-background/40 p-4 backdrop-blur-sm" wire:click.self="closeModal">
-            <div class="flex w-full max-w-md animate-in zoom-in-95 flex-col overflow-hidden rounded-[2rem] bg-white shadow-2xl duration-200">
+            <div class="flex w-full max-w-md animate-in zoom-in-95 flex-col overflow-hidden rounded-2xl bg-white shadow-2xl duration-200">
                 <div class="z-10 flex items-center justify-between border-b border-outline-variant/20 bg-white/90 p-6 backdrop-blur">
                     <h3 class="flex items-center gap-2 text-xl font-bold text-on-surface">
                         <x-user.icon name="key" class="text-tertiary" />

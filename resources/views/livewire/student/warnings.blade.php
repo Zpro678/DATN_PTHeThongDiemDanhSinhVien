@@ -1,11 +1,11 @@
 <div class="mx-auto max-w-[1400px] space-y-6 p-4 pb-24 sm:p-8 animate-in fade-in slide-in-from-bottom-4 duration-500">
-    <section class="flex flex-col justify-between gap-4 rounded-[2rem] border border-outline-variant/10 bg-white p-6 shadow-sm md:flex-row md:items-center">
+    <section class="flex flex-col justify-between gap-4 rounded-2xl border border-outline-variant/10 bg-white p-6 shadow-sm md:flex-row md:items-center">
         <div>
             <div class="mb-2 inline-flex items-center gap-1.5 rounded-full border border-rose-200 bg-rose-50 px-3 py-1 text-[11px] font-bold uppercase tracking-widest text-rose-600">
                 <x-user.icon name="alert-triangle" :size="14" />
                 Hệ thống cảnh báo
             </div>
-            <h1 class="text-2xl font-extrabold uppercase tracking-tight text-slate-900">Cảnh báo học tập</h1>
+            <h1 class="text-2xl font-bold tracking-tight text-slate-900">Cảnh báo học tập</h1>
             <p class="mt-2 text-sm text-slate-500">
                 Cập nhật các cảnh báo về điểm danh, kỷ luật và các vấn đề cần lưu ý trong quá trình học.
             </p>
@@ -44,7 +44,7 @@
     <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
         @forelse ($warnings as $warning)
             @php $style = $styles[$warning['type']] ?? $styles['info']; @endphp
-            <div class="group relative flex flex-col overflow-hidden rounded-[2rem] border {{ $style['card'] }} p-6 shadow-sm transition-all duration-300 hover:-translate-y-1 hover:shadow-md">
+            <div class="group relative flex flex-col overflow-hidden rounded-2xl border {{ $style['card'] }} p-6 shadow-sm transition-all duration-300 hover:-translate-y-1 hover:shadow-md">
                 <div class="absolute -right-4 -top-4 rounded-full {{ $style['halo'] }} p-6">
                     <x-user.icon :name="$warning['icon']" :size="72" class="{{ $style['iconText'] }} opacity-10" />
                 </div>
@@ -63,7 +63,7 @@
                 </div>
             </div>
         @empty
-            <div class="col-span-full rounded-[2rem] border border-emerald-100 bg-white p-10 text-center shadow-sm">
+            <div class="col-span-full rounded-2xl border border-emerald-100 bg-white p-10 text-center shadow-sm">
                 <div class="mx-auto mb-4 flex h-14 w-14 items-center justify-center rounded-2xl bg-emerald-50 text-emerald-600">
                     <x-user.icon name="check-circle" :size="28" stroke-width="2.5" />
                 </div>

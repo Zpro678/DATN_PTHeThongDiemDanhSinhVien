@@ -9,7 +9,7 @@
 
 <div class="mx-auto max-w-[1100px] space-y-6 p-4 pb-24 sm:p-8">
     <div class="flex flex-col justify-between gap-4 sm:flex-row sm:items-center">
-        <div><h1 class="text-3xl font-extrabold uppercase tracking-tight text-slate-900">Chi tiết đơn xin nghỉ</h1><p class="mt-1 text-base text-slate-500">Mã đơn #{{ $leaveRequest->id }}</p></div>
+        <div><h1 class="text-3xl font-bold tracking-tight text-slate-900">Chi tiết đơn xin nghỉ</h1><p class="mt-1 text-base text-slate-500">Mã đơn #{{ $leaveRequest->id }}</p></div>
         <div class="flex flex-wrap gap-2">@if($leaveRequest->status === 'pending')<button type="button" wire:click="$set('showApproveForm', true)" class="inline-flex items-center gap-2 rounded-xl bg-emerald-600 px-4 py-2.5 text-base font-bold text-white hover:bg-emerald-700"><x-user.icon name="check-circle" :size="20" />Duyệt đơn</button><button type="button" wire:click="$set('showRejectForm', true)" class="inline-flex items-center gap-2 rounded-xl border border-red-200 bg-white px-4 py-2.5 text-base font-bold text-red-600 hover:bg-red-50"><x-user.icon name="x" :size="20" />Từ chối</button>@endif<a href="{{ route('lecturer.leave-requests.index') }}" class="inline-flex items-center gap-2 rounded-xl border border-slate-200 bg-white px-4 py-2.5 text-base font-bold text-slate-600 hover:bg-slate-50">Quay lại</a></div>
     </div>
 

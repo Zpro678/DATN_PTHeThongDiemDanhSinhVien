@@ -1,6 +1,6 @@
 <div class="mx-auto max-w-[1300px] space-y-6 p-4 pb-24 sm:p-8">
 
-    <section class="flex flex-col justify-between gap-4 rounded-[2rem] border border-outline-variant/10 bg-white p-6 shadow-sm md:flex-row md:items-end">
+    <section class="flex flex-col justify-between gap-4 rounded-2xl border border-outline-variant/10 bg-white p-6 shadow-sm md:flex-row md:items-end">
         <div>
             <h1 class="flex items-center gap-3 text-2xl font-extrabold tracking-tight text-slate-900">
                 <x-user.icon name="calendar-check" class="text-primary" />{{ $meeting->name }}
@@ -58,7 +58,7 @@
                                 <span class="mt-0.5 block text-xs text-slate-500">Tạo lúc {{ $session->created_at->format('H:i d/m/Y') }}</span>
                             </td>
                             <td class="px-4 py-4 text-center">
-                                <span class="inline-flex items-center rounded-md px-2 py-0.5 text-[11px] font-medium ring-1 ring-inset {{ $session->qr_token ? 'bg-indigo-50 text-indigo-700 ring-indigo-600/20' : 'bg-purple-50 text-purple-700 ring-purple-600/20' }}">{{ $session->qr_token ? 'Điểm danh QR' : 'Thủ công' }}</span>
+                                <span class="inline-flex items-center rounded-md px-2 py-0.5 text-[11px] font-medium ring-1 ring-inset {{ $session->qr_token ? 'bg-blue-50 text-blue-700 ring-blue-600/20' : 'bg-purple-50 text-purple-700 ring-purple-600/20' }}">{{ $session->qr_token ? 'Điểm danh QR' : 'Thủ công' }}</span>
                             </td>
                             <td class="px-4 py-4 text-center">
                                 <span class="inline-flex items-center rounded-md px-2 py-0.5 text-[11px] font-medium ring-1 ring-inset {{ $session->status === 'active' ? 'bg-emerald-50 text-emerald-700 ring-emerald-600/20' : 'bg-sky-50 text-sky-700 ring-sky-600/20' }}">{{ $session->status === 'active' ? 'Đang mở' : 'Đã chốt' }}</span>

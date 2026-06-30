@@ -39,7 +39,7 @@
         <a href="{{ route('lecturer.students.index') }}" class="inline-flex items-center gap-2 rounded-xl border border-slate-200 bg-white px-4 py-2.5 text-sm font-bold text-slate-600 hover:bg-slate-50"><x-user.icon name="users" :size="18" />Danh sách học viên</a>
     </div>
 
-    <section class="overflow-hidden rounded-3xl bg-gradient-to-br from-primary to-[#003184] p-7 text-white shadow-lg shadow-primary/20">
+    <section class="overflow-hidden rounded-2xl bg-primary p-7 text-white shadow-lg shadow-primary/20">
         <div class="flex flex-col gap-6 md:flex-row md:items-center">
             <div class="flex h-20 w-20 items-center justify-center rounded-2xl bg-white/15 text-3xl font-extrabold ring-1 ring-white/20">{{ mb_strtoupper(mb_substr($member->full_name, 0, 1)) }}</div>
             <div class="flex-1"><h2 class="text-2xl font-extrabold">{{ $member->full_name }}</h2><p class="mt-2 text-sm text-blue-100">{{ $member->student_code }} · {{ $member->user?->email ?? 'Chưa liên kết tài khoản' }}</p><p class="mt-1 text-sm font-semibold text-white">{{ $member->courseClass->join_key }} - {{ $member->courseClass->name }}</p></div>

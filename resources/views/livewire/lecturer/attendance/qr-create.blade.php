@@ -88,7 +88,7 @@
 
     <div class="flex flex-col gap-5 md:flex-row md:items-center md:justify-between xl:grid xl:grid-cols-12 xl:gap-6">
         <div class="min-w-0 flex-1 xl:col-span-8">
-            <h1 class="truncate text-2xl md:text-3xl font-extrabold tracking-tight text-slate-900 uppercase" title="THIẾT LẬP ĐIỂM DANH @if($selectedClass) - {{ mb_strtoupper($selectedClass->name) }} @if($selectedClass->subject_code) ({{ mb_strtoupper($selectedClass->subject_code) }}) @endif @endif">
+            <h1 class="truncate text-2xl md:text-3xl font-bold tracking-tight text-slate-900" title="THIẾT LẬP ĐIỂM DANH @if($selectedClass) - {{ mb_strtoupper($selectedClass->name) }} @if($selectedClass->subject_code) ({{ mb_strtoupper($selectedClass->subject_code) }}) @endif @endif">
                 THIẾT LẬP ĐIỂM DANH
                 @if($selectedClass)
                     - {{ mb_strtoupper($selectedClass->name) }} @if($selectedClass->subject_code) ({{ mb_strtoupper($selectedClass->subject_code) }}) @endif
@@ -103,8 +103,8 @@
 
             <button type="submit" form="qr-setup-form"
                 x-bind:disabled="gpsEnabled && (!gpsLatitude || !gpsLongitude)"
-                :class="(gpsEnabled && (!gpsLatitude || !gpsLongitude)) ? 'opacity-70 cursor-not-allowed' : 'hover:-translate-y-0.5 hover:from-blue-700 hover:to-indigo-700 hover:shadow-blue-500/40'"
-                class="group inline-flex items-center justify-center gap-2 rounded-xl bg-gradient-to-r from-blue-600 to-indigo-600 px-8 py-3 text-sm font-bold text-white shadow-lg shadow-blue-500/30 transition-all">
+                :class="(gpsEnabled && (!gpsLatitude || !gpsLongitude)) ? 'opacity-70 cursor-not-allowed' : 'hover:-translate-y-0.5 hover:from-blue-700 hover:to-blue-700 hover:shadow-blue-500/40'"
+                class="group inline-flex items-center justify-center gap-2 rounded-xl bg-primary px-8 py-3 text-sm font-bold text-white shadow-lg shadow-blue-500/30 transition-all">
                 <span x-show="gpsEnabled && (!gpsLatitude || !gpsLongitude)">Đang lấy tọa độ...</span>
                 <span x-show="!(gpsEnabled && (!gpsLatitude || !gpsLongitude))">{{ $editSessionId ? 'Cập nhật thiết lập' : 'Bắt đầu phát mã' }}</span>
                 <x-user.icon name="qr-code" :size="18" class="transition-transform group-hover:scale-110" />
@@ -120,11 +120,11 @@
     @endif
 
     <div class="grid gap-6 xl:grid-cols-12">
-        <section class="rounded-3xl border border-slate-200/60 bg-white p-6 shadow-xl shadow-slate-200/40 sm:p-8 xl:col-span-8">
+        <section class="rounded-2xl border border-slate-200/60 bg-white p-6 shadow-xl shadow-slate-200/40 sm:p-8 xl:col-span-8">
             <form id="qr-setup-form" wire:submit="save" class="grid gap-10 lg:grid-cols-2">
                 <div class="space-y-6">
                     <div class="flex items-center gap-4 border-b border-slate-100 pb-5">
-                        <span class="flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl bg-gradient-to-br from-blue-50 to-indigo-50 text-blue-600 shadow-sm ring-1 ring-inset ring-blue-100/50">
+                        <span class="flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl bg-primary/10 text-blue-600 shadow-sm ring-1 ring-inset ring-blue-100/50">
                             <x-user.icon name="school" :size="24" />
                         </span>
                         <div>
@@ -223,7 +223,7 @@
 
                 <div class="space-y-6">
                     <div class="flex items-center gap-4 border-b border-slate-100 pb-5">
-                        <span class="flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl bg-gradient-to-br from-indigo-50 to-violet-50 text-indigo-600 shadow-sm ring-1 ring-inset ring-indigo-100/50">
+                        <span class="flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl bg-primary/10 text-blue-600 shadow-sm ring-1 ring-inset ring-blue-100/50">
                             <x-user.icon name="shield-check" :size="24" />
                         </span>
                         <div>
@@ -335,14 +335,14 @@
         </section>
 
         <aside class="h-full xl:col-span-4">
-            <div class="flex h-full flex-col rounded-3xl border border-slate-200/60 bg-white p-6 text-slate-900 shadow-xl shadow-slate-200/40 sm:p-8">
+            <div class="flex h-full flex-col rounded-2xl border border-slate-200/60 bg-white p-6 text-slate-900 shadow-xl shadow-slate-200/40 sm:p-8">
                 <div class="flex items-center justify-between gap-4 border-b border-slate-100 pb-5">
                     <div>
                         <h2 class="text-lg font-black text-slate-900">Tóm tắt cấu hình</h2>
                         <p class="mt-0.5 text-[13px] font-semibold text-slate-500">Phiên điểm danh sắp tạo</p>
                     </div>
 
-                    <span class="flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl bg-gradient-to-br from-blue-50 to-indigo-50 text-blue-600 shadow-sm ring-1 ring-inset ring-blue-100/50">
+                    <span class="flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl bg-primary/10 text-blue-600 shadow-sm ring-1 ring-inset ring-blue-100/50">
                         <x-user.icon name="qr-code" :size="24" />
                     </span>
                 </div>
@@ -386,8 +386,8 @@
 
         <button type="submit" form="qr-setup-form"
             x-bind:disabled="gpsEnabled && (!gpsLatitude || !gpsLongitude)"
-            :class="(gpsEnabled && (!gpsLatitude || !gpsLongitude)) ? 'opacity-70 cursor-not-allowed' : 'hover:from-blue-700 hover:to-indigo-700'"
-            class="group inline-flex items-center justify-center gap-2 rounded-xl bg-gradient-to-r from-blue-600 to-indigo-600 px-8 py-3.5 text-sm font-bold text-white shadow-lg shadow-blue-500/30 transition-all">
+            :class="(gpsEnabled && (!gpsLatitude || !gpsLongitude)) ? 'opacity-70 cursor-not-allowed' : 'hover:from-blue-700 hover:to-blue-700'"
+            class="group inline-flex items-center justify-center gap-2 rounded-xl bg-primary px-8 py-3.5 text-sm font-bold text-white shadow-lg shadow-blue-500/30 transition-all">
             <span x-show="gpsEnabled && (!gpsLatitude || !gpsLongitude)">Đang lấy tọa độ...</span>
             <span x-show="!(gpsEnabled && (!gpsLatitude || !gpsLongitude))">{{ $editSessionId ? 'Cập nhật thiết lập' : 'Bắt đầu phát mã' }}</span>
             <x-user.icon name="qr-code" :size="18" />

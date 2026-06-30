@@ -7,9 +7,10 @@
 @endphp
 
 <div class="mx-auto max-w-[1400px] space-y-6 p-4 pb-24 sm:p-8">
-    <section class="flex flex-col justify-between gap-4 rounded-[2rem] border border-outline-variant/10 bg-white p-6 shadow-sm md:flex-row md:items-end">
+    <section class="flex flex-col justify-between gap-4 rounded-2xl border border-outline-variant/10 bg-white p-6 shadow-sm md:flex-row md:items-end">
         <div>
-            <h1 class="flex items-center gap-3 text-2xl font-extrabold uppercase tracking-tight text-slate-900"><x-user.icon name="file-text" class="text-primary" />Đơn xin nghỉ phép</h1>
+            <x-user.workspace-badge type="owner" />
+            <h1 class="flex items-center gap-3 text-2xl font-bold tracking-tight text-slate-900"><x-user.icon name="file-text" class="text-primary" />Đơn xin nghỉ phép</h1>
             <p class="mt-2 text-sm text-slate-500">Theo dõi và xử lý đơn xin nghỉ của học viên trong các lớp bạn quản lý.</p>
         </div>
         <a href="{{ route('lecturer.students.index') }}" class="inline-flex items-center justify-center gap-2 rounded-full border border-slate-200 px-5 py-2.5 text-sm font-bold text-slate-600 hover:bg-slate-50"><x-user.icon name="users" :size="18" />Quản lý học viên</a>
