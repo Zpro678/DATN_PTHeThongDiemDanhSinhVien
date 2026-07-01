@@ -10,45 +10,38 @@
     $mcNearLimit = $mcPlanMax > 0 && $mcOwnedCount >= $mcPlanMax;
 @endphp
 
-<div class="mx-auto max-w-7xl space-y-6 p-4 pb-24 sm:p-6 lg:p-8">
+<div class="w-full space-y-6 px-6 py-6 sm:px-10 lg:px-16 animate-in fade-in slide-in-from-bottom-4 duration-500">
     <header class="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
-        <div>
-            <span class="mb-2 inline-flex items-center gap-1.5 rounded-full bg-primary/10 px-3 py-1 text-xs font-semibold text-primary">
-                <x-user.icon name="shield" :size="14" /> Không gian Chủ lớp
-            </span>
-            <h1 class="text-2xl font-bold tracking-tight text-on-surface">Lớp tôi quản lý</h1>
-            <p class="mt-1 text-sm text-on-surface-variant">Danh sách các lớp bạn đang làm chủ lớp.</p>
+        {{-- Nhắc gói cước trong ngữ cảnh (Concept 1) --}}
+        <div class="flex flex-col gap-3 rounded-2xl border border-outline-variant bg-white p-3 shadow-sm sm:flex-row sm:items-center sm:w-[500px]">
+            <div class="flex items-center gap-3">
+                <span class="grid h-10 w-10 shrink-0 place-items-center rounded-xl bg-primary/10 text-primary">
+                    <x-user.icon name="zap" :size="20" />
+                </span>
+                <div class="w-32">
+                    <p class="truncate text-sm font-bold text-on-surface">Gói {{ $mcPlanName }}</p>
+                    <p class="text-xs text-on-surface-variant">Đã dùng {{ $mcOwnedCount }}/{{ $mcPlanMax }} lớp</p>
+                </div>
+            </div>
+            <div class="flex flex-1 items-center gap-3">
+                <div class="h-2 flex-1 overflow-hidden rounded-full bg-surface-container-highest">
+                    <div class="{{ $mcNearLimit ? 'bg-error' : 'bg-primary' }} h-full rounded-full" style="width: {{ $mcUsedPercent }}%"></div>
+                </div>
+                @if ($mcNearLimit)
+                    <a href="{{ route('upgrade') }}" wire:navigate class="inline-flex shrink-0 items-center gap-1.5 rounded-lg bg-primary px-3 py-1.5 text-xs font-bold text-white transition-colors hover:bg-primary-container">
+                        <x-user.icon name="zap" :size="14" /> Nâng cấp
+                    </a>
+                @else
+                    <a href="{{ route('upgrade') }}" wire:navigate class="shrink-0 text-xs font-bold text-primary hover:underline">Xem gói</a>
+                @endif
+            </div>
         </div>
-        <a href="{{ route('create-class') }}" class="inline-flex items-center justify-center gap-2 rounded-lg bg-primary px-4 py-2.5 text-sm font-semibold text-white shadow-sm transition-colors hover:bg-primary-container">
+
+        <a href="{{ route('create-class') }}" class="inline-flex shrink-0 items-center justify-center gap-2 rounded-lg bg-primary px-4 py-2.5 text-sm font-semibold text-white shadow-sm transition-colors hover:bg-primary-container">
             <x-user.icon name="plus" :size="18" />
             Tạo lớp mới
         </a>
     </header>
-
-    {{-- Nhắc gói cước trong ngữ cảnh (Concept 1) --}}
-    <div class="flex flex-col gap-3 rounded-2xl border border-outline-variant bg-white p-4 shadow-sm sm:flex-row sm:items-center sm:justify-between">
-        <div class="flex items-center gap-3">
-            <span class="grid h-10 w-10 shrink-0 place-items-center rounded-xl bg-primary/10 text-primary">
-                <x-user.icon name="zap" :size="20" />
-            </span>
-            <div>
-                <p class="text-sm font-bold text-on-surface">Gói {{ $mcPlanName }}</p>
-                <p class="text-xs text-on-surface-variant">Đã dùng {{ $mcOwnedCount }}/{{ $mcPlanMax }} lớp</p>
-            </div>
-        </div>
-        <div class="flex items-center gap-3 sm:w-72">
-            <div class="h-2 flex-1 overflow-hidden rounded-full bg-surface-container-highest">
-                <div class="{{ $mcNearLimit ? 'bg-error' : 'bg-primary' }} h-full rounded-full" style="width: {{ $mcUsedPercent }}%"></div>
-            </div>
-            @if ($mcNearLimit)
-                <a href="{{ route('upgrade') }}" wire:navigate class="inline-flex shrink-0 items-center gap-1.5 rounded-lg bg-primary px-3 py-1.5 text-xs font-bold text-white transition-colors hover:bg-primary-container">
-                    <x-user.icon name="zap" :size="14" /> Nâng cấp
-                </a>
-            @else
-                <a href="{{ route('upgrade') }}" wire:navigate class="shrink-0 text-xs font-bold text-primary hover:underline">Xem gói</a>
-            @endif
-        </div>
-    </div>
 
     <div class="flex flex-col gap-3 sm:flex-row sm:items-center">
         <label class="relative flex-1">
@@ -118,65 +111,89 @@
                     'bg-[#047857]', 'bg-[#0369A1]', 'bg-[#6D28D9]', 'bg-[#B45309]',
                 ];
                 $themeColor = $colorOptions[$class->id % count($colorOptions)];
+                
+                $bgIcons = ['laptop', 'book', 'code', 'book-open', 'graduation-cap', 'layout-dashboard'];
+                $bgIcon = $bgIcons[$class->id % count($bgIcons)];
             @endphp
 
             <article @class([
-                'group relative flex flex-col rounded-xl border border-outline-variant bg-white transition-all duration-200',
-                'hover:border-outline-variant hover:shadow-md' => ! $isEnded,
+                'group relative flex flex-col overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm transition-all duration-300',
+                'hover:border-slate-300 hover:shadow-md hover:-translate-y-0.5' => ! $isEnded,
                 'opacity-75' => $isEnded,
             ])>
                 <a href="{{ route('lecturer.classes.show', $class->id) }}" class="absolute inset-0 z-10"><span class="sr-only">Xem chi tiết lớp</span></a>
 
-                <div class="flex items-start gap-3 p-4">
-                    <span class="{{ $isEnded ? 'bg-on-surface-variant' : $themeColor }} grid h-11 w-11 shrink-0 place-items-center rounded-lg text-lg font-bold text-white">
-                        {{ mb_strtoupper(mb_substr($class->name, 0, 1)) }}
-                    </span>
-                    <div class="min-w-0 flex-1">
-                        <h3 class="truncate font-semibold text-on-surface" title="{{ $class->name }}">{{ $class->name }}</h3>
-                        <p class="mt-0.5 truncate text-xs text-on-surface-variant">
-                            {{ $class->subject_code ?? 'N/A' }} · Mã <span class="font-semibold text-on-surface">{{ $class->join_key }}</span>
-                        </p>
+                {{-- Header Theme Color --}}
+                <div class="{{ $isEnded ? 'bg-on-surface-variant' : $themeColor }} h-24 px-5 py-4 relative">
+                    <div class="relative z-10 w-3/4">
+                        <h3 class="truncate font-normal text-white text-[22px] tracking-wide leading-tight" title="{{ $class->name }}">
+                            <a href="{{ route('lecturer.classes.show', $class->id) }}" class="hover:underline focus:outline-none">{{ $class->name }}</a>
+                        </h3>
+                        <p class="mt-1 truncate text-[13px] font-light text-white/95 tracking-wide">Mã học phần: {{ $class->subject_code ?? 'N/A' }}</p>
+                    </div>
+
+                    {{-- Background Icon --}}
+                    <div class="absolute right-3 top-2 z-0 opacity-15">
+                        <x-user.icon :name="$bgIcon" :size="76" class="text-white transform -rotate-12" stroke-width="1.5" />
+                    </div>
+
+                    {{-- Avatar overlapping --}}
+                    <div class="absolute -bottom-6 right-5 z-20">
+                        <span class="{{ $isEnded ? 'bg-on-surface-variant' : $themeColor }} grid h-14 w-14 place-items-center rounded-full border-2 border-white text-[22px] font-medium text-white shadow-sm" title="{{ auth()->user()->name }}">
+                            {{ mb_strtoupper(mb_substr(auth()->user()->name, 0, 1)) }}
+                        </span>
                     </div>
                 </div>
 
-                <div class="flex flex-wrap items-center gap-1.5 px-4">
-                    <span @class([
-                        'inline-flex items-center rounded-full px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wide',
-                        'bg-tertiary/10 text-tertiary' => ! $isEnded,
-                        'bg-surface-container text-on-surface-variant' => $isEnded,
-                    ])>{{ $isEnded ? 'Đã kết thúc' : 'Đang hoạt động' }}</span>
-                    <span class="inline-flex items-center gap-1 rounded-full bg-primary/10 px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wide text-primary">
-                        <x-user.icon name="shield" :size="10" /> Chủ lớp
-                    </span>
-                    @if ($isBanned)
-                        <span class="inline-flex items-center rounded-full bg-error/10 px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wide text-error">Cấm thi</span>
-                    @elseif ($isWarning)
-                        <span class="inline-flex items-center rounded-full bg-amber-100 px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wide text-amber-700">Cảnh báo</span>
-                    @endif
-                </div>
+                {{-- Body (White) --}}
+                <div class="flex-1 px-4 pt-8 pb-3">
+                    <div class="mb-3 flex items-center justify-between">
+                        <div class="flex flex-wrap gap-1.5">
+                            <span @class([
+                                'inline-flex items-center rounded-sm px-1.5 py-0.5 text-[10px] font-bold uppercase tracking-wide',
+                                'bg-blue-50 text-blue-600' => ! $isEnded,
+                                'bg-surface-container text-on-surface-variant' => $isEnded,
+                            ])>{{ $isEnded ? 'Đã kết thúc' : 'Đang hoạt động' }}</span>
+                            <span class="inline-flex items-center rounded-sm bg-amber-50 px-1.5 py-0.5 text-[10px] font-bold uppercase tracking-wide text-amber-600">
+                                <x-user.icon name="shield" :size="10" class="mr-1" /> Chủ lớp
+                            </span>
+                        </div>
+                        <span class="text-[11px] font-medium text-slate-700">Mã lớp: <span class="font-bold">{{ $class->join_key }}</span></span>
+                    </div>
 
-                <div class="mt-4 grid grid-cols-2 gap-3 px-4">
-                    <div class="rounded-lg border border-outline-variant bg-surface-container-low p-3">
-                        <p class="flex items-center gap-1.5 text-[11px] font-medium text-on-surface-variant">
-                            <x-user.icon name="users" :size="14" class="text-primary" /> Học viên
-                        </p>
-                        <p class="mt-1 text-xl font-bold leading-none text-on-surface">{{ $class->students_count }}</p>
+                    <div class="flex gap-8 mb-3">
+                        <div>
+                            <p class="text-[10px] font-semibold text-slate-500 mb-1">HỌC VIÊN</p>
+                            <p class="flex items-center gap-1.5 text-lg font-bold text-slate-700">
+                                <x-user.icon name="users" :size="16" class="text-slate-400" />
+                                {{ $class->students_count }}
+                            </p>
+                        </div>
+                        <div class="w-px bg-slate-200"></div>
+                        <div>
+                            <p class="text-[10px] font-semibold text-slate-500 mb-1">ĐÃ HỌC</p>
+                            <p class="flex items-center gap-1.5 text-lg font-bold text-slate-700">
+                                <x-user.icon name="check-square" :size="16" class="text-slate-400" />
+                                {{ $class->studied_sessions ?? 0 }}
+                            </p>
+                        </div>
                     </div>
-                    <div class="rounded-lg border border-outline-variant bg-surface-container-low p-3">
-                        <p class="flex items-center gap-1.5 text-[11px] font-medium text-on-surface-variant">
-                            <x-user.icon name="check-square" :size="14" class="text-tertiary" /> Đã học
-                        </p>
-                        <p class="mt-1 text-xl font-bold leading-none text-on-surface">{{ $class->studied_sessions ?? 0 }}</p>
-                    </div>
-                </div>
 
-                <div class="px-4 pt-4">
-                    <div class="mb-1.5 flex items-center justify-between">
-                        <span class="text-[11px] font-medium text-on-surface-variant">TB chuyên cần</span>
-                        <span class="{{ $textClass }} text-sm font-bold">{{ $attendancePct }}%</span>
-                    </div>
-                    <div class="h-1.5 w-full overflow-hidden rounded-full bg-surface-container-high">
-                        <div class="{{ $barClass }} h-full rounded-full" style="width: {{ $attendancePct }}%"></div>
+                    <div class="pt-2">
+                        <div class="mb-1.5 flex items-center justify-between">
+                            <span class="text-[10px] font-bold text-slate-500 uppercase">TB CHUYÊN CẦN</span>
+                            <div class="flex items-center gap-2">
+                                @if ($isBanned)
+                                    <span class="rounded-sm bg-error/10 px-1.5 py-0.5 text-[9px] font-bold text-error uppercase">Cấm thi</span>
+                                @elseif ($isWarning)
+                                    <span class="rounded-sm bg-amber-100 px-1.5 py-0.5 text-[9px] font-bold text-amber-700 uppercase">Cảnh báo</span>
+                                @endif
+                                <span class="{{ $textClass }} text-xs font-bold">{{ $attendancePct }}%</span>
+                            </div>
+                        </div>
+                        <div class="h-1 w-full overflow-hidden bg-surface-container-high rounded-sm">
+                            <div class="{{ $barClass }} h-full transition-all duration-700" style="width: {{ $attendancePct }}%"></div>
+                        </div>
                     </div>
                 </div>
 

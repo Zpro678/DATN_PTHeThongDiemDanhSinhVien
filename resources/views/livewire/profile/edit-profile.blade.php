@@ -10,7 +10,7 @@
         : 'bg-rose-50 text-rose-700 border-rose-100';
 @endphp
 
-<div x-data="{ view: 'profile' }" class="mx-auto max-w-[1500px] p-4 pb-24 md:p-8 md:pb-12 space-y-6">
+<div x-data="{ view: 'profile' }" class="w-full p-4 pb-24 md:p-8 md:pb-12 space-y-6">
     <section class="admin-card flex flex-col justify-between gap-4 overflow-hidden rounded-3xl border p-6 lg:flex-row lg:items-end lg:p-7">
         <div>
             <p class="text-[10px] font-bold uppercase tracking-[0.3em] text-slate-400">Tài khoản cá nhân</p>

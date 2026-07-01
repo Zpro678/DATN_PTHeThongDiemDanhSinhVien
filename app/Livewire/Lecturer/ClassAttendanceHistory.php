@@ -47,7 +47,12 @@ class ClassAttendanceHistory extends Component
 
     public function render(): View
     {
-        $members = $this->courseClass->members()->where('status', 'active')->orderBy('student_code')->paginate($this->perPage);
+        $members = $this->courseClass->members()->with('user')->where('status', 'active')->get();
+        $members = $members->sortBy(function ($m) {
+            $parts = explode(' ', trim($m->full_name));
+            return end($parts);
+        })->values();
+
         $sessions = ClassSession::query()
             ->where('class_id', $this->courseClass->id)
             ->where('status', 'closed')
@@ -174,7 +179,7 @@ class ClassAttendanceHistory extends Component
 
         $totalCourseSessions = $this->courseClass->total_sessions ?? 0;
 
-        $membersData = collect($members->items())->map(function($m) use ($colors, $totalAttended, $totalCourseSessions, $memberStats) {
+        $membersData = $members->map(function($m) use ($colors, $totalAttended, $totalCourseSessions, $memberStats) {
             $color = $colors[$m->id % count($colors)];
             return [
                 'id' => $m->id,
@@ -183,6 +188,7 @@ class ClassAttendanceHistory extends Component
                 'avatar_bg' => $color['bg'],
                 'avatar_text' => $color['text'],
                 'avatar_border' => $color['border'],
+                'avatar_url' => $m->user && $m->user->avatar ? asset('storage/' . $m->user->avatar) : null,
                 'total_attended_sessions' => $totalAttended[$m->id] ?? 0,
                 'total_course_sessions' => $totalCourseSessions,
                 'attendance_percent' => $memberStats[$m->id] ?? 100,
@@ -190,6 +196,10 @@ class ClassAttendanceHistory extends Component
         })->keyBy('id');
 
         return view('livewire.lecturer.class-attendance-history', compact('members', 'groupedSessions', 'matrix', 'sessions', 'groupedSessionsInfo', 'membersData'))
-            ->layout('layouts.user', ['title' => 'Lịch sử điểm danh: ' . $this->courseClass->name]);
+            ->layout('layouts.fullscreen', [
+                'title' => 'Lịch sử điểm danh (' . $sessions->count() . ')',
+                'subtitle' => $this->courseClass->code . ' - ' . $this->courseClass->name,
+                'backUrl' => route('lecturer.classes.show', ['ma_user' => auth()->id(), 'courseClass' => $this->courseClass->id])
+            ]);
     }
 }

@@ -10,7 +10,7 @@
     $adminStats = [
         ['label' => 'Lớp quản lý', 'value' => $totalClasses, 'icon' => 'book-open', 'color' => 'text-primary', 'bg' => 'bg-primary/10'],
         ['label' => 'Tổng học viên', 'value' => $overview['total_students'] ?? 0, 'icon' => 'users', 'color' => 'text-tertiary', 'bg' => 'bg-tertiary/10'],
-        ['label' => 'Buổi điểm danh hôm nay', 'value' => $todayAttendanceSessions, 'icon' => 'calendar-check', 'color' => 'text-primary', 'bg' => 'bg-primary/10'],
+        ['label' => 'Điểm danh hôm nay', 'value' => $todayAttendanceSessions, 'icon' => 'calendar-check', 'color' => 'text-primary', 'bg' => 'bg-primary/10'],
         ['label' => 'SV gần/vượt ngưỡng', 'value' => $attendanceWarningStudentsCount, 'icon' => 'alert-triangle', 'color' => 'text-error', 'bg' => 'bg-error/10'],
     ];
 
@@ -134,8 +134,8 @@
     $joinedCards = $studentJoinedCards;
 @endphp
 
-<div class="dashboard-canvas min-h-[calc(100vh-4rem)] w-full">
-    <div class="w-full px-4 py-6 pb-24 sm:px-6 md:py-8 lg:px-8 xl:px-12">
+<div class="min-h-[calc(100vh-4rem)] w-full">
+    <div class="w-full px-6 py-6 pb-24 sm:px-10 lg:px-16">
     @php
         $heroName = Auth::user()?->name ?? 'bạn';
         $isAdminWs = $workspace === 'admin';
@@ -152,8 +152,8 @@
         $adminNeedsCount = $unclosedAttendanceSessions + $pendingLeaveRequestsCount + $attendanceWarningStudentsCount;
 
         $adminNeedRows = [
-            ['label' => 'Buổi chưa chốt sổ', 'value' => $unclosedAttendanceSessions, 'icon' => 'clock', 'tone' => 'text-error', 'bg' => 'bg-error/10', 'href' => route('lecturer.attendance.index')],
-            ['label' => 'Đơn nghỉ chờ duyệt', 'value' => $pendingLeaveRequestsCount, 'icon' => 'file-text', 'tone' => 'text-primary', 'bg' => 'bg-primary/10', 'href' => route('lecturer.leave-requests.index')],
+            ['label' => 'Buổi chưa chốt sổ', 'value' => $unclosedAttendanceSessions, 'icon' => 'clock', 'tone' => 'text-red-600', 'bg' => 'bg-red-50', 'href' => route('lecturer.attendance.index')],
+            ['label' => 'Đơn nghỉ chờ duyệt', 'value' => $pendingLeaveRequestsCount, 'icon' => 'file-text', 'tone' => 'text-[#0b57d0]', 'bg' => 'bg-[#d3e3fd]', 'href' => route('lecturer.leave-requests.index')],
             ['label' => 'Học viên cảnh báo', 'value' => $attendanceWarningStudentsCount, 'icon' => 'alert-triangle', 'tone' => 'text-[#D97706]', 'bg' => 'bg-[#FEF3C7]', 'href' => route('lecturer.students.index')],
         ];
 
@@ -240,7 +240,7 @@
         {{-- Bắt đầu nhanh: CTA chính + lối tắt điều hướng --}}
         <div class="dash-card flex flex-col rounded-2xl p-5 md:p-6">
             <div class="flex items-start gap-3">
-                <span class="grid h-11 w-11 shrink-0 place-items-center rounded-xl {{ $isAdminWs ? 'bg-primary/10 text-primary' : 'bg-tertiary/10 text-tertiary' }}">
+                <span class="grid h-11 w-11 shrink-0 place-items-center rounded-full {{ $isAdminWs ? 'bg-blue-50 text-blue-600' : 'bg-tertiary/10 text-tertiary' }}">
                     <x-user.icon :name="$isAdminWs ? 'zap' : 'sparkles'" :size="22" />
                 </span>
                 <div class="min-w-0">
@@ -257,20 +257,20 @@
 
             <div class="mt-5 flex flex-wrap items-center gap-3">
                 @if ($isAdminWs)
-                    <a href="{{ route('lecturer.attendance.create') }}" class="inline-flex items-center gap-2 rounded-xl bg-primary px-4 py-2.5 text-sm font-semibold text-white shadow-sm transition-colors hover:bg-primary-container">
+                    <a href="{{ route('lecturer.attendance.create') }}" class="inline-flex items-center gap-2 rounded-xl bg-[#0b57d0] px-5 py-2.5 text-sm font-semibold text-white shadow-sm transition-colors hover:bg-blue-700">
                         <x-user.icon name="calendar-plus" :size="18" />
                         Tạo buổi điểm danh
                     </a>
-                    <a href="{{ route('create-class') }}" class="inline-flex items-center gap-2 rounded-xl border border-outline-variant bg-white px-4 py-2.5 text-sm font-semibold text-on-surface-variant transition-colors hover:bg-surface-container hover:text-on-surface">
+                    <a href="{{ route('create-class') }}" class="inline-flex items-center gap-2 rounded-xl bg-[#f0f4f8] px-5 py-2.5 text-sm font-semibold text-[#3c4043] transition-colors hover:bg-gray-200">
                         <x-user.icon name="plus" :size="18" />
                         Tạo lớp mới
                     </a>
                 @else
-                    <button type="button" x-on:click="$dispatch('open-join-class-modal')" class="inline-flex items-center gap-2 rounded-xl bg-tertiary px-4 py-2.5 text-sm font-semibold text-white shadow-sm transition-colors hover:bg-tertiary/90">
+                    <button type="button" x-on:click="$dispatch('open-join-class-modal')" class="inline-flex items-center gap-2 rounded-xl bg-tertiary px-5 py-2.5 text-sm font-semibold text-white shadow-sm transition-colors hover:bg-tertiary/90">
                         <x-user.icon name="log-in" :size="18" />
                         Tham gia bằng mã
                     </button>
-                    <a href="{{ route('student.attendance.stats') }}" class="inline-flex items-center gap-2 rounded-xl border border-outline-variant bg-white px-4 py-2.5 text-sm font-semibold text-on-surface-variant transition-colors hover:bg-surface-container hover:text-on-surface">
+                    <a href="{{ route('student.attendance.stats') }}" class="inline-flex items-center gap-2 rounded-xl bg-[#f0f4f8] px-5 py-2.5 text-sm font-semibold text-[#3c4043] transition-colors hover:bg-gray-200">
                         <x-user.icon name="bar-chart" :size="18" />
                         Xem chuyên cần
                     </a>
@@ -279,16 +279,16 @@
 
             {{-- Lối tắt — lấp khoảng trống, đồng bộ chiều cao với panel phải --}}
             <div class="mt-auto pt-5">
-                <p class="mb-2 text-xs font-semibold uppercase tracking-wide text-on-surface-variant">Lối tắt</p>
-                <div class="grid gap-2 sm:grid-cols-3">
+                <p class="mb-3 text-xs font-semibold uppercase tracking-wide text-on-surface-variant">Lối tắt</p>
+                <div class="grid gap-3 sm:grid-cols-3">
                     @foreach (($isAdminWs ? $adminShortcuts : $studentShortcuts) as $sc)
-                        <a href="{{ $sc['href'] }}" wire:navigate class="group flex items-center gap-3 rounded-xl border border-outline-variant/60 bg-surface-container-low p-3 transition hover:bg-white sm:flex-col sm:items-start sm:gap-2 {{ $isAdminWs ? 'hover:border-primary/30' : 'hover:border-tertiary/30' }}">
-                            <span class="grid h-9 w-9 shrink-0 place-items-center rounded-lg bg-white text-on-surface-variant shadow-sm ring-1 ring-outline-variant/30 transition {{ $isAdminWs ? 'group-hover:text-primary' : 'group-hover:text-tertiary' }}">
-                                <x-user.icon :name="$sc['icon']" :size="18" />
+                        <a href="{{ $sc['href'] }}" wire:navigate class="group flex items-center gap-3 rounded-2xl border border-gray-100 bg-white p-4 shadow-sm transition hover:border-gray-300 hover:shadow-md sm:flex-col sm:items-start sm:gap-3">
+                            <span class="grid h-10 w-10 shrink-0 place-items-center rounded-full bg-slate-100 text-gray-600 transition {{ $isAdminWs ? 'group-hover:bg-primary/10 group-hover:text-primary' : 'group-hover:bg-tertiary/10 group-hover:text-tertiary' }}">
+                                <x-user.icon :name="$sc['icon']" :size="20" />
                             </span>
                             <span class="min-w-0">
-                                <span class="block truncate text-sm font-semibold text-on-surface">{{ $sc['label'] }}</span>
-                                <span class="block truncate text-xs text-on-surface-variant">{{ $sc['hint'] }}</span>
+                                <span class="block truncate text-sm font-bold text-gray-900">{{ $sc['label'] }}</span>
+                                <span class="block truncate text-xs text-gray-500">{{ $sc['hint'] }}</span>
                             </span>
                         </a>
                     @endforeach
@@ -300,8 +300,8 @@
         @if ($isAdminWs)
             <div class="dash-card rounded-2xl p-5">
                 <div class="flex items-center justify-between">
-                    <p class="flex items-center gap-2 text-sm font-bold text-on-surface">
-                        <x-user.icon name="alert-circle" :size="16" class="text-primary" />
+                    <p class="flex items-center gap-2 text-base font-bold text-on-surface">
+                        <x-user.icon name="alert-circle" :size="18" class="text-error" />
                         Cần xử lý
                     </p>
                     @if ($adminNeedsCount > 0)
@@ -312,19 +312,20 @@
                         </span>
                     @endif
                 </div>
-                <div class="mt-3 divide-y divide-outline-variant/50">
+                <div class="mt-4 space-y-2">
                     @foreach ($adminNeedRows as $row)
-                        <a href="{{ $row['href'] }}" wire:navigate class="group -mx-2 flex items-center gap-3 rounded-xl px-2 py-2.5 transition hover:bg-surface-container-low">
-                            <span class="{{ $row['bg'] }} {{ $row['tone'] }} grid h-9 w-9 shrink-0 place-items-center rounded-lg">
-                                <x-user.icon :name="$row['icon']" :size="18" />
+                        @php $hasItems = $row['value'] > 0; @endphp
+                        <a href="{{ $row['href'] }}" wire:navigate class="group flex items-center gap-3 rounded-xl px-3 py-2.5 transition hover:bg-[#eff4fd]">
+                            <span class="{{ $row['bg'] }} {{ $row['tone'] }} grid h-8 w-8 shrink-0 place-items-center rounded-full">
+                                <x-user.icon :name="$row['icon']" :size="16" />
                             </span>
-                            <span class="flex-1 text-sm font-medium text-on-surface">{{ $row['label'] }}</span>
+                            <span class="flex-1 text-sm font-medium text-gray-900">{{ $row['label'] }}</span>
                             <span @class([
-                                'grid h-7 min-w-7 place-items-center rounded-lg px-2 text-sm font-bold tabular-nums',
-                                $row['bg'].' '.$row['tone'] => $row['value'] > 0,
-                                'text-on-surface-variant' => ! ($row['value'] > 0),
+                                'grid h-6 min-w-6 place-items-center rounded-full px-2 text-xs font-bold tabular-nums',
+                                $row['bg'].' '.$row['tone'] => $hasItems,
+                                'text-gray-500' => ! $hasItems,
                             ])>{{ $row['value'] }}</span>
-                            <x-user.icon name="chevron-right" :size="16" class="-ml-1 text-on-surface-variant transition group-hover:translate-x-0.5" />
+                            <x-user.icon name="chevron-right" :size="16" class="-ml-1 text-gray-400 transition group-hover:translate-x-0.5 group-hover:text-gray-900" />
                         </a>
                     @endforeach
                 </div>
@@ -352,8 +353,8 @@
             </div>
                 @else
             <div class="dash-card rounded-2xl p-5">
-                <p class="flex items-center gap-2 text-sm font-bold text-on-surface">
-                    <x-user.icon name="bar-chart" :size="16" class="text-tertiary" />
+                <p class="flex items-center gap-2 text-base font-bold text-on-surface">
+                    <x-user.icon name="bar-chart" :size="18" class="text-tertiary" />
                     Chuyên cần của bạn
                 </p>
                 <div class="mt-3 flex items-end justify-between">
@@ -397,234 +398,327 @@
         @if ($workspace === 'admin')
             <section class="mt-8 space-y-8 animate-in fade-in slide-in-from-bottom-4 duration-500">
                 <div class="mb-6">
-                    <h3 class="flex items-center gap-2 font-headline-sm text-headline-sm text-on-surface">
-                        <x-user.icon name="book-open" class="text-primary" />
+                    <h3 class="font-headline-sm text-headline-sm text-on-surface">
                         Không gian Chủ lớp
                     </h3>
-                    <p class="mt-1 text-body-md text-on-surface-variant">Quản lý lớp học, học viên, buổi điểm danh, báo cáo và cảnh báo chuyên cần.</p>
                 </div>
 
                 <div class="grid grid-cols-2 gap-3 lg:grid-cols-4">
                     @foreach ($adminStats as $stat)
-                        <div class="dash-card dash-card-hover rounded-2xl p-4 sm:p-5">
-                            <span class="{{ $stat['bg'] }} {{ $stat['color'] }} mb-3 grid h-10 w-10 place-items-center rounded-xl">
-                                <x-user.icon :name="$stat['icon']" :size="20" />
-                            </span>
-                            <div class="text-2xl font-bold leading-none text-on-surface sm:text-3xl">{{ $stat['value'] }}</div>
-                            <p class="mt-1.5 text-xs text-on-surface-variant sm:text-sm">{{ $stat['label'] }}</p>
+                        <div class="dash-card dash-card-hover flex flex-col justify-center rounded-2xl bg-white p-5 shadow-sm">
+                            <div class="mb-3 flex items-center gap-3">
+                                <span class="{{ $stat['bg'] }} {{ $stat['color'] }} grid h-10 w-10 shrink-0 place-items-center rounded-full">
+                                    <x-user.icon :name="$stat['icon']" :size="18" />
+                                </span>
+                                <span class="text-base font-medium leading-snug text-gray-600">{{ $stat['label'] }}</span>
+                            </div>
+                            <div class="text-center text-3xl font-bold text-gray-900">{{ $stat['value'] }}</div>
                         </div>
                     @endforeach
                 </div>
 
-                <div>
-                    <h4 class="mb-4 text-[16px] font-bold text-on-surface">Thao tác nhanh</h4>
-                    <div class="grid grid-cols-3 gap-2 sm:gap-3 md:grid-cols-3 lg:grid-cols-6">
-                        @foreach ($adminActions as $action)
-                            <a href="{{ $action['href'] }}" class="group flex flex-col items-center justify-center rounded-2xl p-3 transition-all hover:bg-surface-container-lowest hover:shadow-sm">
-                                <div class="mb-3 flex h-12 w-12 items-center justify-center rounded-full bg-white text-on-surface-variant shadow-sm ring-1 ring-outline-variant/20 group-hover:text-primary transition-all group-hover:scale-105">
-                                    <x-user.icon :name="$action['icon']" :size="20" />
-                                </div>
-                                <span class="line-clamp-1 text-center text-xs font-semibold text-on-surface-variant group-hover:text-on-surface">{{ $action['label'] }}</span>
-                            </a>
-                        @endforeach
-                    </div>
-                </div>
+                @if(count($managedClassCards) > 0)
+                    <div>
+                        <h3 class="mb-4 font-headline-sm text-headline-sm text-on-surface">Lớp tôi quản lý</h3>
+                        <div class="grid grid-cols-1 gap-6 md:grid-cols-2 xl:grid-cols-3">
+                            @foreach ($managedClassCards as $class)
+                            @php
+                                $isEnded = $class['status_label'] === 'Đã kết thúc';
+                                $attendancePct = $class['attendance'];
+                                
+                                $isBanned = $attendancePct < \App\Services\AttendanceCalculator::MIN_ATTENDANCE_PERCENT;
+                                $isWarning = ! $isBanned && $attendancePct < 85;
 
-                <div>
-                    <h4 class="mb-4 text-[16px] font-bold text-on-surface">Lớp tôi quản lý</h4>
-                    <div class="grid grid-cols-1 gap-6 md:grid-cols-2 xl:grid-cols-3">
-                        @forelse ($managedClassCards as $class)
-                            <article class="dash-card dash-card-hover group flex flex-col rounded-2xl p-5">
-                                <div class="mb-4 flex items-start justify-between">
-                                    <div class="flex h-12 w-12 items-center justify-center rounded-xl bg-surface-container-lowest shadow-sm ring-1 ring-outline-variant/20 {{ $class['color'] }}">
-                                        <x-user.icon :name="$class['icon']" :size="24" />
+                                if ($isEnded) {
+                                    $barClass = 'bg-on-surface-variant'; $textClass = 'text-on-surface-variant';
+                                } elseif ($attendancePct < 70) {
+                                    $barClass = 'bg-error'; $textClass = 'text-error';
+                                } elseif ($attendancePct < 90) {
+                                    $barClass = 'bg-amber-500'; $textClass = 'text-amber-600';
+                                } else {
+                                    $barClass = 'bg-tertiary'; $textClass = 'text-tertiary';
+                                }
+
+                                $colorOptions = [
+                                    'bg-[#475569]', 'bg-[#1D4ED8]', 'bg-[#0F766E]', 'bg-[#4338CA]',
+                                    'bg-[#047857]', 'bg-[#0369A1]', 'bg-[#6D28D9]', 'bg-[#B45309]',
+                                ];
+                                $themeColor = $colorOptions[$class['id'] % count($colorOptions)];
+                                
+                                $bgIcons = ['laptop', 'book', 'code', 'book-open', 'graduation-cap', 'layout-dashboard'];
+                                $bgIcon = $bgIcons[$class['id'] % count($bgIcons)];
+                            @endphp
+
+                            <article @class([
+                                'group relative flex flex-col overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm transition-all duration-300',
+                                'hover:border-slate-300 hover:shadow-md hover:-translate-y-0.5' => ! $isEnded,
+                                'opacity-75' => $isEnded,
+                            ])>
+                                <a href="{{ route('lecturer.classes.show', $class['id']) }}" class="absolute inset-0 z-10"><span class="sr-only">Xem chi tiết lớp</span></a>
+
+                                {{-- Header Theme Color --}}
+                                <div class="{{ $isEnded ? 'bg-on-surface-variant' : $themeColor }} h-24 px-5 py-4 relative">
+                                    <div class="relative z-10 w-3/4">
+                                        <h3 class="truncate font-normal text-white text-[22px] tracking-wide leading-tight" title="{{ $class['title'] }}">
+                                            <a href="{{ route('lecturer.classes.show', $class['id']) }}" class="hover:underline focus:outline-none">{{ $class['title'] }}</a>
+                                        </h3>
+                                        <p class="mt-1 truncate text-[13px] font-light text-white/95 tracking-wide">Mã học phần: {{ $class['subject_code'] ?? 'N/A' }}</p>
                                     </div>
-                                    <span class="rounded-full bg-surface-container-lowest px-3 py-1 text-[10px] font-bold uppercase tracking-wider text-on-surface-variant ring-1 ring-outline-variant/20">{{ $class['status_label'] }}</span>
+
+                                    {{-- Background Icon --}}
+                                    <div class="absolute right-3 top-2 z-0 opacity-15">
+                                        <x-user.icon :name="$bgIcon" :size="76" class="text-white transform -rotate-12" stroke-width="1.5" />
+                                    </div>
+
+                                    {{-- Avatar overlapping --}}
+                                    <div class="absolute -bottom-6 right-5 z-20">
+                                        <span class="{{ $isEnded ? 'bg-on-surface-variant' : $themeColor }} grid h-14 w-14 place-items-center rounded-full border-2 border-white text-[22px] font-medium text-white shadow-sm" title="{{ auth()->user()->name }}">
+                                            {{ mb_strtoupper(mb_substr(auth()->user()->name, 0, 1)) }}
+                                        </span>
+                                    </div>
                                 </div>
-                                <div class="flex flex-1 flex-col">
-                                    <div class="mb-1 flex items-start justify-between">
-                                        <h4 class="line-clamp-2 text-lg font-bold text-on-surface transition-colors group-hover:{{ $class['color'] }}" title="{{ $class['title'] }}">{{ $class['title'] }}</h4>
-                                        <button type="button" class="rounded-full p-1 text-on-surface-variant hover:bg-surface-container hover:text-on-surface">
-                                            <x-user.icon name="more-vertical" :size="20" />
+
+                                {{-- Body (White) --}}
+                                <div class="flex-1 px-4 pt-8 pb-3 relative z-20 pointer-events-none">
+                                    <div class="mb-3 flex items-center justify-between">
+                                        <div class="flex flex-wrap gap-1.5">
+                                            <span @class([
+                                                'inline-flex items-center rounded-sm px-1.5 py-0.5 text-[10px] font-bold uppercase tracking-wide',
+                                                'bg-blue-50 text-blue-600' => ! $isEnded,
+                                                'bg-surface-container text-on-surface-variant' => $isEnded,
+                                            ])>{{ $isEnded ? 'Đã kết thúc' : 'Đang hoạt động' }}</span>
+                                            <span class="inline-flex items-center rounded-sm bg-amber-50 px-1.5 py-0.5 text-[10px] font-bold uppercase tracking-wide text-amber-600">
+                                                <x-user.icon name="shield" :size="10" class="mr-1" /> Chủ lớp
+                                            </span>
+                                        </div>
+                                        <span class="text-[11px] font-medium text-slate-700">Mã lớp: <span class="font-bold">{{ $class['code'] }}</span></span>
+                                    </div>
+
+                                    <div class="flex gap-8 mb-3">
+                                        <div>
+                                            <p class="text-[10px] font-semibold text-slate-500 mb-1">HỌC VIÊN</p>
+                                            <p class="flex items-center gap-1.5 text-lg font-bold text-slate-700">
+                                                <x-user.icon name="users" :size="16" class="text-slate-400" />
+                                                {{ $class['students'] }}
+                                            </p>
+                                        </div>
+                                        <div class="w-px bg-slate-200"></div>
+                                        <div>
+                                            <p class="text-[10px] font-semibold text-slate-500 mb-1">ĐÃ HỌC</p>
+                                            <p class="flex items-center gap-1.5 text-lg font-bold text-slate-700">
+                                                <x-user.icon name="check-square" :size="16" class="text-slate-400" />
+                                                {{ intval($class['sessions']) }}
+                                            </p>
+                                        </div>
+                                    </div>
+
+                                    <div class="pt-2">
+                                        <div class="mb-1.5 flex items-center justify-between">
+                                            <span class="text-[10px] font-bold text-slate-500 uppercase">TB CHUYÊN CẦN</span>
+                                            <div class="flex items-center gap-2">
+                                                @if ($isBanned)
+                                                    <span class="rounded-sm bg-error/10 px-1.5 py-0.5 text-[9px] font-bold text-error uppercase">Cấm thi</span>
+                                                @elseif ($isWarning)
+                                                    <span class="rounded-sm bg-amber-100 px-1.5 py-0.5 text-[9px] font-bold text-amber-700 uppercase">Cảnh báo</span>
+                                                @endif
+                                                <span class="{{ $textClass }} text-xs font-bold">{{ $attendancePct }}%</span>
+                                            </div>
+                                        </div>
+                                        <div class="h-1 w-full overflow-hidden bg-surface-container-high rounded-sm">
+                                            <div class="{{ $barClass }} h-full transition-all duration-700" style="width: {{ $attendancePct }}%"></div>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <div class="relative z-20 mt-4 flex items-center justify-end gap-0.5 border-t border-outline-variant px-3 py-2">
+                                    <div x-data="{ copied: false }" class="relative z-20">
+                                        <button
+                                            type="button"
+                                            title="Sao chép mã lớp: {{ $class['code'] }}"
+                                            class="group/action rounded-lg p-2 transition-colors hover:bg-surface-container"
+                                            x-on:click="navigator.clipboard.writeText('{{ $class['code'] }}'); copied = true; setTimeout(() => copied = false, 2000); $event.stopPropagation()"
+                                        >
+                                            <template x-if="!copied"><x-user.icon name="copy" :size="18" class="text-on-surface-variant transition-colors group-hover/action:text-primary" /></template>
+                                            <template x-if="copied"><x-user.icon name="check-circle" :size="18" class="text-tertiary" /></template>
                                         </button>
                                     </div>
-                                    <p class="mb-4 flex items-center gap-2 text-sm text-on-surface-variant">
-                                        <span class="font-bold">{{ $class['code'] }}</span>
-                                        <span class="h-1 w-1 rounded-full bg-outline-variant"></span>
-                                        <span>{{ $class['subject_code'] }}</span>
-                                    </p>
-                                    <div class="mb-6 space-y-3 rounded-2xl border border-outline-variant/20 bg-surface-container-low p-4">
-                                        <div class="flex justify-between text-sm text-on-surface">
-                                            <span class="flex items-center gap-2 font-bold">
-                                                <x-user.icon name="users" :size="16" class="text-on-surface-variant" />
-                                                {{ $class['students'] }} học viên
-                                            </span>
-                                            <span class="font-bold text-on-surface-variant">{{ $class['sessions'] }} buổi</span>
-                                        </div>
-                                        <div>
-                                            <div class="mb-1 flex justify-between text-sm">
-                                                <span class="text-on-surface-variant">Chuyên cần cả lớp</span>
-                                                <span class="{{ $class['color'] }} font-bold">{{ $class['attendance'] }}%</span>
-                                            </div>
-                                            <div class="h-2 w-full overflow-hidden rounded-full bg-surface-container-highest">
-                                                <div class="{{ $class['bar'] }} h-full rounded-full" style="width: {{ $class['attendance'] }}%"></div>
-                                            </div>
-                                        </div>
-                                    </div>
-                                    <div class="mt-auto grid grid-cols-2 gap-3">
-                                        <a href="{{ route('lecturer.attendance.create', ['class_id' => $class['id']]) }}" class="flex items-center justify-center gap-2 rounded-xl bg-primary py-2.5 text-sm font-bold text-white shadow-sm transition-colors hover:bg-primary/90">
-                                            <x-user.icon name="check-square" :size="18" />
-                                            Điểm danh
+                                    @foreach ([
+                                        ['label' => 'Điểm danh QR', 'icon' => 'qr-code'],
+                                        ['label' => 'Thủ công', 'icon' => 'check-square'],
+                                        ['label' => 'Quản lý SV', 'icon' => 'users'],
+                                        ['label' => 'Thống kê', 'icon' => 'bar-chart'],
+                                    ] as $action)
+                                        <a href="{{ match ($action['label']) { 'Điểm danh QR' => route('lecturer.attendance.create', ['class_id' => $class['id']]), 'Thủ công' => route('lecturer.attendance.create', ['class_id' => $class['id']]), 'Quản lý SV' => route('lecturer.students.index', ['class_id' => $class['id']]), 'Thống kê' => route('lecturer.class.statistics', ['class_id' => $class['id']]), default => '#' } }}" @class([
+                                            'group/action rounded-lg p-2 transition-colors hover:bg-surface-container',
+                                            'pointer-events-none opacity-40' => $isEnded && in_array($action['icon'], ['qr-code', 'check-square'], true),
+                                        ]) title="{{ $action['label'] }}">
+                                            <x-user.icon :name="$action['icon']" class="text-on-surface-variant transition-colors group-hover/action:text-primary" :size="18"/>
                                         </a>
-                                        <a href="{{ route('lecturer.classes.show', $class['id']) }}" class="flex items-center justify-center gap-2 rounded-xl border border-outline-variant py-2.5 text-sm font-bold text-on-surface-variant transition-colors hover:bg-surface-container">
-                                            <x-user.icon name="eye" :size="18" />
-                                            Chi tiết
-                                        </a>
+                                    @endforeach
+                                    
+                                    <div class="relative z-20" x-data="{ open: false }">
+                                        <button type="button" x-on:click.stop="open = ! open" class="rounded-lg p-2 text-on-surface-variant transition-colors hover:bg-surface-container">
+                                            <x-user.icon name="more-vertical" :size="18" />
+                                        </button>
+                                        <div x-cloak x-show="open" x-on:click.outside="open = false" class="absolute right-0 bottom-full z-50 mb-1 w-44 overflow-hidden rounded-lg border border-outline-variant bg-white py-1 shadow-lg">
+                                            <div class="px-3 py-2 border-b border-outline-variant/30 text-xs font-semibold uppercase tracking-wider text-on-surface-variant">Thao tác</div>
+                                            <a href="{{ route('lecturer.classes.show', $class['id']) }}" class="flex items-center gap-2 px-4 py-2.5 text-sm text-on-surface hover:bg-surface-container">
+                                                <x-user.icon name="eye" :size="16" />
+                                                Chi tiết
+                                            </a>
+                                            <a href="{{ route('lecturer.class.statistics', ['class_id' => $class['id']]) }}" class="flex items-center gap-2 px-4 py-2.5 text-sm text-on-surface hover:bg-surface-container">
+                                                <x-user.icon name="bar-chart-2" :size="16" />
+                                                Thống kê
+                                            </a>
+                                        </div>
                                     </div>
                                 </div>
                             </article>
-                        @empty
-                            <div class="col-span-full rounded-2xl border border-dashed border-outline-variant/30 bg-white p-8 text-center text-sm font-semibold text-on-surface-variant">
-                                Chưa có lớp học nào để hiển thị.
-                            </div>
-                        @endforelse
-                    </div>
-                </div>
-
-                <div class="grid grid-cols-1 gap-6 lg:grid-cols-2">
-                    <div>
-                        <h4 class="mb-4 flex items-center gap-2 text-[16px] font-bold text-on-surface">
-                            <x-user.icon name="alert-triangle" class="text-error" />
-                            Cảnh báo cần xử lý
-                        </h4>
-                        <div class="space-y-3">
-                            @foreach ($alerts as $alert)
-                                <div class="{{ $alert['border'] }} flex items-start gap-4 rounded-2xl border bg-white p-4">
-                                    <div class="{{ $alert['bg'] }} {{ $alert['color'] }} flex h-10 w-10 shrink-0 items-center justify-center rounded-full">
-                                        <x-user.icon :name="$alert['icon']" />
-                                    </div>
-                                    <div class="flex-1">
-                                        <p class="text-sm font-bold text-on-surface">{{ $alert['title'] }}</p>
-                                        <p class="mt-1 text-xs text-on-surface-variant">{{ $alert['meta'] }}</p>
-                                    </div>
-                                    @if (! empty($alert['href']) && ! empty($alert['button']))
-                                        <a href="{{ $alert['href'] }}" wire:navigate class="{{ $alert['button'] }} shrink-0 rounded-lg px-3 py-1.5 text-xs font-bold">{{ $alert['action'] }}</a>
-                                    @endif
-                                </div>
                             @endforeach
                         </div>
                     </div>
+                @endif
 
-                    <div>
-                        <h4 class="mb-4 flex items-center gap-2 text-[16px] font-bold text-on-surface">
-                            <x-user.icon name="activity" class="text-tertiary" />
-                            Hoạt động gần đây
-                        </h4>
-                        <div class="relative rounded-2xl border border-outline-variant/10 bg-white p-6">
-                            <div class="absolute bottom-8 left-10 top-8 w-[2px] bg-surface-container-high"></div>
-                            <div class="relative z-10 space-y-6">
-                                @foreach ($activities as $activity)
-                                    <div class="flex items-start gap-4">
-                                        <div class="{{ $activity['bg'] }} flex h-8 w-8 shrink-0 items-center justify-center rounded-full border-4 border-white text-white shadow-sm">
-                                            <x-user.icon :name="$activity['icon']" :size="12" />
-                                        </div>
-                                        <div>
-                                            <p class="text-sm font-medium text-on-surface">{{ $activity['text'] }}</p>
-                                            <p class="mt-0.5 text-xs text-on-surface-variant">{{ $activity['time'] }}</p>
-                                        </div>
-                                    </div>
-                                @endforeach
-                            </div>
-                        </div>
-                    </div>
-                </div>
+
             </section>
         @else
             <section id="student" class="mt-8 space-y-8 animate-in fade-in slide-in-from-bottom-4 duration-500">
                 <div class="mb-6">
-                    <h3 class="flex items-center gap-2 font-headline-sm text-headline-sm text-on-surface">
-                        <x-user.icon name="user" class="text-tertiary" />
+                    <h3 class="font-headline-sm text-headline-sm text-on-surface">
                         Không gian Học viên
                     </h3>
-                    <p class="mt-1 text-body-md text-on-surface-variant">Theo dõi lớp đã tham gia, lịch sử điểm danh cá nhân, chuyên cần và đơn xin nghỉ.</p>
                 </div>
 
                 <div class="grid grid-cols-2 gap-3 lg:grid-cols-4">
                     @foreach ($studentStats as $stat)
-                        <div class="dash-card dash-card-hover rounded-2xl p-4 sm:p-5">
-                            <span class="{{ $stat['bg'] }} {{ $stat['color'] }} mb-3 grid h-10 w-10 place-items-center rounded-xl">
-                                <x-user.icon :name="$stat['icon']" :size="20" />
-                            </span>
-                            <div class="text-2xl font-bold leading-none text-on-surface sm:text-3xl">{{ $stat['value'] }}</div>
-                            <p class="mt-1.5 text-xs text-on-surface-variant sm:text-sm">{{ $stat['label'] }}</p>
+                        <div class="dash-card dash-card-hover flex flex-col justify-center rounded-2xl bg-white p-4 shadow-sm transition sm:p-5">
+                            <div class="mb-3 flex items-center gap-2 lg:gap-3">
+                                <span class="{{ $stat['bg'] }} {{ $stat['color'] }} grid h-10 w-10 shrink-0 place-items-center rounded-xl">
+                                    <x-user.icon :name="$stat['icon']" :size="20" />
+                                </span>
+                                <span class="text-base font-medium leading-snug text-gray-600">{{ $stat['label'] }}</span>
+                            </div>
+                            <div class="text-center text-3xl font-bold text-gray-900">{{ $stat['value'] }}</div>
                         </div>
                     @endforeach
                 </div>
 
-                <div>
-                    <h4 class="mb-4 text-[16px] font-bold text-on-surface">Thao tác nhanh</h4>
-                    <div class="grid grid-cols-3 gap-2 sm:gap-3 md:grid-cols-4 lg:grid-cols-8">
-                        @foreach ($studentActions as $action)
-                            @if(isset($action['action']))
-                                <button type="button" x-on:click="{{ $action['action'] }}" class="group flex flex-col items-center justify-center rounded-2xl p-3 transition-all hover:bg-surface-container-lowest hover:shadow-sm">
-                                    <div class="mb-3 flex h-12 w-12 items-center justify-center rounded-full bg-white text-on-surface-variant shadow-sm ring-1 ring-outline-variant/20 group-hover:text-tertiary transition-all group-hover:scale-105">
-                                        <x-user.icon :name="$action['icon']" :size="20" />
-                                    </div>
-                                    <span class="line-clamp-1 text-center text-xs font-semibold text-on-surface-variant group-hover:text-on-surface">{{ $action['label'] }}</span>
-                                </button>
-                            @else
-                                <a href="{{ $action['href'] }}" class="group flex flex-col items-center justify-center rounded-2xl p-3 transition-all hover:bg-surface-container-lowest hover:shadow-sm">
-                                    <div class="mb-3 flex h-12 w-12 items-center justify-center rounded-full bg-white text-on-surface-variant shadow-sm ring-1 ring-outline-variant/20 group-hover:text-tertiary transition-all group-hover:scale-105">
-                                        <x-user.icon :name="$action['icon']" :size="20" />
-                                    </div>
-                                    <span class="line-clamp-1 text-center text-xs font-semibold text-on-surface-variant group-hover:text-on-surface">{{ $action['label'] }}</span>
-                                </a>
-                            @endif
-                        @endforeach
-                    </div>
-                </div>
+
 
                 <div>
                     <h4 class="mb-4 text-[16px] font-bold text-on-surface">Lớp tôi tham gia</h4>
                     <div class="grid grid-cols-1 gap-6 md:grid-cols-2 lg:grid-cols-3">
                         @forelse ($joinedCards as $class)
-                            <article class="dash-card dash-card-hover group flex flex-col rounded-2xl p-5">
-                                <div class="mb-4 flex items-start justify-between">
-                                    <div class="flex h-12 w-12 items-center justify-center rounded-xl bg-surface-container-lowest shadow-sm ring-1 ring-outline-variant/20 {{ $class['color'] }}">
-                                        <span class="text-xl font-bold uppercase">{{ substr($class['title'], 0, 1) }}</span>
+                            @php
+                                $attendancePct = $class['attendance'];
+                                
+                                $colorOptions = [
+                                    'bg-[#475569]', 'bg-[#1D4ED8]', 'bg-[#0F766E]', 'bg-[#4338CA]',
+                                    'bg-[#047857]', 'bg-[#0369A1]', 'bg-[#6D28D9]', 'bg-[#B45309]',
+                                ];
+                                $themeColor = $colorOptions[($class['class_id'] ?? 1) % count($colorOptions)];
+                                
+                                $bgIcons = ['laptop', 'book', 'code', 'book-open', 'graduation-cap', 'layout-dashboard'];
+                                $bgIcon = $bgIcons[($class['class_id'] ?? 1) % count($bgIcons)];
+                            @endphp
+
+                            <article @class([
+                                'group relative flex flex-col overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm transition-all duration-300',
+                                'hover:border-slate-300 hover:shadow-md hover:-translate-y-0.5'
+                            ])>
+                                {{-- Header Theme Color --}}
+                                <div class="{{ $themeColor }} h-24 px-5 py-4 relative">
+                                    <div class="relative z-10 w-3/4">
+                                        <h3 class="truncate font-normal text-white text-[22px] tracking-wide leading-tight" title="{{ $class['title'] }}">
+                                            {{ $class['title'] }}
+                                        </h3>
+                                        <p class="mt-1 truncate text-[13px] font-light text-white/95 tracking-wide">Mã học phần: {{ $class['code'] ?? 'N/A' }}</p>
                                     </div>
-                                    <span class="{{ $class['statusClass'] }} rounded-full px-3 py-1 text-[10px] font-bold uppercase tracking-wider ring-1 ring-outline-variant/20">{{ $class['status'] }}</span>
+
+                                    {{-- Background Icon --}}
+                                    <div class="absolute right-3 top-2 z-0 opacity-15">
+                                        <x-user.icon :name="$bgIcon" :size="76" class="text-white transform -rotate-12" stroke-width="1.5" />
+                                    </div>
+
+                                    {{-- Avatar overlapping --}}
+                                    <div class="absolute -bottom-6 right-5 z-20">
+                                        <span class="{{ $themeColor }} grid h-14 w-14 place-items-center rounded-full border-2 border-white text-[22px] font-medium text-white shadow-sm" title="Giảng viên: {{ $class['teacher'] }}">
+                                            {{ mb_strtoupper(mb_substr($class['teacher'] ?? 'GV', 0, 1)) }}
+                                        </span>
+                                    </div>
                                 </div>
-                                <div class="flex flex-1 flex-col">
-                                    <h4 class="line-clamp-2 mb-1 text-lg font-bold text-on-surface transition-colors group-hover:{{ $class['color'] }}" title="{{ $class['title'] }}">{{ $class['title'] }}</h4>
-                                    <p class="mb-4 text-sm text-on-surface-variant">Giảng viên: <span class="font-bold">{{ $class['teacher'] }}</span></p>
-                                    <p class="mb-4 flex items-center gap-2 text-sm text-on-surface-variant">
-                                        <span class="font-bold">{{ $class['code'] }}</span>
-                                    </p>
-                                    <div class="mb-6 space-y-3 rounded-2xl border border-outline-variant/20 bg-surface-container-low p-4">
-                                        <div class="flex justify-between text-sm text-on-surface">
-                                            <span class="text-on-surface-variant">Tổng buổi vắng</span>
-                                            <span class="font-bold text-on-surface-variant">{{ $class['absent'] }}</span>
+
+                                {{-- Body (White) --}}
+                                <div class="flex-1 px-4 pt-8 pb-3 relative z-20 pointer-events-none">
+                                    <div class="mb-3 flex items-center justify-between">
+                                        <div class="flex flex-wrap gap-1.5">
+                                            <span class="inline-flex items-center rounded-sm px-1.5 py-0.5 text-[10px] font-bold uppercase tracking-wide {{ $class['statusClass'] }}">
+                                                {{ $class['status'] }}
+                                            </span>
+                                            <span class="inline-flex items-center rounded-sm bg-blue-50 px-1.5 py-0.5 text-[10px] font-bold uppercase tracking-wide text-blue-600">
+                                                <x-user.icon name="user" :size="10" class="mr-1" /> Học viên
+                                            </span>
                                         </div>
+                                        <span class="text-[11px] font-medium text-slate-700">Mã lớp: <span class="font-bold">{{ $class['class_code'] }}</span></span>
+                                    </div>
+
+                                    <div class="flex gap-8 mb-3">
                                         <div>
-                                            <div class="mb-1 flex justify-between text-sm">
-                                                <span class="text-on-surface-variant">Chuyên cần cá nhân</span>
-                                                <span class="{{ $class['color'] }} font-bold">{{ $class['attendance'] }}%</span>
-                                            </div>
-                                            <div class="h-2 w-full overflow-hidden rounded-full bg-surface-container-highest">
-                                                <div class="{{ $class['bar'] }} h-full rounded-full" style="width: {{ $class['attendance'] }}%"></div>
-                                            </div>
+                                            <p class="text-[10px] font-semibold text-slate-500 mb-1">TỔNG BUỔI VẮNG</p>
+                                            <p class="flex items-center gap-1.5 text-lg font-bold text-slate-700">
+                                                <x-user.icon name="clock" :size="16" class="text-slate-400" />
+                                                <span class="text-[15px]">{{ $class['absent'] }}</span>
+                                            </p>
+                                        </div>
+                                        <div class="w-px bg-slate-200"></div>
+                                        <div>
+                                            <p class="text-[10px] font-semibold text-slate-500 mb-1">ĐÃ HỌC</p>
+                                            <p class="flex items-center gap-1.5 text-lg font-bold text-slate-700">
+                                                <x-user.icon name="check-square" :size="16" class="text-slate-400" />
+                                                {{ $class['studied_sessions'] }}
+                                            </p>
                                         </div>
                                     </div>
-                                    <div class="mt-auto grid grid-cols-2 gap-3">
-                                        <button type="button" class="flex items-center justify-center gap-2 rounded-xl bg-tertiary py-2.5 text-sm font-bold text-white shadow-sm transition-colors hover:bg-tertiary/90">
-                                            <x-user.icon name="history" :size="18" />
-                                            Xem lịch sử
+
+                                    <div class="pt-2">
+                                        <div class="mb-1.5 flex items-center justify-between">
+                                            <span class="text-[10px] font-bold text-slate-500 uppercase">CHUYÊN CẦN CÁ NHÂN</span>
+                                            <div class="flex items-center gap-2">
+                                                <span class="{{ $class['color'] }} text-xs font-bold">{{ $attendancePct }}%</span>
+                                            </div>
+                                        </div>
+                                        <div class="h-1 w-full overflow-hidden bg-surface-container-high rounded-sm">
+                                            <div class="{{ $class['bar'] }} h-full transition-all duration-700" style="width: {{ $attendancePct }}%"></div>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <div class="relative z-20 mt-4 flex items-center justify-end gap-0.5 border-t border-outline-variant px-3 py-2">
+                                    <div x-data="{ copied: false }" class="relative z-20">
+                                        <button
+                                            type="button"
+                                            title="Sao chép mã lớp: {{ $class['class_code'] }}"
+                                            class="group/action rounded-lg p-2 transition-colors hover:bg-surface-container"
+                                            x-on:click="navigator.clipboard.writeText('{{ $class['class_code'] }}'); copied = true; setTimeout(() => copied = false, 2000); $event.stopPropagation()"
+                                        >
+                                            <template x-if="!copied"><x-user.icon name="copy" :size="18" class="text-on-surface-variant transition-colors group-hover/action:text-primary" /></template>
+                                            <template x-if="copied"><x-user.icon name="check-circle" :size="18" class="text-tertiary" /></template>
                                         </button>
-                                        <button type="button" class="flex items-center justify-center gap-2 rounded-xl border border-outline-variant py-2.5 text-sm font-bold text-on-surface-variant transition-colors hover:bg-surface-container">
-                                            <x-user.icon name="eye" :size="18" />
-                                            Chi tiết
+                                    </div>
+                                    <a href="{{ route('student.attendance.history', ['class_id' => $class['class_id']]) }}" class="group/action rounded-lg p-2 transition-colors hover:bg-surface-container" title="Xem lịch sử">
+                                        <x-user.icon name="history" class="text-on-surface-variant transition-colors group-hover/action:text-primary" :size="18"/>
+                                    </a>
+                                    <div class="relative z-20" x-data="{ open: false }">
+                                        <button type="button" x-on:click.stop="open = ! open" class="rounded-lg p-2 text-on-surface-variant transition-colors hover:bg-surface-container">
+                                            <x-user.icon name="more-vertical" :size="18" />
                                         </button>
+                                        <div x-cloak x-show="open" x-on:click.outside="open = false" class="absolute right-0 bottom-full z-50 mb-1 w-44 overflow-hidden rounded-lg border border-outline-variant bg-white py-1 shadow-lg">
+                                            <div class="px-3 py-2 border-b border-outline-variant/30 text-xs font-semibold uppercase tracking-wider text-on-surface-variant">Thao tác</div>
+                                            <a href="{{ route('student.classes.show', $class['class_id']) }}" class="flex items-center gap-2 px-4 py-2.5 text-sm text-on-surface hover:bg-surface-container">
+                                                <x-user.icon name="eye" :size="16" />
+                                                Chi tiết
+                                            </a>
+                                        </div>
                                     </div>
                                 </div>
                             </article>

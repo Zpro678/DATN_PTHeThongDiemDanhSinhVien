@@ -1,3 +1,10 @@
+<x-slot:headerActions>
+    <a href="{{ route('lecturer.students.index', ['ma_user' => auth()->id(), 'class_id' => $this->courseClass->id, 'action' => 'export']) }}" wire:navigate class="inline-flex items-center gap-2 rounded-lg bg-blue-50 px-3.5 py-2 text-sm font-bold text-blue-700 hover:bg-blue-100 transition-colors shadow-sm ring-1 ring-inset ring-blue-200">
+        <x-user.icon name="download" :size="18" class="text-blue-600" />
+        Xuất Excel
+    </a>
+</x-slot:headerActions>
+
 <div x-data="{ 
     viewMode: @js($initialGroupKey ? 'session' : 'matrix'), // 'matrix', 'session'
     showModal: false,
@@ -35,50 +42,33 @@
     scrollToTop() {
         window.scrollTo({ top: 0, behavior: 'smooth' });
     }
-}" class="mx-auto max-w-[1300px] space-y-8 p-4 pb-24 sm:p-8 font-sans text-slate-800">
+}" class="flex flex-col flex-1 min-h-0 font-sans text-slate-800 animate-in fade-in slide-in-from-bottom-4 duration-500">
 
-    <section class="flex flex-col justify-between gap-6 md:flex-row md:items-end px-2">
-        <div class="space-y-1">
-            <p class="text-sm font-semibold tracking-widest text-blue-500 uppercase">Quản lý điểm danh</p>
-            <h1 class="text-3xl font-black tracking-tight text-slate-900 flex items-center gap-3">
-                {{ $courseClass->join_key }} 
-                <span class="text-slate-300 font-light">|</span> 
-                <span class="text-2xl text-slate-700">{{ $courseClass->name }}</span>
-            </h1>
-            <p class="text-sm text-slate-500 font-medium mt-2">Tổng cộng <span class="font-bold text-slate-700">{{ count($sessions) }}</span> phiên học</p>
-        </div>
-        
-        <div class="flex items-center gap-3">
-            <template x-if="viewMode !== 'matrix'">
-                <button @click="viewMode = 'matrix'; scrollToTop()" class="group inline-flex items-center justify-center gap-2 rounded-2xl bg-white px-5 py-2.5 text-sm font-bold text-slate-700 shadow-sm ring-1 ring-inset ring-slate-200 transition-all hover:bg-slate-50 hover:text-blue-600 hover:ring-blue-200">
-                    <x-user.icon name="arrow-left" :size="18" class="transition-transform group-hover:-translate-x-1" />
-                    Trở về
-                </button>
-            </template>
-            <template x-if="viewMode === 'matrix'">
-                <a href="{{ route('lecturer.classes.show', $courseClass->id) }}" class="group inline-flex items-center justify-center gap-2 rounded-2xl bg-white px-5 py-2.5 text-sm font-bold text-slate-700 shadow-sm ring-1 ring-inset ring-slate-200 transition-all hover:bg-slate-50">
-                    <x-user.icon name="arrow-left" :size="18" class="transition-transform group-hover:-translate-x-1" />
-                    Quay lại
-                </a>
-            </template>
-        </div>
+    <section x-show="viewMode !== 'matrix'" x-cloak class="flex items-center justify-start p-6 pb-2 border-b border-slate-200">
+        <button @click="viewMode = 'matrix'; scrollToTop()" class="group inline-flex items-center justify-center gap-2 rounded-2xl bg-white px-5 py-2.5 text-sm font-bold text-slate-700 shadow-sm ring-1 ring-inset ring-slate-200 transition-all hover:bg-slate-50 hover:text-blue-600 hover:ring-blue-200">
+            <x-user.icon name="arrow-left" :size="18" class="transition-transform group-hover:-translate-x-1" />
+            Trở về
+        </button>
     </section>
 
     @if(session('status'))
-        <div class="rounded-2xl bg-emerald-50/80 px-6 py-4 text-sm font-medium text-emerald-800 border border-emerald-100 shadow-sm backdrop-blur-sm flex items-center gap-3">
+        <div class="m-4 md:m-6 rounded-2xl bg-emerald-50/80 px-6 py-4 text-sm font-medium text-emerald-800 border border-emerald-100 shadow-sm backdrop-blur-sm flex items-center gap-3">
             <x-user.icon name="check-circle" :size="20" class="text-emerald-500" />
             {{ session('status') }}
         </div>
     @endif
 
-    <section x-show="viewMode === 'matrix'" x-transition:enter="transition ease-out duration-500" x-transition:enter-start="opacity-0 translate-y-2" x-transition:enter-end="opacity-100 translate-y-0">
-        <div class="rounded-2xl border border-slate-100 bg-white shadow-[0_8px_30px_rgb(0,0,0,0.04)] overflow-hidden">
-            <div class="overflow-x-auto">
+    <section x-show="viewMode === 'matrix'" class="flex flex-col flex-1 min-h-0" x-transition:enter="transition ease-out duration-500" x-transition:enter-start="opacity-0 translate-y-2" x-transition:enter-end="opacity-100 translate-y-0">
+        <div class="bg-white overflow-hidden flex flex-col flex-1 min-h-0 h-full">
+            <div class="overflow-x-auto overflow-y-auto flex-1 relative">
                 <table class="w-full text-left text-sm whitespace-nowrap">
-                    <thead>
+                    <thead class="sticky top-0 z-30 bg-white">
                         <tr>
-                            <th scope="col" class="sticky left-0 z-20 w-[160px] min-w-[160px] max-w-[160px] sm:w-[280px] sm:min-w-[280px] sm:max-w-none bg-white px-3 sm:px-8 py-4 sm:py-6 shadow-[8px_0_24px_-12px_rgba(0,0,0,0.1)] border-b border-slate-100">
-                                <span class="text-[13px] font-black uppercase tracking-widest text-slate-700">Sinh viên</span>
+                            <th scope="col" class="sticky left-0 z-40 w-[180px] min-w-[180px] max-w-[180px] sm:w-[320px] sm:min-w-[320px] sm:max-w-none bg-white px-3 sm:px-6 py-4 sm:py-6 shadow-[8px_0_24px_-12px_rgba(0,0,0,0.1)] border-b border-slate-100">
+                                <div class="flex items-center gap-3">
+                                    <span class="text-[13px] font-black uppercase tracking-widest text-slate-700 w-8 text-center">STT</span>
+                                    <span class="text-[13px] font-black uppercase tracking-widest text-slate-700">Sinh viên</span>
+                                </div>
                             </th>
                             @foreach($groupedSessionsInfo as $groupKey => $info)
                                 <th scope="col" 
@@ -95,15 +85,20 @@
                     <tbody class="divide-y divide-slate-50">
                         @forelse($members as $member)
                             <tr class="transition-colors hover:bg-slate-50 group/row">
-                                <td class="sticky left-0 z-10 w-[160px] min-w-[160px] max-w-[160px] sm:w-[280px] sm:min-w-[280px] sm:max-w-none bg-white px-3 sm:px-6 py-3 sm:py-4 shadow-[8px_0_24px_-12px_rgba(0,0,0,0.1)] group-hover/row:bg-slate-50 transition-colors">
+                                <td class="sticky left-0 z-20 w-[180px] min-w-[180px] max-w-[180px] sm:w-[320px] sm:min-w-[320px] sm:max-w-none bg-white px-3 sm:px-4 py-3 sm:py-4 shadow-[8px_0_24px_-12px_rgba(0,0,0,0.1)] group-hover/row:bg-slate-50 transition-colors">
                                     <div class="flex items-center justify-between gap-3">
                                         <div class="flex min-w-0 items-center gap-3">
+                                            <span class="text-sm font-bold text-slate-400 w-8 text-center shrink-0">{{ $loop->iteration }}</span>
                                             @php
                                                 $mInfo = $membersData[$member->id];
                                             @endphp
-                                            <div class="flex h-10 w-10 shrink-0 items-center justify-center rounded-2xl font-bold shadow-sm border {{ $mInfo['avatar_bg'] }} {{ $mInfo['avatar_text'] }} {{ $mInfo['avatar_border'] }}">
-                                                {{ mb_substr($member->full_name, 0, 1) }}
-                                            </div>
+                                            @if($mInfo['avatar_url'])
+                                                <img src="{{ $mInfo['avatar_url'] }}" alt="{{ $member->full_name }}" class="h-10 w-10 shrink-0 rounded-2xl object-cover shadow-sm border {{ $mInfo['avatar_border'] }}">
+                                            @else
+                                                <div class="flex h-10 w-10 shrink-0 items-center justify-center rounded-2xl font-bold shadow-sm border {{ $mInfo['avatar_bg'] }} {{ $mInfo['avatar_text'] }} {{ $mInfo['avatar_border'] }}">
+                                                    {{ mb_substr($member->full_name, 0, 1) }}
+                                                </div>
+                                            @endif
                                             <div class="flex min-w-0 flex-col">
                                                 <span class="truncate font-black text-slate-900" title="{{ $member->full_name }}">{{ $member->full_name }}</span>
                                                 <span class="text-xs font-medium text-slate-400">{{ $member->student_code }}</span>
@@ -180,17 +175,11 @@
                     </tbody>
                 </table>
             </div>
-            
-            @if($members->hasPages())
-                <div class="border-t border-slate-100 px-8 py-6">
-                    {{ $members->links() }}
-                </div>
-            @endif
         </div>
     </section>
 
-    <section x-cloak x-show="viewMode === 'session'" x-transition:enter="transition ease-out duration-500" x-transition:enter-start="opacity-0 translate-y-4" x-transition:enter-end="opacity-100 translate-y-0">
-        <div class="rounded-2xl bg-white shadow-[0_8px_30px_rgb(0,0,0,0.04)] border border-slate-100 overflow-hidden">
+    <section x-cloak x-show="viewMode === 'session'" class="flex-1 flex flex-col min-h-0" x-transition:enter="transition ease-out duration-500" x-transition:enter-start="opacity-0 translate-y-4" x-transition:enter-end="opacity-100 translate-y-0">
+        <div class="bg-white overflow-hidden flex flex-col flex-1 min-h-0 h-full">
             <div class="px-8 py-8 md:px-10 border-b border-slate-50">
                 <div class="flex flex-col md:flex-row md:items-center justify-between gap-6">
                     <div>
@@ -223,9 +212,9 @@
                 </div>
             </div>
 
-            <div class="overflow-x-auto">
+            <div class="overflow-x-auto overflow-y-auto flex-1 relative">
                 <table class="w-full text-left text-sm whitespace-nowrap">
-                    <thead class="bg-transparent border-b border-slate-100">
+                    <thead class="sticky top-0 z-30 bg-white border-b border-slate-100">
                         <tr>
                             <th scope="col" class="px-8 py-6 w-16 text-center text-[13px] font-black uppercase tracking-widest text-slate-700">STT</th>
                             <th scope="col" class="py-6 text-[13px] font-black uppercase tracking-widest text-slate-700 transition-all duration-300" :class="sessionFilter === 'merged' ? 'pl-20 pr-8' : 'px-8'">Sinh viên</th>
@@ -251,9 +240,14 @@
                                 <td class="px-8 py-5 text-center font-semibold text-slate-400" x-text="index + 1"></td>
                                 <td class="py-5 align-middle transition-all duration-300" :class="sessionFilter === 'merged' ? 'pl-20 pr-8' : 'px-8'">
                                     <div class="flex items-center gap-4">
-                                        <div class="flex h-10 w-10 items-center justify-center rounded-2xl text-sm font-bold transition-colors border group-hover:opacity-80" 
-                                             :class="`${student.avatar_bg} ${student.avatar_text} ${student.avatar_border}`" 
-                                             x-text="student.full_name.charAt(0)"></div>
+                                        <template x-if="student.avatar_url">
+                                            <img :src="student.avatar_url" :alt="student.full_name" class="h-10 w-10 shrink-0 rounded-2xl object-cover border group-hover:opacity-80 transition-colors" :class="student.avatar_border">
+                                        </template>
+                                        <template x-if="!student.avatar_url">
+                                            <div class="flex h-10 w-10 shrink-0 items-center justify-center rounded-2xl text-sm font-bold transition-colors border group-hover:opacity-80" 
+                                                 :class="`${student.avatar_bg} ${student.avatar_text} ${student.avatar_border}`" 
+                                                 x-text="student.full_name.charAt(0)"></div>
+                                        </template>
                                         <div class="flex flex-col">
                                             <span class="font-bold text-slate-900" x-text="student.full_name"></span>
                                             <span class="text-xs font-medium text-slate-400" x-text="student.student_code"></span>
@@ -298,21 +292,16 @@
                     </tbody>
                 </table>
             </div>
-            
-            @if($members->hasPages())
-                <div class="border-t border-slate-100 px-8 py-6">
-                    {{ $members->links() }}
-                </div>
-            @endif
         </div>
     </section>
 
     <!-- POPUP MODAL THÔNG TIN ĐIỂM DANH -->
-    <div x-cloak x-show="showModal" class="relative z-50" aria-labelledby="modal-title" role="dialog" aria-modal="true">
-        <div x-show="showModal" x-transition:enter="ease-out duration-300" x-transition:enter-start="opacity-0" x-transition:enter-end="opacity-100" x-transition:leave="ease-in duration-200" x-transition:leave-start="opacity-100" x-transition:leave-end="opacity-0" class="fixed inset-0 bg-slate-900/40 backdrop-blur-sm transition-opacity"></div>
-        <div class="fixed inset-0 z-10 w-screen overflow-y-auto">
-            <div class="flex min-h-full items-end justify-center p-4 text-center sm:items-center sm:p-0">
-                <div x-show="showModal" @click.away="showModal = false" x-transition:enter="ease-out duration-300" x-transition:enter-start="opacity-0 translate-y-4 sm:translate-y-0 sm:scale-95" x-transition:enter-end="opacity-100 translate-y-0 sm:scale-100" x-transition:leave="ease-in duration-200" x-transition:leave-start="opacity-100 translate-y-0 sm:scale-100" x-transition:leave-end="opacity-0 translate-y-4 sm:translate-y-0 sm:scale-95" class="relative transform overflow-hidden rounded-2xl bg-white text-left shadow-xl transition-all sm:my-8 sm:w-full sm:max-w-md">
+    <template x-teleport="body">
+        <div x-cloak x-show="showModal" class="relative z-[9999]" aria-labelledby="modal-title" role="dialog" aria-modal="true">
+            <div x-show="showModal" x-transition:enter="ease-out duration-300" x-transition:enter-start="opacity-0" x-transition:enter-end="opacity-100" x-transition:leave="ease-in duration-200" x-transition:leave-start="opacity-100" x-transition:leave-end="opacity-0" class="fixed inset-0 bg-slate-900/40 backdrop-blur-sm transition-opacity"></div>
+            <div class="fixed inset-0 z-10 w-screen overflow-y-auto">
+                <div class="flex min-h-full items-center justify-center p-4 text-center sm:p-0">
+                    <div x-show="showModal" @click.away="showModal = false" x-transition:enter="ease-out duration-300" x-transition:enter-start="opacity-0 translate-y-4 sm:translate-y-0 sm:scale-95" x-transition:enter-end="opacity-100 translate-y-0 sm:scale-100" x-transition:leave="ease-in duration-200" x-transition:leave-start="opacity-100 translate-y-0 sm:scale-100" x-transition:leave-end="opacity-0 translate-y-4 sm:translate-y-0 sm:scale-95" class="relative transform overflow-hidden rounded-2xl bg-white text-left shadow-xl transition-all sm:my-8 sm:w-full sm:max-w-md">
                     
                     <template x-if="modalData">
                         <div>
@@ -328,10 +317,15 @@
                             <div class="px-6 py-6 space-y-4">
                                 <!-- Student Info -->
                                 <div class="flex items-center gap-4 p-4 rounded-2xl bg-slate-50/50 border border-slate-100">
-                                    <div class="flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl text-lg font-black border"
-                                         :class="`${modalData.student.avatar_bg} ${modalData.student.avatar_text} ${modalData.student.avatar_border}`">
-                                        <span x-text="modalData.student.full_name.charAt(0)"></span>
-                                    </div>
+                                    <template x-if="modalData.student.avatar_url">
+                                        <img :src="modalData.student.avatar_url" :alt="modalData.student.full_name" class="h-12 w-12 shrink-0 rounded-2xl object-cover border" :class="modalData.student.avatar_border">
+                                    </template>
+                                    <template x-if="!modalData.student.avatar_url">
+                                        <div class="flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl text-lg font-black border"
+                                             :class="`${modalData.student.avatar_bg} ${modalData.student.avatar_text} ${modalData.student.avatar_border}`">
+                                            <span x-text="modalData.student.full_name.charAt(0)"></span>
+                                        </div>
+                                    </template>
                                     <div>
                                         <p class="font-bold text-slate-900" x-text="modalData.student.full_name"></p>
                                         <p class="text-sm font-medium text-slate-500" x-text="modalData.student.student_code"></p>
@@ -377,5 +371,5 @@
                 </div>
             </div>
         </div>
-    </div>
+    </template>
 </div>

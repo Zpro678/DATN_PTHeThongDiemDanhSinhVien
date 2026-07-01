@@ -33,17 +33,19 @@
     $isWarning = (bool) ($stats['is_warning'] ?? false);
 @endphp
 
-<div class="mx-auto max-w-[1200px] space-y-6 p-4 pb-24 sm:p-8">
-    <div class="flex items-center justify-between gap-4">
-        <div><h1 class="text-2xl font-bold text-slate-900">Chi tiết học viên</h1><p class="mt-1 text-sm text-slate-500">Hồ sơ và lịch sử chuyên cần trong lớp học.</p></div>
-        <a href="{{ route('lecturer.students.index') }}" class="inline-flex items-center gap-2 rounded-xl border border-slate-200 bg-white px-4 py-2.5 text-sm font-bold text-slate-600 hover:bg-slate-50"><x-user.icon name="users" :size="18" />Danh sách học viên</a>
-    </div>
-
-    <section class="overflow-hidden rounded-2xl bg-primary p-7 text-white shadow-lg shadow-primary/20">
-        <div class="flex flex-col gap-6 md:flex-row md:items-center">
-            <div class="flex h-20 w-20 items-center justify-center rounded-2xl bg-white/15 text-3xl font-extrabold ring-1 ring-white/20">{{ mb_strtoupper(mb_substr($member->full_name, 0, 1)) }}</div>
-            <div class="flex-1"><h2 class="text-2xl font-extrabold">{{ $member->full_name }}</h2><p class="mt-2 text-sm text-blue-100">{{ $member->student_code }} · {{ $member->user?->email ?? 'Chưa liên kết tài khoản' }}</p><p class="mt-1 text-sm font-semibold text-white">{{ $member->courseClass->join_key }} - {{ $member->courseClass->name }}</p></div>
-            <span class="self-start rounded-full bg-white/15 px-4 py-2 text-xs font-bold uppercase ring-1 ring-white/20">{{ $member->trashed() ? 'Lưu trữ' : 'Đang học' }}</span>
+<div class="w-full space-y-6 px-6 py-6 pb-24 sm:px-10 lg:px-16">
+    <section class="relative overflow-hidden rounded-2xl bg-gradient-to-br from-blue-600 via-blue-700 to-indigo-700 p-7 text-white shadow-lg shadow-blue-600/25">
+        {{-- Decorative circles --}}
+        <div class="pointer-events-none absolute -right-10 -top-10 h-40 w-40 rounded-full bg-white/10"></div>
+        <div class="pointer-events-none absolute -bottom-8 -left-8 h-32 w-32 rounded-full bg-white/5"></div>
+        <div class="relative flex flex-col gap-6 md:flex-row md:items-center">
+            @if($member->user && $member->user->avatar)
+                <img src="{{ asset('storage/' . $member->user->avatar) }}" alt="{{ $member->full_name }}" class="h-20 w-20 shrink-0 rounded-2xl object-cover ring-2 ring-white/25">
+            @else
+                <div class="flex h-20 w-20 shrink-0 items-center justify-center rounded-2xl bg-white/20 text-3xl font-extrabold backdrop-blur-sm ring-2 ring-white/25">{{ mb_strtoupper(mb_substr($member->full_name, 0, 1)) }}</div>
+            @endif
+            <div class="flex-1"><h2 class="text-2xl font-extrabold">{{ $member->full_name }}</h2><p class="mt-2 text-sm text-blue-100">{{ $member->student_code }} · {{ $member->user?->email ?? 'Chưa liên kết tài khoản' }}</p><p class="mt-1 text-sm font-semibold text-white/90">{{ $member->courseClass->join_key }} - {{ $member->courseClass->name }}</p></div>
+            <span class="self-start rounded-full bg-white/20 px-4 py-2 text-xs font-bold uppercase ring-1 ring-white/25">{{ $member->trashed() ? 'Lưu trữ' : 'Đang học' }}</span>
         </div>
     </section>
 
@@ -62,34 +64,36 @@
         </div>
     </section>
 
-    <section class="overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm">
-        <div class="border-b border-slate-100 px-6 py-5"><h3 class="font-bold text-slate-900">Lịch sử điểm danh</h3></div>
-        <div class="overflow-x-auto">
-            <table class="w-full min-w-[760px] text-left">
-                <thead class="bg-slate-50 text-xs font-bold uppercase text-slate-500"><tr><th class="px-6 py-4">Buổi học</th><th class="px-4 py-4">Ngày</th><th class="px-4 py-4">Giờ điểm danh</th><th class="px-4 py-4">Khoảng cách</th><th class="px-6 py-4 text-right">Trạng thái</th></tr></thead>
-                <tbody class="divide-y divide-slate-100">
-                    @forelse ($history as $row)
-                        <tr>
-                            <td class="px-6 py-4 text-sm font-bold text-slate-800">{{ $row['name'] }}</td>
-                            <td class="px-4 py-4 text-sm text-slate-600">{{ $row['date']?->format('d/m/Y') }}</td>
-                            <td class="px-4 py-4 text-sm text-slate-600">{{ $row['check_in_time']?->format('H:i:s') ?? '—' }}</td>
-                            <td class="px-4 py-4 text-sm text-slate-600">{{ $row['distance_meters'] ? $row['distance_meters'].' m' : '—' }}</td>
-                            <td class="px-6 py-4 text-right">
-                                <span @class([
-                                    'rounded-full px-3 py-1 text-xs font-bold',
-                                    'bg-emerald-50 text-emerald-700' => $row['status'] === 'present',
-                                    'bg-amber-50 text-amber-700' => $row['status'] === 'late',
-                                    'bg-orange-50 text-orange-700' => $row['status'] === 'partial',
-                                    'bg-red-50 text-red-700' => in_array($row['status'], ['absent', 'early_leave'], true),
-                                    'bg-blue-50 text-blue-700' => $row['status'] === 'excused',
-                                ])>{{ $row['label'] }}</span>
-                            </td>
-                        </tr>
-                    @empty
-                        <tr><td colspan="5" class="px-6 py-14 text-center text-sm text-slate-500">Chưa có lịch sử điểm danh.</td></tr>
-                    @endforelse
-                </tbody>
-            </table>
-        </div>
-    </section>
+    <div>
+        <h3 class="mb-4 text-xl font-bold text-slate-900">Lịch sử điểm danh</h3>
+        <section class="overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm">
+            <div class="overflow-x-auto">
+                <table class="w-full min-w-[760px] text-left">
+                    <thead class="bg-slate-50 text-sm font-bold uppercase text-slate-500"><tr><th class="px-6 py-4">Buổi học</th><th class="px-4 py-4">Ngày</th><th class="px-4 py-4">Giờ điểm danh</th><th class="px-4 py-4">Khoảng cách</th><th class="px-6 py-4 text-right">Trạng thái</th></tr></thead>
+                    <tbody class="divide-y divide-slate-100">
+                        @forelse ($history as $row)
+                            <tr class="transition-colors hover:bg-slate-50/70">
+                                <td class="px-6 py-5 text-[15px] font-bold text-slate-800">{{ $row['name'] }}</td>
+                                <td class="px-4 py-5 text-[15px] text-slate-600">{{ $row['date']?->format('d/m/Y') }}</td>
+                                <td class="px-4 py-5 text-[15px] text-slate-600">{{ $row['check_in_time']?->format('H:i:s') ?? '—' }}</td>
+                                <td class="px-4 py-5 text-[15px] text-slate-600">{{ $row['distance_meters'] ? $row['distance_meters'].' m' : '—' }}</td>
+                                <td class="px-6 py-5 text-right">
+                                    <span @class([
+                                        'rounded-full px-3 py-1.5 text-sm font-bold',
+                                        'bg-emerald-50 text-emerald-700' => $row['status'] === 'present',
+                                        'bg-amber-50 text-amber-700' => $row['status'] === 'late',
+                                        'bg-orange-50 text-orange-700' => $row['status'] === 'partial',
+                                        'bg-red-50 text-red-700' => in_array($row['status'], ['absent', 'early_leave'], true),
+                                        'bg-blue-50 text-blue-700' => $row['status'] === 'excused',
+                                    ])>{{ $row['label'] }}</span>
+                                </td>
+                            </tr>
+                        @empty
+                            <tr><td colspan="5" class="px-6 py-14 text-center text-sm text-slate-500">Chưa có lịch sử điểm danh.</td></tr>
+                        @endforelse
+                    </tbody>
+                </table>
+            </div>
+        </section>
+    </div>
 </div>

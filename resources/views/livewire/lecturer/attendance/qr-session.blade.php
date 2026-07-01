@@ -14,7 +14,7 @@
 @endphp
 
 <div
-    class="mx-auto max-w-[1400px] space-y-5 sm:space-y-8 p-3 sm:p-8 pb-24"
+    class="w-full space-y-5 sm:space-y-8 px-6 py-6 sm:px-10 lg:px-16 pb-24"
     x-data="{
         isClosed: @entangle('isClosed').live,
         timeLeft: {{ $qrRefreshRate }},

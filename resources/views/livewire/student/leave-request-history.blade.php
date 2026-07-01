@@ -6,23 +6,16 @@
     ];
 @endphp
 
-<div class="mx-auto max-w-[1400px] space-y-6 p-4 pb-24 sm:p-8 animate-in fade-in slide-in-from-bottom-4 duration-500">
-    <section class="flex flex-col justify-between gap-4 rounded-2xl border border-outline-variant/10 bg-white p-6 shadow-sm md:flex-row md:items-center">
-        <div>
-            <div class="mb-2 inline-flex items-center gap-1.5 rounded-full border border-primary/20 bg-primary/10 px-3 py-1 text-[11px] font-bold uppercase tracking-widest text-primary">
-                <x-user.icon name="history" :size="14" />
-                Lịch sử
-            </div>
-            <h1 class="text-2xl font-bold tracking-tight text-slate-900">Lịch sử đơn xin nghỉ phép ({{ $requests->total() }})</h1>
-        </div>
-        <a href="{{ route('student.leave-requests.create') }}" wire:navigate class="flex w-full items-center justify-center gap-2 rounded-xl bg-primary px-6 py-3 font-bold text-white transition-all hover:shadow-lg hover:bg-primary/90 active:scale-95 md:w-auto shrink-0">
+<div class="w-full space-y-6 px-6 py-6 sm:px-10 lg:px-16 animate-in fade-in slide-in-from-bottom-4 duration-500">
+    <div class="flex justify-end mb-2">
+        <a href="{{ route('student.leave-requests.create') }}" wire:navigate class="flex items-center justify-center gap-2 rounded-xl bg-primary px-6 py-3 font-bold text-white transition-all hover:shadow-lg hover:bg-primary/90 active:scale-95 shrink-0 shadow-sm">
             <x-user.icon name="plus" />
             Tạo đơn mới
         </a>
-    </section>
+    </div>
 
-    <section class="rounded-2xl border border-outline-variant/10 bg-white shadow-sm w-full">
-        <div class="overflow-x-auto rounded-2xl min-h-[260px]">
+    <section class="flex flex-col rounded-2xl border border-outline-variant/10 bg-white shadow-sm w-full min-h-[calc(100vh-170px)]">
+        <div class="flex-1 overflow-x-auto rounded-2xl">
             <table class="w-full min-w-[900px] border-collapse text-left">
                 <thead class="bg-surface-container-lowest text-sm font-bold uppercase tracking-wider text-on-surface-variant">
                     <tr>
@@ -122,7 +115,7 @@
                                         <x-user.icon name="file-text" :size="32" />
                                     </div>
                                     <p class="text-base font-bold text-on-surface">Chưa có đơn xin nghỉ phép nào</p>
-                                    <p class="mt-1 text-sm">Bạn chưa từng gửi đơn xin nghỉ phép nào lên hệ thống.</p>
+                                    <p class="mt-1 text-sm">Bạn chưa gửi đơn xin nghỉ phép nào lên hệ thống.</p>
                                 </div>
                             </td>
                         </tr>
