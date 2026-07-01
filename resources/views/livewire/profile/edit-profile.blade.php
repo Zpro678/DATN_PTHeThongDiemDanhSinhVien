@@ -3,7 +3,7 @@
     $initial = function_exists('mb_substr')
         ? mb_strtoupper(mb_substr($user->name ?? 'U', 0, 1, 'UTF-8'), 'UTF-8')
         : strtoupper(substr($user->name ?? 'U', 0, 1));
-    $roleLabel = $user->is_admin ? 'Admin' : 'Người dùng';
+    $roleLabel = $user->isAdmin() ? 'Admin' : 'Người dùng';
     $statusLabel = $user->status === 'active' ? 'Đang hoạt động' : 'Bị khóa';
     $statusColor = $user->status === 'active'
         ? 'bg-emerald-50 text-emerald-700 border-emerald-100'
@@ -52,7 +52,7 @@
                     <h2 class="text-xl font-black text-slate-900">{{ $user->name }}</h2>
                     <p class="text-sm font-medium text-slate-500">{{ $user->email }}</p>
                     <div class="mt-4 flex flex-wrap justify-center gap-2">
-                        <span class="rounded-lg border px-3 py-1 text-[10px] font-bold uppercase tracking-wider {{ $user->is_admin ? 'border-blue-100 bg-blue-50 text-blue-700' : 'border-slate-100 bg-slate-50 text-slate-600' }}">
+                        <span class="rounded-lg border px-3 py-1 text-[10px] font-bold uppercase tracking-wider {{ $user->isAdmin() ? 'border-blue-100 bg-blue-50 text-blue-700' : 'border-slate-100 bg-slate-50 text-slate-600' }}">
                             {{ $roleLabel }}
                         </span>
                         <span class="rounded-lg border px-3 py-1 text-[10px] font-bold uppercase tracking-wider {{ $statusColor }}">
@@ -100,7 +100,7 @@
                                     @error('name') <span class="text-red-500 text-xs mt-1 block">{{ $message }}</span> @enderror
                                 </div>
 
-                                @if(!$user->is_admin)
+                                @if(!$user->isAdmin())
                                 <div>
                                     <label class="mb-2 block text-[10px] font-bold uppercase tracking-widest text-slate-400">Mã số sinh viên (nếu có)</label>
                                     <input type="text" wire:model="member_id" class="w-full rounded-xl border border-slate-200 bg-white px-4 py-3 text-sm font-bold text-slate-900 focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-500">

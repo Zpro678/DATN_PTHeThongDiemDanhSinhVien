@@ -1,9 +1,9 @@
 @php
     $statusMeta = [
         'present' => ['label' => 'Có mặt', 'short' => 'Có mặt', 'card' => 'border-emerald-500', 'iconBg' => 'bg-emerald-50 text-emerald-600', 'button' => 'bg-emerald-600 text-white', 'soft' => 'bg-emerald-50 text-emerald-700 hover:bg-emerald-100', 'row' => 'bg-white'],
-        'late' => ['label' => 'Đi trễ', 'short' => 'Đi trễ', 'card' => 'border-amber-500', 'iconBg' => 'bg-amber-50 text-amber-600', 'button' => 'bg-amber-500 text-white', 'soft' => 'bg-amber-50 text-amber-700 hover:bg-amber-100', 'row' => 'bg-white'],
-        'excused' => ['label' => 'Vắng phép', 'short' => 'Vắng phép', 'card' => 'border-blue-500', 'iconBg' => 'bg-blue-50 text-blue-600', 'button' => 'bg-blue-600 text-white', 'soft' => 'bg-blue-50 text-blue-700 hover:bg-blue-100', 'row' => 'bg-white'],
-        'absent' => ['label' => 'Vắng KP', 'short' => 'Vắng KP', 'card' => 'border-rose-500', 'iconBg' => 'bg-rose-50 text-rose-600', 'button' => 'bg-rose-600 text-white', 'soft' => 'bg-rose-50 text-rose-700 hover:bg-rose-100', 'row' => 'bg-white'],
+        'late' => ['label' => 'Đi muộn', 'short' => 'Đi muộn', 'card' => 'border-amber-500', 'iconBg' => 'bg-amber-50 text-amber-600', 'button' => 'bg-amber-500 text-white', 'soft' => 'bg-amber-50 text-amber-700 hover:bg-amber-100', 'row' => 'bg-white'],
+        'excused' => ['label' => 'Có phép', 'short' => 'Có phép', 'card' => 'border-blue-500', 'iconBg' => 'bg-blue-50 text-blue-600', 'button' => 'bg-blue-600 text-white', 'soft' => 'bg-blue-50 text-blue-700 hover:bg-blue-100', 'row' => 'bg-white'],
+        'absent' => ['label' => 'Vắng', 'short' => 'Vắng', 'card' => 'border-rose-500', 'iconBg' => 'bg-rose-50 text-rose-600', 'button' => 'bg-rose-600 text-white', 'soft' => 'bg-rose-50 text-rose-700 hover:bg-rose-100', 'row' => 'bg-white'],
         'pending' => ['label' => 'Chưa ĐD', 'short' => 'Chưa ĐD', 'card' => 'border-slate-400', 'iconBg' => 'bg-slate-100 text-slate-500', 'button' => 'bg-slate-900 text-white', 'soft' => 'bg-slate-100 text-slate-600 hover:bg-slate-200', 'row' => 'bg-white'],
     ];
 
@@ -135,9 +135,9 @@
                         <option value="all" @selected($statusFilter === 'all')>Tất cả trạng thái</option>
                         <option value="pending" @selected($statusFilter === 'pending')>Chưa ĐD</option>
                         <option value="present" @selected($statusFilter === 'present')>Có mặt</option>
-                        <option value="absent" @selected($statusFilter === 'absent')>Vắng KP</option>
-                        <option value="late" @selected($statusFilter === 'late')>Đi trễ</option>
-                        <option value="excused" @selected($statusFilter === 'excused')>Vắng phép</option>
+                        <option value="absent" @selected($statusFilter === 'absent')>Vắng</option>
+                        <option value="late" @selected($statusFilter === 'late')>Đi muộn</option>
+                        <option value="excused" @selected($statusFilter === 'excused')>Có phép</option>
                     </select>
 
                     @if ($search !== '' || $statusFilter !== 'all')
@@ -222,6 +222,12 @@
                 Tổng sĩ số: <span class="font-bold text-slate-900">{{ $summary['total'] }}</span>
                 <span class="mx-2 text-slate-300">|</span>
                 Có mặt: <span class="font-bold text-emerald-600">{{ $summary['present'] }}</span>
+                <span class="mx-2 text-slate-300">|</span>
+                Đi muộn: <span class="font-bold text-amber-600">{{ $summary['late'] }}</span>
+                <span class="mx-2 text-slate-300">|</span>
+                Vắng: <span class="font-bold text-rose-600">{{ $summary['absent'] }}</span>
+                <span class="mx-2 text-slate-300">|</span>
+                Có phép: <span class="font-bold text-sky-600">{{ $summary['excused'] }}</span>
             </p>
             @if ($canExportExcel)
                 <button type="button" wire:click="exportExcel" class="inline-flex items-center justify-center gap-2 rounded-xl border border-slate-200 bg-white px-4 py-2.5 text-sm font-bold text-slate-700 transition hover:bg-slate-50">
@@ -244,8 +250,11 @@
         <div class="mx-auto flex max-w-7xl flex-col gap-4 sm:flex-row sm:items-center sm:justify-end sm:gap-6">
             <div class="flex items-center gap-2">
                 <span class="text-sm font-bold uppercase tracking-wider text-slate-500">Tổng hợp nhanh:</span>
-                <span class="text-lg font-extrabold text-slate-900">
-                    {{ $summary['present'] }}/{{ $summary['total'] }} có mặt ({{ $summary['present_percent'] }}%)
+                <span class="text-lg font-extrabold text-slate-900 tabular-nums">
+                    <span class="text-emerald-600">{{ $summary['present'] }}</span> có mặt ·
+                    <span class="text-amber-600">{{ $summary['late'] }}</span> đi muộn ·
+                    <span class="text-rose-600">{{ $summary['absent'] }}</span> vắng ·
+                    <span class="text-sky-600">{{ $summary['excused'] }}</span> có phép
                 </span>
             </div>
             <button

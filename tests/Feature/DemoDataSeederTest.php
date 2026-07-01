@@ -34,7 +34,6 @@ class DemoDataSeederTest extends TestCase
             'lecturer.leave-requests.index',
             'lecturer.attendance.index',
             'lecturer.attendance.create',
-            'lecturer.attendance.manual.create',
             'lecturer.attendance.qr.create',
         ] as $routeName) {
             $this->actingAs($teacher)

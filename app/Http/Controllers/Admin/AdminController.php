@@ -15,14 +15,14 @@ class AdminController extends Controller
 {
     private function ensureAdmin()
     {
-        abort_unless(auth()->user()?->is_admin, 403);
+        abort_unless(auth()->user()?->isAdmin(), 403);
     }
 
     public function dashboard()
     {
         $this->ensureAdmin();
 
-        $totalStudents = User::where('is_admin', false)->count();
+        $totalStudents = User::where('role', User::ROLE_USER)->count();
         $activeClasses = CourseClass::where('status', 'active')->count();
 
         // Calculate attendance rate
@@ -146,13 +146,13 @@ class AdminController extends Controller
     {
         $this->ensureAdmin();
 
-        $totalRevenue = \App\Models\Transaction::where('status', 'success')->sum('amount');
+        $totalRevenue = \App\Models\Transaction::where('status', 'PAID')->sum('amount');
         
         $overview = [
             'users' => User::count(),
             'classes' => CourseClass::count(),
             'plans' => Plan::count(),
-            'transactions' => \App\Models\Transaction::where('status', 'success')->count(),
+            'transactions' => \App\Models\Transaction::where('status', 'PAID')->count(),
             'revenue' => $totalRevenue,
         ];
 
@@ -160,7 +160,7 @@ class AdminController extends Controller
         $monthlyRevenue = [];
         for ($i = 5; $i >= 0; $i--) {
             $month = now()->subMonths($i);
-            $amount = \App\Models\Transaction::where('status', 'success')
+            $amount = \App\Models\Transaction::where('status', 'PAID')
                 ->whereYear('created_at', $month->year)
                 ->whereMonth('created_at', $month->month)
                 ->sum('amount');

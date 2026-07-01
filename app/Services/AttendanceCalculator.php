@@ -17,14 +17,11 @@ use Illuminate\Support\Collection;
  *    chỉ có 2 khả năng: CÓ MẶT hay VẮNG (nhị phân 1/0).
  *  - BUỔI (class_meeting): một buổi học, gồm nhiều phiên. Đơn vị tính chuyên cần là BUỔI (mỗi buổi = 1 đơn vị).
  *
- * THUẬT TOÁN TỔNG KẾT 1 BUỔI (theo đặc tả "điểm danh.docx", mục 8):
- *  Quy mỗi phiên về 0/1 rồi xét MẪU chuỗi bit để ra 1 trong 6 trạng thái:
- *    present     (Có mặt)         : tất cả phiên đều có mặt.
- *    late        (Đi muộn)        : vắng ở đầu rồi có mặt liền mạch tới cuối (vd 0111, 0011), có mặt ≥ vắng.
- *    partial     (Vắng giữa giờ)  : có mặt nhưng có "lỗ" ở giữa (vd 1101, 1011, 1010).
- *    early_leave (Về sớm)         : có mặt ở đầu rồi nghỉ liền mạch (vd 1110, 1100), có mặt ≥ vắng.
- *    absent      (Vắng)           : các trường hợp còn lại (0000, 0001, 0101, 0010, 1000...).
- *    excused     (Có phép)        : tất cả phiên đều "có phép".
+ * THUẬT TOÁN TỔNG KẾT 1 BUỔI:
+ *  Quy mỗi phiên về 0/1 rồi xét phiên đầu, phiên cuối và dấu hiệu đi muộn:
+ *    absent  (Vắng)    : phiên cuối vắng.
+ *    late    (Đi muộn) : phiên cuối có mặt, nhưng phiên đầu vắng hoặc có phiên bị đánh dấu đi muộn.
+ *    present (Có mặt)  : phiên cuối có mặt, phiên đầu có mặt, và không có phiên đi muộn.
  *
  * DIỄN GIẢI "pending" (record chưa được điểm danh) theo LOẠI phiên:
  *  - Phiên QR  (qr_token != null): sinh viên chưa quét  -> coi như VẮNG (0).
@@ -54,7 +51,7 @@ class AttendanceCalculator
     public const ABSENCE_LIMIT_RATIO = 0.2;
 
     /** PRESENTISH: các trạng thái PHIÊN được coi là "đã có mặt" khi nhị phân hoá (-> bit 1). */
-    private const PRESENTISH = ['present', 'late', 'partial', 'early_leave', 'excused'];
+    private const PRESENTISH = ['present', 'late', 'excused'];
 
     /**
      * DEDUCTIONS — BẢNG ĐIỂM TRỪ theo trạng thái TỔNG KẾT BUỔI (số dương: càng lớn càng mất nhiều điểm).
@@ -65,8 +62,6 @@ class AttendanceCalculator
     public const DEDUCTIONS = [
         'present' => 0.0,     // Có mặt              -> không trừ
         'late' => 0.5,        // Đi muộn             -> trừ 0.5
-        'partial' => 0.5,     // Vắng giữa giờ       -> trừ 0.5 (đặc tả: 0.5 hoặc 1, tạm 0.5)
-        'early_leave' => 1.0, // Về sớm              -> trừ 1
         'absent' => 1.0,      // Vắng                -> trừ 1
         'excused' => 0.0,     // Có phép             -> tạm 0 (cấu hình lớp quyết định sau)
     ];
@@ -75,8 +70,6 @@ class AttendanceCalculator
     public const LABELS = [
         'present' => 'Có mặt',
         'late' => 'Đi muộn',
-        'partial' => 'Vắng giữa giờ',
-        'early_leave' => 'Về sớm',
         'absent' => 'Vắng',
         'excused' => 'Có phép',
     ];
@@ -120,11 +113,8 @@ class AttendanceCalculator
      *
      * Luồng xử lý:
      *   1) Mảng rỗng (không có phiên nào) -> coi như 'absent'.
-     *   2) Nếu MỌI phiên đều 'excused' -> 'excused' (có phép cả buổi).
-     *   3) Nhị phân hoá: phiên có mặt (present/late/excused) -> 1, vắng -> 0.
-     *   4) classifyPattern($bits) -> 1 trong các trạng thái present/late/partial/early_leave/absent.
-     *   5) GIỮ "đi muộn" tường minh: nếu mẫu ra 'present' nhưng có phiên đánh 'late' thì hạ thành 'late'.
-     *   6) buildResult(): bọc {status, deduction, label}.
+     *   2) Phân loại theo phiên đầu/cuối, nhưng giữ nguyên dấu hiệu "late" đã được đánh dấu.
+     *   3) buildResult(): bọc {status, deduction, label}.
      *
      * @param  array<int, string>  $statuses     Trạng thái từng phiên (đã interpretStatus, đã sắp theo thời gian).
      * @param  array               $rules        Mảng luật cấu hình chuyên cần động.
@@ -137,120 +127,51 @@ class AttendanceCalculator
             return self::buildResult('absent', $rules);
         }
 
-        // (2) Có phép CẢ buổi -> EXCUSED.
-        if (collect($statuses)->every(fn (string $s) => $s === 'excused')) {
-            return self::buildResult('excused', $rules);
-        }
+        // (2)+(3) Phân loại theo phiên đầu/cuối và trạng thái đi muộn rõ ràng.
+        $state = self::classifyPattern($statuses);
 
-        // (3) $bits: chuỗi nhị phân 0/1 tương ứng từng phiên (1 = có mặt, 0 = vắng).
-        $bits = array_map(fn (string $s) => self::isPresent($s) ? 1 : 0, $statuses);
-
-        // (4) Phân loại theo MẪU bit.
-        $state = self::classifyPattern($bits);
-
-        // (5) Giữ các trạng thái phạt (nhưng vẫn tính là có mặt) được đánh dấu tường minh:
-        if ($state === 'present') {
-            if (in_array('partial', $statuses, true)) {
-                $state = 'partial';
-            } elseif (in_array('early_leave', $statuses, true)) {
-                $state = 'early_leave';
-            } elseif (in_array('late', $statuses, true)) {
-                $state = 'late';
-            }
-        }
-
-        // (6) Bọc kết quả {status, deduction, label}.
+        // (3) Bọc kết quả {status, deduction, label}.
         return self::buildResult($state, $rules);
     }
 
     /**
-     * classifyPattern(): PHÂN LOẠI buổi từ chuỗi nhị phân 0/1 (1 = có mặt, 0 = vắng) — lõi thuật toán mục 8.
+     * classifyPattern(): xét phiên đầu, phiên cuối và trạng thái "late" đã được đánh dấu.
+     *   - Vắng phiên cuối -> absent.
+     *   - Có mặt phiên cuối nhưng vắng phiên đầu -> late.
+     *   - Có mặt phiên cuối và có phiên bị đánh dấu đi muộn -> late.
+     *   - Có mặt phiên cuối, phiên đầu có mặt và không có phiên đi muộn -> present.
      *
-     * Biến nội bộ:
-     *   $n             = số phiên.
-     *   $present       = số phiên có mặt (tổng các bit 1).
-     *   $absent        = số phiên vắng (= $n − $present).
-     *   $startsPresent = phiên ĐẦU có mặt? (bit[0] == 1)
-     *   $endsPresent   = phiên CUỐI có mặt? (bit[n-1] == 1)
-     *   $firstP        = chỉ số phiên có mặt ĐẦU TIÊN.
-     *   $lastP         = chỉ số phiên có mặt CUỐI CÙNG.
-     *   $hasMiddleGap  = có "lỗ" (bit 0) nằm GIỮA $firstP và $lastP không (tức rời lớp giữa chừng).
-     *
-     * Cây quyết định (khớp 13 ca trong bảng đặc tả):
-     *   - all 1            -> present
-     *   - all 0            -> absent
-     *   - đầu & cuối đều CÓ -> partial (đã có mặt 2 đầu nhưng giữa hụt -> vắng giữa giờ)
-     *   - đầu CÓ, cuối VẮNG:
-     *        + có lỗ giữa   -> partial   (vd 1010)
-     *        + liền mạch    -> early_leave nếu present ≥ absent, else absent (vd 1110/1100 vs 1000)
-     *   - đầu VẮNG, cuối CÓ:
-     *        + có lỗ giữa   -> absent    (vd 0101 — vắng đầu + đứt quãng -> không tính đi muộn)
-     *        + liền mạch    -> late nếu present ≥ absent, else absent (vd 0111/0011 vs 0001)
-     *   - đầu & cuối đều VẮNG -> absent
-     *
-     * @param  array<int, int>  $bits
-     * @return string  Một trong: present|late|partial|early_leave|absent.
+     * @param  array<int, string>  $statuses
+     * @return string  Một trong: present|late|absent.
      */
-    private static function classifyPattern(array $bits): string
+    private static function classifyPattern(array $statuses): string
     {
-        $n = count($bits);
-        $present = array_sum($bits);
-        $absent = $n - $present;
-
-        // Hai trường hợp tuyệt đối.
-        if ($present === $n) {
-            return 'present';
-        }
-        if ($present === 0) {
+        if ($statuses === []) {
             return 'absent';
         }
 
-        $startsPresent = $bits[0] === 1;
-        $endsPresent = $bits[$n - 1] === 1;
+        $firstStatus = (string) $statuses[array_key_first($statuses)];
+        $lastStatus = (string) $statuses[array_key_last($statuses)];
 
-        // Tìm phiên có mặt đầu/cuối để dò "lỗ" ở giữa.
-        $firstP = array_search(1, $bits, true);       // chỉ số bit 1 đầu tiên
-        $lastP = array_keys($bits, 1, true);          // tất cả chỉ số có bit 1
-        $lastP = end($lastP);                         // -> chỉ số bit 1 cuối cùng
-        $hasMiddleGap = false;
-        for ($i = $firstP + 1; $i < $lastP; $i++) {
-            if ($bits[$i] === 0) {                     // có 1 phiên vắng nằm giữa hai phiên có mặt
-                $hasMiddleGap = true;
-                break;
-            }
+        if (! self::isPresent($lastStatus)) {
+            return 'absent';
         }
 
-        // Có mặt cả đầu lẫn cuối nhưng (vì không all-1) chắc chắn có lỗ giữa -> vắng giữa giờ.
-        if ($startsPresent && $endsPresent) {
-            return 'partial';
+        if (! self::isPresent($firstStatus)) {
+            return 'late';
         }
 
-        // Có mặt đầu, vắng cuối.
-        if ($startsPresent && ! $endsPresent) {
-            if ($hasMiddleGap) {
-                return 'partial';                      // 1010: vào → ra → vào → nghỉ
-            }
-
-            return $present >= $absent ? 'early_leave' : 'absent'; // 1110/1100 về sớm; 1000 quá ít -> vắng
+        if (in_array('late', $statuses, true)) {
+            return 'late';
         }
 
-        // Vắng đầu, có mặt cuối.
-        if (! $startsPresent && $endsPresent) {
-            if ($hasMiddleGap) {
-                return 'absent';                       // 0101: vắng đầu + đứt quãng -> vắng (không là đi muộn)
-            }
-
-            return $present >= $absent ? 'late' : 'absent'; // 0111/0011 đi muộn; 0001 quá ít -> vắng
-        }
-
-        // Vắng cả đầu lẫn cuối -> vắng.
-        return 'absent';
+        return 'present';
     }
 
     /**
      * buildResult(): bọc 1 trạng thái thành cấu trúc chuẩn {status, deduction, label}.
      *
-     * @param  string  $state          Trạng thái tổng kết (present/late/partial/early_leave/absent/excused).
+     * @param  string  $state          Trạng thái tổng kết (present/late/absent/excused).
      * @param  array   $rules          Cấu hình điểm trừ.
      * @return array{status: string, deduction: float, label: string}
      */
@@ -303,7 +224,7 @@ class AttendanceCalculator
      * @param  iterable  $rows  Mỗi phần tử (object) cần có: ->meeting_id, ->status, và nên có
      *                          ->class_session_id, ->qr_token. CHỈ truyền record của phiên đã chốt.
      * @param  array     $rules
-     * @return array{present:int, late:int, partial:int, early_leave:int, excused:int, absent:int, total:int, deduction:float}
+     * @return array{present:int, late:int, excused:int, absent:int, total:int, deduction:float}
      */
     public static function consolidateByMeeting(iterable $rows, array $rules = []): array
     {
@@ -323,7 +244,7 @@ class AttendanceCalculator
         }
 
         // $counts: bộ đếm số BUỔI theo từng trạng thái + tổng điểm trừ.
-        $counts = ['present' => 0, 'late' => 0, 'partial' => 0, 'early_leave' => 0, 'excused' => 0, 'absent' => 0, 'total' => 0, 'deduction' => 0.0];
+        $counts = ['present' => 0, 'late' => 0, 'excused' => 0, 'absent' => 0, 'total' => 0, 'deduction' => 0.0];
 
         // (2)+(3) Tổng kết từng buổi rồi cộng dồn.
         foreach ($byMeeting as $sessions) {
@@ -367,9 +288,9 @@ class AttendanceCalculator
 
     /**
      * lostFromCounts(): TỔNG ĐIỂM TRỪ (= số buổi vắng QUY ĐỔI) từ bộ đếm $counts.
-     *  Cộng điểm trừ của present/late/partial/early_leave/absent theo bảng DEDUCTIONS; BỎ QUA 'excused'
+     *  Cộng điểm trừ của present/late/absent theo bảng DEDUCTIONS; BỎ QUA 'excused'
      *  (vì vắng có phép đã được xử lý ở mẫu số countedSessions).
-     *  vd: vắng 1.0 + về sớm 1.0 + đi muộn 0.5 + vắng giữa giờ 0.5.
+     *  vd: vắng 1.0 + đi muộn 0.5.
      *
      * @param  array<string, int>  $counts
      * @param  array               $rules
@@ -377,7 +298,7 @@ class AttendanceCalculator
     public static function lostFromCounts(array $counts, array $rules = []): float
     {
         $lost = 0.0;
-        foreach (['present', 'late', 'partial', 'early_leave', 'absent'] as $state) {
+        foreach (['present', 'late', 'absent'] as $state) {
             $lost += (int) ($counts[$state] ?? 0) * (float) ($rules[$state] ?? self::DEDUCTIONS[$state] ?? 1.0);
         }
 
@@ -397,13 +318,13 @@ class AttendanceCalculator
 
     /**
      * percentOfPlanned(): % CHUYÊN CẦN trên tổng số buổi dự kiến, suy từ điểm trừ.
-     *  - $counted = countedSessions(planned, excused, deduct).  (mẫu số)
+     *  - $counted = countedSessions(planned, excused, rules).  (mẫu số)
      *  - Nếu $counted <= 0 -> trả 100 (chưa có buổi nào để tính).
      *  - $attended = counted − tổng_điểm_trừ.  (buổi chưa diễn ra mặc định coi như có mặt, không trừ)
      *  - % = round(attended / counted × 100).
      *
      * @param  int                  $plannedSessions  Tổng buổi dự kiến của lớp.
-     * @param  array<string, int>   $counts           Kết quả consolidateByMeeting (đủ 6 trạng thái).
+     * @param  array<string, int>   $counts           Kết quả consolidateByMeeting.
      * @param  array                $rules
      * @return int   % chuyên cần (0..100).
      */
@@ -460,9 +381,11 @@ class AttendanceCalculator
 
         // Thành viên đang học của lớp.
         $members = $meeting->courseClass->members()
-            ->where('status', 'active')
-            ->orderBy('full_name')
-            ->get();
+            ->where('status', \App\Models\ClassMember::STATUS_ACTIVE)
+            ->with('profile')
+            ->get()
+            ->sortBy(fn ($member) => $member->display_name)
+            ->values();
 
         // Record điểm danh của tất cả phiên này, gom theo từng sinh viên.
         $records = AttendanceRecord::query()

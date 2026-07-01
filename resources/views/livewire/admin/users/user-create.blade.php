@@ -36,7 +36,7 @@
                     <dl class="mt-6 space-y-3 border-t border-slate-100 pt-5 text-sm">
                         <div class="flex items-center justify-between gap-4">
                             <dt class="font-medium text-slate-500">Vai trò</dt>
-                            <dd class="font-bold text-slate-900">{{ $is_admin ? 'Admin' : 'Người dùng' }}</dd>
+                            <dd class="font-bold text-slate-900">{{ $role === \App\Models\User::ROLE_USER ? 'Người dùng' : 'Admin' }}</dd>
                         </div>
                         <div class="flex items-center justify-between gap-4">
                             <dt class="font-medium text-slate-500">Trạng thái</dt>
@@ -85,12 +85,12 @@
                                 <label class="mb-2 block text-[10px] font-bold uppercase tracking-widest text-slate-400">Vai trò <span class="text-rose-500">*</span></label>
                                 @php
                                 $roleOptions = [
-                                    ['value' => '0', 'label' => 'Người dùng', 'sub_label' => 'Giảng viên & Học viên'],
-                                    ['value' => '1', 'label' => 'Admin', 'sub_label' => 'Quản trị viên hệ thống'],
+                                    ['value' => \App\Models\User::ROLE_USER, 'label' => 'Người dùng', 'sub_label' => 'Giảng viên & Học viên'],
+                                    ['value' => \App\Models\User::ROLE_ADMIN, 'label' => 'Admin', 'sub_label' => 'Quản trị viên hệ thống'],
                                 ];
                                 @endphp
-                                <x-custom-select wire:model.live="is_admin" :options="$roleOptions" placeholder="Chọn vai trò" />
-                                @error('is_admin') <span class="text-xs text-rose-500 mt-1 block font-medium">{{ $message }}</span> @enderror
+                                <x-custom-select wire:model.live="role" :options="$roleOptions" placeholder="Chọn vai trò" />
+                                @error('role') <span class="text-xs text-rose-500 mt-1 block font-medium">{{ $message }}</span> @enderror
                             </div>
 
                             <div>

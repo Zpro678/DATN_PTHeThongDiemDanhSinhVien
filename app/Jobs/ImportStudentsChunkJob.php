@@ -19,7 +19,7 @@ class ImportStudentsChunkJob implements ShouldQueue
 {
     use Dispatchable, InteractsWithQueue, Queueable, SerializesModels;
 
-    protected int $classId;
+    protected string $classId;
     protected array $rows;
     protected array $dateHeaders;
     protected array $meetingHeaders;
@@ -31,7 +31,7 @@ class ImportStudentsChunkJob implements ShouldQueue
     /**
      * Create a new job instance.
      */
-    public function __construct(int $classId, array $rows, array $dateHeaders, array $meetingHeaders, int $emailColIndex, int $authUserId, ?string $importToken = null, bool $syncAttendance = false)
+    public function __construct(string $classId, array $rows, array $dateHeaders, array $meetingHeaders, int $emailColIndex, int $authUserId, ?string $importToken = null, bool $syncAttendance = false)
     {
         $this->classId = $classId;
         $this->rows = $rows;
@@ -79,11 +79,12 @@ class ImportStudentsChunkJob implements ShouldQueue
                 continue;
             }
 
-            $activeCount = ClassMember::where('class_id', $this->classId)->where('status', 'active')->count();
+            $activeCount = ClassMember::where('class_id', $this->classId)->where('status', ClassMember::STATUS_ACTIVE)->count();
 
+            // Tìm thành viên theo MSSV qua hồ sơ danh tính (class_member_profiles).
             $member = ClassMember::withTrashed()
                 ->where('class_id', $this->classId)
-                ->where('student_code', strtoupper($studentCode))
+                ->whereHas('profile', fn ($q) => $q->where('student_code', strtoupper($studentCode)))
                 ->first();
 
             $user = null;
@@ -93,13 +94,7 @@ class ImportStudentsChunkJob implements ShouldQueue
 
             $isNewMember = false;
             if ($member) {
-                $updateData = [
-                    'full_name' => $fullName,
-                    'status' => 'active',
-                ];
-                if ($email) {
-                    $updateData['email'] = $email;
-                }
+                $updateData = ['status' => ClassMember::STATUS_ACTIVE];
                 if ($user && is_null($member->user_id)) {
                     $updateData['user_id'] = $user->id;
                 }
@@ -113,13 +108,17 @@ class ImportStudentsChunkJob implements ShouldQueue
                 $isNewMember = true;
                 $member = ClassMember::create([
                     'class_id' => $this->classId,
-                    'full_name' => $fullName,
-                    'email' => $email,
-                    'student_code' => strtoupper($studentCode),
                     'user_id' => $user ? $user->id : null,
-                    'status' => 'active',
+                    'status' => ClassMember::STATUS_ACTIVE,
                 ]);
             }
+
+            // Lưu danh tính (MSSV/tên/email) vào hồ sơ thành viên.
+            $member->syncProfile([
+                'student_code' => strtoupper($studentCode),
+                'full_name' => $fullName,
+                'email' => $email ?: null,
+            ]);
 
             // Gửi email thông báo được thêm vào lớp học
             if ($email && $isNewMember) {
@@ -149,14 +148,10 @@ class ImportStudentsChunkJob implements ShouldQueue
                     $status = 'present';
                 } elseif ($statusChar === 'm') {
                     $status = 'late';
-                } elseif ($statusChar === 'vg') {
-                    $status = 'partial';
-                } elseif ($statusChar === 'vs') {
-                    $status = 'early_leave';
                 } elseif ($statusChar === 'v') {
-                    $status = 'absent';   // vắng không phép
+                    $status = 'absent';
                 } elseif ($statusChar === 'p') {
-                    $status = 'excused';  // vắng có phép
+                    $status = 'excused';
                 } elseif ($statusChar === '') {
                     continue;
                 }
@@ -166,7 +161,7 @@ class ImportStudentsChunkJob implements ShouldQueue
                     'class_member_id' => $member->id,
                 ], [
                     'status' => $status,
-                    'is_verified' => $member->user_id !== null,
+                    'is_account' => $member->user_id !== null,
                 ]);
                 
                 $processedSessionIds[] = $sessionId;
@@ -181,7 +176,7 @@ class ImportStudentsChunkJob implements ShouldQueue
                             'class_member_id' => $member->id,
                         ], [
                             'status' => 'pending',
-                            'is_verified' => $member->user_id !== null,
+                            'is_account' => $member->user_id !== null,
                         ]);
                     }
                 }

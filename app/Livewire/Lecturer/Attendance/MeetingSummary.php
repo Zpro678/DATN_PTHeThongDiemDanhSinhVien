@@ -47,7 +47,7 @@ class MeetingSummary extends Component
 
     public function setStatus(int $memberId, string $status): void
     {
-        abort_unless(in_array($status, ['present', 'late', 'partial', 'early_leave', 'absent', 'excused'], true), 422);
+        abort_unless(in_array($status, ['present', 'late', 'absent', 'excused'], true), 422);
 
         if (array_key_exists($memberId, $this->draftStatuses)) {
             $this->draftStatuses[$memberId] = $status;

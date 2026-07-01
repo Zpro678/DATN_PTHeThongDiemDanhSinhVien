@@ -123,14 +123,14 @@ class QrAttendanceCreate extends Component
     public function updatedClassId($value): void
     {
         if ($value) {
-            $selectedClass = $this->ownedClass((int) $value);
+            $selectedClass = $this->ownedClass($value);
             $this->loadConfigForClass($value);
         }
     }
 
     private function loadConfigForClass(string $classId): void
     {
-        $selectedClass = $this->ownedClass((int) $classId);
+        $selectedClass = $this->ownedClass($classId);
 
         $config = cache()->get('qr_config_class_'.$classId);
         if ($config) {
@@ -177,7 +177,7 @@ class QrAttendanceCreate extends Component
     public function save(): void
     {
         $validated = $this->validate([
-            'classId' => ['required', 'integer'],
+            'classId' => ['required', 'string', 'exists:classes,id'],
             'name' => ['required', 'string', 'max:255'],
             'date' => ['required', 'date'],
             'startTime' => ['nullable', 'date_format:H:i'],
@@ -191,7 +191,7 @@ class QrAttendanceCreate extends Component
             'deviceCheck' => ['boolean'],
         ], [
             'classId.required' => 'Vui lòng chọn lớp học.',
-            'classId.integer' => 'Lớp học không hợp lệ.',
+            'classId.exists' => 'Lớp học không hợp lệ.',
             'name.required' => 'Vui lòng nhập tiêu đề buổi học.',
             'date.required' => 'Vui lòng chọn ngày học.',
             'durationMinutes.required' => 'Vui lòng nhập thời lượng mở QR.',
@@ -212,9 +212,9 @@ class QrAttendanceCreate extends Component
             }
         }
 
-        $courseClass = $this->ownedClass((int) $validated['classId']);
+        $courseClass = $this->ownedClass($validated['classId']);
 
-        if ($courseClass->members()->where('status', 'active')->count() === 0) {
+        if ($courseClass->members()->where('status', \App\Models\ClassMember::STATUS_ACTIVE)->count() === 0) {
             $this->addError('classId', 'Vui lòng import danh sách lớp trước khi điểm danh.');
             $this->redirectRoute('lecturer.classes.show', ['ma_user' => auth()->id(), 'courseClass' => $courseClass->id, 'openImport' => 1], navigate: true);
             return;
@@ -265,12 +265,12 @@ class QrAttendanceCreate extends Component
             // Đồng bộ thông tin buổi để các trang khác hiển thị nhất quán.
             $session->meeting?->update($meetingFields);
 
-            $courseClass->members()->where('status', 'active')->get()->each(fn ($member) => AttendanceRecord::query()->firstOrCreate([
+            $courseClass->members()->where('status', \App\Models\ClassMember::STATUS_ACTIVE)->get()->each(fn ($member) => AttendanceRecord::query()->firstOrCreate([
                 'class_session_id' => $session->id,
                 'class_member_id' => $member->id,
             ], [
                 'status' => 'pending',
-                'is_verified' => $member->user_id !== null,
+                'is_account' => $member->user_id !== null,
             ]));
 
             session()->flash('success_config', 'Đã cập nhật thiết lập phiên điểm danh.');
@@ -300,7 +300,7 @@ class QrAttendanceCreate extends Component
 
         $meeting = ClassMeeting::query()->create([
             'class_id' => $courseClass->id,
-            'created_by' => auth()->id(),
+            'user_Created' => auth()->id(),
             'name' => $validated['name'],
             'date' => $date,
             'start_time' => $startTime,
@@ -317,10 +317,10 @@ class QrAttendanceCreate extends Component
     public function render(): View
     {
         $classes = $this->availableClasses()
-            ->loadCount(['members' => fn ($query) => $query->where('status', 'active')]);
-        $selectedClass = $classes->firstWhere('id', (int) $this->classId) ?? $classes->first();
+            ->loadCount(['members' => fn ($query) => $query->where('status', \App\Models\ClassMember::STATUS_ACTIVE)]);
+        $selectedClass = $classes->firstWhere('id', $this->classId) ?? $classes->first();
         $students = $selectedClass
-            ? $selectedClass->members()->where('status', 'active')->orderBy('full_name')->get()
+            ? $selectedClass->members()->where('status', \App\Models\ClassMember::STATUS_ACTIVE)->with('profile')->get()->sortBy(fn ($m) => $m->display_name)->values()
             : collect();
 
         return view('livewire.lecturer.attendance.qr-create', compact('classes', 'selectedClass', 'students'))
@@ -351,8 +351,6 @@ class QrAttendanceCreate extends Component
                 'owner_user_id' => $userId,
                 'name' => 'Lớp demo điểm danh QR',
                 'description' => 'Dữ liệu giả để kiểm thử trang điểm danh bằng QR.',
-                'subject_code' => 'QR101',
-                'semester' => 'HK2 2025-2026',
                 'require_approval' => false,
                 'status' => 'active',
                 'total_sessions' => 15,
@@ -375,18 +373,23 @@ class QrAttendanceCreate extends Component
             ['QR007', 'Hoàng Đức Huy'],
             ['QR008', 'Bùi Khánh Vy'],
         ])->each(function (array $student) use ($courseClass): void {
-            $member = ClassMember::withTrashed()->firstOrNew([
-                'class_id' => $courseClass->id,
-                'student_code' => $student[0],
-            ]);
+            $member = ClassMember::withTrashed()
+                ->where('class_id', $courseClass->id)
+                ->whereHas('profile', fn ($p) => $p->where('student_code', $student[0]))
+                ->first();
 
-            $member->fill([
-                'full_name' => $student[1],
-                'user_id' => null,
-                'status' => 'active',
-            ]);
-            $member->save();
-            $member->restore();
+            if (! $member) {
+                $member = ClassMember::create([
+                    'class_id' => $courseClass->id,
+                    'user_id' => null,
+                    'status' => ClassMember::STATUS_ACTIVE,
+                ]);
+            } else {
+                $member->restore();
+                $member->update(['status' => ClassMember::STATUS_ACTIVE]);
+            }
+
+            $member->syncProfile(['student_code' => $student[0], 'full_name' => $student[1]]);
         });
     }
 }

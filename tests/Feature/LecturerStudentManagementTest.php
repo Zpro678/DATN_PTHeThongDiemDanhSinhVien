@@ -66,10 +66,13 @@ class LecturerStudentManagementTest extends TestCase
 
         $this->assertDatabaseHas('class_members', [
             'id' => $member->id,
+            'status' => ClassMember::STATUS_ACTIVE,
+            'deleted_at' => null,
+        ]);
+        $this->assertDatabaseHas('class_member_profiles', [
+            'class_member_id' => $member->id,
             'full_name' => 'Sinh viên đã cập nhật',
             'student_code' => 'SV-UPDATED',
-            'status' => 'active',
-            'deleted_at' => null,
         ]);
     }
 
@@ -85,7 +88,8 @@ class LecturerStudentManagementTest extends TestCase
 
         Livewire::actingAs($owner)
             ->test(LeaveRequestIndex::class, ['status' => 'pending'])
-            ->call('approve', $leaveRequest->id)
+            ->call('openApprove', $leaveRequest->id)
+            ->call('confirmApprove')
             ->assertHasNoErrors();
 
         $this->assertDatabaseHas('leave_requests', [
@@ -130,6 +134,34 @@ class LecturerStudentManagementTest extends TestCase
             ->assertSee(route('lecturer.leave-requests.index'), false);
     }
 
+    public function test_student_only_user_opens_student_workspace_by_default(): void
+    {
+        $owner = User::factory()->create();
+        $student = User::factory()->create();
+        $courseClass = CourseClass::factory()->create(['owner_user_id' => $owner->id]);
+        ClassMember::factory()->create([
+            'class_id' => $courseClass->id,
+            'user_id' => $student->id,
+        ]);
+
+        $this->actingAs($student)->get(route('dashboard'))
+            ->assertOk()
+            ->assertSee('Không gian Học viên')
+            ->assertSee('Lớp tôi tham gia')
+            ->assertDontSee('Không gian Chủ lớp');
+    }
+
+    public function test_owner_user_opens_admin_workspace_by_default(): void
+    {
+        $owner = User::factory()->create();
+        CourseClass::factory()->create(['owner_user_id' => $owner->id]);
+
+        $this->actingAs($owner)->get(route('dashboard'))
+            ->assertOk()
+            ->assertSee('Không gian Chủ lớp')
+            ->assertSee('Lớp tôi quản lý');
+    }
+
     /**
      * @return array{User, ClassMember, LeaveRequest}
      */
@@ -138,10 +170,12 @@ class LecturerStudentManagementTest extends TestCase
         $owner = User::factory()->create();
         $student = User::factory()->create();
         $courseClass = CourseClass::factory()->create(['owner_user_id' => $owner->id]);
-        $member = ClassMember::factory()->create([
+        $member = ClassMember::factory()->withoutProfile()->create([
             'class_id' => $courseClass->id,
             'user_id' => $student->id,
-            'student_code' => $student->member_id,
+        ]);
+        $member->syncProfile([
+            'student_code' => 'SV'.$student->id,
             'full_name' => $student->name,
         ]);
         $session = ClassSession::factory()->create([

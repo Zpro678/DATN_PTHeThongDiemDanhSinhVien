@@ -6,23 +6,18 @@ use Illuminate\Support\Facades\Schema;
 
 return new class extends Migration
 {
-    /**
-     * Run the migrations.
-     */
     public function up(): void
     {
         Schema::table('classes', function (Blueprint $table) {
-            $table->boolean('deduct_excused_absence')->default(false)->after('late_threshold')->comment('Có trừ phần trăm chuyên cần khi vắng có phép hay không?');
+            $table->string('subject_code', 50)->nullable()->after('name');
+            $table->string('semester', 50)->nullable()->after('subject_code');
         });
     }
 
-    /**
-     * Reverse the migrations.
-     */
     public function down(): void
     {
         Schema::table('classes', function (Blueprint $table) {
-            $table->dropColumn('deduct_excused_absence');
+            $table->dropColumn(['subject_code', 'semester']);
         });
     }
 };

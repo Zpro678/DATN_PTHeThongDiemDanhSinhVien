@@ -79,7 +79,7 @@ class QrAttendanceSession extends Component
         $record->update([
             'status' => $status,
             'check_in_time' => in_array($status, ['present', 'late'], true) ? now() : null,
-            'is_verified' => $record->classMember->user_id !== null,
+            'is_account' => $record->classMember->user_id !== null,
         ]);
     }
 
@@ -159,9 +159,9 @@ class QrAttendanceSession extends Component
             ->with('classMember.user')
             ->when($this->statusFilter !== 'all', fn (Builder $query) => $query->where('status', $this->statusFilter))
             ->when($this->search !== '', function (Builder $query): void {
-                $query->whereHas('classMember', function (Builder $query): void {
-                    $query->where('student_code', 'like', '%'.$this->search.'%')
-                        ->orWhere('full_name', 'like', '%'.$this->search.'%');
+                $query->where(function (Builder $query): void {
+                    $query->whereHas('classMember.profile', fn (Builder $p) => $p->where('student_code', 'like', '%'.$this->search.'%')->orWhere('full_name', 'like', '%'.$this->search.'%'))
+                        ->orWhereHas('classMember.user', fn (Builder $u) => $u->where('name', 'like', '%'.$this->search.'%'));
                 });
             })
             ->orderBy('id')

@@ -79,8 +79,7 @@
                                     'rounded-full px-3 py-1 text-xs font-bold',
                                     'bg-emerald-50 text-emerald-700' => $row['status'] === 'present',
                                     'bg-amber-50 text-amber-700' => $row['status'] === 'late',
-                                    'bg-orange-50 text-orange-700' => $row['status'] === 'partial',
-                                    'bg-red-50 text-red-700' => in_array($row['status'], ['absent', 'early_leave'], true),
+                                    'bg-red-50 text-red-700' => $row['status'] === 'absent',
                                     'bg-blue-50 text-blue-700' => $row['status'] === 'excused',
                                 ])>{{ $row['label'] }}</span>
                             </td>

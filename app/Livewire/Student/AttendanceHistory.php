@@ -106,7 +106,7 @@ class AttendanceHistory extends Component
                 'status' => $record->status,
                 'method' => filled($record->classSession?->qr_token) ? 'QR + GPS' : 'Thủ công',
                 'check_in_time' => $record->check_in_time,
-                'verified' => $record->is_verified,
+                'verified' => $record->is_account,
                 'distance' => $record->distance_meters,
                 'note' => $record->note,
                 'demo' => false,
@@ -114,7 +114,7 @@ class AttendanceHistory extends Component
             ->values();
 
         if ($this->classFilter !== 'all') {
-            $records = $records->where('class_id', (int) $this->classFilter)->values();
+            $records = $records->where('class_id', $this->classFilter)->values();
         }
 
         if ($this->statusFilter !== 'all') {

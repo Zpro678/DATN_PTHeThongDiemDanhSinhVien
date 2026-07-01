@@ -94,7 +94,7 @@ class AttendanceCheckInController extends Controller
         if ($user) {
             $classMember = $session->courseClass->members()
                 ->where('user_id', $user->id)
-                ->where('status', 'active')
+                ->where('status', \App\Models\ClassMember::STATUS_ACTIVE)
                 ->first();
         } else {
             $request->validate([
@@ -104,8 +104,8 @@ class AttendanceCheckInController extends Controller
             ]);
 
             $classMember = $session->courseClass->members()
-                ->where('student_code', $request->studentCode)
-                ->where('status', 'active')
+                ->whereHas('profile', fn ($p) => $p->where('student_code', $request->studentCode))
+                ->where('status', \App\Models\ClassMember::STATUS_ACTIVE)
                 ->first();
         }
 
@@ -214,7 +214,7 @@ class AttendanceCheckInController extends Controller
             'accuracy' => $accuracy,      // Lưu vào DB
             'altitude' => $altitude,      // Lưu vào DB
             'note' => $finalNote,         // Cập nhật lưu vết cảnh báo
-            'is_verified' => true,
+            'is_account' => true,
             'ip_address' => $request->ip(),
             'device_fingerprint' => $deviceId,
         ]);
@@ -237,7 +237,7 @@ class AttendanceCheckInController extends Controller
                 'class_member_id' => $memberId,
             ], [
                 'status' => 'pending',
-                'is_verified' => true,
+                'is_account' => true,
             ]);
     }
 

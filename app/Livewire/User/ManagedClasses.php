@@ -18,9 +18,9 @@ class ManagedClasses extends Component
     public string $search = '';
 
     // ID lớp đang chờ xác nhận kết thúc
-    public ?int $confirmingEndClassId = null;
+    public ?string $confirmingEndClassId = null;
 
-    public function confirmEndClass(int $classId): void
+    public function confirmEndClass(string $classId): void
     {
         $this->confirmingEndClassId = $classId;
     }
@@ -39,7 +39,7 @@ class ManagedClasses extends Component
     {
         $query = CourseClass::where('owner_user_id', auth()->id())
             ->withCount([
-                'members as students_count' => fn ($q) => $q->where('status', 'active'),
+                'members as students_count' => fn ($q) => $q->where('status', \App\Models\ClassMember::STATUS_ACTIVE),
                 'sessions as completed_sessions_count' => fn ($q) => $q->where('status', 'closed'),
             ])
             ->withCount(['meetings as studied_sessions' => fn ($query) => $query->whereHas('sessions', fn ($s) => $s->where('status', 'closed'))])
@@ -54,27 +54,18 @@ class ManagedClasses extends Component
             $query->where('status', 'ended');
         }
 
-        if ($this->semesterFilter !== 'Tất cả học kỳ') {
-            $query->where('semester', $this->semesterFilter);
-        }
-
         if (trim($this->search) !== '') {
             $search = str($this->search)->lower()->toString();
             $query->where(function ($q) use ($search) {
                 $q->whereRaw('LOWER(name) LIKE ?', ["%{$search}%"])
-                    ->orWhereRaw('LOWER(join_key) LIKE ?', ["%{$search}%"])
-                    ->orWhereRaw('LOWER(subject_code) LIKE ?', ["%{$search}%"]);
+                    ->orWhereRaw('LOWER(join_key) LIKE ?', ["%{$search}%"]);
             });
         }
 
         $classes = $query->orderByDesc('created_at')->get();
 
-        $semesters = CourseClass::where('owner_user_id', auth()->id())
-            ->whereNotNull('semester')
-            ->distinct()
-            ->pluck('semester')
-            ->filter()
-            ->values();
+        // Cột học kỳ đã được lược bỏ khỏi schema; không còn bộ lọc theo học kỳ.
+        $semesters = collect();
 
         return view('livewire.user.managed-classes', [
             'classes' => $classes,
@@ -82,7 +73,7 @@ class ManagedClasses extends Component
         ])->layout('layouts.user', ['title' => 'Lớp tôi quản lý']);
     }
 
-    public function endClass(int $classId): void
+    public function endClass(string $classId): void
     {
         $class = CourseClass::where('id', $classId)
             ->where('owner_user_id', auth()->id())

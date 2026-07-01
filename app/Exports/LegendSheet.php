@@ -23,10 +23,8 @@ class LegendSheet implements FromArray, WithStyles, WithTitle
             ['Ký hiệu', 'Ý nghĩa', 'Ảnh hưởng chuyên cần'],
             ['c', 'Có mặt',           'Tính đủ 1 buổi'],
             ['m', 'Đi muộn',          'Tính đủ 1 buổi (không trừ hoặc trừ theo CĐ)'],
-            ['vg', 'Vắng giữa giờ',   'Trừ chuyên cần theo cài đặt'],
-            ['vs', 'Về sớm',          'Trừ chuyên cần theo cài đặt'],
-            ['v', 'Vắng không phép',  'Trừ 1 buổi chuyên cần'],
-            ['p', 'Vắng có phép',     'Tính đủ 1 buổi (không trừ hoặc trừ theo CĐ)'],
+            ['v', 'Vắng',             'Trừ 1 buổi chuyên cần'],
+            ['p', 'Có phép',          'Tính đủ 1 buổi (không trừ hoặc trừ theo CĐ)'],
             ['-', 'Chưa điểm danh',   'Không tính'],
         ];
     }
@@ -46,11 +44,9 @@ class LegendSheet implements FromArray, WithStyles, WithTitle
         $colors = [
             2 => ['bg' => 'FFd1fae5', 'fg' => 'FF065f46'], // c - xanh lá
             3 => ['bg' => 'FFfef3c7', 'fg' => 'FF92400e'], // m - vàng
-            4 => ['bg' => 'FFffedd5', 'fg' => 'FF9a3412'], // vg - cam
-            5 => ['bg' => 'FFfce7f3', 'fg' => 'FF9d174d'], // vs - hồng
-            6 => ['bg' => 'FFfee2e2', 'fg' => 'FF991b1b'], // v - đỏ
-            7 => ['bg' => 'FFdbeafe', 'fg' => 'FF1e3a8a'], // p - xanh dương
-            8 => ['bg' => 'FFf1f5f9', 'fg' => 'FF475569'], // - - xám
+            4 => ['bg' => 'FFfee2e2', 'fg' => 'FF991b1b'], // v - đỏ
+            5 => ['bg' => 'FFdbeafe', 'fg' => 'FF1e3a8a'], // p - xanh dương
+            6 => ['bg' => 'FFf1f5f9', 'fg' => 'FF475569'], // - - xám
         ];
 
         foreach ($colors as $row => $color) {

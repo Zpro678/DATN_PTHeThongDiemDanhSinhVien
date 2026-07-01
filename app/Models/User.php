@@ -2,10 +2,8 @@
 
 namespace App\Models;
 
-// use Illuminate\Contracts\Auth\MustVerifyEmail;
 use Database\Factories\UserFactory;
 use Illuminate\Contracts\Auth\MustVerifyEmail;
-
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 use Illuminate\Database\Eloquent\Relations\HasMany;
@@ -20,6 +18,11 @@ class User extends Authenticatable implements MustVerifyEmail
     /** @use HasFactory<UserFactory> */
     use HasFactory, Notifiable, SoftDeletes;
 
+    // Phân quyền: USER, ADMIN, SUPER_ADMIN.
+    public const ROLE_USER = 'USER';
+    public const ROLE_ADMIN = 'ADMIN';
+    public const ROLE_SUPER_ADMIN = 'SUPER_ADMIN';
+
     protected $table = 'users';
 
     /**
@@ -28,9 +31,8 @@ class User extends Authenticatable implements MustVerifyEmail
      * @var list<string>
      */
     protected $fillable = [
-        'is_admin', // Lọc nhanh quyền quản trị tối cao.
+        'role', // Phân quyền USER/ADMIN/SUPER_ADMIN.
         'google_id', // ID Google phục vụ đăng nhập OAuth.
-        'member_id', // Mã số cá nhân/MSSV tùy chọn.
         'name', // Họ và tên.
         'email', // Email đăng nhập duy nhất.
         'password', // Mật khẩu đã hash.
@@ -57,9 +59,24 @@ class User extends Authenticatable implements MustVerifyEmail
     {
         return [
             'email_verified_at' => 'datetime', // Thời gian xác thực email.
-            'is_admin' => 'boolean', // Ép kiểu quyền quản trị.
             'password' => 'hashed', // Tự động hash mật khẩu.
         ];
+    }
+
+    /**
+     * Là quản trị viên (ADMIN hoặc SUPER_ADMIN).
+     */
+    public function isAdmin(): bool
+    {
+        return in_array($this->role, [self::ROLE_ADMIN, self::ROLE_SUPER_ADMIN], true);
+    }
+
+    /**
+     * Là quản trị viên tối cao.
+     */
+    public function isSuperAdmin(): bool
+    {
+        return $this->role === self::ROLE_SUPER_ADMIN;
     }
 
     public function getAvatarUrlAttribute(): string
@@ -89,7 +106,7 @@ class User extends Authenticatable implements MustVerifyEmail
     public function joinedClasses(): BelongsToMany
     {
         return $this->belongsToMany(CourseClass::class, 'class_members', 'user_id', 'class_id')
-            ->withPivot(['id', 'student_code', 'full_name', 'status', 'deleted_at'])
+            ->withPivot(['id', 'status', 'status_changed_at', 'deleted_at'])
             ->wherePivotNull('deleted_at')
             ->withTimestamps();
     }
@@ -102,6 +119,11 @@ class User extends Authenticatable implements MustVerifyEmail
     public function createdClassSessions(): HasMany
     {
         return $this->hasMany(ClassSession::class, 'created_by');
+    }
+
+    public function createdMeetings(): HasMany
+    {
+        return $this->hasMany(ClassMeeting::class, 'user_Created');
     }
 
     public function auditLogs(): HasMany

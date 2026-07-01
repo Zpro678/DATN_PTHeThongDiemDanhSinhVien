@@ -13,9 +13,9 @@ return new class extends Migration
     {
         Schema::create('users', function (Blueprint $table) {
             $table->id();
-            $table->boolean('is_admin')->default(false);
+            // Phân quyền: USER, ADMIN, SUPER_ADMIN.
+            $table->string('role', 50)->default('USER')->index();
             $table->string('google_id')->nullable()->unique();
-            $table->string('member_id', 50)->nullable()->index();
             $table->string('name');
             $table->string('email')->unique();
             $table->timestamp('email_verified_at')->nullable();

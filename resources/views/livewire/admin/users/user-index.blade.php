@@ -109,7 +109,7 @@
                                 </div>
                             </td>
                             <td class="whitespace-nowrap px-6 py-4">
-                                @if($user->is_admin)
+                                @if($user->isAdmin())
                                     <span class="inline-flex items-center rounded-full bg-purple-100 px-2.5 py-0.5 text-xs font-medium text-purple-800">
                                         <span class="-ml-0.5 mr-1.5 h-2 w-2 rounded-full bg-purple-400"></span>
                                         Admin

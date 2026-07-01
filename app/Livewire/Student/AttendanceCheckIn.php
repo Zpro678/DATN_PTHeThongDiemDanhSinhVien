@@ -77,7 +77,7 @@ class AttendanceCheckIn extends Component
                 'class_member_id' => $memberId,
             ], [
                 'status' => 'pending',
-                'is_verified' => true,
+                'is_account' => true,
             ]);
 
         if ($this->record && in_array($this->record->status, ['present', 'late', 'excused'])) {
@@ -100,8 +100,8 @@ class AttendanceCheckIn extends Component
         ]);
 
         $classMember = $this->session->courseClass->members()
-            ->where('student_code', $this->studentCode)
-            ->where('status', 'active')
+            ->whereHas('profile', fn ($p) => $p->where('student_code', $this->studentCode))
+            ->where('status', \App\Models\ClassMember::STATUS_ACTIVE)
             ->first();
 
         if (!$classMember) {
@@ -191,7 +191,7 @@ class AttendanceCheckIn extends Component
             'gps_latitude_recorded' => $gpsLatRecorded,
             'gps_longitude_recorded' => $gpsLngRecorded,
             'gps_fraud_flag' => $gpsFraudFlag,
-            'is_verified' => true,
+            'is_account' => true,
         ]);
 
         if ($gpsFraudFlag === 'out_of_radius') {

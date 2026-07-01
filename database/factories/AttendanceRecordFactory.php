@@ -17,7 +17,7 @@ class AttendanceRecordFactory extends Factory
             'class_session_id' => ClassSession::factory(),
             'class_member_id' => ClassMember::factory(),
             'status' => $status,
-            'is_verified' => true,
+            'is_account' => true,
             'check_in_time' => in_array($status, ['present', 'late'], true) ? now() : null,
             'ip_address' => fake()->ipv4(),
             'device_fingerprint' => hash('sha256', Str::random(32)),

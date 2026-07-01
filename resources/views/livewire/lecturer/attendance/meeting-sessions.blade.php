@@ -38,14 +38,16 @@
             <p class="mt-1 text-sm text-slate-500">Mỗi phiên là một lần điểm danh của buổi học này. Bấm "Xem chi tiết" để xem danh sách sinh viên.</p>
         </div>
         <div class="overflow-x-auto">
-            <table class="w-full min-w-[800px] text-left">
+            <table class="w-full min-w-[940px] text-left">
                 <thead class="bg-slate-50 text-sm font-extrabold uppercase tracking-wider text-slate-800 whitespace-nowrap">
                     <tr>
                         <th class="px-6 py-4 text-left">Phiên</th>
                         <th class="px-4 py-4 text-center">Phương thức</th>
                         <th class="px-4 py-4 text-center">Trạng thái</th>
                         <th class="px-4 py-4 text-center">Có mặt</th>
+                        <th class="px-4 py-4 text-center">Đi muộn</th>
                         <th class="px-4 py-4 text-center">Vắng</th>
+                        <th class="px-4 py-4 text-center">Có phép</th>
                         <th class="px-4 py-4 text-center">Chưa ĐD</th>
                         <th class="px-6 py-4 text-center">Thao tác</th>
                     </tr>
@@ -64,7 +66,9 @@
                                 <span class="inline-flex items-center rounded-md px-2 py-0.5 text-[11px] font-medium ring-1 ring-inset {{ $session->status === 'active' ? 'bg-emerald-50 text-emerald-700 ring-emerald-600/20' : 'bg-sky-50 text-sky-700 ring-sky-600/20' }}">{{ $session->status === 'active' ? 'Đang mở' : 'Đã chốt' }}</span>
                             </td>
                             <td class="px-4 py-4 text-center"><span class="text-sm font-black text-emerald-600">{{ $session->present_count }}</span></td>
+                            <td class="px-4 py-4 text-center"><span class="text-sm font-black text-amber-600">{{ $session->late_count }}</span></td>
                             <td class="px-4 py-4 text-center"><span class="text-sm font-black text-rose-600">{{ $session->absent_count }}</span></td>
+                            <td class="px-4 py-4 text-center"><span class="text-sm font-black text-sky-600">{{ $session->excused_count }}</span></td>
                             <td class="px-4 py-4 text-center"><span class="text-sm font-black text-slate-400">{{ $session->pending_count }}</span></td>
                             <td class="px-6 py-4 text-center">
                                 <a href="{{ $session->qr_token ? route('lecturer.attendance.qr.session', $session) : route('lecturer.attendance.manual.session', $session) }}" class="whitespace-nowrap rounded-xl bg-white px-4 py-2 text-xs font-bold text-slate-700 shadow-sm ring-1 ring-inset ring-slate-300 transition-all hover:bg-slate-50 hover:text-slate-900">Xem chi tiết</a>
@@ -72,7 +76,7 @@
                         </tr>
                     @empty
                         <tr>
-                            <td colspan="7" class="px-6 py-14 text-center text-sm text-slate-500">Buổi này chưa có phiên điểm danh nào.</td>
+                            <td colspan="9" class="px-6 py-14 text-center text-sm text-slate-500">Buổi này chưa có phiên điểm danh nào.</td>
                         </tr>
                     @endforelse
                 </tbody>

@@ -23,12 +23,12 @@ class StatisticalService
      *
      * Công thức tính chuyên cần (xem App\Services\AttendanceCalculator):
      * - Chỉ tính các phiên điểm danh đã chốt sổ (class_sessions.status = closed).
-     * - Mỗi phiên được quy đổi theo lesson_count để tính theo tiết học.
-     * - Vắng có phép (excused) bị loại khỏi mẫu số.
-     * - Đi muộn đếm theo số lần; cứ đủ 3 lần muộn quy thành 1 tiết vắng, phần lẻ vẫn tính có đi học.
-     * - absent, pending, invalid được xem là vắng/chưa hợp lệ sau khi phiên đã chốt.
+     * - Mỗi buổi được tổng kết bằng quy tắc phiên đầu/phiên cuối trong AttendanceCalculator.
+     * - Vắng có phép (excused) được xử lý theo cấu hình lớp.
+     * - Đi muộn dùng điểm trừ trong rules (mặc định 0.5 buổi).
+     * - absent được xem là vắng sau khi phiên đã chốt.
      *
-     * @return array{subjects: array<int, array<string, mixed>>, totals: array<string, int>, isDemo: bool}
+     * @return array{subjects: array<int, array<string, mixed>>, totals: array<string, int|float>, isDemo: bool}
      */
     public function getStudentAttendanceStatistics(int $studentUserId): array
     {
@@ -132,7 +132,7 @@ class StatisticalService
         return ClassMember::query()
             ->with(['courseClass.owner'])
             ->where('user_id', $studentUserId)
-            ->where('status', 'active')
+            ->where('status', ClassMember::STATUS_ACTIVE)
             ->orderBy('class_id')
             ->get();
     }
@@ -168,11 +168,11 @@ class StatisticalService
                 return (object) [
                     'total_sessions' => $counts['total'],
                     'present_sessions' => $counts['present'],
-                    'late_sessions' => $counts['late'] + $counts['partial'],         // gộp vắng giữa giờ
+                    'late_sessions' => $counts['late'],
                     'late_count' => $counts['late'],
                     'excused_sessions' => $counts['excused'],
-                    'absent_sessions' => $counts['absent'] + $counts['early_leave'], // gộp về sớm
-                    'counts' => $counts, // counts đầy đủ 6 trạng thái để tính % chính xác
+                    'absent_sessions' => $counts['absent'],
+                    'counts' => $counts,
                 ];
             });
     }
@@ -200,11 +200,11 @@ class StatisticalService
 
                 $rules = $courseClass ? $courseClass->getAttendanceRules() : (new \App\Models\CourseClass())->getAttendanceRules();
 
-                // Đơn vị là buổi; vắng có phép bị loại khỏi mẫu số (nếu bật). Không quy đổi muộn.
+                // Đơn vị là buổi; điểm trừ quy đổi lấy từ AttendanceCalculator.
                 $plannedSessions = max((int) ($courseClass?->total_sessions ?? 0), $total);
-                $countedTotal = AttendanceCalculator::countedSessions($total, $excused, $rules);
-                $lateAbsentSessions = 0;
-                $effectiveAbsent = max($absent, 0);
+                $countedTotal = AttendanceCalculator::countedSessions($plannedSessions, $excused, $rules);
+                $effectiveAbsent = AttendanceCalculator::effectiveAbsence($row->counts ?? [], $rules);
+                $lateAbsentSessions = max($effectiveAbsent - $absent, 0);
                 $attended = $present + $late;
                 // % chuyên cần tính trên tổng số buổi dự kiến (cả khóa) để nhất quán với quỹ vắng.
                 $percent = AttendanceCalculator::percentOfPlanned($plannedSessions, $row->counts ?? [], $rules);
@@ -252,7 +252,7 @@ class StatisticalService
      * Tính thống kê tổng hợp trên toàn bộ môn/lớp.
      *
      * @param  array<int, array<string, mixed>>  $subjects
-     * @return array<string, int>
+     * @return array<string, int|float>
      */
     private function buildTotals(array $subjects): array
     {
@@ -266,19 +266,18 @@ class StatisticalService
             'present' => (int) $subjectsCollection->sum('present'),
             'late' => (int) $subjectsCollection->sum('late'),
             'late_count' => (int) $subjectsCollection->sum('late_count'),
-            'late_absent_sessions' => (int) $subjectsCollection->sum('late_absent_sessions'),
+            'late_absent_sessions' => (float) $subjectsCollection->sum('late_absent_sessions'),
             'excused' => (int) $subjectsCollection->sum('excused'),
             'absent' => (int) $subjectsCollection->sum('absent'),
-            'effective_absent' => (int) $subjectsCollection->sum('effective_absent'),
+            'effective_absent' => (float) $subjectsCollection->sum('effective_absent'),
             'allowed_absent_sessions' => (int) $subjectsCollection->sum('allowed_absent_sessions'),
-            'safe_absence_sessions' => (int) $subjectsCollection->sum('safe_absence_sessions'),
-            'exceeded_absent_sessions' => (int) $subjectsCollection->sum('exceeded_absent_sessions'),
+            'safe_absence_sessions' => (float) $subjectsCollection->sum('safe_absence_sessions'),
+            'exceeded_absent_sessions' => (float) $subjectsCollection->sum('exceeded_absent_sessions'),
             'warning_count' => (int) $subjectsCollection->where('warning', true)->count(),
         ];
 
-        // % tổng tính trên tổng tiết kế hoạch của tất cả môn (đã bỏ vắng có phép),
-        // trừ đi vắng hiệu dụng (gồm muộn quy đổi) — nhất quán với từng môn.
-        $plannedCounted = max($totals['planned_sessions'] - $totals['excused'], 0);
+        // % tổng dùng mẫu số đã tính theo rule từng lớp, rồi trừ điểm vắng quy đổi.
+        $plannedCounted = max((float) $totals['counted_total'], 0);
         $totals['percent'] = $plannedCounted > 0
             ? (int) round((($plannedCounted - $totals['effective_absent']) / $plannedCounted) * 100)
             : 100;
@@ -289,25 +288,25 @@ class StatisticalService
     /**
      * Tạo nhãn hiển thị cho quỹ vắng dựa trên số tiết vắng đã ghi nhận.
      */
-    private function absenceBudgetLabel(int $allowedAbsentSessions, int $absent): string
+    private function absenceBudgetLabel(int $allowedAbsentSessions, float $absent): string
     {
         $remaining = $allowedAbsentSessions - $absent;
 
         if ($remaining < 0) {
-            return 'Đã vượt '.abs($remaining).' buổi';
+            return 'Đã vượt '.$this->formatSessionNumber(abs($remaining)).' buổi';
         }
 
-        if ($remaining === 0) {
+        if ($remaining == 0.0) {
             return 'Hết quỹ vắng';
         }
 
-        return 'Còn vắng '.$remaining.' buổi';
+        return 'Còn vắng '.$this->formatSessionNumber($remaining).' buổi';
     }
 
     /**
      * Phân loại trạng thái để view chỉ quyết định màu, không tự tính dữ liệu.
      */
-    private function absenceBudgetState(int $allowedAbsentSessions, int $absent): string
+    private function absenceBudgetState(int $allowedAbsentSessions, float $absent): string
     {
         $remaining = $allowedAbsentSessions - $absent;
 
@@ -315,10 +314,15 @@ class StatisticalService
             return 'danger';
         }
 
-        if ($remaining === 0) {
+        if ($remaining == 0.0) {
             return 'warning';
         }
 
         return 'safe';
+    }
+
+    private function formatSessionNumber(float $value): string
+    {
+        return rtrim(rtrim(number_format($value, 1), '0'), '.');
     }
 }

@@ -32,7 +32,7 @@ class LeaveRequestReviewService
 
             $record->fill([
                 'status' => 'excused',
-                'is_verified' => $leaveRequest->classMember->user_id !== null,
+                'is_account' => $leaveRequest->classMember->user_id !== null,
                 'check_in_time' => null,
                 'note' => 'Đơn xin nghỉ đã được duyệt.',
             ])->save();

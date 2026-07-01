@@ -25,7 +25,7 @@ class LecturerQrAttendanceTest extends TestCase
         $this->actingAs($user)
             ->get(route('lecturer.attendance.qr.create'))
             ->assertOk()
-            ->assertSee('Thiết lập điểm danh')
+            ->assertSee('THIẾT LẬP ĐIỂM DANH')
             ->assertSee('Lớp demo điểm danh QR')
             ->assertSee('Bắt đầu phát mã');
 
@@ -43,6 +43,7 @@ class LecturerQrAttendanceTest extends TestCase
 
         Livewire::actingAs($user)
             ->test(QrAttendanceCreate::class)
+            ->set('name', 'Buổi điểm danh QR')
             ->call('save')
             ->assertHasNoErrors();
 
@@ -68,14 +69,14 @@ class LecturerQrAttendanceTest extends TestCase
 
         $record = AttendanceRecord::query()
             ->where('class_session_id', $session->id)
-            ->whereHas('classMember', fn ($query) => $query->where('student_code', 'QR002'))
+            ->whereHas('classMember.profile', fn ($query) => $query->where('student_code', 'QR002'))
             ->firstOrFail();
 
         Livewire::actingAs($owner)
             ->test(QrAttendanceSession::class, ['session' => $session->id])
             ->set('search', 'QR002')
-            ->assertSee('Trần Gia Bảo')
-            ->assertDontSee('Nguyễn Minh Anh')
+            ->assertSee('Qr Beta Target')
+            ->assertDontSee('Qr Alpha Hidden')
             ->call('updateStatus', $record->id, 'present')
             ->assertHasNoErrors();
 
@@ -92,24 +93,31 @@ class LecturerQrAttendanceTest extends TestCase
     {
         $owner = User::factory()->create();
         $courseClass = CourseClass::factory()->create(['owner_user_id' => $owner->id]);
+        $meeting = \App\Models\ClassMeeting::factory()->create([
+            'class_id' => $courseClass->id,
+            'user_Created' => $owner->id,
+            'date' => now()->addDay()->toDateString(),
+            'status' => 'active',
+        ]);
         $session = ClassSession::factory()->create([
             'class_id' => $courseClass->id,
+            'meeting_id' => $meeting->id,
             'created_by' => $owner->id,
+            'date' => $meeting->date,
             'status' => 'active',
             'qr_token' => 'QRSESSIONTOKEN',
             'token_expires_at' => now()->addMinutes(15),
         ]);
 
         collect([
-            ['QR001', 'Nguyễn Minh Anh'],
-            ['QR002', 'Trần Gia Bảo'],
-            ['QR003', 'Lê Hoàng Nam'],
+            ['QR001', 'Qr Alpha Hidden'],
+            ['QR002', 'Qr Beta Target'],
+            ['QR003', 'Qr Gamma Extra'],
         ])->each(function (array $student) use ($courseClass, $session): void {
-            $member = ClassMember::factory()->create([
+            $member = ClassMember::factory()->withoutProfile()->create([
                 'class_id' => $courseClass->id,
-                'student_code' => $student[0],
-                'full_name' => $student[1],
             ]);
+            $member->syncProfile(['student_code' => $student[0], 'full_name' => $student[1]]);
 
             AttendanceRecord::factory()->create([
                 'class_session_id' => $session->id,
@@ -122,38 +130,6 @@ class LecturerQrAttendanceTest extends TestCase
         return [$owner, $session];
     }
 
-    public function test_class_default_gps_settings_are_saved_and_loaded_in_qr_creation(): void
-    {
-        $owner = User::factory()->create();
-        $courseClass = CourseClass::factory()->create([
-            'owner_user_id' => $owner->id,
-            'gps_latitude' => null,
-            'gps_longitude' => null,
-            'gps_radius' => null,
-        ]);
-
-        // 1. Verify ClassSettings saves the GPS config
-        Livewire::actingAs($owner)
-            ->test(ClassSettings::class, ['courseClass' => $courseClass])
-            ->set('gpsEnabled', true)
-            ->set('gpsLatitude', 10.762622)
-            ->set('gpsLongitude', 106.660172)
-            ->set('gpsRadius', 150)
-            ->call('save')
-            ->assertHasNoErrors();
-
-        $courseClass->refresh();
-        $this->assertEquals(10.762622, $courseClass->gps_latitude);
-        $this->assertEquals(106.660172, $courseClass->gps_longitude);
-        $this->assertEquals(150, $courseClass->gps_radius);
-
-        // 2. Verify QrAttendanceCreate loads it as default
-        Livewire::actingAs($owner)
-            ->test(QrAttendanceCreate::class)
-            ->set('classId', (string) $courseClass->id)
-            ->assertSet('gpsEnabled', true)
-            ->assertSet('gpsLatitude', 10.762622)
-            ->assertSet('gpsLongitude', 106.660172)
-            ->assertSet('gpsRadius', 150);
-    }
+    // Lưu ý: cấu hình GPS mức lớp đã bị loại bỏ khỏi schema (DBML mới);
+    // GPS giờ chỉ thiết lập ở mức phiên điểm danh, nên test cũ về GPS mặc định của lớp đã được gỡ.
 }

@@ -68,22 +68,24 @@ class StudentsSheet implements FromArray, ShouldAutoSize, WithStyles, WithTitle
 
         // ── Truy vấn học viên ──
         $members = ClassMember::query()
-            ->with(['courseClass:id,name,join_key', 'user:id,email'])
+            ->with(['courseClass:id,name,join_key', 'user:id,name,email', 'profile'])
+            ->leftJoin('class_member_profiles', 'class_member_profiles.class_member_id', '=', 'class_members.id')
+            ->select('class_members.*')
             ->whereHas('courseClass', fn (Builder $q) => $q->where('owner_user_id', $this->ownerUserId))
             ->when(
                 $this->statusFilter === 'archived',
                 fn (Builder $q) => $q->onlyTrashed(),
-                fn (Builder $q) => $q->where('status', 'active'),
+                fn (Builder $q) => $q->where('class_members.status', \App\Models\ClassMember::STATUS_ACTIVE),
             )
-            ->when($this->classFilter !== 'all', fn (Builder $q) => $q->where('class_id', $this->classFilter))
+            ->when($this->classFilter !== 'all', fn (Builder $q) => $q->where('class_members.class_id', $this->classFilter))
             ->when($this->search !== '', function (Builder $q) {
                 $q->where(function (Builder $q) {
-                    $q->where('full_name', 'like', '%' . $this->search . '%')
-                      ->orWhere('student_code', 'like', '%' . $this->search . '%')
+                    $q->where('class_member_profiles.full_name', 'like', '%' . $this->search . '%')
+                      ->orWhere('class_member_profiles.student_code', 'like', '%' . $this->search . '%')
                       ->orWhereHas('user', fn (Builder $q) => $q->where('email', 'like', '%' . $this->search . '%'));
                 });
             })
-            ->orderBy('full_name')
+            ->orderBy('class_member_profiles.full_name')
             ->get();
 
         // ── Truy vấn buổi học & tổng kết ──
@@ -117,8 +119,6 @@ class StudentsSheet implements FromArray, ShouldAutoSize, WithStyles, WithTitle
             'Tổng số buổi',
             'Có mặt', 
             'Đi muộn',
-            'Vắng giữa giờ',
-            'Về sớm',
             'Vắng', 
             'Có phép',
             'Tổng điểm trừ',
@@ -140,7 +140,7 @@ class StudentsSheet implements FromArray, ShouldAutoSize, WithStyles, WithTitle
 
         foreach ($members as $member) {
             $memberSummaries = $meetingSummaries->get($member->id, collect())->keyBy('meeting_id');
-            $counts = ['present' => 0, 'late' => 0, 'partial' => 0, 'early_leave' => 0, 'excused' => 0, 'absent' => 0, 'total' => 0, 'deduction' => 0.0];
+            $counts = ['present' => 0, 'late' => 0, 'excused' => 0, 'absent' => 0, 'total' => 0, 'deduction' => 0.0];
             
             // Loop through all $meetings to build counts. Only closed meetings of this class are considered.
             foreach ($meetings as $meeting) {
@@ -168,7 +168,7 @@ class StudentsSheet implements FromArray, ShouldAutoSize, WithStyles, WithTitle
                 
                 $formulaStr = preg_replace_callback('/[a-z]+/', function($matches) {
                     $word = $matches[0];
-                    $allowed = ['c', 'm', 'vg', 'vs', 'v', 'p', 't', 'floor', 'ceil', 'round', 'max', 'min', 'abs'];
+                    $allowed = ['c', 'm', 'v', 'p', 't', 'floor', 'ceil', 'round', 'max', 'min', 'abs'];
                     return in_array($word, $allowed) ? $word : '';
                 }, $formulaStr);
 
@@ -176,8 +176,6 @@ class StudentsSheet implements FromArray, ShouldAutoSize, WithStyles, WithTitle
                 
                 $formulaStr = preg_replace('/\bc\b/', $counts['present'], $formulaStr);
                 $formulaStr = preg_replace('/\bm\b/', $counts['late'], $formulaStr);
-                $formulaStr = preg_replace('/\bvg\b/', $counts['partial'], $formulaStr);
-                $formulaStr = preg_replace('/\bvs\b/', $counts['early_leave'], $formulaStr);
                 $formulaStr = preg_replace('/\bv\b/', $counts['absent'], $formulaStr);
                 $formulaStr = preg_replace('/\bp\b/', $counts['excused'], $formulaStr);
                 $formulaStr = preg_replace('/\bt\b/', $counts['total'], $formulaStr);
@@ -209,8 +207,6 @@ class StudentsSheet implements FromArray, ShouldAutoSize, WithStyles, WithTitle
                         $statusMap = [
                             'present'     => 'c',
                             'late'        => 'm',
-                            'partial'     => 'vg',
-                            'early_leave' => 'vs',
                             'absent'      => 'v',
                             'excused'     => 'p',
                         ];
@@ -227,8 +223,6 @@ class StudentsSheet implements FromArray, ShouldAutoSize, WithStyles, WithTitle
                 $counts['total'],
                 $counts['present'],
                 $counts['late'],
-                $counts['partial'],
-                $counts['early_leave'],
                 $counts['absent'],
                 $counts['excused'],
                 $counts['deduction'],
@@ -254,19 +248,15 @@ class StudentsSheet implements FromArray, ShouldAutoSize, WithStyles, WithTitle
             
             $cCol      = Coordinate::stringFromColumnIndex($colIdx);
             $mCol      = Coordinate::stringFromColumnIndex($colIdx + 1);
-            $vgCol     = Coordinate::stringFromColumnIndex($colIdx + 2);
-            $vsCol     = Coordinate::stringFromColumnIndex($colIdx + 3);
-            $vCol      = Coordinate::stringFromColumnIndex($colIdx + 4);
-            $pCol      = Coordinate::stringFromColumnIndex($colIdx + 5);
-            $deductCol = Coordinate::stringFromColumnIndex($colIdx + 6);
-            $ccCol     = Coordinate::stringFromColumnIndex($colIdx + 7);
+            $vCol      = Coordinate::stringFromColumnIndex($colIdx + 2);
+            $pCol      = Coordinate::stringFromColumnIndex($colIdx + 3);
+            $deductCol = Coordinate::stringFromColumnIndex($colIdx + 4);
+            $ccCol     = Coordinate::stringFromColumnIndex($colIdx + 5);
 
             $rows[] = [
                 'TỔNG KẾT LỚP', '', '', '', '',
                 'TB có mặt',  "=AVERAGE({$cCol}{$start}:{$cCol}{$end})",
                 'TB muộn',    "=AVERAGE({$mCol}{$start}:{$mCol}{$end})",
-                'TB vắng giữa', "=AVERAGE({$vgCol}{$start}:{$vgCol}{$end})",
-                'TB về sớm',  "=AVERAGE({$vsCol}{$start}:{$vsCol}{$end})",
                 'TB vắng', "=AVERAGE({$vCol}{$start}:{$vCol}{$end})",
                 'TB có phép', "=AVERAGE({$pCol}{$start}:{$pCol}{$end})",
                 'TB điểm trừ', "=AVERAGE({$deductCol}{$start}:{$deductCol}{$end})",

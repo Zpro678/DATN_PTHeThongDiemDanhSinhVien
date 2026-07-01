@@ -17,7 +17,7 @@ class AttendanceRecord extends Model
         'class_session_id', // ID của phiên điểm danh.
         'class_member_id', // ID thành viên lớp được điểm danh.
         'status', // Trạng thái điểm danh pending/present/late/absent/excused/invalid.
-        'is_verified', // True nếu sinh viên có tài khoản, false nếu điền form.
+        'is_account', // True nếu sinh viên có tài khoản, false nếu điền form.
         'check_in_time', // Thời điểm ghi nhận có mặt.
         'ip_address', // IP mạng của thiết bị điểm danh.
         'device_fingerprint', // Mã định danh thiết bị đã băm.
@@ -32,7 +32,7 @@ class AttendanceRecord extends Model
     protected function casts(): array
     {
         return [
-            'is_verified' => 'boolean', // Ép kiểu trạng thái xác thực.
+            'is_account' => 'boolean', // Ép kiểu cờ có tài khoản.
             'check_in_time' => 'datetime', // Ép kiểu thời điểm check-in.
             'distance_meters' => 'decimal:2', // Ép kiểu khoảng cách GPS.
             'gps_accuracy_meters' => 'float',

@@ -107,6 +107,7 @@
     $studentJoinedCards = $studentDashboard['joined_cards'] ?? [];
     $studentJoinedClassesCount = $studentDashboardStats['joined_classes'] ?? 0;
     $studentAverageAttendance = $studentDashboardStats['attendance_percent'] ?? 100;
+    $studentAverageAttendanceLabel = $studentDashboardStats['attendance_percent_label'] ?? "{$studentAverageAttendance}%";
     $studentAbsentSessions = $studentDashboardStats['absent_sessions'] ?? 0;
     $studentWarningCount = $studentDashboardStats['warning_count'] ?? 0;
     $studentPendingLeaveRequests = $studentDashboardStats['pending_leave_requests'] ?? 0;
@@ -115,7 +116,7 @@
     // KPI học viên (4 thẻ). Đơn chờ duyệt + buổi gần nhất nằm trong panel "Chuyên cần của bạn".
     $studentStats = [
         ['label' => 'Lớp tham gia', 'value' => $studentJoinedClassesCount, 'icon' => 'users', 'color' => 'text-tertiary', 'bg' => 'bg-tertiary/10'],
-        ['label' => 'CC trung bình', 'value' => "{$studentAverageAttendance}%", 'icon' => 'check-circle', 'color' => 'text-primary', 'bg' => 'bg-primary/10'],
+        ['label' => 'CC trung bình', 'value' => $studentAverageAttendanceLabel, 'icon' => 'check-circle', 'color' => 'text-primary', 'bg' => 'bg-primary/10'],
         ['label' => 'Buổi vắng', 'value' => $studentAbsentSessions, 'icon' => 'clock', 'color' => 'text-error', 'bg' => 'bg-error/10'],
         ['label' => 'Cảnh báo', 'value' => $studentWarningCount, 'icon' => 'alert-triangle', 'color' => 'text-error', 'bg' => 'bg-error/10'],
     ];
@@ -172,7 +173,7 @@
 
         $studentShortcuts = [
             ['label' => 'Lịch sử điểm danh', 'hint' => 'Xem các buổi', 'icon' => 'history', 'href' => route('student.attendance.history')],
-            ['label' => 'Chuyên cần của tôi', 'hint' => "{$studentAverageAttendance}% trung bình", 'icon' => 'bar-chart', 'href' => route('student.attendance.stats')],
+            ['label' => 'Chuyên cần của tôi', 'hint' => "{$studentAverageAttendanceLabel} trung bình", 'icon' => 'bar-chart', 'href' => route('student.attendance.stats')],
             ['label' => 'Gửi đơn xin nghỉ', 'hint' => 'Tạo đơn mới', 'icon' => 'send', 'href' => route('student.leave-requests.create')],
         ];
     @endphp
@@ -449,9 +450,7 @@
                                         </button>
                                     </div>
                                     <p class="mb-4 flex items-center gap-2 text-sm text-on-surface-variant">
-                                        <span class="font-bold">{{ $class['code'] }}</span>
-                                        <span class="h-1 w-1 rounded-full bg-outline-variant"></span>
-                                        <span>{{ $class['subject_code'] }}</span>
+                                        <span class="font-bold">Mã lớp: {{ $class['code'] }}</span>
                                     </p>
                                     <div class="mb-6 space-y-3 rounded-2xl border border-outline-variant/20 bg-surface-container-low p-4">
                                         <div class="flex justify-between text-sm text-on-surface">
@@ -464,10 +463,10 @@
                                         <div>
                                             <div class="mb-1 flex justify-between text-sm">
                                                 <span class="text-on-surface-variant">Chuyên cần cả lớp</span>
-                                                <span class="{{ $class['color'] }} font-bold">{{ $class['attendance'] }}%</span>
+                                                <span class="{{ $class['color'] }} font-bold">{{ $class['attendance_label'] ?? (($class['attendance'] ?? 0) . '%') }}</span>
                                             </div>
                                             <div class="h-2 w-full overflow-hidden rounded-full bg-surface-container-highest">
-                                                <div class="{{ $class['bar'] }} h-full rounded-full" style="width: {{ $class['attendance'] }}%"></div>
+                                                <div class="{{ $class['bar'] }} h-full rounded-full" style="width: {{ $class['attendance_bar_width'] ?? ($class['attendance'] ?? 0) }}%"></div>
                                             </div>
                                         </div>
                                     </div>
@@ -609,10 +608,10 @@
                                         <div>
                                             <div class="mb-1 flex justify-between text-sm">
                                                 <span class="text-on-surface-variant">Chuyên cần cá nhân</span>
-                                                <span class="{{ $class['color'] }} font-bold">{{ $class['attendance'] }}%</span>
+                                                <span class="{{ $class['color'] }} font-bold">{{ $class['attendance_label'] ?? (($class['attendance'] ?? 0) . '%') }}</span>
                                             </div>
                                             <div class="h-2 w-full overflow-hidden rounded-full bg-surface-container-highest">
-                                                <div class="{{ $class['bar'] }} h-full rounded-full" style="width: {{ $class['attendance'] }}%"></div>
+                                                <div class="{{ $class['bar'] }} h-full rounded-full" style="width: {{ $class['attendance_bar_width'] ?? ($class['attendance'] ?? 0) }}%"></div>
                                             </div>
                                         </div>
                                     </div>

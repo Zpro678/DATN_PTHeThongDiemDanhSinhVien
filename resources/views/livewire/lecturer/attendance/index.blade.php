@@ -23,15 +23,16 @@
             <h2 class="text-xl font-extrabold text-slate-900">Buổi điểm danh gần đây ({{ number_format($meetings->total()) }})</h2>
         </div>
         <div class="overflow-x-auto">
-            <table class="w-full min-w-[900px] text-left whitespace-nowrap">
+            <table class="w-full min-w-[980px] text-left whitespace-nowrap">
                 <thead class="bg-slate-50 text-sm font-extrabold uppercase tracking-wider text-slate-800 whitespace-nowrap">
                     <tr>
-                        <th class="w-[25%] px-6 py-4 text-left">Buổi học</th>
-                        <th class="w-[30%] pl-10 pr-4 py-4 text-left">Lớp</th>
+                        <th class="w-[24%] px-6 py-4 text-left">Buổi học</th>
+                        <th class="w-[28%] pl-10 pr-4 py-4 text-left">Lớp</th>
                         <th class="w-[10%] px-4 py-4 text-center">Ngày</th>
-                        <th class="w-[10%] px-4 py-4 text-center">Đã ghi nhận</th>
+                        <th class="w-[8%] px-4 py-4 text-center">Có mặt</th>
+                        <th class="w-[8%] px-4 py-4 text-center">Đi muộn</th>
                         <th class="w-[10%] px-4 py-4 text-center">Vắng</th>
-                        <th class="w-[15%] px-6 py-4 text-center">Thao tác</th>
+                        <th class="w-[12%] px-6 py-4 text-center">Thao tác</th>
                     </tr>
                 </thead>
                 <tbody class="divide-y divide-slate-100">
@@ -64,6 +65,9 @@
                                 <span class="inline-flex h-7 min-w-7 items-center justify-center rounded-full bg-emerald-50 px-2 text-sm font-black text-emerald-600 ring-1 ring-inset ring-emerald-600/20">{{ $meeting->present_count }}</span>
                             </td>
                             <td class="px-4 py-4 text-center">
+                                <span class="inline-flex h-7 min-w-7 items-center justify-center rounded-full bg-amber-50 px-2 text-sm font-black text-amber-600 ring-1 ring-inset ring-amber-600/20">{{ $meeting->late_count }}</span>
+                            </td>
+                            <td class="px-4 py-4 text-center">
                                 <span class="inline-flex h-7 min-w-7 items-center justify-center rounded-full bg-rose-50 px-2 text-sm font-black text-rose-600 ring-1 ring-inset ring-rose-600/20">{{ $meeting->absent_count }}</span>
                             </td>
                             <td class="px-6 py-4 text-center">
@@ -83,7 +87,7 @@
                         </tr>
                     @empty
                         <tr>
-                            <td colspan="6" class="px-6 py-14 text-center text-sm text-slate-500">Chưa có buổi điểm danh nào.</td>
+                            <td colspan="7" class="px-6 py-14 text-center text-sm text-slate-500">Chưa có buổi điểm danh nào.</td>
                         </tr>
                     @endforelse
                 </tbody>

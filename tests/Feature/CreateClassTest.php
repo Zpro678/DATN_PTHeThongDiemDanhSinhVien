@@ -33,11 +33,10 @@ class CreateClassTest extends TestCase
         Livewire::actingAs($user)
             ->test(CreateClass::class)
             ->set('name', 'Kiểm thử phần mềm')
-            ->set('code', 'test-2026-01')
+            ->set('randomSuffix', '2401')
             ->set('subjectCode', 'SWE401')
             ->set('semester', 'HK1 2026-2027')
             ->set('description', 'Lớp học được tạo từ Livewire.')
-            ->set('totalSessions', 36)
             ->set('requireApproval', true)
             ->call('save')
             ->assertHasNoErrors()
@@ -46,10 +45,10 @@ class CreateClassTest extends TestCase
         $this->assertDatabaseHas('classes', [
             'owner_user_id' => $user->id,
             'name' => 'Kiểm thử phần mềm',
-            'join_key' => 'TEST-2026-01',
+            'join_key' => 'SWE2401',
             'subject_code' => 'SWE401',
             'semester' => 'HK1 2026-2027',
-            'total_sessions' => 36,
+            'total_sessions' => 0,
             'require_approval' => true,
             'status' => 'active',
         ]);

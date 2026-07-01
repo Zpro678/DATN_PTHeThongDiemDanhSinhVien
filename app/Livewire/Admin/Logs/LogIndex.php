@@ -16,7 +16,7 @@ class LogIndex extends Component
 
     public function mount()
     {
-        abort_unless(Auth::user()?->is_admin, 403);
+        abort_unless(Auth::user()?->isAdmin(), 403);
     }
 
     public function updatingSearch()
@@ -27,7 +27,7 @@ class LogIndex extends Component
     #[Layout('components.admin-layout')]
     public function render()
     {
-        abort_unless(Auth::user()?->is_admin, 403);
+        abort_unless(Auth::user()?->isAdmin(), 403);
 
         $query = AuditLog::query()->with(['user', 'courseClass']);
 

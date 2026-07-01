@@ -44,7 +44,7 @@ class CreateClass extends Component
     }
 
     /**
-     * Mỗi khi subjectCode hoặc semester thay đổi,
+     * Mỗi khi subjectCode thay đổi,
      * tự động cập nhật preview mã lớp hiển thị cho người dùng.
      */
     public function updatedSubjectCode(): void
@@ -55,7 +55,7 @@ class CreateClass extends Component
 
     /**
      * Sinh preview mã với 4 số random đã tạo lúc load trang.
-     * Ví dụ: subjectCode=INT3110, semester=HK1 2026, suffix=4829 → "INTHK14829"
+     * Ví dụ: subjectCode=INT3110, suffix=4829 → "INT4829"
      */
     private function buildPreviewCode(): string
     {
@@ -114,8 +114,6 @@ class CreateClass extends Component
             'attendanceRules' => ['required', 'array'],
             'attendanceRules.present' => ['required', 'numeric', 'max:0'],
             'attendanceRules.late' => ['required', 'numeric'],
-            'attendanceRules.partial' => ['required', 'numeric'],
-            'attendanceRules.early_leave' => ['required', 'numeric'],
             'attendanceRules.absent' => ['required', 'numeric'],
             'attendanceRules.excused' => ['required', 'numeric'],
             'requireApproval' => ['boolean'],
@@ -129,11 +127,11 @@ class CreateClass extends Component
             'owner_user_id' => auth()->id(),
             'name' => $this->name,
             'join_key' => $code,
-            'subject_code' => filled($this->subjectCode) ? strtoupper($this->subjectCode) : null,
-            'semester' => $this->semester ?: null,
+            'subject_code' => filled($this->subjectCode) ? strtoupper(trim($this->subjectCode)) : null,
+            'semester' => filled($this->semester) ? trim($this->semester) : null,
             'description' => $this->description ?: null,
             'late_threshold' => $this->lateThreshold,
-            'attendance_rules' => $this->attendanceRules,
+            'deduct_excused_absence' => ($this->attendanceRules['excused'] ?? 0) > 0,
             'total_sessions' => 0,
             'require_approval' => $this->requireApproval,
             'status' => 'active',

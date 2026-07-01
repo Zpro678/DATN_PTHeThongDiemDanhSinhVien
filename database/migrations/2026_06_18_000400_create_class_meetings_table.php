@@ -10,13 +10,14 @@ return new class extends Migration
     {
         Schema::create('class_meetings', function (Blueprint $table) {
             $table->id();
-            $table->foreignId('class_id')->constrained('classes')->cascadeOnDelete();
-            $table->foreignId('created_by')->constrained('users')->restrictOnDelete();
-            $table->string('name'); // Tên buổi học.
-            $table->date('date'); // Ngày diễn ra buổi học.
-            $table->time('start_time')->nullable(); // Giờ bắt đầu buổi.
-            $table->time('end_time')->nullable(); // Giờ kết thúc buổi.
-            $table->string('status', 50)->default('active'); // active/closed.
+            $table->foreignUuid('class_id')->constrained('classes')->cascadeOnDelete();
+            // Người tạo buổi học; restrictOnDelete (theo DBML: user_Created).
+            $table->foreignId('user_Created')->constrained('users')->restrictOnDelete();
+            $table->string('name');
+            $table->date('date');
+            $table->time('start_time')->nullable();
+            $table->time('end_time')->nullable();
+            $table->string('status', 50)->default('active'); // active | closed.
             $table->timestamps();
             $table->softDeletes();
 

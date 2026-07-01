@@ -9,16 +9,16 @@ return new class extends Migration
     public function up(): void
     {
         Schema::create('classes', function (Blueprint $table) {
-            $table->id();
+            $table->uuid('id')->primary(); // Khóa chính UUID theo DBML.
             $table->foreignId('owner_user_id')->constrained('users')->restrictOnDelete();
-            $table->string('join_key', 50)->unique();
+            $table->string('join_key', 50)->unique(); // Mã lớp SV nhập để vào lớp.
             $table->string('name');
             $table->text('description')->nullable();
-            $table->string('subject_code', 50)->nullable();
-            $table->string('semester', 50)->nullable();
+            $table->integer('late_threshold')->default(15); // Số phút trễ tối đa để tính đi muộn.
+            $table->boolean('deduct_excused_absence')->default(false); // Có trừ chuyên cần khi vắng có phép.
             $table->boolean('require_approval')->default(false);
-            $table->string('status', 50)->default('active')->index();
-            $table->unsignedInteger('total_sessions')->default(15); // Tổng số buổi dự kiến của lớp.
+            $table->string('status', 50)->default('active');
+            $table->integer('total_sessions')->default(15); // Tổng số buổi dự kiến.
             $table->timestamps();
             $table->softDeletes();
         });

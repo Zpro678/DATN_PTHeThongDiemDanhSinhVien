@@ -26,9 +26,14 @@ class AppServiceProvider extends ServiceProvider
         \Illuminate\Support\Facades\Event::listen(function (\Illuminate\Auth\Events\Login $event) {
             \Illuminate\Support\Facades\URL::defaults(['ma_user' => $event->user->id]);
             if ($event->user->email) {
-                \App\Models\ClassMember::where('email', $event->user->email)
-                    ->whereNull('user_id')
-                    ->update(['user_id' => $event->user->id]);
+                $memberIds = \App\Models\ClassMemberProfile::where('email', $event->user->email)
+                    ->pluck('class_member_id');
+                
+                if ($memberIds->isNotEmpty()) {
+                    \App\Models\ClassMember::whereIn('id', $memberIds)
+                        ->whereNull('user_id')
+                        ->update(['user_id' => $event->user->id]);
+                }
             }
         });
     }

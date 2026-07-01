@@ -17,7 +17,7 @@ trait OwnsAttendanceSessions
             ->get();
     }
 
-    private function ownedClass(int $classId): CourseClass
+    private function ownedClass(string $classId): CourseClass
     {
         return CourseClass::query()
             ->where('owner_user_id', auth()->id())

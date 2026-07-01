@@ -117,7 +117,7 @@ class ClassShow extends Component
         $count = $this->importSuccess;
         
         // Cập nhật lại số sinh viên và số buổi
-        $this->studentsCount = $this->class->members()->where('status', 'active')->count();
+        $this->studentsCount = $this->class->members()->where('status', \App\Models\ClassMember::STATUS_ACTIVE)->count();
         $this->sessionsCount = $this->class->sessions()->count();
         $this->sessionsCompleted = $this->class->sessions()->whereIn('status', ['closed', 'active'])->count();
         
@@ -159,7 +159,7 @@ class ClassShow extends Component
             $q->orderByDesc('date')->orderByDesc('created_at');
         }]);
 
-        $this->studentsCount   = $courseClass->members()->where('status', 'active')->count();
+        $this->studentsCount   = $courseClass->members()->where('status', \App\Models\ClassMember::STATUS_ACTIVE)->count();
         $this->sessionsCount = $courseClass->sessions()->count();
         $this->sessionsCompleted = $courseClass->sessions()->whereIn('status', ['closed', 'active'])->count();
         $this->pendingLeaveRequests = LeaveRequest::whereHas('classSession', function ($q) use ($courseClass) {
@@ -184,7 +184,7 @@ class ClassShow extends Component
         if ($type === 'qr') {
             $this->redirectRoute('lecturer.attendance.qr.create', ['ma_user' => auth()->id(), 'class_id' => $this->class->id], navigate: true);
         } else {
-            $this->redirectRoute('lecturer.attendance.manual.create', ['ma_user' => auth()->id(), 'class_id' => $this->class->id], navigate: true);
+            $this->redirectRoute('lecturer.attendance.create', ['ma_user' => auth()->id(), 'class_id' => $this->class->id], navigate: true);
         }
     }
 
@@ -262,10 +262,10 @@ class ClassShow extends Component
         $lines = [
             "M\u00e3 h\u1ecdc vi\u00ean,H\u1ecd v\u00e0 t\u00ean,Email,22/06,23/06,24/06",
             "HV001,Nguy\u1ec5n V\u0103n A,nva@email.com,c,m,c",
-            "HV002,Tr\u1ea7n Th\u1ecb B,ttb@email.com,vg,c,v",
-            "HV003,L\u00ea V\u0103n C,lvc@email.com,c,vs,p",
+            "HV002,Tr\u1ea7n Th\u1ecb B,ttb@email.com,v,c,v",
+            "HV003,L\u00ea V\u0103n C,lvc@email.com,c,v,p",
             "",
-            "Ch\u00fa th\u00edch k\u00fd hi\u1ec7u:,c=C\u00f3 m\u1eb7t,m=\u0110i mu\u1ed9n,vg=V\u1eafng gi\u1eefa gi\u1edd,vs=V\u1ec1 s\u1edbm,v=V\u1eafng kh\u00f4ng ph\u00e9p,p=V\u1eafng c\u00f3 ph\u00e9p",
+            "Ch\u00fa th\u00edch k\u00fd hi\u1ec7u:,c=C\u00f3 m\u1eb7t,m=\u0110i mu\u1ed9n,v=V\u1eafng kh\u00f4ng ph\u00e9p,p=V\u1eafng c\u00f3 ph\u00e9p",
         ];
         $csvContent = implode("\n", $lines);
 

@@ -47,7 +47,13 @@ class ClassAttendanceHistory extends Component
 
     public function render(): View
     {
-        $members = $this->courseClass->members()->where('status', 'active')->orderBy('student_code')->paginate($this->perPage);
+        $members = $this->courseClass->members()
+            ->where('class_members.status', \App\Models\ClassMember::STATUS_ACTIVE)
+            ->leftJoin('class_member_profiles', 'class_member_profiles.class_member_id', '=', 'class_members.id')
+            ->orderBy('class_member_profiles.student_code')
+            ->select('class_members.*')
+            ->with('profile')
+            ->paginate($this->perPage);
         $sessions = ClassSession::query()
             ->where('class_id', $this->courseClass->id)
             ->where('status', 'closed')
@@ -71,7 +77,7 @@ class ClassAttendanceHistory extends Component
         $memberStats = [];
         foreach ($members as $member) {
             $memberRecords = $records->get($member->id, collect())->keyBy('class_session_id');
-            $counts = ['present' => 0, 'late' => 0, 'partial' => 0, 'early_leave' => 0, 'excused' => 0, 'absent' => 0];
+            $counts = ['present' => 0, 'late' => 0, 'excused' => 0, 'absent' => 0];
 
             foreach ($groupedSessions as $groupKey => $daySessions) {
                 // Sắp phiên theo id (~ thời gian) để xác định "phiên cuối quyết định".
@@ -104,7 +110,7 @@ class ClassAttendanceHistory extends Component
                 // Gộp cả buổi theo quy tắc tổng kết (phiên cuối quyết định).
                 $result = AttendanceCalculator::consolidateStatuses($statuses, $rules);
                 $finalStatus = $result['status']; // present / late / absent / excused
-                $finalText = $result['label'];     // Có mặt / Đi muộn / Về sớm / Vắng / Có phép
+                $finalText = $result['label'];     // Có mặt / Đi muộn / Vắng / Có phép
 
                 // Chỉ tính vào chuyên cần các buổi mà sinh viên thực sự có bản ghi.
                 if ($hasRecord) {
@@ -112,7 +118,7 @@ class ClassAttendanceHistory extends Component
                 }
 
                 $attendedSessions = in_array($finalStatus, ['present', 'late', 'excused'], true) ? 1 : 0;
-                $absentSessions = in_array($finalStatus, ['absent', 'early_leave'], true) ? 1 : 0;
+                $absentSessions = $finalStatus === 'absent' ? 1 : 0;
 
                 $tooltipStr = collect($dayDetailsArr)
                     ->map(fn($d) => "Lần {$d['iteration']} ({$d['time']}): {$d['statusText']}")
@@ -128,10 +134,10 @@ class ClassAttendanceHistory extends Component
                 ];
             }
 
-            // % chuyên cần chuẩn (suy từ điểm trừ, đủ 6 trạng thái).
+            // % chuyên cần chuẩn theo 3 trạng thái tổng kết và có phép.
             $studied = array_sum($counts);
             $planned = max((int) ($this->courseClass->total_sessions ?? 0), $studied);
-            $totalAttended[$member->id] = $counts['present'] + $counts['late'] + $counts['partial'] + $counts['excused'];
+            $totalAttended[$member->id] = $counts['present'] + $counts['late'] + $counts['excused'];
             $memberStats[$member->id] = AttendanceCalculator::percentOfPlanned($planned, $counts, $rules);
         }
 

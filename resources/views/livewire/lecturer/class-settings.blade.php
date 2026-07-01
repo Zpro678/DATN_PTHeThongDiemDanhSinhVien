@@ -55,13 +55,17 @@
                             @error('name') <span class="text-error text-xs mt-1 block">{{ $message }}</span> @enderror
                         </label>
 
-                        <label class="col-span-1 md:col-span-2 block">
+                        <label class="col-span-1 block">
                             <span class="mb-2 block text-sm font-bold text-on-surface">Mã môn học <span class="text-xs font-normal text-on-surface-variant">(Tùy chọn)</span></span>
                             <input type="text" wire:model="subjectCode" class="w-full rounded-xl border border-outline-variant/30 bg-surface-container-lowest px-4 py-3 outline-none uppercase transition-all focus:border-primary focus:ring-2 focus:ring-primary/20" placeholder="VD: WEB301">
                             @error('subjectCode') <span class="text-error text-xs mt-1 block">{{ $message }}</span> @enderror
                         </label>
 
-
+                        <label class="col-span-1 block">
+                            <span class="mb-2 block text-sm font-bold text-on-surface">Học kỳ <span class="text-xs font-normal text-on-surface-variant">(Tùy chọn)</span></span>
+                            <input type="text" wire:model="semester" class="w-full rounded-xl border border-outline-variant/30 bg-surface-container-lowest px-4 py-3 outline-none transition-all focus:border-primary focus:ring-2 focus:ring-primary/20" placeholder="VD: HK1 2026-2027">
+                            @error('semester') <span class="text-error text-xs mt-1 block">{{ $message }}</span> @enderror
+                        </label>
 
                         <label class="col-span-1 md:col-span-2 block">
                             <span class="mb-2 block text-sm font-bold text-on-surface">Mô tả lớp học <span class="text-xs font-normal text-on-surface-variant">(Tùy chọn)</span></span>
@@ -123,7 +127,7 @@
                                 <span class="text-xs text-on-surface-variant block mt-1">Thiết lập mức điểm trừ cho từng trạng thái (ví dụ: 0.5 điểm trừ = 2 lần vi phạm thành 1 buổi vắng).</span>
                             </div>
                             
-                            <div class="grid grid-cols-2 md:grid-cols-3 gap-4">
+                            <div class="grid grid-cols-2 md:grid-cols-4 gap-4">
                                 <div>
                                     <label class="block text-xs font-bold text-on-surface mb-1">Có mặt</label>
                                     <input wire:model="attendanceRules.present" type="number" step="0.5" max="0" class="w-full rounded-xl border border-outline-variant/30 px-3 py-2 text-sm focus:border-primary focus:ring-1 focus:ring-primary">
@@ -131,14 +135,6 @@
                                 <div>
                                     <label class="block text-xs font-bold text-on-surface mb-1">Đi muộn</label>
                                     <input wire:model="attendanceRules.late" type="number" step="0.5" class="w-full rounded-xl border border-outline-variant/30 px-3 py-2 text-sm focus:border-primary focus:ring-1 focus:ring-primary">
-                                </div>
-                                <div>
-                                    <label class="block text-xs font-bold text-on-surface mb-1">Vắng giữa giờ</label>
-                                    <input wire:model="attendanceRules.partial" type="number" step="0.5" class="w-full rounded-xl border border-outline-variant/30 px-3 py-2 text-sm focus:border-primary focus:ring-1 focus:ring-primary">
-                                </div>
-                                <div>
-                                    <label class="block text-xs font-bold text-on-surface mb-1">Về sớm</label>
-                                    <input wire:model="attendanceRules.early_leave" type="number" step="0.5" class="w-full rounded-xl border border-outline-variant/30 px-3 py-2 text-sm focus:border-primary focus:ring-1 focus:ring-primary">
                                 </div>
                                 <div>
                                     <label class="block text-xs font-bold text-on-surface mb-1">Vắng</label>

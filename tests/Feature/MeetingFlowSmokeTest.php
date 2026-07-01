@@ -6,6 +6,7 @@ use App\Livewire\Lecturer\Attendance\AttendanceCreate;
 use App\Livewire\Lecturer\Attendance\AttendanceIndex;
 use App\Livewire\Lecturer\Attendance\ManualAttendanceSession;
 use App\Livewire\Lecturer\Attendance\MeetingSessions;
+use App\Livewire\Lecturer\Attendance\MeetingSummary;
 use App\Livewire\Lecturer\Attendance\QrAttendanceCreate;
 use App\Models\AttendanceRecord;
 use App\Models\ClassMeeting;
@@ -28,16 +29,19 @@ class MeetingFlowSmokeTest extends TestCase
         URL::defaults(['ma_user' => $owner->id]);
         $courseClass = CourseClass::factory()->create(['owner_user_id' => $owner->id, 'total_sessions' => 15]);
 
-        $members = collect([['SV01', 'An'], ['SV02', 'Binh']])->map(fn ($s) => ClassMember::factory()->create([
-            'class_id' => $courseClass->id,
-            'student_code' => $s[0],
-            'full_name' => $s[1],
-            'status' => 'active',
-        ]));
+        $members = collect([['SV01', 'An'], ['SV02', 'Binh']])->map(function ($s) use ($courseClass) {
+            $member = ClassMember::factory()->withoutProfile()->create([
+                'class_id' => $courseClass->id,
+                'status' => ClassMember::STATUS_ACTIVE,
+            ]);
+            $member->syncProfile(['student_code' => $s[0], 'full_name' => $s[1]]);
+
+            return $member;
+        });
 
         $meeting = ClassMeeting::query()->create([
             'class_id' => $courseClass->id,
-            'created_by' => $owner->id,
+            'user_Created' => $owner->id,
             'name' => 'Buổi 1 - Demo',
             'date' => now()->toDateString(),
             'start_time' => '07:00:00',
@@ -82,6 +86,29 @@ class MeetingFlowSmokeTest extends TestCase
             ->assertSee('Lần 1');
     }
 
+    public function test_meeting_summary_keeps_explicit_late_status(): void
+    {
+        [$owner, , $meeting] = $this->makeMeetingWithClosedSession();
+
+        $record = AttendanceRecord::query()
+            ->whereHas('classMember.profile', fn ($query) => $query->where('student_code', 'SV01'))
+            ->whereHas('classSession', fn ($query) => $query->where('meeting_id', $meeting->id))
+            ->firstOrFail();
+        $record->update(['status' => 'late']);
+
+        Livewire::actingAs($owner)
+            ->test(MeetingSummary::class, ['meeting' => $meeting])
+            ->assertSet("draftStatuses.{$record->class_member_id}", 'late')
+            ->assertSee('Đi muộn');
+
+        $this->assertDatabaseHas('meeting_summaries', [
+            'meeting_id' => $meeting->id,
+            'class_member_id' => $record->class_member_id,
+            'status' => 'late',
+            'auto_status' => 'late',
+        ]);
+    }
+
     public function test_add_session_keeps_same_meeting(): void
     {
         [$owner, , $meeting] = $this->makeMeetingWithClosedSession();
@@ -104,7 +131,7 @@ class MeetingFlowSmokeTest extends TestCase
         $owner = User::factory()->create();
         URL::defaults(['ma_user' => $owner->id]);
         $courseClass = CourseClass::factory()->create(['owner_user_id' => $owner->id, 'total_sessions' => 15]);
-        ClassMember::factory()->create(['class_id' => $courseClass->id, 'status' => 'active']);
+        ClassMember::factory()->create(['class_id' => $courseClass->id, 'status' => ClassMember::STATUS_ACTIVE]);
 
         Livewire::actingAs($owner)
             ->test(AttendanceCreate::class)
@@ -161,10 +188,10 @@ class MeetingFlowSmokeTest extends TestCase
         $owner = User::factory()->create();
         URL::defaults(['ma_user' => $owner->id]);
         $courseClass = CourseClass::factory()->create(['owner_user_id' => $owner->id, 'total_sessions' => 15]);
-        $member = ClassMember::factory()->create(['class_id' => $courseClass->id, 'status' => 'active']);
+        $member = ClassMember::factory()->create(['class_id' => $courseClass->id, 'status' => ClassMember::STATUS_ACTIVE]);
 
         $meeting = ClassMeeting::query()->create([
-            'class_id' => $courseClass->id, 'created_by' => $owner->id, 'name' => 'Buổi 1',
+            'class_id' => $courseClass->id, 'user_Created' => $owner->id, 'name' => 'Buổi 1',
             'date' => now()->toDateString(), 'status' => 'active',
         ]);
         $session = ClassSession::factory()->create([

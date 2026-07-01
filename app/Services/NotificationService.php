@@ -416,7 +416,7 @@ class NotificationService
     /**
      * Đã có thông báo cùng loại cho cùng lớp đang chưa đọc hay chưa (chống gửi trùng).
      */
-    private function hasUnreadLike(int $userId, string $type, int $classId): bool
+    private function hasUnreadLike(int $userId, string $type, string $classId): bool
     {
         return Notification::query()
             ->where('notifiable_id', $userId)

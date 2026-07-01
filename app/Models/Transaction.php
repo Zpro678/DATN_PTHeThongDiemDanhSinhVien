@@ -12,24 +12,30 @@ class Transaction extends Model
 
     protected $table = 'transactions';
 
-    public $timestamps = false;
-
     protected $fillable = [
         'user_id', // ID người thực hiện giao dịch.
         'plan_id', // Gói được thanh toán trong giao dịch này.
         'amount', // Số tiền thanh toán.
-        'payment_method', // Phương thức thanh toán.
+        'currency', // Đơn vị tiền tệ.
+        'payment_method', // Cổng thanh toán: MOMO/PAYOS/VNPAY/STRIPE.
         'transaction_code', // Mã giao dịch nội bộ duy nhất.
-        'partner_reference_id', // Mã tham chiếu từ cổng thanh toán.
-        'status', // Trạng thái giao dịch pending/success/failed/canceled.
-        'created_at', // Thời điểm tạo giao dịch.
+        'reference_code', // Mã tham chiếu gửi sang cổng thanh toán.
+        'gateway_transaction_id', // Mã giao dịch do cổng trả về.
+        'status', // Trạng thái giao dịch.
+        'payment_url', // Link thanh toán do gateway tạo.
+        'payment_response', // Dữ liệu phản hồi từ cổng.
+        'failure_reason', // Lý do thất bại nếu lỗi.
+        'paid_at', // Thời điểm thanh toán thành công.
+        'expired_at', // Thời gian hết hạn thanh toán.
     ];
 
     protected function casts(): array
     {
         return [
             'amount' => 'decimal:2', // Ép kiểu số tiền thanh toán.
-            'created_at' => 'datetime', // Ép kiểu thời điểm tạo.
+            'payment_response' => 'array', // Ép kiểu phản hồi cổng dạng JSON.
+            'paid_at' => 'datetime',
+            'expired_at' => 'datetime',
         ];
     }
 

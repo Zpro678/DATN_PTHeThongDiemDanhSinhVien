@@ -2,6 +2,7 @@
 
 namespace App\Models;
 
+use App\Services\AttendanceCalculator;
 use Carbon\Carbon;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
@@ -18,7 +19,7 @@ class ClassMeeting extends Model
 
     protected $fillable = [
         'class_id', // ID của lớp học.
-        'created_by', // ID chủ lớp tạo buổi học.
+        'user_Created', // ID chủ lớp tạo buổi học (theo DBML).
         'name', // Tên buổi học.
         'date', // Ngày diễn ra buổi học.
         'start_time', // Giờ bắt đầu.
@@ -40,7 +41,7 @@ class ClassMeeting extends Model
 
     public function creator(): BelongsTo
     {
-        return $this->belongsTo(User::class, 'created_by');
+        return $this->belongsTo(User::class, 'user_Created');
     }
 
     public function sessions(): HasMany
@@ -126,12 +127,12 @@ class ClassMeeting extends Model
         // Phiên thủ công mặc định "Có mặt" (giảng viên chỉ sửa ngoại lệ); phiên QR giữ "chưa điểm danh".
         $defaultStatus = empty($overrides['qr_token']) ? 'present' : 'pending';
 
-        $this->courseClass->members()->where('status', 'active')->get()->each(fn ($member) => AttendanceRecord::query()->firstOrCreate([
+        $this->courseClass->members()->where('status', ClassMember::STATUS_ACTIVE)->get()->each(fn ($member) => AttendanceRecord::query()->firstOrCreate([
             'class_session_id' => $session->id,
             'class_member_id' => $member->id,
         ], [
             'status' => $defaultStatus,
-            'is_verified' => $member->user_id !== null,
+            'is_account' => $member->user_id !== null,
         ]));
 
         return $session;
@@ -157,29 +158,25 @@ class ClassMeeting extends Model
     }
 
     /**
-     * Gộp trạng thái điểm danh theo từng sinh viên qua tất cả phiên của buổi.
-     * Trả về ['present' => int, 'absent' => int] ở mức buổi.
-     *
-     * Một sinh viên được tính "có mặt" nếu có mặt/đi trễ/có phép ở bất kỳ phiên nào;
-     * tính "vắng" nếu bị đánh vắng và không có mặt ở phiên nào.
+     * Gộp trạng thái điểm danh theo từng sinh viên qua tất cả phiên của buổi
+     * theo quy tắc phiên đầu/phiên cuối.
      *
      * @param  Collection<int, AttendanceRecord>  $records  Bản ghi đã gom theo class_member_id.
      */
     public static function consolidateCounts(Collection $recordsByMember): array
     {
-        $present = 0;
-        $absent = 0;
+        $counts = ['present' => 0, 'late' => 0, 'absent' => 0];
 
         foreach ($recordsByMember as $memberRecords) {
-            $statuses = $memberRecords->pluck('status');
+            $statuses = $memberRecords
+                ->sortBy(fn ($record) => (int) ($record->class_session_id ?? $record->session_id ?? 0))
+                ->pluck('status')
+                ->all();
 
-            if ($statuses->contains(fn ($s) => in_array($s, ['present', 'late', 'excused'], true))) {
-                $present++;
-            } elseif ($statuses->contains('absent')) {
-                $absent++;
-            }
+            $result = AttendanceCalculator::consolidateStatuses($statuses);
+            $counts[$result['status']] = ($counts[$result['status']] ?? 0) + 1;
         }
 
-        return ['present' => $present, 'absent' => $absent];
+        return $counts;
     }
 }

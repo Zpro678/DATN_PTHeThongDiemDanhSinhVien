@@ -26,7 +26,7 @@ class ClassStatistics extends Component
             ->where('id', $this->class_id)
             ->firstOrFail();
 
-        $members = $class->members()->where('status', 'active')->with('user')->get();
+        $members = $class->members()->where('status', \App\Models\ClassMember::STATUS_ACTIVE)->with('user')->get();
         $memberIds = $members->pluck('id')->all();
         $statsMap = $memberIds ? $service->getStudentsAttendanceStats($memberIds) : [];
 

@@ -14,7 +14,7 @@ use Maatwebsite\Excel\Concerns\WithMultipleSheets;
 
 class StudentsImport implements ToCollection, WithStartRow, WithMultipleSheets
 {
-    protected int $classId;
+    protected string $classId;
     protected ?string $importToken;
     protected bool $syncAttendance;
 
@@ -22,7 +22,7 @@ class StudentsImport implements ToCollection, WithStartRow, WithMultipleSheets
 
     public int $successCount = 0;
 
-    public function __construct(int $classId, ?string $importToken = null, bool $syncAttendance = false)
+    public function __construct(string $classId, ?string $importToken = null, bool $syncAttendance = false)
     {
         $this->classId = $classId;
         $this->importToken = $importToken;
@@ -137,7 +137,7 @@ class StudentsImport implements ToCollection, WithStartRow, WithMultipleSheets
                     $meeting = ClassMeeting::create([
                         'class_id' => $this->classId,
                         'date' => $dateStr,
-                        'created_by' => auth()->id(),
+                        'user_Created' => auth()->id(),
                         'name' => 'Buổi học ngày ' . Carbon::parse($dateStr)->format('d/m/Y') . ($nth > 1 ? " (Lần $nth)" : ''),
                         'status' => 'closed',
                     ]);
@@ -168,8 +168,8 @@ class StudentsImport implements ToCollection, WithStartRow, WithMultipleSheets
             } else {
                 // Silently ignore known summary columns from export
                 $lowerVal = mb_strtolower($colValue);
-                $isSummaryColumn = preg_match('/^(tổng|có mặt|đi muộn|vắng|về sớm|có phép|điểm trừ|chuyên cần|kết quả|c|m|vg|vs|v|p|cp|\%)/i', $lowerVal) 
-                                   || in_array($lowerVal, ['c', 'm', 'vg', 'vs', 'v', 'p', 'cp', 'tc']);
+                $isSummaryColumn = preg_match('/^(tổng|có mặt|đi muộn|vắng|có phép|điểm trừ|chuyên cần|kết quả|c|m|v|p|cp|\%)/i', $lowerVal) 
+                                   || in_array($lowerVal, ['c', 'm', 'v', 'p', 'cp', 'tc']);
                 
                 if (!$isSummaryColumn) {
                     $this->errors[] = "Cột '{$colValue}' bị bỏ qua vì không đúng định dạng ngày tháng.";
@@ -204,10 +204,10 @@ class StudentsImport implements ToCollection, WithStartRow, WithMultipleSheets
             $isValidRow = true;
             foreach ($dateHeaders as $colIndex => $sessionId) {
                 $statusChar = mb_strtolower(trim((string) ($row[$colIndex] ?? '')));
-                // c=có mặt, m=muộn, vg=vắng giữa giờ, vs=về sớm, v=vắng KP, p=vắng có phép
-                if ($statusChar !== '' && !in_array($statusChar, ['c', 'm', 'vg', 'vs', 'v', 'p'])) {
+                // c=có mặt, m=muộn, v=vắng, p=có phép.
+                if ($statusChar !== '' && !in_array($statusChar, ['c', 'm', 'v', 'p'])) {
                     $colName = trim((string) ($header[$colIndex] ?? "Cột $colIndex"));
-                    $this->errors[] = "Dòng {$actualRowNumber}, Cột '{$colName}': Điểm danh sai ('{$statusChar}'). Chỉ dùng c, m, vg, vs, v, p.";
+                    $this->errors[] = "Dòng {$actualRowNumber}, Cột '{$colName}': Điểm danh sai ('{$statusChar}'). Chỉ dùng c, m, v, p.";
                     $isValidRow = false;
                 }
             }

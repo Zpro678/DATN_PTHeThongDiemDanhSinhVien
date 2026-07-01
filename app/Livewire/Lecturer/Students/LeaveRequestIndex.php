@@ -138,10 +138,8 @@ class LeaveRequestIndex extends Component
             ->when($this->search !== '', function (Builder $query): void {
                 $query->where(function (Builder $query): void {
                     $query->where('reason', 'like', '%'.$this->search.'%')
-                        ->orWhereHas('classMember', function (Builder $query): void {
-                            $query->where('full_name', 'like', '%'.$this->search.'%')
-                                ->orWhere('student_code', 'like', '%'.$this->search.'%');
-                        });
+                        ->orWhereHas('classMember.profile', fn (Builder $p) => $p->where('full_name', 'like', '%'.$this->search.'%')->orWhere('student_code', 'like', '%'.$this->search.'%'))
+                        ->orWhereHas('classMember.user', fn (Builder $u) => $u->where('name', 'like', '%'.$this->search.'%'));
                 });
             })
             ->orderByDesc('created_at')

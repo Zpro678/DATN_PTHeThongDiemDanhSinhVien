@@ -64,7 +64,7 @@ Route::post('/payment/momo/ipn', [\App\Http\Controllers\MomoController::class, '
 
 Route::middleware(['auth', 'verified', 'user.route'])->group(function () {
     $ensureAdmin = function (): void {
-        abort_unless(auth()->user()?->is_admin, 403);
+        abort_unless(auth()->user()?->isAdmin(), 403);
     };
 
     Route::prefix('admin/{ma_user}')->name('admin.')->group(function () use ($ensureAdmin) {

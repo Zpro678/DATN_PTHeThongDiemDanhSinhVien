@@ -2,6 +2,7 @@
 
 namespace Database\Factories;
 
+use App\Models\ClassJoinRequest;
 use App\Models\CourseClass;
 use App\Models\User;
 use Illuminate\Database\Eloquent\Factories\Factory;
@@ -13,19 +14,17 @@ class ClassJoinRequestFactory extends Factory
         return [
             'class_id' => CourseClass::factory(),
             'user_id' => User::factory(),
-            'student_code' => 'SV'.fake()->unique()->numerify('########'),
-            'full_name' => fake()->name(),
-            'status' => 'pending',
+            'status' => ClassJoinRequest::STATUS_PENDING,
         ];
     }
 
     public function approved(): static
     {
-        return $this->state(fn (array $attributes) => ['status' => 'approved']);
+        return $this->state(fn (array $attributes) => ['status' => ClassJoinRequest::STATUS_APPROVED]);
     }
 
     public function rejected(): static
     {
-        return $this->state(fn (array $attributes) => ['status' => 'rejected']);
+        return $this->state(fn (array $attributes) => ['status' => ClassJoinRequest::STATUS_REJECTED]);
     }
 }

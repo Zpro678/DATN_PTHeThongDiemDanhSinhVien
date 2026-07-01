@@ -139,7 +139,7 @@ class ManualAttendanceSession extends Component
                 'check_in_time' => in_array($status, ['present', 'late'], true)
                     ? ($record->check_in_time ?? now())
                     : null,
-                'is_verified' => $record->classMember?->user_id !== null,
+                'is_account' => $record->classMember?->user_id !== null,
             ]);
         }
 
@@ -221,9 +221,9 @@ class ManualAttendanceSession extends Component
             ->whereHas('classMember')
             ->with('classMember.user')
             ->when($this->search !== '', function (Builder $query): void {
-                $query->whereHas('classMember', function (Builder $query): void {
-                    $query->where('student_code', 'like', '%'.$this->search.'%')
-                        ->orWhere('full_name', 'like', '%'.$this->search.'%');
+                $query->where(function (Builder $query): void {
+                    $query->whereHas('classMember.profile', fn (Builder $p) => $p->where('student_code', 'like', '%'.$this->search.'%')->orWhere('full_name', 'like', '%'.$this->search.'%'))
+                        ->orWhereHas('classMember.user', fn (Builder $u) => $u->where('name', 'like', '%'.$this->search.'%'));
                 });
             })
             ->orderBy('id')

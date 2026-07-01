@@ -49,7 +49,7 @@ class GoogleController extends Controller
                 'google_id' => $googleUser->getId(),
                 'avatar' => $googleUser->getAvatar(),
                 'password' => null, // Không có mật khẩu hệ thống
-                'is_admin' => false, // Mặc định là người dùng
+                'role' => User::ROLE_USER, // Mặc định là người dùng
                 'status' => 'active',
             ]);
         }
@@ -63,7 +63,7 @@ class GoogleController extends Controller
         Auth::login($user, true);
 
         // Chuyển hướng theo logic (admin về admin dashboard, user về user dashboard)
-        if ($user->is_admin) {
+        if ($user->isAdmin()) {
             return redirect()->route('admin.dashboard', ['ma_user' => $user->id]);
         }
 

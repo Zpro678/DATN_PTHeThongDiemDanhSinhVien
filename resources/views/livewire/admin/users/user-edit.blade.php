@@ -43,7 +43,7 @@
                     <dl class="mt-6 space-y-3 border-t border-slate-100 pt-5 text-sm">
                         <div class="flex items-center justify-between gap-4">
                             <dt class="font-medium text-slate-500">Vai trò</dt>
-                            <dd class="font-bold text-slate-900">{{ $user->is_admin ? 'Admin' : 'Người dùng' }}</dd>
+                            <dd class="font-bold text-slate-900">{{ $user->isAdmin() ? 'Admin' : 'Người dùng' }}</dd>
                         </div>
                         <div class="flex items-center justify-between gap-4">
                             <dt class="font-medium text-slate-500">Trạng thái</dt>
@@ -86,12 +86,6 @@
                             </div>
 
                             <div>
-                                <label class="mb-2 block text-[10px] font-bold uppercase tracking-widest text-slate-400">Mã số sinh viên (nếu có)</label>
-                                <input type="text" wire:model="member_id" class="w-full rounded-xl border border-slate-200 bg-white px-4 py-3 text-sm font-bold text-slate-900 focus:border-blue-500 focus:ring-2 focus:ring-blue-500">
-                                @error('member_id')<p class="mt-1 text-xs text-red-500">{{ $message }}</p>@enderror
-                            </div>
-
-                            <div>
                                 <label class="mb-2 block text-[10px] font-bold uppercase tracking-widest text-slate-400">Email</label>
                                 <input type="email" wire:model="email" class="w-full rounded-xl border border-slate-200 bg-white px-4 py-3 text-sm font-bold text-slate-900 focus:border-blue-500 focus:ring-2 focus:ring-blue-500">
                                 @error('email')<p class="mt-1 text-xs text-red-500">{{ $message }}</p>@enderror
@@ -103,11 +97,12 @@
                                 <label class="mb-2 block text-[10px] font-bold uppercase tracking-widest text-slate-400">Vai trò</label>
                                 @php
                                 $roleOptions = [
-                                    ['value' => '0', 'label' => 'Người dùng', 'sub_label' => 'Giảng viên & Học viên'],
-                                    ['value' => '1', 'label' => 'Admin', 'sub_label' => 'Quản trị viên hệ thống'],
+                                    ['value' => \App\Models\User::ROLE_USER, 'label' => 'Người dùng', 'sub_label' => 'Giảng viên & Học viên'],
+                                    ['value' => \App\Models\User::ROLE_ADMIN, 'label' => 'Admin', 'sub_label' => 'Quản trị viên hệ thống'],
+                                    ['value' => \App\Models\User::ROLE_SUPER_ADMIN, 'label' => 'Super Admin', 'sub_label' => 'Quản trị tối cao'],
                                 ];
                                 @endphp
-                                <x-custom-select disabled wire:model="is_admin" :options="$roleOptions" placeholder="Chọn vai trò" />
+                                <x-custom-select wire:model="role" :options="$roleOptions" placeholder="Chọn vai trò" />
                             </div>
 
                             <div>

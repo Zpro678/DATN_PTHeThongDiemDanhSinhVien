@@ -475,7 +475,7 @@
                                     options: [
                                         { value: '(c + m + p) / t * 100', label: 'Mặc định' },
                                         { value: 'v / t * 100', label: 'Tính tỷ lệ vắng' },
-                                        { value: '(c + m + vg + vs + v + p) / t * 100', label: 'Điểm danh đầy đủ' },
+                                        { value: '(c + m + v + p) / t * 100', label: 'Điểm danh đầy đủ' },
                                         { value: '(c + m + p - floor(m / 3)) / t * 100', label: 'Phạt đi muộn (3 lần muộn = 1 lần vắng)' },
                                     ],
                                     get label() { return this.options.find(o => o.value == this.value)?.label ?? 'Chọn...' },
@@ -568,7 +568,7 @@
                                 </li>
                                 <li class="flex flex-col gap-0.5">
                                     <span class="font-semibold text-slate-700">Điểm danh đầy đủ</span>
-                                    <code class="bg-slate-100 rounded px-1.5 py-0.5 text-[11px] text-primary font-mono">(c + m + vg + vs + v + p) / t * 100</code>
+                                    <code class="bg-slate-100 rounded px-1.5 py-0.5 text-[11px] text-primary font-mono">(c + m + v + p) / t * 100</code>
                                 </li>
                                 <li class="flex flex-col gap-0.5">
                                     <span class="font-semibold text-slate-700">Phạt đi muộn</span>
@@ -587,14 +587,6 @@
                                 <li class="flex items-center gap-2">
                                     <code class="bg-amber-50 text-amber-700 rounded px-1.5 py-0.5 font-mono text-[11px] min-w-[20px] text-center">m</code>
                                     <span>Số buổi đi muộn</span>
-                                </li>
-                                <li class="flex items-center gap-2">
-                                    <code class="bg-orange-50 text-orange-700 rounded px-1.5 py-0.5 font-mono text-[11px] min-w-[20px] text-center">vg</code>
-                                    <span>Vắng giữa giờ</span>
-                                </li>
-                                <li class="flex items-center gap-2">
-                                    <code class="bg-pink-50 text-pink-700 rounded px-1.5 py-0.5 font-mono text-[11px] min-w-[20px] text-center">vs</code>
-                                    <span>Về sớm</span>
                                 </li>
                                 <li class="flex items-center gap-2">
                                     <code class="bg-red-50 text-red-700 rounded px-1.5 py-0.5 font-mono text-[11px] min-w-[20px] text-center">v</code>

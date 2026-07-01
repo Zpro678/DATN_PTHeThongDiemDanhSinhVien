@@ -25,9 +25,8 @@ class UserFactory extends Factory
     public function definition(): array
     {
         return [
-            'is_admin' => false,
+            'role' => User::ROLE_USER,
             'google_id' => null,
-            'member_id' => 'SV'.fake()->unique()->numerify('########'),
             'name' => fake()->name(),
             'email' => fake()->unique()->safeEmail(),
             'email_verified_at' => now(),
@@ -51,7 +50,14 @@ class UserFactory extends Factory
     public function admin(): static
     {
         return $this->state(fn (array $attributes) => [
-            'is_admin' => true,
+            'role' => User::ROLE_ADMIN,
+        ]);
+    }
+
+    public function superAdmin(): static
+    {
+        return $this->state(fn (array $attributes) => [
+            'role' => User::ROLE_SUPER_ADMIN,
         ]);
     }
 

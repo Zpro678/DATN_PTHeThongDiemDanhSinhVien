@@ -70,16 +70,10 @@ class ClassSettings extends Component
         $this->semester = $courseClass->semester ?? '';
         $this->description = $courseClass->description ?? '';
         $this->lateThreshold = $courseClass->late_threshold ?? 15;
-        $rules = $courseClass->getAttendanceRules();
-        $this->deductExcusedAbsence = ($rules['excused'] ?? 0) > 0;
-        $this->attendanceRules = $rules;
+        $this->deductExcusedAbsence = (bool) $courseClass->deduct_excused_absence;
+        $this->attendanceRules = $courseClass->getAttendanceRules();
         $this->requireApproval = $courseClass->require_approval;
         $this->status = $courseClass->status;
-
-        $this->gpsEnabled = $courseClass->gps_latitude !== null;
-        $this->gpsLatitude = $courseClass->gps_latitude ? (float) $courseClass->gps_latitude : null;
-        $this->gpsLongitude = $courseClass->gps_longitude ? (float) $courseClass->gps_longitude : null;
-        $this->gpsRadius = $courseClass->gps_radius ? (int) $courseClass->gps_radius : null;
     }
 
     public function save()
@@ -91,20 +85,9 @@ class ClassSettings extends Component
             'semester' => ['nullable', 'string', 'max:50'],
             'description' => ['nullable', 'string', 'max:5000'],
             'lateThreshold' => ['required', 'integer', 'min:0', 'max:300'],
-            'attendanceRules' => ['required', 'array'],
-            'attendanceRules.present' => ['required', 'numeric', 'max:0'],
-            'attendanceRules.late' => ['required', 'numeric'],
-            'attendanceRules.partial' => ['required', 'numeric'],
-            'attendanceRules.early_leave' => ['required', 'numeric'],
-            'attendanceRules.absent' => ['required', 'numeric'],
-            'attendanceRules.excused' => ['required', 'numeric'],
             'deductExcusedAbsence' => ['boolean'],
             'requireApproval' => ['boolean'],
             'status' => ['required', 'string', Rule::in(['active', 'archived', 'ended'])],
-            'gpsEnabled' => ['boolean'],
-            'gpsLatitude' => ['nullable', 'numeric'],
-            'gpsLongitude' => ['nullable', 'numeric'],
-            'gpsRadius' => ['nullable', 'integer', 'min:10', 'max:5000'],
         ], [
             'name.required' => 'Vui lòng nhập tên lớp.',
             'join_key.required' => 'Mã lớp không được để trống.',
@@ -112,23 +95,16 @@ class ClassSettings extends Component
 
         ]);
 
-        $rules = $this->attendanceRules;
-        $rules['excused'] = $validated['deductExcusedAbsence'] ? 1.0 : 0.0;
-
         $this->courseClass->update([
             'name' => $validated['name'],
             'join_key' => strtoupper($validated['join_key']),
-            'subject_code' => filled($validated['subjectCode']) ? strtoupper($validated['subjectCode']) : null,
-            'semester' => $validated['semester'] ?: null,
+            'subject_code' => filled($validated['subjectCode'] ?? null) ? strtoupper(trim($validated['subjectCode'])) : null,
+            'semester' => filled($validated['semester'] ?? null) ? trim($validated['semester']) : null,
             'description' => $validated['description'] ?: null,
             'late_threshold' => $validated['lateThreshold'],
-            'attendance_rules' => $rules,
-            'total_sessions' => 0,
+            'deduct_excused_absence' => $validated['deductExcusedAbsence'] ?? false,
             'require_approval' => $validated['requireApproval'],
             'status' => $validated['status'],
-            'gps_latitude' => $validated['gpsEnabled'] ? ($validated['gpsLatitude'] ?? null) : null,
-            'gps_longitude' => $validated['gpsEnabled'] ? ($validated['gpsLongitude'] ?? null) : null,
-            'gps_radius' => $validated['gpsEnabled'] ? ($validated['gpsRadius'] ?? null) : null,
         ]);
 
         session()->flash('status', 'Cài đặt lớp học đã được cập nhật.');
@@ -137,7 +113,7 @@ class ClassSettings extends Component
 
     public function regenerateCode(): void
     {
-        $this->join_key = CourseClass::generateUniqueCode($this->subjectCode, $this->semester, $this->courseClass->id);
+        $this->join_key = CourseClass::generateUniqueCode($this->subjectCode, $this->courseClass->id);
     }
 
     // ─── Xoá lớp ────────────────────────────────────────────────────────────────

@@ -26,7 +26,7 @@ class LectureManageStudentService
         // Cài đặt lớp: tổng buổi dự kiến + cấu hình điểm trừ.
         $classes = CourseClass::query()
             ->whereIn('id', $members->pluck('class_id')->unique()->filter())
-            ->get(['id', 'total_sessions', 'attendance_rules'])
+            ->get(['id', 'total_sessions', 'deduct_excused_absence'])
             ->keyBy('id');
 
         // Bản ghi điểm danh ở phiên đã chốt, kèm meeting_id để gộp theo buổi.
@@ -45,9 +45,8 @@ class LectureManageStudentService
 
             $studiedSessions = $counts['total']; // Số buổi đã diễn ra của sinh viên.
             $presentSessions = $counts['present'];
-            // Gộp để hiển thị 4 nhóm: vắng giữa giờ ~ muộn (−0.5); về sớm ~ vắng (−1).
-            $lateSessions = $counts['late'] + $counts['partial'];
-            $absentSessions = $counts['absent'] + $counts['early_leave'];
+            $lateSessions = $counts['late'];
+            $absentSessions = $counts['absent'];
             $excusedSessions = $counts['excused'];
 
             $class = $classes->get($member->class_id);
@@ -59,8 +58,7 @@ class LectureManageStudentService
 
             $countedSessions = $effectivePlanned; // Trong hệ thống mới, luôn là tổng số buổi dự kiến, trừ điểm qua $rules
             $attendedSessions = $presentSessions + $lateSessions; // Số buổi có đến lớp (gồm cả muộn).
-            $effectiveAbsent = $absentSessions; // Số buổi vắng (hiển thị).
-            $absenceForBan = AttendanceCalculator::effectiveAbsence($counts, $rules); // Vắng quy đổi (đủ 6 trạng thái).
+            $effectiveAbsent = AttendanceCalculator::effectiveAbsence($counts, $rules); // Vắng quy đổi theo quy tắc tổng kết.
 
             $attendancePercent = AttendanceCalculator::percentOfPlanned(
                 $effectivePlanned,
@@ -70,7 +68,7 @@ class LectureManageStudentService
 
             $allowedAbsent = AttendanceCalculator::allowedAbsentSessions($effectivePlanned);
             // Cấm thi: vắng quy đổi vượt 20% tổng buổi hoặc chuyên cần < 80%.
-            $isBanned = $effectivePlanned > 0 && ($absenceForBan > $allowedAbsent || $attendancePercent < AttendanceCalculator::MIN_ATTENDANCE_PERCENT);
+            $isBanned = $effectivePlanned > 0 && ($effectiveAbsent > $allowedAbsent || $attendancePercent < AttendanceCalculator::MIN_ATTENDANCE_PERCENT);
             // Cảnh báo: chuyên cần dưới 85% nhưng chưa bị cấm.
             $isWarning = ! $isBanned && $attendancePercent < AttendanceCalculator::WARNING_PERCENT;
 
@@ -84,7 +82,7 @@ class LectureManageStudentService
                     'late_count' => $lateSessions, // Số buổi đi muộn (tương thích view cũ).
                     'absent_sessions' => $absentSessions, // Số buổi vắng không phép.
                     'excused_sessions' => $excusedSessions, // Số buổi vắng có phép.
-                    'effective_absent_sessions' => $effectiveAbsent, // Số buổi vắng dùng xét cấm thi.
+                    'effective_absent_sessions' => $effectiveAbsent, // Số buổi vắng quy đổi dùng xét cấm thi.
                     'attended_sessions' => $attendedSessions, // Số buổi có chuyên cần.
                     'allowed_absent_sessions' => $allowedAbsent, // Số buổi được phép vắng (20%).
                     'attendance_percent' => $attendancePercent, // % chuyên cần trên tổng buổi dự kiến.
@@ -95,10 +93,10 @@ class LectureManageStudentService
         })->toArray();
     }
 
-    public function getTotalAttendanceStats(int $ownerUserId, ?int $classId = null): array
+    public function getTotalAttendanceStats(int $ownerUserId, ?string $classId = null): array
     {
         $memberIds = ClassMember::query()
-            ->where('status', 'active')
+            ->where('status', ClassMember::STATUS_ACTIVE)
             ->whereHas('courseClass', function ($query) use ($ownerUserId, $classId) {
                 $query->where('owner_user_id', $ownerUserId)
                     ->when($classId, fn ($query) => $query->where('id', $classId));
@@ -112,7 +110,7 @@ class LectureManageStudentService
         $lateSessions = (int) $studentsStats->sum('late_sessions');
         $absentSessions = (int) $studentsStats->sum('absent_sessions');
         $excusedSessions = (int) $studentsStats->sum('excused_sessions');
-        $effectiveAbsent = (int) $studentsStats->sum('effective_absent_sessions');
+        $effectiveAbsent = (float) $studentsStats->sum('effective_absent_sessions');
         $attendedSessions = (int) $studentsStats->sum('attended_sessions');
 
         // Trung bình chuyên cần = trung bình cộng % từng sinh viên.

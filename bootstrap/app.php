@@ -21,7 +21,7 @@ return Application::configure(basePath: dirname(__DIR__))
 
         // Fix redirect for authenticated users (e.g. remember me)
         $middleware->redirectUsersTo(function (\Illuminate\Http\Request $request) {
-            if (auth()->check() && auth()->user()->is_admin) {
+            if (auth()->check() && auth()->user()->isAdmin()) {
                 return route('admin.dashboard', ['ma_user' => auth()->id()]);
             }
             return route('dashboard', ['ma_user' => auth()->id()]);

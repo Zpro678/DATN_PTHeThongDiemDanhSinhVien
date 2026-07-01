@@ -16,7 +16,7 @@ class PackageShow extends Component
 
     public function mount(Plan $package)
     {
-        abort_unless(Auth::user()?->is_admin, 403);
+        abort_unless(Auth::user()?->isAdmin(), 403);
         $this->package = $package;
         $this->package->loadCount('subscriptions');
     }

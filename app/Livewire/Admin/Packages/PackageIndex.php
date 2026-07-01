@@ -11,7 +11,7 @@ class PackageIndex extends Component
 {
     public function toggleStatus(Plan $package)
     {
-        abort_unless(Auth::user()?->is_admin, 403);
+        abort_unless(Auth::user()?->isAdmin(), 403);
 
         $package->is_active = !$package->is_active;
         $package->save();
@@ -19,7 +19,7 @@ class PackageIndex extends Component
 
     public function deletePackage(Plan $package)
     {
-        abort_unless(Auth::user()?->is_admin, 403);
+        abort_unless(Auth::user()?->isAdmin(), 403);
 
         $package->delete();
     }
@@ -27,7 +27,7 @@ class PackageIndex extends Component
     #[Layout('components.admin-layout')]
     public function render()
     {
-        abort_unless(Auth::user()?->is_admin, 403);
+        abort_unless(Auth::user()?->isAdmin(), 403);
 
         $packages = Plan::query()
             ->withCount('subscriptions')

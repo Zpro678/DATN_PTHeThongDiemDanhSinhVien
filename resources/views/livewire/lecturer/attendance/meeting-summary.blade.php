@@ -10,8 +10,6 @@
     $finalBadge = [
         'present'     => 'border-emerald-300 bg-emerald-50 text-emerald-700',
         'late'        => 'border-amber-300 bg-amber-50 text-amber-700',
-        'partial'     => 'border-orange-300 bg-orange-50 text-orange-700',
-        'early_leave' => 'border-rose-300 bg-rose-50 text-rose-700',
         'excused'     => 'border-sky-300 bg-sky-50 text-sky-700',
         'absent'      => 'border-rose-300 bg-rose-50 text-rose-700',
     ];
@@ -59,14 +57,14 @@
     {{-- Thẻ thống kê --}}
     <section class="grid grid-cols-2 gap-4 md:grid-cols-5">
         <div class="rounded-2xl border border-emerald-100 bg-white p-4 shadow-sm"><p class="text-xs font-bold uppercase text-slate-400">Có mặt</p><p class="mt-1 text-2xl font-black text-emerald-600">{{ $totals['present'] ?? 0 }}</p></div>
-        <div class="rounded-2xl border border-amber-100 bg-white p-4 shadow-sm"><p class="text-xs font-bold uppercase text-slate-400">Đi muộn / giữa giờ</p><p class="mt-1 text-2xl font-black text-amber-600">{{ ($totals['late'] ?? 0) + ($totals['partial'] ?? 0) }}</p></div>
-        <div class="rounded-2xl border border-rose-100 bg-white p-4 shadow-sm"><p class="text-xs font-bold uppercase text-slate-400">Vắng / về sớm</p><p class="mt-1 text-2xl font-black text-rose-600">{{ ($totals['absent'] ?? 0) + ($totals['early_leave'] ?? 0) }}</p></div>
+        <div class="rounded-2xl border border-amber-100 bg-white p-4 shadow-sm"><p class="text-xs font-bold uppercase text-slate-400">Đi muộn</p><p class="mt-1 text-2xl font-black text-amber-600">{{ $totals['late'] ?? 0 }}</p></div>
+        <div class="rounded-2xl border border-rose-100 bg-white p-4 shadow-sm"><p class="text-xs font-bold uppercase text-slate-400">Vắng</p><p class="mt-1 text-2xl font-black text-rose-600">{{ $totals['absent'] ?? 0 }}</p></div>
         <div class="rounded-2xl border border-sky-100 bg-white p-4 shadow-sm"><p class="text-xs font-bold uppercase text-slate-400">Có phép</p><p class="mt-1 text-2xl font-black text-sky-600">{{ $totals['excused'] ?? 0 }}</p></div>
         <div class="rounded-2xl border border-slate-200 bg-slate-900 p-4 shadow-sm"><p class="text-xs font-bold uppercase text-slate-300">Tổng điểm trừ</p><p class="mt-1 text-2xl font-black text-white">-{{ rtrim(rtrim(number_format($totals['deduction'] ?? 0, 1), '0'), '.') }}</p></div>
     </section>
 
     <div class="rounded-2xl border border-blue-100 bg-blue-50/60 px-5 py-3 text-xs font-medium leading-relaxed text-blue-800">
-        <span class="font-bold">Quy tắc tổng kết:</span> Vắng ở phiên cuối → Vắng cả buổi (−1). Có mặt phiên cuối nhưng từng vắng phiên trước → Đi muộn (−0.5). Có mặt tất cả phiên → Có mặt (0). Bạn có thể chỉnh tay từng dòng trước khi xuất file.
+        <span class="font-bold">Quy tắc tổng kết:</span> Nếu phiên cuối vắng → Vắng. Nếu phiên cuối có mặt nhưng phiên đầu vắng hoặc có phiên được đánh dấu đi muộn → Đi muộn. Nếu phiên cuối có mặt, phiên đầu có mặt và không có phiên đi muộn → Có mặt.
     </div>
 
     <section class="overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm">
@@ -101,8 +99,6 @@
                                 <select wire:model.live="draftStatuses.{{ $memberId }}" class="w-full min-w-[120px] cursor-pointer rounded-xl border-2 px-3 py-2 text-sm font-bold outline-none transition {{ $finalBadge[$row['status']] ?? 'border-slate-200 bg-white text-slate-700' }}">
                                     <option value="present">Có mặt</option>
                                     <option value="late">Đi muộn</option>
-                                    <option value="partial">Vắng giữa giờ</option>
-                                    <option value="early_leave">Về sớm</option>
                                     <option value="absent">Vắng</option>
                                     <option value="excused">Có phép</option>
                                 </select>

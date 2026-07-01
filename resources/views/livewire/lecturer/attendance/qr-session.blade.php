@@ -8,7 +8,7 @@
         'pending' => ['label' => 'Chưa điểm danh', 'pill' => 'border-slate-200 bg-slate-100 text-slate-600'],
         'present' => ['label' => 'Có mặt', 'pill' => 'border-emerald-200 bg-emerald-100 text-emerald-700'],
         'late' => ['label' => 'Đi muộn', 'pill' => 'border-amber-200 bg-amber-100 text-amber-700'],
-        'absent' => ['label' => 'Vắng mặt', 'pill' => 'border-rose-200 bg-rose-100 text-rose-700'],
+        'absent' => ['label' => 'Vắng', 'pill' => 'border-rose-200 bg-rose-100 text-rose-700'],
         'excused' => ['label' => 'Có phép', 'pill' => 'border-sky-200 bg-sky-100 text-sky-700'],
     ];
 @endphp

@@ -33,7 +33,7 @@ class PackageEdit extends Component
 
     public function mount(Plan $package)
     {
-        abort_unless(Auth::user()?->is_admin, 403);
+        abort_unless(Auth::user()?->isAdmin(), 403);
         
         $this->package = $package;
         $this->name = $package->name;
@@ -56,7 +56,7 @@ class PackageEdit extends Component
 
     public function save()
     {
-        abort_unless(Auth::user()?->is_admin, 403);
+        abort_unless(Auth::user()?->isAdmin(), 403);
 
         $this->validate([
             'name' => 'required|string|max:255',

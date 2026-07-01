@@ -10,14 +10,17 @@ class ClassJoinRequest extends Model
 {
     use HasFactory;
 
+    // Trạng thái yêu cầu vào lớp.
+    public const STATUS_PENDING = 'PENDING';
+    public const STATUS_APPROVED = 'APPROVED';
+    public const STATUS_REJECTED = 'REJECTED';
+
     protected $table = 'class_join_requests';
 
     protected $fillable = [
         'class_id', // ID của lớp xin tham gia.
         'user_id', // ID tài khoản gửi yêu cầu.
-        'student_code', // MSSV sinh viên khai báo.
-        'full_name', // Họ tên sinh viên khai báo.
-        'status', // Trạng thái yêu cầu pending/approved/rejected.
+        'status', // Trạng thái yêu cầu PENDING/APPROVED/REJECTED.
     ];
 
     public function courseClass(): BelongsTo

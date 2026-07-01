@@ -34,7 +34,7 @@ class MeetingSessions extends Component
             return;
         }
 
-        if ($this->meeting->courseClass->members()->where('status', 'active')->count() === 0) {
+        if ($this->meeting->courseClass->members()->where('status', \App\Models\ClassMember::STATUS_ACTIVE)->count() === 0) {
             session()->flash('error', 'Vui lòng import danh sách lớp trước khi điểm danh.');
             return;
         }
@@ -49,8 +49,10 @@ class MeetingSessions extends Component
     {
         $sessions = $this->meeting->sessions()
             ->withCount([
-                'attendanceRecords as present_count' => fn (Builder $query) => $query->whereIn('status', ['present', 'late', 'excused']),
+                'attendanceRecords as present_count' => fn (Builder $query) => $query->where('status', 'present'),
+                'attendanceRecords as late_count' => fn (Builder $query) => $query->where('status', 'late'),
                 'attendanceRecords as absent_count' => fn (Builder $query) => $query->where('status', 'absent'),
+                'attendanceRecords as excused_count' => fn (Builder $query) => $query->where('status', 'excused'),
                 'attendanceRecords as pending_count' => fn (Builder $query) => $query->where('status', 'pending'),
             ])
             ->orderBy('created_at', 'asc')

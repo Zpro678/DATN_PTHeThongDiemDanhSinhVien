@@ -14,28 +14,28 @@ class UserEdit extends Component
     
     public $name = '';
     public $email = '';
-    public $member_id = '';
+    public $role = User::ROLE_USER;
     public $status = 'active';
 
     public function mount(User $user)
     {
-        abort_unless(Auth::user()?->is_admin, 403);
-        
+        abort_unless(Auth::user()?->isAdmin(), 403);
+
         $this->user = $user;
         $this->name = $user->name;
         $this->email = $user->email;
-        $this->member_id = $user->member_id;
+        $this->role = $user->role;
         $this->status = $user->status;
     }
 
     public function save()
     {
-        abort_unless(Auth::user()?->is_admin, 403);
+        abort_unless(Auth::user()?->isAdmin(), 403);
 
         $validatedData = $this->validate([
             'name' => ['required', 'string', 'max:255'],
             'email' => ['required', 'string', 'email', 'max:255', Rule::unique('users')->ignore($this->user->id)],
-            'member_id' => ['nullable', 'string', 'max:50', Rule::unique('users')->ignore($this->user->id)],
+            'role' => ['required', 'in:'.User::ROLE_USER.','.User::ROLE_ADMIN.','.User::ROLE_SUPER_ADMIN],
             'status' => ['required', 'in:active,blocked'],
         ]);
 

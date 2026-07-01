@@ -98,7 +98,7 @@ class AttendanceIndex extends Component
             return;
         }
 
-        if ($courseClass->members()->where('status', 'active')->count() === 0) {
+        if ($courseClass->members()->where('status', \App\Models\ClassMember::STATUS_ACTIVE)->count() === 0) {
             $this->addError('classId', 'Vui lòng import danh sách lớp trước khi điểm danh.');
             $this->redirectRoute('lecturer.classes.show', ['ma_user' => auth()->id(), 'courseClass' => $courseClass->id, 'openImport' => 1], navigate: true);
             return;
@@ -124,7 +124,7 @@ class AttendanceIndex extends Component
             $meeting->closeIfExpired();
         }
 
-        // Gộp số "đã ghi nhận" / "vắng" mức buổi qua tất cả phiên của buổi.
+        // Gộp số có mặt / đi muộn / vắng mức buổi qua tất cả phiên của buổi.
         $allSessions = $meetings->getCollection()->flatMap->sessions;
         $sessionToMeeting = $allSessions->pluck('meeting_id', 'id');
 
@@ -137,8 +137,9 @@ class AttendanceIndex extends Component
         foreach ($meetings as $meeting) {
             $meetingRecords = ($recordsByMeeting->get($meeting->id) ?? collect())->groupBy('class_member_id');
             $counts = ClassMeeting::consolidateCounts($meetingRecords);
-            $meeting->present_count = $counts['present'];
-            $meeting->absent_count = $counts['absent'];
+            $meeting->present_count = $counts['present'] ?? 0;
+            $meeting->late_count = $counts['late'] ?? 0;
+            $meeting->absent_count = $counts['absent'] ?? 0;
         }
 
         return view('livewire.lecturer.attendance.index', compact('meetings'))

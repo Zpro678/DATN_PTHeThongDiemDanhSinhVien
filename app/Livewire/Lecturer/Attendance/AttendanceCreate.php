@@ -107,12 +107,12 @@ class AttendanceCreate extends Component
     private function createBaseMeeting(): ?ClassMeeting
     {
         $validated = $this->validate([
-            'classId' => ['required', 'integer'],
+            'classId' => ['required', 'string', 'exists:classes,id'],
             'name' => ['required', 'string', 'max:255'],
             'meetingEndTime' => ['required', 'date_format:H:i'],
         ], [
             'classId.required' => 'Vui lòng chọn lớp học.',
-            'classId.integer' => 'Lớp học không hợp lệ.',
+            'classId.exists' => 'Lớp học không hợp lệ.',
             'name.required' => 'Vui lòng nhập tiêu đề buổi học.',
             'meetingEndTime.required' => 'Vui lòng nhập giờ kết thúc buổi điểm danh.',
             'meetingEndTime.date_format' => 'Giờ kết thúc không hợp lệ.',
@@ -128,9 +128,9 @@ class AttendanceCreate extends Component
             return null;
         }
 
-        $courseClass = $this->ownedClass((int) $validated['classId']);
+        $courseClass = $this->ownedClass($validated['classId']);
 
-        if ($courseClass->members()->where('status', 'active')->count() === 0) {
+        if ($courseClass->members()->where('status', \App\Models\ClassMember::STATUS_ACTIVE)->count() === 0) {
             $this->addError('classId', 'Vui lòng import danh sách lớp trước khi điểm danh.');
             $this->redirectRoute('lecturer.classes.show', ['ma_user' => auth()->id(), 'courseClass' => $courseClass->id, 'openImport' => 1], navigate: true);
             return null;
@@ -139,7 +139,7 @@ class AttendanceCreate extends Component
         // Mỗi lần "Tạo buổi điểm danh" tạo một BUỔI mới.
         return ClassMeeting::query()->create([
             'class_id' => $courseClass->id,
-            'created_by' => auth()->id(),
+            'user_Created' => auth()->id(),
             'name' => $validated['name'],
             'date' => $date,
             'start_time' => $startTime,
@@ -156,7 +156,7 @@ class AttendanceCreate extends Component
         $session = ClassSession::query()->create([
             'class_id' => $meeting->class_id,
             'meeting_id' => $meeting->id,
-            'created_by' => $meeting->created_by,
+            'created_by' => $meeting->user_Created,
             'name' => $meeting->name,
             'date' => $meeting->date,
             'start_time' => $meeting->start_time,
@@ -166,12 +166,12 @@ class AttendanceCreate extends Component
 
         $defaultStatus = $status === 'pending' ? 'pending' : 'present';
 
-        $meeting->courseClass->members()->where('status', 'active')->get()->each(fn ($member) => AttendanceRecord::query()->firstOrCreate([
+        $meeting->courseClass->members()->where('status', \App\Models\ClassMember::STATUS_ACTIVE)->get()->each(fn ($member) => AttendanceRecord::query()->firstOrCreate([
             'class_session_id' => $session->id,
             'class_member_id' => $member->id,
         ], [
             'status' => $defaultStatus,
-            'is_verified' => $member->user_id !== null,
+            'is_account' => $member->user_id !== null,
         ]));
 
         return $session;
@@ -186,9 +186,9 @@ class AttendanceCreate extends Component
     public function render(): View
     {
         $classes = $this->availableClasses()
-            ->loadCount(['members' => fn ($query) => $query->where('status', 'active')]);
+            ->loadCount(['members' => fn ($query) => $query->where('status', \App\Models\ClassMember::STATUS_ACTIVE)]);
             
-        $selectedClass = $classes->firstWhere('id', (int) $this->classId) ?? $classes->first();
+        $selectedClass = $classes->firstWhere('id', $this->classId) ?? $classes->first();
 
         return view('livewire.lecturer.attendance.create', compact('classes', 'selectedClass'))
             ->layout('layouts.user', ['title' => 'Tạo buổi điểm danh']);
@@ -218,8 +218,6 @@ class AttendanceCreate extends Component
                 'owner_user_id' => $userId,
                 'name' => 'Lớp demo điểm danh',
                 'description' => 'Dữ liệu giả để kiểm thử trang tạo điểm danh.',
-                'subject_code' => 'DEMO101',
-                'semester' => 'HK2 2025-2026',
                 'require_approval' => false,
                 'status' => 'active',
                 'total_sessions' => 15,
@@ -238,18 +236,23 @@ class AttendanceCreate extends Component
             ['DEMO003', 'Lê Minh Cường'],
             ['DEMO004', 'Phạm Thanh Duy'],
         ])->each(function (array $student) use ($courseClass): void {
-            $member = ClassMember::withTrashed()->firstOrNew([
-                'class_id' => $courseClass->id,
-                'student_code' => $student[0],
-            ]);
+            $member = ClassMember::withTrashed()
+                ->where('class_id', $courseClass->id)
+                ->whereHas('profile', fn ($p) => $p->where('student_code', $student[0]))
+                ->first();
 
-            $member->fill([
-                'full_name' => $student[1],
-                'user_id' => null,
-                'status' => 'active',
-            ]);
-            $member->save();
-            $member->restore();
+            if (! $member) {
+                $member = ClassMember::create([
+                    'class_id' => $courseClass->id,
+                    'user_id' => null,
+                    'status' => ClassMember::STATUS_ACTIVE,
+                ]);
+            } else {
+                $member->restore();
+                $member->update(['status' => ClassMember::STATUS_ACTIVE]);
+            }
+
+            $member->syncProfile(['student_code' => $student[0], 'full_name' => $student[1]]);
         });
     }
 }

@@ -15,7 +15,7 @@ class UserShow extends Component
 
     public function mount(User $user)
     {
-        abort_unless(Auth::user()?->is_admin, 403);
+        abort_unless(Auth::user()?->isAdmin(), 403);
         
         $user->loadCount(['ownedClasses', 'joinedClasses', 'subscriptions', 'classJoinRequests']);
         $this->user = $user;

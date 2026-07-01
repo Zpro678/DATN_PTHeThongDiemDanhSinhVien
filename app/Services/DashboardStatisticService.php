@@ -19,7 +19,7 @@ class DashboardStatisticService
      * 3. Tối ưu bộ nhớ: Chỉ select chính xác các cột cần dùng ('id', 'name', 'total_sessions') thay vì lấy toàn bộ (*) các cột.
      * 4. Xử lý logic nhẹ nhàng bằng PHP: Sử dụng Collection (map) để tính phần trăm (%) và trừ số tiết còn lại. PHP xử lý toán học trên mảng rất nhanh, làm vậy giúp câu lệnh SQL gọn nhẹ và dễ bảo trì hơn.
      */
-    private function getClassesSessionProgress(int $userId, ?int $classId = null): array
+    private function getClassesSessionProgress(int $userId, ?string $classId = null): array
     {
         $classes = CourseClass::query()
             ->where('owner_user_id', $userId)
@@ -74,17 +74,18 @@ class DashboardStatisticService
 
         $members = ClassMember::query()
             ->join('classes', 'class_members.class_id', '=', 'classes.id')
+            ->leftJoin('class_member_profiles', 'class_member_profiles.class_member_id', '=', 'class_members.id')
             ->whereIn('class_members.class_id', $classIds)
-            ->where('class_members.status', 'active')
+            ->where('class_members.status', ClassMember::STATUS_ACTIVE)
             ->whereNull('classes.deleted_at')
             ->get([
                 'class_members.id',
                 'class_members.class_id',
-                'class_members.student_code',
-                'class_members.full_name',
+                'class_member_profiles.student_code',
+                'class_member_profiles.full_name',
                 'classes.name as class_name',
                 'classes.total_sessions as planned_sessions',
-                'classes.attendance_rules as attendance_rules',
+                'classes.deduct_excused_absence as deduct_excused_absence',
             ]);
 
         if ($members->isEmpty()) {
@@ -110,11 +111,10 @@ class DashboardStatisticService
                 $absentSessions   = $counts['absent'];
                 $lateSessions     = $counts['late'];
                 $excusedSessions  = $counts['excused'];
-                $rules            = is_string($student->attendance_rules) ? (json_decode($student->attendance_rules, true) ?? []) : (array) ($student->attendance_rules ?? []);
-                $rules            = array_merge((new \App\Models\CourseClass())->getAttendanceRules(), $rules);
+                $rules            = (new \App\Models\CourseClass(['deduct_excused_absence' => (bool) $student->deduct_excused_absence]))->getAttendanceRules();
 
                 $counted         = AttendanceCalculator::countedSessions($plannedSessions, $excusedSessions, $rules);
-                $effectiveAbsent = AttendanceCalculator::effectiveAbsence($counts, $rules); // Vắng quy đổi (đủ 6 trạng thái).
+                $effectiveAbsent = AttendanceCalculator::effectiveAbsence($counts, $rules); // Vắng quy đổi theo quy tắc tổng kết.
 
                 if ($counted <= 0 || $plannedSessions <= 0) {
                     return null;
@@ -204,14 +204,15 @@ class DashboardStatisticService
             ->join('class_members', 'leave_requests.class_member_id', '=', 'class_members.id')
             ->join('classes', 'class_members.class_id', '=', 'classes.id')
             ->leftJoin('class_sessions', 'leave_requests.class_session_id', '=', 'class_sessions.id')
+            ->leftJoin('class_member_profiles', 'class_member_profiles.class_member_id', '=', 'class_members.id')
             ->whereIn('class_members.class_id', $classIds)
             ->where('leave_requests.status', 'pending')
             ->whereNull('classes.deleted_at')
             ->select([
                 'leave_requests.id',
                 'leave_requests.class_member_id',
-                'class_members.student_code',
-                'class_members.full_name',
+                'class_member_profiles.student_code',
+                'class_member_profiles.full_name',
                 'class_members.class_id',
                 'classes.name as class_name',
                 'class_sessions.date as session_date',
@@ -265,6 +266,7 @@ class DashboardStatisticService
             ->join('class_sessions', 'attendance_records.class_session_id', '=', 'class_sessions.id')
             ->join('class_members', 'attendance_records.class_member_id', '=', 'class_members.id')
             ->join('classes', 'class_sessions.class_id', '=', 'classes.id')
+            ->leftJoin('class_member_profiles', 'class_member_profiles.class_member_id', '=', 'class_members.id')
             ->whereIn('class_sessions.class_id', $classIds)
             ->whereIn('attendance_records.status', ['present', 'late'])
             ->whereNotNull('attendance_records.check_in_time')
@@ -275,8 +277,8 @@ class DashboardStatisticService
             ->get([
                 'attendance_records.status as record_status',
                 'attendance_records.check_in_time',
-                'class_members.student_code',
-                'class_members.full_name',
+                'class_member_profiles.student_code',
+                'class_member_profiles.full_name',
                 'classes.name as class_name',
             ])
             ->each(function ($record) use ($activities): void {
@@ -325,14 +327,15 @@ class DashboardStatisticService
         LeaveRequest::query()
             ->join('class_members', 'leave_requests.class_member_id', '=', 'class_members.id')
             ->join('classes', 'class_members.class_id', '=', 'classes.id')
+            ->leftJoin('class_member_profiles', 'class_member_profiles.class_member_id', '=', 'class_members.id')
             ->whereIn('class_members.class_id', $classIds)
             ->whereNull('classes.deleted_at')
             ->select([
                 'leave_requests.status',
                 'leave_requests.created_at',
                 'leave_requests.reviewed_at',
-                'class_members.student_code',
-                'class_members.full_name',
+                'class_member_profiles.student_code',
+                'class_member_profiles.full_name',
                 'classes.name as class_name',
             ])
             ->selectRaw('COALESCE(leave_requests.reviewed_at, leave_requests.created_at) as activity_at')
@@ -401,7 +404,7 @@ class DashboardStatisticService
      * 3. Đếm trực tiếp từ DB: Việc đếm học viên (count) diễn ra thẳng ở Database, không tải dữ liệu rác về PHP.
      * 4. Gộp truy vấn điểm danh: Dùng kỹ thuật Pivot với CASE WHEN bên trong lệnh SUM(). Thay vì phải chạy 1 query để tính Có mặt, 1 query để tính Vắng mặt, chúng ta gom cả 2 vào duy nhất 1 truy vấn quét qua bảng attendance_records.
      */
-    public function getOwnerOverview(int $userId, ?int $classId = null): array
+    public function getOwnerOverview(int $userId, ?string $classId = null): array
     {
         $ownedClassesQuery = CourseClass::query()
             ->where('owner_user_id', $userId)
@@ -460,7 +463,7 @@ class DashboardStatisticService
         // 4. Đếm tổng học viên đang hoạt động
         $totalStudents = ClassMember::query()
             ->whereIn('class_id', $classIds)
-            ->where('status', 'active')
+            ->where('status', ClassMember::STATUS_ACTIVE)
             ->count();
 
         // 5. Thống kê buổi điểm danh theo ngày.
@@ -495,7 +498,7 @@ class DashboardStatisticService
         // 6. Tính tổng số buổi sinh viên có mặt / vắng (gộp theo buổi từng sinh viên).
         $activeMemberIds = ClassMember::query()
             ->whereIn('class_id', $classIds)
-            ->where('status', 'active')
+            ->where('status', ClassMember::STATUS_ACTIVE)
             ->pluck('id');
 
         $rowsByMember = AttendanceRecord::query()

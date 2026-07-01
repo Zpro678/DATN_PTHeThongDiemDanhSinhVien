@@ -26,7 +26,7 @@ class SetUserRouteDefaults
             $routeMaUser = $request->route('ma_user');
 
             // Allow access to own route, or if user is admin
-            if ($routeMaUser && $routeMaUser !== (string) $maUser && ! $user->is_admin) {
+            if ($routeMaUser && $routeMaUser !== (string) $maUser && ! $user->isAdmin()) {
                 // If the user is trying to access another user's route, redirect them to their own dashboard
                 // or abort with 403. We'll abort for security.
                 abort(403, 'Bạn không có quyền truy cập vào đường dẫn của người dùng khác.');

@@ -150,14 +150,6 @@
                                                 <div class="flex cursor-pointer items-center justify-center text-blue-500 transition-transform hover:scale-125">
                                                     <x-user.icon name="check-circle" :size="20" stroke-width="2.5" />
                                                 </div>
-                                            @elseif($status === 'partial')
-                                                <div class="flex cursor-pointer items-center justify-center text-orange-500 transition-transform hover:scale-125" title="Vắng giữa giờ">
-                                                    <x-user.icon name="alert-triangle" :size="20" stroke-width="2.5" />
-                                                </div>
-                                            @elseif($status === 'early_leave')
-                                                <div class="flex cursor-pointer items-center justify-center text-rose-500 transition-transform hover:scale-125" title="Về sớm">
-                                                    <x-user.icon name="log-out" :size="20" stroke-width="2.5" />
-                                                </div>
                                             @else
                                                 <div class="flex cursor-pointer items-center justify-center text-slate-300 transition-transform hover:scale-125">
                                                     <x-user.icon name="minus" :size="20" stroke-width="2.5" />
@@ -288,8 +280,6 @@
                                     <span x-show="student.cell.status === 'present'" class="inline-flex min-w-[110px] items-center justify-center rounded-xl px-4 py-2 text-[13px] font-bold bg-emerald-50 text-emerald-600 border border-emerald-100 shadow-sm">Có mặt</span>
                                     <span x-show="student.cell.status === 'absent'" class="inline-flex min-w-[110px] items-center justify-center rounded-xl px-4 py-2 text-[13px] font-bold bg-rose-50 text-rose-600 border border-rose-100 shadow-sm" x-text="student.cell.text || 'Vắng mặt'"></span>
                                     <span x-show="student.cell.status === 'late'" class="inline-flex min-w-[110px] items-center justify-center rounded-xl px-4 py-2 text-[13px] font-bold bg-amber-50 text-amber-600 border border-amber-100 shadow-sm" x-text="student.cell.text || 'Đi trễ'"></span>
-                                    <span x-show="student.cell.status === 'partial'" class="inline-flex min-w-[110px] items-center justify-center rounded-xl px-4 py-2 text-[13px] font-bold bg-orange-50 text-orange-600 border border-orange-100 shadow-sm">Vắng giữa giờ</span>
-                                    <span x-show="student.cell.status === 'early_leave'" class="inline-flex min-w-[110px] items-center justify-center rounded-xl px-4 py-2 text-[13px] font-bold bg-rose-50 text-rose-600 border border-rose-100 shadow-sm">Về sớm</span>
                                     <span x-show="student.cell.status === 'excused'" class="inline-flex min-w-[110px] items-center justify-center rounded-xl px-4 py-2 text-[13px] font-bold bg-blue-50 text-blue-600 border border-blue-100 shadow-sm">Có phép</span>
                                     <span x-show="student.cell.status === 'pending'" class="inline-flex min-w-[110px] items-center justify-center rounded-xl px-4 py-2 text-[13px] font-bold bg-slate-50 text-slate-500 border border-slate-200 shadow-sm">Chưa ĐD</span>
                                 </td>

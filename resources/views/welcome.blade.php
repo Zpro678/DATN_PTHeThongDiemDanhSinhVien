@@ -126,7 +126,7 @@
         
         <nav class="flex items-center gap-3 md:gap-5">
             @auth
-                @if(auth()->user()->is_admin)
+                @if(auth()->user()->isAdmin())
                     <a href="{{ route('admin.dashboard', ['ma_user' => auth()->id()]) }}" wire:navigate class="text-sm font-semibold text-slate-600 hover:text-blue-600 transition-colors">Bảng điều khiển</a>
                 @else
                     <a href="{{ route('dashboard') }}" wire:navigate class="text-sm font-semibold text-slate-600 hover:text-blue-600 transition-colors">Bảng điều khiển</a>
@@ -159,7 +159,7 @@
 
             <div class="flex flex-col sm:flex-row items-center justify-center gap-4 sm:gap-5 pt-8 w-full px-4 sm:px-0">
                 @auth
-                    @if(auth()->user()->is_admin)
+                    @if(auth()->user()->isAdmin())
                         <a href="{{ route('admin.dashboard', ['ma_user' => auth()->id()]) }}" wire:navigate class="w-full sm:w-auto px-6 py-3.5 sm:px-8 sm:py-4 text-base font-bold text-white bg-blue-600 rounded-full hover:bg-blue-700 transition-all shadow-md shadow-blue-500/20">
                             Đi đến Bảng điều khiển 
                         </a>

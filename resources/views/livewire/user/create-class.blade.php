@@ -16,6 +16,7 @@
     @php
         $previewName    = filled($name) ? $name : 'Tên lớp học';
         $previewSubject = filled($subjectCode) ? strtoupper($subjectCode) : 'Mã môn';
+        $previewSemester = filled($semester) ? $semester : 'Chưa gán học kỳ';
 
     @endphp
 
@@ -74,7 +75,7 @@
                         </label>
 
                         {{-- Mã môn học --}}
-                        <label class="space-y-2 sm:col-span-2">
+                        <label class="space-y-2 sm:col-span-2 md:col-span-1">
                             <span class="block text-[13px] font-semibold text-on-surface">Mã môn học</span>
                             <input
                                 wire:model.live.debounce.300ms="subjectCode"
@@ -86,7 +87,17 @@
                             @error('subjectCode') <span class="block text-xs font-medium text-error">{{ $message }}</span> @enderror
                         </label>
 
-
+                        {{-- Học kỳ --}}
+                        <label class="space-y-2 sm:col-span-2 md:col-span-1">
+                            <span class="block text-[13px] font-semibold text-on-surface">Học kỳ</span>
+                            <input
+                                wire:model.live.debounce.300ms="semester"
+                                type="text"
+                                placeholder="Ví dụ: HK1 2026-2027"
+                                class="h-12 w-full rounded-xl border border-outline-variant/40 bg-white px-4 text-sm font-semibold text-on-surface outline-none transition-all placeholder:text-on-surface-variant/50 hover:border-outline-variant focus:border-primary focus:ring-2 focus:ring-primary/20"
+                            >
+                            @error('semester') <span class="block text-xs font-medium text-error">{{ $message }}</span> @enderror
+                        </label>
 
                         {{-- Mã lớp: ẩn input, hiển thị preview sinh tự động --}}
                         <div class="space-y-2 sm:col-span-2">
@@ -143,7 +154,7 @@
                                 </div>
                             </div>
 
-                            <div class="grid grid-cols-2 md:grid-cols-3 gap-4">
+                            <div class="grid grid-cols-2 md:grid-cols-4 gap-4">
                                 <div>
                                     <label class="block text-xs font-semibold text-on-surface mb-1">Có mặt</label>
                                     <input wire:model="attendanceRules.present" type="number" step="0.5" max="0" class="w-full rounded-lg border border-outline-variant/40 bg-white px-3 py-2 text-sm text-on-surface outline-none transition-all focus:border-primary focus:ring-2 focus:ring-primary/20">
@@ -151,14 +162,6 @@
                                 <div>
                                     <label class="block text-xs font-semibold text-on-surface mb-1">Đi muộn</label>
                                     <input wire:model="attendanceRules.late" type="number" step="0.5" class="w-full rounded-lg border border-outline-variant/40 bg-white px-3 py-2 text-sm text-on-surface outline-none transition-all focus:border-primary focus:ring-2 focus:ring-primary/20">
-                                </div>
-                                <div>
-                                    <label class="block text-xs font-semibold text-on-surface mb-1">Vắng giữa giờ</label>
-                                    <input wire:model="attendanceRules.partial" type="number" step="0.5" class="w-full rounded-lg border border-outline-variant/40 bg-white px-3 py-2 text-sm text-on-surface outline-none transition-all focus:border-primary focus:ring-2 focus:ring-primary/20">
-                                </div>
-                                <div>
-                                    <label class="block text-xs font-semibold text-on-surface mb-1">Về sớm</label>
-                                    <input wire:model="attendanceRules.early_leave" type="number" step="0.5" class="w-full rounded-lg border border-outline-variant/40 bg-white px-3 py-2 text-sm text-on-surface outline-none transition-all focus:border-primary focus:ring-2 focus:ring-primary/20">
                                 </div>
                                 <div>
                                     <label class="block text-xs font-semibold text-on-surface mb-1">Vắng</label>
@@ -227,6 +230,7 @@
                             </div>
                             <h3 class="mt-5 text-2xl font-bold leading-tight">{{ $previewName }}</h3>
                             <p class="mt-2 text-sm font-medium text-primary-fixed">{{ $previewSubject }}</p>
+                            <p class="mt-1 text-xs font-semibold text-primary-fixed/80">{{ $previewSemester }}</p>
                             @if($generatedCode)
                                 <div class="mt-3 inline-flex items-center gap-2 rounded-xl bg-white/15 px-3 py-1.5">
                                     <x-user.icon name="key" :size="14" class="text-white/80" />

@@ -2,6 +2,7 @@
 
 namespace App\Models;
 
+use Illuminate\Database\Eloquent\Concerns\HasUuids;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
@@ -11,7 +12,7 @@ use Illuminate\Database\Eloquent\SoftDeletes;
 
 class CourseClass extends Model
 {
-    use HasFactory, SoftDeletes;
+    use HasFactory, HasUuids, SoftDeletes;
 
     protected $table = 'classes';
 
@@ -19,28 +20,23 @@ class CourseClass extends Model
         'owner_user_id', // ID của chủ lớp tạo lớp học.
         'join_key', // Mã lớp (SV nhập để vào lớp).
         'name', // Tên lớp học.
+        'subject_code', // Mã học phần/môn học.
+        'semester', // Học kỳ của lớp học.
         'description', // Mô tả môn học.
-        'late_threshold', // Ngưỡng thời gian trễ.
-        'attendance_rules', // Cấu hình bảng điểm trừ chuyên cần.
-        'subject_code', // Mã môn học.
-        'semester', // Học kỳ.
+        'late_threshold', // Ngưỡng phút trễ tối đa để tính đi muộn.
+        'deduct_excused_absence', // Có trừ chuyên cần khi vắng có phép.
         'require_approval', // Bật/tắt yêu cầu duyệt khi xin vào lớp.
         'status', // Trạng thái lớp active/archived.
         'total_sessions', // Tổng số buổi dự kiến của môn học.
-        'gps_latitude', // Vĩ độ định vị GPS mặc định.
-        'gps_longitude', // Kinh độ định vị GPS mặc định.
-        'gps_radius', // Bán kính GPS mặc định.
     ];
 
     protected function casts(): array
     {
         return [
             'require_approval' => 'boolean', // Ép kiểu cờ yêu cầu duyệt.
-            'attendance_rules' => 'array', // Ép kiểu mảng.
+            'deduct_excused_absence' => 'boolean', // Ép kiểu cờ trừ chuyên cần khi vắng có phép.
+            'late_threshold' => 'integer', // Ép kiểu ngưỡng phút trễ.
             'total_sessions' => 'integer', // Ép kiểu tổng số buổi dự kiến.
-            'gps_latitude' => 'float',
-            'gps_longitude' => 'float',
-            'gps_radius' => 'integer',
         ];
     }
 
@@ -57,7 +53,7 @@ class CourseClass extends Model
     public function users(): BelongsToMany
     {
         return $this->belongsToMany(User::class, 'class_members', 'class_id', 'user_id')
-            ->withPivot(['id', 'student_code', 'full_name', 'status', 'deleted_at'])
+            ->withPivot(['id', 'status', 'status_changed_at', 'deleted_at'])
             ->wherePivotNull('deleted_at')
             ->withTimestamps();
     }
@@ -88,17 +84,15 @@ class CourseClass extends Model
     }
 
     /**
-     * Sinh mã lớp duy nhất dựa trên subject_code và semester.
-     * Tái dùng ở CreateClass và ClassSettings.
+     * Sinh mã lớp (join_key) duy nhất toàn cục.
      *
-     * @param  string  $subjectCode  Mã môn học (có thể rỗng)
-     * @param  string  $semester  Học kỳ (có thể rỗng)
-     * @param  int|null  $excludeId  ID lớp cần loại trừ khi kiểm tra unique (dùng khi đổi mã)
-     * @return string Mã lớp duy nhất đã được kiểm tra
+     * @param  string  $prefixHint  Gợi ý tiền tố (vd mã môn); mặc định CLS.
+     * @param  int|null  $excludeId  ID lớp cần loại trừ khi kiểm tra unique (dùng khi đổi mã).
+     * @return string Mã lớp duy nhất đã được kiểm tra.
      */
-    public static function generateUniqueCode(string $subjectCode = '', string $semester = '', ?int $excludeId = null): string
+    public static function generateUniqueCode(string $prefixHint = '', ?string $excludeId = null): string
     {
-        $subPart = strtoupper(substr(preg_replace('/[^A-Za-z0-9]/', '', $subjectCode), 0, 3));
+        $subPart = strtoupper(substr(preg_replace('/[^A-Za-z0-9]/', '', $prefixHint), 0, 3));
         $prefix = ($subPart ?: 'CLS');
 
         $attempts = 0;
@@ -117,20 +111,21 @@ class CourseClass extends Model
     }
 
     /**
-     * Lấy cấu hình điểm trừ chuyên cần.
-     * Trả về giá trị mặc định nếu lớp chưa cấu hình.
+     * Bảng điểm trừ chuyên cần của lớp.
+     *
+     * Cấu hình chi tiết theo từng trạng thái đã được lược bỏ khỏi bảng classes;
+     * lớp chỉ còn cờ deduct_excused_absence. Hàm này trả về bảng điểm trừ mặc định
+     * (đã điều chỉnh theo cờ vắng có phép) để các phần tính chuyên cần dùng chung.
+     *
+     * @return array<string, float>
      */
     public function getAttendanceRules(): array
     {
-        $defaultRules = [
+        return [
             'present' => 0.0,
             'late' => 0.5,
-            'partial' => 0.5,
-            'early_leave' => 1.0,
             'absent' => 1.0,
-            'excused' => 0.0,
+            'excused' => $this->deduct_excused_absence ? 1.0 : 0.0,
         ];
-
-        return array_merge($defaultRules, $this->attendance_rules ?? []);
     }
 }

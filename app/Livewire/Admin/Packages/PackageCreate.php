@@ -31,12 +31,12 @@ class PackageCreate extends Component
 
     public function mount()
     {
-        abort_unless(Auth::user()?->is_admin, 403);
+        abort_unless(Auth::user()?->isAdmin(), 403);
     }
 
     public function save()
     {
-        abort_unless(Auth::user()?->is_admin, 403);
+        abort_unless(Auth::user()?->isAdmin(), 403);
 
         $this->validate([
             'name' => 'required|string|max:255',

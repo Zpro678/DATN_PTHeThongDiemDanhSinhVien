@@ -39,7 +39,7 @@ class UserIndex extends Component
 
     public function toggleStatus(User $user)
     {
-        abort_unless(Auth::user()?->is_admin, 403);
+        abort_unless(Auth::user()?->isAdmin(), 403);
 
         if ($user->id === Auth::id()) {
             return; // Ngăn chặn tự khóa tài khoản của chính mình
@@ -52,22 +52,21 @@ class UserIndex extends Component
     #[Layout('components.admin-layout')]
     public function render()
     {
-        abort_unless(Auth::user()?->is_admin, 403);
+        abort_unless(Auth::user()?->isAdmin(), 403);
 
         $users = User::query()
             ->withCount(['ownedClasses', 'joinedClasses', 'subscriptions', 'classJoinRequests'])
             ->when($this->search, function ($query) {
                 $query->where(function ($q) {
                     $q->where('name', 'like', "%{$this->search}%")
-                        ->orWhere('email', 'like', "%{$this->search}%")
-                        ->orWhere('member_id', 'like', "%{$this->search}%");
+                        ->orWhere('email', 'like', "%{$this->search}%");
                 });
             })
             ->when($this->role, function ($query) {
                 if ($this->role === 'admin') {
-                    $query->where('is_admin', true);
+                    $query->whereIn('role', [User::ROLE_ADMIN, User::ROLE_SUPER_ADMIN]);
                 } elseif ($this->role === 'user') {
-                    $query->where('is_admin', false);
+                    $query->where('role', User::ROLE_USER);
                 }
             })
             ->when($this->status, fn ($query) => $query->where('status', $this->status))

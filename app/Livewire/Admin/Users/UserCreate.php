@@ -16,24 +16,24 @@ class UserCreate extends Component
     public $name = '';
     public $email = '';
     public $password = '';
-    public $is_admin = false;
+    public $role = User::ROLE_USER;
     public $status = 'active';
     public $avatar;
 
     public function mount()
     {
-        abort_unless(Auth::user()?->is_admin, 403);
+        abort_unless(Auth::user()?->isAdmin(), 403);
     }
 
     public function save()
     {
-        abort_unless(Auth::user()?->is_admin, 403);
+        abort_unless(Auth::user()?->isAdmin(), 403);
 
         $validatedData = $this->validate([
             'name' => ['required', 'string', 'max:255'],
             'email' => ['required', 'string', 'email', 'max:255', 'unique:users,email'],
             'password' => ['required', 'string', 'min:8'],
-            'is_admin' => ['required', 'boolean'],
+            'role' => ['required', 'in:'.User::ROLE_USER.','.User::ROLE_ADMIN.','.User::ROLE_SUPER_ADMIN],
             'status' => ['required', 'in:active,blocked'],
             'avatar' => ['nullable', 'image', 'max:2048'],
         ]);

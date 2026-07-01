@@ -185,21 +185,17 @@ class StudentIndex extends Component
             $q->where('owner_user_id', auth()->id());
         })->findOrFail($requestId);
 
-        $exists = ClassMember::where('class_id', $request->class_id)
-            ->where('student_code', $request->student_code)
-            ->exists();
+        // Yêu cầu vào lớp gắn với tài khoản; tìm thành viên theo user_id.
+        $member = ClassMember::where('class_id', $request->class_id)
+            ->where('user_id', $request->user_id)
+            ->first();
 
-        if ($exists) {
-            $member = ClassMember::where('class_id', $request->class_id)
-                ->where('student_code', $request->student_code)
-                ->first();
-            if (is_null($member->user_id)) {
-                $member->update(['user_id' => $request->user_id]);
-            }
+        if ($member) {
+            $member->update(['status' => ClassMember::STATUS_ACTIVE, 'status_changed_at' => now()]);
         } else {
             $maxStudents = app(SubscriptionService::class)->maxStudentsPerClass(auth()->user());
             $currentCount = ClassMember::where('class_id', $request->class_id)
-                ->where('status', 'active')
+                ->where('status', ClassMember::STATUS_ACTIVE)
                 ->count();
 
             if ($currentCount >= $maxStudents) {
@@ -207,16 +203,20 @@ class StudentIndex extends Component
                 return;
             }
 
-            ClassMember::create([
+            $member = ClassMember::create([
                 'class_id' => $request->class_id,
                 'user_id' => $request->user_id,
-                'student_code' => $request->student_code,
-                'full_name' => $request->full_name,
-                'status' => 'active',
+                'status' => ClassMember::STATUS_ACTIVE,
+            ]);
+
+            // Khởi tạo hồ sơ danh tính từ tài khoản (chưa có MSSV khai báo).
+            $member->syncProfile([
+                'full_name' => $request->user?->name,
+                'email' => $request->user?->email,
             ]);
         }
 
-        $request->update(['status' => 'approved']);
+        $request->update(['status' => ClassJoinRequest::STATUS_APPROVED]);
         $this->dispatch('toast', message: 'Đã duyệt yêu cầu tham gia lớp của sinh viên.', type: 'success');
     }
 
@@ -226,7 +226,7 @@ class StudentIndex extends Component
             $q->where('owner_user_id', auth()->id());
         })->findOrFail($requestId);
 
-        $request->update(['status' => 'rejected']);
+        $request->update(['status' => ClassJoinRequest::STATUS_REJECTED]);
         $this->dispatch('toast', message: 'Đã từ chối yêu cầu tham gia lớp của sinh viên.', type: 'success');
     }
 
@@ -235,10 +235,10 @@ class StudentIndex extends Component
         $member = $this->ownedMember($memberId);
 
         $this->editingMemberId = $member->id;
-        $this->editingName = $member->full_name;
-        $this->editingStudentCode = $member->student_code;
+        $this->editingName = (string) $member->full_name;
+        $this->editingStudentCode = (string) $member->student_code;
         $this->editingEmail = $member->email ?? '';
-        $this->editingStatus = $member->status;
+        $this->editingStatus = $member->status === ClassMember::STATUS_ACTIVE ? 'active' : 'dropped';
     }
 
     public function closeEdit(): void
@@ -281,7 +281,7 @@ class StudentIndex extends Component
 
         $duplicateExists = ClassMember::query()
             ->where('class_id', $courseClass->id)
-            ->where('student_code', $validated['newStudentCode'])
+            ->whereHas('profile', fn (Builder $q) => $q->where('student_code', strtoupper($validated['newStudentCode'])))
             ->exists();
 
         if ($duplicateExists) {
@@ -294,7 +294,7 @@ class StudentIndex extends Component
         $maxStudents = app(SubscriptionService::class)->maxStudentsPerClass(auth()->user());
         $currentCount = ClassMember::query()
             ->where('class_id', $courseClass->id)
-            ->where('status', 'active')
+            ->where('status', ClassMember::STATUS_ACTIVE)
             ->count();
 
         if ($currentCount >= $maxStudents) {
@@ -308,13 +308,16 @@ class StudentIndex extends Component
             $user = \App\Models\User::where('email', $validated['newEmail'])->first();
         }
 
-        ClassMember::create([
+        $member = ClassMember::create([
             'class_id' => $courseClass->id,
+            'user_id' => $user ? $user->id : null,
+            'status' => ClassMember::STATUS_ACTIVE,
+        ]);
+
+        $member->syncProfile([
+            'student_code' => strtoupper($validated['newStudentCode']),
             'full_name' => $validated['newName'],
             'email' => $validated['newEmail'] ?: null,
-            'student_code' => strtoupper($validated['newStudentCode']),
-            'user_id' => $user ? $user->id : null,
-            'status' => 'active',
         ]);
 
         $this->closeAdd();
@@ -339,10 +342,10 @@ class StudentIndex extends Component
         $lines = [
             "M\u00e3 h\u1ecdc vi\u00ean,H\u1ecd v\u00e0 t\u00ean,Email,22/06,23/06,24/06",
             "HV001,Nguy\u1ec5n V\u0103n A,nva@email.com,c,m,c",
-            "HV002,Tr\u1ea7n Th\u1ecb B,ttb@email.com,vg,c,v",
-            "HV003,L\u00ea V\u0103n C,lvc@email.com,c,vs,p",
+            "HV002,Tr\u1ea7n Th\u1ecb B,ttb@email.com,v,c,v",
+            "HV003,L\u00ea V\u0103n C,lvc@email.com,c,v,p",
             "",
-            "Ch\u00fa th\u00edch k\u00fd hi\u1ec7u:,c=C\u00f3 m\u1eb7t,m=\u0110i mu\u1ed9n,vg=V\u1eafng gi\u1eefa gi\u1edd,vs=V\u1ec1 s\u1edbm,v=V\u1eafng kh\u00f4ng ph\u00e9p,p=V\u1eafng c\u00f3 ph\u00e9p",
+            "Ch\u00fa th\u00edch k\u00fd hi\u1ec7u:,c=C\u00f3 m\u1eb7t,m=\u0110i mu\u1ed9n,v=V\u1eafng kh\u00f4ng ph\u00e9p,p=V\u1eafng c\u00f3 ph\u00e9p",
         ];
         $csvContent = implode("\n", $lines);
 
@@ -428,7 +431,7 @@ class StudentIndex extends Component
 
         $duplicateExists = ClassMember::query()
             ->where('class_id', $member->class_id)
-            ->where('student_code', $validated['editingStudentCode'])
+            ->whereHas('profile', fn (Builder $q) => $q->where('student_code', strtoupper($validated['editingStudentCode'])))
             ->whereKeyNot($member->id)
             ->exists();
 
@@ -443,12 +446,20 @@ class StudentIndex extends Component
             $user = \App\Models\User::where('email', $validated['editingEmail'])->first();
         }
 
+        $newStatus = $validated['editingStatus'] === 'dropped'
+            ? ClassMember::STATUS_REMOVED
+            : ClassMember::STATUS_ACTIVE;
+
         $member->update([
-            'full_name' => $validated['editingName'],
-            'student_code' => strtoupper($validated['editingStudentCode']),
-            'email' => $validated['editingEmail'] ?: null,
             'user_id' => $user ? $user->id : ($member->email !== $validated['editingEmail'] ? null : $member->user_id),
-            'status' => $validated['editingStatus'],
+            'status' => $newStatus,
+            'status_changed_at' => $newStatus !== ClassMember::STATUS_ACTIVE ? now() : null,
+        ]);
+
+        $member->syncProfile([
+            'student_code' => strtoupper($validated['editingStudentCode']),
+            'full_name' => $validated['editingName'],
+            'email' => $validated['editingEmail'] ?: null,
         ]);
 
         // Nếu chuyển sang trạng thái "thôi học", tự động đưa vào mục lưu trữ
@@ -481,7 +492,7 @@ class StudentIndex extends Component
         }
 
         $member = $this->ownedMember($this->archivingMemberId);
-        $member->update(['status' => 'dropped']);
+        $member->update(['status' => ClassMember::STATUS_REMOVED, 'status_changed_at' => now()]);
         $member->delete();
 
         $this->closeArchiveConfirm();
@@ -492,7 +503,7 @@ class StudentIndex extends Component
     {
         $member = $this->ownedMember($memberId, true);
         $member->restore();
-        $member->update(['status' => 'active']);
+        $member->update(['status' => ClassMember::STATUS_ACTIVE, 'status_changed_at' => null]);
 
         session()->flash('success', 'Sinh viên đã được khôi phục vào lớp.');
     }
@@ -551,37 +562,38 @@ class StudentIndex extends Component
 
         if ($this->statusFilter === 'pending') {
             $members = ClassJoinRequest::query()
-                ->with(['courseClass:id,name,join_key', 'user:id,email,avatar'])
+                ->with(['courseClass:id,name,join_key', 'user:id,name,email,avatar'])
                 ->whereHas('courseClass', fn (Builder $query) => $query->where('owner_user_id', auth()->id()))
-                ->where('status', 'pending')
+                ->where('status', ClassJoinRequest::STATUS_PENDING)
                 ->when($this->classFilter !== 'all', fn (Builder $query) => $query->where('class_id', $this->classFilter))
                 ->when($this->search !== '', function (Builder $query): void {
-                    $query->where(function (Builder $query): void {
-                        $query->where('full_name', 'like', '%'.$this->search.'%')
-                            ->orWhere('student_code', 'like', '%'.$this->search.'%')
-                            ->orWhereHas('user', fn (Builder $query) => $query->where('email', 'like', '%'.$this->search.'%'));
+                    $query->whereHas('user', function (Builder $q): void {
+                        $q->where('name', 'like', '%'.$this->search.'%')
+                            ->orWhere('email', 'like', '%'.$this->search.'%');
                     });
                 })
                 ->orderByDesc('created_at')
                 ->paginate(12);
         } else {
             $members = ClassMember::query()
-                ->with(['courseClass:id,name,join_key', 'user:id,email,avatar', 'attendanceSummary'])
+                ->with(['courseClass:id,name,join_key', 'user:id,name,email,avatar', 'profile', 'attendanceSummary'])
+                ->leftJoin('class_member_profiles', 'class_member_profiles.class_member_id', '=', 'class_members.id')
+                ->select('class_members.*')
                 ->whereHas('courseClass', fn (Builder $query) => $query->where('owner_user_id', auth()->id()))
                 ->when(
                     $this->statusFilter === 'archived',
                     fn (Builder $query) => $query->onlyTrashed(),
-                    fn (Builder $query) => $query->where('status', 'active'),
+                    fn (Builder $query) => $query->where('class_members.status', ClassMember::STATUS_ACTIVE),
                 )
-                ->when($this->classFilter !== 'all', fn (Builder $query) => $query->where('class_id', $this->classFilter))
+                ->when($this->classFilter !== 'all', fn (Builder $query) => $query->where('class_members.class_id', $this->classFilter))
                 ->when($this->search !== '', function (Builder $query): void {
                     $query->where(function (Builder $query): void {
-                        $query->where('full_name', 'like', '%'.$this->search.'%')
-                            ->orWhere('student_code', 'like', '%'.$this->search.'%')
-                            ->orWhereHas('user', fn (Builder $query) => $query->where('email', 'like', '%'.$this->search.'%'));
+                        $query->where('class_member_profiles.full_name', 'like', '%'.$this->search.'%')
+                            ->orWhere('class_member_profiles.student_code', 'like', '%'.$this->search.'%')
+                            ->orWhereHas('user', fn (Builder $query) => $query->where('email', 'like', '%'.$this->search.'%')->orWhere('name', 'like', '%'.$this->search.'%'));
                     });
                 })
-                ->orderBy('full_name')
+                ->orderBy('class_member_profiles.full_name')
                 ->paginate(12);
         }
 
@@ -594,7 +606,7 @@ class StudentIndex extends Component
 
         $attendanceOverview = $studentService->getTotalAttendanceStats( // Tính tổng chuyên cần theo toàn bộ bộ lọc hiện tại.
             auth()->id(), // Giới hạn dữ liệu theo giảng viên đang đăng nhập.
-            $this->classFilter !== 'all' ? (int) $this->classFilter : null // Nếu chọn một lớp thì chỉ thống kê lớp đó.
+            $this->classFilter !== 'all' ? $this->classFilter : null // Nếu chọn một lớp thì chỉ thống kê lớp đó.
         );
 
         $canExportExcel = app(SubscriptionService::class)->canExportExcel(auth()->user()); // Quyền xuất Excel theo gói (Pro trở lên).

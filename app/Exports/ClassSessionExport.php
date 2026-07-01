@@ -51,9 +51,10 @@ class ClassSessionExport implements FromArray, ShouldAutoSize, WithStyles
         // Nạp kèm classMember đã withTrashed để sinh viên đã bị xoá mềm vẫn hiển thị
         // trong báo cáo của buổi (tránh lỗi đọc thuộc tính trên null).
         $records = $this->session->attendanceRecords()
-            ->with(['classMember' => fn ($query) => $query->withTrashed()])
+            ->with(['classMember' => fn ($query) => $query->withTrashed()->with(['profile', 'user'])])
             ->join('class_members', 'attendance_records.class_member_id', '=', 'class_members.id')
-            ->orderBy('class_members.student_code')
+            ->leftJoin('class_member_profiles', 'class_member_profiles.class_member_id', '=', 'class_members.id')
+            ->orderBy('class_member_profiles.student_code')
             ->select('attendance_records.*')
             ->get();
 
@@ -61,7 +62,7 @@ class ClassSessionExport implements FromArray, ShouldAutoSize, WithStyles
             'pending' => 'Chưa điểm danh',
             'present' => 'Có mặt',
             'late' => 'Đi muộn',
-            'absent' => 'Vắng mặt',
+            'absent' => 'Vắng',
             'excused' => 'Có phép',
         ];
 
