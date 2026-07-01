@@ -64,10 +64,11 @@ class JoinClass extends Component
 
         $userId = Auth::id();
 
-        $existingMember = ClassMember::where('class_id', $courseClass->id)
+        $existingMember = ClassMember::with('profile')
+            ->where('class_id', $courseClass->id)
             ->where(function ($query) use ($userId) {
                 $query->where('user_id', $userId)
-                    ->orWhere('student_code', $this->student_code);
+                    ->orWhereHas('profile', fn ($profile) => $profile->where('student_code', $this->student_code));
             })->first();
 
         if ($existingMember) {
@@ -75,6 +76,13 @@ class JoinClass extends Component
             if (is_null($existingMember->user_id) && $existingMember->student_code === $this->student_code) {
                 $existingMember->update([
                     'user_id' => $userId,
+                    'status' => ClassMember::STATUS_ACTIVE,
+                    'status_changed_at' => null,
+                ]);
+                $existingMember->syncProfile([
+                    'student_code' => $this->student_code,
+                    'full_name' => $this->full_name,
+                    'email' => Auth::user()?->email,
                 ]);
                 session()->flash('status', 'Đã liên kết tài khoản của bạn với danh sách học viên trong lớp!');
                 $this->reset(['class_code', 'student_code']);
@@ -109,12 +117,16 @@ class JoinClass extends Component
             session()->flash('status', 'Yêu cầu tham gia lớp của bạn đã được gửi và đang chờ giảng viên phê duyệt!');
         } else {
             // Thêm sinh viên vào lớp ngay lập tức
-            ClassMember::create([
+            $member = ClassMember::create([
                 'class_id' => $courseClass->id,
                 'user_id' => $userId,
+                'status' => ClassMember::STATUS_ACTIVE,
+            ]);
+
+            $member->syncProfile([
                 'student_code' => $this->student_code,
                 'full_name' => $this->full_name,
-                'status' => 'active',
+                'email' => Auth::user()?->email,
             ]);
 
             session()->flash('status', 'Bạn đã tham gia lớp học thành công!');

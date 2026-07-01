@@ -219,7 +219,7 @@ class ManualAttendanceSession extends Component
         $session = $this->ownedSession($this->sessionId)->load('courseClass');
         $records = $session->attendanceRecords()
             ->whereHas('classMember')
-            ->with('classMember.user')
+            ->with(['classMember.user', 'classMember.profile'])
             ->when($this->search !== '', function (Builder $query): void {
                 $query->where(function (Builder $query): void {
                     $query->whereHas('classMember.profile', fn (Builder $p) => $p->where('student_code', 'like', '%'.$this->search.'%')->orWhere('full_name', 'like', '%'.$this->search.'%'))

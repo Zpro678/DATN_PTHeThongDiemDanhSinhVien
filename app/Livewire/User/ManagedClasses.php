@@ -58,14 +58,25 @@ class ManagedClasses extends Component
             $search = str($this->search)->lower()->toString();
             $query->where(function ($q) use ($search) {
                 $q->whereRaw('LOWER(name) LIKE ?', ["%{$search}%"])
-                    ->orWhereRaw('LOWER(join_key) LIKE ?', ["%{$search}%"]);
+                    ->orWhereRaw('LOWER(join_key) LIKE ?', ["%{$search}%"])
+                    ->orWhereRaw('LOWER(subject_code) LIKE ?', ["%{$search}%"])
+                    ->orWhereRaw('LOWER(semester) LIKE ?', ["%{$search}%"]);
             });
+        }
+
+        if ($this->semesterFilter !== 'Tất cả học kỳ') {
+            $query->where('semester', $this->semesterFilter);
         }
 
         $classes = $query->orderByDesc('created_at')->get();
 
-        // Cột học kỳ đã được lược bỏ khỏi schema; không còn bộ lọc theo học kỳ.
-        $semesters = collect();
+        $semesters = CourseClass::query()
+            ->where('owner_user_id', auth()->id())
+            ->whereNotNull('semester')
+            ->where('semester', '!=', '')
+            ->distinct()
+            ->orderBy('semester')
+            ->pluck('semester');
 
         return view('livewire.user.managed-classes', [
             'classes' => $classes,

@@ -52,10 +52,13 @@ class ClassStatistics extends Component
             ->sortByDesc(fn ($row) => $row['stats']['is_banned'] ? 1 : 0)
             ->values();
 
-        // Tất cả học viên (sắp xếp chuyên cần tăng dần để dễ phát hiện vấn đề)
+        // Tất cả học viên (sắp xếp theo tên A-Z)
         $allStudents = $members
             ->map(fn ($m) => ['member' => $m, 'stats' => $statsMap[$m->id] ?? null])
-            ->sortBy(fn ($row) => $row['stats']['attendance_percent'] ?? 100)
+            ->sortBy(function ($row) {
+                $parts = explode(' ', trim($row['member']->full_name));
+                return end($parts);
+            })
             ->values();
 
         // Dữ liệu điểm danh theo từng buổi đã chốt (cho biểu đồ)
@@ -91,6 +94,10 @@ class ClassStatistics extends Component
             'alertStudents'   => $alertStudents,
             'allStudents'     => $allStudents,
             'sessionChart'    => $sessionChart,
-        ])->layout('layouts.user', ['title' => 'Thống kê — ' . $class->name]);
+        ])->layout('layouts.fullscreen', [
+            'title' => 'Thống kê',
+            'subtitle' => $class->code . ' - ' . $class->name,
+            'backUrl' => route('lecturer.classes.show', ['ma_user' => auth()->id(), 'courseClass' => $class->id])
+        ]);
     }
 }

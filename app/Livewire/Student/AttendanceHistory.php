@@ -11,6 +11,8 @@ use Livewire\Attributes\Url;
 use Livewire\Component;
 use Livewire\WithPagination;
 use Illuminate\Pagination\LengthAwarePaginator;
+use App\Exports\StudentAttendanceHistoryExport;
+use Maatwebsite\Excel\Facades\Excel;
 
 class AttendanceHistory extends Component
 {
@@ -30,6 +32,12 @@ class AttendanceHistory extends Component
         $this->resetPage();
     }
 
+    public function exportExcel()
+    {
+        $fileName = 'lich_su_diem_danh_' . date('Ymd_His') . '.xlsx';
+        return Excel::download(new StudentAttendanceHistoryExport(auth()->id(), $this->classFilter, $this->statusFilter, $this->search), $fileName);
+    }
+
     public function clearFilters(): void
     {
         $this->statusFilter = 'all';
@@ -42,6 +50,7 @@ class AttendanceHistory extends Component
         $members = ClassMember::query()
             ->with('courseClass.owner')
             ->where('user_id', auth()->id())
+            ->where('status', ClassMember::STATUS_ACTIVE)
             ->get();
 
         // Summary: dùng LectureManageStudentService — tính theo TIẾT, chỉ buổi đã chốt.

@@ -76,7 +76,7 @@ class LeaveRequestShow extends Component
             ->with('classSession:id,name,date')
             ->where('status', 'approved')
             ->orderByDesc('created_at')
-            ->paginate(6);
+            ->get();
 
         return view('livewire.lecturer.students.leave-requests.show', compact('leaveRequest', 'approvedLeaveRequests'))
             ->layout('layouts.user', ['title' => 'Chi tiết đơn xin nghỉ']);

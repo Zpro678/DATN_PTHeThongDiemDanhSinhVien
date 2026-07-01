@@ -3,6 +3,7 @@
 namespace App\Livewire\Student;
 
 use App\Models\CourseClass;
+use App\Models\ClassMember;
 use App\Services\StatisticalService;
 use Illuminate\Contracts\View\View;
 use Livewire\Component;
@@ -20,7 +21,7 @@ class ClassShow extends Component
         abort_unless(
             $courseClass->members()
                 ->where('user_id', auth()->id())
-                ->where('status', 'active')
+                ->where('status', ClassMember::STATUS_ACTIVE)
                 ->exists(),
             403,
         );

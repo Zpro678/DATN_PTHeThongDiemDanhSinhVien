@@ -1,20 +1,8 @@
-<div x-data="{ showImportModal: false, showShareModal: false }" class="mx-auto max-w-7xl p-4 sm:p-6 lg:p-8 animate-in fade-in slide-in-from-bottom-4 duration-500">
+<div x-data="{ showImportModal: false, showShareModal: false }" class="w-full space-y-6 px-6 py-6 pb-24 sm:px-10 lg:px-16 animate-in fade-in slide-in-from-bottom-4 duration-500">
 
     {{-- Header --}}
-    <div class="mb-6 flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
-        <div class="flex items-center justify-between w-full sm:w-auto gap-4">
-            <h1 class="flex items-center gap-3 text-2xl font-bold text-slate-800 min-w-0">
-                <span class="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-blue-50 text-blue-600">
-                    <x-user.icon name="book-open" :size="20" />
-                </span>
-                <span class="truncate">{{ $class->name }}</span>
-            </h1>
-            <a href="{{ route('managed-classes') }}" class="inline-flex sm:hidden shrink-0 items-center justify-center gap-2 rounded-lg bg-blue-600 px-3 py-2 text-sm font-medium text-white transition-colors hover:bg-blue-700">
-                <x-user.icon name="arrow-left" :size="16" />
-                Trở về
-            </a>
-        </div>
-        <div class="grid grid-cols-2 gap-2 sm:flex sm:flex-wrap sm:items-center">
+    <div class="mb-6 flex justify-end">
+        <div class="grid grid-cols-2 gap-2 sm:flex sm:flex-wrap sm:items-center w-full sm:w-auto">
             <button
                 type="button"
                 class="inline-flex w-full sm:w-auto justify-center items-center gap-2 rounded-lg border border-slate-200 bg-white px-4 py-2 text-sm font-medium text-slate-600 transition-colors hover:bg-slate-50 hover:text-slate-900"
@@ -47,88 +35,89 @@
                 <x-user.icon name="settings" :size="18" />
                 Cài đặt lớp
             </a>
-            <a href="{{ route('managed-classes') }}" class="hidden sm:inline-flex w-full sm:w-auto justify-center items-center gap-2 rounded-lg bg-blue-600 px-4 py-2 text-sm font-medium text-white transition-colors hover:bg-blue-700">
-                <x-user.icon name="arrow-left" :size="16" />
-                Trở về
-            </a>
         </div>
     </div>
+
+@php
+    $colorOptions = [
+        'bg-[#475569]', 'bg-[#1D4ED8]', 'bg-[#0F766E]', 'bg-[#4338CA]',
+        'bg-[#047857]', 'bg-[#0369A1]', 'bg-[#6D28D9]', 'bg-[#B45309]',
+    ];
+    $themeColor = $colorOptions[$class->id % count($colorOptions)];
+@endphp
 
     {{-- Thông tin lớp & Hành động nhanh --}}
     <div class="mb-6 flex flex-col gap-4 lg:flex-row">
         {{-- Thông tin lớp (Match image 1) --}}
-        <div class="relative flex-1 rounded-[20px] bg-blue-50/50 border border-blue-100 p-6 shadow-sm sm:p-8">
+        <div class="relative flex-1 rounded-[20px] {{ $themeColor }} p-6 shadow-sm sm:p-8">
             <div class="absolute right-6 top-6 flex items-center justify-center">
                 @if($class->status === 'active')
                     <span class="relative flex h-3 w-3" title="Trạng thái: Đang hoạt động">
-                        <span class="animate-ping absolute inline-flex h-full w-full rounded-full bg-[#3E7B62] opacity-75"></span>
-                        <span class="relative inline-flex rounded-full h-3 w-3 bg-[#3E7B62]"></span>
+                        <span class="animate-ping absolute inline-flex h-full w-full rounded-full bg-white opacity-75"></span>
+                        <span class="relative inline-flex rounded-full h-3 w-3 bg-white"></span>
                     </span>
                 @elseif($class->status === 'archived')
-                    <span class="h-3 w-3 rounded-full bg-amber-500" title="Trạng thái: Lưu trữ"></span>
+                    <span class="h-3 w-3 rounded-full bg-amber-300" title="Trạng thái: Lưu trữ"></span>
                 @else
-                    <span class="h-3 w-3 rounded-full bg-slate-400" title="Trạng thái: Đã kết thúc"></span>
+                    <span class="h-3 w-3 rounded-full bg-slate-300" title="Trạng thái: Đã kết thúc"></span>
                 @endif
             </div>
+
+            <h1 class="flex items-center gap-3 text-2xl font-bold text-white min-w-0 mb-8 pr-8">
+                <span class="truncate">{{ $class->name }}</span>
+            </h1>
             
             <div class="grid grid-cols-2 gap-x-4 gap-y-6 sm:grid-cols-4">
-                <div class="min-w-0">
-                    <span class="text-sm text-slate-500">Sinh viên</span>
-                    <p class="mt-1 text-2xl sm:text-[28px] font-bold text-slate-800 leading-none">{{ $studentsCount }}</p>
-                </div>
-                <div class="min-w-0">
-                    <span class="text-sm text-slate-500">Điểm danh</span>
-                    <p class="mt-1 text-2xl sm:text-[28px] font-bold text-slate-800 leading-none">{{ $sessionsCompleted }} <span class="text-base font-medium text-slate-500">buổi</span></p>
-                </div>
-                <div class="min-w-0">
-                    <span class="text-sm text-slate-500">Tiến độ</span>
-                    <p class="mt-1 text-2xl sm:text-[28px] font-bold text-slate-800 leading-none">{{ $sessionsCount > 0 ? round(($sessionsCompleted / $sessionsCount) * 100) : 0 }}%</p>
-                </div>
                 @if($class->subject_code)
                 <div class="min-w-0">
-                    <span class="text-sm text-slate-500">Mã học phần</span>
-                    <p class="mt-1 text-2xl sm:text-[28px] font-bold text-slate-800 truncate leading-none" title="{{ $class->subject_code }}">{{ $class->subject_code }}</p>
+                    <span class="text-sm text-white/70">Mã học phần</span>
+                    <p class="mt-1 text-2xl sm:text-[28px] font-bold text-white truncate leading-none" title="{{ $class->subject_code }}">{{ $class->subject_code }}</p>
                 </div>
                 @else
                 <div class="min-w-0 hidden sm:block"></div>
                 @endif
+                <div class="min-w-0">
+                    <span class="text-sm text-white/70">Sinh viên</span>
+                    <p class="mt-1 text-2xl sm:text-[28px] font-bold text-white leading-none">{{ $studentsCount }}</p>
+                </div>
+                <div class="min-w-0">
+                    <span class="text-sm text-white/70">Điểm danh</span>
+                    <p class="mt-1 text-2xl sm:text-[28px] font-bold text-white leading-none">{{ $sessionsCompleted }} <span class="text-base font-medium text-white/80">buổi</span></p>
+                </div>
+                <div class="min-w-0">
+                    <span class="text-sm text-white/70">Tiến độ</span>
+                    <p class="mt-1 text-2xl sm:text-[28px] font-bold text-white leading-none">{{ $sessionsCount > 0 ? round(($sessionsCompleted / $sessionsCount) * 100) : 0 }}%</p>
+                </div>
                 <div class="col-span-2 sm:col-span-4 flex items-end sm:justify-end mt-2">
-                    <a href="{{ route('lecturer.classes.attendance', $class->id) }}" wire:navigate class="inline-flex w-full sm:w-auto whitespace-nowrap items-center justify-center gap-2 rounded-lg border border-slate-300 bg-slate-200 px-4 py-2 text-sm font-bold text-slate-800 transition-colors hover:bg-slate-300 hover:text-slate-900 shadow-sm">
-                        <x-user.icon name="clock" :size="16" />
-                        Lịch sử điểm danh
-                    </a>
                 </div>
             </div>
         </div>
 
-        {{-- Quick Actions (Match image 1 colors) --}}
+        {{-- Quick Actions --}}
         <div class="grid grid-cols-2 gap-4 lg:w-[320px] lg:shrink-0 text-center">
-            <button type="button" wire:click="checkBeforeAttendance('qr')" class="group flex h-[100px] flex-col items-center justify-center gap-2 rounded-[20px] bg-blue-600 p-4 transition-colors hover:bg-blue-700">
-                <div class="flex h-10 w-10 items-center justify-center rounded-full bg-white/20 text-white transition-colors group-hover:bg-white/30">
+            <button type="button" wire:click="checkBeforeAttendance('qr')" class="group flex h-[100px] flex-col items-center justify-center gap-2 rounded-[20px] bg-blue-50 border border-blue-300 p-4 transition-all duration-300 hover:shadow-sm hover:bg-blue-100 hover:-translate-y-0.5">
+                <div class="flex h-10 w-10 items-center justify-center rounded-full bg-blue-200/50 text-blue-600 transition-colors group-hover:bg-blue-200">
                     <x-user.icon name="qr-code" :size="20" />
                 </div>
-                <span class="text-[13px] font-bold text-white">QR</span>
+                <span class="text-[13px] font-bold text-blue-700">QR</span>
             </button>
-            <button type="button" wire:click="checkBeforeAttendance('manual')" class="group flex h-[100px] flex-col items-center justify-center gap-2 rounded-[20px] bg-emerald-600 p-4 transition-colors hover:bg-emerald-700">
-                <div class="flex h-10 w-10 items-center justify-center rounded-full bg-white/20 text-white transition-colors group-hover:bg-white/30">
+            <button type="button" wire:click="checkBeforeAttendance('manual')" class="group flex h-[100px] flex-col items-center justify-center gap-2 rounded-[20px] bg-emerald-50 border border-emerald-300 p-4 transition-all duration-300 hover:shadow-sm hover:bg-emerald-100 hover:-translate-y-0.5">
+                <div class="flex h-10 w-10 items-center justify-center rounded-full bg-emerald-200/50 text-emerald-600 transition-colors group-hover:bg-emerald-200">
                     <x-user.icon name="check-square" :size="20" />
                 </div>
-                <span class="text-[13px] font-bold text-white">Thủ công</span>
+                <span class="text-[13px] font-bold text-emerald-700">Thủ công</span>
             </button>
-            <a href="{{ route('lecturer.leave-requests.index', ['class_id' => $class->id]) }}" wire:navigate class="group relative flex h-[100px] flex-col items-center justify-center gap-2 rounded-[20px] bg-rose-600 p-4 transition-colors hover:bg-rose-700">
-                <div class="flex h-10 w-10 items-center justify-center rounded-full bg-white/20 text-white transition-colors group-hover:bg-white/30">
-                    <x-user.icon name="file-text" :size="20" />
+            <a href="{{ route('lecturer.classes.attendance', $class->id) }}" wire:navigate class="group relative flex h-[100px] flex-col items-center justify-center gap-2 rounded-[20px] bg-rose-50 border border-rose-300 p-4 transition-all duration-300 hover:shadow-sm hover:bg-rose-100 hover:-translate-y-0.5">
+                <div class="flex h-10 w-10 items-center justify-center rounded-full bg-rose-200/50 text-rose-600 transition-colors group-hover:bg-rose-200">
+                    <x-user.icon name="history" :size="20" />
                 </div>
-                <span class="text-[13px] font-bold text-white">Đơn nghỉ</span>
-                @if($pendingLeaveRequests > 0)
-                    <span class="absolute right-2 top-2 flex h-5 w-5 items-center justify-center rounded-full bg-white text-[10px] font-bold text-rose-600">{{ $pendingLeaveRequests }}</span>
-                @endif
+                <span class="text-[13px] font-bold text-rose-700 text-center leading-tight">Lịch sử ĐD</span>
             </a>
-            <a href="{{ route('lecturer.class.statistics', ['class_id' => $class->id]) }}" wire:navigate class="group flex h-[100px] flex-col items-center justify-center gap-2 rounded-[20px] bg-slate-700 p-4 transition-colors hover:bg-slate-800" style="background-color: #334155;">
-                <div class="flex h-10 w-10 items-center justify-center rounded-full bg-white/20 text-white transition-colors group-hover:bg-white/30">
+            <a href="{{ route('lecturer.class.statistics', ['class_id' => $class->id]) }}" wire:navigate class="group flex h-[100px] flex-col items-center justify-center gap-2 rounded-[20px] bg-slate-50 border border-slate-300 p-4 transition-all duration-300 hover:shadow-sm hover:bg-slate-100 hover:-translate-y-0.5">
+                <div class="flex h-10 w-10 items-center justify-center rounded-full bg-slate-200/50 text-slate-600 transition-colors group-hover:bg-slate-200">
                     <x-user.icon name="bar-chart-2" :size="20" />
                 </div>
-                <span class="text-[13px] font-bold text-white">Thống kê</span>
+                <span class="text-[13px] font-bold text-slate-700">Thống kê</span>
             </a>
         </div>
     </div>
@@ -155,7 +144,7 @@
     {{-- Danh sách học viên --}}
     <div class="mt-8 mb-4 flex items-center justify-between px-1">
         <h2 class="text-lg font-bold text-slate-800">Danh sách học viên ({{ $studentsCount }})</h2>
-        <a href="{{ route('lecturer.students.index', ['class_id' => $class->id, 'status' => 'pending']) }}" wire:navigate class="relative inline-flex items-center gap-2 rounded-lg bg-blue-50 px-3 py-1.5 text-sm font-bold text-blue-600 transition-colors hover:bg-blue-100">
+        <a href="{{ route('lecturer.classes.pending-members', $class->id) }}" wire:navigate class="relative inline-flex items-center gap-2 rounded-lg bg-blue-50 px-3 py-1.5 text-sm font-bold text-blue-600 transition-colors hover:bg-blue-100">
             <x-user.icon name="user-check" :size="16" />
             Duyệt học viên
             @if($pendingMembersCount > 0)
@@ -176,13 +165,14 @@
                 <p class="mt-1 text-sm text-slate-500">Lớp học này hiện chưa có sinh viên nào.</p>
             </div>
         @else
-            <div class="overflow-x-auto">
+            <div class="overflow-x-auto {{ $students->count() > 30 ? 'max-h-[800px] overflow-y-auto relative' : '' }}">
                 <table class="w-full min-w-[750px] table-fixed text-left text-sm whitespace-nowrap">
                     <thead class="border-b border-slate-200 bg-slate-50 text-sm uppercase text-black">
-                        <tr>
+                        <tr class="{{ $students->count() > 30 ? 'sticky top-0 z-10 bg-slate-50' : '' }}">
+                            <th scope="col" class="w-[10%] px-6 py-4 font-bold text-center">STT</th>
                             <th scope="col" class="w-[15%] px-6 py-4 font-bold text-center">MSSV</th>
-                            <th scope="col" class="w-[25%] pl-6 pr-6 py-4 font-bold">Họ & Tên</th>
-                            <th scope="col" class="w-[25%] pl-6 pr-6 py-4 font-bold">Email</th>
+                            <th scope="col" class="w-[20%] pl-6 pr-6 py-4 font-bold">Họ & Tên</th>
+                            <th scope="col" class="w-[20%] pl-6 pr-6 py-4 font-bold">Email</th>
                             <th scope="col" class="w-[20%] px-6 py-4 font-bold text-center">Liên kết</th>
                             <th scope="col" class="w-[15%] px-6 py-4 font-bold text-center">Chuyên cần</th>
                         </tr>
@@ -200,12 +190,17 @@
                                 $rowBg = $isBanned ? 'bg-red-50/40' : ($isWarning ? 'bg-amber-50/40' : '');
                             @endphp
                             <tr class="transition-colors hover:bg-slate-50/50 {{ $rowBg }}">
+                                <td class="px-6 py-4 font-medium text-slate-700 text-center">{{ $loop->iteration }}</td>
                                 <td class="px-6 py-4 font-medium text-slate-700 text-center">{{ $student->student_code }}</td>
                                 <td class="pl-6 pr-6 py-4 text-left">
                                     <div class="flex items-center gap-3">
-                                        <div class="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-blue-50 text-[13px] font-bold text-blue-600 uppercase">
-                                            {{ mb_substr(collect(explode(' ', $student->full_name))->last(), 0, 1) }}
-                                        </div>
+                                        @if($student->user && $student->user->avatar)
+                                            <img src="{{ asset('storage/' . $student->user->avatar) }}" alt="{{ $student->full_name }}" class="h-8 w-8 shrink-0 rounded-full object-cover">
+                                        @else
+                                            <div class="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-blue-50 text-[13px] font-bold text-blue-600 uppercase">
+                                                {{ mb_substr(collect(explode(' ', $student->full_name))->last(), 0, 1) }}
+                                            </div>
+                                        @endif
                                         <div class="flex flex-col gap-0.5">
                                             <span class="font-bold text-slate-800">{{ $student->full_name }}</span>
                                             @if ($isBanned)
@@ -249,12 +244,6 @@
                     </tbody>
                 </table>
             </div>
-            
-            @if($students->hasPages())
-                <div class="border-t border-slate-200 bg-slate-50 p-4">
-                    {{ $students->links() }}
-                </div>
-            @endif
         @endif
     </div>
 
@@ -480,4 +469,6 @@
             </div>
         </div>
     </template>
+
+    <x-lecturer.attendance.quick-start-modal :hideClassSelector="true" />
 </div>

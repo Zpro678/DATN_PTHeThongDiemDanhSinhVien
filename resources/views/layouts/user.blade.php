@@ -34,13 +34,13 @@
         ['label' => 'Lớp tôi tham gia', 'icon' => 'graduation-cap', 'route' => 'joined-classes', 'active' => ['joined-classes', 'student.classes.show'], 'desc' => 'Các lớp bạn đang theo học'],
         ['label' => 'Lịch sử điểm danh', 'icon' => 'history', 'route' => 'student.attendance.history', 'active' => 'student.attendance.history', 'desc' => 'Nhật ký check-in của bạn'],
         ['label' => 'Thống kê chuyên cần', 'icon' => 'bar-chart', 'route' => 'student.attendance.stats', 'active' => 'student.attendance.stats', 'desc' => 'Tỷ lệ & xu hướng đi học'],
-        ['label' => 'Xin nghỉ phép', 'icon' => 'send', 'route' => 'student.leave-requests.create', 'active' => 'student.leave-requests.*', 'desc' => 'Gửi yêu cầu nghỉ có phép'],
+        ['label' => 'Xin nghỉ phép', 'icon' => 'send', 'route' => 'student.leave-requests.history', 'active' => 'student.leave-requests.*', 'desc' => 'Gửi yêu cầu nghỉ có phép'],
     ];
 
-    $navMenus = [
-        ['label' => 'Giảng dạy', 'icon' => 'shield', 'items' => $teachItems],
-        ['label' => 'Học tập', 'icon' => 'graduation-cap', 'items' => $learnItems],
-    ];
+    // $navMenus = [
+    //     ['label' => 'Giảng dạy', 'icon' => 'shield', 'items' => $teachItems],
+    //     ['label' => 'Học tập', 'icon' => 'graduation-cap', 'items' => $learnItems],
+    // ];
 
     // Mức active của từng dropdown = có item con nào đang active không.
     $menuActive = function (array $items) use ($matchesActive): bool {
@@ -54,6 +54,8 @@
 
     $dashboardActive = $matchesActive('dashboard');
     $warningsActive = $matchesActive('student.warnings');
+    $teachGroupActive = $menuActive($teachItems);
+    $learnGroupActive = $menuActive($learnItems);
 
     // Cấu trúc đầy đủ cho drawer mobile.
     $navSections = [
@@ -97,118 +99,133 @@
         @vite(['resources/css/app.css', 'resources/js/app.js'])
     </head>
     <body class="min-h-screen bg-surface font-sans antialiased text-on-surface">
-        <div x-data="{ navOpen: false }" class="flex min-h-screen flex-col">
+        <div x-data="{ navOpen: false }" class="flex min-h-screen bg-surface">
 
-            {{-- ============================ TOP NAV (≥ md) ============================ --}}
-            <header class="sticky top-0 z-40 border-b border-outline-variant bg-white/90 backdrop-blur-md">
-                <div class="mx-auto flex h-16 max-w-[1400px] items-center gap-3 px-4 sm:px-6 lg:px-8">
-
-                    {{-- Hamburger (mobile) --}}
-                    <button type="button" x-on:click="navOpen = true"
-                        class="grid h-9 w-9 shrink-0 place-items-center rounded-lg text-on-surface-variant hover:bg-surface-container md:hidden">
-                        <x-user.icon name="menu" :size="20" />
-                    </button>
-
-                    {{-- Brand --}}
-                    <a href="{{ route('dashboard') }}" wire:navigate class="flex shrink-0 items-center gap-2.5">
-                        <span class="grid h-9 w-9 place-items-center rounded-xl bg-primary text-white shadow-sm shadow-primary/30">
-                            <x-user.icon name="school" :size="20" />
-                        </span>
-                        <span class="leading-tight">
-                            <span class="block text-[16px] font-extrabold tracking-tight text-on-surface">EduTrack</span>
-                            <span class="hidden text-[10px] font-semibold uppercase tracking-wider text-on-surface-variant lg:block">Hệ thống điểm danh</span>
-                        </span>
+            {{-- ============================ SIDEBAR (≥ md) ============================ --}}
+            <aside class="sticky top-0 h-screen hidden w-[260px] shrink-0 flex-col border-r border-outline-variant bg-white md:flex">
+                <div class="flex h-16 shrink-0 items-center gap-2.5 px-5">
+                    <span class="grid h-9 w-9 place-items-center rounded-xl bg-primary text-white shadow-sm shadow-primary/30">
+                        <x-user.icon name="school" :size="20" />
+                    </span>
+                    <span class="leading-tight">
+                        <span class="block text-[16px] font-extrabold tracking-tight text-on-surface">EduTrack</span>
+                        <span class="block text-[10px] font-semibold uppercase tracking-wider text-on-surface-variant">Hệ thống điểm danh</span>
+                    </span>
+                </div>
+                
+                <nav class="scrollbar-custom flex-1 space-y-2 overflow-y-auto px-3 py-5">
+                    {{-- Tổng quan --}}
+                    <a href="{{ route('dashboard') }}" wire:navigate
+                        @class([
+                            'flex items-center gap-3 rounded-lg px-3 py-3 text-[17px] font-medium transition-colors',
+                            'bg-primary/10 text-primary' => $dashboardActive,
+                            'text-on-surface-variant hover:bg-surface-container hover:text-on-surface' => ! $dashboardActive,
+                        ])>
+                        <x-user.icon name="layout-dashboard" :size="24" class="shrink-0" />
+                        <span class="truncate">Tổng quan</span>
                     </a>
 
-                    {{-- Primary nav (desktop) --}}
-                    <nav class="ml-4 hidden h-16 items-center gap-1 md:flex">
-                        {{-- Tổng quan --}}
-                        <a href="{{ route('dashboard') }}" wire:navigate
-                            @class([
-                                'relative inline-flex h-16 items-center gap-2 px-3 text-sm font-semibold transition-colors',
-                                'text-primary after:absolute after:inset-x-3 after:bottom-0 after:h-0.5 after:rounded-full after:bg-primary' => $dashboardActive,
-                                'text-on-surface-variant hover:text-on-surface' => ! $dashboardActive,
-                            ])>
-                            <x-user.icon name="layout-dashboard" :size="18" /> Tổng quan
-                        </a>
+                    {{-- Giảng dạy --}}
+                    <a href="{{ route('managed-classes') }}" wire:navigate
+                        @class([
+                            'flex items-center gap-3 rounded-lg px-3 py-3 text-[17px] font-medium transition-colors',
+                            'bg-primary/10 text-primary' => $teachGroupActive,
+                            'text-on-surface-variant hover:bg-surface-container hover:text-on-surface' => ! $teachGroupActive,
+                        ])>
+                        <x-user.icon name="shield" :size="24" class="shrink-0" />
+                        <span class="truncate">Giảng dạy</span>
+                    </a>
 
-                        {{-- Dropdown nhóm vai trò --}}
-                        @foreach ($navMenus as $menu)
-                            @php $groupActive = $menuActive($menu['items']); @endphp
-                            <div class="relative h-16" x-data="{ open: false }" x-on:mouseleave="open = false">
-                                <button type="button" x-on:click="open = !open" x-on:mouseenter="open = true"
-                                    @class([
-                                        'relative inline-flex h-16 items-center gap-2 px-3 text-sm font-semibold transition-colors',
-                                        'text-primary after:absolute after:inset-x-3 after:bottom-0 after:h-0.5 after:rounded-full after:bg-primary' => $groupActive,
-                                        'text-on-surface-variant hover:text-on-surface' => ! $groupActive,
-                                    ])>
-                                    <x-user.icon :name="$menu['icon']" :size="18" /> {{ $menu['label'] }}
-                                    <x-user.icon name="chevron-down" :size="15" class="transition-transform" x-bind:class="open && 'rotate-180'" />
+                    {{-- Học tập --}}
+                    <a href="{{ route('joined-classes') }}" wire:navigate
+                        @class([
+                            'flex items-center gap-3 rounded-lg px-3 py-3 text-[17px] font-medium transition-colors',
+                            'bg-primary/10 text-primary' => $learnGroupActive,
+                            'text-on-surface-variant hover:bg-surface-container hover:text-on-surface' => ! $learnGroupActive,
+                        ])>
+                        <x-user.icon name="graduation-cap" :size="24" class="shrink-0" />
+                        <span class="truncate">Học tập</span>
+                    </a>
+
+                    {{-- Cảnh báo --}}
+                    <a href="{{ route('student.warnings') }}" wire:navigate
+                        @class([
+                            'flex items-center gap-3 rounded-lg px-3 py-3 text-[17px] font-medium transition-colors',
+                            'bg-primary/10 text-primary' => $warningsActive,
+                            'text-on-surface-variant hover:bg-surface-container hover:text-on-surface' => ! $warningsActive,
+                        ])>
+                        <x-user.icon name="alert-triangle" :size="24" class="shrink-0" />
+                        <span class="truncate">Cảnh báo</span>
+                    </a>
+                </nav>
+
+                <div class="space-y-1 border-t border-outline-variant p-3">
+                    <a href="{{ route('support') }}" wire:navigate class="flex items-center gap-3 rounded-lg px-3 py-2 text-[17px] font-medium text-on-surface-variant transition-colors hover:bg-surface-container hover:text-on-surface">
+                        <x-user.icon name="help-circle" :size="24" class="shrink-0" /> <span>Hỗ trợ</span>
+                    </a>
+                    <form method="POST" action="{{ route('logout') }}">
+                        @csrf
+                        <button type="submit" class="flex w-full items-center gap-3 rounded-lg px-3 py-2 text-[17px] font-medium text-error transition-colors hover:bg-error/10">
+                            <x-user.icon name="log-out" :size="24" class="shrink-0" /> <span>Đăng xuất</span>
+                        </button>
+                    </form>
+                </div>
+            </aside>
+
+            {{-- ============================ MAIN CONTENT WRAPPER ============================ --}}
+            <div class="flex min-w-0 flex-1 flex-col">
+
+                {{-- ============================ TOP HEADER ============================ --}}
+                <header class="sticky top-0 z-40 border-b border-outline-variant bg-white">
+                    <div class="mx-auto flex h-16 w-full items-center justify-between px-4 sm:px-6 lg:px-8">
+                        
+                        {{-- Mobile Left: Hamburger + Brand --}}
+                        <div class="flex items-center gap-3 md:hidden">
+                            <button type="button" x-on:click="navOpen = true"
+                                class="grid h-9 w-9 shrink-0 place-items-center rounded-lg text-on-surface-variant hover:bg-surface-container">
+                                <x-user.icon name="menu" :size="20" />
+                            </button>
+                            <a href="{{ route('dashboard') }}" wire:navigate class="flex shrink-0 items-center gap-2.5">
+                                <span class="grid h-8 w-8 place-items-center rounded-xl bg-primary text-white shadow-sm shadow-primary/30">
+                                    <x-user.icon name="school" :size="16" />
+                                </span>
+                                <span class="leading-tight">
+                                    <span class="block text-[15px] font-extrabold tracking-tight text-on-surface">EduTrack</span>
+                                </span>
+                            </a>
+                        </div>
+
+                        {{-- Right cluster --}}
+                        <div class="ml-auto flex items-center gap-2 sm:gap-3">
+                            
+                            {{-- Tham gia (desktop) --}}
+                            <button type="button" x-data x-on:click="$dispatch('open-join-class-modal')" class="hidden sm:flex h-10 items-center gap-2 rounded-xl bg-emerald-50 text-emerald-700 hover:bg-emerald-100 px-4 text-sm font-semibold transition-all focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:ring-offset-2 shadow-sm border border-emerald-200">
+                                <x-user.icon name="log-in" :size="18" />
+                                Tham gia
+                            </button>
+
+                            {{-- Tạo lớp (desktop) --}}
+                            <a href="{{ route('create-class') }}" wire:navigate class="hidden sm:flex h-10 items-center gap-2 rounded-xl bg-primary px-4 text-sm font-semibold text-white shadow-sm shadow-primary/30 transition-all hover:bg-primary-600 focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-2">
+                                <x-user.icon name="plus" :size="18" />
+                                Tạo lớp
+                            </a>
+
+                            {{-- Mobile Create/Join Menu --}}
+                            <div class="sm:hidden relative" x-data="{ openCreate: false }" x-on:click.away="openCreate = false">
+                                <button type="button" x-on:click="openCreate = !openCreate" class="flex h-10 w-10 items-center justify-center rounded-xl bg-primary/10 text-primary transition-colors hover:bg-primary/20 focus:outline-none">
+                                    <x-user.icon name="plus" :size="20" />
                                 </button>
-
-                                <div x-cloak x-show="open"
-                                    x-transition:enter="transition ease-out duration-150" x-transition:enter-start="opacity-0 translate-y-1" x-transition:enter-end="opacity-100 translate-y-0"
-                                    x-transition:leave="transition ease-in duration-100" x-transition:leave-start="opacity-100" x-transition:leave-end="opacity-0"
-                                    class="absolute left-0 top-[60px] z-50 w-[320px] overflow-hidden rounded-2xl border border-outline-variant bg-white p-2 shadow-xl shadow-slate-900/10">
-                                    @foreach ($menu['items'] as $item)
-                                        @php $isActive = $matchesActive($item['active'] ?? $item['route']); @endphp
-                                        <a href="{{ route($item['route']) }}" wire:navigate
-                                            @class([
-                                                'group flex items-start gap-3 rounded-xl p-2.5 transition-colors',
-                                                'bg-primary/[0.07]' => $isActive,
-                                                'hover:bg-surface-container' => ! $isActive,
-                                            ])>
-                                            <span @class([
-                                                'mt-0.5 grid h-9 w-9 shrink-0 place-items-center rounded-lg',
-                                                'bg-primary text-white' => $isActive,
-                                                'bg-surface-container text-on-surface-variant group-hover:bg-primary/10 group-hover:text-primary' => ! $isActive,
-                                            ])>
-                                                <x-user.icon :name="$item['icon']" :size="18" />
-                                            </span>
-                                            <span class="min-w-0">
-                                                <span @class(['block text-sm font-semibold', 'text-primary' => $isActive, 'text-on-surface' => ! $isActive])>{{ $item['label'] }}</span>
-                                                <span class="block truncate text-xs text-on-surface-variant">{{ $item['desc'] }}</span>
-                                            </span>
-                                        </a>
-                                    @endforeach
+                                <div x-cloak x-show="openCreate" class="absolute right-0 mt-2 w-48 rounded-xl border border-outline-variant bg-white p-2 shadow-xl z-50">
+                                    <a href="{{ route('create-class') }}" wire:navigate class="flex items-center gap-3 rounded-lg p-2 hover:bg-surface-container">
+                                        <div class="grid h-8 w-8 place-items-center rounded bg-primary/10 text-primary"><x-user.icon name="plus" :size="16" /></div>
+                                        <span class="text-sm font-semibold text-on-surface">Tạo lớp</span>
+                                    </a>
+                                    <button type="button" x-on:click="openCreate = false; $dispatch('open-join-class-modal')" class="flex w-full items-center gap-3 rounded-lg p-2 hover:bg-surface-container mt-1 text-left">
+                                        <div class="grid h-8 w-8 place-items-center rounded bg-emerald-50 text-emerald-600"><x-user.icon name="log-in" :size="16" /></div>
+                                        <span class="text-sm font-semibold text-on-surface">Tham gia</span>
+                                    </button>
                                 </div>
                             </div>
-                        @endforeach
-
-                        {{-- Cảnh báo --}}
-                        <a href="{{ route('student.warnings') }}" wire:navigate
-                            @class([
-                                'relative inline-flex h-16 items-center gap-2 px-3 text-sm font-semibold transition-colors',
-                                'text-primary after:absolute after:inset-x-3 after:bottom-0 after:h-0.5 after:rounded-full after:bg-primary' => $warningsActive,
-                                'text-on-surface-variant hover:text-on-surface' => ! $warningsActive,
-                            ])>
-                            <x-user.icon name="alert-triangle" :size="18" /> Cảnh báo
-                        </a>
-                    </nav>
-
-                    {{-- Right cluster --}}
-                    <div class="ml-auto flex items-center gap-1.5 sm:gap-2">
-                        {{-- Tạo / Tham gia (desktop) --}}
-                        <div class="relative hidden sm:block" x-data="{ openCreate: false }" x-on:click.away="openCreate = false">
-                            <button type="button" x-on:click="openCreate = !openCreate"
-                                class="inline-flex items-center gap-1.5 rounded-xl bg-primary px-3.5 py-2 text-sm font-semibold text-white shadow-sm shadow-primary/30 transition-colors hover:bg-primary-container">
-                                <x-user.icon name="plus" :size="16" /> <span class="hidden lg:inline">Tạo / Tham gia</span><span class="lg:hidden">Tạo</span>
-                                <x-user.icon name="chevron-down" :size="15" class="transition-transform" x-bind:class="openCreate && 'rotate-180'" />
-                            </button>
-                            <div x-cloak x-show="openCreate"
-                                x-transition:enter="transition ease-out duration-150" x-transition:enter-start="opacity-0 scale-95 -translate-y-1" x-transition:enter-end="opacity-100 scale-100 translate-y-0"
-                                x-transition:leave="transition ease-in duration-100" x-transition:leave-start="opacity-100" x-transition:leave-end="opacity-0"
-                                class="absolute right-0 mt-2 w-64 origin-top-right overflow-hidden rounded-2xl border border-outline-variant bg-white p-2 shadow-xl shadow-slate-900/10">
-                                <a href="{{ route('create-class') }}" wire:navigate class="group flex items-start gap-3 rounded-xl p-2.5 transition-colors hover:bg-surface-container">
-                                    <span class="mt-0.5 grid h-9 w-9 shrink-0 place-items-center rounded-lg bg-primary/10 text-primary"><x-user.icon name="plus" :size="18" /></span>
-                                    <span><span class="block text-sm font-semibold text-on-surface">Học phần mới</span><span class="block text-xs text-on-surface-variant">Tạo lớp bạn làm chủ</span></span>
-                                </a>
-                                <button type="button" x-on:click="openCreate = false; $dispatch('open-join-class-modal')" class="group flex w-full items-start gap-3 rounded-xl p-2.5 text-left transition-colors hover:bg-surface-container">
-                                    <span class="mt-0.5 grid h-9 w-9 shrink-0 place-items-center rounded-lg bg-tertiary/10 text-tertiary"><x-user.icon name="log-in" :size="18" /></span>
-                                    <span><span class="block text-sm font-semibold text-on-surface">Tham gia lớp</span><span class="block text-xs text-on-surface-variant">Nhập mã lớp để vào học</span></span>
-                                </button>
-                            </div>
-                        </div>
 
                         {{-- Notifications --}}
                         <x-notification-dropdown
@@ -268,8 +285,7 @@
                             </div>
                         </div>
                     </div>
-                </div>
-            </header>
+                </header>
 
             {{-- ============ MOBILE DRAWER (< md) ============ --}}
             <div x-cloak x-show="navOpen" class="fixed inset-0 z-[80] md:hidden">
@@ -297,11 +313,11 @@
                                     @php $isActive = $matchesActive($item['active'] ?? $item['route']); @endphp
                                     <a href="{{ route($item['route']) }}" wire:navigate x-on:click="navOpen = false"
                                         @class([
-                                            'flex items-center gap-3 rounded-lg px-3 py-2 text-sm font-medium transition-colors',
+                                            'flex items-center gap-3 rounded-lg px-3 py-2 text-[17px] font-medium transition-colors',
                                             'bg-primary/10 text-primary' => $isActive,
                                             'text-on-surface-variant hover:bg-surface-container hover:text-on-surface' => ! $isActive,
                                         ])>
-                                        <x-user.icon :name="$item['icon']" :size="18" class="shrink-0" />
+                                        <x-user.icon :name="$item['icon']" :size="24" class="shrink-0" />
                                         <span class="truncate">{{ $item['label'] }}</span>
                                     </a>
                                 @endforeach
@@ -309,56 +325,57 @@
                         @endforeach
                     </nav>
                     <div class="space-y-1 border-t border-outline-variant p-3">
-                        <a href="{{ route('support') }}" wire:navigate x-on:click="navOpen = false" class="flex items-center gap-3 rounded-lg px-3 py-2 text-sm font-medium text-on-surface-variant transition-colors hover:bg-surface-container hover:text-on-surface">
-                            <x-user.icon name="help-circle" :size="18" class="shrink-0" /> <span>Hỗ trợ</span>
+                        <a href="{{ route('support') }}" wire:navigate x-on:click="navOpen = false" class="flex items-center gap-3 rounded-lg px-3 py-2 text-[17px] font-medium text-on-surface-variant transition-colors hover:bg-surface-container hover:text-on-surface">
+                            <x-user.icon name="help-circle" :size="24" class="shrink-0" /> <span>Hỗ trợ</span>
                         </a>
                         <form method="POST" action="{{ route('logout') }}">
                             @csrf
-                            <button type="submit" class="flex w-full items-center gap-3 rounded-lg px-3 py-2 text-sm font-medium text-error transition-colors hover:bg-error/10">
-                                <x-user.icon name="log-out" :size="18" class="shrink-0" /> <span>Đăng xuất</span>
+                            <button type="submit" class="flex w-full items-center gap-3 rounded-lg px-3 py-2 text-[17px] font-medium text-error transition-colors hover:bg-error/10">
+                                <x-user.icon name="log-out" :size="24" class="shrink-0" /> <span>Đăng xuất</span>
                             </button>
                         </form>
                     </div>
                 </aside>
             </div>
 
-            {{-- ============ ONGOING SESSION BANNER ============ --}}
-            @auth
-                @if(request()->routeIs('managed-classes', 'lecturer.*', 'create-class'))
-                    @php
-                        $ongoingSession = \App\Models\ClassSession::query()
-                            ->where('status', 'active')
-                            ->whereHas('meeting.courseClass', fn ($q) => $q->where('owner_user_id', auth()->id()))
-                            ->with(['meeting.courseClass:id,name,join_key,owner_user_id'])
-                            ->latest()
-                            ->first();
-                    @endphp
-                    @if($ongoingSession)
-                        <div class="border-b border-primary/20 bg-primary/5 px-4 py-2.5 sm:px-6 lg:px-8">
-                            <div class="mx-auto flex max-w-[1400px] items-center justify-between gap-3">
-                                <div class="flex min-w-0 items-center gap-2.5">
-                                    <span class="relative flex h-2.5 w-2.5 shrink-0">
-                                        <span class="absolute inline-flex h-full w-full animate-ping rounded-full bg-primary/60"></span>
-                                        <span class="relative inline-flex h-2.5 w-2.5 rounded-full bg-primary"></span>
-                                    </span>
-                                    <p class="truncate text-sm font-semibold text-on-surface">
-                                        Phiên điểm danh đang diễn ra
-                                        <span class="font-normal text-on-surface-variant">— {{ $ongoingSession->meeting->courseClass->join_key ?? '' }} · {{ $ongoingSession->name }}</span>
-                                    </p>
-                                </div>
-                                <a href="{{ $ongoingSession->qr_token ? route('lecturer.attendance.qr.session', $ongoingSession) : route('lecturer.attendance.manual.session', $ongoingSession) }}" class="inline-flex shrink-0 items-center gap-1.5 rounded-lg bg-primary px-3.5 py-1.5 text-xs font-semibold text-white transition-colors hover:bg-primary-container">
-                                    Xem ngay <x-user.icon name="arrow-right" :size="14" />
-                                </a>
-                            </div>
-                        </div>
-                    @endif
-                @endif
-            @endauth
 
             {{-- ============ MAIN CONTENT ============
                  Mỗi trang tự bọc `mx-auto max-w-7xl … p-4/6/8 pb-24` của riêng nó,
                  nên main giữ trong suốt để tránh container/padding lồng nhau. --}}
-            <main class="relative flex-1">
+            <main class="relative flex-1 flex flex-col">
+                {{-- Body Sub-Nav Tabs --}}
+                @if ($teachGroupActive || $learnGroupActive)
+                    <div class="w-full bg-surface border-b border-outline-variant/50 sticky top-16 z-30">
+                        <div class="flex h-14 w-full items-center gap-8 px-6 sm:px-10 lg:px-16 overflow-x-auto [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none]">
+                            @if ($teachGroupActive)
+                                @foreach ($teachItems as $item)
+                                    @php $isActive = $matchesActive($item['active'] ?? $item['route']); @endphp
+                                    <a href="{{ route($item['route']) }}" wire:navigate
+                                        @class([
+                                            'relative inline-flex h-14 shrink-0 items-center px-2 text-[15px] font-medium transition-colors',
+                                            'text-[#1a73e8] after:absolute after:left-2 after:right-2 after:bottom-0 after:h-1 after:rounded-t-[4px] after:bg-[#1a73e8]' => $isActive,
+                                            'text-[#3c4043] hover:text-[#1a73e8] after:absolute after:left-2 after:right-2 after:bottom-0 after:h-1 after:rounded-t-[4px] after:bg-[#1a73e8] after:scale-x-0 hover:after:scale-x-100 after:transition-transform after:duration-300 after:origin-center' => ! $isActive,
+                                        ])>
+                                        {{ $item['label'] }}
+                                    </a>
+                                @endforeach
+                            @elseif ($learnGroupActive)
+                                @foreach ($learnItems as $item)
+                                    @php $isActive = $matchesActive($item['active'] ?? $item['route']); @endphp
+                                    <a href="{{ route($item['route']) }}" wire:navigate
+                                        @class([
+                                            'relative inline-flex h-14 shrink-0 items-center px-2 text-[15px] font-medium transition-colors',
+                                            'text-[#1a73e8] after:absolute after:left-2 after:right-2 after:bottom-0 after:h-1 after:rounded-t-[4px] after:bg-[#1a73e8]' => $isActive,
+                                            'text-[#3c4043] hover:text-[#1a73e8] after:absolute after:left-2 after:right-2 after:bottom-0 after:h-1 after:rounded-t-[4px] after:bg-[#1a73e8] after:scale-x-0 hover:after:scale-x-100 after:transition-transform after:duration-300 after:origin-center' => ! $isActive,
+                                        ])>
+                                        {{ $item['label'] }}
+                                    </a>
+                                @endforeach
+                            @endif
+                        </div>
+                    </div>
+                @endif
+
                 {{ $slot }}
             </main>
 
@@ -380,6 +397,7 @@
                     Thêm
                 </button>
             </nav>
+            </div>
         </div>
 
         <x-notification.notification />

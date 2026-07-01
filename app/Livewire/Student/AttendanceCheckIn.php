@@ -3,6 +3,7 @@
 namespace App\Livewire\Student;
 
 use App\Models\AttendanceRecord;
+use App\Models\ClassMember;
 use App\Models\ClassSession;
 use Illuminate\Contracts\View\View;
 use Livewire\Component;
@@ -54,7 +55,7 @@ class AttendanceCheckIn extends Component
             
             $classMember = $this->session->courseClass->members()
                 ->where('user_id', $user->id)
-                ->where('status', 'active')
+                ->where('status', ClassMember::STATUS_ACTIVE)
                 ->first();
 
             if (!$classMember) {

@@ -1,22 +1,4 @@
-<div class="mx-auto max-w-[1400px] space-y-6 p-4 pb-24 sm:p-8 animate-in fade-in slide-in-from-bottom-4 duration-500">
-
-    {{-- Header --}}
-    <div class="flex items-center gap-4">
-        <a href="{{ route('lecturer.classes.show', $class->id) }}" wire:navigate
-            class="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-surface-container-low text-on-surface-variant transition-colors hover:bg-surface-container hover:text-on-surface">
-            <x-user.icon name="arrow-left" :size="20" />
-        </a>
-        <div class="min-w-0 flex-1">
-            <h1 class="truncate text-2xl font-bold text-on-surface">Thống kê: {{ $class->name }}</h1>
-            <p class="text-sm text-on-surface-variant">{{ $class->join_key }} · {{ $class->semester ?? 'Chưa xác định' }}</p>
-        </div>
-        <a href="{{ route('lecturer.students.index') }}" wire:navigate
-            class="hidden shrink-0 items-center gap-2 rounded-xl border border-outline-variant/30 bg-white px-4 py-2 text-sm font-semibold text-on-surface-variant shadow-sm transition hover:bg-surface-container md:flex">
-            <x-user.icon name="users" :size="16" />
-            Quản lý học viên
-        </a>
-    </div>
-
+<div class="flex-1 overflow-y-auto space-y-6 px-6 py-6 pb-24 sm:px-10 lg:px-16 animate-in fade-in slide-in-from-bottom-4 duration-500">
     {{-- Summary cards --}}
     @php
         $cards = [
@@ -28,15 +10,17 @@
             ['label' => 'Phép vắng / SV',   'value' => $allowedAbsent,                            'sub' => 'buổi được phép vắng (20%)',         'icon' => 'shield',        'color' => 'text-primary',   'bg' => 'bg-primary/10'],
         ];
     @endphp
-    <div class="grid grid-cols-2 gap-3 md:grid-cols-3 lg:grid-cols-6">
+    <div class="grid grid-cols-2 gap-4 md:grid-cols-3 lg:grid-cols-6">
         @foreach ($cards as $card)
-            <div class="flex flex-col gap-2 rounded-2xl bg-white p-4 shadow-sm ring-1 ring-outline-variant/10 transition-shadow hover:shadow-md">
-                <div class="{{ $card['bg'] }} {{ $card['color'] }} flex h-10 w-10 items-center justify-center rounded-xl">
-                    <x-user.icon :name="$card['icon']" :size="20" />
+            <div class="flex flex-col gap-2 rounded-2xl bg-white p-5 border border-slate-100 shadow-sm transition-all duration-300 hover:shadow-md hover:-translate-y-1">
+                <div class="{{ $card['bg'] }} {{ $card['color'] }} flex h-12 w-12 items-center justify-center rounded-xl">
+                    <x-user.icon :name="$card['icon']" :size="22" />
                 </div>
-                <p class="text-[11px] font-medium text-on-surface-variant">{{ $card['label'] }}</p>
-                <p class="text-xl font-extrabold leading-none text-on-surface">{{ $card['value'] }}</p>
-                <p class="text-[10px] text-on-surface-variant/70">{{ $card['sub'] }}</p>
+                <div class="mt-1">
+                    <p class="text-sm font-semibold text-on-surface-variant">{{ $card['label'] }}</p>
+                    <p class="mt-1 text-2xl font-black text-on-surface">{{ $card['value'] }}</p>
+                    <p class="mt-1 text-xs text-on-surface-variant/80">{{ $card['sub'] }}</p>
+                </div>
             </div>
         @endforeach
     </div>
@@ -46,21 +30,21 @@
 
         {{-- Học viên cần chú ý --}}
         <div class="flex flex-col">
-            <h4 class="mb-3 flex items-center gap-2 text-[15px] font-bold text-on-surface">
-                <x-user.icon name="alert-triangle" class="text-error" :size="18" />
+            <h4 class="mb-4 flex items-center gap-2 text-base font-bold text-on-surface">
+                <x-user.icon name="alert-triangle" class="text-error" :size="20" />
                 Học viên cần chú ý
                 @if ($bannedCount + $warningCount > 0)
-                    <span class="ml-auto rounded-full bg-error/10 px-2 py-0.5 text-[11px] font-bold text-error">{{ $bannedCount + $warningCount }}</span>
+                    <span class="ml-auto rounded-full bg-error/10 px-2.5 py-0.5 text-xs font-bold text-error">{{ $bannedCount + $warningCount }}</span>
                 @endif
             </h4>
-            <div class="flex flex-1 flex-col rounded-2xl border border-outline-variant/10 bg-white p-4">
+            <div class="flex flex-1 flex-col rounded-2xl border border-slate-100 bg-white p-5 shadow-sm">
                 @if ($alertStudents->isEmpty())
                     <div class="flex flex-1 flex-col items-center justify-center gap-2 py-8 text-center">
                         <div class="flex h-12 w-12 items-center justify-center rounded-full bg-tertiary/10 text-tertiary">
                             <x-user.icon name="check-circle" :size="24" />
                         </div>
-                        <p class="text-sm font-semibold text-on-surface">Tất cả ổn định</p>
-                        <p class="text-xs text-on-surface-variant">Không có học viên nào cần chú ý.</p>
+                        <p class="text-base font-semibold text-on-surface">Tất cả ổn định</p>
+                        <p class="text-sm text-on-surface-variant">Không có học viên nào cần chú ý.</p>
                     </div>
                 @else
                     <div class="space-y-3">
@@ -76,9 +60,13 @@
                             @endphp
                             <a href="{{ route('lecturer.students.show', $m->id) }}" wire:navigate
                                 class="flex items-center gap-3 rounded-xl border p-3 transition-all hover:shadow-sm {{ $banned ? 'border-error/20 bg-error/5 hover:border-error/40' : 'border-secondary/20 bg-secondary/5 hover:border-secondary/40' }}">
-                                <div class="flex h-9 w-9 shrink-0 items-center justify-center rounded-full {{ $banned ? 'bg-error/15 text-error' : 'bg-secondary/15 text-secondary' }} text-sm font-bold">
-                                    {{ mb_strtoupper(mb_substr($m->full_name, 0, 1)) }}
-                                </div>
+                                @if($m->user && $m->user->avatar)
+                                    <img src="{{ asset('storage/' . $m->user->avatar) }}" alt="{{ $m->full_name }}" class="h-9 w-9 shrink-0 rounded-full object-cover">
+                                @else
+                                    <div class="flex h-9 w-9 shrink-0 items-center justify-center rounded-full {{ $banned ? 'bg-error/15 text-error' : 'bg-secondary/15 text-secondary' }} text-sm font-bold">
+                                        {{ mb_strtoupper(mb_substr($m->full_name, 0, 1)) }}
+                                    </div>
+                                @endif
                                 <div class="min-w-0 flex-1">
                                     <p class="truncate text-sm font-bold text-on-surface">{{ $m->full_name }}</p>
                                     <p class="text-[11px] text-on-surface-variant">{{ $m->student_code }} · CC: <span class="{{ $banned ? 'text-error font-bold' : 'text-secondary font-semibold' }}">{{ $pct }}%</span></p>
@@ -108,19 +96,19 @@
 
         {{-- Biểu đồ chuyên cần theo buổi --}}
         <div class="flex flex-col lg:col-span-2">
-            <h4 class="mb-3 flex items-center gap-2 text-[15px] font-bold text-on-surface">
-                <x-user.icon name="trending-up" class="text-tertiary" :size="18" />
+            <h4 class="mb-4 flex items-center gap-2 text-base font-bold text-on-surface">
+                <x-user.icon name="trending-up" class="text-tertiary" :size="20" />
                 Tỉ lệ có mặt theo buổi
-                <span class="ml-auto text-[11px] font-normal text-on-surface-variant">{{ $closedCount }} buổi đã chốt</span>
+                <span class="ml-auto text-xs font-normal text-on-surface-variant">{{ $closedCount }} buổi đã chốt</span>
             </h4>
-            <div class="flex flex-1 flex-col justify-center rounded-2xl border border-outline-variant/10 bg-white p-5">
+            <div class="flex flex-1 flex-col justify-center rounded-2xl border border-slate-100 bg-white p-6 shadow-sm">
                 @if (empty($sessionChart))
                     <div class="flex flex-1 flex-col items-center justify-center gap-2 py-10 text-center">
                         <div class="flex h-12 w-12 items-center justify-center rounded-full bg-primary/10 text-primary">
                             <x-user.icon name="bar-chart-2" :size="24" />
                         </div>
-                        <p class="text-sm font-semibold text-on-surface">Chưa có buổi nào chốt sổ</p>
-                        <p class="text-xs text-on-surface-variant">Sau khi chốt buổi điểm danh, biểu đồ sẽ hiển thị tại đây.</p>
+                        <p class="text-base font-semibold text-on-surface">Chưa có buổi nào chốt sổ</p>
+                        <p class="text-sm text-on-surface-variant">Sau khi chốt buổi điểm danh, biểu đồ sẽ hiển thị tại đây.</p>
                     </div>
                 @else
                     {{-- Vùng biểu đồ: trục % bên trái + các cột --}}
@@ -189,19 +177,19 @@
 
     {{-- Danh sách đầy đủ học viên --}}
     <div>
-        <h4 class="mb-3 flex items-center gap-2 text-[15px] font-bold text-on-surface">
-            <x-user.icon name="list" class="text-primary" :size="18" />
-            Danh sách học viên
-            <span class="ml-auto text-[11px] font-normal text-on-surface-variant">Sắp xếp theo chuyên cần tăng dần</span>
+        <h4 class="mb-4 flex items-center gap-2 text-base font-bold text-on-surface">
+            Danh sách học viên ({{ $totalStudents }})
+            <span class="ml-auto text-xs font-normal text-on-surface-variant">Sắp xếp theo tên A-Z</span>
         </h4>
-        <div class="overflow-hidden rounded-2xl border border-outline-variant/10 bg-white shadow-sm">
+        <div class="overflow-hidden rounded-2xl border border-slate-100 bg-white shadow-sm">
             @if ($allStudents->isEmpty())
-                <div class="py-12 text-center text-sm text-on-surface-variant">Chưa có học viên nào trong lớp.</div>
+                <div class="py-12 text-center text-base text-on-surface-variant">Chưa có học viên nào trong lớp.</div>
             @else
-                <div class="overflow-x-auto">
-                    <table class="w-full text-sm">
+                <div class="overflow-x-auto {{ $allStudents->count() > 30 ? 'max-h-[800px] overflow-y-auto relative' : '' }}">
+                    <table class="w-full text-base">
                         <thead>
-                            <tr class="border-b border-outline-variant/10 bg-surface-container-low/50 text-left text-[11px] font-bold uppercase tracking-wider text-on-surface-variant">
+                            <tr class="border-b border-outline-variant/10 bg-surface-container-low/50 text-left text-sm font-bold uppercase tracking-wider text-on-surface {{ $allStudents->count() > 30 ? 'sticky top-0 z-10' : '' }}">
+                                <th class="px-4 py-3 text-center w-16">STT</th>
                                 <th class="px-4 py-3">Học viên</th>
                                 <th class="px-4 py-3 text-center">CC (%)</th>
                                 <th class="px-4 py-3 text-center">Có mặt</th>
@@ -227,15 +215,22 @@
                                     'bg-error/5' => $banned,
                                     'bg-amber-50/40' => $warn,
                                 ])>
+                                    <td class="px-4 py-3 text-center text-sm font-bold text-on-surface-variant">
+                                        {{ $loop->iteration }}
+                                    </td>
                                     <td class="px-4 py-3">
                                         <a href="{{ route('lecturer.students.show', $m->id) }}" wire:navigate
                                             class="flex items-center gap-3 hover:underline">
-                                            <div class="flex h-8 w-8 shrink-0 items-center justify-center rounded-full {{ $banned ? 'bg-error/15 text-error' : ($warn ? 'bg-secondary/15 text-secondary' : 'bg-primary/10 text-primary') }} text-xs font-bold">
-                                                {{ mb_strtoupper(mb_substr($m->full_name, 0, 1)) }}
-                                            </div>
+                                            @if($m->user && $m->user->avatar)
+                                                <img src="{{ asset('storage/' . $m->user->avatar) }}" alt="{{ $m->full_name }}" class="h-10 w-10 shrink-0 rounded-full object-cover">
+                                            @else
+                                                <div class="flex h-10 w-10 shrink-0 items-center justify-center rounded-full {{ $banned ? 'bg-error/15 text-error' : ($warn ? 'bg-secondary/15 text-secondary' : 'bg-primary/10 text-primary') }} text-sm font-bold">
+                                                    {{ mb_strtoupper(mb_substr($m->full_name, 0, 1)) }}
+                                                </div>
+                                            @endif
                                             <div class="min-w-0">
-                                                <p class="truncate font-semibold text-on-surface">{{ $m->full_name }}</p>
-                                                <p class="text-[11px] text-on-surface-variant">{{ $m->student_code }}</p>
+                                                <p class="truncate text-base font-semibold text-on-surface">{{ $m->full_name }}</p>
+                                                <p class="text-sm text-on-surface-variant">{{ $m->student_code }}</p>
                                             </div>
                                         </a>
                                     </td>
@@ -271,16 +266,16 @@
                                     </td>
                                     <td class="px-4 py-3 text-center">
                                         @if ($banned)
-                                            <span class="inline-flex items-center gap-1 rounded-full bg-error/10 px-2.5 py-1 text-[10px] font-bold text-error">
-                                                <x-user.icon name="alert-triangle" :size="10" /> Cấm thi
+                                            <span class="inline-flex items-center gap-1.5 rounded-full bg-error/10 px-3 py-1.5 text-xs font-bold text-error">
+                                                <x-user.icon name="alert-triangle" :size="14" /> Cấm thi
                                             </span>
                                         @elseif ($warn)
-                                            <span class="inline-flex items-center gap-1 rounded-full bg-secondary/10 px-2.5 py-1 text-[10px] font-bold text-secondary">
-                                                <x-user.icon name="alert-circle" :size="10" /> Cảnh báo
+                                            <span class="inline-flex items-center gap-1.5 rounded-full bg-secondary/10 px-3 py-1.5 text-xs font-bold text-secondary">
+                                                <x-user.icon name="alert-circle" :size="14" /> Cảnh báo
                                             </span>
                                         @else
-                                            <span class="inline-flex items-center gap-1 rounded-full bg-tertiary/10 px-2.5 py-1 text-[10px] font-bold text-tertiary">
-                                                <x-user.icon name="check-circle" :size="10" /> Ổn định
+                                            <span class="inline-flex items-center gap-1.5 rounded-full bg-tertiary/10 px-3 py-1.5 text-xs font-bold text-tertiary">
+                                                <x-user.icon name="check-circle" :size="14" /> Ổn định
                                             </span>
                                         @endif
                                     </td>

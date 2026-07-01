@@ -24,7 +24,7 @@
 @endphp
 
 <div
-    class="mx-auto max-w-[1400px] space-y-8 p-4 pb-24 sm:p-8"
+    class="w-full space-y-8 px-6 py-6 pb-24 sm:px-10 lg:px-16"
     x-data="{
         classDropdownOpen: false,
         selectedClassId: @entangle('classId').live,

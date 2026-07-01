@@ -1,35 +1,5 @@
-<div class="mx-auto max-w-[1400px] space-y-6 p-4 pb-24 sm:p-8">
-    <section class="flex flex-col justify-between gap-4 rounded-2xl border border-outline-variant/10 bg-white p-6 shadow-sm md:flex-row md:items-end">
-        <div class="flex-1 w-full min-w-0">
-            <x-user.workspace-badge type="owner" />
-            <div class="flex items-center justify-between gap-4">
-                <h1 class="flex items-center gap-3 text-2xl font-bold tracking-tight text-slate-900 truncate">
-                    <x-user.icon name="users" class="text-primary shrink-0" />
-                    <span class="truncate">Học viên</span>
-                </h1>
-                @if ($showBackButton)
-                    <a href="javascript:history.back()" class="inline-flex md:hidden shrink-0 items-center justify-center gap-2 rounded-xl bg-blue-600 px-3 py-2 text-sm font-bold text-white transition-colors hover:bg-blue-700 shadow-sm">
-                        <x-user.icon name="arrow-left" :size="16" />
-                        Trở về
-                    </a>
-                @endif
-            </div>
-            <p class="mt-2 text-sm text-slate-500">Quản lý danh sách học viên trong các lớp bạn đang phụ trách.</p>
-        </div>
-        <div class="flex flex-wrap items-center justify-end gap-2 sm:gap-3">
+<div class="w-full space-y-6 px-6 py-6 pb-24 sm:px-10 lg:px-16">
 
-            <a href="{{ route('lecturer.leave-requests.index') }}" class="inline-flex whitespace-nowrap items-center justify-center gap-2 rounded-full border border-slate-200 bg-white px-4 sm:px-5 py-2 sm:py-2.5 text-sm font-bold text-slate-600 transition-colors hover:bg-slate-50">
-                <x-user.icon name="file-text" :size="18" />
-                Đơn xin nghỉ
-            </a>
-            @if ($showBackButton)
-                <a href="javascript:history.back()" class="hidden md:inline-flex whitespace-nowrap items-center justify-center gap-2 rounded-xl bg-blue-600 px-4 sm:px-5 py-2 sm:py-2.5 text-sm font-bold text-white transition-colors hover:bg-blue-700 shadow-sm">
-                    <x-user.icon name="arrow-left" :size="18" />
-                    Trở về
-                </a>
-            @endif
-        </div>
-    </section>
 
     @if (session('status'))
         <div class="rounded-2xl border border-emerald-200 bg-emerald-50 px-5 py-3 text-sm font-semibold text-emerald-700">{{ session('status') }}</div>
@@ -38,31 +8,38 @@
         <div class="rounded-2xl border border-emerald-200 bg-emerald-50 px-5 py-3 text-sm font-semibold text-emerald-700">{{ session('success') }}</div>
     @endif
 
-    <section class="grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-5">
+    <section class="grid grid-cols-2 gap-4 sm:grid-cols-3 lg:grid-cols-5">
         @foreach ([
-            ['label' => 'Tổng học viên', 'value' => $attendanceOverview['total_students'], 'color' => 'text-primary'],
-            ['label' => 'Có mặt', 'value' => $attendanceOverview['present_sessions'], 'color' => 'text-emerald-600'],
-            ['label' => 'Muộn', 'value' => $attendanceOverview['late_sessions'], 'color' => 'text-amber-600'],
-            ['label' => 'Vắng', 'value' => $attendanceOverview['absent_sessions'], 'color' => 'text-red-600'],
-            ['label' => 'TB chuyên cần', 'value' => $attendanceOverview['attendance_percent'].'%', 'color' => 'text-primary'],
+            ['label' => 'Tổng học viên', 'value' => $attendanceOverview['total_students'], 'icon' => 'users', 'color' => 'text-primary', 'bg' => 'bg-primary/10', 'iconColor' => 'text-primary', 'border' => 'hover:border-primary/30'],
+            ['label' => 'Có mặt', 'value' => $attendanceOverview['present_sessions'], 'icon' => 'check-circle', 'color' => 'text-emerald-600', 'bg' => 'bg-emerald-50', 'iconColor' => 'text-emerald-600', 'border' => 'hover:border-emerald-300'],
+            ['label' => 'Muộn', 'value' => $attendanceOverview['late_sessions'], 'icon' => 'clock', 'color' => 'text-amber-600', 'bg' => 'bg-amber-50', 'iconColor' => 'text-amber-600', 'border' => 'hover:border-amber-300'],
+            ['label' => 'Vắng', 'value' => $attendanceOverview['absent_sessions'], 'icon' => 'x-circle', 'color' => 'text-red-600', 'bg' => 'bg-red-50', 'iconColor' => 'text-red-600', 'border' => 'hover:border-red-300'],
+            ['label' => 'TB chuyên cần', 'value' => $attendanceOverview['attendance_percent'].'%', 'icon' => 'bar-chart', 'color' => 'text-slate-900', 'bg' => 'bg-primary/10', 'iconColor' => 'text-primary', 'border' => 'hover:border-primary/30'],
         ] as $overviewItem)
             <div @class([
-                'rounded-2xl border border-slate-200 bg-white p-4 sm:p-5 shadow-sm text-center',
+                'group relative overflow-hidden rounded-2xl border border-slate-200 bg-white p-5 shadow-sm transition-all duration-300 hover:shadow-md hover:-translate-y-0.5',
+                $overviewItem['border'],
                 'col-span-2 sm:col-span-1 lg:col-span-1' => $loop->last,
             ])>
-                <p class="text-[11px] sm:text-xs font-bold uppercase tracking-wider text-slate-500 truncate">{{ $overviewItem['label'] }}</p>
-                <p class="mt-1.5 sm:mt-2 text-2xl sm:text-3xl font-extrabold {{ $overviewItem['color'] }}">{{ $overviewItem['value'] }}</p>
+                <div class="flex items-center gap-3">
+                    <div class="{{ $overviewItem['bg'] }} flex h-11 w-11 shrink-0 items-center justify-center rounded-xl transition-transform duration-300 group-hover:scale-110">
+                        <x-user.icon :name="$overviewItem['icon']" :size="20" class="{{ $overviewItem['iconColor'] }}" />
+                    </div>
+                    <div class="min-w-0">
+                        <p class="truncate text-[11px] font-bold uppercase tracking-wider text-slate-700">{{ $overviewItem['label'] }}</p>
+                        <p class="mt-0.5 text-lg font-extrabold {{ $overviewItem['color'] }}">{{ $overviewItem['value'] }}</p>
+                    </div>
+                </div>
             </div>
         @endforeach
     </section>
 
-    <section class="grid gap-3 rounded-2xl border border-slate-200 bg-white p-4 shadow-sm lg:grid-cols-[1fr_260px_auto]">
+    <div class="grid gap-3 lg:grid-cols-[1fr_260px_auto]">
         <label class="relative">
             <x-user.icon name="search" :size="18" class="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400" />
             <input wire:model.live.debounce.300ms="search" type="search" placeholder="Tìm theo tên, mã học viên hoặc email..." class="w-full rounded-xl border-slate-200 py-2.5 pl-11 pr-4 text-sm focus:border-primary focus:ring-primary/20">
         </label>
         <select wire:model.live="classFilter" class="rounded-xl border-slate-200 text-sm font-semibold text-slate-700 focus:border-primary focus:ring-primary/20">
-            <option value="all">Tất cả lớp học</option>
             @foreach ($classes as $class)
                 <option value="{{ $class->id }}">{{ $class->join_key }} - {{ $class->name }}</option>
             @endforeach
@@ -71,12 +48,12 @@
             <button type="button" wire:click="setStatusFilter('active')" @class(['rounded-lg px-4 py-2 text-xs font-bold transition-colors', 'bg-white text-primary shadow-sm' => $statusFilter === 'active', 'text-slate-500' => $statusFilter !== 'active'])>Đang học</button>
             <button type="button" wire:click="setStatusFilter('archived')" @class(['rounded-lg px-4 py-2 text-xs font-bold transition-colors', 'bg-white text-primary shadow-sm' => $statusFilter === 'archived', 'text-slate-500' => $statusFilter !== 'archived'])>Lưu trữ</button>
         </div>
-    </section>
+    </div>
 
-    <section class="overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm">
-        <div class="overflow-x-auto">
+    <section class="overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm flex flex-col" style="min-height: 500px;">
+        <div class="overflow-x-auto flex-1 bg-white {{ $members->count() > 30 ? 'max-h-[700px] overflow-y-auto relative' : '' }}">
             <table class="w-full min-w-[900px] text-left whitespace-nowrap">
-                <thead class="bg-slate-50 text-xs font-bold uppercase tracking-wider text-slate-500">
+                <thead class="text-sm font-bold uppercase tracking-wider text-slate-500 {{ $members->count() > 30 ? 'bg-slate-100 sticky top-0 z-10 shadow-sm' : 'bg-slate-50' }}">
                     <tr>
                         <th class="px-6 py-4">Học viên</th>
                         <th class="px-4 py-4">Lớp học</th>
@@ -106,12 +83,16 @@
                         <tr @class(['transition-colors hover:bg-slate-50/70', 'bg-red-50/30' => $isBanned, 'bg-amber-50/30' => $isWarning && !$isBanned])>
                             <td class="px-6 py-4">
                                 <a href="{{ route('lecturer.students.show', $member) }}" class="flex items-center gap-3">
-                                    <span @class([
-                                        'flex h-10 w-10 shrink-0 items-center justify-center rounded-full font-bold',
-                                        'bg-red-100 text-red-600'     => $isBanned,
-                                        'bg-amber-100 text-amber-600' => $isWarning && !$isBanned,
-                                        'bg-primary/10 text-primary'  => !$isBanned && !$isWarning,
-                                    ])>{{ mb_strtoupper(mb_substr($member->full_name, 0, 1)) }}</span>
+                                    @if($member->user && $member->user->avatar)
+                                        <img src="{{ asset('storage/' . $member->user->avatar) }}" alt="{{ $member->full_name }}" class="h-10 w-10 shrink-0 rounded-full object-cover">
+                                    @else
+                                        <span @class([
+                                            'flex h-10 w-10 shrink-0 items-center justify-center rounded-full font-bold',
+                                            'bg-red-100 text-red-600'     => $isBanned,
+                                            'bg-amber-100 text-amber-600' => $isWarning && !$isBanned,
+                                            'bg-primary/10 text-primary'  => !$isBanned && !$isWarning,
+                                        ])>{{ mb_strtoupper(mb_substr($member->full_name, 0, 1)) }}</span>
+                                    @endif
                                     <span>
                                         <span class="block text-sm font-bold text-slate-900">{{ $member->full_name }}</span>
                                         <span class="block text-xs text-slate-500">{{ $member->student_code }} · {{ $member->email ?? ($member->user?->email ?? 'Chưa có email') }}</span>
@@ -176,9 +157,6 @@
                 </tbody>
             </table>
         </div>
-        @if ($members->hasPages())
-            <div class="border-t border-slate-100 px-6 py-4">{{ $members->links() }}</div>
-        @endif
     </section>
 
     @if ($editingMemberId)

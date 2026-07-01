@@ -24,9 +24,9 @@ class StudentIndex extends Component
     // Từ khóa tìm kiếm sinh viên
     public string $search = '';
 
-    // Bộ lọc theo ID lớp học ('all' là tất cả các lớp)
+    // Bộ lọc theo ID lớp học
     #[Url(as: 'class_id')]
-    public string $classFilter = 'all';
+    public string $classFilter = '';
 
     // Tham số hành động từ URL (ví dụ: 'import' để tự động mở modal)
     #[Url(as: 'action')]
@@ -145,6 +145,13 @@ class StudentIndex extends Component
 
     public function mount(): void
     {
+        if (empty($this->classFilter) || $this->classFilter === 'all') {
+            $latestClass = CourseClass::where('owner_user_id', auth()->id())->latest()->first();
+            if ($latestClass) {
+                $this->classFilter = (string) $latestClass->id;
+            }
+        }
+
         $this->showBackButton = request()->has('class_id');
         
         if ($this->action === 'import') {
@@ -156,12 +163,12 @@ class StudentIndex extends Component
 
     public function updatedSearch(): void
     {
-        $this->resetPage();
+        // Khi search không cần resetPage nữa vì không còn dùng phân trang
     }
 
     public function updatedClassFilter(): void
     {
-        $this->resetPage();
+        // Khi đổi class filter không cần resetPage
     }
 
     public function updatedSelectedTemplate($value): void
@@ -175,7 +182,6 @@ class StudentIndex extends Component
     {
         if (in_array($status, ['active', 'archived', 'pending'], true)) {
             $this->statusFilter = $status;
-            $this->resetPage();
         }
     }
 
@@ -251,7 +257,7 @@ class StudentIndex extends Component
     public function openAdd(): void
     {
         $this->isAdding = true;
-        $this->newClassId = $this->classFilter !== 'all' ? $this->classFilter : '';
+        $this->newClassId = $this->classFilter;
         $this->newEmail = '';
     }
 
@@ -327,7 +333,7 @@ class StudentIndex extends Component
     public function openImport(): void
     {
         $this->isImporting = true;
-        $this->importClassId = $this->classFilter !== 'all' ? $this->classFilter : '';
+        $this->importClassId = $this->classFilter;
         $this->reset(['importFile', 'importErrors', 'importSuccess']);
     }
 
@@ -573,7 +579,7 @@ class StudentIndex extends Component
                     });
                 })
                 ->orderByDesc('created_at')
-                ->paginate(12);
+                ->get();
         } else {
             $members = ClassMember::query()
                 ->with(['courseClass:id,name,join_key', 'user:id,name,email,avatar', 'profile', 'attendanceSummary'])
@@ -594,13 +600,13 @@ class StudentIndex extends Component
                     });
                 })
                 ->orderBy('class_member_profiles.full_name')
-                ->paginate(12);
+                ->get();
         }
 
         $attendanceStats = [];
         if ($this->statusFilter !== 'pending') {
             $attendanceStats = $studentService->getStudentsAttendanceStats( // Tính chuyên cần cho từng sinh viên đang hiển thị trên trang hiện tại.
-                $members->getCollection()->pluck('id') // Lấy id sinh viên trong page hiện tại sau khi phân trang.
+                $members->pluck('id') // Lấy id sinh viên
             );
         }
 

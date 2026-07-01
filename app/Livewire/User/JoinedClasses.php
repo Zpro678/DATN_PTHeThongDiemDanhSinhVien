@@ -3,6 +3,7 @@
 namespace App\Livewire\User;
 
 use App\Models\CourseClass;
+use App\Models\ClassMember;
 use App\Services\AttendanceCalculator;
 use App\Services\LectureManageStudentService;
 use Illuminate\Contracts\View\View;
@@ -28,10 +29,10 @@ class JoinedClasses extends Component
     public function render(): View
     {
         $query = CourseClass::whereHas('members', function ($q) {
-            $q->where('user_id', auth()->id())->where('status', 'active');
+            $q->where('user_id', auth()->id())->where('status', ClassMember::STATUS_ACTIVE);
         })
             ->with(['owner:id,name', 'members' => function ($q) {
-                $q->where('user_id', auth()->id())->where('status', 'active');
+                $q->where('user_id', auth()->id())->where('status', ClassMember::STATUS_ACTIVE);
             }]);
 
         if ($this->statusFilter === 'Đang học') {

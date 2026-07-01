@@ -30,7 +30,7 @@ class LeaveRequestCreate extends Component
         return ClassMember::with('courseClass')
             ->whereHas('courseClass')
             ->where('user_id', auth()->id())
-            ->where('status', 'active')
+            ->where('status', ClassMember::STATUS_ACTIVE)
             ->get()
             ->pluck('courseClass');
     }
@@ -68,6 +68,7 @@ class LeaveRequestCreate extends Component
 
         $member = ClassMember::where('class_id', $this->class_id)
             ->where('user_id', auth()->id())
+            ->where('status', ClassMember::STATUS_ACTIVE)
             ->firstOrFail();
 
         // Check if already requested

@@ -7,10 +7,10 @@
     [$statusLabel, $statusClass] = $statusMap[$leaveRequest->status] ?? [$leaveRequest->status, 'bg-slate-100 text-slate-700 border-slate-200'];
 @endphp
 
-<div class="mx-auto max-w-[1100px] space-y-6 p-4 pb-24 sm:p-8">
+<div class="space-y-6 px-6 py-6 pb-24 sm:px-10 sm:py-8 lg:px-16">
     <div class="flex flex-col justify-between gap-4 sm:flex-row sm:items-center">
         <div><h1 class="text-3xl font-bold tracking-tight text-slate-900">Chi tiết đơn xin nghỉ</h1><p class="mt-1 text-base text-slate-500">Mã đơn #{{ $leaveRequest->id }}</p></div>
-        <div class="flex flex-wrap gap-2">@if($leaveRequest->status === 'pending')<button type="button" wire:click="$set('showApproveForm', true)" class="inline-flex items-center gap-2 rounded-xl bg-emerald-600 px-4 py-2.5 text-base font-bold text-white hover:bg-emerald-700"><x-user.icon name="check-circle" :size="20" />Duyệt đơn</button><button type="button" wire:click="$set('showRejectForm', true)" class="inline-flex items-center gap-2 rounded-xl border border-red-200 bg-white px-4 py-2.5 text-base font-bold text-red-600 hover:bg-red-50"><x-user.icon name="x" :size="20" />Từ chối</button>@endif<a href="{{ route('lecturer.leave-requests.index') }}" class="inline-flex items-center gap-2 rounded-xl border border-slate-200 bg-white px-4 py-2.5 text-base font-bold text-slate-600 hover:bg-slate-50">Quay lại</a></div>
+        <div class="flex flex-wrap gap-2">@if($leaveRequest->status === 'pending')<button type="button" wire:click="$set('showApproveForm', true)" class="inline-flex items-center gap-2 rounded-xl bg-emerald-600 px-4 py-2.5 text-base font-bold text-white hover:bg-emerald-700"><x-user.icon name="check-circle" :size="20" />Duyệt đơn</button><button type="button" wire:click="$set('showRejectForm', true)" class="inline-flex items-center gap-2 rounded-xl border border-red-200 bg-white px-4 py-2.5 text-base font-bold text-red-600 hover:bg-red-50"><x-user.icon name="x" :size="20" />Từ chối</button>@endif</div>
     </div>
 
 
@@ -19,7 +19,13 @@
         <div class="flex h-full flex-col gap-6">
             <div class="rounded-2xl border border-slate-200 bg-white p-6 shadow-sm">
                 <div class="mb-5 flex items-center justify-between"><h2 class="text-sm font-extrabold uppercase tracking-wider text-slate-900">Thông tin học viên</h2><span class="rounded-full border px-3 py-1 text-sm font-bold {{ $statusClass }}">{{ $statusLabel }}</span></div>
-                <div class="flex items-center gap-4"><span class="flex h-16 w-16 items-center justify-center rounded-2xl bg-primary/10 text-2xl font-extrabold text-primary">{{ mb_strtoupper(mb_substr($leaveRequest->classMember->full_name, 0, 1)) }}</span><div><a href="{{ route('lecturer.students.show', $leaveRequest->classMember) }}" class="text-xl font-extrabold text-slate-900 hover:text-primary">{{ $leaveRequest->classMember->full_name }}</a><p class="mt-1 text-base text-slate-500">{{ $leaveRequest->classMember->student_code }} · {{ $leaveRequest->classMember->user?->email }}</p></div></div>
+                <div class="flex items-center gap-4">
+                    @if($leaveRequest->classMember->user && $leaveRequest->classMember->user->avatar)
+                        <img src="{{ asset('storage/' . $leaveRequest->classMember->user->avatar) }}" alt="{{ $leaveRequest->classMember->full_name }}" class="h-16 w-16 shrink-0 rounded-2xl object-cover">
+                    @else
+                        <span class="flex h-16 w-16 shrink-0 items-center justify-center rounded-2xl bg-primary/10 text-2xl font-extrabold text-primary">{{ mb_strtoupper(mb_substr($leaveRequest->classMember->full_name, 0, 1)) }}</span>
+                    @endif
+                    <div><a href="{{ route('lecturer.students.show', $leaveRequest->classMember) }}" class="text-xl font-extrabold text-slate-900 hover:text-primary">{{ $leaveRequest->classMember->full_name }}</a><p class="mt-1 text-base text-slate-500">{{ $leaveRequest->classMember->student_code }} · {{ $leaveRequest->classMember->user?->email }}</p></div></div>
                 <dl class="mt-5 grid gap-3 border-t border-slate-100 pt-5 text-base"><div><dt class="text-sm font-bold uppercase text-slate-400">Lớp học</dt><dd class="mt-1 font-semibold text-slate-700">{{ $leaveRequest->classMember->courseClass->join_key }} - {{ $leaveRequest->classMember->courseClass->name }}</dd></div><div><dt class="text-sm font-bold uppercase text-slate-400">Buổi học</dt><dd class="mt-1 font-semibold text-slate-700">{{ $leaveRequest->classSession->name }} · {{ $leaveRequest->classSession->date->format('d/m/Y') }}</dd></div></dl>
             </div>
 
@@ -30,11 +36,11 @@
 
         <div class="overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm lg:col-span-2">
             <div class="border-b border-slate-100 px-6 py-5">
-                <h2 class="text-sm font-extrabold uppercase tracking-wider text-slate-900">Đơn đã duyệt gần đây ({{ $approvedLeaveRequests->total() }})</h2>
+                <h2 class="text-sm font-extrabold uppercase tracking-wider text-slate-900">Đơn đã duyệt gần đây ({{ $approvedLeaveRequests->count() }})</h2>
             </div>
-            <div class="overflow-x-auto">
-                <table class="w-full text-left text-sm text-slate-600">
-                    <thead class="bg-slate-50 text-[13px] font-bold uppercase tracking-wider text-slate-500">
+            <div class="overflow-x-auto overflow-y-auto max-h-[1040px]">
+                <table class="w-full text-left text-sm text-slate-600 relative">
+                    <thead class="bg-slate-50 text-[13px] font-bold uppercase tracking-wider text-slate-900 sticky top-0 z-10 shadow-sm">
                         <tr>
                             <th scope="col" class="px-6 py-4">Buổi học</th>
                             <th scope="col" class="px-6 py-4">Ngày xin nghỉ</th>
@@ -68,11 +74,6 @@
                     </tbody>
                 </table>
             </div>
-            @if($approvedLeaveRequests->hasPages())
-                <div class="border-t border-slate-100 px-6 py-4">
-                    {{ $approvedLeaveRequests->links() }}
-                </div>
-            @endif
         </div>
     </section>
 
