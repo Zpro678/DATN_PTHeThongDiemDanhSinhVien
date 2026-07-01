@@ -18,12 +18,6 @@ class ClassSettings extends Component
     // Mã lớp học (duy nhất để tham gia lớp)
     public string $join_key = '';
 
-    // Mã môn học
-    public string $subjectCode = '';
-
-    // Học kỳ của lớp học
-    public string $semester = '';
-
     // Mô tả chi tiết về lớp học
     public string $description = '';
 
@@ -66,8 +60,6 @@ class ClassSettings extends Component
 
         $this->name = $courseClass->name;
         $this->join_key = $courseClass->join_key;
-        $this->subjectCode = $courseClass->subject_code ?? '';
-        $this->semester = $courseClass->semester ?? '';
         $this->description = $courseClass->description ?? '';
         $this->lateThreshold = $courseClass->late_threshold ?? 15;
         $this->deductExcusedAbsence = (bool) $courseClass->deduct_excused_absence;
@@ -81,8 +73,6 @@ class ClassSettings extends Component
         $validated = $this->validate([
             'name' => ['required', 'string', 'max:255'],
             'join_key' => ['required', 'string', 'max:20', Rule::unique('classes', 'join_key')->ignore($this->courseClass->id)],
-            'subjectCode' => ['nullable', 'string', 'max:50'],
-            'semester' => ['nullable', 'string', 'max:50'],
             'description' => ['nullable', 'string', 'max:5000'],
             'lateThreshold' => ['required', 'integer', 'min:0', 'max:300'],
             'deductExcusedAbsence' => ['boolean'],
@@ -98,8 +88,6 @@ class ClassSettings extends Component
         $this->courseClass->update([
             'name' => $validated['name'],
             'join_key' => strtoupper($validated['join_key']),
-            'subject_code' => filled($validated['subjectCode'] ?? null) ? strtoupper(trim($validated['subjectCode'])) : null,
-            'semester' => filled($validated['semester'] ?? null) ? trim($validated['semester']) : null,
             'description' => $validated['description'] ?: null,
             'late_threshold' => $validated['lateThreshold'],
             'deduct_excused_absence' => $validated['deductExcusedAbsence'] ?? false,
@@ -113,7 +101,7 @@ class ClassSettings extends Component
 
     public function regenerateCode(): void
     {
-        $this->join_key = CourseClass::generateUniqueCode($this->subjectCode, $this->courseClass->id);
+        $this->join_key = CourseClass::generateUniqueCode('', $this->courseClass->id);
     }
 
     // ─── Xoá lớp ────────────────────────────────────────────────────────────────

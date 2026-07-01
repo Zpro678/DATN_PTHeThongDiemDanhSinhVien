@@ -3,6 +3,7 @@
 namespace App\Livewire\User;
 
 use App\Models\ClassMember;
+use App\Models\ClassJoinRequest;
 use App\Models\ClassSession;
 use App\Models\CourseClass;
 use App\Models\LeaveRequest;
@@ -19,7 +20,7 @@ class Classes extends Component
 
         $totalStudents = ClassMember::whereHas('courseClass', function ($q) use ($userId) {
             $q->where('owner_user_id', $userId);
-        })->where('status', 'active')->count();
+        })->where('status', ClassMember::STATUS_ACTIVE)->count();
 
         $sessionsToday = ClassSession::whereHas('courseClass', function ($q) use ($userId) {
             $q->where('owner_user_id', $userId);
@@ -27,7 +28,7 @@ class Classes extends Component
 
         $pendingLeaves = LeaveRequest::whereHas('classMember.courseClass', function ($q) use ($userId) {
             $q->where('owner_user_id', $userId);
-        })->where('status', 'pending')->count();
+        })->whereIn('status', [ClassJoinRequest::STATUS_PENDING, 'pending'])->count();
 
         $stats = [
             ['label' => 'Tổng lớp', 'value' => $totalClasses, 'icon' => 'book-open', 'color' => 'text-primary', 'bg' => 'bg-primary/10'],
@@ -40,7 +41,7 @@ class Classes extends Component
             ->where('status', 'active')
             ->withCount([
                 'members as students_count' => function ($q) {
-                    $q->where('status', 'active');
+                    $q->where('status', ClassMember::STATUS_ACTIVE);
                 },
                 'sessions as sessions_completed' => function ($q) {
                     $q->whereIn('status', ['closed', 'active']);
@@ -67,7 +68,7 @@ class Classes extends Component
                 'id' => $class->id,
                 'title' => $class->name,
                 'code' => $class->join_key,
-                'semester' => $class->semester ?? 'Không xác định',
+                'status' => $class->status === 'ended' ? 'Đã kết thúc' : 'Đang hoạt động',
                 'students' => $class->students_count,
                 'attendance' => $attendancePct,
                 'icon' => 'book',

@@ -63,7 +63,6 @@ class StudentAttendanceHistoryExport implements FromCollection, WithHeadings, Wi
                 $dateStr = $record->classSession?->date ? $record->classSession->date->format('d/m/Y') : '';
                 return str($record->classMember?->courseClass?->name)->lower()->contains($search)
                     || str($record->classMember?->courseClass?->join_key)->lower()->contains($search)
-                    || str((string) $record->classMember?->courseClass?->subject_code)->lower()->contains($search)
                     || str($dateStr)->contains($search);
             })->values();
         }

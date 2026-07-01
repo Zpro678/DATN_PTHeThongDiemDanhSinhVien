@@ -1,6 +1,6 @@
 @php
     $isClosed = $session->status === 'closed';
-    $selectedSubject = $session->courseClass->subject_code ?: $session->courseClass->join_key;
+    $selectedSubject = $session->courseClass->join_key;
     $sessionDateLabel = $session->date->format('d/m/Y');
     $openMinutes = max(1, (int) now()->diffInMinutes($session->token_expires_at ?? now()->addMinutes(15), false));
     $qrRefreshRate = $session->qr_refresh_rate ?? 10;

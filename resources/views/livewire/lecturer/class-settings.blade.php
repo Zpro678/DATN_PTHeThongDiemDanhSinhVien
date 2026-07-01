@@ -45,18 +45,6 @@
                             @error('name') <span class="text-error text-sm mt-1 block">{{ $message }}</span> @enderror
                         </label>
 
-                        <label class="col-span-1 block">
-                            <span class="mb-2 block text-sm font-bold text-on-surface">Mã môn học <span class="text-xs font-normal text-on-surface-variant">(Tùy chọn)</span></span>
-                            <input type="text" wire:model="subjectCode" class="w-full rounded-xl border border-outline-variant/30 bg-surface-container-lowest px-4 py-3 outline-none uppercase transition-all focus:border-primary focus:ring-2 focus:ring-primary/20" placeholder="VD: WEB301">
-                            @error('subjectCode') <span class="text-error text-xs mt-1 block">{{ $message }}</span> @enderror
-                        </label>
-
-                        <label class="col-span-1 block">
-                            <span class="mb-2 block text-sm font-bold text-on-surface">Học kỳ <span class="text-xs font-normal text-on-surface-variant">(Tùy chọn)</span></span>
-                            <input type="text" wire:model="semester" class="w-full rounded-xl border border-outline-variant/30 bg-surface-container-lowest px-4 py-3 outline-none transition-all focus:border-primary focus:ring-2 focus:ring-primary/20" placeholder="VD: HK1 2026-2027">
-                            @error('semester') <span class="text-error text-xs mt-1 block">{{ $message }}</span> @enderror
-                        </label>
-
                         <label class="col-span-1 md:col-span-2 block">
                             <span class="mb-2 block text-base font-bold text-on-surface">Mô tả lớp học <span class="text-sm font-normal text-on-surface-variant">(Tùy chọn)</span></span>
                             <textarea wire:model="description" class="h-24 w-full resize-none rounded-xl border border-outline-variant/30 bg-surface-container-lowest px-4 py-3 text-base outline-none transition-all focus:border-primary focus:ring-2 focus:ring-primary/20" placeholder="Nhập mô tả..."></textarea>

@@ -199,7 +199,7 @@ class ClassAttendanceHistory extends Component
         return view('livewire.lecturer.class-attendance-history', compact('members', 'groupedSessions', 'matrix', 'sessions', 'groupedSessionsInfo', 'membersData'))
             ->layout('layouts.fullscreen', [
                 'title' => 'Lịch sử điểm danh (' . $sessions->count() . ')',
-                'subtitle' => ($this->courseClass->subject_code ?? $this->courseClass->join_key) . ' - ' . $this->courseClass->name,
+                'subtitle' => $this->courseClass->join_key . ' - ' . $this->courseClass->name,
                 'backUrl' => route('lecturer.classes.show', ['ma_user' => auth()->id(), 'courseClass' => $this->courseClass->id])
             ]);
     }

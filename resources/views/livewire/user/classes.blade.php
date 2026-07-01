@@ -59,7 +59,7 @@
                         </span>
                         <div class="min-w-0 flex-1">
                             <h4 class="truncate font-semibold text-on-surface">{{ $class['title'] }}</h4>
-                            <p class="mt-0.5 truncate text-xs text-on-surface-variant">{{ $class['code'] }} · {{ $class['semester'] }}</p>
+                            <p class="mt-0.5 truncate text-xs text-on-surface-variant">{{ $class['code'] }} · {{ $class['status'] }}</p>
                         </div>
                         <span class="inline-flex items-center rounded-full bg-tertiary/10 px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wide text-tertiary">Đang học</span>
                     </div>

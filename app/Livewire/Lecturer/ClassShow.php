@@ -181,7 +181,9 @@ class ClassShow extends Component
         $this->pendingLeaveRequests = LeaveRequest::whereHas('classSession', function ($q) use ($courseClass) {
             $q->where('class_id', $courseClass->id);
         })->where('status', 'pending')->count();
-        $this->pendingMembersCount = $courseClass->joinRequests()->where('status', 'pending')->count();
+        $this->pendingMembersCount = $courseClass->joinRequests()
+            ->whereIn('status', [\App\Models\ClassJoinRequest::STATUS_PENDING, 'pending'])
+            ->count();
         
         if (request()->has('openImport')) {
             $this->openImport();

@@ -64,8 +64,18 @@ class ClassMeeting extends Model
         }
 
         $time = Carbon::parse($this->end_time)->format('H:i:s');
+        $endsAt = Carbon::parse($this->date->toDateString().' '.$time);
 
-        return Carbon::parse($this->date->toDateString().' '.$time);
+        if ($this->start_time) {
+            $startTime = Carbon::parse($this->start_time)->format('H:i:s');
+            $startsAt = Carbon::parse($this->date->toDateString().' '.$startTime);
+
+            if ($endsAt->lessThanOrEqualTo($startsAt)) {
+                $endsAt->addDay();
+            }
+        }
+
+        return $endsAt;
     }
 
     /**

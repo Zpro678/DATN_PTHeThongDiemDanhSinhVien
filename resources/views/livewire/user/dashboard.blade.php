@@ -464,7 +464,7 @@
                                         <h3 class="truncate font-normal text-white text-[22px] tracking-wide leading-tight" title="{{ $class['title'] }}">
                                             <a href="{{ route('lecturer.classes.show', $class['id']) }}" class="hover:underline focus:outline-none">{{ $class['title'] }}</a>
                                         </h3>
-                                        <p class="mt-1 truncate text-[13px] font-light text-white/95 tracking-wide">Mã học phần: {{ $class['subject_code'] ?? $class['code'] ?? 'N/A' }}</p>
+                                        <p class="mt-1 truncate text-[13px] font-light text-white/95 tracking-wide">Mã lớp: {{ $class['code'] ?? 'N/A' }}</p>
                                     </div>
 
                                     {{-- Background Icon --}}

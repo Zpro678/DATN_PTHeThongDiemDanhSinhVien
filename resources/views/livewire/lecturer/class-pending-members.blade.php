@@ -18,7 +18,7 @@
             <div class="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none text-slate-400">
                 <x-user.icon name="search" :size="18" />
             </div>
-            <input wire:model.live.debounce.300ms="search" type="text" class="block w-full pl-11 pr-4 py-3 border border-slate-200 rounded-2xl leading-5 bg-white placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-sm transition-shadow font-medium" placeholder="Tìm kiếm theo Tên, MSSV hoặc Email...">
+            <input wire:model.live.debounce.300ms="search" type="text" class="block w-full pl-11 pr-4 py-3 border border-slate-200 rounded-2xl leading-5 bg-white placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-sm transition-shadow font-medium" placeholder="Tìm kiếm theo tên hoặc email...">
         </div>
         
         @if($pendingMembers->count() > 0)
@@ -45,8 +45,7 @@
                         <tr>
                             <th scope="col" class="px-6 py-5 font-black uppercase tracking-widest text-slate-700 text-[13px] {{ $pendingMembers->count() > 30 ? 'bg-white' : '' }}">STT</th>
                             <th scope="col" class="px-6 py-5 font-black uppercase tracking-widest text-slate-700 text-[13px] {{ $pendingMembers->count() > 30 ? 'bg-white' : '' }}">Sinh viên</th>
-                            <th scope="col" class="px-6 py-5 font-black uppercase tracking-widest text-slate-700 text-[13px] {{ $pendingMembers->count() > 30 ? 'bg-white' : '' }}">MSSV</th>
-                            <th scope="col" class="px-6 py-5 font-black uppercase tracking-widest text-slate-700 text-[13px] {{ $pendingMembers->count() > 30 ? 'bg-white' : '' }}">Tài khoản liên kết</th>
+                            <th scope="col" class="px-6 py-5 font-black uppercase tracking-widest text-slate-700 text-[13px] {{ $pendingMembers->count() > 30 ? 'bg-white' : '' }}">Email</th>
                             <th scope="col" class="px-6 py-5 font-black uppercase tracking-widest text-slate-700 text-[13px] text-center {{ $pendingMembers->count() > 30 ? 'bg-white' : '' }}">Thời gian xin vào</th>
                             <th scope="col" class="px-6 py-5 font-black uppercase tracking-widest text-slate-700 text-[13px] text-right {{ $pendingMembers->count() > 30 ? 'bg-white' : '' }}">Hành động</th>
                         </tr>
@@ -60,19 +59,16 @@
                                 <td class="px-6 py-4">
                                     <div class="flex items-center gap-3">
                                         @if($member->user && $member->user->avatar)
-                                            <img src="{{ asset('storage/' . $member->user->avatar) }}" alt="{{ $member->full_name }}" class="h-10 w-10 shrink-0 rounded-2xl object-cover border border-slate-200">
+                                            <img src="{{ asset('storage/' . $member->user->avatar) }}" alt="{{ $member->user->name }}" class="h-10 w-10 shrink-0 rounded-2xl object-cover border border-slate-200">
                                         @else
                                             <div class="flex h-10 w-10 shrink-0 items-center justify-center rounded-2xl font-bold bg-blue-100 text-blue-700 border border-blue-200">
-                                                {{ mb_substr($member->full_name, 0, 1) }}
+                                                {{ mb_substr($member->user?->name ?? 'H', 0, 1) }}
                                             </div>
                                         @endif
                                         <div class="flex flex-col">
-                                            <span class="font-black text-slate-900">{{ $member->full_name }}</span>
+                                            <span class="font-black text-slate-900">{{ $member->user?->name ?? 'Học viên' }}</span>
                                         </div>
                                     </div>
-                                </td>
-                                <td class="px-6 py-4 font-bold text-slate-700">
-                                    {{ $member->student_code }}
                                 </td>
                                 <td class="px-6 py-4">
                                     @if($member->user)
@@ -91,7 +87,7 @@
                                         <button wire:click="approve({{ $member->id }})" class="inline-flex items-center justify-center rounded-xl bg-emerald-50 p-2 text-emerald-600 hover:bg-emerald-100 hover:text-emerald-700 transition-colors" title="Duyệt">
                                             <x-user.icon name="check" :size="18" stroke-width="2.5" />
                                         </button>
-                                        <button wire:click="confirmReject({{ $member->id }}, '{{ addslashes($member->full_name) }}')" class="inline-flex items-center justify-center rounded-xl bg-rose-50 p-2 text-rose-600 hover:bg-rose-100 hover:text-rose-700 transition-colors" title="Từ chối">
+                                        <button wire:click="confirmReject({{ $member->id }}, '{{ addslashes($member->user?->name ?? 'Học viên') }}')" class="inline-flex items-center justify-center rounded-xl bg-rose-50 p-2 text-rose-600 hover:bg-rose-100 hover:text-rose-700 transition-colors" title="Từ chối">
                                             <x-user.icon name="x" :size="18" stroke-width="2.5" />
                                         </button>
                                     </div>

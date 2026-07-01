@@ -2,11 +2,9 @@
     $classOptions = $classes
         ->map(fn ($class) => [
             'id' => (string) $class->id,
-            'label' => trim($class->name.($class->subject_code ? ' - '.$class->subject_code : '')),
+            'label' => $class->name.' - '.$class->join_key,
             'name' => $class->name,
             'code' => $class->join_key,
-            'subject_code' => $class->subject_code ?: $class->join_key,
-            'semester' => $class->semester ?: 'Chưa gán học kỳ',
             'members_count' => (int) ($class->members_count ?? 0),
         ])
         ->values();
@@ -19,8 +17,7 @@
         ->values();
 
     $studentCount = (int) ($selectedClass?->members_count ?? $studentRows->count());
-    $selectedSubject = $selectedClass?->subject_code ?: $selectedClass?->join_key ?: 'QR101';
-    $selectedSemester = $selectedClass?->semester ?: 'HK2 2025-2026';
+    $selectedSubject = $selectedClass?->join_key ?: 'QR101';
 @endphp
 
 <div
@@ -88,10 +85,10 @@
 
     <div class="flex flex-col gap-5 md:flex-row md:items-center md:justify-between xl:grid xl:grid-cols-12 xl:gap-6">
         <div class="min-w-0 flex-1 xl:col-span-8">
-            <h1 class="truncate text-2xl md:text-3xl font-bold tracking-tight text-slate-900" title="THIẾT LẬP ĐIỂM DANH @if($selectedClass) - {{ mb_strtoupper($selectedClass->name) }} @if($selectedClass->subject_code) ({{ mb_strtoupper($selectedClass->subject_code) }}) @endif @endif">
+            <h1 class="truncate text-2xl md:text-3xl font-bold tracking-tight text-slate-900" title="THIẾT LẬP ĐIỂM DANH @if($selectedClass) - {{ mb_strtoupper($selectedClass->name) }} ({{ mb_strtoupper($selectedClass->join_key) }}) @endif">
                 THIẾT LẬP ĐIỂM DANH
                 @if($selectedClass)
-                    - {{ mb_strtoupper($selectedClass->name) }} @if($selectedClass->subject_code) ({{ mb_strtoupper($selectedClass->subject_code) }}) @endif
+                    - {{ mb_strtoupper($selectedClass->name) }} ({{ mb_strtoupper($selectedClass->join_key) }})
                 @endif
             </h1>
         </div>
@@ -174,7 +171,7 @@
                                             <span class="min-w-0">
                                                 <span class="block truncate text-sm font-extrabold">{{ $courseClass['label'] }}</span>
                                                 <span class="mt-0.5 block truncate text-xs font-semibold text-slate-400">
-                                                    {{ $courseClass['semester'] }} · {{ number_format($courseClass['members_count']) }} học viên
+                                                    Mã lớp: {{ $courseClass['code'] }} · {{ number_format($courseClass['members_count']) }} học viên
                                                 </span>
                                             </span>
 
@@ -349,9 +346,8 @@
 
                 <div class="mt-6 space-y-5">
                     <div class="rounded-2xl border border-slate-200 bg-slate-50 p-5">
-                        <p class="text-xs font-extrabold uppercase tracking-widest text-slate-500">Môn học</p>
-                        <p class="mt-2 text-[17px] font-black text-slate-900 leading-snug"><span x-text="selectedClass.subject_code || @js($selectedSubject)"></span> - <span x-text="selectedClass.name || @js($selectedClass?->name ?? 'Lớp demo QR')"></span></p>
-                        <p class="mt-1 text-sm font-bold text-slate-500" x-text="selectedClass.semester || @js($selectedSemester)"></p>
+                        <p class="text-xs font-extrabold uppercase tracking-widest text-slate-500">Lớp học</p>
+                        <p class="mt-2 text-[17px] font-black text-slate-900 leading-snug"><span x-text="selectedClass.code || @js($selectedSubject)"></span> - <span x-text="selectedClass.name || @js($selectedClass?->name ?? 'Lớp demo QR')"></span></p>
                     </div>
 
                     <div class="grid grid-cols-2 gap-4">

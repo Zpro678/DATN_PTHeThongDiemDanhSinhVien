@@ -109,8 +109,6 @@ class AttendanceHistory extends Component
                 'class_id' => $record->classMember?->courseClass?->id,
                 'class_code' => $record->classMember?->courseClass?->join_key ?? 'N/A',
                 'class_name' => $record->classMember?->courseClass?->name ?? 'Lớp học',
-                'subject_code' => $record->classMember?->courseClass?->subject_code,
-                'semester' => $record->classMember?->courseClass?->semester,
                 'teacher' => $record->classMember?->courseClass?->owner?->name ?? 'Chưa cập nhật',
                 'status' => $record->status,
                 'method' => filled($record->classSession?->qr_token) ? 'QR + GPS' : 'Thủ công',
@@ -136,7 +134,6 @@ class AttendanceHistory extends Component
                 $dateStr = $record['date'] ? $record['date']->format('d/m/Y') : '';
                 return str($record['class_name'])->lower()->contains($search)
                     || str($record['class_code'])->lower()->contains($search)
-                    || str((string) $record['subject_code'])->lower()->contains($search)
                     || str($dateStr)->contains($search);
             })->values();
         }

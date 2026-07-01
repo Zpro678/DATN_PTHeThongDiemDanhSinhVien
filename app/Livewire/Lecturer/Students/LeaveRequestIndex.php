@@ -126,9 +126,10 @@ class LeaveRequestIndex extends Component
 
         $leaveRequests = LeaveRequest::query()
             ->with([
-                'classMember:id,class_id,user_id,student_code,full_name',
+                'classMember:id,class_id,user_id',
+                'classMember.profile:id,class_member_id,student_code,full_name,email',
                 'classMember.courseClass:id,name,join_key,owner_user_id',
-                'classMember.user:id,email,avatar',
+                'classMember.user:id,name,email,avatar',
                 'classSession:id,class_id,name,date,start_time',
                 'reviewer:id,name',
             ])

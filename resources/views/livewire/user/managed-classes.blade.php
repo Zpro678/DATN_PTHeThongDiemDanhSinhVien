@@ -71,18 +71,6 @@
                 </button>
             @endforeach
         </div>
-
-        @if ($semesters->isNotEmpty())
-            <select
-                wire:model.live="semesterFilter"
-                class="shrink-0 rounded-lg border border-outline-variant bg-white px-3.5 py-2.5 text-sm font-medium text-on-surface-variant transition-colors focus:border-primary focus:outline-none focus:ring-2 focus:ring-primary/20"
-            >
-                <option value="Tất cả học kỳ">Tất cả học kỳ</option>
-                @foreach ($semesters as $semester)
-                    <option value="{{ $semester }}">{{ $semester }}</option>
-                @endforeach
-            </select>
-        @endif
     </div>
 
     <section class="grid grid-cols-1 gap-4 md:grid-cols-2 xl:grid-cols-3">
@@ -142,7 +130,7 @@
                         <h3 class="truncate font-normal text-white text-[22px] tracking-wide leading-tight" title="{{ $class->name }}">
                             <a href="{{ route('lecturer.classes.show', $class->id) }}" class="hover:underline focus:outline-none">{{ $class->name }}</a>
                         </h3>
-                        <p class="mt-1 truncate text-[13px] font-light text-white/95 tracking-wide">Mã học phần: {{ $class->subject_code ?? 'N/A' }}</p>
+                        <p class="mt-1 truncate text-[13px] font-light text-white/95 tracking-wide">Mã lớp: {{ $class->join_key }}</p>
                     </div>
 
                     {{-- Background Icon --}}

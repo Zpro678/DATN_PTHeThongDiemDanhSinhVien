@@ -115,14 +115,17 @@
             </div>
 
             <div class="flex w-full flex-col gap-3 sm:flex-row xl:w-auto xl:justify-end">
-                <label class="relative flex-1 sm:w-64 sm:flex-none">
-                    <x-user.icon name="search" :size="16" class="absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-400" />
-                    <input
-                        type="text"
-                        wire:model.live.debounce.300ms="search"
-                        placeholder="Tìm kiếm theo tên hoặc mã..."
-                        class="w-full rounded-xl border border-slate-200 bg-white py-2.5 pl-10 pr-4 text-sm outline-none transition focus:border-blue-500 focus:ring-1 focus:ring-blue-500/20"
-                    >
+                <label class="flex flex-1 flex-col gap-1 sm:w-64 sm:flex-none">
+                    <span class="text-xs font-bold uppercase tracking-wider text-slate-500">Tìm kiếm</span>
+                    <span class="relative">
+                        <x-user.icon name="search" :size="16" class="absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-400" />
+                        <input
+                            type="text"
+                            wire:model.live.debounce.300ms="search"
+                            placeholder="Tìm theo tên hoặc mã số..."
+                            class="w-full rounded-xl border border-slate-200 bg-white py-2.5 pl-10 pr-4 text-sm outline-none transition focus:border-blue-500 focus:ring-1 focus:ring-blue-500/20"
+                        >
+                    </span>
                 </label>
                 
                 <div class="flex gap-3">

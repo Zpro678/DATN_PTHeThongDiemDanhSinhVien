@@ -5,7 +5,6 @@
             'label' => $class->name.' - '.$class->join_key,
             'name' => $class->name,
             'code' => $class->join_key,
-            'subject_code' => $class->subject_code,
             'members_count' => (int) ($class->members_count ?? 0),
         ])
         ->values();
@@ -137,7 +136,7 @@
                                             <span class="min-w-0">
                                                 <span class="block truncate text-sm font-bold">{{ $classOption['label'] }}</span>
                                                 <span class="mt-0.5 block truncate text-xs font-medium text-slate-400">
-                                                    {{ $classOption['subject_code'] ?: 'Chưa có mã môn' }} • {{ $classOption['members_count'] }} học viên
+                                                    Mã lớp: {{ $classOption['code'] }} • {{ $classOption['members_count'] }} học viên
                                                 </span>
                                             </span>
                                             <span class="h-2.5 w-2.5 shrink-0 rounded-full" :class="String(selectedClassId) === @js((string) $classOption['id']) ? 'bg-blue-500' : 'bg-transparent'"></span>
@@ -371,7 +370,7 @@
                             </div>
                             <div class="min-w-0">
                                 <span class="block truncate text-sm font-bold text-slate-700" x-text="selectedClass.name || 'Chưa chọn lớp'"></span>
-                                <span class="block truncate text-[11px] font-medium text-slate-500" x-text="selectedClass.subject_code ? 'Mã môn: ' + selectedClass.subject_code : 'Chưa có mã môn'"></span>
+                                <span class="block truncate text-[11px] font-medium text-slate-500" x-text="selectedClass.code ? 'Mã lớp: ' + selectedClass.code : 'Chưa chọn mã lớp'"></span>
                             </div>
                         </div>
                     </div>

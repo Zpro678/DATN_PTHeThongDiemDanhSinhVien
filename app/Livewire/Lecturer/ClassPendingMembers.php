@@ -27,7 +27,7 @@ class ClassPendingMembers extends Component
 
         // Lấy ID mới nhất lúc khởi tạo
         $this->lastRequestId = \App\Models\ClassJoinRequest::where('class_id', $this->courseClass->id)
-            ->where('status', 'pending')
+            ->whereIn('status', [ClassJoinRequest::STATUS_PENDING, 'pending'])
             ->max('id');
     }
 
@@ -47,11 +47,11 @@ class ClassPendingMembers extends Component
     {
         $request = ClassJoinRequest::where('class_id', $this->courseClass->id)
             ->where('id', $requestId)
-            ->where('status', 'pending')
+            ->whereIn('status', [ClassJoinRequest::STATUS_PENDING, 'pending'])
             ->first();
 
         if ($request) {
-            $request->update(['status' => 'approved']);
+            $request->update(['status' => ClassJoinRequest::STATUS_APPROVED]);
             
             $member = ClassMember::withTrashed()->firstOrCreate([
                 'class_id' => $this->courseClass->id,
@@ -66,12 +66,11 @@ class ClassPendingMembers extends Component
 
             $member->update(['status' => ClassMember::STATUS_ACTIVE, 'status_changed_at' => null]);
             $member->syncProfile([
-                'student_code' => $request->student_code,
-                'full_name' => $request->full_name,
+                'full_name' => $request->user?->name,
                 'email' => $request->user?->email,
             ]);
 
-            $this->dispatch('toast', message: 'Đã duyệt học viên ' . $request->full_name . ' thành công.', type: 'success');
+            $this->dispatch('toast', message: 'Đã duyệt học viên ' . ($request->user?->name ?? 'này') . ' thành công.', type: 'success');
         }
     }
 
@@ -79,12 +78,12 @@ class ClassPendingMembers extends Component
     {
         $request = ClassJoinRequest::where('class_id', $this->courseClass->id)
             ->where('id', $requestId)
-            ->where('status', 'pending')
+            ->whereIn('status', [ClassJoinRequest::STATUS_PENDING, 'pending'])
             ->first();
 
         if ($request) {
-            $request->update(['status' => 'rejected']);
-            $this->dispatch('toast', message: 'Đã từ chối học viên ' . $request->full_name . '.', type: 'success');
+            $request->update(['status' => ClassJoinRequest::STATUS_REJECTED]);
+            $this->dispatch('toast', message: 'Đã từ chối học viên ' . ($request->user?->name ?? 'này') . '.', type: 'success');
             $this->dispatch('close-modal', 'confirm-reject');
         }
     }
@@ -92,12 +91,12 @@ class ClassPendingMembers extends Component
     public function approveAll()
     {
         $requests = ClassJoinRequest::where('class_id', $this->courseClass->id)
-            ->where('status', 'pending')
+            ->whereIn('status', [ClassJoinRequest::STATUS_PENDING, 'pending'])
             ->get();
 
         if ($requests->isNotEmpty()) {
             foreach ($requests as $request) {
-                $request->update(['status' => 'approved']);
+                $request->update(['status' => ClassJoinRequest::STATUS_APPROVED]);
                 $member = ClassMember::withTrashed()->firstOrCreate([
                     'class_id' => $this->courseClass->id,
                     'user_id' => $request->user_id,
@@ -111,8 +110,7 @@ class ClassPendingMembers extends Component
 
                 $member->update(['status' => ClassMember::STATUS_ACTIVE, 'status_changed_at' => null]);
                 $member->syncProfile([
-                    'student_code' => $request->student_code,
-                    'full_name' => $request->full_name,
+                    'full_name' => $request->user?->name,
                     'email' => $request->user?->email,
                 ]);
             }
@@ -125,17 +123,16 @@ class ClassPendingMembers extends Component
     {
         $query = ClassJoinRequest::with('user')
             ->where('class_id', $this->courseClass->id)
-            ->where('status', 'pending')
+            ->whereIn('status', [ClassJoinRequest::STATUS_PENDING, 'pending'])
             ->whereDoesntHave('user.classMemberships', function ($q) {
                 $q->where('class_id', $this->courseClass->id)->withTrashed();
             });
 
         if (!empty($this->search)) {
             $query->where(function($q) {
-                $q->where('full_name', 'like', '%' . $this->search . '%')
-                  ->orWhere('student_code', 'like', '%' . $this->search . '%')
-                  ->orWhereHas('user', function($q2) {
-                      $q2->where('email', 'like', '%' . $this->search . '%');
+                $q->whereHas('user', function($q2) {
+                      $q2->where('name', 'like', '%' . $this->search . '%')
+                          ->orWhere('email', 'like', '%' . $this->search . '%');
                   });
             });
         }

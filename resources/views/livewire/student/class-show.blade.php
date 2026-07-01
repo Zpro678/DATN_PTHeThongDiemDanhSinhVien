@@ -27,11 +27,12 @@
             'text-[#475569]', 'text-[#1D4ED8]', 'text-[#0F766E]', 'text-[#4338CA]',
             'text-[#047857]', 'text-[#0369A1]', 'text-[#6D28D9]', 'text-[#B45309]',
         ];
-        $themeBgClass = $colorOptions[$class->id % count($colorOptions)];
-        $themeTextClass = $textColorOptions[$class->id % count($textColorOptions)];
+        $colorIndex = hexdec(substr(md5((string) $class->id), 0, 8));
+        $themeBgClass = $colorOptions[$colorIndex % count($colorOptions)];
+        $themeTextClass = $textColorOptions[$colorIndex % count($textColorOptions)];
         
         $bgIcons = ['laptop', 'book', 'code', 'book-open', 'graduation-cap', 'layout-dashboard'];
-        $themeIcon = $bgIcons[$class->id % count($bgIcons)];
+        $themeIcon = $bgIcons[$colorIndex % count($bgIcons)];
     @endphp
 
     {{-- Header Banner like Google Classroom --}}
@@ -48,10 +49,6 @@
                     <h1 class="text-3xl sm:text-[2.5rem] leading-tight font-medium tracking-tight text-white drop-shadow-sm">{{ $class->name }}</h1>
                     <p class="mt-2 text-[15px] text-white/90 drop-shadow-sm">
                         Mã lớp: <span class="font-bold text-white">{{ $class->join_key }}</span>
-                        @if($class->subject_code)
-                            <span class="mx-2 opacity-60">•</span>
-                            Mã học phần: <span class="font-bold text-white">{{ $class->subject_code }}</span>
-                        @endif
                     </p>
                 </div>
             </div>
@@ -79,13 +76,13 @@
                         <span class="font-bold text-slate-800 text-right leading-tight max-w-[55%]">{{ $class->owner->name ?? 'Chưa cập nhật' }}</span>
                     </div>
 
-                    <!-- Mã học phần -->
+                    <!-- Mã lớp -->
                     <div class="flex items-center justify-between rounded-xl bg-[#f8faff] px-4 py-3 transition hover:bg-[#f0f4ff]">
                         <div class="flex items-center gap-3">
                             <x-user.icon name="qr-code" :size="16" class="text-slate-600" />
-                            <span class="font-medium text-slate-500">Mã học phần</span>
+                            <span class="font-medium text-slate-500">Mã lớp</span>
                         </div>
-                        <span class="font-bold text-slate-800 text-right">{{ $class->subject_code ?? 'N/A' }}</span>
+                        <span class="font-bold text-slate-800 text-right">{{ $class->join_key }}</span>
                     </div>
 
                     <!-- Tổng số buổi -->

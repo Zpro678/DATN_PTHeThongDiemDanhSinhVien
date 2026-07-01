@@ -290,8 +290,8 @@ class QrAttendanceCreate extends Component
         // Buổi luôn diễn ra hôm nay, bắt đầu lúc tạo; giờ kết thúc tự động tính (mặc định +90 phút).
         $date = now()->toDateString();
         $startTime = now()->format('H:i');
-        $endTime = now()->addMinutes(max(90, (int)$validated['durationMinutes']))->format('H:i');
-        $endsAt = \Carbon\Carbon::parse($date.' '.$endTime.':00');
+        $endsAt = now()->copy()->addMinutes(max(90, (int)$validated['durationMinutes']))->second(0);
+        $endTime = $endsAt->format('H:i');
 
         if ($endsAt->lessThanOrEqualTo(now()->addMinutes(10))) {
             $this->addError('name', 'Giờ kết thúc không hợp lệ, vui lòng thử lại.');

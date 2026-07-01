@@ -35,8 +35,6 @@ class CreateClassTest extends TestCase
             ->test(CreateClass::class)
             ->set('name', 'Kiểm thử phần mềm')
             ->set('randomSuffix', '2401')
-            ->set('subjectCode', 'SWE401')
-            ->set('semester', 'HK1 2026-2027')
             ->set('description', 'Lớp học được tạo từ Livewire.')
             ->set('requireApproval', true)
             ->call('save')
@@ -46,9 +44,7 @@ class CreateClassTest extends TestCase
         $this->assertDatabaseHas('classes', [
             'owner_user_id' => $user->id,
             'name' => 'Kiểm thử phần mềm',
-            'join_key' => 'SWE2401',
-            'subject_code' => 'SWE401',
-            'semester' => 'HK1 2026-2027',
+            'join_key' => 'CLS2401',
             'total_sessions' => 0,
             'require_approval' => true,
             'status' => 'active',

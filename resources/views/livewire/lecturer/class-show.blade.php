@@ -43,7 +43,8 @@
         'bg-[#475569]', 'bg-[#1D4ED8]', 'bg-[#0F766E]', 'bg-[#4338CA]',
         'bg-[#047857]', 'bg-[#0369A1]', 'bg-[#6D28D9]', 'bg-[#B45309]',
     ];
-    $themeColor = $colorOptions[$class->id % count($colorOptions)];
+    $colorIndex = hexdec(substr(md5((string) $class->id), 0, 8));
+    $themeColor = $colorOptions[$colorIndex % count($colorOptions)];
 @endphp
 
     {{-- Thông tin lớp & Hành động nhanh --}}
@@ -68,14 +69,10 @@
             </h1>
             
             <div class="grid grid-cols-2 gap-x-4 gap-y-6 sm:grid-cols-4">
-                @if($class->subject_code)
                 <div class="min-w-0">
-                    <span class="text-sm text-white/70">Mã học phần</span>
-                    <p class="mt-1 text-2xl sm:text-[28px] font-bold text-white truncate leading-none" title="{{ $class->subject_code }}">{{ $class->subject_code }}</p>
+                    <span class="text-sm text-white/70">Mã lớp</span>
+                    <p class="mt-1 text-2xl sm:text-[28px] font-bold text-white truncate leading-none" title="{{ $class->join_key }}">{{ $class->join_key }}</p>
                 </div>
-                @else
-                <div class="min-w-0 hidden sm:block"></div>
-                @endif
                 <div class="min-w-0">
                     <span class="text-sm text-white/70">Sinh viên</span>
                     <p class="mt-1 text-2xl sm:text-[28px] font-bold text-white leading-none">{{ $studentsCount }}</p>

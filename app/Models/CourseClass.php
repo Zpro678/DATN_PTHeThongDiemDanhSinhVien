@@ -20,8 +20,6 @@ class CourseClass extends Model
         'owner_user_id', // ID của chủ lớp tạo lớp học.
         'join_key', // Mã lớp (SV nhập để vào lớp).
         'name', // Tên lớp học.
-        'subject_code', // Mã học phần/môn học.
-        'semester', // Học kỳ của lớp học.
         'description', // Mô tả môn học.
         'late_threshold', // Ngưỡng phút trễ tối đa để tính đi muộn.
         'deduct_excused_absence', // Có trừ chuyên cần khi vắng có phép.

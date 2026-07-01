@@ -122,6 +122,9 @@ class AttendanceCreate extends Component
         $date = now()->toDateString();
         $startTime = now()->format('H:i');
         $endsAt = \Carbon\Carbon::parse($date.' '.$validated['meetingEndTime'].':00');
+        if ($endsAt->lessThanOrEqualTo(now())) {
+            $endsAt->addDay();
+        }
 
         if ($endsAt->lessThanOrEqualTo(now()->addMinutes(10))) {
             $this->addError('meetingEndTime', 'Giờ kết thúc phải sau thời điểm hiện tại ít nhất 10 phút.');

@@ -1,8 +1,7 @@
 <div class="w-full space-y-6 px-6 py-6 sm:px-10 lg:px-16 animate-in fade-in slide-in-from-bottom-4 duration-500">
     @php
         $previewName    = filled($name) ? $name : 'Tên lớp học';
-        $previewSubject = filled($subjectCode) ? strtoupper($subjectCode) : 'Mã môn';
-        $previewSemester = filled($semester) ? $semester : 'Chưa gán học kỳ';
+        $previewCode = $generatedCode ?: 'Mã lớp sẽ tự sinh';
     @endphp
     
     <div class="mb-4">
@@ -44,31 +43,6 @@
                             @error('name') <span class="block text-xs font-medium text-error">{{ $message }}</span> @enderror
                         </label>
 
-                        {{-- Mã môn học --}}
-                        <label class="space-y-2 sm:col-span-2 md:col-span-1">
-                            <span class="block text-[13px] font-semibold text-on-surface">Mã môn học</span>
-                            <input
-                                wire:model.live.debounce.300ms="subjectCode"
-                                type="text"
-                                placeholder="Ví dụ: INT3110"
-                                oninput="cleanInput(this)"
-                                class="h-12 w-full rounded-xl border border-outline-variant/40 bg-white px-4 text-sm font-semibold uppercase text-on-surface outline-none transition-all placeholder:text-on-surface-variant/50 hover:border-outline-variant focus:border-primary focus:ring-2 focus:ring-primary/20"
-                            >
-                            @error('subjectCode') <span class="block text-xs font-medium text-error">{{ $message }}</span> @enderror
-                        </label>
-
-                        {{-- Học kỳ --}}
-                        <label class="space-y-2 sm:col-span-2 md:col-span-1">
-                            <span class="block text-[13px] font-semibold text-on-surface">Học kỳ</span>
-                            <input
-                                wire:model.live.debounce.300ms="semester"
-                                type="text"
-                                placeholder="Ví dụ: HK1 2026-2027"
-                                class="h-12 w-full rounded-xl border border-outline-variant/40 bg-white px-4 text-sm font-semibold text-on-surface outline-none transition-all placeholder:text-on-surface-variant/50 hover:border-outline-variant focus:border-primary focus:ring-2 focus:ring-primary/20"
-                            >
-                            @error('semester') <span class="block text-xs font-medium text-error">{{ $message }}</span> @enderror
-                        </label>
-
                         {{-- Mã lớp: ẩn input, hiển thị preview sinh tự động --}}
                         <div class="space-y-2 sm:col-span-2">
                             <span class="block text-sm font-semibold text-on-surface">Mã lớp học <span class="ml-1.5 rounded-full bg-primary/10 px-2 py-0.5 text-[11px] font-bold text-primary">Tự động sinh</span></span>
@@ -78,7 +52,7 @@
                                     <span class="font-mono text-base font-black tracking-widest text-primary truncate">{{ $generatedCode }}</span>
                                     <span class="ml-auto text-xs text-on-surface-variant/70 shrink-0">Mã sẽ được xác nhận khi lưu</span>
                                 @else
-                                    <span class="text-sm text-on-surface-variant/70 truncate">Nhập mã môn học để xem trước mã lớp...</span>
+                                    <span class="text-sm text-on-surface-variant/70 truncate">Mã lớp sẽ được tự động sinh khi lưu.</span>
                                 @endif
                             </div>
                         </div>
@@ -199,8 +173,7 @@
                                 <x-user.icon name="eye" :size="20" class="text-white/90" />
                             </div>
                             <h3 class="mt-5 text-2xl font-bold leading-tight">{{ $previewName }}</h3>
-                            <p class="mt-2 text-sm font-medium text-primary-fixed">{{ $previewSubject }}</p>
-                            <p class="mt-1 text-xs font-semibold text-primary-fixed/80">{{ $previewSemester }}</p>
+                            <p class="mt-2 text-sm font-medium text-primary-fixed">Mã lớp: {{ $previewCode }}</p>
                             @if($generatedCode)
                                 <div class="mt-3 inline-flex items-center gap-2 rounded-xl bg-white/15 px-3 py-1.5">
                                     <x-user.icon name="key" :size="14" class="text-white/80" />

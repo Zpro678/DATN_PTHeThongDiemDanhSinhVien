@@ -97,7 +97,7 @@ class JoinClass extends Component
         if ($courseClass->require_approval) {
             $existingRequest = \App\Models\ClassJoinRequest::where('class_id', $courseClass->id)
                 ->where('user_id', $userId)
-                ->where('status', 'pending')
+                ->whereIn('status', [\App\Models\ClassJoinRequest::STATUS_PENDING, 'pending'])
                 ->first();
 
             if ($existingRequest) {
@@ -109,9 +109,7 @@ class JoinClass extends Component
             \App\Models\ClassJoinRequest::create([
                 'class_id' => $courseClass->id,
                 'user_id' => $userId,
-                'student_code' => $this->student_code,
-                'full_name' => $this->full_name,
-                'status' => 'pending',
+                'status' => \App\Models\ClassJoinRequest::STATUS_PENDING,
             ]);
 
             session()->flash('status', 'Yêu cầu tham gia lớp của bạn đã được gửi và đang chờ giảng viên phê duyệt!');

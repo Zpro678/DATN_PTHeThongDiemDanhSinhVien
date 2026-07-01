@@ -11,10 +11,7 @@ class ManagedClasses extends Component
     // Bộ lọc theo trạng thái của lớp học (Đang hoạt động, Đã kết thúc, Tất cả)
     public string $statusFilter = 'Tất cả';
 
-    // Bộ lọc theo học kỳ của lớp học
-    public string $semesterFilter = 'Tất cả học kỳ';
-
-    // Từ khóa tìm kiếm lớp học theo tên, mã lớp hoặc mã môn
+    // Từ khóa tìm kiếm lớp học theo tên hoặc mã lớp
     public string $search = '';
 
     // ID lớp đang chờ xác nhận kết thúc
@@ -58,29 +55,14 @@ class ManagedClasses extends Component
             $search = str($this->search)->lower()->toString();
             $query->where(function ($q) use ($search) {
                 $q->whereRaw('LOWER(name) LIKE ?', ["%{$search}%"])
-                    ->orWhereRaw('LOWER(join_key) LIKE ?', ["%{$search}%"])
-                    ->orWhereRaw('LOWER(subject_code) LIKE ?', ["%{$search}%"])
-                    ->orWhereRaw('LOWER(semester) LIKE ?', ["%{$search}%"]);
+                    ->orWhereRaw('LOWER(join_key) LIKE ?', ["%{$search}%"]);
             });
-        }
-
-        if ($this->semesterFilter !== 'Tất cả học kỳ') {
-            $query->where('semester', $this->semesterFilter);
         }
 
         $classes = $query->orderByDesc('created_at')->get();
 
-        $semesters = CourseClass::query()
-            ->where('owner_user_id', auth()->id())
-            ->whereNotNull('semester')
-            ->where('semester', '!=', '')
-            ->distinct()
-            ->orderBy('semester')
-            ->pluck('semester');
-
         return view('livewire.user.managed-classes', [
             'classes' => $classes,
-            'semesters' => $semesters,
         ])->layout('layouts.user', ['title' => 'Lớp tôi quản lý']);
     }
 

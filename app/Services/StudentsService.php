@@ -312,7 +312,7 @@ class StudentsService
 
         $members = ClassMember::query()
             ->with([
-                'courseClass:id,owner_user_id,join_key,name,subject_code,semester,status,total_sessions,deduct_excused_absence',
+                'courseClass:id,owner_user_id,join_key,name,status,total_sessions,deduct_excused_absence',
                 'courseClass.owner:id,name',
                 'profile',
             ])
@@ -437,8 +437,8 @@ class StudentsService
                     'title' => $courseClass?->name ?? 'Lớp học',
                     // Tên giảng viên/chủ lớp; nếu chưa nạp được owner thì hiển thị trạng thái chưa cập nhật.
                     'teacher' => $courseClass?->owner?->name ?? 'Chưa cập nhật',
-                    // Mã học phần ưu tiên subject_code, nếu không có thì dùng mã lớp.
-                    'code' => $courseClass?->subject_code ?? $courseClass?->join_key ?? 'N/A',
+                    // Mã lớp dùng để tham gia lớp.
+                    'code' => $courseClass?->join_key ?? 'N/A',
                     // Mã lớp riêng, thường dùng cho hiển thị hoặc tham gia lớp.
                     'class_code' => $courseClass?->join_key ?? 'N/A',
                     // Nhãn trạng thái chuyên cần, ví dụ: Bình thường, Cảnh báo nhẹ, Nguy cơ cấm thi.

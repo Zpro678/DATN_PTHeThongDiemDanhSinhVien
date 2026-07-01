@@ -197,7 +197,7 @@ class StudentsSheet implements FromArray, ShouldAutoSize, WithStyles, WithTitle
                 $member->student_code,
                 $member->full_name,
                 $member->email ?? $member->user?->email ?? '',
-                $member->courseClass?->code ?? '',
+                $member->courseClass?->join_key ?? '',
             ];
 
             foreach ($meetings as $meeting) {

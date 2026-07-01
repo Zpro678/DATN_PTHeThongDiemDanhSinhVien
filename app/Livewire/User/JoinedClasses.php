@@ -83,10 +83,10 @@ class JoinedClasses extends Component
             return [
                 'id' => $class->id,
                 'title' => $class->name,
-                'code' => $class->subject_code ?? $class->join_key,
+                'code' => $class->join_key,
                 'join_code' => $class->join_key,
                 'teacher' => $class->owner->name ?? 'Không xác định',
-                'schedule' => $class->semester ?? 'Không xác định',
+                'schedule' => $class->status === 'ended' ? 'Đã kết thúc' : 'Đang học',
                 'attendance' => $attendance,
                 'present' => $present,
                 'absent' => $absent,
