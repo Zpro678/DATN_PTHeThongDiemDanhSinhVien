@@ -59,7 +59,7 @@
                     'bg-[#475569]', 'bg-[#1D4ED8]', 'bg-[#0F766E]', 'bg-[#4338CA]',
                     'bg-[#047857]', 'bg-[#0369A1]', 'bg-[#6D28D9]', 'bg-[#B45309]',
                 ];
-                $themeColor = $colorOptions[$class['id'] % count($colorOptions)];
+                $themeColor = $colorOptions[hexdec(substr(md5((string) $class['id']), 0, 8)) % count($colorOptions)];
 
                 if ($isEnded) {
                     $attendanceColor = 'text-on-surface-variant'; $barColor = 'bg-on-surface-variant';

@@ -115,7 +115,7 @@
                                 ['text' => 'text-[#3730a3]', 'light' => 'bg-[#e7e9fd]', 'bar' => 'bg-[#3730a3]'],
                             ];
                             $warningTheme = ['text' => 'text-[#c5221f]', 'light' => 'bg-[#fce8e6]', 'bar' => 'bg-[#c5221f]'];
-                            $zone = $subject['warning'] ? $warningTheme : $palette[((int) $subject['class_id']) % count($palette)];
+                            $zone = $subject['warning'] ? $warningTheme : $palette[hexdec(substr(md5((string) $subject['class_id']), 0, 8)) % count($palette)];
 
                             if ($budgetState === 'danger') {
                                 $budgetColor = 'text-[#a52714]';

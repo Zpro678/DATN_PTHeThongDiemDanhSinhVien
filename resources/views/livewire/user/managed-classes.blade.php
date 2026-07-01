@@ -117,7 +117,7 @@
                     'bg-[#475569]', 'bg-[#1D4ED8]', 'bg-[#0F766E]', 'bg-[#4338CA]',
                     'bg-[#047857]', 'bg-[#0369A1]', 'bg-[#6D28D9]', 'bg-[#B45309]',
                 ];
-                $themeColor = $colorOptions[$class->id % count($colorOptions)];
+                $themeColor = $colorOptions[hexdec(substr(md5((string) $class->id), 0, 8)) % count($colorOptions)];
             @endphp
 
             <article @class([
@@ -214,7 +214,7 @@
                             <a href="{{ route('lecturer.classes.show', $class->id) }}" class="block px-4 py-2 text-sm text-on-surface hover:bg-surface-container">Xem lớp học</a>
                             @if (! $isEnded)
                                 <a href="{{ route('lecturer.classes.settings', $class->id) }}" class="block px-4 py-2 text-sm text-on-surface hover:bg-surface-container">Cài đặt lớp</a>
-                                <button type="button" wire:click.stop.prevent="confirmEndClass({{ $class->id }})" class="block w-full px-4 py-2 text-left text-sm text-error hover:bg-error/10">Kết thúc lớp</button>
+                                <button type="button" wire:click.stop.prevent="confirmEndClass('{{ $class->id }}')" class="block w-full px-4 py-2 text-left text-sm text-error hover:bg-error/10">Kết thúc lớp</button>
                             @endif
                         </div>
                     </div>
@@ -247,7 +247,7 @@
                     <p class="text-sm text-on-surface-variant">Bạn có chắc muốn kết thúc lớp học này? Hành động này sẽ khóa toàn bộ hoạt động điểm danh của lớp.</p>
                     <div class="mt-6 flex justify-end gap-3">
                         <button type="button" wire:click="cancelEndClass" class="rounded-lg border border-outline-variant px-5 py-2.5 text-sm font-semibold text-on-surface-variant transition-colors hover:bg-surface-container">Hủy bỏ</button>
-                        <button type="button" wire:click="endClass({{ $confirmingEndClassId }})" class="rounded-lg bg-amber-500 px-5 py-2.5 text-sm font-semibold text-white transition-colors hover:bg-amber-600">Kết thúc lớp</button>
+                        <button type="button" wire:click="endClass('{{ $confirmingEndClassId }}')" class="rounded-lg bg-amber-500 px-5 py-2.5 text-sm font-semibold text-white transition-colors hover:bg-amber-600">Kết thúc lớp</button>
                     </div>
                 </div>
             </div>

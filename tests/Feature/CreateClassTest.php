@@ -3,6 +3,7 @@
 namespace Tests\Feature;
 
 use App\Livewire\User\CreateClass;
+use App\Models\CourseClass;
 use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\URL;
@@ -66,5 +67,23 @@ class CreateClassTest extends TestCase
                 ->assertOk()
                 ->assertSee($createUrl, false);
         }
+    }
+
+    public function test_managed_classes_page_renders_uuid_class_cards(): void
+    {
+        $user = User::factory()->create();
+        URL::defaults(['ma_user' => $user->id]);
+
+        CourseClass::factory()->create([
+            'owner_user_id' => $user->id,
+            'name' => 'Lớp UUID không lỗi',
+            'join_key' => 'UUID-2026',
+        ]);
+
+        $this->actingAs($user)
+            ->get(route('managed-classes'))
+            ->assertOk()
+            ->assertSee('Lớp UUID không lỗi')
+            ->assertSee('UUID-2026');
     }
 }
