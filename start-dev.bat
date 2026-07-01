@@ -77,12 +77,28 @@ if "%RESET_DATABASE%"=="1" (
     )
 
     echo.
-    echo Running database seeders...
-    php artisan db:seed --force --no-interaction
+    echo Running plan seeders...
+    php artisan db:seed --class=PlanSeeder --force --no-interaction
     if errorlevel 1 (
-        echo Demo data seeding failed.
+        echo Plan data seeding failed.
         pause
         exit /b 1
+    )
+
+    echo.
+    echo Checking demo data...
+    php -r "require 'vendor/autoload.php'; $app = require 'bootstrap/app.php'; $app->make(Illuminate\Contracts\Console\Kernel::class)->bootstrap(); $demoExists = App\Models\User::whereIn('email', ['admin@example.com', 'teacher@example.com', 'student1@example.com'])->exists() || App\Models\CourseClass::whereIn('join_key', ['WEB-2026-01', 'DB-2026-01', 'SE-2026-01'])->exists(); exit($demoExists ? 0 : 1);"
+    if errorlevel 1 (
+        echo Demo data not found. Running DemoSeeder once...
+        php artisan db:seed --class=DemoSeeder --force --no-interaction
+        if errorlevel 1 (
+            echo Demo data seeding failed.
+            pause
+            exit /b 1
+        )
+    ) else (
+        echo Demo data already exists. Skipping DemoSeeder to avoid duplicate emails and class codes.
+        echo To rebuild demo data from scratch, run: start-dev.bat fresh
     )
 )
 
