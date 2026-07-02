@@ -3,7 +3,7 @@
 <head>
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
-    <title>EduTrack — Hệ Thống Điểm Danh</title>
+    <title>Attendia Tech — Hệ Thống Điểm Danh</title>
     <meta name="description" content="Hệ thống quản lý điểm danh thông minh dành cho giảng viên và học viên.">
     
     <link rel="preconnect" href="https://fonts.bunny.net">
@@ -116,7 +116,7 @@
             </div>
             <div class="flex flex-col justify-center">
                 <span class="text-2xl font-black tracking-tight text-[#0052cc] leading-none transition-colors duration-300">
-                    EduTrack
+                    Attendia Tech
                 </span>
                 <span class="text-[0.65rem] font-bold text-gray-500 uppercase tracking-widest mt-1 leading-none">
                     Hệ Thống Điểm Danh
@@ -183,7 +183,7 @@
     </main>
 
     <footer class="bg-transparent border-t border-slate-200/50 py-6 text-center text-sm text-slate-500 w-full z-20">
-        <p>&copy; {{ date('Y') }} EduTrack. Bảo lưu mọi quyền.</p>
+        <p>&copy; {{ date('Y') }} Attendia Tech. Bảo lưu mọi quyền.</p>
     </footer>
 
     <script>

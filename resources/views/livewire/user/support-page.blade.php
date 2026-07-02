@@ -6,7 +6,7 @@
             <x-user.icon name="headphones" :size="40" class="text-white" />
         </div>
         <h1 class="mb-4 text-3xl font-black md:text-4xl">Chúng tôi có thể giúp gì cho bạn?</h1>
-        <p class="mx-auto max-w-2xl text-primary-100 md:text-lg">Tìm kiếm câu trả lời trong các câu hỏi thường gặp hoặc gửi trực tiếp yêu cầu hỗ trợ cho đội ngũ kỹ thuật của EduTrack.</p>
+        <p class="mx-auto max-w-2xl text-primary-100 md:text-lg">Tìm kiếm câu trả lời trong các câu hỏi thường gặp hoặc gửi trực tiếp yêu cầu hỗ trợ cho đội ngũ kỹ thuật của Attendia Tech.</p>
     </div>
 
     <div class="grid gap-8 md:grid-cols-3">

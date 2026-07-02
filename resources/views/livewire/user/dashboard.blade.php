@@ -398,29 +398,37 @@
     <div id="admin" class="relative">
         @if ($workspace === 'admin')
             <section class="mt-8 space-y-8 animate-in fade-in slide-in-from-bottom-4 duration-500">
-                <div class="mb-6">
-                    <h3 class="font-headline-sm text-headline-sm text-on-surface">
-                        Không gian Chủ lớp
-                    </h3>
+                <div class="mb-6 flex items-center gap-3">
+                    <span class="grid h-11 w-11 shrink-0 place-items-center rounded-2xl bg-primary/10 text-primary">
+                        <x-user.icon name="shield-check" :size="22" />
+                    </span>
+                    <div class="min-w-0">
+                        <h3 class="text-lg font-bold leading-tight tracking-tight text-on-surface md:text-xl">Không gian Chủ lớp</h3>
+                        <p class="mt-0.5 text-sm text-on-surface-variant">Quản lý lớp học và theo dõi chuyên cần học viên</p>
+                    </div>
                 </div>
 
-                <div class="grid grid-cols-2 gap-3 lg:grid-cols-4">
+                <div class="grid grid-cols-2 gap-3 sm:gap-4 lg:grid-cols-4">
                     @foreach ($adminStats as $stat)
-                        <div class="dash-card dash-card-hover flex flex-col justify-center rounded-2xl bg-white p-5 shadow-sm">
-                            <div class="mb-3 flex items-center gap-3">
-                                <span class="{{ $stat['bg'] }} {{ $stat['color'] }} grid h-10 w-10 shrink-0 place-items-center rounded-full">
-                                    <x-user.icon :name="$stat['icon']" :size="18" />
-                                </span>
-                                <span class="text-base font-medium leading-snug text-gray-600">{{ $stat['label'] }}</span>
+                        <div class="dash-card dash-card-hover flex flex-col items-start gap-3 rounded-2xl bg-white p-4 shadow-sm sm:flex-row sm:items-center sm:gap-4 sm:p-5">
+                            <span class="{{ $stat['bg'] }} {{ $stat['color'] }} grid h-11 w-11 shrink-0 place-items-center rounded-xl sm:h-12 sm:w-12">
+                                <x-user.icon :name="$stat['icon']" :size="22" />
+                            </span>
+                            <div class="min-w-0">
+                                <p class="text-2xl font-bold leading-none text-gray-900 sm:text-3xl">{{ $stat['value'] }}</p>
+                                <p class="mt-1.5 text-[13px] font-medium leading-snug text-gray-500 sm:text-sm">{{ $stat['label'] }}</p>
                             </div>
-                            <div class="text-center text-3xl font-bold text-gray-900">{{ $stat['value'] }}</div>
                         </div>
                     @endforeach
                 </div>
 
                 @if(count($managedClassCards) > 0)
                     <div>
-                        <h3 class="mb-4 font-headline-sm text-headline-sm text-on-surface">Lớp tôi quản lý</h3>
+                        <div class="mb-4 flex items-center gap-2.5">
+                            <span class="h-6 w-1.5 shrink-0 rounded-full bg-primary"></span>
+                            <h3 class="text-lg font-bold tracking-tight text-on-surface md:text-xl">Lớp tôi quản lý</h3>
+                            <span class="inline-flex h-6 min-w-6 items-center justify-center rounded-full bg-primary/10 px-2 text-xs font-bold text-primary">{{ count($managedClassCards) }}</span>
+                        </div>
                         <div class="grid grid-cols-1 gap-6 md:grid-cols-2 xl:grid-cols-3">
                             @foreach ($managedClassCards as $class)
                             @php
@@ -585,22 +593,26 @@
             </section>
         @else
             <section id="student" class="mt-8 space-y-8 animate-in fade-in slide-in-from-bottom-4 duration-500">
-                <div class="mb-6">
-                    <h3 class="font-headline-sm text-headline-sm text-on-surface">
-                        Không gian Học viên
-                    </h3>
+                <div class="mb-6 flex items-center gap-3">
+                    <span class="grid h-11 w-11 shrink-0 place-items-center rounded-2xl bg-tertiary/10 text-tertiary">
+                        <x-user.icon name="user" :size="22" />
+                    </span>
+                    <div class="min-w-0">
+                        <h3 class="text-lg font-bold leading-tight tracking-tight text-on-surface md:text-xl">Không gian Học viên</h3>
+                        <p class="mt-0.5 text-sm text-on-surface-variant">Theo dõi chuyên cần và lớp học bạn tham gia</p>
+                    </div>
                 </div>
 
-                <div class="grid grid-cols-2 gap-3 lg:grid-cols-4">
+                <div class="grid grid-cols-2 gap-3 sm:gap-4 lg:grid-cols-4">
                     @foreach ($studentStats as $stat)
-                        <div class="dash-card dash-card-hover flex flex-col justify-center rounded-2xl bg-white p-4 shadow-sm transition sm:p-5">
-                            <div class="mb-3 flex items-center gap-2 lg:gap-3">
-                                <span class="{{ $stat['bg'] }} {{ $stat['color'] }} grid h-10 w-10 shrink-0 place-items-center rounded-xl">
-                                    <x-user.icon :name="$stat['icon']" :size="20" />
-                                </span>
-                                <span class="text-base font-medium leading-snug text-gray-600">{{ $stat['label'] }}</span>
+                        <div class="dash-card dash-card-hover flex flex-col items-start gap-3 rounded-2xl bg-white p-4 shadow-sm sm:flex-row sm:items-center sm:gap-4 sm:p-5">
+                            <span class="{{ $stat['bg'] }} {{ $stat['color'] }} grid h-11 w-11 shrink-0 place-items-center rounded-xl sm:h-12 sm:w-12">
+                                <x-user.icon :name="$stat['icon']" :size="22" />
+                            </span>
+                            <div class="min-w-0">
+                                <p class="text-2xl font-bold leading-none text-gray-900 sm:text-3xl">{{ $stat['value'] }}</p>
+                                <p class="mt-1.5 text-[13px] font-medium leading-snug text-gray-500 sm:text-sm">{{ $stat['label'] }}</p>
                             </div>
-                            <div class="text-center text-3xl font-bold text-gray-900">{{ $stat['value'] }}</div>
                         </div>
                     @endforeach
                 </div>
@@ -608,7 +620,11 @@
 
 
                 <div>
-                    <h4 class="mb-4 text-[16px] font-bold text-on-surface">Lớp tôi tham gia</h4>
+                    <div class="mb-4 flex items-center gap-2.5">
+                        <span class="h-6 w-1.5 shrink-0 rounded-full bg-tertiary"></span>
+                        <h4 class="text-lg font-bold tracking-tight text-on-surface md:text-xl">Lớp tôi tham gia</h4>
+                        <span class="inline-flex h-6 min-w-6 items-center justify-center rounded-full bg-tertiary/10 px-2 text-xs font-bold text-tertiary">{{ count($joinedCards) }}</span>
+                    </div>
                     <div class="grid grid-cols-1 gap-6 md:grid-cols-2 lg:grid-cols-3">
                         @forelse ($joinedCards as $class)
                             @php

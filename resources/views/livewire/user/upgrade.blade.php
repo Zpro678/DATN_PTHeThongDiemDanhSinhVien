@@ -11,7 +11,7 @@
             <div class="flex h-8 w-8 items-center justify-center rounded-xl bg-primary/10 text-primary">
                 <x-user.icon name="zap" :size="16" />
             </div>
-            <span class="text-sm font-bold tracking-tight">{{ config('app.name', 'EduTrack') }}</span>
+            <span class="text-sm font-bold tracking-tight">{{ config('app.name', 'Attendia Tech') }}</span>
         </a>
 
         <a href="{{ url()->previous() !== url()->current() ? url()->previous() : route('dashboard') }}"

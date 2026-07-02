@@ -90,7 +90,7 @@ class Dashboard extends Component
                     'students' => (int) $courseClass->students_count, // Tổng sinh viên active trong lớp.
                     'studied_sessions' => $studiedSessions, // Số buổi đã chốt.
                     'sessions' => $courseClass->total_sessions > 0 ? $studiedSessions.'/'.$courseClass->total_sessions : $studiedSessions.' buổi', // Tiến độ số buổi đã học/tổng số buổi.
-                    'attendance' => $attendancePercent, // Chuyên cần trung bình của cả lớp.
+                    'attendance' => $hasAttendanceData ? $attendancePercent : 100, // Chuyên cần trung bình của cả lớp; chưa có dữ liệu (chưa có SV hoặc chưa điểm danh) => coi như 100%.
                     'attendance_label' => $hasAttendanceData ? $attendancePercent.'%' : 'Chưa có dữ liệu',
                     'attendance_bar_width' => $hasAttendanceData ? $attendancePercent : 0,
                     'status_label' => in_array($courseClass->status, ['ended', 'archived'], true) ? 'Đã kết thúc' : 'Đang học',

@@ -33,7 +33,7 @@
         <meta name="viewport" content="width=device-width, initial-scale=1">
         <meta name="csrf-token" content="{{ csrf_token() }}">
 
-        <title>{{ $title ? $title.' - ' : '' }}{{ config('app.name', 'EduTrack') }}</title>
+        <title>{{ $title ? $title.' - ' : '' }}{{ config('app.name', 'Attendia Tech') }}</title>
 
         <link rel="preconnect" href="https://fonts.bunny.net">
         <link href="https://fonts.bunny.net/css?family=inter:400,500,600,700,800,900&display=swap" rel="stylesheet" />
@@ -53,7 +53,7 @@
                             <x-user.icon name="school" :size="24" />
                         </span>
                         <span>
-                            <span class="block font-headline-md text-headline-sm font-bold leading-tight text-primary">EduTrack</span>
+                            <span class="block font-headline-md text-headline-sm font-bold leading-tight text-primary">Attendia Tech</span>
                             <span class="block text-[10px] font-bold uppercase tracking-widest text-on-surface-variant/70">Hệ thống điểm danh</span>
                         </span>
                     </a>
@@ -122,7 +122,7 @@
                                     <x-user.icon name="school" :size="24" />
                                 </span>
                                 <span>
-                                    <span class="block font-headline-md text-headline-sm font-bold leading-tight text-primary">EduTrack</span>
+                                    <span class="block font-headline-md text-headline-sm font-bold leading-tight text-primary">Attendia Tech</span>
                                     <span class="block text-[10px] font-bold uppercase tracking-widest text-on-surface-variant/70">Hệ thống điểm danh</span>
                                 </span>
                             </a>
