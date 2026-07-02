@@ -25,8 +25,8 @@
     $attendanceTotal = array_sum(array_column($attendanceData, 'value'));
 @endphp
 
-<div class="h-full">
-    <div class="admin-card admin-card-hover overflow-hidden rounded-2xl border p-6 h-full flex flex-col justify-center">
+<div class="admin-grid-equal grid grid-cols-1 gap-6 lg:grid-cols-2">
+    <div class="admin-card admin-card-hover overflow-hidden rounded-2xl border p-6 lg:col-span-2">
         <div class="relative z-10">
             <h2 class="text-base font-extrabold tracking-tight text-slate-900">
                 Phân bố trạng thái điểm danh

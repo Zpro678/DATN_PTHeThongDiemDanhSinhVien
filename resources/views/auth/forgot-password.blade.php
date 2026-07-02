@@ -30,14 +30,7 @@
                     </p>
                 </div>
 
-                @if (session('status'))
-                    <div class="mb-6 p-4 rounded-xl bg-emerald-50 border border-emerald-200">
-                        <p class="font-bold text-sm text-emerald-600 flex items-center gap-2">
-                            <i data-lucide="check-circle" class="w-5 h-5"></i>
-                            {{ session('status') }}
-                        </p>
-                    </div>
-                @endif
+
 
                 <form method="POST" action="{{ route('password.email') }}" class="space-y-5">
                     @csrf
@@ -92,5 +85,6 @@
     <script>
         window.lucide?.createIcons();
     </script>
+    <x-notification.notification />
 </body>
 </html>

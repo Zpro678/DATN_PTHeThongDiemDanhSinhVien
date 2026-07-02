@@ -12,7 +12,7 @@
     @endphp
 
     <div class="mx-auto max-w-[1500px] space-y-6">
-        <section class="admin-card flex flex-col justify-between gap-4 overflow-hidden rounded-3xl border p-6 lg:flex-row lg:items-end lg:p-7">
+        <section class="flex flex-col justify-between gap-4 p-6 lg:flex-row lg:items-end lg:p-7 mb-2">
             <div>
                 <p class="text-[10px] font-bold uppercase tracking-[0.3em] text-slate-400">Tài khoản</p>
                 <h1 class="mt-1 text-3xl font-black tracking-tight text-slate-900">{{ $user->name }}</h1>

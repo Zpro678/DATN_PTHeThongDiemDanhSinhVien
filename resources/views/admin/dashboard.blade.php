@@ -8,15 +8,13 @@
             @include('admin.dashboard.stats-overview')
         </section>
 
-        <div class="grid grid-cols-1 items-stretch gap-6 xl:grid-cols-2">
-            <section id="attendance" class="scroll-mt-24 h-full">
-                @include('admin.dashboard.attendance-chart')
-            </section>
-            
-            <section id="warnings" class="scroll-mt-24 h-full">
-                @include('admin.dashboard.warning-students')
-            </section>
-        </div>
+        <section id="attendance" class="scroll-mt-24">
+            @include('admin.dashboard.attendance-chart')
+        </section>
+
+        <section id="warnings" class="scroll-mt-24">
+            @include('admin.dashboard.warning-students')
+        </section>
 
         <section id="faculty" class="scroll-mt-24">
             @include('admin.dashboard.faculty-chart')

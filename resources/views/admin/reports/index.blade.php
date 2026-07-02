@@ -1,6 +1,6 @@
 <x-admin-layout title="Báo cáo">
     <div class="mx-auto max-w-[1500px] space-y-6">
-        <section class="admin-card overflow-hidden rounded-3xl border p-6 lg:p-7">
+        <section class="mb-2 p-6 lg:p-7">
             <div class="relative z-10 flex flex-col justify-between gap-4 lg:flex-row lg:items-end">
             <div>
                 <p class="text-[10px] font-bold uppercase tracking-[0.3em] text-slate-400">Reports</p>
