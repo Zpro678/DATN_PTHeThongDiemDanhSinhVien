@@ -40,10 +40,12 @@
         <div class="mb-4 flex flex-wrap items-center justify-between gap-3">
             <h3 class="text-base font-semibold text-on-surface">Lớp tôi quản lý</h3>
             <div class="flex items-center gap-2">
-                <select class="rounded-lg border border-outline-variant bg-white py-2 pl-3 pr-8 text-sm text-on-surface-variant focus:border-primary focus:outline-none focus:ring-2 focus:ring-primary/20">
-                    <option>Học kỳ I - 2024</option>
-                    <option>Học kỳ II - 2023</option>
-                </select>
+                <div class="w-44">
+                    <x-custom-select placeholder="" value="hk1-2024" :options="[
+                        ['value' => 'hk1-2024', 'label' => 'Học kỳ I - 2024'],
+                        ['value' => 'hk2-2023', 'label' => 'Học kỳ II - 2023'],
+                    ]" />
+                </div>
                 <button type="button" class="grid h-9 w-9 place-items-center rounded-lg border border-outline-variant bg-white text-on-surface-variant transition-colors hover:bg-surface-container">
                     <x-user.icon name="filter" :size="18" />
                 </button>

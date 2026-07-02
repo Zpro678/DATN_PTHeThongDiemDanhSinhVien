@@ -315,12 +315,12 @@
                             <div class="grid grid-cols-2 gap-4">
                                 <div>
                                     <label class="mb-2 block text-sm font-bold text-slate-700">Làm mới mã (giây)</label>
-                                    <select wire:model="qrRefreshRate" class="w-full rounded-xl border-2 border-slate-200 bg-white px-4 py-3 text-sm font-semibold text-slate-900 shadow-sm outline-none transition-all duration-200 focus:border-blue-500 focus:ring-4 focus:ring-blue-500/10">
-                                        <option value="5">5 giây</option>
-                                        <option value="10">10 giây</option>
-                                        <option value="15">15 giây</option>
-                                        <option value="30">30 giây</option>
-                                    </select>
+                                    <x-custom-select wire:model="qrRefreshRate" placeholder="" :options="[
+                                        ['value' => '5', 'label' => '5 giây'],
+                                        ['value' => '10', 'label' => '10 giây'],
+                                        ['value' => '15', 'label' => '15 giây'],
+                                        ['value' => '30', 'label' => '30 giây'],
+                                    ]" />
                                 </div>
                                 
                                 <div x-data="{

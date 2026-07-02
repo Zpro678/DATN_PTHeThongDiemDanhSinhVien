@@ -1,4 +1,4 @@
-@props(['options' => [], 'placeholder' => 'Chọn...'])
+@props(['options' => [], 'placeholder' => 'Chọn...', 'value' => null])
 
 <div x-data="{
     open: false,
@@ -33,10 +33,10 @@ class="relative w-full"
 
     <select x-ref="hiddenSelect" {{ $attributes->merge(['class' => 'hidden']) }}>
         @if($placeholder)
-            <option value="">{{ $placeholder }}</option>
+            <option value="" @selected($value === '' || $value === null)>{{ $placeholder }}</option>
         @endif
         @foreach($options as $opt)
-            <option value="{{ $opt['value'] }}">{{ $opt['label'] }}</option>
+            <option value="{{ $opt['value'] }}" @selected((string) $value === (string) $opt['value'])>{{ $opt['label'] }}</option>
         @endforeach
     </select>
 

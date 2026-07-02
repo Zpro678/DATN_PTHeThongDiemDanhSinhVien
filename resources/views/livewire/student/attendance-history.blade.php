@@ -133,18 +133,15 @@
                             <x-user.icon name="search" :size="16" class="absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-400" />
                             <input wire:model.live.debounce.300ms="search" type="text" placeholder="Tìm tên môn học, mã..." class="w-full rounded-xl bg-[#f4f5f9] border-none py-2.5 pl-10 pr-4 text-sm font-medium text-slate-700 outline-none transition focus:ring-2 focus:ring-[#0a46b5]/30">
                         </div>
-                        <select wire:model.live="classFilter" class="w-full truncate rounded-xl bg-[#f4f5f9] border-none px-4 py-2.5 pr-10 text-sm font-medium text-slate-700 outline-none transition focus:ring-2 focus:ring-[#0a46b5]/30">
-                            <option value="all">Tất cả lớp học</option>
-                            @foreach ($classes as $class)
-                                <option value="{{ $class->id }}">{{ $class->join_key }} - {{ $class->name }}</option>
-                            @endforeach
-                        </select>
-                        <select wire:model.live="statusFilter" class="w-full truncate rounded-xl bg-[#f4f5f9] border-none px-4 py-2.5 pr-10 text-sm font-medium text-slate-700 outline-none transition focus:ring-2 focus:ring-[#0a46b5]/30">
-                            <option value="all">Mọi trạng thái</option>
-                            @foreach ($statusMeta as $status => $meta)
-                                <option value="{{ $status }}">{{ $meta['label'] }}</option>
-                            @endforeach
-                        </select>
+                        <x-custom-select wire:model.live="classFilter" placeholder="" :options="collect($classes)
+                            ->map(fn ($class) => ['value' => (string) $class->id, 'label' => $class->join_key . ' - ' . $class->name])
+                            ->prepend(['value' => 'all', 'label' => 'Tất cả lớp học'])
+                            ->values()->all()" />
+                        <x-custom-select wire:model.live="statusFilter" placeholder="" :options="collect($statusMeta)
+                            ->map(fn ($meta, $status) => ['value' => (string) $status, 'label' => $meta['label']])
+                            ->values()
+                            ->prepend(['value' => 'all', 'label' => 'Mọi trạng thái'])
+                            ->all()" />
                     </div>
                 </div>
 

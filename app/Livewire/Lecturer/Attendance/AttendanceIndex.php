@@ -8,6 +8,7 @@ use App\Models\ClassSession;
 use Illuminate\Contracts\View\View;
 use Illuminate\Database\Eloquent\Builder;
 use Livewire\Attributes\Computed;
+use Livewire\Attributes\Url;
 use Livewire\Component;
 use Livewire\WithPagination;
 
@@ -16,6 +17,24 @@ class AttendanceIndex extends Component
     use WithPagination;
 
     public $perPage = 10;
+
+    // Bộ lọc danh sách. 'unclosed' = chỉ hiện buổi chưa chốt (đồng bộ với thẻ dashboard).
+    #[Url]
+    public string $filter = '';
+
+    // Từ khóa tìm kiếm theo tên buổi học / tên lớp / mã lớp.
+    #[Url]
+    public string $search = '';
+
+    public function updatingFilter(): void
+    {
+        $this->resetPage();
+    }
+
+    public function updatingSearch(): void
+    {
+        $this->resetPage();
+    }
 
     public bool $showQuickStart = false;
     public string $quickStartType = 'manual';
@@ -266,6 +285,17 @@ class AttendanceIndex extends Component
         $meetings = ClassMeeting::query()
             ->with(['courseClass:id,name,join_key,owner_user_id', 'sessions'])
             ->whereHas('courseClass', fn (Builder $query) => $query->where('owner_user_id', auth()->id()))
+            ->when($this->filter === 'unclosed', fn (Builder $query) => $query->where('status', '!=', 'closed'))
+            ->when($this->filter === 'closed', fn (Builder $query) => $query->where('status', 'closed'))
+            ->when($this->search !== '', function (Builder $query) {
+                $term = '%'.$this->search.'%';
+                $query->where(function (Builder $sub) use ($term) {
+                    $sub->where('name', 'like', $term)
+                        ->orWhereHas('courseClass', fn (Builder $c) => $c
+                            ->where('name', 'like', $term)
+                            ->orWhere('join_key', 'like', $term));
+                });
+            })
             ->orderByDesc('created_at')
             ->orderByDesc('date')
             ->paginate($this->perPage);

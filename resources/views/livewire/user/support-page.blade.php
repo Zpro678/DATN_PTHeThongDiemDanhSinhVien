@@ -69,13 +69,12 @@
                         <div class="grid gap-5 sm:grid-cols-2">
                             <div class="space-y-1.5">
                                 <label class="text-sm font-bold text-on-surface">Chủ đề <span class="text-error">*</span></label>
-                                <select required class="w-full rounded-xl border-outline-variant/50 bg-surface-container-lowest px-4 py-2.5 text-sm focus:border-primary focus:ring-2 focus:ring-primary/20">
-                                    <option value="">Chọn chủ đề hỗ trợ</option>
-                                    <option value="account">Lỗi tài khoản / Đăng nhập</option>
-                                    <option value="attendance">Lỗi điểm danh / Quét QR</option>
-                                    <option value="system">Lỗi hệ thống</option>
-                                    <option value="other">Vấn đề khác</option>
-                                </select>
+                                <x-custom-select placeholder="Chọn chủ đề hỗ trợ" :options="[
+                                    ['value' => 'account', 'label' => 'Lỗi tài khoản / Đăng nhập'],
+                                    ['value' => 'attendance', 'label' => 'Lỗi điểm danh / Quét QR'],
+                                    ['value' => 'system', 'label' => 'Lỗi hệ thống'],
+                                    ['value' => 'other', 'label' => 'Vấn đề khác'],
+                                ]" />
                             </div>
                             <div class="space-y-1.5">
                                 <label class="text-sm font-bold text-on-surface">Mã lớp (Nếu có)</label>
