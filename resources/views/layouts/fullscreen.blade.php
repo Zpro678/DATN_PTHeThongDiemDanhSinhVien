@@ -6,7 +6,8 @@
     <meta name="csrf-token" content="{{ csrf_token() }}">
 
     <title>{{ isset($title) ? $title . ' · ' : '' }}{{ config('app.name', 'Attendia Tech') }}</title>
-    <link rel="icon" type="image/png" href="{{ asset('favicon.png?v=' . time()) }}">
+    <link rel="icon" href="{{ asset('favicon.svg') }}" type="image/svg+xml">
+    <link rel="alternate icon" type="image/png" href="{{ asset('favicon.png?v=' . time()) }}">
 
     <!-- Fonts -->
     <link rel="preconnect" href="https://fonts.googleapis.com">

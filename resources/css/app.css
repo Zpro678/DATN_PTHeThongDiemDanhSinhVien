@@ -59,6 +59,13 @@
 }
 
 @layer components {
+    /* Sidebar thu/mở: transition CSS thuần cho width → co giãn mượt, không bị "thụt" đột ngột.
+       Dùng !important để không bị các utility transition-* khác ghi đè thứ tự. */
+    .sidebar-anim {
+        transition: width 300ms cubic-bezier(0.4, 0, 0.2, 1) !important;
+        will-change: width;
+    }
+
     /* Canvas nền cao cấp cho Dashboard người dùng: 2 vầng sáng brand (xanh dương = Chủ lớp,
        xanh lá = Học viên) + lưới mảnh rất mờ, giúp các thẻ trắng nổi bật và "ăn khớp" với nền. */
     .dashboard-canvas {

@@ -135,7 +135,7 @@
     $joinedCards = $studentJoinedCards;
 @endphp
 
-<div class="min-h-[calc(100vh-4rem)] w-full">
+<div class="dashboard-canvas min-h-[calc(100vh-4rem)] w-full">
     <div class="w-full px-6 py-6 pb-24 sm:px-10 lg:px-16">
     @php
         $heroName = Auth::user()?->name ?? 'bạn';

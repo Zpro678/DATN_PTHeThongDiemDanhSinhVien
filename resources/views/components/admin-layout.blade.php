@@ -53,9 +53,7 @@
             <aside class="admin-sidebar fixed left-0 top-0 z-50 hidden h-screen w-sidebar-width flex-col gap-stack-sm border-r border-outline-variant/20 bg-surface-container-lowest p-stack-md xl:flex">
                 <div class="mb-4 px-4 py-6">
                     <a href="{{ route('admin.dashboard') }}" class="flex items-center gap-3">
-                        <span class="flex h-10 w-10 items-center justify-center rounded-xl bg-primary text-white shadow-lg shadow-primary/20">
-                            <x-user.icon name="school" :size="24" />
-                        </span>
+                        <img src="{{ asset('favicon.svg') }}" alt="Attendia Tech" class="h-10 w-10 rounded-xl drop-shadow-[0_2px_5px_rgba(15,23,42,0.22)]">
                         <span>
                             <span class="block font-headline-md text-headline-sm font-bold leading-tight text-primary">Attendia Tech</span>
                             <span class="block text-[10px] font-bold uppercase tracking-widest text-on-surface-variant/70">Hệ thống điểm danh</span>
@@ -122,9 +120,7 @@
                     <div class="mb-4 px-4 py-6">
                         <div class="flex items-center justify-between">
                             <a href="{{ route('admin.dashboard') }}" class="flex items-center gap-3">
-                                <span class="flex h-10 w-10 items-center justify-center rounded-xl bg-primary text-white shadow-lg shadow-primary/20">
-                                    <x-user.icon name="school" :size="24" />
-                                </span>
+                                <img src="{{ asset('favicon.svg') }}" alt="Attendia Tech" class="h-10 w-10 rounded-xl drop-shadow-[0_2px_5px_rgba(15,23,42,0.22)]">
                                 <span>
                                     <span class="block font-headline-md text-headline-sm font-bold leading-tight text-primary">Attendia Tech</span>
                                     <span class="block text-[10px] font-bold uppercase tracking-widest text-on-surface-variant/70">Hệ thống điểm danh</span>
