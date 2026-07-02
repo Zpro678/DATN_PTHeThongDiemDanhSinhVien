@@ -22,6 +22,9 @@ class MeetingSummary extends Component
     /** @var array<int, string> Ghi chú tạm theo class_member_id. */
     public array $draftNotes = [];
 
+    /** @var bool Trạng thái khóa chỉnh sửa */
+    public bool $isLocked = true;
+
     public function mount(ClassMeeting $meeting): void
     {
         $meeting->load('courseClass');
@@ -61,7 +64,7 @@ class MeetingSummary extends Component
     {
         $rules = $this->meeting->courseClass->getAttendanceRules();
 
-        $summaries = $this->meeting->summaries()->get()->keyBy('class_member_id');
+        $summaries = $this->meeting->summaries()->with('classMember.user')->get()->keyBy('class_member_id');
 
         foreach ($this->draftStatuses as $memberId => $status) {
             $summary = $summaries->get($memberId);
@@ -77,9 +80,19 @@ class MeetingSummary extends Component
                 'is_overridden' => $status !== $summary->auto_status,
                 'note' => $note !== '' ? $note : null,
             ]);
+
+            if ($summary->classMember && $summary->classMember->user) {
+                $summary->classMember->user->notify(new \App\Notifications\AttendanceResultNotification($summary));
+            }
         }
 
-        session()->flash('status', 'Đã lưu tổng kết buổi điểm danh.');
+        $this->isLocked = true;
+        $this->dispatch('toast', message: 'Đã lưu tổng kết và gửi thông báo cho học viên.', type: 'success');
+    }
+
+    public function unlock(): void
+    {
+        $this->isLocked = false;
     }
 
     /**
@@ -97,7 +110,7 @@ class MeetingSummary extends Component
         $this->draftNotes = [];
         $this->loadDrafts();
 
-        session()->flash('status', 'Đã tính lại tổng kết từ các phiên điểm danh.');
+        $this->dispatch('toast', message: 'Đã tính lại tổng kết từ các phiên điểm danh.', type: 'success');
     }
 
     public function exportExcel()
@@ -138,6 +151,10 @@ class MeetingSummary extends Component
                 'deduction' => AttendanceCalculator::deductionForStatus($status, $rules),
                 'edited' => $status !== $row['status'],
             ];
+        })->sortBy(function ($row) {
+            $parts = explode(' ', trim($row['member']->full_name));
+            $firstName = end($parts);
+            return $firstName . ' ' . $row['member']->full_name;
         })->values();
 
         // Tổng hợp số liệu mức buổi theo trạng thái đang chọn.

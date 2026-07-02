@@ -441,6 +441,11 @@
             <line x1="5" x2="19" y1="12" y2="12" />
             @break
 
+        @case('minus-circle')
+            <circle cx="12" cy="12" r="10" />
+            <line x1="8" y1="12" x2="16" y2="12" />
+            @break
+
         @case('hash')
             <line x1="4" y1="9" x2="20" y2="9" />
             <line x1="4" y1="15" x2="20" y2="15" />
@@ -514,6 +519,14 @@
             <line x1="4" x2="20" y1="12" y2="12" />
             <line x1="4" x2="20" y1="6" y2="6" />
             <line x1="4" x2="20" y1="18" y2="18" />
+            @break
+
+        @case('projector')
+            <path d="M5 7 3 21" />
+            <path d="m19 7 2 14" />
+            <path d="M6 21h12" />
+            <rect width="16" height="12" x="4" y="3" rx="2" />
+            <circle cx="12" cy="9" r="3" />
             @break
 
         @default

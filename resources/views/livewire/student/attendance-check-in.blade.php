@@ -10,7 +10,7 @@
             <div class="relative z-10 flex items-center gap-4 sm:gap-5">
                 <div class="relative flex h-14 w-14 shrink-0 items-center justify-center rounded-[1.25rem] bg-white/20 backdrop-blur-xl shadow-2xl ring-1 ring-white/50">
                     <div class="absolute inset-0 rounded-[1.25rem] bg-white/20 animate-ping opacity-20"></div>
-                    <x-user.icon name="scan" :size="28" class="text-white" />
+                    <x-user.icon name="qr-code" :size="28" class="text-white" />
                 </div>
                 
                 <div class="text-left">
@@ -59,7 +59,7 @@
                         <div class="grid grid-cols-2 gap-4 border-t border-slate-100 pt-5">
                             <div class="flex items-center gap-3">
                                 <div class="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-amber-50 text-amber-500 ring-1 ring-amber-100">
-                                    <x-user.icon name="layers" :size="20" />
+                                    <x-user.icon name="history" :size="20" />
                                 </div>
                                 <div class="min-w-0">
                                     <p class="text-[10px] font-black uppercase tracking-widest text-slate-400">Phiên</p>
@@ -86,19 +86,28 @@
                             Bạn chưa đăng nhập. Vui lòng nhập thông tin để điểm danh.
                         </div>
                         <div class="space-y-1.5">
-                            <label class="block text-sm font-black text-slate-700">Mã số học viên <span class="text-rose-500">*</span></label>
+                            <label class="block text-sm font-black text-slate-700">Mã số học viên <span class="text-slate-400 font-semibold">(Tùy chọn)</span></label>
                             <div class="relative">
                                 <x-user.icon name="credit-card" :size="20" class="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400" />
-                                <input type="text" wire:model="studentCode" class="w-full rounded-2xl border-slate-200 bg-slate-50 py-3.5 pl-12 pr-4 font-bold text-slate-900 transition focus:border-blue-500 focus:bg-white focus:ring-4 focus:ring-blue-500/10" placeholder="Nhập MSSV của bạn" required>
+                                <input type="text" wire:model="studentCode" class="w-full rounded-2xl border-slate-200 bg-slate-50 py-3.5 pl-12 pr-4 font-bold text-slate-900 transition focus:border-blue-500 focus:bg-white focus:ring-4 focus:ring-blue-500/10" placeholder="Nhập MSSV của bạn">
                             </div>
                             @error('studentCode') <span class="mt-1 block text-sm font-bold text-rose-500">{{ $message }}</span> @enderror
                         </div>
                         <div class="space-y-1.5">
-                            <label class="block text-sm font-black text-slate-700">Họ và tên <span class="text-slate-400 font-semibold">(Tùy chọn)</span></label>
+                            <label class="block text-sm font-black text-slate-700">Họ và tên <span class="text-rose-500">*</span></label>
                             <div class="relative">
                                 <x-user.icon name="user" :size="20" class="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400" />
-                                <input type="text" wire:model="fullName" class="w-full rounded-2xl border-slate-200 bg-slate-50 py-3.5 pl-12 pr-4 font-bold text-slate-900 transition focus:border-blue-500 focus:bg-white focus:ring-4 focus:ring-blue-500/10" placeholder="Nhập họ tên của bạn">
+                                <input type="text" wire:model="fullName" class="w-full rounded-2xl border-slate-200 bg-slate-50 py-3.5 pl-12 pr-4 font-bold text-slate-900 transition focus:border-blue-500 focus:bg-white focus:ring-4 focus:ring-blue-500/10" placeholder="Nhập họ tên của bạn" required>
                             </div>
+                            @error('fullName') <span class="mt-1 block text-sm font-bold text-rose-500">{{ $message }}</span> @enderror
+                        </div>
+                        <div class="space-y-1.5">
+                            <label class="block text-sm font-black text-slate-700">Email <span class="text-rose-500">*</span></label>
+                            <div class="relative">
+                                <x-user.icon name="mail" :size="20" class="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400" />
+                                <input type="email" wire:model="email" class="w-full rounded-2xl border-slate-200 bg-slate-50 py-3.5 pl-12 pr-4 font-bold text-slate-900 transition focus:border-blue-500 focus:bg-white focus:ring-4 focus:ring-blue-500/10" placeholder="Nhập email của bạn" required>
+                            </div>
+                            @error('email') <span class="mt-1 block text-sm font-bold text-rose-500">{{ $message }}</span> @enderror
                         </div>
                         <button type="submit" class="group relative inline-flex w-full items-center justify-center overflow-hidden rounded-xl bg-primary px-8 py-4 text-lg font-black text-white shadow-xl shadow-blue-600/20 transition-all hover:scale-[1.02] hover:shadow-2xl hover:shadow-blue-600/40 active:scale-[0.98]">
                             <div class="absolute inset-0 -translate-x-full bg-gradient-to-r from-transparent via-white/20 to-transparent transition-transform duration-1000 group-hover:translate-x-full"></div>

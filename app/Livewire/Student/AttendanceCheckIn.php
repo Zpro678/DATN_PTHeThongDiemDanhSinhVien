@@ -21,6 +21,7 @@ class AttendanceCheckIn extends Component
     // For guest mode
     public string $studentCode = '';
     public string $fullName = '';
+    public string $email = '';
     public bool $isAutoCheckIn = false;
     public bool $isGuestForm = false;
     public bool $isGpsError = false;
@@ -95,18 +96,29 @@ class AttendanceCheckIn extends Component
         }
 
         $this->validate([
-            'studentCode' => 'required|string|max:20',
+            'studentCode' => 'nullable|string|max:20',
+            'fullName' => 'required|string|max:100',
+            'email' => 'required|email|max:100',
         ], [
-            'studentCode.required' => 'Vui lòng nhập Mã số sinh viên.',
+            'fullName.required' => 'Vui lòng nhập họ và tên.',
+            'email.required' => 'Vui lòng nhập email.',
+            'email.email' => 'Email không đúng định dạng.',
         ]);
 
         $classMember = $this->session->courseClass->members()
-            ->whereHas('profile', fn ($p) => $p->where('student_code', $this->studentCode))
             ->where('status', \App\Models\ClassMember::STATUS_ACTIVE)
+            ->whereHas('profile', function ($p) {
+                $p->where(function ($q) {
+                    $q->where('email', $this->email);
+                    if (!empty($this->studentCode)) {
+                        $q->orWhere('student_code', $this->studentCode);
+                    }
+                });
+            })
             ->first();
 
         if (!$classMember) {
-            $this->addError('studentCode', 'Không tìm thấy sinh viên có mã này trong danh sách lớp.');
+            $this->addError('email', 'Không tìm thấy sinh viên có thông tin này trong danh sách lớp.');
             return;
         }
         
@@ -134,10 +146,9 @@ class AttendanceCheckIn extends Component
         }
 
         $status = 'present';
-        // Check if late based on start time
-        if ($this->session->start_time) {
-            $startTime = \Carbon\Carbon::parse($this->session->date->format('Y-m-d') . ' ' . $this->session->start_time);
-            if (now()->greaterThan($startTime->addMinutes(15))) {
+        // Check if late based on when the QR session was opened
+        if ($this->session->created_at) {
+            if (now()->greaterThan($this->session->created_at->addMinutes(15))) {
                 $status = 'late';
             }
         }
@@ -148,6 +159,24 @@ class AttendanceCheckIn extends Component
         $gpsLatRecorded = null;
         $gpsLngRecorded = null;
         $gpsFraudFlag = null;
+
+        $ipAddress = request()->ip();
+        $userAgent = request()->userAgent();
+        $deviceFingerprint = md5($ipAddress . $userAgent);
+
+        // Check for device duplication (Điểm danh hộ)
+        // Check if there is already a record in this session with the same fingerprint but a different member ID that has already checked in
+        $duplicateRecord = \App\Models\AttendanceRecord::query()
+            ->where('class_session_id', $this->session->id)
+            ->where('class_member_id', '!=', $this->record->class_member_id)
+            ->where('device_fingerprint', $deviceFingerprint)
+            ->whereNotNull('device_fingerprint')
+            ->whereNotNull('check_in_time')
+            ->first();
+
+        if ($duplicateRecord) {
+            $gpsFraudFlag = 'device_duplicate';
+        }
 
         if ($this->session->gps_radius && $this->session->gps_latitude && $this->session->gps_longitude) {
             if (!$gpsCheckToken) {
@@ -192,7 +221,28 @@ class AttendanceCheckIn extends Component
             'gps_latitude_recorded' => $gpsLatRecorded,
             'gps_longitude_recorded' => $gpsLngRecorded,
             'gps_fraud_flag' => $gpsFraudFlag,
+            'ip_address' => $ipAddress,
+            'device_fingerprint' => $deviceFingerprint,
             'is_account' => true,
+        ]);
+
+        \App\Jobs\SaveAuditLogJob::dispatch([
+            'user_id' => auth()->id() ?? null,
+            'class_id' => $this->session->class_id,
+            'action' => 'attendance_check_in',
+            'table_name' => 'attendance_records',
+            'row_id' => $this->record->id,
+            'ip_address' => substr($ipAddress, 0, 45),
+            'user_agent' => $userAgent,
+            'new_values' => json_encode([
+                'status' => $gpsFraudFlag === 'out_of_radius' ? 'invalid' : $status,
+                'distance_meters' => $distanceMeters,
+                'gps_accuracy_meters' => $gpsAccuracy,
+                'gps_latitude_recorded' => $gpsLatRecorded,
+                'gps_longitude_recorded' => $gpsLngRecorded,
+                'gps_fraud_flag' => $gpsFraudFlag,
+                'device_fingerprint' => $deviceFingerprint,
+            ])
         ]);
 
         if ($gpsFraudFlag === 'out_of_radius') {
@@ -205,6 +255,9 @@ class AttendanceCheckIn extends Component
         $this->statusMessage = 'Điểm danh thành công!';
         
         session()->flash('success', 'Điểm danh thành công!');
+
+        // Trigger real-time update
+        event(new \App\Events\StudentCheckedIn($this->session->id));
     }
 
     public function render(): View

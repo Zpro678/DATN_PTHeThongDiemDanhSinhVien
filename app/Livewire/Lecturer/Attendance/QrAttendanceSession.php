@@ -10,6 +10,7 @@ use App\Services\SubscriptionService;
 use Illuminate\Contracts\View\View;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Support\Str;
+use Livewire\Attributes\On;
 use Livewire\Component;
 use Livewire\WithPagination;
 use Maatwebsite\Excel\Facades\Excel;
@@ -25,6 +26,9 @@ class QrAttendanceSession extends Component
 
     public string $statusFilter = 'all';
 
+    public array $draftStatuses = [];
+    public array $draftNotes = [];
+
     public bool $isClosed = false;
     
     public string $qrAnimationStr = '';
@@ -38,6 +42,20 @@ class QrAttendanceSession extends Component
 
         $this->sessionId = $model->id;
         $this->isClosed = $model->status === 'closed';
+
+        $this->initDrafts();
+    }
+
+    private function initDrafts(): void
+    {
+        $records = AttendanceRecord::query()
+            ->where('class_session_id', $this->sessionId)
+            ->whereHas('classMember')
+            ->get(['id', 'status', 'note']);
+
+        foreach ($records as $record) {
+            $this->draftNotes[$record->id] = $record->note ?? '';
+        }
     }
 
     public function setStatusFilter(string $status): void
@@ -66,7 +84,7 @@ class QrAttendanceSession extends Component
         $this->qrAnimationStr = Str::random(8);
     }
 
-    public function updateStatus(int $recordId, string $status): void
+    public function setStatus(int $recordId, string $status): void
     {
         abort_unless(in_array($status, ['present', 'late', 'absent', 'excused'], true), 422);
         $this->ensureSessionIsOpen();
@@ -83,15 +101,45 @@ class QrAttendanceSession extends Component
         ]);
     }
 
+    #[On('echo:attendance.{sessionId},StudentCheckedIn')]
+    public function onStudentCheckedIn(): void
+    {
+        // Livewire v3 automatically re-renders the component when this is hit
+    }
+
+    public function markAllPresent(): void
+    {
+        $this->ensureSessionIsOpen();
+
+        $records = AttendanceRecord::query()
+            ->where('class_session_id', $this->sessionId)
+            ->whereHas('classSession.courseClass', fn ($query) => $query->where('owner_user_id', auth()->id()))
+            ->where('status', 'pending')
+            ->get();
+
+        foreach ($records as $record) {
+            $record->update([
+                'status' => 'present',
+                'check_in_time' => now(),
+            ]);
+        }
+
+        session()->flash('success', 'Đã đánh dấu tất cả học viên chưa điểm danh là có mặt.');
+    }
+
     public function closeSession(): void
     {
         $session = $this->ownedSession($this->sessionId);
         $session->update(['status' => 'closed']);
+        
+        // Mặc định những ai chưa điểm danh (pending) khi khóa phiên QR sẽ thành vắng (absent)
+        $session->attendanceRecords()->where('status', 'pending')->update(['status' => 'absent']);
+        
         $this->isClosed = true;
 
         app(NotificationService::class)->attendanceSessionClosed((int) auth()->id(), $session, isQr: true);
 
-        session()->flash('status', 'Phiên QR đã được chốt.');
+        $this->dispatch('toast', message: 'Phiên QR đã được chốt.', type: 'success');
     }
 
     /**
@@ -101,6 +149,22 @@ class QrAttendanceSession extends Component
      */
     public function saveSession(): void
     {
+        $this->ensureSessionIsOpen();
+
+        $records = AttendanceRecord::query()
+            ->where('class_session_id', $this->sessionId)
+            ->whereHas('classSession.courseClass', fn ($query) => $query->where('owner_user_id', auth()->id()))
+            ->get();
+
+        foreach ($records as $record) {
+            if (isset($this->draftNotes[$record->id])) {
+                $note = trim((string) $this->draftNotes[$record->id]);
+                if ($note !== ($record->note ?? '')) {
+                    $record->update(['note' => $note !== '' ? $note : null]);
+                }
+            }
+        }
+
         $meetingId = $this->ownedSession($this->sessionId)->meeting_id;
 
         session()->flash('status', 'Đã lưu phiên điểm danh.');
@@ -173,6 +237,13 @@ class QrAttendanceSession extends Component
             ->groupBy('status')
             ->pluck('aggregate', 'status');
 
+        $fraudStats = $session->attendanceRecords()
+            ->whereHas('classMember')
+            ->selectRaw('gps_fraud_flag, COUNT(*) as aggregate')
+            ->whereNotNull('gps_fraud_flag')
+            ->groupBy('gps_fraud_flag')
+            ->pluck('aggregate', 'gps_fraud_flag');
+
         $summary = [
             'present' => (int) ($stats['present'] ?? 0),
             'late' => (int) ($stats['late'] ?? 0),
@@ -192,7 +263,7 @@ class QrAttendanceSession extends Component
 
         $canExportExcel = app(SubscriptionService::class)->canExportExcel(auth()->user()); // Quyền xuất Excel theo gói (Pro trở lên).
 
-        return view('livewire.lecturer.attendance.qr-session', compact('session', 'records', 'attendanceLink', 'summary', 'qrSvg', 'qrCells', 'canExportExcel'))
+        return view('livewire.lecturer.attendance.qr-session', compact('session', 'records', 'attendanceLink', 'summary', 'fraudStats', 'qrSvg', 'qrCells', 'canExportExcel'))
             ->layout('layouts.user', ['title' => 'Điểm danh QR']);
     }
 

@@ -107,7 +107,14 @@ class ClassMeeting extends Model
             return false;
         }
 
-        $this->sessions()->where('status', '!=', 'closed')->update(['status' => 'closed']);
+        $sessionsToClose = $this->sessions()->where('status', '!=', 'closed')->get();
+        foreach ($sessionsToClose as $session) {
+            $session->update(['status' => 'closed']);
+            // Mặc định những ai chưa điểm danh (pending) khi khóa phiên QR sẽ thành vắng (absent)
+            if (!empty($session->qr_token)) {
+                $session->attendanceRecords()->where('status', 'pending')->update(['status' => 'absent']);
+            }
+        }
         $this->update(['status' => 'closed']);
 
         if ($this->relationLoaded('sessions')) {

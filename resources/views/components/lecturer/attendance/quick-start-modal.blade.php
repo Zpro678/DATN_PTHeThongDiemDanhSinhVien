@@ -253,17 +253,7 @@
                             </div>
                             @error('quickMeetingId') <span class="mt-1.5 block text-xs font-bold text-red-500"><x-user.icon name="alert-circle" :size="12" class="inline pb-0.5" /> {{ $message }}</span> @enderror
                             
-                            @if($quickClassId && $this->classMeetings->isEmpty())
-                                <div class="mt-3 overflow-hidden rounded-xl border-2 border-dashed border-amber-300/60 bg-gradient-to-r from-amber-50 to-orange-50/30">
-                                    <button type="button" wire:click="createTodayMeeting" class="group flex w-full flex-col items-center justify-center px-4 py-5 text-center transition-all duration-200 hover:from-amber-100/50 hover:to-orange-50/50">
-                                        <div class="mb-2 flex h-10 w-10 items-center justify-center rounded-full bg-amber-100 text-amber-600 transition-transform duration-200 group-hover:scale-110">
-                                            <x-user.icon name="plus" :size="20" />
-                                        </div>
-                                        <span class="block text-xs font-medium text-amber-600">Chưa có buổi học nào trong hôm nay</span>
-                                        <span class="mt-0.5 block text-sm font-extrabold text-amber-700 transition-colors duration-200 group-hover:text-amber-800">Tạo nhanh buổi học hôm nay</span>
-                                    </button>
-                                </div>
-                            @endif
+
                         </div>
 
                         {{-- ═══ End Time ═══ --}}
@@ -335,6 +325,21 @@
                                 
                                 <div x-data="{
                                     isRequestingGps: false,
+                                    init() {
+                                        $watch('$wire.showQuickStart', (value) => {
+                                            if (value && $wire.quickStartType === 'qr' && $wire.gpsEnabled && !$wire.gpsLatitude) {
+                                                this.getLocation();
+                                            }
+                                        });
+                                        $watch('$wire.quickStartType', (value) => {
+                                            if ($wire.showQuickStart && value === 'qr' && $wire.gpsEnabled && !$wire.gpsLatitude) {
+                                                this.getLocation();
+                                            }
+                                        });
+                                        if ($wire.showQuickStart && $wire.quickStartType === 'qr' && $wire.gpsEnabled && !$wire.gpsLatitude) {
+                                            this.getLocation();
+                                        }
+                                    },
                                     getLocation() {
                                         if (!$wire.gpsEnabled) {
                                             $wire.set('gpsLatitude', null);

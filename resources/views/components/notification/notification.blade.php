@@ -21,7 +21,10 @@
 	@php $toastId = \Illuminate\Support\Str::random(10); @endphp
 
 	{{-- Success Messages --}}
-	@if (session('success'))
+	@if (session('success') || session('status'))
+    @php
+        $successMessage = session('success') ?? session('status');
+    @endphp
 	<div wire:key="toast-success-{{ $toastId }}" x-data="{ show: !sessionStorage.getItem('toast_{{ $toastId }}') }" x-show="show" x-init="if(show) { sessionStorage.setItem('toast_{{ $toastId }}', '1'); setTimeout(() => { show = false; setTimeout(() => $el.remove(), 500); }, 5000); }" x-transition:leave="hiding" class="custom-toast server-toast toast-success">
 		<div class="toast-content">
 			<div class="toast-icon">
@@ -31,10 +34,12 @@
 				</svg>
 			</div>
 			<div class="toast-message">
-				{{ session('success') }}
+				{{ $successMessage }}
 			</div>
 		</div>
-		<span class="toast-close" @click="show = false">&times;</span>
+		<span class="toast-close" @click="show = false">
+			<svg viewBox="0 0 24 24" width="16" height="16" stroke="currentColor" stroke-width="2" fill="none" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>
+		</span>
 	</div>
 	@endif
 
@@ -52,7 +57,9 @@
 				{{ session('error') }}
 			</div>
 		</div>
-		<span class="toast-close" @click="show = false">&times;</span>
+		<span class="toast-close" @click="show = false">
+			<svg viewBox="0 0 24 24" width="16" height="16" stroke="currentColor" stroke-width="2" fill="none" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>
+		</span>
 	</div>
 	@endif
 
@@ -75,7 +82,9 @@
 				</ul>
 			</div>
 		</div>
-		<span class="toast-close" @click="show = false">&times;</span>
+		<span class="toast-close" @click="show = false">
+			<svg viewBox="0 0 24 24" width="16" height="16" stroke="currentColor" stroke-width="2" fill="none" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>
+		</span>
 	</div>
 	@endif
 
@@ -92,7 +101,9 @@
 				</div>
 				<div class="toast-message" x-text="toast.message"></div>
 			</div>
-			<span class="toast-close" @click="removeToast(toast.id)">&times;</span>
+			<span class="toast-close" @click="removeToast(toast.id)">
+				<svg viewBox="0 0 24 24" width="16" height="16" stroke="currentColor" stroke-width="2" fill="none" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>
+			</span>
 		</div>
 	</template>
 
@@ -152,7 +163,7 @@
 		display: flex;
 		align-items: center;
 		gap: 12px;
-		padding-right: 15px;
+		padding-right: 24px;
 	}
 
 	.toast-message {
@@ -168,8 +179,9 @@
 		right: 12px;
 		transform: translateY(-50%);
 		cursor: pointer;
-		font-size: 20px;
-		line-height: 1;
+		display: flex;
+		align-items: center;
+		justify-content: center;
 		opacity: 0.7;
 		color: #ffffff;
 		transition: opacity 0.15s ease;

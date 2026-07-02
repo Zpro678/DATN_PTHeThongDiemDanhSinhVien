@@ -98,7 +98,7 @@ class AttendanceIndex extends Component
 
         $meeting = ClassMeeting::create([
             'class_id' => $courseClass->id,
-            'created_by' => auth()->id(),
+            'user_Created' => auth()->id(),
             'name' => $meetingName,
             'date' => $date,
             'start_time' => $startTime,
@@ -169,7 +169,7 @@ class AttendanceIndex extends Component
             
             $meeting = \App\Models\ClassMeeting::create([
                 'class_id' => $courseClass->id,
-                'created_by' => auth()->id(),
+                'user_Created' => auth()->id(),
                 'name' => $this->newMeetingName,
                 'date' => $date,
                 'start_time' => $startTime,
