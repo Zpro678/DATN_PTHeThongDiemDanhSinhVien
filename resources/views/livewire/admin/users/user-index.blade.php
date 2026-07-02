@@ -1,5 +1,5 @@
 <div class="flex min-h-[calc(100vh-8rem)] flex-col space-y-5">
-    <div class="admin-card overflow-hidden rounded-3xl border p-5 lg:p-6 flex-none">
+    <div class="flex-none p-5 lg:p-6 mb-2">
         <div class="relative z-10 flex flex-col items-start justify-between gap-4 sm:flex-row sm:items-center">
             <div>
                 <p class="text-[10px] font-bold uppercase tracking-[0.3em] text-slate-400">Accounts</p>
@@ -15,17 +15,7 @@
         </div>
     </div>
 
-    @if(session('success'))
-        <div class="flex-none rounded-xl border border-green-200 bg-green-50 p-4 text-green-800">
-            <span class="text-sm font-medium">{{ session('success') }}</span>
-        </div>
-    @endif
 
-    @if(session('error'))
-        <div class="flex-none rounded-xl border border-red-200 bg-red-50 p-4 text-red-800">
-            <span class="text-sm font-medium">{{ session('error') }}</span>
-        </div>
-    @endif
 
     <div class="admin-card flex-none overflow-visible rounded-2xl border p-4 lg:p-5 relative z-20">
         <div class="grid grid-cols-1 gap-4 md:grid-cols-4">

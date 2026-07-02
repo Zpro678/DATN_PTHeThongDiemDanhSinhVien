@@ -27,7 +27,7 @@
                     <h2 class="text-3xl font-extrabold text-slate-900 tracking-tight">ĐĂNG NHẬP TÀI KHOẢN</h2>
                 </div>
 
-                <x-auth-session-status class="mb-4" :status="session('status')" />
+
                 <form method="POST" action="{{ route('login') }}" class="space-y-5">
                     @csrf
 
@@ -169,5 +169,6 @@
             }
         });
     </script>
+    <x-notification.notification />
 </body>
 </html>

@@ -38,14 +38,7 @@
                     Nếu bạn không nhận được email, hãy nhấn nút bên dưới để chúng tôi gửi lại nhé.
                 </p>
 
-                @if (session('status') == 'verification-link-sent')
-                    <div class="mb-6 p-4 rounded-xl bg-emerald-50 border border-emerald-200">
-                        <p class="font-bold text-sm text-emerald-600 flex items-center justify-center gap-2">
-                            <i data-lucide="check-circle" class="w-5 h-5"></i>
-                            Một đường link xác thực mới đã được gửi!
-                        </p>
-                    </div>
-                @endif
+
 
                 <div class="mt-8 space-y-4">
                     <form method="POST" action="{{ route('verification.send') }}">
@@ -71,6 +64,24 @@
 
     <script>
         window.lucide?.createIcons();
+
+        // Polling to check email verification status
+        setInterval(() => {
+            fetch('{{ url('api/check-email-verification') }}', {
+                headers: {
+                    'Accept': 'application/json',
+                    'X-Requested-With': 'XMLHttpRequest'
+                }
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.verified) {
+                    window.location.href = "{{ route('dashboard', absolute: false) }}?verified=1";
+                }
+            })
+            .catch(error => console.error('Error checking verification:', error));
+        }, 3000);
     </script>
+    <x-notification.notification />
 </body>
 </html>

@@ -28,5 +28,6 @@
                 {{ $slot }}
             </div>
         </div>
+        <x-notification.notification />
     </body>
 </html>

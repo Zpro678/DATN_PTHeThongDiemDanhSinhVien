@@ -1,6 +1,6 @@
 <x-admin-layout title="Cấu hình hệ thống">
     <div class="mx-auto max-w-[1200px]" x-data="{ activeTab: 'payment' }">
-        <div class="admin-card mb-6 overflow-hidden rounded-3xl border p-5 lg:p-6">
+        <div class="mb-6 p-5 lg:p-6">
             <div class="relative z-10 flex flex-col justify-between gap-4 md:flex-row md:items-end">
             <div>
                 <p class="text-[10px] font-bold uppercase tracking-[0.3em] text-slate-400">Settings</p>

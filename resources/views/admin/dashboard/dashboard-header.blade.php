@@ -3,7 +3,7 @@
     $formattedDate = ucfirst(\Carbon\Carbon::now()->isoFormat('dddd, D MMMM, YYYY'));
 @endphp
 
-<div class="admin-card overflow-hidden rounded-3xl border p-6 lg:p-7">
+<div class="mb-2 p-6 lg:p-7">
     <div class="relative z-10 flex flex-col justify-between gap-4 lg:flex-row lg:items-end">
         <div>
             <div class="mb-3 inline-flex items-center gap-2 rounded-full border border-blue-100 bg-blue-50 px-3 py-1 text-[10px] font-extrabold uppercase tracking-widest text-blue-700">

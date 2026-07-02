@@ -11,7 +11,7 @@
 @endphp
 
 <div x-data="{ view: 'profile' }" class="w-full p-4 pb-24 md:p-8 md:pb-12 space-y-6">
-    <section class="admin-card flex flex-col justify-between gap-4 overflow-hidden rounded-3xl border p-6 lg:flex-row lg:items-end lg:p-7">
+    <section class="flex flex-col justify-between gap-4 p-6 lg:flex-row lg:items-end lg:p-7 mb-2">
         <div>
             <p class="text-[10px] font-bold uppercase tracking-[0.3em] text-slate-400">Tài khoản cá nhân</p>
             <h1 class="mt-1 text-3xl font-black tracking-tight text-slate-900">Hồ sơ của bạn</h1>

@@ -35,13 +35,17 @@
 
         <title>{{ $title ? $title.' - ' : '' }}{{ config('app.name', 'Attendia Tech') }}</title>
 
-        <link rel="preconnect" href="https://fonts.bunny.net">
-        <link href="https://fonts.bunny.net/css?family=inter:400,500,600,700,800,900&display=swap" rel="stylesheet" />
-
+        <link rel="preconnect" href="https://fonts.googleapis.com">
+        <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
+        
+        <!-- Scripts -->
         @vite(['resources/css/app.css', 'resources/js/app.js'])
         @livewireStyles
+        
+        <!-- Icons -->
+        <script src="https://unpkg.com/lucide@latest"></script>
     </head>
-    <body class="bg-slate-50 text-slate-900 antialiased" style="font-family: 'Inter', 'Plus Jakarta Sans', sans-serif;">
+    <body class="bg-slate-50 text-slate-900 font-sans antialiased">
         <div
             x-data="{ sidebarOpen: false, userMenuOpen: false }"
             class="admin-shell-bg min-h-screen"
@@ -245,6 +249,7 @@
                 </main>
             </div>
         </div>
+        <x-notification.notification />
         @livewireScripts
     </body>
 </html>

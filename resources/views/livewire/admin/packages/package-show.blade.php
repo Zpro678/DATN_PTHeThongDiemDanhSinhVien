@@ -40,7 +40,7 @@
 
     <div class="mx-auto max-w-[1200px] space-y-6">
 
-        <div class="admin-card overflow-hidden rounded-3xl border {{ !$package->is_active ? 'opacity-80' : '' }}">
+        <div class="mb-2 {{ !$package->is_active ? 'opacity-80' : '' }}">
             <div class="h-2 w-full bg-gradient-to-r {{ $accent }}"></div>
 
             <div class="relative z-10 flex flex-col items-start justify-between gap-6 p-8 md:flex-row md:items-center md:p-10">

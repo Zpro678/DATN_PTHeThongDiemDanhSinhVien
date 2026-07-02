@@ -43,6 +43,27 @@
 	</div>
 	@endif
 
+	{{-- Status Messages (Common in Auth) --}}
+	@if (session('status'))
+	<div wire:key="toast-status-{{ $toastId }}" x-data="{ show: !sessionStorage.getItem('toast_{{ $toastId }}') }" x-show="show" x-init="if(show) { sessionStorage.setItem('toast_{{ $toastId }}', '1'); setTimeout(() => { show = false; setTimeout(() => $el.remove(), 500); }, 5000); }" x-transition:leave="hiding" class="custom-toast server-toast toast-success">
+		<div class="toast-content">
+			<div class="toast-icon">
+				<svg style="flex-shrink: 0; min-width: 24px; min-height: 24px; display: block;" viewBox="0 0 24 24" width="24" height="24">
+					<circle cx="12" cy="12" r="11" fill="#ffffff" />
+					<path d="M7.5 12.5l3 3 6-6" stroke="#15803d" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" fill="none" />
+				</svg>
+			</div>
+			<div class="toast-message">
+				@if(session('status') == 'verification-link-sent')
+					Mã xác thực mới đã được gửi tới email của bạn.
+				@else
+					{{ session('status') }}
+				@endif
+			</div>
+		</div>
+		<span class="toast-close" @click="show = false">&times;</span>
+	</div>
+	@endif
 	{{-- Error Messages --}}
 	@if (session('error'))
 	<div wire:key="toast-error-{{ $toastId }}" x-data="{ show: !sessionStorage.getItem('toast_{{ $toastId }}') }" x-show="show" x-init="if(show) { sessionStorage.setItem('toast_{{ $toastId }}', '1'); setTimeout(() => { show = false; setTimeout(() => $el.remove(), 500); }, 5000); }" x-transition:leave="hiding" class="custom-toast server-toast toast-error">
