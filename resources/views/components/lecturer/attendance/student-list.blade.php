@@ -21,18 +21,16 @@
             </label>
             
             <div class="flex gap-3">
-                <select
-                    wire:change="setStatusFilter($event.target.value)"
-                    class="shrink-0 cursor-pointer appearance-none rounded-xl border border-slate-200 bg-white px-5 py-2.5 text-sm font-medium text-slate-600 outline-none transition focus:border-blue-500"
-                    style="background-image: url('data:image/svg+xml;charset=US-ASCII,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20width%3D%2224%22%20height%3D%2224%22%20viewBox%3D%220%200%2024%2024%22%20fill%3D%22none%22%20stroke%3D%22%2364748b%22%20stroke-width%3D%222%22%20stroke-linecap%3D%22round%22%20stroke-linejoin%3D%22round%22%3E%3Cpolyline%20points%3D%226%209%2012%2015%2018%209%22%3E%3C%2Fpolyline%3E%3C%2Fsvg%3E'); background-repeat: no-repeat; background-position: right 0.75rem center; background-size: 1rem 1rem; padding-right: 2.5rem;"
-                >
-                    <option value="all" @selected($statusFilter === 'all')>Tất cả trạng thái</option>
-                    <option value="pending" @selected($statusFilter === 'pending')>Chưa ĐD</option>
-                    <option value="present" @selected($statusFilter === 'present')>Có mặt</option>
-                    <option value="absent" @selected($statusFilter === 'absent')>Vắng</option>
-                    <option value="late" @selected($statusFilter === 'late')>Đi muộn</option>
-                    <option value="excused" @selected($statusFilter === 'excused')>Có phép</option>
-                </select>
+                <div class="w-44 shrink-0">
+                    <x-custom-select wire:change="setStatusFilter($event.target.value)" placeholder="" :value="$statusFilter" :options="[
+                        ['value' => 'all', 'label' => 'Tất cả trạng thái'],
+                        ['value' => 'pending', 'label' => 'Chưa ĐD'],
+                        ['value' => 'present', 'label' => 'Có mặt'],
+                        ['value' => 'absent', 'label' => 'Vắng'],
+                        ['value' => 'late', 'label' => 'Đi muộn'],
+                        ['value' => 'excused', 'label' => 'Có phép'],
+                    ]" />
+                </div>
 
                 @if($showMarkAllPresent ?? true)
                     <button

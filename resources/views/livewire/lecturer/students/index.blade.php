@@ -39,11 +39,9 @@
             <x-user.icon name="search" :size="18" class="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400" />
             <input wire:model.live.debounce.300ms="search" type="search" placeholder="Tìm theo tên, mã học viên hoặc email..." class="w-full rounded-xl border-slate-200 py-2.5 pl-11 pr-4 text-sm focus:border-primary focus:ring-primary/20">
         </label>
-        <select wire:model.live="classFilter" class="rounded-xl border-slate-200 text-sm font-semibold text-slate-700 focus:border-primary focus:ring-primary/20">
-            @foreach ($classes as $class)
-                <option value="{{ $class->id }}">{{ $class->join_key }} - {{ $class->name }}</option>
-            @endforeach
-        </select>
+        <x-custom-select wire:model.live="classFilter" placeholder="" :options="collect($classes)
+            ->map(fn ($class) => ['value' => (string) $class->id, 'label' => $class->join_key . ' - ' . $class->name])
+            ->values()->all()" />
         <div class="inline-flex w-max ml-auto rounded-xl bg-slate-100 p-1">
             <button type="button" wire:click="setStatusFilter('active')" @class(['rounded-lg px-4 py-2 text-xs font-bold transition-colors', 'bg-white text-primary shadow-sm' => $statusFilter === 'active', 'text-slate-500' => $statusFilter !== 'active'])>Đang học</button>
             <button type="button" wire:click="setStatusFilter('archived')" @class(['rounded-lg px-4 py-2 text-xs font-bold transition-colors', 'bg-white text-primary shadow-sm' => $statusFilter === 'archived', 'text-slate-500' => $statusFilter !== 'archived'])>Lưu trữ</button>
@@ -175,7 +173,7 @@
                             <input type="email" wire:model="editingEmail" class="w-full rounded-xl border-slate-200 focus:border-primary focus:ring-primary/20" placeholder="nva@email.com">
                             @error('editingEmail')<span class="text-xs text-red-600">{{ $message }}</span>@enderror
                         </label>
-                        <label class="block space-y-2"><span class="text-sm font-semibold text-slate-700">Trạng thái</span><select wire:model="editingStatus" class="w-full rounded-xl border-slate-200 focus:border-primary focus:ring-primary/20"><option value="active">Đang học</option><option value="dropped">Đã thôi học</option></select></label>
+                        <label class="block space-y-2"><span class="text-sm font-semibold text-slate-700">Trạng thái</span><x-custom-select wire:model="editingStatus" placeholder="" :value="$editingStatus" :options="[['value' => 'active', 'label' => 'Đang học'], ['value' => 'dropped', 'label' => 'Đã thôi học']]" /></label>
                     </div>
                     <div class="mt-6 flex justify-end gap-3"><button type="button" wire:click="closeEdit" class="rounded-xl px-5 py-2.5 text-sm font-bold text-slate-600 hover:bg-slate-100">Hủy</button><button type="submit" class="rounded-xl bg-primary px-5 py-2.5 text-sm font-bold text-white">Lưu thay đổi</button></div>
                 </form>
@@ -193,12 +191,9 @@
                     <div class="space-y-4">
                         <label class="block space-y-2">
                             <span class="text-sm font-semibold text-slate-700">Lớp học</span>
-                            <select wire:model="newClassId" class="w-full rounded-xl border-slate-200 focus:border-primary focus:ring-primary/20">
-                                <option value="">-- Chọn lớp học --</option>
-                                @foreach ($classes as $class)
-                                    <option value="{{ $class->id }}">{{ $class->join_key }} - {{ $class->name }}</option>
-                                @endforeach
-                            </select>
+                            <x-custom-select wire:model="newClassId" placeholder="-- Chọn lớp học --" :value="$newClassId" :options="collect($classes)
+                                ->map(fn ($class) => ['value' => (string) $class->id, 'label' => $class->join_key . ' - ' . $class->name])
+                                ->values()->all()" />
                             @error('newClassId')<span class="text-xs text-red-600">{{ $message }}</span>@enderror
                         </label>
                         <label class="block space-y-2"><span class="text-sm font-semibold text-slate-700">Họ và tên</span><input wire:model="newName" class="w-full rounded-xl border-slate-200 focus:border-primary focus:ring-primary/20" placeholder="Nguyễn Văn A">@error('newName')<span class="text-xs text-red-600">{{ $message }}</span>@enderror</label>
@@ -245,12 +240,9 @@
                     
                     {{-- Class Selection --}}
                     <div>
-                        <select wire:model="importClassId" class="w-full rounded-xl border-slate-200 bg-slate-50 py-3 text-[15px] font-medium text-slate-700 focus:border-blue-500 focus:ring-blue-500/20">
-                            <option value="">-- Chọn lớp học để import --</option>
-                            @foreach ($classes as $class)
-                                <option value="{{ $class->id }}">{{ $class->join_key }} - {{ $class->name }}</option>
-                            @endforeach
-                        </select>
+                        <x-custom-select wire:model="importClassId" placeholder="-- Chọn lớp học để import --" :value="$importClassId" :options="collect($classes)
+                            ->map(fn ($class) => ['value' => (string) $class->id, 'label' => $class->join_key . ' - ' . $class->name])
+                            ->values()->all()" />
                         @error('importClassId')<span class="mt-1 block text-sm text-red-500">{{ $message }}</span>@enderror
                     </div>
 

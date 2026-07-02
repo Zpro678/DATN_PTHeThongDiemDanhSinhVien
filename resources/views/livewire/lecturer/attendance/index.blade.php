@@ -16,8 +16,30 @@
     </section>
 
     <section class="overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm">
-        <div class="border-b border-slate-100 px-6 py-5">
-            <h2 class="text-xl font-extrabold text-slate-900">Buổi điểm danh gần đây ({{ number_format($meetings->total()) }})</h2>
+        <div class="border-b border-slate-100 px-6 py-5 flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
+            <h2 class="text-xl font-extrabold text-slate-900">
+                {{ $filter === 'unclosed' ? 'Buổi chưa chốt' : ($filter === 'closed' ? 'Buổi đã chốt' : 'Buổi điểm danh gần đây') }}
+                ({{ number_format($meetings->total()) }})
+            </h2>
+
+            <div class="flex flex-col gap-3 sm:flex-row sm:items-center">
+                {{-- Thanh tìm kiếm --}}
+                <div class="relative">
+                    <span class="pointer-events-none absolute inset-y-0 left-3 flex items-center text-slate-400">
+                        <x-user.icon name="search" :size="16" />
+                    </span>
+                    <input type="text" wire:model.live.debounce.400ms="search" placeholder="Tìm buổi học, lớp..."
+                        class="h-11 w-full sm:w-64 rounded-xl border border-slate-200 bg-white pl-9 pr-3 text-sm text-slate-700 shadow-sm placeholder:text-slate-400 focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-500/30">
+                </div>
+
+                {{-- Bộ lọc trạng thái (dropdown tùy biến) --}}
+                <div class="w-full sm:w-60">
+                    <x-custom-select wire:model.live="filter" placeholder="Tất cả trạng thái" :options="[
+                        ['value' => 'unclosed', 'label' => 'Chưa kết thúc (chưa chốt)'],
+                        ['value' => 'closed', 'label' => 'Đã chốt'],
+                    ]" />
+                </div>
+            </div>
         </div>
         <div class="overflow-x-auto">
             <table class="w-full min-w-[980px] text-left whitespace-nowrap">
@@ -84,7 +106,9 @@
                         </tr>
                     @empty
                         <tr>
-                            <td colspan="7" class="px-6 py-14 text-center text-sm text-slate-500">Chưa có buổi điểm danh nào.</td>
+                            <td colspan="7" class="px-6 py-14 text-center text-sm text-slate-500">
+                                {{ ($search !== '' || $filter !== '') ? 'Không tìm thấy buổi điểm danh phù hợp.' : 'Chưa có buổi điểm danh nào.' }}
+                            </td>
                         </tr>
                     @endforelse
                 </tbody>

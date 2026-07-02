@@ -153,7 +153,7 @@
         $adminNeedsCount = $unclosedAttendanceSessions + $pendingLeaveRequestsCount + $attendanceWarningStudentsCount;
 
         $adminNeedRows = [
-            ['label' => 'Buổi chưa chốt sổ', 'value' => $unclosedAttendanceSessions, 'icon' => 'clock', 'tone' => 'text-red-600', 'bg' => 'bg-red-50', 'href' => route('lecturer.attendance.index')],
+            ['label' => 'Buổi chưa kết thúc cần chốt', 'value' => $unclosedAttendanceSessions, 'icon' => 'clock', 'tone' => 'text-red-600', 'bg' => 'bg-red-50', 'href' => route('lecturer.attendance.index', ['filter' => 'unclosed'])],
             ['label' => 'Đơn nghỉ chờ duyệt', 'value' => $pendingLeaveRequestsCount, 'icon' => 'file-text', 'tone' => 'text-[#0b57d0]', 'bg' => 'bg-[#d3e3fd]', 'href' => route('lecturer.leave-requests.index')],
             ['label' => 'Học viên cảnh báo', 'value' => $attendanceWarningStudentsCount, 'icon' => 'alert-triangle', 'tone' => 'text-[#D97706]', 'bg' => 'bg-[#FEF3C7]', 'href' => route('lecturer.students.index')],
         ];

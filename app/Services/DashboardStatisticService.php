@@ -171,6 +171,7 @@ class DashboardStatisticService
             ->join('classes', 'class_sessions.class_id', '=', 'classes.id')
             ->whereIn('class_sessions.class_id', $classIds)
             ->where('class_sessions.status', '!=', 'closed')
+            ->whereNull('class_sessions.end_time') // Chỉ buổi không đặt giờ kết thúc → cần chốt tay.
             ->whereNull('classes.deleted_at')
             ->select([
                 'class_sessions.id',
@@ -472,9 +473,13 @@ class DashboardStatisticService
             ->whereDate('date', today())
             ->count();
 
+        // "Cần xử lý" = buổi chưa chốt VÀ không đặt giờ kết thúc (end_time null) nên không tự chốt
+        // được (buổi có end_time sẽ tự chốt qua lệnh attendance:close-expired). Chỉ những buổi này
+        // mới thật sự cần giảng viên chốt tay.
         $unclosedAttendanceSessions = ClassSession::query()
             ->whereIn('class_id', $classIds)
             ->where('status', '!=', 'closed')
+            ->whereNull('end_time')
             ->count();
 
         $attendanceSessionsByDate = ClassSession::query()
