@@ -161,8 +161,8 @@
                     </h3>
                     <div class="flex items-baseline gap-2 mb-4">
                         <span class="text-[5rem] font-black tracking-tight leading-none text-blue-600">{{ $summary['checked_in'] }}</span>
-                        <span class="text-4xl font-bold text-slate-300">/{{ $summary['total'] }}</span>
-                        <span class="text-lg font-bold text-slate-400 ml-1">Sinh viên</span>
+                        <span class="text-4xl font-black text-slate-500">/{{ $summary['total'] }}</span>
+                        <span class="text-lg font-extrabold text-slate-600 ml-1">Sinh viên</span>
                     </div>
                     <div class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-slate-50 border border-slate-100 text-sm text-slate-600">
                         <x-user.icon name="clock" :size="16" class="text-amber-500" />

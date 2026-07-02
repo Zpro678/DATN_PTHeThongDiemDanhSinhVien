@@ -50,9 +50,9 @@
     </div>
 
     {{-- TABLE --}}
-    <div class="overflow-x-auto">
-        <table class="w-full min-w-[1024px] border-collapse text-left">
-            <thead class="border-b border-slate-100 bg-slate-50/50 text-sm font-bold uppercase tracking-wider text-black">
+    <div class="overflow-x-auto overflow-y-auto {{ $records->count() > 30 ? 'max-h-[75vh]' : '' }}">
+        <table class="w-full min-w-[1024px] border-collapse text-left relative">
+            <thead class="sticky top-0 z-10 border-b border-slate-200 bg-slate-50 text-sm font-bold uppercase tracking-wider text-black shadow-sm">
                 <tr>
                     <th class="w-16 px-6 py-4 text-center">STT</th>
                     <th class="w-32 px-6 py-4">MSSV</th>
@@ -83,8 +83,16 @@
                                         {{ \Illuminate\Support\Str::substr($record->classMember?->full_name ?? '?', 0, 1) }}
                                     </div>
                                 @endif
+                                @php
+                                    $nameColor = 'text-slate-800';
+                                    if ($record->gps_fraud_flag === 'device_duplicate' || str_contains($record->note ?? '', 'điểm danh hộ')) {
+                                        $nameColor = 'text-red-600';
+                                    } elseif ($record->gps_fraud_flag === 'out_of_radius' || str_contains($record->note ?? '', 'Sai GPS') || str_contains($record->note ?? '', 'Fake GPS')) {
+                                        $nameColor = 'text-amber-500';
+                                    }
+                                @endphp
                                 <div class="min-w-0">
-                                    <p class="truncate text-[15.5px] font-semibold text-slate-800">{{ $record->classMember?->full_name ?? 'Không xác định' }}</p>
+                                    <p class="truncate text-[15.5px] font-semibold {{ $nameColor }}">{{ $record->classMember?->full_name ?? 'Không xác định' }}</p>
                                     <p class="text-[12px] font-medium {{ $statusColor }} mt-0.5">{{ $statusLabel }}</p>
                                 </div>
                             </div>

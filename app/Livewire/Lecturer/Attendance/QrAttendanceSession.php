@@ -60,7 +60,7 @@ class QrAttendanceSession extends Component
 
     public function setStatusFilter(string $status): void
     {
-        abort_unless(in_array($status, ['all', 'pending', 'present', 'late', 'absent', 'excused'], true), 422);
+        abort_unless(in_array($status, ['all', 'pending', 'present', 'late', 'absent', 'excused', 'invalid'], true), 422);
 
         $this->statusFilter = $status;
     }
@@ -96,7 +96,7 @@ class QrAttendanceSession extends Component
 
         $record->update([
             'status' => $status,
-            'check_in_time' => in_array($status, ['present', 'late'], true) ? now() : null,
+            'check_in_time' => in_array($status, ['present', 'late'], true) ? now('Asia/Ho_Chi_Minh') : null,
             'is_account' => $record->classMember->user_id !== null,
         ]);
     }
@@ -120,7 +120,7 @@ class QrAttendanceSession extends Component
         foreach ($records as $record) {
             $record->update([
                 'status' => 'present',
-                'check_in_time' => now(),
+                'check_in_time' => now('Asia/Ho_Chi_Minh'),
             ]);
         }
 
@@ -228,8 +228,9 @@ class QrAttendanceSession extends Component
                         ->orWhereHas('classMember.user', fn (Builder $u) => $u->where('name', 'like', '%'.$this->search.'%'));
                 });
             })
+            ->orderByRaw("CASE WHEN gps_fraud_flag IN ('device_duplicate', 'out_of_radius') OR note LIKE '%Cảnh báo:%' OR note LIKE '%Nghi ngờ Fake GPS%' THEN 0 ELSE 1 END")
             ->orderBy('id')
-            ->paginate(10);
+            ->get();
 
         $stats = $session->attendanceRecords()
             ->whereHas('classMember')

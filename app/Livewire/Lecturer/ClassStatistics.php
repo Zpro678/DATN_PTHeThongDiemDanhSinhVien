@@ -9,11 +9,11 @@ use Livewire\Component;
 
 class ClassStatistics extends Component
 {
-    public int $class_id;
+    public $class_id;
 
-    public function mount(int $class_id): void
+    public function mount($class_id): void
     {
-        $this->class_id = $class_id;
+        $this->class_id = (int) $class_id;
 
         CourseClass::where('id', $class_id)
             ->where('owner_user_id', auth()->id())

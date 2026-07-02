@@ -7,6 +7,7 @@ use App\Models\ClassSession;
 use Illuminate\Http\Request;
 use Carbon\Carbon;
 use Illuminate\Support\Str;
+use Illuminate\Support\Facades\Cookie;
 
 class AttendanceCheckInController extends Controller
 {
@@ -151,8 +152,18 @@ class AttendanceCheckInController extends Controller
                         'note' => ($record->note ? $record->note . ' | ' : '') . $currentNote,
                         'ip_address' => $request->ip(),
                         'device_fingerprint' => $deviceId,
+                        'gps_fraud_flag' => 'device_duplicate',
                     ]);
                 }
+
+                app(\App\Services\NotificationService::class)->notifyDeviceDuplicate(
+                    $session->courseClass->owner_user_id,
+                    $classMember->user_id ?? null,
+                    $originalMember->user_id ?? null,
+                    $session,
+                    $classMember->full_name ?? 'Sinh viên',
+                    $originalMember->full_name ?? 'Sinh viên'
+                );
 
                 return back()->with('error', 'LỖI: Thiết bị này đã được sử dụng để điểm danh. Hệ thống đã lưu vết gian lận của cả người điểm danh hộ và người nhờ!');
             }
@@ -209,7 +220,7 @@ class AttendanceCheckInController extends Controller
         // Lưu toàn bộ thông tin (bao gồm cả dữ liệu Lớp 2) vào database
         $record->update([
             'status' => $status,
-            'check_in_time' => now(),
+            'check_in_time' => now('Asia/Ho_Chi_Minh'),
             'distance_meters' => $distanceMeters,
             'accuracy' => $accuracy,      // Lưu vào DB
             'altitude' => $altitude,      // Lưu vào DB
@@ -222,11 +233,10 @@ class AttendanceCheckInController extends Controller
         $response = back()->with('success', 'Điểm danh thành công!');
         
         if ($isNewDevice) {
-            // Lưu Cookie thiết bị trong 1 năm (ngăn chặn xóa phiên làm việc tạm thời)
-            $response->withCookie(cookie('device_fingerprint', $deviceId, 60 * 24 * 365));
+            Cookie::queue(cookie('device_fingerprint', $deviceId, 60 * 24 * 365));
         }
 
-        return $response;
+        return back()->with('success', 'Điểm danh thành công!');
     }
 
     private function initializeRecord(int $sessionId, int $memberId): AttendanceRecord

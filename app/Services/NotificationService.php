@@ -426,4 +426,99 @@ class NotificationService
             ->where('data->class_id', $classId)
             ->exists();
     }
+
+    /**
+     * Báo cho giảng viên và sinh viên khi phát hiện điểm danh hộ (trùng thiết bị).
+     */
+    public function notifyDeviceDuplicate(
+        int $lecturerUserId,
+        ?int $student1UserId,
+        ?int $student2UserId,
+        ClassSession $session,
+        string $student1Name,
+        string $student2Name
+    ): void {
+        $className = $session->courseClass?->name ?? 'lớp học';
+        $isQr = !empty($session->qr_token);
+        $url = $this->sessionUrl($lecturerUserId, $session, $isQr);
+
+        // Gửi cho giảng viên
+        $this->push(
+            $lecturerUserId,
+            'App\\Notifications\\FraudWarning',
+            'Phát hiện gian lận (Điểm danh hộ)',
+            "Phát hiện sinh viên {$student1Name} và {$student2Name} điểm danh trùng thiết bị trong buổi \"{$session->name}\" của lớp {$className}.",
+            $url,
+            'danger',
+            ['class_id' => $session->class_id]
+        );
+
+        // Gửi cho sinh viên 1
+        if ($student1UserId) {
+            $studentUrl = route('student.classes.show', ['ma_user' => $student1UserId, 'courseClass' => $session->class_id]);
+            $this->push(
+                $student1UserId,
+                'App\\Notifications\\FraudWarning',
+                'Cảnh báo gian lận (Điểm danh hộ)',
+                "Hệ thống phát hiện bạn sử dụng chung thiết bị điểm danh với sinh viên {$student2Name} trong buổi \"{$session->name}\".",
+                $studentUrl,
+                'danger',
+                ['class_id' => $session->class_id]
+            );
+        }
+
+        // Gửi cho sinh viên 2
+        if ($student2UserId) {
+            $studentUrl = route('student.classes.show', ['ma_user' => $student2UserId, 'courseClass' => $session->class_id]);
+            $this->push(
+                $student2UserId,
+                'App\\Notifications\\FraudWarning',
+                'Cảnh báo gian lận (Điểm danh hộ)',
+                "Hệ thống phát hiện bạn sử dụng chung thiết bị điểm danh với sinh viên {$student1Name} trong buổi \"{$session->name}\".",
+                $studentUrl,
+                'danger',
+                ['class_id' => $session->class_id]
+            );
+        }
+    }
+
+    /**
+     * Báo cho giảng viên và sinh viên khi phát hiện sai GPS (khoảng cách quá xa).
+     */
+    public function notifyGpsFraud(
+        int $lecturerUserId,
+        ?int $studentUserId,
+        ClassSession $session,
+        string $studentName,
+        float $distanceMeters
+    ): void {
+        $className = $session->courseClass?->name ?? 'lớp học';
+        $isQr = !empty($session->qr_token);
+        $url = $this->sessionUrl($lecturerUserId, $session, $isQr);
+
+        // Gửi cho giảng viên
+        $this->push(
+            $lecturerUserId,
+            'App\\Notifications\\FraudWarning',
+            'Cảnh báo vị trí (Sai GPS)',
+            "Sinh viên {$studentName} điểm danh ngoài phạm vi cho phép (" . round($distanceMeters) . "m) trong buổi \"{$session->name}\" của lớp {$className}.",
+            $url,
+            'warning',
+            ['class_id' => $session->class_id]
+        );
+
+        // Gửi cho sinh viên
+        if ($studentUserId) {
+            $studentUrl = route('student.classes.show', ['ma_user' => $studentUserId, 'courseClass' => $session->class_id]);
+            $this->push(
+                $studentUserId,
+                'App\\Notifications\\FraudWarning',
+                'Điểm danh thất bại (Sai vị trí)',
+                "Hệ thống phát hiện vị trí của bạn quá xa lớp học (" . round($distanceMeters) . "m) khi điểm danh buổi \"{$session->name}\". Kết quả điểm danh không được công nhận.",
+                $studentUrl,
+                'warning',
+                ['class_id' => $session->class_id]
+            );
+        }
+    }
 }

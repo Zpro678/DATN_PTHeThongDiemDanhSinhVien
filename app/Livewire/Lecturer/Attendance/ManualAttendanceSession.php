@@ -67,7 +67,7 @@ class ManualAttendanceSession extends Component
 
     public function setStatusFilter(string $status): void
     {
-        abort_unless(in_array($status, ['all', 'pending', 'present', 'late', 'absent', 'excused'], true), 422);
+        abort_unless(in_array($status, ['all', 'pending', 'present', 'late', 'absent', 'excused', 'invalid'], true), 422);
 
         $this->statusFilter = $status;
     }
@@ -137,7 +137,7 @@ class ManualAttendanceSession extends Component
                 'status' => $status,
                 'note' => $note !== '' ? $note : null,
                 'check_in_time' => in_array($status, ['present', 'late'], true)
-                    ? ($record->check_in_time ?? now())
+                    ? ($record->check_in_time ?? now('Asia/Ho_Chi_Minh'))
                     : null,
                 'is_account' => $record->classMember?->user_id !== null,
             ]);

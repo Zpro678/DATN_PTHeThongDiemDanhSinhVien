@@ -167,6 +167,7 @@ class AttendanceCheckIn extends Component
         // Check for device duplication (Điểm danh hộ)
         // Check if there is already a record in this session with the same fingerprint but a different member ID that has already checked in
         $duplicateRecord = \App\Models\AttendanceRecord::query()
+            ->with(['classMember.user'])
             ->where('class_session_id', $this->session->id)
             ->where('class_member_id', '!=', $this->record->class_member_id)
             ->where('device_fingerprint', $deviceFingerprint)
@@ -176,6 +177,17 @@ class AttendanceCheckIn extends Component
 
         if ($duplicateRecord) {
             $gpsFraudFlag = 'device_duplicate';
+            
+            $this->record->loadMissing('classMember');
+            
+            app(\App\Services\NotificationService::class)->notifyDeviceDuplicate(
+                $this->session->courseClass->owner_user_id,
+                $this->record->classMember->user_id ?? null,
+                $duplicateRecord->classMember->user_id ?? null,
+                $this->session,
+                $this->record->classMember->full_name ?? 'Sinh viên',
+                $duplicateRecord->classMember->full_name ?? 'Sinh viên'
+            );
         }
 
         if ($this->session->gps_radius && $this->session->gps_latitude && $this->session->gps_longitude) {
@@ -210,12 +222,21 @@ class AttendanceCheckIn extends Component
                 
                 // Vẫn ghi nhận nhật ký gian lận
                 $gpsFraudFlag = 'out_of_radius';
+                
+                $this->record->loadMissing('classMember');
+                app(\App\Services\NotificationService::class)->notifyGpsFraud(
+                    $this->session->courseClass->owner_user_id,
+                    $this->record->classMember->user_id ?? null,
+                    $this->session,
+                    $this->record->classMember->full_name ?? 'Sinh viên',
+                    $distanceMeters
+                );
             }
         }
 
         $this->record->update([
             'status' => $gpsFraudFlag === 'out_of_radius' ? 'invalid' : $status,
-            'check_in_time' => now(),
+            'check_in_time' => now('Asia/Ho_Chi_Minh'),
             'distance_meters' => $distanceMeters,
             'gps_accuracy_meters' => $gpsAccuracy,
             'gps_latitude_recorded' => $gpsLatRecorded,
