@@ -464,13 +464,13 @@
                                 'hover:border-slate-300 hover:shadow-md hover:-translate-y-0.5' => ! $isEnded,
                                 'opacity-75' => $isEnded,
                             ])>
-                                <a href="{{ route('lecturer.classes.show', $class['id']) }}" class="absolute inset-0 z-10"><span class="sr-only">Xem chi tiết lớp</span></a>
+                                <a href="{{ route('lecturer.classes.show', $class['id']) }}" wire:navigate class="absolute inset-0 z-10"><span class="sr-only">Xem chi tiết lớp</span></a>
 
                                 {{-- Header Theme Color --}}
                                 <div class="{{ $isEnded ? 'bg-on-surface-variant' : $themeColor }} h-24 px-5 py-4 relative">
                                     <div class="relative z-10 w-3/4">
                                         <h3 class="truncate font-normal text-white text-[22px] tracking-wide leading-tight" title="{{ $class['title'] }}">
-                                            <a href="{{ route('lecturer.classes.show', $class['id']) }}" class="hover:underline focus:outline-none">{{ $class['title'] }}</a>
+                                            <a href="{{ route('lecturer.classes.show', $class['id']) }}" wire:navigate class="hover:underline focus:outline-none">{{ $class['title'] }}</a>
                                         </h3>
                                         <p class="mt-1 truncate text-[13px] font-light text-white/95 tracking-wide">Mã lớp: {{ $class['code'] ?? 'N/A' }}</p>
                                     </div>
@@ -558,7 +558,7 @@
                                         ['label' => 'Quản lý SV', 'icon' => 'users'],
                                         ['label' => 'Thống kê', 'icon' => 'bar-chart'],
                                     ] as $action)
-                                        <a href="{{ match ($action['label']) { 'Điểm danh QR' => route('lecturer.attendance.qr.create', ['class_id' => $class['id']]), 'Thủ công' => route('lecturer.attendance.create', ['class_id' => $class['id']]), 'Quản lý SV' => route('lecturer.students.index', ['class_id' => $class['id']]), 'Thống kê' => route('lecturer.class.statistics', ['class_id' => $class['id']]), default => '#' } }}" @class([
+                                        <a href="{{ match ($action['label']) { 'Điểm danh QR' => route('lecturer.attendance.qr.create', ['class_id' => $class['id']]), 'Thủ công' => route('lecturer.attendance.create', ['class_id' => $class['id']]), 'Quản lý SV' => route('lecturer.students.index', ['class_id' => $class['id']]), 'Thống kê' => route('lecturer.class.statistics', ['class_id' => $class['id']]), default => '#' } }}" wire:navigate @class([
                                             'group/action rounded-lg p-2 transition-colors hover:bg-surface-container',
                                             'pointer-events-none opacity-40' => $isEnded && in_array($action['icon'], ['qr-code', 'check-square'], true),
                                         ]) title="{{ $action['label'] }}">
@@ -572,11 +572,11 @@
                                         </button>
                                         <div x-cloak x-show="open" x-on:click.outside="open = false" class="absolute right-0 bottom-full z-50 mb-1 w-44 overflow-hidden rounded-lg border border-outline-variant bg-white py-1 shadow-lg">
                                             <div class="px-3 py-2 border-b border-outline-variant/30 text-xs font-semibold uppercase tracking-wider text-on-surface-variant">Thao tác</div>
-                                            <a href="{{ route('lecturer.classes.show', $class['id']) }}" class="flex items-center gap-2 px-4 py-2.5 text-sm text-on-surface hover:bg-surface-container">
+                                            <a href="{{ route('lecturer.classes.show', $class['id']) }}" wire:navigate class="flex items-center gap-2 px-4 py-2.5 text-sm text-on-surface hover:bg-surface-container">
                                                 <x-user.icon name="eye" :size="16" />
                                                 Chi tiết
                                             </a>
-                                            <a href="{{ route('lecturer.class.statistics', ['class_id' => $class['id']]) }}" class="flex items-center gap-2 px-4 py-2.5 text-sm text-on-surface hover:bg-surface-container">
+                                            <a href="{{ route('lecturer.class.statistics', ['class_id' => $class['id']]) }}" wire:navigate class="flex items-center gap-2 px-4 py-2.5 text-sm text-on-surface hover:bg-surface-container">
                                                 <x-user.icon name="bar-chart-2" :size="16" />
                                                 Thống kê
                                             </a>
@@ -733,7 +733,7 @@
                                         </button>
                                         <div x-cloak x-show="open" x-on:click.outside="open = false" class="absolute right-0 bottom-full z-50 mb-1 w-44 overflow-hidden rounded-lg border border-outline-variant bg-white py-1 shadow-lg">
                                             <div class="px-3 py-2 border-b border-outline-variant/30 text-xs font-semibold uppercase tracking-wider text-on-surface-variant">Thao tác</div>
-                                            <a href="{{ route('student.classes.show', $class['class_id']) }}" class="flex items-center gap-2 px-4 py-2.5 text-sm text-on-surface hover:bg-surface-container">
+                                            <a href="{{ route('student.classes.show', $class['class_id']) }}" wire:navigate class="flex items-center gap-2 px-4 py-2.5 text-sm text-on-surface hover:bg-surface-container">
                                                 <x-user.icon name="eye" :size="16" />
                                                 Chi tiết
                                             </a>

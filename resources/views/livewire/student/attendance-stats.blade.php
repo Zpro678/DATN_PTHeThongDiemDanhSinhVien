@@ -154,6 +154,7 @@
                     @endphp
                     
                     <a href="{{ route('student.classes.show', ['ma_user' => auth()->id(), 'courseClass' => $subject['class_id'], 'from' => 'attendance-stats']) }}"
+                       wire:navigate
                        class="group relative flex flex-col justify-between overflow-hidden rounded-3xl border {{ $cardBorder }} {{ $bgGradient }} p-6 shadow-sm transition-all duration-300 hover:shadow-lg">
                        
                         <div class="mb-5 flex items-start justify-between gap-4">

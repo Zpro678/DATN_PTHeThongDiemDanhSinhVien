@@ -70,13 +70,13 @@
                 'border-error/40 ring-1 ring-error/20' => $isWarning,
                 'opacity-75' => $isEnded,
             ])>
-                <a href="{{ route('student.classes.show', $class['id']) }}" class="absolute inset-0 z-10"><span class="sr-only">Vào thông tin lớp</span></a>
+                <a href="{{ route('student.classes.show', $class['id']) }}" wire:navigate class="absolute inset-0 z-10"><span class="sr-only">Vào thông tin lớp</span></a>
 
                 {{-- Header Theme Color --}}
                 <div class="{{ $isEnded ? 'bg-on-surface-variant' : ($isWarning ? 'bg-error' : $themeColor) }} h-24 px-5 py-4 relative">
                     <div class="relative z-10 w-3/4">
                         <h3 class="truncate font-normal text-white text-[22px] tracking-wide leading-tight" title="{{ $class['title'] }}">
-                            <a href="{{ route('student.classes.show', $class['id']) }}" class="hover:underline focus:outline-none">{{ $class['title'] }}</a>
+                            <a href="{{ route('student.classes.show', $class['id']) }}" wire:navigate class="hover:underline focus:outline-none">{{ $class['title'] }}</a>
                         </h3>
                         <p class="mt-1 truncate text-[13px] text-white/95 font-light tracking-wide">{{ $class['schedule'] }}</p>
                         <p class="mt-0.5 truncate text-[12px] text-white/80 font-light tracking-wide">{{ $class['teacher'] }}</p>
@@ -156,7 +156,7 @@
 
                 {{-- Bottom Action bar --}}
                 <div class="relative z-20 flex items-center justify-end gap-0.5 border-t border-outline-variant px-3 py-2 bg-white">
-                    <a href="{{ route('student.classes.show', $class['id']) }}" class="group/btn rounded-lg p-2 transition-colors hover:bg-surface-container" title="Hồ sơ môn học">
+                    <a href="{{ route('student.classes.show', $class['id']) }}" wire:navigate class="group/btn rounded-lg p-2 transition-colors hover:bg-surface-container" title="Hồ sơ môn học">
                         <x-user.icon name="book-open" class="text-on-surface-variant transition-colors group-hover/btn:text-primary" :size="18"/>
                     </a>
                     <a href="{{ route('student.attendance.history', ['classFilter' => $class['id']]) }}" class="group/btn rounded-lg p-2 transition-colors hover:bg-surface-container" title="Lịch sử điểm danh">
@@ -167,7 +167,7 @@
                             <x-user.icon name="more-vertical" :size="18" />
                         </button>
                         <div x-cloak x-show="open" x-on:click.outside="open = false" class="absolute right-0 bottom-full z-50 mb-1 w-44 overflow-hidden rounded-lg border border-outline-variant bg-white py-1 shadow-lg">
-                            <a href="{{ route('student.classes.show', $class['id']) }}" class="block px-4 py-2 text-sm text-on-surface hover:bg-surface-container">Vào thông tin</a>
+                            <a href="{{ route('student.classes.show', $class['id']) }}" wire:navigate class="block px-4 py-2 text-sm text-on-surface hover:bg-surface-container">Vào thông tin</a>
                             <a href="{{ route('student.attendance.history', ['classFilter' => $class['id']]) }}" class="block px-4 py-2 text-sm text-on-surface hover:bg-surface-container">Lịch sử</a>
                         </div>
                     </div>

@@ -237,11 +237,24 @@
             {{-- ============================ BODY: SIDEBAR + CONTENT ============================ --}}
             <div class="flex min-h-0 flex-1">
 
-                {{-- ============================ SIDEBAR (≥ md) ============================ --}}
-                <aside
-                    class="sidebar-anim sticky top-16 hidden h-[calc(100vh-4rem)] shrink-0 flex-col overflow-hidden border-r border-outline-variant bg-white md:flex"
-                    :class="sidebarCollapsed ? 'w-[76px]' : 'w-[260px]'"
-                >
+            {{-- ============================ SIDEBAR (≥ md) ============================ --}}
+            <script>
+                if (localStorage.getItem('sidebarCollapsed') === '1') {
+                    document.documentElement.classList.add('sidebar-collapsed-init');
+                } else {
+                    document.documentElement.classList.remove('sidebar-collapsed-init');
+                }
+            </script>
+            <style>
+                html.sidebar-collapsed-init .main-sidebar { width: 76px !important; }
+                html.sidebar-collapsed-init .sidebar-text { display: none !important; }
+                html:not(.sidebar-collapsed-init) .main-sidebar { width: 260px !important; }
+            </style>
+            <aside
+                class="main-sidebar sidebar-anim sticky top-16 hidden h-[calc(100vh-4rem)] shrink-0 flex-col overflow-hidden border-r border-outline-variant bg-white md:flex"
+                :class="sidebarCollapsed ? 'w-[76px]' : 'w-[260px]'"
+                x-init="$watch('sidebarCollapsed', val => document.documentElement.classList.toggle('sidebar-collapsed-init', val))"
+            >
                     <nav class="scrollbar-custom flex-1 space-y-2 overflow-y-auto overflow-x-hidden px-3 py-5">
                         {{-- Tổng quan --}}
                         <a href="{{ route('dashboard') }}" wire:navigate title="Tổng quan"
@@ -252,7 +265,7 @@
                                 'text-on-surface-variant hover:bg-surface-container hover:text-on-surface' => ! $dashboardActive,
                             ])>
                             <x-user.icon name="layout-dashboard" :size="24" class="shrink-0" />
-                            <span class="truncate whitespace-nowrap" x-show="!sidebarCollapsed" x-transition:enter="transition-opacity duration-200 delay-100" x-transition:enter-start="opacity-0" x-transition:enter-end="opacity-100" x-transition:leave="transition-opacity duration-100" x-transition:leave-start="opacity-100" x-transition:leave-end="opacity-0">Tổng quan</span>
+                            <span class="sidebar-text truncate whitespace-nowrap" x-show="!sidebarCollapsed" x-transition:enter="transition-opacity duration-200 delay-100" x-transition:enter-start="opacity-0" x-transition:enter-end="opacity-100" x-transition:leave="transition-opacity duration-100" x-transition:leave-start="opacity-100" x-transition:leave-end="opacity-0">Tổng quan</span>
                         </a>
 
                         {{-- Giảng dạy --}}
@@ -264,7 +277,7 @@
                                 'text-on-surface-variant hover:bg-surface-container hover:text-on-surface' => ! $teachGroupActive,
                             ])>
                             <x-user.icon name="shield" :size="24" class="shrink-0" />
-                            <span class="truncate whitespace-nowrap" x-show="!sidebarCollapsed" x-transition:enter="transition-opacity duration-200 delay-100" x-transition:enter-start="opacity-0" x-transition:enter-end="opacity-100" x-transition:leave="transition-opacity duration-100" x-transition:leave-start="opacity-100" x-transition:leave-end="opacity-0">Giảng dạy</span>
+                            <span class="sidebar-text truncate whitespace-nowrap" x-show="!sidebarCollapsed" x-transition:enter="transition-opacity duration-200 delay-100" x-transition:enter-start="opacity-0" x-transition:enter-end="opacity-100" x-transition:leave="transition-opacity duration-100" x-transition:leave-start="opacity-100" x-transition:leave-end="opacity-0">Giảng dạy</span>
                         </a>
 
                         {{-- Học tập --}}
@@ -276,7 +289,7 @@
                                 'text-on-surface-variant hover:bg-surface-container hover:text-on-surface' => ! $learnGroupActive,
                             ])>
                             <x-user.icon name="graduation-cap" :size="24" class="shrink-0" />
-                            <span class="truncate whitespace-nowrap" x-show="!sidebarCollapsed" x-transition:enter="transition-opacity duration-200 delay-100" x-transition:enter-start="opacity-0" x-transition:enter-end="opacity-100" x-transition:leave="transition-opacity duration-100" x-transition:leave-start="opacity-100" x-transition:leave-end="opacity-0">Học tập</span>
+                            <span class="sidebar-text truncate whitespace-nowrap" x-show="!sidebarCollapsed" x-transition:enter="transition-opacity duration-200 delay-100" x-transition:enter-start="opacity-0" x-transition:enter-end="opacity-100" x-transition:leave="transition-opacity duration-100" x-transition:leave-start="opacity-100" x-transition:leave-end="opacity-0">Học tập</span>
                         </a>
 
                         {{-- Cảnh báo --}}
@@ -288,7 +301,7 @@
                                 'text-on-surface-variant hover:bg-surface-container hover:text-on-surface' => ! $warningsActive,
                             ])>
                             <x-user.icon name="alert-triangle" :size="24" class="shrink-0" />
-                            <span class="truncate whitespace-nowrap" x-show="!sidebarCollapsed" x-transition:enter="transition-opacity duration-200 delay-100" x-transition:enter-start="opacity-0" x-transition:enter-end="opacity-100" x-transition:leave="transition-opacity duration-100" x-transition:leave-start="opacity-100" x-transition:leave-end="opacity-0">Cảnh báo</span>
+                            <span class="sidebar-text truncate whitespace-nowrap" x-show="!sidebarCollapsed" x-transition:enter="transition-opacity duration-200 delay-100" x-transition:enter-start="opacity-0" x-transition:enter-end="opacity-100" x-transition:leave="transition-opacity duration-100" x-transition:leave-start="opacity-100" x-transition:leave-end="opacity-0">Cảnh báo</span>
                         </a>
                     </nav>
 
@@ -296,14 +309,14 @@
                         <a href="{{ route('support') }}" wire:navigate title="Hỗ trợ"
                             :class="sidebarCollapsed ? 'justify-center px-0' : ''"
                             class="flex items-center gap-3 rounded-lg px-3 py-2 text-[17px] font-medium text-on-surface-variant transition-colors hover:bg-surface-container hover:text-on-surface">
-                            <x-user.icon name="help-circle" :size="24" class="shrink-0" /> <span class="whitespace-nowrap" x-show="!sidebarCollapsed" x-transition:enter="transition-opacity duration-200 delay-100" x-transition:enter-start="opacity-0" x-transition:enter-end="opacity-100" x-transition:leave="transition-opacity duration-100" x-transition:leave-start="opacity-100" x-transition:leave-end="opacity-0">Hỗ trợ</span>
+                            <x-user.icon name="help-circle" :size="24" class="shrink-0" /> <span class="sidebar-text whitespace-nowrap" x-show="!sidebarCollapsed" x-transition:enter="transition-opacity duration-200 delay-100" x-transition:enter-start="opacity-0" x-transition:enter-end="opacity-100" x-transition:leave="transition-opacity duration-100" x-transition:leave-start="opacity-100" x-transition:leave-end="opacity-0">Hỗ trợ</span>
                         </a>
                         <form method="POST" action="{{ route('logout') }}">
                             @csrf
                             <button type="submit" title="Đăng xuất"
                                 :class="sidebarCollapsed ? 'justify-center px-0' : ''"
                                 class="flex w-full items-center gap-3 rounded-lg px-3 py-2 text-[17px] font-medium text-error transition-colors hover:bg-error/10">
-                                <x-user.icon name="log-out" :size="24" class="shrink-0" /> <span class="whitespace-nowrap" x-show="!sidebarCollapsed" x-transition:enter="transition-opacity duration-200 delay-100" x-transition:enter-start="opacity-0" x-transition:enter-end="opacity-100" x-transition:leave="transition-opacity duration-100" x-transition:leave-start="opacity-100" x-transition:leave-end="opacity-0">Đăng xuất</span>
+                                <x-user.icon name="log-out" :size="24" class="shrink-0" /> <span class="sidebar-text whitespace-nowrap" x-show="!sidebarCollapsed" x-transition:enter="transition-opacity duration-200 delay-100" x-transition:enter-start="opacity-0" x-transition:enter-end="opacity-100" x-transition:leave="transition-opacity duration-100" x-transition:leave-start="opacity-100" x-transition:leave-end="opacity-0">Đăng xuất</span>
                             </button>
                         </form>
                     </div>
