@@ -71,6 +71,23 @@
 
     <script>
         window.lucide?.createIcons();
+
+        // Polling to check email verification status
+        setInterval(() => {
+            fetch('{{ url('api/check-email-verification') }}', {
+                headers: {
+                    'Accept': 'application/json',
+                    'X-Requested-With': 'XMLHttpRequest'
+                }
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.verified) {
+                    window.location.href = "{{ route('dashboard', absolute: false) }}?verified=1";
+                }
+            })
+            .catch(error => console.error('Error checking verification:', error));
+        }, 3000);
     </script>
 </body>
 </html>

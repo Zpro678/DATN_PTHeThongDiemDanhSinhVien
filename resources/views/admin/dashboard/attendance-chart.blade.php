@@ -43,7 +43,7 @@
     $areaPath = $primaryPath . sprintf(' L %0.1f,%0.1f L %0.1f,%0.1f Z', $primaryPoints[array_key_last($primaryPoints)]['x'], $height - $paddingY, $primaryPoints[0]['x'], $height - $paddingY);
 @endphp
 
-<div class="admin-card admin-card-hover overflow-hidden rounded-2xl border p-6">
+<div class="admin-card admin-card-hover overflow-hidden rounded-2xl border p-6 h-full">
     <div class="relative z-10 mb-6 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
         <div>
             <h2 class="text-lg font-extrabold tracking-tight text-slate-900">
