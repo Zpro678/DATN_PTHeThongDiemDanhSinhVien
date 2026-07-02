@@ -89,7 +89,9 @@
 
         <title>{{ $title ? $title.' · ' : '' }}{{ config('app.name', 'Attendia Tech') }}</title>
 
-        <link rel="icon" type="image/png" href="{{ asset('favicon.png?v=' . time()) }}">
+        <link rel="icon" href="{{ asset('favicon.svg') }}" type="image/svg+xml">
+        <link rel="alternate icon" type="image/png" href="{{ asset('favicon.png?v=' . time()) }}">
+        <link rel="apple-touch-icon" href="{{ asset('favicon.png') }}">
 
         <link rel="preconnect" href="https://fonts.googleapis.com">
         <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -129,9 +131,9 @@
                         </div>
 
                         <a href="{{ route('dashboard') }}" wire:navigate class="flex min-w-0 shrink-0 items-center gap-2.5">
-                            <span class="grid h-9 w-9 shrink-0 place-items-center rounded-xl bg-primary text-white shadow-sm shadow-primary/30">
-                                <x-user.icon name="school" :size="18" />
-                            </span>
+                            <img src="{{ asset('favicon.svg') }}" alt="Attendia Tech"
+                                class="h-9 w-9 shrink-0 rounded-xl drop-shadow-[0_2px_4px_rgba(15,23,42,0.22)]">
+
                             <span class="hidden leading-tight sm:block">
                                 <span class="block text-[16px] font-extrabold tracking-tight text-on-surface">Attendia Tech</span>
                                 <span class="block text-[10px] font-semibold uppercase tracking-wider text-on-surface-variant">Hệ thống điểm danh</span>
@@ -237,7 +239,7 @@
 
                 {{-- ============================ SIDEBAR (≥ md) ============================ --}}
                 <aside
-                    class="sticky top-16 hidden h-[calc(100vh-4rem)] shrink-0 flex-col overflow-hidden border-r border-outline-variant bg-white md:flex"
+                    class="sidebar-anim sticky top-16 hidden h-[calc(100vh-4rem)] shrink-0 flex-col overflow-hidden border-r border-outline-variant bg-white md:flex"
                     :class="sidebarCollapsed ? 'w-[76px]' : 'w-[260px]'"
                 >
                     <nav class="scrollbar-custom flex-1 space-y-2 overflow-y-auto overflow-x-hidden px-3 py-5">
@@ -250,7 +252,7 @@
                                 'text-on-surface-variant hover:bg-surface-container hover:text-on-surface' => ! $dashboardActive,
                             ])>
                             <x-user.icon name="layout-dashboard" :size="24" class="shrink-0" />
-                            <span class="truncate" x-show="!sidebarCollapsed">Tổng quan</span>
+                            <span class="truncate whitespace-nowrap" x-show="!sidebarCollapsed" x-transition:enter="transition-opacity duration-200 delay-100" x-transition:enter-start="opacity-0" x-transition:enter-end="opacity-100" x-transition:leave="transition-opacity duration-100" x-transition:leave-start="opacity-100" x-transition:leave-end="opacity-0">Tổng quan</span>
                         </a>
 
                         {{-- Giảng dạy --}}
@@ -262,7 +264,7 @@
                                 'text-on-surface-variant hover:bg-surface-container hover:text-on-surface' => ! $teachGroupActive,
                             ])>
                             <x-user.icon name="shield" :size="24" class="shrink-0" />
-                            <span class="truncate" x-show="!sidebarCollapsed">Giảng dạy</span>
+                            <span class="truncate whitespace-nowrap" x-show="!sidebarCollapsed" x-transition:enter="transition-opacity duration-200 delay-100" x-transition:enter-start="opacity-0" x-transition:enter-end="opacity-100" x-transition:leave="transition-opacity duration-100" x-transition:leave-start="opacity-100" x-transition:leave-end="opacity-0">Giảng dạy</span>
                         </a>
 
                         {{-- Học tập --}}
@@ -274,7 +276,7 @@
                                 'text-on-surface-variant hover:bg-surface-container hover:text-on-surface' => ! $learnGroupActive,
                             ])>
                             <x-user.icon name="graduation-cap" :size="24" class="shrink-0" />
-                            <span class="truncate" x-show="!sidebarCollapsed">Học tập</span>
+                            <span class="truncate whitespace-nowrap" x-show="!sidebarCollapsed" x-transition:enter="transition-opacity duration-200 delay-100" x-transition:enter-start="opacity-0" x-transition:enter-end="opacity-100" x-transition:leave="transition-opacity duration-100" x-transition:leave-start="opacity-100" x-transition:leave-end="opacity-0">Học tập</span>
                         </a>
 
                         {{-- Cảnh báo --}}
@@ -286,7 +288,7 @@
                                 'text-on-surface-variant hover:bg-surface-container hover:text-on-surface' => ! $warningsActive,
                             ])>
                             <x-user.icon name="alert-triangle" :size="24" class="shrink-0" />
-                            <span class="truncate" x-show="!sidebarCollapsed">Cảnh báo</span>
+                            <span class="truncate whitespace-nowrap" x-show="!sidebarCollapsed" x-transition:enter="transition-opacity duration-200 delay-100" x-transition:enter-start="opacity-0" x-transition:enter-end="opacity-100" x-transition:leave="transition-opacity duration-100" x-transition:leave-start="opacity-100" x-transition:leave-end="opacity-0">Cảnh báo</span>
                         </a>
                     </nav>
 
@@ -294,14 +296,14 @@
                         <a href="{{ route('support') }}" wire:navigate title="Hỗ trợ"
                             :class="sidebarCollapsed ? 'justify-center px-0' : ''"
                             class="flex items-center gap-3 rounded-lg px-3 py-2 text-[17px] font-medium text-on-surface-variant transition-colors hover:bg-surface-container hover:text-on-surface">
-                            <x-user.icon name="help-circle" :size="24" class="shrink-0" /> <span x-show="!sidebarCollapsed">Hỗ trợ</span>
+                            <x-user.icon name="help-circle" :size="24" class="shrink-0" /> <span class="whitespace-nowrap" x-show="!sidebarCollapsed" x-transition:enter="transition-opacity duration-200 delay-100" x-transition:enter-start="opacity-0" x-transition:enter-end="opacity-100" x-transition:leave="transition-opacity duration-100" x-transition:leave-start="opacity-100" x-transition:leave-end="opacity-0">Hỗ trợ</span>
                         </a>
                         <form method="POST" action="{{ route('logout') }}">
                             @csrf
                             <button type="submit" title="Đăng xuất"
                                 :class="sidebarCollapsed ? 'justify-center px-0' : ''"
                                 class="flex w-full items-center gap-3 rounded-lg px-3 py-2 text-[17px] font-medium text-error transition-colors hover:bg-error/10">
-                                <x-user.icon name="log-out" :size="24" class="shrink-0" /> <span x-show="!sidebarCollapsed">Đăng xuất</span>
+                                <x-user.icon name="log-out" :size="24" class="shrink-0" /> <span class="whitespace-nowrap" x-show="!sidebarCollapsed" x-transition:enter="transition-opacity duration-200 delay-100" x-transition:enter-start="opacity-0" x-transition:enter-end="opacity-100" x-transition:leave="transition-opacity duration-100" x-transition:leave-start="opacity-100" x-transition:leave-end="opacity-0">Đăng xuất</span>
                             </button>
                         </form>
                     </div>
@@ -319,7 +321,7 @@
                             class="absolute inset-y-0 left-0 flex w-[280px] max-w-[82%] flex-col bg-white shadow-xl">
                             <div class="flex h-16 items-center justify-between border-b border-outline-variant px-5">
                                 <div class="flex items-center gap-2.5">
-                                    <span class="grid h-9 w-9 place-items-center rounded-xl bg-primary text-white"><x-user.icon name="school" :size="20" /></span>
+                                    <img src="{{ asset('favicon.svg') }}" alt="Attendia Tech" class="h-9 w-9 rounded-xl drop-shadow-[0_2px_4px_rgba(15,23,42,0.22)]">
                                     <span class="text-[15px] font-extrabold text-on-surface">Attendia Tech</span>
                                 </div>
                                 <button type="button" x-on:click="navOpen = false" class="rounded-lg p-1.5 text-on-surface-variant hover:bg-surface-container">
