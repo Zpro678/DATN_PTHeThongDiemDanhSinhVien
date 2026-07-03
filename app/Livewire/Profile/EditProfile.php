@@ -17,8 +17,6 @@ class EditProfile extends Component
 
     public $email;
 
-    public $member_id;
-
     public $avatar;
 
     public $current_password;
@@ -27,12 +25,30 @@ class EditProfile extends Component
 
     public $password_confirmation;
 
+    public function messages()
+    {
+        return [
+            'avatar.image' => 'File tải lên bắt buộc phải là định dạng hình ảnh.',
+            'avatar.max' => 'Kích thước ảnh không được vượt quá 10MB.',
+            'name.required' => 'Họ và tên không được để trống.',
+            'email.required' => 'Email không được để trống.',
+            'email.email' => 'Email không đúng định dạng.',
+            'email.unique' => 'Email này đã được sử dụng bởi một tài khoản khác.'
+        ];
+    }
+
+    public function updatedAvatar()
+    {
+        $this->validate([
+            'avatar' => ['nullable', 'image', 'max:10240'],
+        ]);
+    }
+
     public function mount()
     {
         $user = Auth::user();
         $this->name = $user->name;
         $this->email = $user->email;
-        $this->member_id = $user->member_id;
     }
 
     public function updateProfileInformation()
@@ -41,14 +57,12 @@ class EditProfile extends Component
 
         $this->validate([
             'name' => ['required', 'string', 'max:255'],
-            'member_id' => ['nullable', 'string', 'max:50', Rule::unique('users')->ignore($user->id)],
             'email' => ['required', 'string', 'lowercase', 'email', 'max:255', Rule::unique('users')->ignore($user->id)],
-            'avatar' => ['nullable', 'image', 'max:1024'], // 1MB Max
+            'avatar' => ['nullable', 'image', 'max:10240'], // 10MB Max
         ]);
 
         $user->fill([
             'name' => $this->name,
-            'member_id' => $this->member_id,
             'email' => $this->email,
         ]);
 
@@ -64,6 +78,8 @@ class EditProfile extends Component
         $user->save();
 
         session()->flash('status', 'Thông tin cá nhân đã được cập nhật thành công.');
+
+        return redirect()->route('profile.edit');
     }
 
     public function updatePassword()

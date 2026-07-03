@@ -1,15 +1,15 @@
 <div>
     @php
         $initial = function_exists('mb_substr')
-            ? mb_strtoupper(mb_substr($user->name ?? 'U', 0, 1, 'UTF-8'), 'UTF-8')
-            : strtoupper(substr($user->name ?? 'U', 0, 1));
+            ? mb_strtoupper(mb_substr($name ?? 'U', 0, 1, 'UTF-8'), 'UTF-8')
+            : strtoupper(substr($name ?? 'U', 0, 1));
     @endphp
     <div class="mx-auto max-w-[1500px] space-y-6">
         <section class="flex flex-col justify-between gap-4 p-6 lg:flex-row lg:items-end lg:p-7 mb-2">
             <div>
                 <p class="text-[10px] font-bold uppercase tracking-[0.3em] text-slate-400">Người dùng</p>
                 <h1 class="mt-1 text-3xl font-black tracking-tight text-slate-900">Chỉnh sửa hồ sơ</h1>
-                <p class="mt-1 text-sm font-medium text-slate-500">{{ $user->name }} - {{ $user->email }}</p>
+                <p class="mt-1 text-sm font-medium text-slate-500">{{ $name }} - {{ $email }}</p>
             </div>
 
             <div class="flex flex-wrap gap-2">
@@ -35,8 +35,8 @@
                         @endif
                         <div class="min-w-0">
                             <p class="text-[10px] font-bold uppercase tracking-widest text-slate-400">Tài khoản hiện tại</p>
-                            <h2 class="truncate text-xl font-black text-slate-900">{{ $user->name }}</h2>
-                            <p class="truncate text-sm font-medium text-slate-500">{{ $user->email }}</p>
+                            <h2 class="truncate text-xl font-black text-slate-900">{{ $name }}</h2>
+                            <p class="truncate text-sm font-medium text-slate-500">{{ $email }}</p>
                         </div>
                     </div>
 
@@ -47,7 +47,9 @@
                         </div>
                         <div class="flex items-center justify-between gap-4">
                             <dt class="font-medium text-slate-500">Trạng thái</dt>
-                            <dd class="font-bold text-slate-900">{{ ucfirst($user->status ?? 'active') }}</dd>
+                            <dd class="font-bold text-slate-900">
+                                @if($status === 'active') Đang hoạt động @else Đã khóa @endif
+                            </dd>
                         </div>
                     </dl>
                 </div>
@@ -71,13 +73,13 @@
                         <div class="space-y-5">
                             <div>
                                 <label class="mb-2 block text-[10px] font-bold uppercase tracking-widest text-slate-400">Họ và tên</label>
-                                <input type="text" wire:model="name" class="w-full rounded-xl border border-slate-200 bg-white px-4 py-3 text-sm font-bold text-slate-900 focus:border-blue-500 focus:ring-2 focus:ring-blue-500">
+                                <input type="text" wire:model.live="name" class="w-full rounded-xl border border-slate-200 bg-white px-4 py-3 text-sm font-bold text-slate-900 focus:border-blue-500 focus:ring-2 focus:ring-blue-500">
                                 @error('name')<p class="mt-1 text-xs text-red-500">{{ $message }}</p>@enderror
                             </div>
 
                             <div>
                                 <label class="mb-2 block text-[10px] font-bold uppercase tracking-widest text-slate-400">Email</label>
-                                <input type="email" wire:model="email" class="w-full rounded-xl border border-slate-200 bg-white px-4 py-3 text-sm font-bold text-slate-900 focus:border-blue-500 focus:ring-2 focus:ring-blue-500">
+                                <input type="email" wire:model.live="email" class="w-full rounded-xl border border-slate-200 bg-white px-4 py-3 text-sm font-bold text-slate-900 focus:border-blue-500 focus:ring-2 focus:ring-blue-500">
                                 @error('email')<p class="mt-1 text-xs text-red-500">{{ $message }}</p>@enderror
                             </div>
                         </div>
@@ -85,14 +87,7 @@
                         <div class="space-y-5">
                             <div>
                                 <label class="mb-2 block text-[10px] font-bold uppercase tracking-widest text-slate-400">Vai trò</label>
-                                @php
-                                $roleOptions = [
-                                    ['value' => \App\Models\User::ROLE_USER, 'label' => 'Người dùng', 'sub_label' => 'Giảng viên & Học viên'],
-                                    ['value' => \App\Models\User::ROLE_ADMIN, 'label' => 'Admin', 'sub_label' => 'Quản trị viên hệ thống'],
-                                    ['value' => \App\Models\User::ROLE_SUPER_ADMIN, 'label' => 'Super Admin', 'sub_label' => 'Quản trị tối cao'],
-                                ];
-                                @endphp
-                                <x-custom-select wire:model="role" :options="$roleOptions" placeholder="Chọn vai trò" />
+                                <input type="text" value="{{ $user->isAdmin() ? 'Admin' : 'Người dùng' }}" disabled class="w-full rounded-xl border border-slate-200 bg-slate-50 px-4 py-3 text-sm font-bold text-slate-500 cursor-not-allowed">
                             </div>
 
                             <div>
@@ -103,7 +98,7 @@
                                     ['value' => 'blocked', 'label' => 'Đã khóa', 'sub_label' => 'Tài khoản bị vô hiệu hóa'],
                                 ];
                                 @endphp
-                                <x-custom-select wire:model="status" :options="$statusOptions" placeholder="Chọn trạng thái" />
+                                <x-custom-select wire:model.live="status" :options="$statusOptions" placeholder="Chọn trạng thái" />
                                 @error('status')<p class="mt-1 text-xs text-red-500">{{ $message }}</p>@enderror
                             </div>
                         </div>

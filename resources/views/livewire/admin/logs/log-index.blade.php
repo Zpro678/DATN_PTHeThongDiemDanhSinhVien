@@ -13,6 +13,15 @@
                     <x-user.icon name="search" :size="16" class="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" />
                     <input type="text" wire:model.live.debounce.300ms="search" placeholder="Tìm kiếm hành động, bảng, user..." class="w-64 rounded-xl border border-slate-200 bg-white py-2 pl-10 pr-4 text-sm text-slate-900 shadow-sm transition-colors focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-500">
                 </div>
+                <div class="relative">
+                    <select wire:model.live="dateFilter" class="w-40 appearance-none rounded-xl border border-slate-200 bg-white py-2 pl-4 pr-10 text-sm text-slate-900 shadow-sm transition-colors focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-500">
+                        <option value="all">Tất cả thời gian</option>
+                        <option value="1_month">1 tháng gần nhất</option>
+                        <option value="3_months">3 tháng gần nhất</option>
+                        <option value="6_months">6 tháng gần nhất</option>
+                    </select>
+                    <x-user.icon name="chevron-down" :size="16" class="pointer-events-none absolute right-3 top-1/2 -translate-y-1/2 text-slate-400" />
+                </div>
                 @if($search)
                     <button wire:click="$set('search', '')" class="text-sm font-semibold text-blue-600 hover:text-blue-700 hover:underline">Xóa lọc</button>
                 @endif
@@ -84,9 +93,9 @@
                                 </div>
                             @endif
 
-                            @if($log->new_values || true)
+                            @if($log->new_values || $log->old_values)
                                 <div class="mt-4 flex items-center justify-start" x-data>
-                                    <button type="button" @click="$dispatch('open-log-modal')" class="group/btn flex items-center gap-2 rounded-xl border border-slate-200 bg-white px-4 py-2 text-xs font-bold text-slate-700 shadow-sm transition-all hover:border-blue-200 hover:bg-blue-50 hover:text-blue-700 hover:shadow">
+                                    <button type="button" wire:click="viewLog({{ $log->id }})" class="group/btn flex items-center gap-2 rounded-xl border border-slate-200 bg-white px-4 py-2 text-xs font-bold text-slate-700 shadow-sm transition-all hover:border-blue-200 hover:bg-blue-50 hover:text-blue-700 hover:shadow">
                                         <div class="flex h-5 w-5 items-center justify-center rounded-md bg-slate-100 text-slate-500 transition-colors group-hover/btn:bg-blue-100 group-hover/btn:text-blue-600">
                                             <x-user.icon name="eye" :size="12" />
                                         </div>
@@ -159,7 +168,9 @@
                                 </div>
                                 <div>
                                     <h3 class="text-base font-bold text-slate-900">Chi tiết thao tác</h3>
-                                    <p class="text-xs font-medium text-slate-500">ID: #LOG-982374 • 25/06/2026 14:30</p>
+                                    @if($selectedLog)
+                                        <p class="text-xs font-medium text-slate-500">ID: #LOG-{{ $selectedLog->id }} • {{ $selectedLog->created_at->format('d/m/Y H:i') }}</p>
+                                    @endif
                                 </div>
                             </div>
                             <button @click="open = false" class="rounded-full p-2 text-slate-400 transition-colors hover:bg-slate-100 hover:text-slate-600">
@@ -170,70 +181,65 @@
 
                     <!-- Body -->
                     <div class="px-6 py-5">
+                        @if($selectedLog)
                         <div class="mb-6 grid grid-cols-2 gap-4 rounded-2xl bg-slate-50 p-4">
                             <div>
                                 <p class="text-[10px] font-bold uppercase tracking-wider text-slate-400">Người thực hiện</p>
-                                <p class="mt-1 text-sm font-semibold text-slate-900">Nguyễn Văn Admin</p>
-                                <p class="text-xs text-slate-500">admin@example.com</p>
+                                <p class="mt-1 text-sm font-semibold text-slate-900">{{ $selectedLog->user?->name ?? 'Hệ thống' }}</p>
+                                <p class="text-xs text-slate-500">{{ $selectedLog->user?->email ?? 'N/A' }}</p>
                             </div>
                             <div>
                                 <p class="text-[10px] font-bold uppercase tracking-wider text-slate-400">Thiết bị & IP</p>
                                 <p class="mt-1 flex items-center gap-1.5 text-sm font-semibold text-slate-900">
                                     <x-user.icon name="map-pin" :size="14" class="text-slate-400" />
-                                    113.190.23.45
+                                    {{ $selectedLog->ip_address ?? 'Không rõ' }}
                                 </p>
-                                <p class="text-xs text-slate-500">Chrome on Windows 11</p>
+                                <p class="text-xs text-slate-500 truncate" title="{{ $selectedLog->user_agent }}">{{ $selectedLog->user_agent ?? 'Không rõ' }}</p>
                             </div>
                         </div>
 
-                        <h4 class="mb-3 mt-8 text-sm font-bold text-slate-900">Chi tiết thay đổi dữ liệu</h4>
-                        <div class="overflow-hidden rounded-xl border border-slate-200 shadow-sm">
-                            <div class="grid grid-cols-3 divide-x divide-slate-200 bg-slate-100 border-b border-slate-200">
+                        <h4 class="mb-3 mt-8 text-sm font-bold text-slate-900">Chi tiết thay đổi dữ liệu (Bảng: {{ $selectedLog->table_name }})</h4>
+                        <div class="overflow-hidden rounded-xl border border-slate-200 shadow-sm max-h-[300px] overflow-y-auto scrollbar-custom">
+                            <div class="sticky top-0 grid grid-cols-3 divide-x divide-slate-200 bg-slate-100 border-b border-slate-200">
                                 <div class="px-4 py-3 text-[11px] font-extrabold text-slate-500 uppercase tracking-wider">Trường dữ liệu</div>
                                 <div class="px-4 py-3 text-[11px] font-extrabold text-slate-500 uppercase tracking-wider">Giá trị cũ (Old)</div>
                                 <div class="px-4 py-3 text-[11px] font-extrabold text-blue-600 uppercase tracking-wider">Giá trị mới (New)</div>
                             </div>
                             <div class="divide-y divide-slate-100">
-                                <!-- Row 1 -->
-                                <div class="grid grid-cols-3 divide-x divide-slate-100 text-sm transition-colors hover:bg-slate-50">
-                                    <div class="px-4 py-3 font-semibold text-slate-700 flex items-center">
-                                        <span class="rounded bg-slate-100 px-2 py-1 text-xs font-mono text-slate-600">name</span>
-                                    </div>
-                                    <div class="px-4 py-3 text-slate-500 flex items-center">
-                                        <span class="line-through decoration-slate-300">Lập trình Web</span>
-                                    </div>
-                                    <div class="px-4 py-3 font-bold text-emerald-700 bg-emerald-50/50 flex items-center">
-                                        Lập trình Web Nâng cao
-                                    </div>
-                                </div>
+                                @php
+                                    $oldValues = $selectedLog->old_values ?? [];
+                                    $newValues = $selectedLog->new_values ?? [];
+                                    $allKeys = array_unique(array_merge(array_keys($oldValues), array_keys($newValues)));
+                                @endphp
                                 
-                                <!-- Row 2 -->
-                                <div class="grid grid-cols-3 divide-x divide-slate-100 text-sm transition-colors hover:bg-slate-50">
-                                    <div class="px-4 py-3 font-semibold text-slate-700 flex items-center">
-                                        <span class="rounded bg-slate-100 px-2 py-1 text-xs font-mono text-slate-600">status</span>
+                                @forelse($allKeys as $key)
+                                    @php
+                                        $oldVal = array_key_exists($key, $oldValues) ? $oldValues[$key] : null;
+                                        $newVal = array_key_exists($key, $newValues) ? $newValues[$key] : null;
+                                        if (is_array($oldVal) || is_object($oldVal)) $oldVal = json_encode($oldVal, JSON_UNESCAPED_UNICODE);
+                                        if (is_array($newVal) || is_object($newVal)) $newVal = json_encode($newVal, JSON_UNESCAPED_UNICODE);
+                                    @endphp
+                                    <div class="grid grid-cols-3 divide-x divide-slate-100 text-sm transition-colors hover:bg-slate-50">
+                                        <div class="px-4 py-3 font-semibold text-slate-700 flex items-center">
+                                            <span class="rounded bg-slate-100 px-2 py-1 text-xs font-mono text-slate-600 break-all">{{ $key }}</span>
+                                        </div>
+                                        <div class="px-4 py-3 text-slate-500 flex items-center overflow-x-hidden">
+                                            <span class="{{ $oldVal != $newVal ? 'line-through decoration-slate-300' : '' }} break-words w-full">{{ $oldVal ?? 'null' }}</span>
+                                        </div>
+                                        <div class="px-4 py-3 font-bold text-emerald-700 bg-emerald-50/50 flex items-center overflow-x-hidden">
+                                            <span class="break-words w-full">{{ $newVal ?? 'null' }}</span>
+                                        </div>
                                     </div>
-                                    <div class="px-4 py-3 text-slate-500 flex items-center">
-                                        <span class="rounded-full bg-slate-100 px-2.5 py-0.5 text-xs font-medium text-slate-600">active</span>
-                                    </div>
-                                    <div class="px-4 py-3 font-bold text-emerald-700 bg-emerald-50/50 flex items-center">
-                                        <span class="rounded-full bg-emerald-100 px-2.5 py-0.5 text-xs font-bold text-emerald-700">archived</span>
-                                    </div>
-                                </div>
-
-                                <!-- Row 3 -->
-                                <div class="grid grid-cols-3 divide-x divide-slate-100 text-sm transition-colors hover:bg-slate-50">
-                                    <div class="px-4 py-3 font-semibold text-slate-700 flex items-center">
-                                        <span class="rounded bg-slate-100 px-2 py-1 text-xs font-mono text-slate-600">max_students</span>
-                                    </div>
-                                    <div class="px-4 py-3 text-slate-500 flex items-center font-mono">
-                                        <span class="line-through decoration-slate-300">40</span>
-                                    </div>
-                                    <div class="px-4 py-3 font-bold text-emerald-700 bg-emerald-50/50 flex items-center font-mono">
-                                        50
-                                    </div>
-                                </div>
+                                @empty
+                                    <div class="p-4 text-center text-sm text-slate-500">Không có chi tiết các trường thay đổi.</div>
+                                @endforelse
                             </div>
                         </div>
+                        @else
+                            <div class="flex items-center justify-center py-10">
+                                <svg class="h-8 w-8 animate-spin text-blue-500" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path></svg>
+                            </div>
+                        @endif
                     </div>
 
                     <!-- Footer -->

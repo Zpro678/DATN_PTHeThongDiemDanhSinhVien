@@ -10,6 +10,7 @@ use Livewire\Component;
 
 class PackageCreate extends Component
 {
+    public $plan_tier = '';
     public $name = '';
     public $description = '';
     public $priceType = 'fixed';
@@ -26,8 +27,6 @@ class PackageCreate extends Component
     
     public $hasGps = false;
     public $hasImport = false;
-    public $hasReports = false;
-    public $hasApi = false;
 
     public function mount()
     {
@@ -39,6 +38,7 @@ class PackageCreate extends Component
         abort_unless(Auth::user()?->isAdmin(), 403);
 
         $this->validate([
+            'plan_tier' => 'required|string|max:50|unique:plans,plan_tier',
             'name' => 'required|string|max:255',
             'description' => 'nullable|string|max:1000',
             'priceType' => 'required|in:fixed,free,contact',
@@ -51,27 +51,20 @@ class PackageCreate extends Component
         $finalPrice = $this->priceType === 'free' ? 0 : ($this->priceType === 'contact' ? 0 : $this->price);
         $finalMaxClasses = $this->isUnlimitedClasses ? 999999 : ($this->max_classes ?: 1);
         $finalMaxStudents = $this->isUnlimitedStudents ? 999999 : ($this->max_students_per_class ?: 1);
-        
-        $features = [];
-        if ($this->hasGps) $features[] = 'Xác thực vị trí GPS';
-        if ($this->hasImport) $features[] = 'Import học viên từ Excel/CSV';
-        if ($this->hasReports) $features[] = 'Báo cáo Thống kê Nâng cao';
-        if ($this->hasApi) $features[] = 'Tích hợp API (SSO, LMS)';
-
-        Plan::create([
-            'plan_tier' => Str::slug($this->name) . '-' . rand(1000, 9999),
+        $plan = Plan::create([
+            'plan_tier' => $this->plan_tier,
             'name' => $this->name,
             'description' => $this->description,
             'price' => $finalPrice,
             'duration_days' => (int) $this->duration_days,
+            'is_active' => true,
+        ]);
+
+        $plan->config()->create([
             'max_classes' => $finalMaxClasses,
             'max_students_per_class' => $finalMaxStudents,
-            'max_gps_radius' => $this->hasGps ? 100 : 0, // Default 100m if GPS enabled
-            'can_export_excel' => $this->hasImport, // Used interchangeably for advanced features
-            'api_access' => $this->hasApi,
-            'support_level' => $this->hasReports ? 'Nâng cao' : 'Cơ bản',
-            'is_active' => true,
-            'features' => $features,
+            'max_gps_radius' => $this->hasGps ? 100 : 0,
+            'can_export_excel' => $this->hasImport,
         ]);
 
         session()->flash('success', 'Thêm gói dịch vụ mới thành công.');

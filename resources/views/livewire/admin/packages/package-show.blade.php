@@ -32,10 +32,19 @@
         $priceLabel = $isFree ? '0đ' : number_format($package->price, 0, ',', '.') . 'đ';
         $durationLabel = $package->duration_days > 0 ? ($package->duration_days >= 365 ? round($package->duration_days / 365) . ' năm' : round($package->duration_days / 30) . ' tháng') : 'Vĩnh viễn';
         
-        $features = is_array($package->features) ? $package->features : [
+        $features = [
             'Điểm danh bằng QR Code / Link',
             'Quản lý chuyên cần & cảnh báo',
         ];
+        
+        if ($package->max_gps_radius > 0) {
+            $features[] = 'Xác thực vị trí GPS';
+        }
+        
+        if ($package->can_export_excel) {
+            $features[] = 'Import học viên từ Excel/CSV';
+            $features[] = 'Có xuất báo cáo Excel';
+        }
     @endphp
 
     <div class="mx-auto max-w-[1200px] space-y-6">
@@ -88,9 +97,9 @@
             </div>
         </div>
 
-        <div class="grid grid-cols-1 gap-6 lg:grid-cols-3">
-            <div class="space-y-6 lg:col-span-2">
-                <div class="admin-grid-equal grid grid-cols-1 gap-4 sm:grid-cols-2 md:grid-cols-3">
+        <div class="space-y-6">
+            <div class="space-y-6">
+                <div class="admin-grid-equal grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
                     <div class="admin-card admin-card-hover rounded-2xl border p-6">
                         <div class="mb-4 flex h-12 w-12 items-center justify-center rounded-xl {{ $iconBg }}">
                             <x-user.icon name="users" :size="24" />
@@ -114,6 +123,14 @@
                         <p class="mb-1 text-sm font-semibold uppercase tracking-wider text-slate-500">Bán kính GPS</p>
                         <p class="text-3xl font-extrabold text-slate-900">{{ $package->max_gps_radius }}m</p>
                     </div>
+                    
+                    <div class="admin-card admin-card-hover rounded-2xl border p-6">
+                        <div class="mb-4 flex h-12 w-12 items-center justify-center rounded-xl {{ $iconBg }}">
+                            <x-user.icon name="user-check" :size="24" />
+                        </div>
+                        <p class="mb-1 text-sm font-semibold uppercase tracking-wider text-slate-500">Người đăng ký</p>
+                        <p class="text-3xl font-extrabold text-slate-900">{{ $package->subscriptions_count ?? 0 }}</p>
+                    </div>
                 </div>
 
                 <div class="admin-card admin-card-hover overflow-hidden rounded-2xl border">
@@ -123,21 +140,13 @@
                     <div class="p-6">
                         <ul class="grid grid-cols-1 gap-x-8 gap-y-4 md:grid-cols-2">
                             @foreach ($features as $feature)
-                                <li class="flex items-start rounded-xl border border-slate-100 bg-white/70 p-3">
-                                    <div class="mt-0.5 flex h-6 w-6 shrink-0 items-center justify-center rounded-full border border-emerald-200 bg-emerald-100">
+                                <li class="flex items-center py-2">
+                                    <div class="flex h-6 w-6 shrink-0 items-center justify-center rounded-full border border-emerald-200 bg-emerald-100">
                                         <x-user.icon name="check-circle" :size="14" class="text-emerald-600" />
                                     </div>
                                     <span class="ml-3 text-sm font-medium text-slate-700 md:text-base">{{ $feature }}</span>
                                 </li>
                             @endforeach
-                            @if($package->can_export_excel)
-                                <li class="flex items-start rounded-xl border border-slate-100 bg-white/70 p-3">
-                                    <div class="mt-0.5 flex h-6 w-6 shrink-0 items-center justify-center rounded-full border border-emerald-200 bg-emerald-100">
-                                        <x-user.icon name="check-circle" :size="14" class="text-emerald-600" />
-                                    </div>
-                                    <span class="ml-3 text-sm font-medium text-slate-700 md:text-base">Có xuất báo cáo Excel</span>
-                                </li>
-                            @endif
                         </ul>
                     </div>
                 </div>
@@ -189,36 +198,6 @@
                     @endif
                 </div>
 
-            </div>
-
-            <div class="space-y-6">
-                <div class="admin-card admin-card-hover overflow-hidden rounded-2xl border">
-                    <div class="border-b border-slate-200 bg-slate-50/50 px-6 py-5">
-                        <h3 class="text-sm font-bold uppercase tracking-wider text-slate-900">Thống kê sử dụng</h3>
-                    </div>
-                    <div class="p-6">
-                        <div class="mb-2 flex items-center justify-between">
-                            <span class="text-sm font-medium text-slate-500">Người đăng ký</span>
-                            <span class="text-lg font-bold text-slate-900">{{ $package->subscriptions_count ?? 0 }}</span>
-                        </div>
-                        <div class="mb-6 h-2 w-full rounded-full bg-slate-100">
-                            <div class="{{ $progressClass }} h-2 rounded-full" style="width: {{ min(100, max(12, ($package->subscriptions_count ?? 0) * 12)) }}%"></div>
-                        </div>
-                    </div>
-                </div>
-
-                <div class="relative overflow-hidden rounded-2xl border border-slate-800 bg-slate-900 text-white shadow-lg transition-transform duration-200 hover:-translate-y-1 hover:shadow-xl">
-                    <div class="absolute right-0 top-0 p-4 opacity-10">
-                        <x-user.icon name="code" :size="96" />
-                    </div>
-                    <div class="relative z-10 p-6">
-                        <h3 class="mb-2 text-lg font-bold">Tích hợp API</h3>
-                        <p class="mb-4 text-sm text-slate-400">Cho phép cấp phát API Key để tích hợp với hệ thống nội bộ của trường đại học (SSO, LMS).</p>
-                        <span class="inline-flex items-center rounded border border-emerald-500/30 bg-emerald-500/20 px-2.5 py-1 text-xs font-bold text-emerald-400">
-                            {{ $package->api_access ? 'Hỗ trợ API' : 'Không hỗ trợ API' }}
-                        </span>
-                    </div>
-                </div>
             </div>
         </div>
     </div>

@@ -35,7 +35,6 @@ class UserEdit extends Component
         $validatedData = $this->validate([
             'name' => ['required', 'string', 'max:255'],
             'email' => ['required', 'string', 'email', 'max:255', Rule::unique('users')->ignore($this->user->id)],
-            'role' => ['required', 'in:'.User::ROLE_USER.','.User::ROLE_ADMIN.','.User::ROLE_SUPER_ADMIN],
             'status' => ['required', 'in:active,blocked'],
         ]);
 
@@ -47,7 +46,7 @@ class UserEdit extends Component
         $this->user->update($validatedData);
 
         session()->flash('success', 'Cập nhật thông tin người dùng thành công.');
-        return redirect()->route('admin.users.index');
+        return redirect()->route('admin.users.show', $this->user);
     }
 
     #[Layout('components.admin-layout')]

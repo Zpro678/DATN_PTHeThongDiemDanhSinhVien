@@ -19,7 +19,7 @@
         </div>
     </section>
 
-    <div class="grid grid-cols-1 items-stretch gap-6 xl:grid-cols-[380px_minmax(0,1fr)]">
+    <div class="grid grid-cols-1 items-start gap-6 xl:grid-cols-[380px_minmax(0,1fr)]">
         <section class="admin-card admin-card-hover flex h-full flex-col overflow-hidden rounded-2xl border bg-white">
             <div class="h-24 bg-gradient-to-r from-blue-600 via-cyan-500 to-emerald-500"></div>
             <div class="px-6 pb-6">
@@ -70,7 +70,7 @@
             </div>
         </section>
 
-        <div class="relative h-full min-h-[550px]" x-cloak>
+        <div class="relative h-full min-h-[400px]" x-cloak>
             <div x-show="view === 'profile'" class="absolute inset-0 h-full w-full" x-transition:enter="transition ease-out duration-300" x-transition:enter-start="opacity-0 translate-x-4" x-transition:enter-end="opacity-100 translate-x-0" x-transition:leave="transition ease-in duration-200" x-transition:leave-start="opacity-100 translate-x-0" x-transition:leave-end="opacity-0 -translate-x-4">
                 <section class="admin-card admin-card-hover flex h-full flex-col overflow-hidden rounded-2xl border bg-white">
                     <div class="flex flex-col gap-4 border-b border-slate-100 p-6 lg:flex-row lg:items-end lg:justify-between">
@@ -100,13 +100,6 @@
                                     @error('name') <span class="text-red-500 text-xs mt-1 block">{{ $message }}</span> @enderror
                                 </div>
 
-                                @if(!$user->isAdmin())
-                                <div>
-                                    <label class="mb-2 block text-[10px] font-bold uppercase tracking-widest text-slate-400">Mã số sinh viên (nếu có)</label>
-                                    <input type="text" wire:model="member_id" class="w-full rounded-xl border border-slate-200 bg-white px-4 py-3 text-sm font-bold text-slate-900 focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-500">
-                                    @error('member_id') <span class="text-red-500 text-xs mt-1 block">{{ $message }}</span> @enderror
-                                </div>
-                                @endif
 
                                 <div>
                                     <label class="mb-2 block text-[10px] font-bold uppercase tracking-widest text-slate-400">Email</label>

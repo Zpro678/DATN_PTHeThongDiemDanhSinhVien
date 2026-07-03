@@ -28,6 +28,18 @@
                 </div>
                 <div class="grid grid-cols-1 gap-6 p-6 md:grid-cols-2">
                     <div class="md:col-span-2">
+                        <label class="mb-2 block text-sm font-semibold text-slate-700">Hạng gói dịch vụ <span class="text-red-500">*</span></label>
+                        @php
+                        $tierOptions = [
+                            ['value' => 'FREE', 'label' => 'FREE', 'sub_label' => 'Gói miễn phí cơ bản'],
+                            ['value' => 'PRO', 'label' => 'PRO', 'sub_label' => 'Gói trả phí nâng cao'],
+                            ['value' => 'ENTERPRISE', 'label' => 'ENTERPRISE', 'sub_label' => 'Gói doanh nghiệp lớn'],
+                        ];
+                        @endphp
+                        <x-custom-select wire:model="plan_tier" :options="$tierOptions" :value="$plan_tier" placeholder="Chọn hạng gói" />
+                        @error('plan_tier') <span class="text-xs text-red-500">{{ $message }}</span> @enderror
+                    </div>
+                    <div class="md:col-span-2">
                         <label class="mb-2 block text-sm font-semibold text-slate-700">Tên gói dịch vụ <span class="text-red-500">*</span></label>
                         <input type="text" wire:model="name" placeholder="VD: Gói Khởi Nghiệp (Startup)" class="w-full rounded-xl border border-slate-300 bg-transparent px-4 py-2.5 text-slate-900 transition-colors focus:border-blue-500 focus:ring-2 focus:ring-blue-500">
                         @error('name') <span class="text-xs text-red-500">{{ $message }}</span> @enderror
@@ -47,7 +59,7 @@
                             ['value' => 'free', 'label' => 'Miễn phí', 'sub_label' => 'Không thu phí người dùng'],
                         ];
                         @endphp
-                        <x-custom-select wire:model.live="priceType" :options="$priceTypeOptions" placeholder="Chọn hình thức" />
+                        <x-custom-select wire:model.live="priceType" :options="$priceTypeOptions" :value="$priceType" placeholder="Chọn hình thức" />
                         @error('priceType') <span class="text-xs text-red-500">{{ $message }}</span> @enderror
                     </div>
                     <div>
@@ -61,7 +73,7 @@
                             ['value' => '0', 'label' => 'Vĩnh viễn', 'sub_label' => 'Sử dụng không giới hạn thời gian'],
                         ];
                         @endphp
-                        <x-custom-select wire:model="duration_days" :options="$durationOptions" placeholder="Chọn thời hạn" />
+                        <x-custom-select wire:model="duration_days" :options="$durationOptions" :value="$duration_days" placeholder="Chọn thời hạn" />
                         @error('duration_days') <span class="text-xs text-red-500">{{ $message }}</span> @enderror
                     </div>
                     @if($priceType === 'fixed')
@@ -144,28 +156,6 @@
                         </div>
                         <label class="relative ml-4 inline-flex shrink-0 cursor-pointer items-center">
                             <input type="checkbox" wire:model="hasImport" class="peer sr-only">
-                            <div class="peer h-7 w-14 rounded-full bg-slate-300 after:absolute after:left-[2px] after:top-[2px] after:h-6 after:w-6 after:rounded-full after:border after:border-slate-300 after:bg-white after:transition-all after:content-[''] peer-checked:bg-emerald-500 peer-checked:after:translate-x-full peer-checked:after:border-white"></div>
-                        </label>
-                    </div>
-                    
-                    <div class="flex items-center justify-between p-6 transition-colors hover:bg-blue-50/40">
-                        <div>
-                            <p class="text-base font-bold text-slate-800">Báo cáo Thống kê Nâng cao</p>
-                            <p class="mt-1 text-sm text-slate-500">Biểu đồ chuyên cần trực quan, xuất báo cáo PDF cuối kỳ, cảnh báo tự động.</p>
-                        </div>
-                        <label class="relative ml-4 inline-flex shrink-0 cursor-pointer items-center">
-                            <input type="checkbox" wire:model="hasReports" class="peer sr-only">
-                            <div class="peer h-7 w-14 rounded-full bg-slate-300 after:absolute after:left-[2px] after:top-[2px] after:h-6 after:w-6 after:rounded-full after:border after:border-slate-300 after:bg-white after:transition-all after:content-[''] peer-checked:bg-emerald-500 peer-checked:after:translate-x-full peer-checked:after:border-white"></div>
-                        </label>
-                    </div>
-                    
-                    <div class="flex items-center justify-between p-6 transition-colors hover:bg-blue-50/40">
-                        <div>
-                            <p class="text-base font-bold text-slate-800">Tích hợp API (SSO, LMS)</p>
-                            <p class="mt-1 text-sm text-slate-500">Tính năng cao cấp cho phép hệ thống gọi API đồng bộ dữ liệu với trường học.</p>
-                        </div>
-                        <label class="relative ml-4 inline-flex shrink-0 cursor-pointer items-center">
-                            <input type="checkbox" wire:model="hasApi" class="peer sr-only">
                             <div class="peer h-7 w-14 rounded-full bg-slate-300 after:absolute after:left-[2px] after:top-[2px] after:h-6 after:w-6 after:rounded-full after:border after:border-slate-300 after:bg-white after:transition-all after:content-[''] peer-checked:bg-emerald-500 peer-checked:after:translate-x-full peer-checked:after:border-white"></div>
                         </label>
                     </div>

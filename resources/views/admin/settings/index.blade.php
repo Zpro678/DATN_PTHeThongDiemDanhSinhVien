@@ -100,105 +100,12 @@
                     </div>
                 </div>
 
-                <div x-cloak x-show="activeTab === 'email'" class="space-y-8 p-6 md:p-8" x-transition.opacity>
-                    <div>
-                        <div class="mb-1 flex items-center justify-between">
-                            <h2 class="text-lg font-bold text-slate-900">Cấu hình Mail Server (SMTP)</h2>
-                            <button type="button" class="text-sm font-semibold text-blue-600 hover:underline">Gửi mail test</button>
-                        </div>
-                        <p class="mb-6 text-sm text-slate-500">Thiết lập kết nối để hệ thống gửi các thông báo tự động tới người dùng.</p>
-
-                        <div class="grid grid-cols-1 gap-6 md:grid-cols-2">
-                            <div class="space-y-2">
-                                <label class="block text-sm font-semibold text-slate-700">Mail Driver</label>
-                                @php
-                                $mailDriverOptions = [
-                                    ['value' => 'smtp', 'label' => 'SMTP', 'sub_label' => 'Sử dụng máy chủ SMTP tiêu chuẩn'],
-                                    ['value' => 'mailgun', 'label' => 'Mailgun', 'sub_label' => 'Dịch vụ gửi email Mailgun'],
-                                    ['value' => 'ses', 'label' => 'Amazon SES', 'sub_label' => 'Dịch vụ gửi email của AWS'],
-                                ];
-                                @endphp
-                                <x-custom-select :options="$mailDriverOptions" placeholder="Chọn Mail Driver" value="smtp" />
-                            </div>
-                            <div class="space-y-2">
-                                <label class="block text-sm font-semibold text-slate-700">Mail Host</label>
-                                <input type="text" value="smtp.gmail.com" class="w-full rounded-xl border border-slate-200 bg-slate-50 px-4 py-2.5 text-slate-900 transition-colors focus:border-blue-500 focus:ring-2 focus:ring-blue-500">
-                            </div>
-                            <div class="space-y-2">
-                                <label class="block text-sm font-semibold text-slate-700">Mail Port</label>
-                                <input type="text" value="465" class="w-full rounded-xl border border-slate-200 bg-slate-50 px-4 py-2.5 text-slate-900 transition-colors focus:border-blue-500 focus:ring-2 focus:ring-blue-500">
-                            </div>
-                            <div class="space-y-2">
-                                <label class="block text-sm font-semibold text-slate-700">Mã hóa (Encryption)</label>
-                                @php
-                                $encryptionOptions = [
-                                    ['value' => 'tls', 'label' => 'TLS', 'sub_label' => 'Bảo mật truyền tải (Transport Layer Security)'],
-                                    ['value' => 'ssl', 'label' => 'SSL', 'sub_label' => 'Lớp cổng bảo mật (Secure Sockets Layer)'],
-                                ];
-                                @endphp
-                                <x-custom-select :options="$encryptionOptions" placeholder="Chọn Mã hóa" value="ssl" />
-                            </div>
-                            <div class="space-y-2 md:col-span-2">
-                                <label class="block text-sm font-semibold text-slate-700">Tên người gửi (From Name)</label>
-                                <input type="text" value="SAMS System Notification" class="w-full rounded-xl border border-slate-200 bg-slate-50 px-4 py-2.5 text-slate-900 transition-colors focus:border-blue-500 focus:ring-2 focus:ring-blue-500">
-                            </div>
-                        </div>
-
-                        <div class="mt-8 flex justify-end gap-3 border-t border-slate-100 pt-6">
-                            <button type="button" class="rounded-xl border border-slate-200 bg-white px-5 py-2.5 text-sm font-bold text-slate-600 hover:bg-slate-50">
-                                Hủy
-                            </button>
-                            <button type="button" class="rounded-xl bg-gradient-to-r from-blue-600 to-cyan-600 px-6 py-2.5 text-sm font-bold text-white shadow-sm shadow-blue-500/25 transition-all hover:-translate-y-0.5 hover:from-blue-700 hover:to-cyan-700">
-                                Lưu cấu hình Mail
-                            </button>
-                        </div>
-                    </div>
+                <div x-cloak x-show="activeTab === 'email'" x-transition.opacity>
+                    @livewire('admin.settings.email-settings')
                 </div>
 
-                <div x-cloak x-show="activeTab === 'general'" class="space-y-8 p-6 md:p-8" x-transition.opacity>
-                    <div>
-                        <h2 class="mb-1 text-lg font-bold text-slate-900">Giao diện & Tải lên</h2>
-                        <p class="mb-6 text-sm text-slate-500">Thay đổi thông tin nhận diện hệ thống và các giới hạn dung lượng.</p>
-
-                        <div class="space-y-6">
-                            <div class="space-y-2">
-                                <label class="block text-sm font-semibold text-slate-700">Tên hệ thống</label>
-                                <input type="text" value="{{ $system['app_name'] ?? 'SAMS - Smart Attendance Management' }}" class="w-full rounded-xl border border-slate-200 bg-slate-50 px-4 py-2.5 text-slate-900 transition-colors focus:border-blue-500 focus:ring-2 focus:ring-blue-500 md:w-2/3">
-                            </div>
-
-                            <div class="space-y-2">
-                                <label class="block text-sm font-semibold text-slate-700">Logo hệ thống</label>
-                                <div class="mt-2 flex items-center gap-6">
-                                    <div class="flex h-20 w-20 items-center justify-center rounded-2xl bg-blue-600 text-white shadow-lg">
-                                        <x-user.icon name="graduation-cap" :size="40" />
-                                    </div>
-                                    <div class="space-y-2">
-                                        <button type="button" class="rounded-lg border border-slate-200 bg-white px-4 py-2 text-xs font-semibold text-slate-700 shadow-sm transition-colors hover:bg-slate-50">
-                                            Thay đổi Logo
-                                        </button>
-                                        <p class="text-[11px] text-slate-500">Khuyên dùng định dạng PNG, SVG hoặc JPG. Kích thước tối đa 2MB.</p>
-                                    </div>
-                                </div>
-                            </div>
-
-                            <hr class="border-slate-100">
-
-                            <div class="space-y-2">
-                                <label class="block text-sm font-semibold text-slate-700">Giới hạn dung lượng Import Excel (MB)</label>
-                                <input type="number" value="10" class="w-full rounded-xl border border-slate-200 bg-slate-50 px-4 py-2.5 text-slate-900 transition-colors focus:border-blue-500 focus:ring-2 focus:ring-blue-500 md:w-1/3">
-                                <p class="mt-1 text-xs text-slate-500">Dung lượng tối đa cho phép tải lên khi Import danh sách học viên.</p>
-                            </div>
-                        </div>
-
-                        <div class="mt-8 flex justify-end gap-3 border-t border-slate-100 pt-6">
-                            <button type="button" class="rounded-xl border border-slate-200 bg-white px-5 py-2.5 text-sm font-bold text-slate-600 hover:bg-slate-50">
-                                Hủy
-                            </button>
-                            <button type="button" class="rounded-xl bg-gradient-to-r from-blue-600 to-cyan-600 px-6 py-2.5 text-sm font-bold text-white shadow-sm shadow-blue-500/25 transition-all hover:-translate-y-0.5 hover:from-blue-700 hover:to-cyan-700">
-                                Lưu cấu hình giao diện
-                            </button>
-                        </div>
-                    </div>
+                <div x-cloak x-show="activeTab === 'general'" x-transition.opacity>
+                    @livewire('admin.settings.general-settings')
                 </div>
 
                 <div x-cloak x-show="activeTab === 'maintenance'" class="space-y-8 p-6 md:p-8" x-transition.opacity>

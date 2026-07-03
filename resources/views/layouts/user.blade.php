@@ -131,11 +131,14 @@
                         </div>
 
                         <a href="{{ route('dashboard') }}" wire:navigate class="flex min-w-0 shrink-0 items-center gap-2.5">
-                            <img src="{{ asset('favicon.svg') }}" alt="Attendia Tech"
-                                class="h-9 w-9 shrink-0 rounded-xl drop-shadow-[0_2px_4px_rgba(15,23,42,0.22)]">
+                            @if(!empty($app_logo_path))
+                                <img src="{{ asset('storage/' . $app_logo_path) }}" alt="{{ config('app.name') }}" class="h-9 w-9 shrink-0 rounded-xl drop-shadow-[0_2px_4px_rgba(15,23,42,0.22)] object-cover">
+                            @else
+                                <img src="{{ asset('favicon.svg') }}" alt="{{ config('app.name') }}" class="h-9 w-9 shrink-0 rounded-xl drop-shadow-[0_2px_4px_rgba(15,23,42,0.22)]">
+                            @endif
 
                             <span class="hidden leading-tight sm:block">
-                                <span class="block text-[16px] font-extrabold tracking-tight text-on-surface">Attendia Tech</span>
+                                <span class="block text-[16px] font-extrabold tracking-tight text-on-surface">{{ config('app.name') }}</span>
                                 <span class="block text-[10px] font-semibold uppercase tracking-wider text-on-surface-variant">Hệ thống điểm danh</span>
                             </span>
                         </a>
@@ -334,8 +337,12 @@
                             class="absolute inset-y-0 left-0 flex w-[280px] max-w-[82%] flex-col bg-white shadow-xl">
                             <div class="flex h-16 items-center justify-between border-b border-outline-variant px-5">
                                 <div class="flex items-center gap-2.5">
-                                    <img src="{{ asset('favicon.svg') }}" alt="Attendia Tech" class="h-9 w-9 rounded-xl drop-shadow-[0_2px_4px_rgba(15,23,42,0.22)]">
-                                    <span class="text-[15px] font-extrabold text-on-surface">Attendia Tech</span>
+                                    @if(!empty($app_logo_path))
+                                        <img src="{{ asset('storage/' . $app_logo_path) }}" alt="{{ config('app.name') }}" class="h-9 w-9 rounded-xl drop-shadow-[0_2px_4px_rgba(15,23,42,0.22)] object-cover">
+                                    @else
+                                        <img src="{{ asset('favicon.svg') }}" alt="{{ config('app.name') }}" class="h-9 w-9 rounded-xl drop-shadow-[0_2px_4px_rgba(15,23,42,0.22)]">
+                                    @endif
+                                    <span class="text-[15px] font-extrabold text-on-surface">{{ config('app.name') }}</span>
                                 </div>
                                 <button type="button" x-on:click="navOpen = false" class="rounded-lg p-1.5 text-on-surface-variant hover:bg-surface-container">
                                     <x-user.icon name="x" :size="20" />

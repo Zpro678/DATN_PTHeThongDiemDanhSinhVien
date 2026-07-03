@@ -53,9 +53,13 @@
             <aside class="admin-sidebar fixed left-0 top-0 z-50 hidden h-screen w-sidebar-width flex-col gap-stack-sm border-r border-outline-variant/20 bg-surface-container-lowest p-stack-md xl:flex">
                 <div class="mb-4 px-4 py-6">
                     <a href="{{ route('admin.dashboard') }}" class="flex items-center gap-3">
-                        <img src="{{ asset('favicon.svg') }}" alt="Attendia Tech" class="h-10 w-10 rounded-xl drop-shadow-[0_2px_5px_rgba(15,23,42,0.22)]">
+                        @if(!empty($app_logo_path))
+                            <img src="{{ asset('storage/' . $app_logo_path) }}" alt="{{ config('app.name') }}" class="h-10 w-10 rounded-xl object-cover drop-shadow-[0_2px_5px_rgba(15,23,42,0.22)]">
+                        @else
+                            <img src="{{ asset('favicon.svg') }}" alt="{{ config('app.name') }}" class="h-10 w-10 rounded-xl drop-shadow-[0_2px_5px_rgba(15,23,42,0.22)]">
+                        @endif
                         <span>
-                            <span class="block font-headline-md text-headline-sm font-bold leading-tight text-primary">Attendia Tech</span>
+                            <span class="block font-headline-md text-headline-sm font-bold leading-tight text-primary">{{ config('app.name') }}</span>
                             <span class="block text-[10px] font-bold uppercase tracking-widest text-on-surface-variant/70">Hệ thống điểm danh</span>
                         </span>
                     </a>
@@ -120,9 +124,13 @@
                     <div class="mb-4 px-4 py-6">
                         <div class="flex items-center justify-between">
                             <a href="{{ route('admin.dashboard') }}" class="flex items-center gap-3">
-                                <img src="{{ asset('favicon.svg') }}" alt="Attendia Tech" class="h-10 w-10 rounded-xl drop-shadow-[0_2px_5px_rgba(15,23,42,0.22)]">
+                                @if(!empty($app_logo_path))
+                                    <img src="{{ asset('storage/' . $app_logo_path) }}" alt="{{ config('app.name') }}" class="h-10 w-10 rounded-xl object-cover drop-shadow-[0_2px_5px_rgba(15,23,42,0.22)]">
+                                @else
+                                    <img src="{{ asset('favicon.svg') }}" alt="{{ config('app.name') }}" class="h-10 w-10 rounded-xl drop-shadow-[0_2px_5px_rgba(15,23,42,0.22)]">
+                                @endif
                                 <span>
-                                    <span class="block font-headline-md text-headline-sm font-bold leading-tight text-primary">Attendia Tech</span>
+                                    <span class="block font-headline-md text-headline-sm font-bold leading-tight text-primary">{{ config('app.name') }}</span>
                                     <span class="block text-[10px] font-bold uppercase tracking-widest text-on-surface-variant/70">Hệ thống điểm danh</span>
                                 </span>
                             </a>
