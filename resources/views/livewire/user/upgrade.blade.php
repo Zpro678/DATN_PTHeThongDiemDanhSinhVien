@@ -214,17 +214,17 @@
                                 ])>
                                     <span class="text-[#a50064]">●</span> MoMo
                                 </button>
-                                <button type="button" wire:click="$set('paymentMethod','vnpay')" @class([
+                                <button type="button" wire:click="$set('paymentMethod','payos')" @class([
                                     'flex items-center justify-center gap-2 rounded-xl border-2 px-3 py-2.5 text-sm font-bold transition-all',
-                                    'border-primary bg-primary/5 text-primary' => $paymentMethod === 'vnpay',
-                                    'border-outline-variant/30 text-on-surface-variant hover:border-outline-variant' => $paymentMethod !== 'vnpay',
+                                    'border-primary bg-primary/5 text-primary' => $paymentMethod === 'payos',
+                                    'border-outline-variant/30 text-on-surface-variant hover:border-outline-variant' => $paymentMethod !== 'payos',
                                 ])>
-                                    <span class="text-[#0066b3]">●</span> VNPay
+                                    <span class="text-[#3b82f6]">●</span> VietQR (PayOS)
                                 </button>
                             </div>
                             <p class="mt-3 text-xs text-on-surface-variant/70">
-                                @if ($paymentMethod === 'vnpay')
-                                    <span class="font-semibold text-amber-600">VNPay đang tích hợp</span> — vui lòng chọn MoMo.
+                                @if ($paymentMethod === 'payos')
+                                    Bạn sẽ được chuyển sang giao diện <span class="font-bold text-[#3b82f6]">Quét mã VietQR</span>.
                                 @else
                                     Bạn sẽ được chuyển sang ví <span class="font-bold text-[#a50064]">MoMo</span> để hoàn tất thanh toán.
                                 @endif
@@ -241,7 +241,7 @@
                     <button type="button" wire:click="subscribe" wire:loading.attr="disabled"
                         class="flex-1 rounded-xl py-3 text-sm font-bold transition-all disabled:opacity-50 {{ $mStyle['btnClass'] }}">
                         <span wire:loading.remove wire:target="subscribe">
-                            {{ (float) $confirmingPlan->price <= 0 ? 'Xác nhận' : ($paymentMethod === 'vnpay' ? 'Thanh toán VNPay' : 'Thanh toán MoMo') }}
+                            {{ (float) $confirmingPlan->price <= 0 ? 'Xác nhận' : ($paymentMethod === 'payos' ? 'Thanh toán QR' : 'Thanh toán MoMo') }}
                         </span>
                         <span wire:loading wire:target="subscribe">Đang xử lý…</span>
                     </button>

@@ -48,7 +48,7 @@ class Upgrade extends Component
      * - Gói trả phí: tạo giao dịch pending rồi chuyển sang cổng MoMo; việc kích
      *   hoạt thuê bao diễn ra ở MomoController::ipn khi thanh toán thành công.
      */
-    public function subscribe(SubscriptionService $subscriptions, MomoService $momo): mixed
+    public function subscribe(SubscriptionService $subscriptions, MomoService $momo, \App\Services\PayosService $payos): mixed
     {
         $plan = Plan::where('is_active', true)->find($this->confirmingPlanId);
 
@@ -72,33 +72,44 @@ class Upgrade extends Component
         // VNPay chưa hoàn thiện - báo đang tích hợp, chưa xử lý thanh toán.
         if ($this->paymentMethod === 'vnpay') {
             $this->confirmingPlanId = null;
-            session()->flash('status', 'Cổng VNPay đang được tích hợp. Vui lòng chọn MoMo.');
+            session()->flash('status', 'Cổng VNPay đang được tích hợp. Vui lòng chọn phương thức khác.');
 
             return null;
         }
+
+        // Nếu là PayOS, sinh mã giao dịch dạng số nguyên dương an toàn (9 chữ số). Ngược lại sinh dạng chuỗi.
+        $isPayos = $this->paymentMethod === 'payos';
+        
+        $transactionCode = $isPayos 
+            ? random_int(100000000, 999999999)
+            : 'TXN'.now()->timestamp.Str::upper(Str::random(5));
 
         // Gói trả phí: tạo giao dịch chờ thanh toán.
         $transaction = $user->transactions()->create([
             'plan_id' => $plan->id,
             'amount' => $plan->price,
-            'payment_method' => 'momo',
-            'transaction_code' => 'TXN'.now()->timestamp.Str::upper(Str::random(5)),
+            'payment_method' => $isPayos ? 'PAYOS' : 'MOMO',
+            'transaction_code' => (string) $transactionCode,
             'status' => 'pending',
             'created_at' => now(),
         ]);
 
-        $payUrl = $momo->createPayment($transaction, "Nang cap goi {$plan->name}");
+        if ($isPayos) {
+            $payUrl = $payos->createPaymentLink($transaction, "Nang cap goi {$plan->name}");
+        } else {
+            $payUrl = $momo->createPayment($transaction, "Nang cap goi {$plan->name}");
+        }
 
         $this->confirmingPlanId = null;
 
         if (! $payUrl) {
             $transaction->update(['status' => 'failed']);
-            session()->flash('error', 'Không tạo được thanh toán MoMo. Vui lòng thử lại sau.');
+            session()->flash('error', 'Không tạo được thanh toán. Vui lòng thử lại sau.');
 
             return null;
         }
 
-        // Chuyển hướng trình duyệt sang trang thanh toán MoMo.
+        // Chuyển hướng trình duyệt sang trang thanh toán.
         return $this->redirect($payUrl);
     }
 

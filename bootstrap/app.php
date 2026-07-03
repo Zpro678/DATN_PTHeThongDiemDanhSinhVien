@@ -30,6 +30,7 @@ return Application::configure(basePath: dirname(__DIR__))
         // MoMo gọi POST server-to-server, không có CSRF token -> phải loại trừ.
         $middleware->validateCsrfTokens(except: [
             'payment/momo/ipn',
+            'payment/payos/webhook',
         ]);
     })
     ->withExceptions(function (Exceptions $exceptions) {

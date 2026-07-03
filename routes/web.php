@@ -62,6 +62,10 @@ Route::post('/gps/verify', [\App\Http\Controllers\GpsVerificationController::cla
 Route::post('/payment/momo/ipn', [\App\Http\Controllers\MomoController::class, 'ipn'])
     ->name('momo.ipn');
 
+// PayOS Webhook
+Route::post('/payment/payos/webhook', [\App\Http\Controllers\PayosController::class, 'webhook'])
+    ->name('payos.webhook');
+
 Route::middleware(['auth', 'verified', 'user.route'])->group(function () {
     $ensureAdmin = function (): void {
         abort_unless(auth()->user()?->isAdmin(), 403);
@@ -163,6 +167,10 @@ Route::middleware('auth')->group(function () {
     // MoMo redirect trình duyệt người dùng về đây sau khi thanh toán (chỉ hiển thị kết quả).
     Route::get('/payment/momo/return', [\App\Http\Controllers\MomoController::class, 'return'])
         ->name('momo.return');
+
+    // PayOS redirect
+    Route::get('/payment/payos/return', [\App\Http\Controllers\PayosController::class, 'return'])
+        ->name('payos.return');
 });
 
 require __DIR__.'/auth.php';

@@ -96,7 +96,7 @@ class StudentsImport implements ToCollection, WithStartRow, WithMultipleSheets
             $rows->forget($index);
         }
 
-        if (!$header) {
+        if ($headerRowNumber === -1) {
             $this->errors[] = "Không tìm thấy dòng tiêu đề chứa 'Mã SV' hoặc 'Họ và tên'. Vui lòng kiểm tra lại xem bạn có để thừa Sheet rỗng nào không, hoặc cột tiêu đề đã viết đúng chưa.";
             return;
         }
@@ -177,6 +177,11 @@ class StudentsImport implements ToCollection, WithStartRow, WithMultipleSheets
             }
         }
 
+        if ($emailColIndex === -1) {
+            $this->errors[] = "Không tìm thấy cột 'Email' (bắt buộc phải có) ở dòng tiêu đề.";
+            return;
+        }
+
         $validRows = [];
         foreach ($rows as $index => $row) {
             // Index in startRow=1 means index 0 is row 2
@@ -195,8 +200,8 @@ class StudentsImport implements ToCollection, WithStartRow, WithMultipleSheets
                 continue;
             }
 
-            if (empty($studentCode) || empty($fullName)) {
-                $this->errors[] = "Dòng {$actualRowNumber}: Thiếu thông tin";
+            if (empty($studentCode) || empty($fullName) || empty($email)) {
+                $this->errors[] = "Dòng {$actualRowNumber}: Thiếu thông tin Mã sinh viên, Họ tên hoặc Email";
                 continue;
             }
 

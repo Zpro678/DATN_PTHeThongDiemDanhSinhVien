@@ -49,5 +49,13 @@ return [
         'endpoint' => env('MOMO_ENDPOINT', 'https://test-payment.momo.vn/v2/gateway/api/create'),
         'ipn_url' => env('MOMO_IPN_URL'), // URL public (ngrok) MoMo gọi server-to-server.
     ],
+    // Cổng thanh toán PayOS
+    'payos' => [
+        'client_id' => env('PAYOS_CLIENT_ID'),
+        'api_key' => env('PAYOS_API_KEY'),
+        'checksum_key' => env('PAYOS_CHECKSUM_KEY'),
+        'return_url' => env('PAYOS_RETURN_URL'),
+        'cancel_url' => env('PAYOS_CANCEL_URL'),
+    ],
 
 ];

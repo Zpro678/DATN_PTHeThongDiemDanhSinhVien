@@ -346,33 +346,33 @@ class StudentIndex extends Component
     public function downloadFullTemplate()
     {
         $lines = [
-            "M\u00e3 h\u1ecdc vi\u00ean,H\u1ecd v\u00e0 t\u00ean,Email,22/06,23/06,24/06",
-            "HV001,Nguy\u1ec5n V\u0103n A,nva@email.com,c,m,c",
-            "HV002,Tr\u1ea7n Th\u1ecb B,ttb@email.com,v,c,v",
-            "HV003,L\u00ea V\u0103n C,lvc@email.com,c,v,p",
+            "Mã SV,Họ và tên,Email (Bắt buộc),22/06,23/06,24/06",
+            "CT030101,Nguyễn Tuấn An, Annt@gmail.com,c,m,c",
+            "CT030102,Trần Thị Bích,bichttt@gmail.com,v,c,v",
+            "CT030103,Lê Văn Cường,cuonglv@gmail.com,c,v,p",
             "",
-            "Ch\u00fa th\u00edch k\u00fd hi\u1ec7u:,c=C\u00f3 m\u1eb7t,m=\u0110i mu\u1ed9n,v=V\u1eafng kh\u00f4ng ph\u00e9p,p=V\u1eafng c\u00f3 ph\u00e9p",
+            "Chú thích ký hiệu:,c=Có mặt,m=Đi muộn,v=Vắng không phép,p=Vắng có phép",
         ];
         $csvContent = implode("\n", $lines);
 
         return response()->streamDownload(function () use ($csvContent) {
             echo "\xEF\xBB\xBF" . $csvContent; // UTF-8 BOM cho Excel
-        }, 'Danh_sach_hoc_vien_mau_day_du.csv');
+        }, 'Danh_sach_sinh_vien_mau_day_du.csv');
     }
 
     public function downloadBasicTemplate()
     {
         $lines = [
-            "M\u00e3 h\u1ecdc vi\u00ean,H\u1ecd v\u00e0 t\u00ean,Email",
-            "HV001,Nguy\u1ec5n V\u0103n A,nva@email.com",
-            "HV002,Tr\u1ea7n Th\u1ecb B,ttb@email.com",
-            "HV003,L\u00ea V\u0103n C,lvc@email.com",
+            "Mã SV,Họ và tên,Email (Bắt buộc)",
+            "CT030101,Nguyễn Tuấn An, Annt@gmail.com",
+            "CT030102,Trần Thị Bích,bichttt@gmail.com",
+            "CT030103,Lê Văn Cường,cuonglv@gmail.com",
         ];
         $csvContent = implode("\n", $lines);
 
         return response()->streamDownload(function () use ($csvContent) {
             echo "\xEF\xBB\xBF" . $csvContent; // UTF-8 BOM cho Excel
-        }, 'Danh_sach_hoc_vien_mau_co_ban.csv');
+        }, 'Danh_sach_sinh_vien_mau_co_ban.csv');
     }
 
     public function processImport(): void
