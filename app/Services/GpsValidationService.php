@@ -120,7 +120,38 @@ class GpsValidationService
         return null;
     }
 
-    // Tính khoảng cách Haversine
+    // Ngưỡng dưới của độ chính xác GPS được coi là "bất thường".
+    // GPS điện thoại qua trình duyệt gần như không bao giờ đạt độ chính xác dưới 1m;
+    // các app Fake GPS lại thường gán cứng accuracy = 0/1. Đây là tín hiệu 1-lần-đọc
+    // đáng tin nhất để suy đoán mock location (thay cho heuristic "accuracy là số
+    // nguyên" cũ — vốn báo nhầm rất nhiều vì thiết bị thật thường trả accuracy nguyên).
+    public const IMPLAUSIBLE_ACCURACY_METERS = 1.0;
+
+    /**
+     * Suy đoán vị trí bị giả lập (mock/fake GPS) từ một lần đọc.
+     *
+     * Trình duyệt KHÔNG cho biết cờ "mock provider" của Android (chỉ app native mới
+     * đọc được), nên ở phía server ta chỉ có thể suy đoán từ giá trị bất thường về
+     * mặt vật lý. Ở đây dùng độ chính xác quá nhỏ để coi là đáng ngờ.
+     *
+     * Trả về câu mô tả lý do nếu nghi ngờ, hoặc null nếu bình thường.
+     * Lưu ý: hàm chỉ GẮN CỜ để giảng viên rà soát, KHÔNG tự chặn điểm danh —
+     * tránh khóa nhầm sinh viên thật khi thiết bị vô tình báo accuracy nhỏ.
+     */
+    public function detectSuspiciousGps(?float $accuracy): ?string
+    {
+        if ($accuracy !== null && $accuracy <= self::IMPLAUSIBLE_ACCURACY_METERS) {
+            return 'Nghi ngờ giả lập vị trí: độ chính xác bất thường (' . round($accuracy, 2) . 'm).';
+        }
+
+        return null;
+    }
+
+    /**
+     * Tính khoảng cách "đường chim bay" (great-circle) giữa 2 điểm GPS theo mét
+     * bằng công thức Haversine. Đây là bản dùng chung duy nhất — controller và
+     * Livewire component đều gọi qua service này thay vì tự tính.
+     */
     public function calculateDistance(float $lat1, float $lon1, float $lat2, float $lon2): float
     {
         $earthRadius = 6371000; // in meters
