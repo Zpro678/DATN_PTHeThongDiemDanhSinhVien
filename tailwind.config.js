@@ -86,7 +86,7 @@ export default {
                 gutter: '1.5rem',
                 'stack-sm': '0.5rem',
                 'stack-md': '1rem',
-                'sidebar-width': '330px',
+                'sidebar-width': '260px',
             },
         },
     },

@@ -182,4 +182,26 @@ class User extends Authenticatable implements MustVerifyEmail
     {
         return $this->morphMany(Notification::class, 'notifiable')->latest();
     }
+
+    /**
+     * Bootstrap the model and its traits.
+     */
+    protected static function booted(): void
+    {
+        // THỰC HIỆN "LATE BINDING" (LIÊN KẾT MUỘN)
+        // Khi một user mới đăng ký tài khoản (qua Form hoặc Google), tự động quét và liên kết
+        // toàn bộ lịch sử điểm danh cũ của họ (khi còn là Guest khai báo qua Form điểm danh).
+        static::created(function (User $user) {
+            $profiles = \App\Models\ClassMemberProfile::where('email', $user->email)->get();
+            
+            foreach ($profiles as $profile) {
+                $member = $profile->classMember;
+                // Nếu tìm thấy member tương ứng và thành viên đó chưa có tài khoản (guest)
+                if ($member && is_null($member->user_id)) {
+                    // Liên kết thành viên này vào tài khoản mới tạo
+                    $member->update(['user_id' => $user->id]);
+                }
+            }
+        });
+    }
 }

@@ -16,19 +16,26 @@ class LogIndex extends Component
     public $dateFilter = 'all'; // all, 1_month, 3_months, 6_months
     public ?AuditLog $selectedLog = null;
 
+    public $perPage = 10;
+
     public function mount()
     {
         abort_unless(Auth::user()?->isAdmin(), 403);
     }
 
+    public function loadMore()
+    {
+        $this->perPage += 10;
+    }
+
     public function updatingSearch()
     {
-        $this->resetPage();
+        $this->perPage = 10;
     }
 
     public function updatingDateFilter()
     {
-        $this->resetPage();
+        $this->perPage = 10;
     }
 
     public function viewLog($id)
@@ -66,10 +73,12 @@ class LogIndex extends Component
             }
         }
 
-        $logs = $query->latest('created_at')->paginate(20);
+        $totalLogs = $query->count();
+        $logs = $query->latest('created_at')->take($this->perPage)->get();
 
         return view('livewire.admin.logs.log-index', [
             'logs' => $logs,
+            'hasMore' => $totalLogs > $this->perPage,
         ])->title('Nhật ký Hoạt động');
     }
 }

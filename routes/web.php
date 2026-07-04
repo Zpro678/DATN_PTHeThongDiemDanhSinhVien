@@ -43,6 +43,14 @@ Route::get('/', function () {
     return view('welcome');
 });
 
+Route::get('/maintenance', function () {
+    return view('maintenance');
+})->name('maintenance');
+
+Route::get('/dashboard', function () {
+    return view('dashboard');
+})->middleware(['auth', 'verified'])->name('dashboard');
+
 // Google OAuth Routes
 Route::get('/auth/google', [GoogleController::class, 'redirect'])->name('google.login');
 Route::get('/auth/google/callback', [GoogleController::class, 'callback'])->name('google.callback');
@@ -89,6 +97,8 @@ Route::middleware(['auth', 'verified', 'user.route'])->group(function () {
 
 
         Route::get('/reports', [\App\Http\Controllers\Admin\AdminController::class, 'reportsIndex'])->name('reports.index');
+
+        Route::get('/broadcast', \App\Livewire\Admin\Broadcast\Index::class)->name('broadcast');
 
         Route::get('/logs', \App\Livewire\Admin\Logs\LogIndex::class)->name('logs.index');
 

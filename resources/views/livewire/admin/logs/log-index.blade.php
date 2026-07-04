@@ -29,7 +29,7 @@
             </div>
         </div>
 
-        <div class="admin-card overflow-hidden rounded-2xl border p-6 md:p-8">
+        <div class="admin-card overflow-hidden rounded-2xl border p-6 md:p-8" wire:poll.5s>
             <div class="relative z-10 space-y-8 before:absolute before:bottom-2 before:left-[17px] before:top-2 before:w-0.5 before:bg-slate-100">
                 @forelse ($logs as $log)
                     @php
@@ -65,14 +65,22 @@
                                 </span>
                             </div>
                             
+                            @php
+                                $recordName = $log->new_values['name'] ?? $log->old_values['name'] ?? $log->new_values['title'] ?? $log->old_values['title'] ?? null;
+                            @endphp
                             <p class="break-words text-sm font-semibold leading-relaxed text-slate-700">
                                 <span class="font-bold text-blue-600">{{ $log->user?->name ?? 'Hệ thống' }}</span>
                                 {{ $log->action }}
                                 @if($log->courseClass)
                                     lớp <span class="font-bold text-slate-900">{{ $log->courseClass->name }}</span>
+                                @elseif($recordName)
+                                    <span class="font-bold text-slate-900">"{{ $recordName }}"</span>
                                 @endif
+                                
                                 @if($log->row_id)
-                                    <span class="text-slate-400">#{{ $log->row_id }}</span>
+                                    <span class="text-slate-400 text-xs ml-1" title="{{ $log->row_id }}">
+                                        #( {{ \Illuminate\Support\Str::length($log->row_id) > 15 ? \Illuminate\Support\Str::substr($log->row_id, 0, 8) . '...' : $log->row_id }} )
+                                    </span>
                                 @endif
                             </p>
 
@@ -121,9 +129,32 @@
                 @endforelse
             </div>
 
-            @if($logs->hasPages())
-                <div class="relative z-10 mt-8 border-t border-slate-200 pt-6">
-                    {{ $logs->links('vendor.livewire.tailwind') }}
+            @if($hasMore)
+                <div x-intersect="$wire.loadMore()" class="relative z-10 space-y-8 animate-pulse mt-8">
+                    <!-- Skeleton 1 -->
+                    <div class="relative flex items-start gap-4 md:gap-6">
+                        <div class="z-10 h-9 w-9 shrink-0 rounded-full bg-slate-200 shadow-sm"></div>
+                        <div class="flex-1 rounded-2xl border border-slate-100 bg-slate-50 p-4">
+                            <div class="mb-3 flex items-center justify-between">
+                                <div class="h-5 w-20 rounded bg-slate-200"></div>
+                                <div class="h-4 w-32 rounded bg-slate-200"></div>
+                            </div>
+                            <div class="h-4 w-3/4 rounded bg-slate-200 mb-2"></div>
+                            <div class="h-4 w-1/2 rounded bg-slate-200"></div>
+                        </div>
+                    </div>
+                    <!-- Skeleton 2 -->
+                    <div class="relative flex items-start gap-4 md:gap-6">
+                        <div class="z-10 h-9 w-9 shrink-0 rounded-full bg-slate-200 shadow-sm"></div>
+                        <div class="flex-1 rounded-2xl border border-slate-100 bg-slate-50 p-4">
+                            <div class="mb-3 flex items-center justify-between">
+                                <div class="h-5 w-24 rounded bg-slate-200"></div>
+                                <div class="h-4 w-28 rounded bg-slate-200"></div>
+                            </div>
+                            <div class="h-4 w-2/3 rounded bg-slate-200 mb-2"></div>
+                            <div class="h-4 w-1/3 rounded bg-slate-200"></div>
+                        </div>
+                    </div>
                 </div>
             @endif
         </div>
@@ -157,7 +188,7 @@
              class="fixed inset-0 z-10 w-screen overflow-y-auto">
             
             <div class="flex min-h-full items-end justify-center p-4 text-center sm:items-center sm:p-0">
-                <div @click.outside="open = false" class="relative w-full max-w-2xl transform overflow-hidden rounded-3xl bg-white text-left shadow-2xl transition-all sm:my-8">
+                <div @click.outside="open = false" class="relative w-full max-w-5xl transform overflow-hidden rounded-3xl bg-white text-left shadow-2xl transition-all sm:my-8">
                     
                     <!-- Header -->
                     <div class="border-b border-slate-100 bg-slate-50/50 px-6 py-4">
@@ -167,9 +198,9 @@
                                     <x-user.icon name="activity" :size="20" />
                                 </div>
                                 <div>
-                                    <h3 class="text-base font-bold text-slate-900">Chi tiết thao tác</h3>
+                                    <h3 class="text-lg font-bold text-slate-900">Chi tiết thao tác</h3>
                                     @if($selectedLog)
-                                        <p class="text-xs font-medium text-slate-500">ID: #LOG-{{ $selectedLog->id }} • {{ $selectedLog->created_at->format('d/m/Y H:i') }}</p>
+                                        <p class="text-sm font-medium text-slate-500">ID: #LOG-{{ $selectedLog->id }} • {{ $selectedLog->created_at->format('d/m/Y H:i') }}</p>
                                     @endif
                                 </div>
                             </div>
@@ -184,26 +215,26 @@
                         @if($selectedLog)
                         <div class="mb-6 grid grid-cols-2 gap-4 rounded-2xl bg-slate-50 p-4">
                             <div>
-                                <p class="text-[10px] font-bold uppercase tracking-wider text-slate-400">Người thực hiện</p>
-                                <p class="mt-1 text-sm font-semibold text-slate-900">{{ $selectedLog->user?->name ?? 'Hệ thống' }}</p>
-                                <p class="text-xs text-slate-500">{{ $selectedLog->user?->email ?? 'N/A' }}</p>
+                                <p class="text-xs font-bold uppercase tracking-wider text-slate-400">Người thực hiện</p>
+                                <p class="mt-1 text-base font-semibold text-slate-900">{{ $selectedLog->user?->name ?? 'Hệ thống' }}</p>
+                                <p class="text-sm text-slate-500">{{ $selectedLog->user?->email ?? 'N/A' }}</p>
                             </div>
                             <div>
-                                <p class="text-[10px] font-bold uppercase tracking-wider text-slate-400">Thiết bị & IP</p>
-                                <p class="mt-1 flex items-center gap-1.5 text-sm font-semibold text-slate-900">
-                                    <x-user.icon name="map-pin" :size="14" class="text-slate-400" />
+                                <p class="text-xs font-bold uppercase tracking-wider text-slate-400">Thiết bị & IP</p>
+                                <p class="mt-1 flex items-center gap-1.5 text-base font-semibold text-slate-900">
+                                    <x-user.icon name="map-pin" :size="16" class="text-slate-400" />
                                     {{ $selectedLog->ip_address ?? 'Không rõ' }}
                                 </p>
-                                <p class="text-xs text-slate-500 truncate" title="{{ $selectedLog->user_agent }}">{{ $selectedLog->user_agent ?? 'Không rõ' }}</p>
+                                <p class="text-sm text-slate-500 truncate" title="{{ $selectedLog->user_agent }}">{{ $selectedLog->user_agent ?? 'Không rõ' }}</p>
                             </div>
                         </div>
 
-                        <h4 class="mb-3 mt-8 text-sm font-bold text-slate-900">Chi tiết thay đổi dữ liệu (Bảng: {{ $selectedLog->table_name }})</h4>
-                        <div class="overflow-hidden rounded-xl border border-slate-200 shadow-sm max-h-[300px] overflow-y-auto scrollbar-custom">
+                        <h4 class="mb-3 mt-8 text-base font-bold text-slate-900">Chi tiết thay đổi dữ liệu (Bảng: {{ $selectedLog->table_name }})</h4>
+                        <div class="overflow-hidden rounded-xl border border-slate-200 shadow-sm max-h-[400px] overflow-y-auto scrollbar-custom">
                             <div class="sticky top-0 grid grid-cols-3 divide-x divide-slate-200 bg-slate-100 border-b border-slate-200">
-                                <div class="px-4 py-3 text-[11px] font-extrabold text-slate-500 uppercase tracking-wider">Trường dữ liệu</div>
-                                <div class="px-4 py-3 text-[11px] font-extrabold text-slate-500 uppercase tracking-wider">Giá trị cũ (Old)</div>
-                                <div class="px-4 py-3 text-[11px] font-extrabold text-blue-600 uppercase tracking-wider">Giá trị mới (New)</div>
+                                <div class="px-4 py-3 text-sm font-extrabold text-slate-500 uppercase tracking-wider">Trường dữ liệu</div>
+                                <div class="px-4 py-3 text-sm font-extrabold text-slate-500 uppercase tracking-wider">Giá trị cũ (Old)</div>
+                                <div class="px-4 py-3 text-sm font-extrabold text-blue-600 uppercase tracking-wider">Giá trị mới (New)</div>
                             </div>
                             <div class="divide-y divide-slate-100">
                                 @php
@@ -219,12 +250,12 @@
                                         if (is_array($oldVal) || is_object($oldVal)) $oldVal = json_encode($oldVal, JSON_UNESCAPED_UNICODE);
                                         if (is_array($newVal) || is_object($newVal)) $newVal = json_encode($newVal, JSON_UNESCAPED_UNICODE);
                                     @endphp
-                                    <div class="grid grid-cols-3 divide-x divide-slate-100 text-sm transition-colors hover:bg-slate-50">
+                                    <div class="grid grid-cols-3 divide-x divide-slate-100 text-base transition-colors hover:bg-slate-50">
                                         <div class="px-4 py-3 font-semibold text-slate-700 flex items-center">
-                                            <span class="rounded bg-slate-100 px-2 py-1 text-xs font-mono text-slate-600 break-all">{{ $key }}</span>
+                                            <span class="rounded bg-slate-100 px-2 py-1 text-sm font-mono text-slate-600 break-all">{{ $key }}</span>
                                         </div>
                                         <div class="px-4 py-3 text-slate-500 flex items-center overflow-x-hidden">
-                                            <span class="{{ $oldVal != $newVal ? 'line-through decoration-slate-300' : '' }} break-words w-full">{{ $oldVal ?? 'null' }}</span>
+                                            <span class="break-words w-full">{{ $oldVal ?? 'null' }}</span>
                                         </div>
                                         <div class="px-4 py-3 font-bold text-emerald-700 bg-emerald-50/50 flex items-center overflow-x-hidden">
                                             <span class="break-words w-full">{{ $newVal ?? 'null' }}</span>

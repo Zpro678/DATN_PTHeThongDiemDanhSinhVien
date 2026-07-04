@@ -14,7 +14,7 @@ return new class extends Migration
             $table->foreignUuid('class_id')->nullable()->constrained('classes')->nullOnDelete();
             $table->string('action');
             $table->string('table_name')->nullable();
-            $table->unsignedBigInteger('row_id')->nullable();
+            $table->string('row_id', 36)->nullable();
             $table->json('old_values')->nullable();
             $table->json('new_values')->nullable();
             $table->string('ip_address', 45)->nullable();

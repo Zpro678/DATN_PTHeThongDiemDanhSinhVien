@@ -33,7 +33,8 @@ class EditProfile extends Component
             'name.required' => 'Họ và tên không được để trống.',
             'email.required' => 'Email không được để trống.',
             'email.email' => 'Email không đúng định dạng.',
-            'email.unique' => 'Email này đã được sử dụng bởi một tài khoản khác.'
+            'email.unique' => 'Email này đã được sử dụng bởi một tài khoản khác.',
+            'password.different' => 'Mật khẩu mới phải khác với mật khẩu hiện tại.'
         ];
     }
 
@@ -77,26 +78,31 @@ class EditProfile extends Component
 
         $user->save();
 
-        session()->flash('status', 'Thông tin cá nhân đã được cập nhật thành công.');
-
-        return redirect()->route('profile.edit');
+        $this->dispatch('toast', message: 'Thông tin cá nhân đã được cập nhật thành công.', type: 'success');
     }
 
     public function updatePassword()
     {
-        $this->validate([
-            'current_password' => ['required', 'current_password'],
-            'password' => ['required', Password::defaults(), 'confirmed'],
-        ]);
-
         $user = Auth::user();
+        
+        $rules = [
+            'password' => ['required', \Illuminate\Validation\Rules\Password::defaults(), 'confirmed'],
+        ];
+
+        if ($user->password) {
+            $rules['current_password'] = ['required', 'current_password'];
+            $rules['password'][] = 'different:current_password';
+        }
+
+        $this->validate($rules);
+
         $user->update([
             'password' => Hash::make($this->password),
         ]);
 
         $this->reset(['current_password', 'password', 'password_confirmation']);
 
-        session()->flash('password_status', 'Mật khẩu đã được cập nhật thành công.');
+        $this->dispatch('toast', message: 'Mật khẩu đã được lưu thành công.', type: 'success');
     }
 
     public function render()

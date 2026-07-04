@@ -21,7 +21,18 @@
         ['label' => 'Dashboard', 'href' => route('admin.dashboard'), 'icon' => 'layout-dashboard', 'active' => ['admin.dashboard']],
         ['label' => 'Quản lý tài khoản', 'href' => route('admin.users.index'), 'icon' => 'user-square', 'active' => ['admin.users.*']],
         ['label' => 'Quản lý gói dịch vụ', 'href' => route('admin.packages.index'), 'icon' => 'star', 'active' => ['admin.packages.*']],
-        ['label' => 'Nhật ký hệ thống', 'href' => route('admin.logs.index'), 'icon' => 'activity', 'active' => ['admin.logs.*']],
+        [
+            'label' => 'Nhật ký hệ thống',
+            'icon' => 'activity',
+            'href' => route('admin.logs.index'),
+            'active' => ['admin.logs.*'],
+        ],
+        [
+            'label' => 'Gửi thông báo',
+            'icon' => 'send',
+            'href' => route('admin.broadcast'),
+            'active' => ['admin.broadcast'],
+        ],
         ['label' => 'Báo cáo & thống kê', 'href' => route('admin.reports.index'), 'icon' => 'bar-chart', 'active' => ['admin.reports.*']],
     ];
 @endphp
@@ -73,7 +84,7 @@
                         <a
                                     href="{{ $item['href'] }}"
                                     @class([
-                                        'flex w-full items-center gap-3 rounded-lg px-3 py-2.5 text-base font-bold transition-all',
+                                        'flex w-full items-center gap-3 rounded-lg px-3 py-3 text-[15px] font-medium transition-all',
                                         'bg-primary-container text-on-primary-container' => $isItemActive,
                                         'text-on-surface-variant hover:bg-surface-container-high' => ! $isItemActive,
                                     ])
@@ -87,7 +98,7 @@
                 <div class="mt-auto space-y-1 border-t border-outline-variant/20 px-2 pt-2 pb-1">
                     <a href="{{ route('admin.settings.index') }}" 
                         @class([
-                            'flex w-full items-center gap-3 rounded-lg px-3 py-2.5 text-base font-bold transition-all',
+                            'flex w-full items-center gap-3 rounded-lg px-3 py-3 text-[15px] font-medium transition-all',
                             'bg-primary-container text-on-primary-container' => request()->routeIs('admin.settings.*'),
                             'text-on-surface-variant hover:bg-surface-container-high' => !request()->routeIs('admin.settings.*'),
                         ])
@@ -98,7 +109,7 @@
 
                     <a href="{{ route('profile.edit') }}" 
                         @class([
-                            'flex w-full items-center gap-3 rounded-lg px-3 py-2.5 text-base font-bold transition-all',
+                            'flex w-full items-center gap-3 rounded-lg px-3 py-3 text-[15px] font-medium transition-all',
                             'bg-primary-container text-on-primary-container' => request()->routeIs('profile.*'),
                             'text-on-surface-variant hover:bg-surface-container-high' => !request()->routeIs('profile.*'),
                         ])
@@ -109,7 +120,7 @@
 
                     <form method="POST" action="{{ route('logout') }}">
                         @csrf
-                        <button type="submit" class="flex w-full items-center gap-3 rounded-lg px-3 py-2.5 text-base font-bold text-error transition-all hover:bg-error-container/40">
+                        <button type="submit" class="flex w-full items-center gap-3 rounded-lg px-3 py-3 text-[15px] font-medium text-error transition-all hover:bg-error-container/40">
                             <x-user.icon name="log-out" :size="20" class="shrink-0" />
                             <span class="whitespace-nowrap">Đăng xuất</span>
                         </button>
@@ -148,7 +159,7 @@
                             <a
                                         href="{{ $item['href'] }}"
                                         @class([
-                                            'flex w-full items-center gap-3 rounded-lg px-3 py-2.5 text-base font-bold transition-all',
+                                            'flex w-full items-center gap-3 rounded-lg px-3 py-3 text-[15px] font-medium transition-all',
                                             'bg-primary-container text-on-primary-container' => $isItemActive,
                                             'text-on-surface-variant hover:bg-surface-container-high' => ! $isItemActive,
                                         ])
@@ -163,7 +174,7 @@
                     <div class="mt-auto space-y-1 border-t border-outline-variant/20 px-2 pt-2 pb-1">
                         <a href="{{ route('admin.settings.index') }}" 
                             @class([
-                                'flex w-full items-center gap-3 rounded-lg px-3 py-2.5 text-base font-bold transition-all',
+                                'flex w-full items-center gap-3 rounded-lg px-3 py-3 text-[15px] font-medium transition-all',
                                 'bg-primary-container text-on-primary-container' => request()->routeIs('admin.settings.*'),
                                 'text-on-surface-variant hover:bg-surface-container-high' => !request()->routeIs('admin.settings.*'),
                             ]) 
@@ -175,7 +186,7 @@
 
                         <a href="{{ route('profile.edit') }}" 
                             @class([
-                                'flex w-full items-center gap-3 rounded-lg px-3 py-2.5 text-base font-bold transition-all',
+                                'flex w-full items-center gap-3 rounded-lg px-3 py-3 text-[15px] font-medium transition-all',
                                 'bg-primary-container text-on-primary-container' => request()->routeIs('profile.*'),
                                 'text-on-surface-variant hover:bg-surface-container-high' => !request()->routeIs('profile.*'),
                             ]) 
@@ -187,7 +198,7 @@
 
                         <form method="POST" action="{{ route('logout') }}">
                             @csrf
-                            <button type="submit" class="flex w-full items-center gap-3 rounded-lg px-3 py-2.5 text-base font-bold text-error transition-all hover:bg-error-container/40">
+                            <button type="submit" class="flex w-full items-center gap-3 rounded-lg px-3 py-3 text-[15px] font-medium text-error transition-all hover:bg-error-container/40">
                                 <x-user.icon name="log-out" :size="20" class="shrink-0" />
                                 <span class="whitespace-nowrap">Đăng xuất</span>
                             </button>
@@ -197,6 +208,7 @@
             </div>
 
             <div class="min-h-screen xl:pl-sidebar-width">
+                <x-maintenance-banner />
                 <header class="admin-topbar sticky top-0 z-30 flex h-16 items-center justify-between border-b border-slate-200/80 bg-white/85 px-4 backdrop-blur-xl sm:px-6">
                     <div class="flex min-w-0 items-center gap-3">
                         <button type="button" class="admin-soft-button flex h-10 w-10 items-center justify-center rounded-xl border border-transparent bg-transparent text-slate-500 transition hover:bg-slate-50 xl:hidden" @click="sidebarOpen = true">

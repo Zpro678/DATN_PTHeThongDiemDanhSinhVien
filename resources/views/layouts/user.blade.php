@@ -109,7 +109,7 @@
             x-init="$watch('sidebarCollapsed', value => localStorage.setItem('sidebarCollapsed', value ? '1' : '0'))"
             class="flex min-h-screen flex-col bg-surface"
         >
-
+            <x-maintenance-banner />
             {{-- ============================ TOP NAVBAR (full width) ============================ --}}
             <header class="sticky top-0 z-40 h-16 shrink-0 border-b border-outline-variant bg-white">
                 <div class="flex h-16 w-full items-center justify-between gap-3 px-4 sm:px-6 lg:px-8">

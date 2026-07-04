@@ -17,6 +17,7 @@ return Application::configure(basePath: dirname(__DIR__))
         ]);
         $middleware->web(append: [
             SetUserRouteDefaults::class,
+            \App\Http\Middleware\CheckSystemMaintenance::class,
         ]);
 
         // Fix redirect for authenticated users (e.g. remember me)

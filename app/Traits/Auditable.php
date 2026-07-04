@@ -58,6 +58,7 @@ trait Auditable
             'new_values' => empty($newValues) ? null : $newValues,
             'ip_address' => request()->ip(),
             'user_agent' => substr(request()->userAgent() ?? '', 0, 255),
+            'created_at' => now(),
         ]);
     }
 }
