@@ -183,6 +183,10 @@ Route::middleware('auth')->group(function () {
     Route::post('/notifications/read-all', [\App\Http\Controllers\NotificationController::class, 'readAll'])
         ->name('notifications.read-all');
 
+    // Đánh dấu một thông báo là đã đọc rồi chuyển tới đích của nó (dùng khi bấm từng cái).
+    Route::get('/notifications/{notification}/read', [\App\Http\Controllers\NotificationController::class, 'read'])
+        ->name('notifications.read');
+
     // MoMo redirect trình duyệt người dùng về đây sau khi thanh toán (chỉ hiển thị kết quả).
     Route::get('/payment/momo/return', [\App\Http\Controllers\MomoController::class, 'return'])
         ->name('momo.return');

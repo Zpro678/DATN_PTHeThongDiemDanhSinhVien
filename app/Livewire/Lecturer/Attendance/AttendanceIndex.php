@@ -227,8 +227,8 @@ class AttendanceIndex extends Component
         } else {
             $session = $meeting->createSession('active', [
                 'name' => $this->sessionName,
-                'qr_token' => \Illuminate\Support\Str::upper(\Illuminate\Support\Str::random(24)),
-                'token_expires_at' => now()->addMinutes($this->durationMinutes),
+                'qr_token' => \App\Models\ClassSession::generateQrToken(),
+                'token_expires_at' => \App\Models\ClassSession::qrTokenExpiryFor((int) $this->qrRefreshRate),
                 'qr_refresh_rate' => $this->qrRefreshRate,
                 'gps_latitude' => $this->gpsEnabled ? $this->gpsLatitude : null,
                 'gps_longitude' => $this->gpsEnabled ? $this->gpsLongitude : null,

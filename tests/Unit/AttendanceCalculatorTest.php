@@ -90,6 +90,43 @@ class AttendanceCalculatorTest extends TestCase
     }
 
     /**
+     * Số buổi cơ sở luôn lấy LỚN NHẤT giữa dự kiến và đã diễn ra.
+     */
+    #[DataProvider('baseSessionsCases')]
+    public function test_base_sessions_takes_the_larger_total(int $planned, int $studied, int $expected): void
+    {
+        $this->assertSame($expected, AttendanceCalculator::baseSessions($planned, $studied));
+    }
+
+    /**
+     * @return array<string, array{0:int,1:int,2:int}>
+     */
+    public static function baseSessionsCases(): array
+    {
+        return [
+            'đã học ít hơn dự kiến -> lấy dự kiến' => [15, 10, 15],
+            'đã học đúng dự kiến' => [15, 15, 15],
+            'đã học VƯỢT dự kiến -> lấy số đã học' => [15, 20, 20],
+            'chưa cấu hình dự kiến -> lấy đã học' => [0, 5, 5],
+            'cả hai bằng 0' => [0, 0, 0],
+        ];
+    }
+
+    /**
+     * Quỹ vắng = floor(20% × số buổi cơ sở). Khi vượt số buổi dự kiến,
+     * quỹ vắng được tính lại trên tổng số buổi lớn hơn.
+     */
+    public function test_allowed_absent_is_twenty_percent_of_base_sessions(): void
+    {
+        $this->assertSame(3, AttendanceCalculator::allowedAbsentSessions(15)); // floor(3.0)
+        $this->assertSame(2, AttendanceCalculator::allowedAbsentSessions(10)); // floor(2.0)
+
+        // Dự kiến 15 nhưng đã học 20 -> cơ sở 20 -> quỹ vắng = floor(4.0) = 4.
+        $base = AttendanceCalculator::baseSessions(15, 20);
+        $this->assertSame(4, AttendanceCalculator::allowedAbsentSessions($base));
+    }
+
+    /**
      * @return array<string, array{0:int,1:array<string,int>,2:array<string,float>,3:int}>
      */
     public static function percentCases(): array

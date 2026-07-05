@@ -126,6 +126,13 @@
                             <input wire:model.live.debounce.300ms="lateThreshold" type="number" min="0" max="300" class="h-12 w-full rounded-xl border border-outline-variant/40 bg-white px-4 text-sm font-semibold text-on-surface outline-none transition-all hover:border-outline-variant focus:border-primary focus:ring-2 focus:ring-primary/20">
                             @error('lateThreshold') <span class="block text-xs font-medium text-error">{{ $message }}</span> @enderror
                         </label>
+
+                        <label class="space-y-2 sm:col-span-2 md:col-span-1">
+                            <span class="block text-sm font-semibold text-on-surface">Tổng số buổi dự kiến <span class="text-error">*</span></span>
+                            <input wire:model.live.debounce.300ms="totalSessions" type="number" min="1" max="200" class="h-12 w-full rounded-xl border border-outline-variant/40 bg-white px-4 text-sm font-semibold text-on-surface outline-none transition-all hover:border-outline-variant focus:border-primary focus:ring-2 focus:ring-primary/20">
+                            <span class="block text-xs text-on-surface-variant/70">Dùng để tính quỹ vắng cho phép (20%) và tiến độ lớp.</span>
+                            @error('totalSessions') <span class="block text-xs font-medium text-error">{{ $message }}</span> @enderror
+                        </label>
                     </div>
 
                     <div class="mt-7 space-y-4">
@@ -230,7 +237,10 @@
 
                         <div class="space-y-4 p-6">
                             <div class="grid grid-cols-1 gap-3">
-                                <!-- Đã bỏ Tổng số buổi dự kiến -->
+                                <div class="rounded-2xl bg-slate-50 p-4">
+                                    <p class="text-xs font-bold uppercase tracking-wide text-slate-400">Tổng số buổi dự kiến</p>
+                                    <p class="mt-2 text-2xl font-extrabold text-slate-950">{{ $totalSessions ?: 0 }}</p>
+                                </div>
                             </div>
 
                             <div class="rounded-2xl border border-outline-variant/20 p-4">

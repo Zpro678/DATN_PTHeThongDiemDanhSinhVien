@@ -56,7 +56,7 @@ class AppServiceProvider extends ServiceProvider
             if ($event->user->email) {
                 $memberIds = \App\Models\ClassMemberProfile::where('email', $event->user->email)
                     ->pluck('class_member_id');
-                
+
                 if ($memberIds->isNotEmpty()) {
                     \App\Models\ClassMember::whereIn('id', $memberIds)
                         ->whereNull('user_id')
@@ -88,6 +88,14 @@ class AppServiceProvider extends ServiceProvider
                     'user_agent' => request()->userAgent(),
                     'created_at' => now(),
                 ]);
+            }
+        });
+
+        // Thông báo gửi qua $user->notify() (kênh 'database') cũng phát tín hiệu realtime,
+        // để chuông thông báo tự cập nhật giống các thông báo tạo qua NotificationService::push().
+        \Illuminate\Support\Facades\Event::listen(function (\Illuminate\Notifications\Events\NotificationSent $event) {
+            if ($event->channel === 'database' && $event->notifiable instanceof \App\Models\User) {
+                event(new \App\Events\NotificationReceived((int) $event->notifiable->getKey()));
             }
         });
     }

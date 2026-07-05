@@ -2,7 +2,9 @@
     $isClosed = $session->status === 'closed';
     $selectedSubject = $session->courseClass->join_key;
     $sessionDateLabel = $session->date->format('d/m/Y');
-    $openMinutes = max(1, (int) now()->diffInMinutes($session->token_expires_at ?? now()->addMinutes(15), false));
+    // "Phiên còn mở" tính theo GIỜ KẾT THÚC BUỔI (không phải hạn token QR — token nay xoay theo giây).
+    $sessionEndsAt = $session->meeting?->endsAt() ?? now()->addMinutes(15);
+    $openMinutes = max(1, (int) now()->diffInMinutes($sessionEndsAt, false));
     $qrRefreshRate = $session->qr_refresh_rate ?? 10;
     $statusMeta = [
         'present' => ['label' => 'CÓ MẶT', 'short' => 'Có mặt', 'card' => 'border border-slate-400 bg-white', 'text' => 'text-emerald-500', 'icon' => 'check-circle-2', 'activeBtn' => 'bg-emerald-600 text-white border-emerald-700 shadow-md ring-2 ring-emerald-600/20'],
@@ -21,7 +23,7 @@
         isClosed: @entangle('isClosed').live,
         timeLeft: {{ $qrRefreshRate }},
         refreshRate: {{ $qrRefreshRate }},
-        sessionTimeLeft: {{ max(0, (int) now()->diffInSeconds($session->token_expires_at ?? now()->addMinutes($session->open_minutes ?? 15), false)) }},
+        sessionTimeLeft: {{ max(0, (int) now()->diffInSeconds($sessionEndsAt, false)) }},
         showEndModal: false,
         showQrModal: false,
         showClassSettingsModal: false,
@@ -81,6 +83,7 @@
             <button type="button" wire:click="refreshToken" @disabled($isClosed) class="inline-flex items-center justify-center rounded-lg bg-blue-600 px-5 py-2.5 text-sm font-bold text-white shadow-sm hover:bg-blue-700 disabled:opacity-50">
                 Làm mới QR
             </button>
+            <x-user.export-button action="exportExcel" label="Xuất Excel" :can="$canExportExcel" />
             @if(!$isClosed)
             <button type="button" @click="showEndModal = true" class="inline-flex items-center justify-center rounded-lg bg-rose-600 px-5 py-2.5 text-sm font-bold text-white shadow-sm hover:bg-rose-700">
                 Kết thúc phiên

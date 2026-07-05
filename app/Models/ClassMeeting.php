@@ -3,6 +3,7 @@
 namespace App\Models;
 
 use App\Services\AttendanceCalculator;
+use App\Services\NotificationService;
 use Carbon\Carbon;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
@@ -107,12 +108,16 @@ class ClassMeeting extends Model
             return false;
         }
 
+        $notifier = app(NotificationService::class);
+
         $sessionsToClose = $this->sessions()->where('status', '!=', 'closed')->get();
         foreach ($sessionsToClose as $session) {
             $session->update(['status' => 'closed']);
             // Mặc định những ai chưa điểm danh (pending) khi khóa phiên QR sẽ thành vắng (absent)
             if (!empty($session->qr_token)) {
                 $session->attendanceRecords()->where('status', 'pending')->update(['status' => 'absent']);
+                // Báo trạng thái điểm danh của phiên QR cho từng học viên.
+                $notifier->notifyQrSessionResults($session);
             }
         }
         $this->update(['status' => 'closed']);
@@ -120,6 +125,10 @@ class ClassMeeting extends Model
         if ($this->relationLoaded('sessions')) {
             $this->sessions->each(fn (ClassSession $session) => $session->status = 'closed');
         }
+
+        // Dựng/đồng bộ bảng tổng kết rồi báo trạng thái tổng kết buổi cho học viên.
+        AttendanceCalculator::syncSummaries($this);
+        $notifier->notifyMeetingResults($this);
 
         return true;
     }

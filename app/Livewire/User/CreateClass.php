@@ -43,6 +43,9 @@ class CreateClass extends Component
     // Ngưỡng thời gian đi muộn (phút)
     public int $lateThreshold = 15;
 
+    // Tổng số buổi dự kiến của môn học (dùng để tính quỹ vắng 20% và tiến độ).
+    public int $totalSessions = 15;
+
     // Cấu hình bảng điểm trừ chuyên cần
     public array $attendanceRules = [];
 
@@ -99,6 +102,7 @@ class CreateClass extends Component
             'classCode' => ['nullable', 'string', 'max:50'],
             'description' => ['nullable', 'string', 'max:5000'],
             'lateThreshold' => ['required', 'integer', 'min:0', 'max:300'],
+            'totalSessions' => ['required', 'integer', 'min:1', 'max:200'],
             'attendanceRules' => ['required', 'array'],
             'attendanceRules.present' => ['required', 'numeric', 'max:0'],
             'attendanceRules.late' => ['required', 'numeric'],
@@ -108,8 +112,9 @@ class CreateClass extends Component
             'importFile' => ['required', 'file', 'extensions:xlsx,xls,csv', 'max:5120'],
         ], [
             'name.required' => 'Vui lòng nhập tên lớp.',
-            'importFile.required' => 'Vui lòng chọn tệp danh sách sinh viên Excel/CSV để import.',
-            'importFile.extensions' => 'Định dạng file import không hỗ trợ. Vui lòng dùng .xlsx, .xls, .csv',
+            'totalSessions.required' => 'Vui lòng nhập tổng số buổi dự kiến.',
+            'totalSessions.min' => 'Tổng số buổi dự kiến phải từ 1 trở lên.',
+            'totalSessions.max' => 'Tổng số buổi dự kiến tối đa là 200.',
         ]);
 
         $code = $this->generateUniqueCode();
@@ -122,7 +127,7 @@ class CreateClass extends Component
             'description' => $this->description ?: null,
             'late_threshold' => $this->lateThreshold,
             'deduct_excused_absence' => ($this->attendanceRules['excused'] ?? 0) > 0,
-            'total_sessions' => 0,
+            'total_sessions' => $this->totalSessions,
             'require_approval' => $this->requireApproval,
             'status' => 'active',
         ]);

@@ -37,10 +37,74 @@ class SubscriptionService
 
         return $user->subscriptions()->create([
             'plan_id' => $plan->id,
+            'paid_plan_id' => $plan->id, // Ghi nhận đây là gói đã trả tiền.
             'start_date' => now(),
             'end_date' => $plan->duration_days > 0 ? now()->addDays($plan->duration_days) : null,
             'status' => 'active',
         ]);
+    }
+
+    /**
+     * Người dùng còn "cửa sổ quyền lợi" đã mua đang hiệu lực (active + chưa hết hạn) hay không.
+     *
+     * Đúng cả khi họ đang tạm dùng FREE nhưng thời hạn đã mua vẫn còn.
+     */
+    public function hasActivePaidPlan(User $user): bool
+    {
+        return $user->activeSubscription()->exists();
+    }
+
+    /**
+     * Có được ĐỔI MIỄN PHÍ sang $plan hay không (không cần thanh toán lại).
+     *
+     * Chỉ cho phép khi còn thời hạn đã mua VÀ đích đến là:
+     *  - Gói FREE (tạm hạ cấp, vẫn giữ hạn), hoặc
+     *  - ĐÚNG gói đã trả tiền (paid_plan_id) — tức quay lại gói mình đã mua.
+     * Mọi gói trả phí KHÁC chưa mua đều phải thanh toán.
+     */
+    public function canSwitchFreeTo(User $user, Plan $plan): bool
+    {
+        $current = $user->activeSubscription()->first();
+
+        if (! $current) {
+            return false; // Hết hạn / chưa mua -> không có gì để đổi miễn phí.
+        }
+
+        return $plan->plan_tier === 'FREE'
+            || (int) $plan->id === (int) $current->paid_plan_id;
+    }
+
+    /**
+     * ĐỔI gói khi còn hạn — KHÔNG thu phí, cập nhật tại chỗ và GIỮ NGUYÊN end_date + paid_plan_id.
+     *
+     * Chỉ đổi "gói đang dùng" (plan_id): về FREE để tạm hạ cấp, hoặc quay lại đúng gói đã mua.
+     * Nhờ giữ paid_plan_id nên về FREE vẫn nhớ được gói đã trả tiền để quay lại; còn muốn lên
+     * gói trả phí khác thì phải mua (không đi qua hàm này).
+     *
+     * @return Subscription|null Thuê bao đang chạy đã đổi gói, hoặc null nếu không còn hạn.
+     */
+    public function switchTo(User $user, Plan $plan): ?Subscription
+    {
+        $current = $user->activeSubscription()->first();
+
+        // Không còn hạn -> coi như đăng ký mới (FREE no-op, trả phí cấp hạn đầy đủ).
+        if (! $current) {
+            return $this->activate($user, $plan);
+        }
+
+        // Đảm bảo chỉ một thuê bao hiệu lực.
+        $user->subscriptions()
+            ->where('status', 'active')
+            ->where('id', '!=', $current->id)
+            ->update(['status' => 'expired']);
+
+        // Đổi gói đang dùng tại chỗ; giữ nguyên paid_plan_id & end_date đã mua.
+        $current->update([
+            'plan_id' => $plan->id,
+            'status' => 'active',
+        ]);
+
+        return $current;
     }
 
     /**

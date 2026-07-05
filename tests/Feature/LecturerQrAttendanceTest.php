@@ -5,12 +5,15 @@ namespace Tests\Feature;
 use App\Livewire\Lecturer\Attendance\QrAttendanceCreate;
 use App\Livewire\Lecturer\Attendance\QrAttendanceSession;
 use App\Livewire\Lecturer\ClassSettings;
+use App\Livewire\Student\AttendanceCheckIn;
 use App\Models\AttendanceRecord;
+use App\Models\ClassMeeting;
 use App\Models\ClassMember;
 use App\Models\ClassSession;
 use App\Models\CourseClass;
 use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Support\Carbon;
 use Livewire\Livewire;
 use Tests\TestCase;
 
@@ -128,6 +131,96 @@ class LecturerQrAttendanceTest extends TestCase
         });
 
         return [$owner, $session];
+    }
+
+    public function test_refresh_token_rotates_qr_token_and_shortens_expiry(): void
+    {
+        [$owner, $session] = $this->createQrSession();
+        $oldToken = $session->qr_token;
+
+        Livewire::actingAs($owner)
+            ->test(QrAttendanceSession::class, ['session' => $session->id])
+            ->call('refreshToken');
+
+        $session->refresh();
+
+        // Token QR phải ĐỔI thật (không chỉ đổi ảnh).
+        $this->assertNotSame($oldToken, $session->qr_token);
+
+        // Hạn token ngắn theo nhịp làm mới (không còn là 15 phút như trước).
+        $ttl = ClassSession::qrTokenTtlSecondsFor($session->qr_refresh_rate);
+        $this->assertTrue($session->token_expires_at->lessThanOrEqualTo(now()->addSeconds($ttl + 2)));
+    }
+
+    public function test_stale_qr_token_is_rejected_after_rotation(): void
+    {
+        [$owner, $session] = $this->createQrSession();
+        $oldToken = $session->qr_token;
+
+        $session->rotateQrToken();
+        $this->assertNotSame($oldToken, $session->fresh()->qr_token);
+
+        // Sinh viên quét ẢNH CHỤP mã cũ -> token không còn khớp -> bị từ chối ngay khi mở trang.
+        Livewire::test(AttendanceCheckIn::class, ['token' => $oldToken])
+            ->assertSet('statusMessage', 'Mã điểm danh không hợp lệ hoặc không tồn tại.');
+    }
+
+    public function test_check_in_completes_even_after_qr_token_expired_while_session_open(): void
+    {
+        $base = Carbon::create(2026, 7, 5, 8, 0, 0);
+        $this->travelTo($base);
+
+        $student = User::factory()->create();
+        $owner = User::factory()->create();
+        $courseClass = CourseClass::factory()->create(['owner_user_id' => $owner->id]);
+        $meeting = ClassMeeting::factory()->create([
+            'class_id' => $courseClass->id,
+            'user_Created' => $owner->id,
+            'date' => $base->toDateString(),
+            'start_time' => '00:00:00',
+            'end_time' => '23:59:00', // Buổi mở cả ngày -> chắc chắn còn trong giờ.
+            'status' => 'active',
+        ]);
+        $session = ClassSession::factory()->create([
+            'class_id' => $courseClass->id,
+            'meeting_id' => $meeting->id,
+            'created_by' => $owner->id,
+            'date' => $base->toDateString(),
+            'status' => 'active',
+            'qr_token' => 'ROTATETOKEN1',
+            'qr_refresh_rate' => 10,
+            'token_expires_at' => $base->copy()->addSeconds(15),
+            'gps_latitude' => null, // Tắt GPS để test đúng nhánh xác thực token.
+            'gps_longitude' => null,
+            'gps_radius' => null,
+        ]);
+        $member = ClassMember::create([
+            'class_id' => $courseClass->id,
+            'user_id' => $student->id,
+            'status' => ClassMember::STATUS_ACTIVE,
+        ]);
+        AttendanceRecord::factory()->create([
+            'class_session_id' => $session->id,
+            'class_member_id' => $member->id,
+            'status' => 'pending',
+            'check_in_time' => null,
+        ]);
+
+        // Quét khi token còn hạn -> mở được trang.
+        $component = Livewire::actingAs($student)
+            ->test(AttendanceCheckIn::class, ['token' => 'ROTATETOKEN1']);
+
+        // Bấm điểm danh MUỘN, sau khi cửa sổ token QR đã trôi qua (buổi vẫn trong giờ).
+        $this->travelTo($base->copy()->addSeconds(60));
+        $component->call('checkIn', null)->assertSet('isSuccess', true);
+
+        $this->assertDatabaseHas('attendance_records', [
+            'class_session_id' => $session->id,
+            'class_member_id' => $member->id,
+            'status' => 'present',
+        ]);
+
+        $this->travelBack();
     }
 
     // Lưu ý: cấu hình GPS mức lớp đã bị loại bỏ khỏi schema (DBML mới);

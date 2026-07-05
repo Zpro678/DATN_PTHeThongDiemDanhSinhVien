@@ -529,11 +529,9 @@
             <circle cx="12" cy="9" r="3" />
             @break
 
-        @case('ticket')
-            <path d="M2 9a3 3 0 0 1 0 6v2a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2v-2a3 3 0 0 1 0-6V7a2 2 0 0 0-2-2H4a2 2 0 0 0-2 2Z" />
-            <path d="M13 5v2" />
-            <path d="M13 17v2" />
-            <path d="M13 11v2" />
+        @case('crown')
+            <path d="M2 4l3 12h14l3-12-6 7-4-7-4 7-6-7z" />
+            <path d="M5 20h14" />
             @break
 
         @default

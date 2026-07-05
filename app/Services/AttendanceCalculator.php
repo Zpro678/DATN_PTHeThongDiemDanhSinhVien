@@ -279,7 +279,27 @@ class AttendanceCalculator
     }
 
     /**
-     * allowedAbsentSessions(): số buổi được phép vắng = floor(20% × tổng buổi dự kiến).
+     * baseSessions(): SỐ BUỔI CƠ SỞ dùng làm mẫu số cho quỹ vắng & % chuyên cần.
+     *
+     * QUY TẮC (nguồn duy nhất): quỹ vắng cho phép = 20% tổng số buổi. Tổng số buổi
+     * lấy theo GIÁ TRỊ LỚN NHẤT giữa số buổi dự kiến của lớp và số buổi đã thực sự
+     * diễn ra. Nhờ vậy, nếu lớp học vượt quá số buổi dự kiến thì vẫn hợp lệ và quỹ
+     * vắng 20% được tính lại trên số buổi lớn hơn (không "khoá cứng" theo dự kiến).
+     *
+     * @param  int  $plannedSessions  Tổng số buổi dự kiến của lớp (classes.total_sessions).
+     * @param  int  $studiedSessions  Số buổi đã diễn ra (đã chốt) — thường là $counts['total'].
+     * @return int  max(dự kiến, đã diễn ra), không âm.
+     */
+    public static function baseSessions(int $plannedSessions, int $studiedSessions): int
+    {
+        return max($plannedSessions, $studiedSessions, 0);
+    }
+
+    /**
+     * allowedAbsentSessions(): số buổi được phép vắng = floor(20% × số buổi cơ sở).
+     *
+     * Truyền vào KẾT QUẢ của baseSessions() để đảm bảo quỹ vắng luôn tính trên
+     * tổng số buổi lớn nhất (dự kiến hoặc đã diễn ra).
      */
     public static function allowedAbsentSessions(int $plannedSessions): int
     {

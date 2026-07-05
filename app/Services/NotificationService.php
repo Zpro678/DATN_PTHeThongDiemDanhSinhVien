@@ -2,10 +2,13 @@
 
 namespace App\Services;
 
+use App\Events\NotificationReceived;
+use App\Models\ClassMeeting;
 use App\Models\ClassSession;
 use App\Models\CourseClass;
 use App\Models\Notification;
 use App\Models\User;
+use App\Notifications\AttendanceResultNotification;
 use Illuminate\Pagination\LengthAwarePaginator;
 use Illuminate\Support\Carbon;
 use Illuminate\Support\Facades\DB;
@@ -68,6 +71,36 @@ class NotificationService
             'unread_count' => $unreadCount,
             'has_unread' => $unreadCount > 0,
         ];
+    }
+
+    /**
+     * Xóa một thông báo của người dùng (chỉ chủ sở hữu mới xóa được).
+     *
+     * @return bool true nếu có bản ghi bị xóa; false nếu không tìm thấy/không thuộc user.
+     */
+    public function deleteForUser(?User $user, string $notificationId): bool
+    {
+        if (! $user) {
+            return false;
+        }
+
+        return $user->notifications()
+            ->whereKey($notificationId)
+            ->delete() > 0;
+    }
+
+    /**
+     * Xóa toàn bộ thông báo của người dùng hiện tại.
+     *
+     * @return int Số bản ghi đã xóa.
+     */
+    public function deleteAllForUser(?User $user): int
+    {
+        if (! $user) {
+            return 0;
+        }
+
+        return $user->notifications()->delete();
     }
 
     /**
@@ -178,6 +211,7 @@ class NotificationService
         $data = $notification->data ?? [];
 
         return [
+            'id' => $notification->id,
             'href' => $data['url'] ?? '#',
             'level' => $this->resolveLevel($notification->type, $data),
             'title' => $data['title'] ?? 'Thông báo',
@@ -271,6 +305,9 @@ class NotificationService
             ], $extra),
             'read_at' => null,
         ]);
+
+        // Phát tín hiệu realtime để chuông thông báo của người nhận tự cập nhật (không reload).
+        event(new NotificationReceived($userId));
     }
 
     /**
@@ -322,6 +359,85 @@ class NotificationService
         $this->notifyStudentAbsenceWarnings($session);
     }
 
+    /** Nhãn tiếng Việt cho từng trạng thái điểm danh (dùng cho thông báo học viên). */
+    private const STATUS_LABELS = [
+        'present' => 'Có mặt',
+        'late' => 'Đi muộn',
+        'absent' => 'Vắng',
+        'excused' => 'Có phép',
+    ];
+
+    /**
+     * Báo trạng thái điểm danh của một PHIÊN QR cho từng học viên có tài khoản.
+     *
+     * Chỉ áp dụng cho phiên QR và được gọi đúng lúc phiên chuyển sang "closed"
+     * (khi giảng viên chốt phiên hoặc buổi tự hết giờ), nên mỗi phiên chỉ gửi một lần.
+     */
+    public function notifyQrSessionResults(ClassSession $session): void
+    {
+        // Chỉ phiên QR mới báo trạng thái từng phiên cho học viên.
+        if (empty($session->qr_token)) {
+            return;
+        }
+
+        $className = $session->courseClass?->name ?? 'lớp học';
+        $date = $session->date ? $session->date->format('d/m/Y') : null;
+
+        $records = $session->attendanceRecords()
+            ->whereHas('classMember', fn ($query) => $query->whereNotNull('user_id'))
+            ->with('classMember:id,user_id')
+            ->get(['id', 'class_session_id', 'class_member_id', 'status']);
+
+        foreach ($records as $record) {
+            $userId = (int) ($record->classMember?->user_id ?? 0);
+            if ($userId <= 0) {
+                continue;
+            }
+
+            $label = self::STATUS_LABELS[$record->status] ?? 'Vắng';
+            $message = "Bạn được điểm danh [{$label}] ở phiên \"{$session->name}\""
+                . ($date ? " ngày {$date}" : '') . " môn {$className}.";
+
+            $this->push(
+                $userId,
+                'App\\Notifications\\SessionAttendanceResult',
+                'Kết quả điểm danh phiên',
+                $message,
+                route('student.attendance.history', ['ma_user' => $userId]),
+                'info',
+                ['class_id' => $session->class_id, 'session_id' => $session->id],
+            );
+        }
+    }
+
+    /**
+     * Báo trạng thái TỔNG KẾT BUỔI cho từng học viên có tài khoản.
+     *
+     * Gọi khi giảng viên "Lưu tổng kết" và khi buổi tự hết giờ chốt. Chỉ gửi cho
+     * những học viên có trạng thái tổng kết thay đổi so với lần đã báo trước đó
+     * (dựa vào cột notified_status), tránh gửi trùng khi lưu/xuất file nhiều lần.
+     */
+    public function notifyMeetingResults(ClassMeeting $meeting): void
+    {
+        $summaries = $meeting->summaries()
+            ->with(['classMember.user', 'meeting.courseClass'])
+            ->get();
+
+        foreach ($summaries as $summary) {
+            if ($summary->status === $summary->notified_status) {
+                continue; // Trạng thái chưa đổi -> không gửi lại.
+            }
+
+            $user = $summary->classMember?->user;
+            if ($user) {
+                $user->notify(new AttendanceResultNotification($summary));
+            }
+
+            // Đánh dấu đã xử lý (kể cả khi học viên chưa có tài khoản) để không lặp lại.
+            $summary->forceFill(['notified_status' => $summary->status])->save();
+        }
+    }
+
     /**
      * Báo cho giảng viên khi tạo lớp thành công.
      */
@@ -352,12 +468,7 @@ class NotificationService
             return;
         }
 
-        $totalSessions = max((int) ($class->total_sessions ?? 0), 0);
-        $allowed = AttendanceCalculator::allowedAbsentSessions($totalSessions);
-
-        if ($allowed <= 0) {
-            return;
-        }
+        $plannedSessions = max((int) ($class->total_sessions ?? 0), 0);
 
         // Lấy bản ghi điểm danh ở phiên đã chốt của các sinh viên có tài khoản, gộp theo buổi.
         $rowsByUser = DB::table('attendance_records as ar')
@@ -378,6 +489,14 @@ class NotificationService
             $userId = (int) $userId;
             $counts = AttendanceCalculator::consolidateByMeeting($userRows, $rules);
             $excused = $counts['excused'];
+
+            // Quỹ vắng 20% tính trên số buổi cơ sở của từng SV = max(dự kiến, đã diễn ra).
+            $baseSessions = AttendanceCalculator::baseSessions($plannedSessions, (int) $counts['total']);
+            $allowed = AttendanceCalculator::allowedAbsentSessions($baseSessions);
+            if ($allowed <= 0) {
+                continue;
+            }
+
             // Vắng quy đổi (đủ 6 trạng thái) để xét quỹ vắng — làm tròn xuống cho thông báo.
             $effectiveAbsent = (int) AttendanceCalculator::effectiveAbsence($counts, $rules);
             $remaining = $allowed - $effectiveAbsent;
@@ -411,6 +530,118 @@ class NotificationService
                 );
             }
         }
+
+        // Gộp cảnh báo mức lớp cho chủ lớp: một thông báo tổng hợp thay vì rải rác.
+        $this->notifyClassAbsenceSummary($class);
+    }
+
+    /**
+     * Gửi một thông báo gộp cho chủ lớp (người đang thao tác điểm danh): tổng số
+     * sinh viên đang ở mức cảnh báo chuyên cần — tức "sắp vượt ngưỡng vắng 20%".
+     *
+     * Số đếm dùng đúng nguồn `is_warning` của LectureManageStudentService để khớp
+     * chính xác với nhóm dòng tô vàng khi bấm vào và lọc ở trang chi tiết lớp.
+     */
+    public function notifyClassAbsenceSummary(CourseClass $class): void
+    {
+        $ownerUserId = (int) ($class->owner_user_id ?? 0);
+
+        if ($ownerUserId <= 0) {
+            return;
+        }
+
+        $memberIds = $class->members()
+            ->where('status', \App\Models\ClassMember::STATUS_ACTIVE)
+            ->pluck('id')
+            ->all();
+
+        if (! $memberIds) {
+            return;
+        }
+
+        $stats = app(LectureManageStudentService::class)->getStudentsAttendanceStats($memberIds);
+
+        $warningCount = 0;
+        foreach ($stats as $row) {
+            if (! empty($row['is_warning'])) {
+                $warningCount++;
+            }
+        }
+
+        if ($warningCount <= 0
+            || $this->hasUnreadLike($ownerUserId, 'App\\Notifications\\ClassAbsenceWarning', $class->id)) {
+            return;
+        }
+
+        $url = route('lecturer.classes.show', [
+            'ma_user' => $ownerUserId,
+            'courseClass' => $class->id,
+            'filter' => 'warning',
+        ]);
+
+        $this->push(
+            $ownerUserId,
+            'App\\Notifications\\ClassAbsenceWarning',
+            'Cảnh báo chuyên cần lớp',
+            "Lớp {$class->name}: có {$warningCount} sinh viên sắp vượt ngưỡng vắng 20%. Bấm để xem danh sách.",
+            $url,
+            'warning',
+            ['class_id' => $class->id, 'warning_count' => $warningCount],
+        );
+    }
+
+    /**
+     * Chủ lớp chủ động gửi cảnh báo chuyên cần cho một sinh viên (mức sắp vượt ngưỡng).
+     *
+     * @return bool true nếu vừa gửi; false nếu SV đã có cảnh báo cùng loại chưa đọc.
+     */
+    public function sendManualAbsenceWarning(int $studentUserId, CourseClass $class, int $attendancePercent): bool
+    {
+        if ($studentUserId <= 0
+            || $this->hasUnreadLike($studentUserId, 'App\\Notifications\\AbsenceWarning', $class->id)) {
+            return false;
+        }
+
+        $url = route('student.classes.show', ['ma_user' => $studentUserId, 'courseClass' => $class->id]);
+
+        $this->push(
+            $studentUserId,
+            'App\\Notifications\\AbsenceWarning',
+            'Cảnh báo chuyên cần',
+            "Lớp {$class->name}: chuyên cần của bạn còn {$attendancePercent}%, sắp chạm ngưỡng cấm thi 20%. Hãy tham gia học đầy đủ hơn.",
+            $url,
+            'warning',
+            ['class_id' => $class->id],
+        );
+
+        return true;
+    }
+
+    /**
+     * Chủ lớp gửi thông báo cấm thi cho một sinh viên đã vượt ngưỡng vắng cho phép.
+     *
+     * @return bool true nếu vừa gửi; false nếu SV đã có thông báo cấm thi chưa đọc.
+     */
+    public function sendExamBanNotice(int $studentUserId, CourseClass $class, int $attendancePercent): bool
+    {
+        if ($studentUserId <= 0
+            || $this->hasUnreadLike($studentUserId, 'App\\Notifications\\ExamBanned', $class->id)) {
+            return false;
+        }
+
+        $url = route('student.classes.show', ['ma_user' => $studentUserId, 'courseClass' => $class->id]);
+
+        $this->push(
+            $studentUserId,
+            'App\\Notifications\\ExamBanned',
+            'Cấm thi',
+            "Lớp {$class->name}: bạn đã bị cấm thi do tỷ lệ chuyên cần chỉ còn {$attendancePercent}% (vắng vượt ngưỡng 20%). Vui lòng liên hệ giảng viên.",
+            $url,
+            'danger',
+            ['class_id' => $class->id],
+        );
+
+        return true;
     }
 
     /**

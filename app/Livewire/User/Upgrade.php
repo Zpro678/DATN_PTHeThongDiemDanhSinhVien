@@ -60,7 +60,29 @@ class Upgrade extends Component
 
         $user = auth()->user();
 
-        // Gói miễn phí: kích hoạt ngay, không qua thanh toán.
+        // CÒN HẠN + đích hợp lệ (FREE hoặc ĐÚNG gói đã mua): đổi trực tiếp, KHÔNG thu phí,
+        // giữ nguyên thời hạn đã mua. Gói trả phí khác chưa mua sẽ rơi xuống luồng thanh toán.
+        if ($subscriptions->canSwitchFreeTo($user, $plan)) {
+            $subscription = $subscriptions->switchTo($user, $plan);
+            $this->confirmingPlanId = null;
+
+            $isFree = $plan->plan_tier === 'FREE' || (float) $plan->price <= 0;
+            $endLabel = $subscription?->end_date?->format('d/m/Y');
+
+            if ($isFree) {
+                session()->flash('status', $endLabel
+                    ? "Đã chuyển về gói Miễn phí. Quyền lợi trả phí vẫn được giữ đến {$endLabel} — bạn có thể quay lại gói cũ bất cứ lúc nào trong thời gian này."
+                    : 'Đã chuyển về gói Miễn phí.');
+            } else {
+                session()->flash('status', $endLabel
+                    ? "Đã chuyển sang gói {$plan->name}. Thời hạn giữ nguyên đến {$endLabel}."
+                    : "Đã chuyển sang gói {$plan->name}.");
+            }
+
+            return null;
+        }
+
+        // Không còn hạn + gói miễn phí: kích hoạt ngay, không qua thanh toán.
         if ($plan->plan_tier === 'FREE' || (float) $plan->price <= 0) {
             $subscriptions->activate($user, $plan);
             $this->confirmingPlanId = null;
@@ -137,6 +159,8 @@ class Upgrade extends Component
             'plans' => $plans,
             'currentPlanCode' => $currentPlanCode,
             'activeSubscription' => $activeSubscription,
+            // Gói đã trả tiền (nếu còn hạn) — chỉ gói này + FREE được đổi qua lại miễn phí.
+            'paidPlanId' => $activeSubscription?->paid_plan_id,
             'confirmingPlan' => $this->confirmingPlanId
                 ? $plans->firstWhere('id', $this->confirmingPlanId)
                 : null,

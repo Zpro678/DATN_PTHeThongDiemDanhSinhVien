@@ -200,8 +200,8 @@ class StatisticalService
 
                 $rules = $courseClass ? $courseClass->getAttendanceRules() : (new \App\Models\CourseClass())->getAttendanceRules();
 
-                // Đơn vị là buổi; điểm trừ quy đổi lấy từ AttendanceCalculator.
-                $plannedSessions = max((int) ($courseClass?->total_sessions ?? 0), $total);
+                // Đơn vị là buổi; số buổi cơ sở = max(dự kiến, đã diễn ra).
+                $plannedSessions = AttendanceCalculator::baseSessions((int) ($courseClass?->total_sessions ?? 0), $total);
                 $countedTotal = AttendanceCalculator::countedSessions($plannedSessions, $excused, $rules);
                 $effectiveAbsent = AttendanceCalculator::effectiveAbsence($row->counts ?? [], $rules);
                 $lateAbsentSessions = max($effectiveAbsent - $absent, 0);

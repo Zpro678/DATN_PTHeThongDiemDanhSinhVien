@@ -1,8 +1,8 @@
 <x-slot:headerActions>
-    <a href="{{ route('lecturer.students.index', ['ma_user' => auth()->id(), 'class_id' => $this->courseClass->id, 'action' => 'export']) }}" wire:navigate class="inline-flex items-center gap-2 rounded-lg bg-blue-50 px-3.5 py-2 text-sm font-bold text-blue-700 hover:bg-blue-100 transition-colors shadow-sm ring-1 ring-inset ring-blue-200">
-        <x-user.icon name="download" :size="18" class="text-blue-600" />
-        Xuất Excel
-    </a>
+    <x-user.export-button
+        label="Xuất Excel"
+        :can="$canExportExcel"
+        :href="route('lecturer.students.index', ['ma_user' => auth()->id(), 'class_id' => $this->courseClass->id, 'action' => 'export'])" />
 </x-slot:headerActions>
 
 <div x-data="{ 

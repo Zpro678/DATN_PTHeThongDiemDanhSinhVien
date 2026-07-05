@@ -2,12 +2,15 @@
 
 namespace App\Livewire\Lecturer;
 
+use App\Exports\StudentsExport;
 use App\Imports\StudentsImport;
 use App\Models\CourseClass;
 use App\Models\LeaveRequest;
 use App\Services\LectureManageStudentService;
+use App\Services\SubscriptionService;
 use Illuminate\Support\Str;
 use Livewire\Attributes\Computed;
+use Livewire\Attributes\Url;
 use Livewire\Component;
 use Livewire\WithFileUploads;
 use Livewire\WithPagination;
@@ -19,6 +22,14 @@ class ClassShow extends Component
 
     // Đối tượng chứa thông tin chi tiết của lớp học hiện tại
     public CourseClass $class;
+
+    // Bộ lọc danh sách học viên qua URL (?filter=warning|banned). Rỗng = xem tất cả.
+    // Dùng để thông báo "sắp vượt ngưỡng vắng" dẫn thẳng tới nhóm SV liên quan.
+    #[Url]
+    public string $filter = '';
+
+    // Từ khóa tìm kiếm học viên theo tên / MSSV / email.
+    public string $search = '';
 
     public function getRecentSessionsProperty()
     {
@@ -327,8 +338,8 @@ class ClassShow extends Component
         } else {
             $session = $meeting->createSession('active', [
                 'name' => $this->sessionName,
-                'qr_token' => Str::upper(Str::random(24)),
-                'token_expires_at' => now()->addMinutes($this->durationMinutes),
+                'qr_token' => \App\Models\ClassSession::generateQrToken(),
+                'token_expires_at' => \App\Models\ClassSession::qrTokenExpiryFor((int) $this->qrRefreshRate),
                 'qr_refresh_rate' => $this->qrRefreshRate,
                 'gps_latitude' => $this->gpsEnabled ? $this->gpsLatitude : null,
                 'gps_longitude' => $this->gpsEnabled ? $this->gpsLongitude : null,
@@ -411,11 +422,169 @@ class ClassShow extends Component
             ? app(LectureManageStudentService::class)->getStudentsAttendanceStats($memberIds)
             : [];
 
+        // Đếm số lượng từng nhóm trên TOÀN lớp (không phụ thuộc search) để hiển thị badge.
+        $warningTotal = $students->filter(fn ($m) => (bool) ($statsMap[$m->id]['is_warning'] ?? false))->count();
+        $bannedTotal  = $students->filter(fn ($m) => (bool) ($statsMap[$m->id]['is_banned'] ?? false))->count();
+
+        // Tìm kiếm theo tên / MSSV / email.
+        $search = trim(mb_strtolower($this->search));
+        if ($search !== '') {
+            $students = $students->filter(function ($m) use ($search) {
+                $email = $m->email ?? ($m->user->email ?? '');
+                $haystack = mb_strtolower(trim(
+                    ($m->full_name ?? '').' '.($m->student_code ?? '').' '.$email
+                ));
+
+                return str_contains($haystack, $search);
+            })->values();
+        }
+
+        // Lọc theo trạng thái chuyên cần (từ thông báo cảnh báo hoặc nút lọc trên trang).
+        // warning = sắp vượt ngưỡng vắng (tô vàng); banned = đã vượt/nguy cơ cấm thi.
+        $activeFilter = in_array($this->filter, ['warning', 'banned'], true) ? $this->filter : '';
+        if ($activeFilter !== '') {
+            $flag = $activeFilter === 'warning' ? 'is_warning' : 'is_banned';
+            $students = $students
+                ->filter(fn ($m) => (bool) ($statsMap[$m->id][$flag] ?? false))
+                ->values();
+        }
+
         return view('livewire.lecturer.class-show', [
             'recentSessions' => $this->recentSessions,
             'students'       => $students,
             'statsMap'       => $statsMap,
+            'activeFilter'   => $activeFilter,
+            'warningTotal'   => $warningTotal,
+            'bannedTotal'    => $bannedTotal,
+            'canExportExcel' => app(\App\Services\SubscriptionService::class)->canExportExcel(auth()->user()),
         ])->layout('layouts.user', ['title' => $this->class->name]);
+    }
+
+    public function clearFilter(): void
+    {
+        $this->filter = '';
+        $this->search = '';
+    }
+
+    /**
+     * Tải trực tiếp file Excel danh sách học viên của CHÍNH lớp đang xem
+     * (theo từ khóa tìm kiếm hiện tại). Không điều hướng sang trang khác.
+     */
+    public function exportExcel()
+    {
+        // Gate theo gói: chỉ gói bật tính năng xuất Excel mới tải được.
+        if (! app(SubscriptionService::class)->canExportExcel(auth()->user())) {
+            session()->flash('upgrade_required', 'Xuất báo cáo Excel là tính năng của gói Pro trở lên. Vui lòng nâng cấp để sử dụng.');
+
+            return $this->redirect(route('upgrade'), navigate: true);
+        }
+
+        $fileName = 'danh_sach_sinh_vien_' . Str::slug($this->class->name) . '_' . date('Ymd_His') . '.xlsx';
+
+        return Excel::download(
+            new StudentsExport(
+                (int) auth()->id(),
+                (string) $this->class->id,   // chỉ lớp hiện tại
+                'all',
+                $this->search,               // theo tìm kiếm đang gõ
+                '(c + m + p) / t * 100',
+            ),
+            $fileName
+        );
+    }
+
+    /**
+     * Tìm học viên đang hoạt động trong lớp này kèm thống kê chuyên cần hiện thời.
+     *
+     * @return array{0: ?\App\Models\ClassMember, 1: array<string, mixed>}
+     */
+    private function resolveMemberForAction(int $memberId): array
+    {
+        $member = $this->class->members()
+            ->where('status', \App\Models\ClassMember::STATUS_ACTIVE)
+            ->find($memberId);
+
+        if (! $member) {
+            $this->dispatch('toast', message: 'Không tìm thấy sinh viên trong lớp.', type: 'error');
+
+            return [null, []];
+        }
+
+        $stats = app(LectureManageStudentService::class)->getStudentsAttendanceStats([$memberId]);
+
+        return [$member, $stats[$memberId] ?? []];
+    }
+
+    /**
+     * Chủ lớp gửi cảnh báo chuyên cần cho một sinh viên đang ở mức "sắp vượt ngưỡng".
+     */
+    public function sendAttendanceWarning(int $memberId): void
+    {
+        [$member, $stats] = $this->resolveMemberForAction($memberId);
+
+        if (! $member) {
+            return;
+        }
+
+        if (empty($stats['is_warning'])) {
+            $this->dispatch('toast', message: 'Sinh viên không còn ở mức cảnh báo.', type: 'error');
+
+            return;
+        }
+
+        if (! $member->user_id) {
+            $this->dispatch('toast', message: 'Sinh viên chưa liên kết tài khoản nên không thể nhận thông báo.', type: 'error');
+
+            return;
+        }
+
+        $sent = app(\App\Services\NotificationService::class)->sendManualAbsenceWarning(
+            (int) $member->user_id,
+            $this->class,
+            (int) ($stats['attendance_percent'] ?? 0),
+        );
+
+        $this->dispatch(
+            'toast',
+            message: $sent ? 'Đã gửi cảnh báo chuyên cần cho sinh viên.' : 'Sinh viên đã có cảnh báo chưa đọc.',
+            type: $sent ? 'success' : 'info',
+        );
+    }
+
+    /**
+     * Chủ lớp gửi thông báo cấm thi cho một sinh viên đã vượt ngưỡng vắng cho phép.
+     */
+    public function sendExamBan(int $memberId): void
+    {
+        [$member, $stats] = $this->resolveMemberForAction($memberId);
+
+        if (! $member) {
+            return;
+        }
+
+        if (empty($stats['is_banned'])) {
+            $this->dispatch('toast', message: 'Sinh viên chưa vượt ngưỡng nên không thể cấm thi.', type: 'error');
+
+            return;
+        }
+
+        if (! $member->user_id) {
+            $this->dispatch('toast', message: 'Sinh viên chưa liên kết tài khoản nên không thể nhận thông báo.', type: 'error');
+
+            return;
+        }
+
+        $sent = app(\App\Services\NotificationService::class)->sendExamBanNotice(
+            (int) $member->user_id,
+            $this->class,
+            (int) ($stats['attendance_percent'] ?? 0),
+        );
+
+        $this->dispatch(
+            'toast',
+            message: $sent ? 'Đã gửi thông báo cấm thi cho sinh viên.' : 'Sinh viên đã có thông báo cấm thi chưa đọc.',
+            type: $sent ? 'success' : 'info',
+        );
     }
 
     public function openImport(): void
