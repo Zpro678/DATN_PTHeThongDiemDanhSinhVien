@@ -122,6 +122,24 @@
                         getMemberId() {
                             return @this.get('memberId');
                         },
+                        getDeviceId() {
+                            // Mã định danh trình duyệt bền: ưu tiên localStorage, mirror sang cookie
+                            // để không mất khi xóa một bên. Dùng phát hiện "1 máy điểm danh nhiều SV".
+                            try {
+                                let id = localStorage.getItem('att_device_id');
+                                if (!id) {
+                                    id = (window.crypto && crypto.randomUUID)
+                                        ? crypto.randomUUID()
+                                        : ('d-' + Date.now() + '-' + Math.random().toString(36).slice(2));
+                                    localStorage.setItem('att_device_id', id);
+                                }
+                                document.cookie = 'att_device_id=' + id + '; max-age=31536000; path=/; SameSite=Lax';
+                                return id;
+                            } catch (e) {
+                                const m = document.cookie.match(/(?:^|; )att_device_id=([^;]+)/);
+                                return m ? m[1] : null;
+                            }
+                        },
                         async performCheckIn() {
                             if (this.isCheckingIn) return;
                             this.isCheckingIn = true;
@@ -183,12 +201,12 @@
                                                     if (!verifyData.success) {
                                                         alert('Xác thực tọa độ GPS không thành công: ' + verifyData.error);
                                                         // Gửi checkIn không token để kích hoạt thông báo lỗi của Livewire
-                                                        await $wire.checkIn(null);
+                                                        await $wire.checkIn(null, this.getDeviceId());
                                                         this.isCheckingIn = false;
                                                         return;
                                                     }
 
-                                                    $wire.checkIn(verifyData.check_token).then(() => {
+                                                    $wire.checkIn(verifyData.check_token, this.getDeviceId()).then(() => {
                                                         this.isCheckingIn = false;
                                                     });
                                                 } catch (e) {
@@ -216,7 +234,7 @@
                                     this.isCheckingIn = false;
                                 }
                             } else {
-                                $wire.checkIn(null).then(() => {
+                                $wire.checkIn(null, this.getDeviceId()).then(() => {
                                     this.isCheckingIn = false;
                                 });
                             }

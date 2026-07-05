@@ -223,6 +223,195 @@ class LecturerQrAttendanceTest extends TestCase
         $this->travelBack();
     }
 
+    public function test_late_uses_class_threshold_and_meeting_start_time(): void
+    {
+        $base = Carbon::create(2026, 7, 5, 8, 0, 0);
+        $this->travelTo($base);
+
+        $owner = User::factory()->create();
+        // Ngưỡng đi muộn của lớp = 5 phút (khác 15 cứng cũ) để phân biệt rõ hành vi.
+        $courseClass = CourseClass::factory()->create([
+            'owner_user_id' => $owner->id,
+            'late_threshold' => 5,
+        ]);
+        // Buổi được tạo tại $base (mốc "mở phiên đầu tiên").
+        $meeting = ClassMeeting::factory()->create([
+            'class_id' => $courseClass->id,
+            'user_Created' => $owner->id,
+            'date' => $base->toDateString(),
+            'start_time' => '00:00:00',
+            'end_time' => '23:59:00',
+            'status' => 'active',
+        ]);
+        $session = ClassSession::factory()->create([
+            'class_id' => $courseClass->id,
+            'meeting_id' => $meeting->id,
+            'created_by' => $owner->id,
+            'date' => $base->toDateString(),
+            'status' => 'active',
+            'qr_token' => 'LATETOKEN1',
+            'token_expires_at' => $base->copy()->addDay(), // Còn hạn để mount qua được cả 2 lần quét.
+            'gps_latitude' => null,
+            'gps_longitude' => null,
+            'gps_radius' => null,
+        ]);
+
+        $makeStudent = function () use ($courseClass, $session) {
+            $user = User::factory()->create();
+            $member = ClassMember::create([
+                'class_id' => $courseClass->id,
+                'user_id' => $user->id,
+                'status' => ClassMember::STATUS_ACTIVE,
+            ]);
+            AttendanceRecord::factory()->create([
+                'class_session_id' => $session->id,
+                'class_member_id' => $member->id,
+                'status' => 'pending',
+                'check_in_time' => null,
+            ]);
+
+            return [$user, $member];
+        };
+
+        [$earlyUser, $earlyMember] = $makeStudent();
+        [$lateUser, $lateMember] = $makeStudent();
+
+        // Trong ngưỡng (3 phút < 5) -> có mặt.
+        $this->travelTo($base->copy()->addMinutes(3));
+        Livewire::actingAs($earlyUser)
+            ->test(AttendanceCheckIn::class, ['token' => 'LATETOKEN1'])
+            ->call('checkIn', null)
+            ->assertSet('isSuccess', true);
+        $this->assertDatabaseHas('attendance_records', [
+            'class_session_id' => $session->id,
+            'class_member_id' => $earlyMember->id,
+            'status' => 'present',
+        ]);
+
+        // Quá ngưỡng (8 phút > 5) -> đi muộn (chứng minh dùng ngưỡng lớp = 5, không phải 15 cứng).
+        $this->travelTo($base->copy()->addMinutes(8));
+        Livewire::actingAs($lateUser)
+            ->test(AttendanceCheckIn::class, ['token' => 'LATETOKEN1'])
+            ->call('checkIn', null)
+            ->assertSet('isSuccess', true);
+        $this->assertDatabaseHas('attendance_records', [
+            'class_session_id' => $session->id,
+            'class_member_id' => $lateMember->id,
+            'status' => 'late',
+        ]);
+
+        $this->travelBack();
+    }
+
+    /**
+     * @return array{User, ClassSession}
+     */
+    private function createOpenQrSessionNoGps(User $owner): array
+    {
+        $courseClass = CourseClass::factory()->create(['owner_user_id' => $owner->id]);
+        $meeting = ClassMeeting::factory()->create([
+            'class_id' => $courseClass->id,
+            'user_Created' => $owner->id,
+            'date' => now()->toDateString(),
+            'start_time' => '00:00:00',
+            'end_time' => '23:59:00',
+            'status' => 'active',
+        ]);
+        $session = ClassSession::factory()->create([
+            'class_id' => $courseClass->id,
+            'meeting_id' => $meeting->id,
+            'created_by' => $owner->id,
+            'date' => now()->toDateString(),
+            'status' => 'active',
+            'qr_token' => 'DEVTOKEN'.uniqid(),
+            'token_expires_at' => now()->addDay(),
+            'gps_latitude' => null,
+            'gps_longitude' => null,
+            'gps_radius' => null,
+        ]);
+
+        return [$courseClass, $session];
+    }
+
+    private function enrolStudentWithRecord(CourseClass $courseClass, ClassSession $session): array
+    {
+        $user = User::factory()->create();
+        $member = ClassMember::create([
+            'class_id' => $courseClass->id,
+            'user_id' => $user->id,
+            'status' => ClassMember::STATUS_ACTIVE,
+        ]);
+        AttendanceRecord::factory()->create([
+            'class_session_id' => $session->id,
+            'class_member_id' => $member->id,
+            'status' => 'pending',
+            'check_in_time' => null,
+        ]);
+
+        return [$user, $member];
+    }
+
+    public function test_same_device_id_flags_both_students_logs_scan_and_notifies(): void
+    {
+        $owner = User::factory()->create();
+        [$courseClass, $session] = $this->createOpenQrSessionNoGps($owner);
+        [$userA, $memberA] = $this->enrolStudentWithRecord($courseClass, $session);
+        [$userB, $memberB] = $this->enrolStudentWithRecord($courseClass, $session);
+
+        // A điểm danh trên máy DEV-SAME.
+        Livewire::actingAs($userA)->test(AttendanceCheckIn::class, ['token' => $session->qr_token])
+            ->call('checkIn', null, 'DEV-SAME-0001')
+            ->assertSet('isSuccess', true);
+        // B điểm danh trên CHÍNH máy đó -> phát hiện điểm danh hộ.
+        Livewire::actingAs($userB)->test(AttendanceCheckIn::class, ['token' => $session->qr_token])
+            ->call('checkIn', null, 'DEV-SAME-0001')
+            ->assertSet('isSuccess', true);
+
+        // Cả 2 bản ghi đều bị gắn cờ trùng máy (để GV thấy đủ 2 SV).
+        $this->assertSame('device_duplicate', AttendanceRecord::where('class_member_id', $memberA->id)->value('gps_fraud_flag'));
+        $this->assertSame('device_duplicate', AttendanceRecord::where('class_member_id', $memberB->id)->value('gps_fraud_flag'));
+        $this->assertSame('DEV-SAME-0001', AttendanceRecord::where('class_member_id', $memberB->id)->value('device_id'));
+
+        // Nhật ký quét được ghi cho cả 2 lần.
+        $this->assertSame(2, \App\Models\CheckInScan::where('class_session_id', $session->id)->count());
+
+        // Giảng viên nhận thông báo điểm danh hộ, link mở phiên kèm bộ lọc same_device.
+        $notif = \App\Models\Notification::query()
+            ->where('notifiable_id', $owner->id)
+            ->where('data->title', 'Phát hiện gian lận (Điểm danh hộ)')
+            ->first();
+        $this->assertNotNull($notif);
+        $this->assertStringContainsString('filter=same_device', $notif->data['url']);
+
+        // Bộ lọc "cùng 1 máy" ở phiên trả về đúng 2 SV dùng chung máy.
+        Livewire::actingAs($owner)->test(QrAttendanceSession::class, ['session' => $session->id])
+            ->set('statusFilter', 'same_device')
+            ->assertViewHas('records', fn ($records) => $records->count() === 2)
+            ->assertViewHas('sameDeviceCount', 2);
+    }
+
+    public function test_different_device_ids_do_not_trigger_false_duplicate(): void
+    {
+        $owner = User::factory()->create();
+        [$courseClass, $session] = $this->createOpenQrSessionNoGps($owner);
+        [$userA, $memberA] = $this->enrolStudentWithRecord($courseClass, $session);
+        [$userB, $memberB] = $this->enrolStudentWithRecord($courseClass, $session);
+
+        // Cùng IP/UA (như trên NAT) nhưng device_id KHÁC nhau -> KHÔNG được báo nhầm điểm danh hộ.
+        Livewire::actingAs($userA)->test(AttendanceCheckIn::class, ['token' => $session->qr_token])
+            ->call('checkIn', null, 'DEV-AAAA-1111')
+            ->assertSet('isSuccess', true);
+        Livewire::actingAs($userB)->test(AttendanceCheckIn::class, ['token' => $session->qr_token])
+            ->call('checkIn', null, 'DEV-BBBB-2222')
+            ->assertSet('isSuccess', true);
+
+        $this->assertNull(AttendanceRecord::where('class_member_id', $memberA->id)->value('gps_fraud_flag'));
+        $this->assertNull(AttendanceRecord::where('class_member_id', $memberB->id)->value('gps_fraud_flag'));
+
+        Livewire::actingAs($owner)->test(QrAttendanceSession::class, ['session' => $session->id])
+            ->assertViewHas('sameDeviceCount', 0);
+    }
+
     // Lưu ý: cấu hình GPS mức lớp đã bị loại bỏ khỏi schema (DBML mới);
     // GPS giờ chỉ thiết lập ở mức phiên điểm danh, nên test cũ về GPS mặc định của lớp đã được gỡ.
 }

@@ -671,7 +671,9 @@ class NotificationService
     ): void {
         $className = $session->courseClass?->name ?? 'lớp học';
         $isQr = !empty($session->qr_token);
+        // Link GV mở thẳng phiên kèm bộ lọc "cùng 1 máy" để xem ngay danh sách SV dùng chung thiết bị.
         $url = $this->sessionUrl($lecturerUserId, $session, $isQr);
+        $url .= (str_contains($url, '?') ? '&' : '?') . 'filter=same_device';
 
         // Gửi cho giảng viên
         $this->push(

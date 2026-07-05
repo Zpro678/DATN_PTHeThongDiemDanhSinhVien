@@ -20,6 +20,10 @@
         return false;
     };
 
+    // Dựng URL cho một mục điều hướng. ma_user được tự chèn qua URL::defaults (xem AppServiceProvider),
+    // nên chỉ cần tên route; hỗ trợ thêm 'params' tùy chọn nếu mục nào cần tham số riêng.
+    $getRouteUrl = fn (array $item): string => route($item['route'], $item['params'] ?? []);
+
     // ── Điều hướng nhóm theo vai trò (dùng cho dropdown top-nav & drawer mobile) ──
     $teachItems = [
         ['label' => 'Lớp tôi quản lý', 'icon' => 'book-open', 'route' => 'managed-classes', 'active' => ['managed-classes', 'lecturer.classes.*', 'lecturer.class.*', 'create-class'], 'desc' => 'Học phần bạn làm chủ lớp'],

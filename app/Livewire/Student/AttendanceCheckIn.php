@@ -128,7 +128,7 @@ class AttendanceCheckIn extends Component
         $this->isAutoCheckIn = true;
     }
 
-    public function checkIn(?string $gpsCheckToken = null): void
+    public function checkIn(?string $gpsCheckToken = null, ?string $deviceId = null): void
     {
         if (!$this->session || !$this->record) {
             return;
@@ -149,12 +149,16 @@ class AttendanceCheckIn extends Component
             return;
         }
 
+        // "Đi muộn" = quá GIỜ MỞ BUỔI cộng ngưỡng phút cấu hình ở lớp (late_threshold).
+        // - Mốc: thời điểm tạo buổi = lúc mở phiên điểm danh ĐẦU TIÊN (meeting->created_at),
+        //   ổn định cho mọi phiên trong buổi (phiên thêm sau vẫn tính theo mốc buổi, không theo
+        //   thời điểm tạo từng phiên).
+        // - Ngưỡng: lấy từ cấu hình lớp, KHÔNG hardcode 15 nữa.
         $status = 'present';
-        // Check if late based on when the QR session was opened
-        if ($this->session->created_at) {
-            if (now()->greaterThan($this->session->created_at->addMinutes(15))) {
-                $status = 'late';
-            }
+        $lateThresholdMinutes = (int) ($this->session->courseClass->late_threshold ?? 15);
+        $meetingStartedAt = $this->session->meeting?->created_at ?? $this->session->created_at;
+        if ($meetingStartedAt && now()->greaterThan($meetingStartedAt->copy()->addMinutes($lateThresholdMinutes))) {
+            $status = 'late';
         }
 
         $this->isGpsError = false;
@@ -168,23 +172,35 @@ class AttendanceCheckIn extends Component
         $ipAddress = request()->ip();
         $userAgent = request()->userAgent();
         $deviceFingerprint = md5($ipAddress . $userAgent);
+        // Mã định danh trình duyệt bền do client gửi (localStorage + cookie). Khóa CHÍNH.
+        $persistentDeviceId = $this->sanitizeDeviceId($deviceId);
 
-        // Check for device duplication (Điểm danh hộ)
-        // Check if there is already a record in this session with the same fingerprint but a different member ID that has already checked in
-        $duplicateRecord = \App\Models\AttendanceRecord::query()
+        // Phát hiện "một máy điểm danh cho nhiều SV": ưu tiên device_id bền (không đụng nhau
+        // giữa 2 máy khác dù cùng NAT/cùng model); chỉ fallback về md5(IP+UA) cho client cũ.
+        $duplicateQuery = \App\Models\AttendanceRecord::query()
             ->with(['classMember.user'])
             ->where('class_session_id', $this->session->id)
             ->where('class_member_id', '!=', $this->record->class_member_id)
-            ->where('device_fingerprint', $deviceFingerprint)
-            ->whereNotNull('device_fingerprint')
-            ->whereNotNull('check_in_time')
-            ->first();
+            ->whereNotNull('check_in_time');
+
+        if ($persistentDeviceId !== null) {
+            $duplicateQuery->where('device_id', $persistentDeviceId);
+        } else {
+            $duplicateQuery->whereNotNull('device_fingerprint')->where('device_fingerprint', $deviceFingerprint);
+        }
+
+        $duplicateRecord = $duplicateQuery->first();
 
         if ($duplicateRecord) {
             $gpsFraudFlag = 'device_duplicate';
-            
+
+            // Gắn cờ cho CẢ bản ghi trùng trước đó để giảng viên thấy đủ 2 SV cùng một máy.
+            if ($duplicateRecord->gps_fraud_flag === null) {
+                $duplicateRecord->forceFill(['gps_fraud_flag' => 'device_duplicate'])->save();
+            }
+
             $this->record->loadMissing('classMember');
-            
+
             app(\App\Services\NotificationService::class)->notifyDeviceDuplicate(
                 $this->session->courseClass->owner_user_id,
                 $this->record->classMember->user_id ?? null,
@@ -260,6 +276,7 @@ class AttendanceCheckIn extends Component
             'gps_fraud_flag' => $gpsFraudFlag,
             'ip_address' => $ipAddress,
             'device_fingerprint' => $deviceFingerprint,
+            'device_id' => $persistentDeviceId,
             'is_account' => true,
         ];
 
@@ -269,6 +286,20 @@ class AttendanceCheckIn extends Component
         }
 
         $this->record->update($updateData);
+
+        // Ghi nhật ký quét (bảng check_in_scans) — phục vụ lịch sử thiết bị xuyên phiên & rà soát.
+        $this->logCheckInScan(
+            isValid: $gpsFraudFlag !== 'out_of_radius',
+            failReason: match ($gpsFraudFlag) {
+                'out_of_radius' => 'out_of_range',
+                'device_duplicate' => 'device_duplicate',
+                'suspected_mock' => 'suspected_mock',
+                default => null,
+            },
+            ip: $ipAddress,
+            deviceFingerprint: $deviceFingerprint,
+            deviceId: $persistentDeviceId,
+        );
 
         \App\Jobs\SaveAuditLogJob::dispatch([
             'user_id' => auth()->id() ?? null,
@@ -302,6 +333,50 @@ class AttendanceCheckIn extends Component
 
         // Trigger real-time update
         event(new \App\Events\StudentCheckedIn($this->session->id));
+    }
+
+    /**
+     * Làm sạch device_id do client gửi: chỉ nhận chuỗi token hợp lệ (UUID/base tự sinh),
+     * tránh nhồi dữ liệu rác/độc. Trả null nếu không hợp lệ (để fallback fingerprint).
+     */
+    private function sanitizeDeviceId(?string $deviceId): ?string
+    {
+        $deviceId = is_string($deviceId) ? trim($deviceId) : '';
+
+        return preg_match('/^[A-Za-z0-9\-_]{8,191}$/', $deviceId) ? $deviceId : null;
+    }
+
+    /**
+     * Chữ ký HMAC của một lần quét (chống replay + phục vụ đối chiếu nhật ký).
+     */
+    private function scanSignature(int $memberId, ?string $deviceId): string
+    {
+        return hash_hmac('sha256', implode('|', [
+            $this->session->id,
+            $memberId,
+            $deviceId ?? '',
+            now()->timestamp,
+        ]), (string) config('app.key'));
+    }
+
+    /**
+     * Ghi một dòng nhật ký quét vào bảng check_in_scans (immutable) để dựng lịch sử thiết bị.
+     */
+    private function logCheckInScan(bool $isValid, ?string $failReason, string $ip, ?string $deviceFingerprint, ?string $deviceId): void
+    {
+        \App\Models\CheckInScan::query()->create([
+            'class_session_id' => $this->session->id,
+            'user_id' => auth()->id(),
+            'student_code_attempt' => $this->studentCode ?: null,
+            'scan_type' => 'qr',
+            'payload_signature' => $this->scanSignature((int) $this->record->class_member_id, $deviceId),
+            'is_valid' => $isValid,
+            'fail_reason' => $failReason,
+            'ip_address' => substr($ip, 0, 45),
+            'device_fingerprint' => $deviceFingerprint,
+            'device_id' => $deviceId,
+            'scanned_at' => now(),
+        ]);
     }
 
     public function render(): View

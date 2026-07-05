@@ -206,16 +206,24 @@
                     </div>
                 </button>
 
-                <!-- Trùng máy -->
-                <button type="button" @if(($fraudStats['device_duplicate'] ?? 0) > 0) wire:click="setStatusFilter('invalid')" @endif class="rounded-xl border border-slate-200 bg-white shadow-sm flex overflow-hidden transition hover:bg-slate-50 text-left w-full">
+                <!-- Trùng máy (điểm danh cùng 1 máy) -->
+                <button type="button" @if(($sameDeviceCount ?? 0) > 0) wire:click="setStatusFilter('{{ $statusFilter === 'same_device' ? 'all' : 'same_device' }}')" @endif
+                    @class([
+                        'rounded-xl border bg-white shadow-sm flex overflow-hidden transition hover:bg-slate-50 text-left w-full',
+                        'border-rose-400 ring-2 ring-rose-200' => $statusFilter === 'same_device',
+                        'border-slate-200' => $statusFilter !== 'same_device',
+                    ])>
                     <div class="w-1.5 bg-gradient-to-b from-rose-400 to-rose-600"></div>
                     <div class="p-6 lg:py-8 flex gap-5 flex-1 items-center">
                         <div class="h-12 w-12 shrink-0 rounded-xl bg-rose-50 flex items-center justify-center text-rose-500">
                             <x-user.icon name="laptop" :size="24" />
                         </div>
                         <div>
-                            <p class="text-sm font-bold uppercase tracking-wider text-slate-600">Trùng máy</p>
-                            <h3 class="text-3xl font-black text-rose-500 mt-1">{{ $fraudStats['device_duplicate'] ?? 0 }}</h3>
+                            <p class="text-sm font-bold uppercase tracking-wider text-slate-600">Điểm danh cùng 1 máy</p>
+                            <h3 class="text-3xl font-black text-rose-500 mt-1">{{ $sameDeviceCount ?? 0 }}</h3>
+                            @if(($sameDeviceCount ?? 0) > 0)
+                                <p class="mt-0.5 text-xs font-semibold text-rose-500">Bấm để lọc các SV dùng chung máy</p>
+                            @endif
                         </div>
                     </div>
                 </button>

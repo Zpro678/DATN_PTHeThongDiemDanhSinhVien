@@ -22,7 +22,8 @@ class AttendanceRecord extends Model
         'is_account', // True nếu sinh viên có tài khoản, false nếu điền form.
         'check_in_time', // Thời điểm ghi nhận có mặt.
         'ip_address', // IP mạng của thiết bị điểm danh.
-        'device_fingerprint', // Mã định danh thiết bị đã băm.
+        'device_fingerprint', // Mã định danh thiết bị đã băm (md5 IP+UA — tín hiệu yếu, phụ).
+        'device_id', // Mã định danh trình duyệt bền (client sinh) — khóa chính chống điểm danh hộ.
         'distance_meters', // Khoảng cách GPS tính bằng mét.
         'gps_accuracy_meters', // Độ chính xác GPS của thiết bị sinh viên.
         'gps_latitude_recorded', // Vĩ độ thực tế ghi nhận từ sinh viên.
