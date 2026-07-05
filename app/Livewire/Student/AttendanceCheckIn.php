@@ -140,8 +140,12 @@ class AttendanceCheckIn extends Component
             return;
         }
 
-        if ($this->session->token_expires_at && $this->session->token_expires_at->isPast()) {
-            $this->statusMessage = 'Mã QR này đã hết hạn. Vui lòng quét lại mã mới.';
+        // Đã mở được trang này nghĩa là cú quét hợp lệ (token khớp lúc mount). Việc HOÀN TẤT
+        // điểm danh không phụ thuộc hạn token QR ngắn (vốn để chống dùng lại ảnh chụp), mà dựa
+        // vào "phiên còn mở" theo giờ kết thúc buổi — nên bấm chậm vẫn điểm danh được, không phải quét lại.
+        $this->session->meeting?->closeIfExpired();
+        if ($this->session->fresh()?->status === 'closed') {
+            $this->statusMessage = 'Phiên điểm danh này đã kết thúc.';
             return;
         }
 

@@ -30,8 +30,6 @@ class QrAttendanceSession extends Component
     public array $draftNotes = [];
 
     public bool $isClosed = false;
-    
-    public string $qrAnimationStr = '';
 
     public function mount(int $session): void
     {
@@ -71,17 +69,29 @@ class QrAttendanceSession extends Component
         $this->statusFilter = 'all';
     }
 
+    /**
+     * Làm mới mã QR: XOAY token thật (không chỉ đổi ảnh).
+     *
+     * Được vòng lặp Alpine gọi mỗi qr_refresh_rate giây (và nút "Làm mới QR"). Mỗi lần
+     * sinh token mới + đặt hạn ngắn, nên ảnh chụp mã cũ gửi đi sẽ hết hiệu lực ngay.
+     * Nếu buổi đã quá giờ kết thúc thì đóng phiên và dừng xoay.
+     */
     public function refreshToken(): void
     {
         $session = $this->ownedSession($this->sessionId);
-        
-        // Keep the token valid while the session is running
-        $session->update([
-            'token_expires_at' => now()->addMinutes(15),
-        ]);
-        
-        // Change the query parameter to force the QR code image to change
-        $this->qrAnimationStr = Str::random(8);
+
+        if ($session->status === 'closed') {
+            $this->isClosed = true;
+            return;
+        }
+
+        // Buổi hết giờ -> đóng phiên (chốt sổ), không xoay token nữa.
+        if ($session->meeting && $session->meeting->closeIfExpired()) {
+            $this->isClosed = true;
+            return;
+        }
+
+        $session->rotateQrToken();
     }
 
     public function setStatus(int $recordId, string $status): void
@@ -224,10 +234,9 @@ class QrAttendanceSession extends Component
     {
         $session = $this->ownedSession($this->sessionId)->load('courseClass');
         
+        // Link luôn dựng từ qr_token hiện tại; token tự đổi mỗi lần refreshToken nên
+        // không cần tham số chống cache — ảnh QR thay đổi theo chính token mới.
         $attendanceLink = route('attendance.check-in.guest', ['token' => $session->qr_token]);
-        if ($this->qrAnimationStr) {
-            $attendanceLink .= '?r=' . $this->qrAnimationStr;
-        }
         $records = $session->attendanceRecords()
             ->whereHas('classMember')
             ->with('classMember.user')

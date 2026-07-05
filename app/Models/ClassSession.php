@@ -7,12 +7,20 @@ use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\SoftDeletes;
+use Illuminate\Support\Carbon;
+use Illuminate\Support\Str;
 
 class ClassSession extends Model
 {
     use HasFactory, SoftDeletes;
 
     protected $table = 'class_sessions';
+
+    /**
+     * Số giây ân hạn cộng thêm vào tuổi thọ token QR.
+     * Che jitter của vòng lặp làm mới và cho phép cú quét rơi sát mép ảnh vẫn kịp mở trang.
+     */
+    public const QR_TOKEN_GRACE_SECONDS = 5;
 
     protected $fillable = [
         'class_id', // ID của lớp học.
@@ -70,5 +78,41 @@ class ClassSession extends Model
     public function leaveRequests(): HasMany
     {
         return $this->hasMany(LeaveRequest::class);
+    }
+
+    /* ====================================================================
+     * TOKEN QR — xoay token để chống dùng lại ảnh chụp
+     * ==================================================================== */
+
+    /** Sinh một token QR mới (ngẫu nhiên, in hoa). */
+    public static function generateQrToken(): string
+    {
+        return Str::upper(Str::random(24));
+    }
+
+    /** Tuổi thọ token QR (giây) = nhịp làm mới + ân hạn. */
+    public static function qrTokenTtlSecondsFor(?int $refreshRate): int
+    {
+        return max(1, (int) ($refreshRate ?: 10)) + self::QR_TOKEN_GRACE_SECONDS;
+    }
+
+    /** Mốc hết hạn token QR tính từ hiện tại theo nhịp làm mới. */
+    public static function qrTokenExpiryFor(?int $refreshRate): Carbon
+    {
+        return now()->addSeconds(self::qrTokenTtlSecondsFor($refreshRate));
+    }
+
+    /**
+     * Xoay token QR: sinh token mới + đặt hạn ngắn (nhịp làm mới + ân hạn) rồi lưu.
+     *
+     * Vì token cũ bị thay ngay trong DB, ảnh chụp mã QR gửi đi sẽ không còn khớp khi
+     * quét (tra cứu theo qr_token thất bại), nên chỉ sống tối đa ~1 nhịp làm mới.
+     */
+    public function rotateQrToken(): void
+    {
+        $this->forceFill([
+            'qr_token' => self::generateQrToken(),
+            'token_expires_at' => self::qrTokenExpiryFor($this->qr_refresh_rate),
+        ])->save();
     }
 }
