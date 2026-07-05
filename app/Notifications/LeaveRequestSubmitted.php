@@ -51,7 +51,7 @@ class LeaveRequestSubmitted extends Notification
             'class_id' => $class ? $class->id : null,
             'type' => 'leave_request',
             'icon' => 'file-text',
-            'url' => route('lecturer.leave-requests.index', ['ma_user' => $notifiable->ma_user, 'class' => $class ? $class->id : null]),
+            'url' => route('lecturer.leave-requests.index', ['ma_user' => $notifiable->id, 'class' => $class ? $class->id : null]),
         ];
     }
 }

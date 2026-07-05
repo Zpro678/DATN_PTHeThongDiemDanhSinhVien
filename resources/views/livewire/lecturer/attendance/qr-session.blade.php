@@ -81,6 +81,7 @@
             <button type="button" wire:click="refreshToken" @disabled($isClosed) class="inline-flex items-center justify-center rounded-lg bg-blue-600 px-5 py-2.5 text-sm font-bold text-white shadow-sm hover:bg-blue-700 disabled:opacity-50">
                 Làm mới QR
             </button>
+            <x-user.export-button action="exportExcel" label="Xuất Excel" :can="$canExportExcel" />
             @if(!$isClosed)
             <button type="button" @click="showEndModal = true" class="inline-flex items-center justify-center rounded-lg bg-rose-600 px-5 py-2.5 text-sm font-bold text-white shadow-sm hover:bg-rose-700">
                 Kết thúc phiên

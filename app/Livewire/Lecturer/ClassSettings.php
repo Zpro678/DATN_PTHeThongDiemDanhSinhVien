@@ -24,6 +24,9 @@ class ClassSettings extends Component
     // Ngưỡng thời gian đi muộn (phút)
     public int $lateThreshold = 15;
 
+    // Tổng số buổi dự kiến của môn học (dùng để tính quỹ vắng 20% và tiến độ).
+    public int $totalSessions = 15;
+
     // Có trừ điểm chuyên cần khi vắng có phép hay không (giữ nguyên cờ cũ hoặc đồng bộ với attendanceRules)
     public bool $deductExcusedAbsence = false;
 
@@ -62,6 +65,7 @@ class ClassSettings extends Component
         $this->join_key = $courseClass->join_key;
         $this->description = $courseClass->description ?? '';
         $this->lateThreshold = $courseClass->late_threshold ?? 15;
+        $this->totalSessions = $courseClass->total_sessions ?? 15;
         $this->deductExcusedAbsence = (bool) $courseClass->deduct_excused_absence;
         $this->attendanceRules = $courseClass->getAttendanceRules();
         $this->requireApproval = $courseClass->require_approval;
@@ -75,6 +79,7 @@ class ClassSettings extends Component
             'join_key' => ['required', 'string', 'max:20', Rule::unique('classes', 'join_key')->ignore($this->courseClass->id)],
             'description' => ['nullable', 'string', 'max:5000'],
             'lateThreshold' => ['required', 'integer', 'min:0', 'max:300'],
+            'totalSessions' => ['required', 'integer', 'min:1', 'max:200'],
             'deductExcusedAbsence' => ['boolean'],
             'requireApproval' => ['boolean'],
             'status' => ['required', 'string', Rule::in(['active', 'archived', 'ended'])],
@@ -82,7 +87,9 @@ class ClassSettings extends Component
             'name.required' => 'Vui lòng nhập tên lớp.',
             'join_key.required' => 'Mã lớp không được để trống.',
             'join_key.unique' => 'Mã lớp đã tồn tại.',
-
+            'totalSessions.required' => 'Vui lòng nhập tổng số buổi dự kiến.',
+            'totalSessions.min' => 'Tổng số buổi dự kiến phải từ 1 trở lên.',
+            'totalSessions.max' => 'Tổng số buổi dự kiến tối đa là 200.',
         ]);
 
         $this->courseClass->update([
@@ -90,6 +97,7 @@ class ClassSettings extends Component
             'join_key' => strtoupper($validated['join_key']),
             'description' => $validated['description'] ?: null,
             'late_threshold' => $validated['lateThreshold'],
+            'total_sessions' => $validated['totalSessions'],
             'deduct_excused_absence' => $validated['deductExcusedAbsence'] ?? false,
             'require_approval' => $validated['requireApproval'],
             'status' => $validated['status'],

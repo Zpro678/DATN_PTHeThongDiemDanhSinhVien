@@ -130,14 +130,24 @@ class QrAttendanceSession extends Component
     public function closeSession(): void
     {
         $session = $this->ownedSession($this->sessionId);
+
+        // Idempotent: phiên đã chốt thì không xử lý/gửi thông báo lại.
+        if ($session->status === 'closed') {
+            $this->isClosed = true;
+            return;
+        }
+
         $session->update(['status' => 'closed']);
-        
+
         // Mặc định những ai chưa điểm danh (pending) khi khóa phiên QR sẽ thành vắng (absent)
         $session->attendanceRecords()->where('status', 'pending')->update(['status' => 'absent']);
-        
+
         $this->isClosed = true;
 
-        app(NotificationService::class)->attendanceSessionClosed((int) auth()->id(), $session, isQr: true);
+        $notifier = app(NotificationService::class);
+        $notifier->attendanceSessionClosed((int) auth()->id(), $session, isQr: true);
+        // Báo trạng thái điểm danh của phiên QR cho từng học viên.
+        $notifier->notifyQrSessionResults($session);
 
         $this->dispatch('toast', message: 'Phiên QR đã được chốt.', type: 'success');
     }

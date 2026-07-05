@@ -5,6 +5,7 @@ namespace App\Livewire\Lecturer;
 use App\Models\ClassSession;
 use App\Models\CourseClass;
 use App\Services\AttendanceCalculator;
+use App\Services\SubscriptionService;
 use Illuminate\Contracts\View\View;
 use Illuminate\Database\Eloquent\Builder;
 use Livewire\Component;
@@ -136,7 +137,7 @@ class ClassAttendanceHistory extends Component
 
             // % chuyên cần chuẩn theo 3 trạng thái tổng kết và có phép.
             $studied = array_sum($counts);
-            $planned = max((int) ($this->courseClass->total_sessions ?? 0), $studied);
+            $planned = AttendanceCalculator::baseSessions((int) ($this->courseClass->total_sessions ?? 0), $studied);
             $totalAttended[$member->id] = $counts['present'] + $counts['late'] + $counts['excused'];
             $memberStats[$member->id] = AttendanceCalculator::percentOfPlanned($planned, $counts, $rules);
         }
@@ -196,7 +197,9 @@ class ClassAttendanceHistory extends Component
             ];
         })->keyBy('id');
 
-        return view('livewire.lecturer.class-attendance-history', compact('members', 'groupedSessions', 'matrix', 'sessions', 'groupedSessionsInfo', 'membersData'))
+        $canExportExcel = app(SubscriptionService::class)->canExportExcel(auth()->user());
+
+        return view('livewire.lecturer.class-attendance-history', compact('members', 'groupedSessions', 'matrix', 'sessions', 'groupedSessionsInfo', 'membersData', 'canExportExcel'))
             ->layout('layouts.fullscreen', [
                 'title' => 'Lịch sử điểm danh (' . $sessions->count() . ')',
                 'subtitle' => $this->courseClass->join_key . ' - ' . $this->courseClass->name,

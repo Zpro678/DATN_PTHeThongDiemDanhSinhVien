@@ -4,8 +4,6 @@
     $userName = Auth::user()?->name ?? 'Người dùng';
     $userEmail = Auth::user()?->email ?? 'user@example.com';
 
-    $notificationData = app(\App\Services\NotificationService::class)->getDropdownData(Auth::user());
-
     $matchesActive = function ($activePattern) use ($activeNav): bool {
         $patterns = is_array($activePattern) ? $activePattern : [$activePattern];
         foreach ($patterns as $pattern) {
@@ -174,10 +172,7 @@
                         </div>
 
                         {{-- Notifications --}}
-                        <x-notification-dropdown
-                            :notifications="$notificationData['items']"
-                            :show-indicator="$notificationData['has_unread']"
-                        />
+                        <livewire:notification-bell />
 
                         {{-- Avatar --}}
                         <div class="relative" x-data="{ openProfile: false }" x-on:click.away="openProfile = false">

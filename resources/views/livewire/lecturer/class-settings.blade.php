@@ -96,6 +96,14 @@
                                 @error('lateThreshold') <span class="text-error text-sm mt-1 block">{{ $message }}</span> @enderror
                             </label>
 
+                            {{-- Tổng số buổi dự kiến --}}
+                            <label class="block">
+                                <span class="mb-2 block text-base font-bold text-on-surface">Tổng số buổi dự kiến <span class="text-error">*</span></span>
+                                <input type="number" wire:model.live.debounce.300ms="totalSessions" min="1" max="200" class="w-full rounded-xl border border-outline-variant/30 bg-surface-container-lowest px-4 py-3 text-base outline-none transition-all focus:border-primary focus:ring-2 focus:ring-primary/20">
+                                <span class="mt-1 block text-sm text-on-surface-variant">Dùng để tính quỹ vắng cho phép (20%) và tiến độ lớp.</span>
+                                @error('totalSessions') <span class="text-error text-sm mt-1 block">{{ $message }}</span> @enderror
+                            </label>
+
                         </div>
 
                         {{-- Bảng cấu hình điểm trừ chuyên cần --}}

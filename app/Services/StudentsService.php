@@ -100,8 +100,8 @@ class StudentsService
         $counts = AttendanceCalculator::consolidateByMeeting($rows, $rules);
         $totalSessions = $counts['total'];
 
-        // % tính trên tổng số buổi dự kiến của lớp để nhất quán với quỹ vắng.
-        $plannedSessions = max((int) ($courseClass->total_sessions ?? 0), $totalSessions);
+        // % tính trên số buổi cơ sở = max(dự kiến, đã diễn ra) để nhất quán với quỹ vắng.
+        $plannedSessions = AttendanceCalculator::baseSessions((int) ($courseClass->total_sessions ?? 0), $totalSessions);
 
         $allowedAbsentSessions = AttendanceCalculator::allowedAbsentSessions($plannedSessions);
         $effectiveAbsentSessions = AttendanceCalculator::effectiveAbsence($counts, $rules);
@@ -117,20 +117,51 @@ class StudentsService
             ->first();
         $latestDate = $latestRecord?->classSession?->date;
         $classLabel = $this->classLabel($member);
+        $date = $latestDate?->format('d/m/Y') ?? now()->format('d/m/Y');
+        $sortDate = $latestDate?->toDateString() ?? now()->toDateString();
+        $excusedSessions = $counts['excused'];
         $warnings = [];
 
-        // Dưới ngưỡng chuyên cần tối thiểu thì sinh cảnh báo nguy cơ cấm thi.
-        if ($totalSessions > 0 && $attendancePercent < AttendanceCalculator::MIN_ATTENDANCE_PERCENT) {
-            $warnings[] = [
-                'type' => 'danger',
-                'icon' => 'alert-triangle',
-                'title' => 'Nguy cơ cấm thi',
-                'message' => "Lớp {$classLabel}. Bạn đã vắng quy đổi {$effectiveAbsentLabel}/{$allowedAbsentSessions} buổi được phép, tỷ lệ chuyên cần còn {$attendancePercent}%.",
-                'date' => $latestDate?->format('d/m/Y') ?? now()->format('d/m/Y'),
-                'sort_date' => $latestDate?->toDateString() ?? now()->toDateString(),
-                'route' => 'student.attendance.history',
-                'action_label' => 'Xem lịch sử',
-            ];
+        if ($totalSessions > 0) {
+            // Dưới 80% -> nguy cơ cấm thi (danger). 80–85% -> cảnh báo chuyên cần (warning).
+            if ($attendancePercent < AttendanceCalculator::MIN_ATTENDANCE_PERCENT) {
+                $warnings[] = [
+                    'type' => 'danger',
+                    'icon' => 'alert-triangle',
+                    'title' => 'Nguy cơ cấm thi',
+                    'message' => "Lớp {$classLabel}. Bạn đã vắng quy đổi {$effectiveAbsentLabel}/{$allowedAbsentSessions} buổi được phép, tỷ lệ chuyên cần còn {$attendancePercent}%.",
+                    'date' => $date,
+                    'sort_date' => $sortDate,
+                    'route' => 'student.attendance.history',
+                    'action_label' => 'Xem lịch sử',
+                ];
+            } elseif ($attendancePercent < AttendanceCalculator::WARNING_PERCENT) {
+                $warnings[] = [
+                    'type' => 'warning',
+                    'icon' => 'alert-triangle',
+                    'title' => 'Cảnh báo chuyên cần',
+                    'message' => "Lớp {$classLabel}. Chuyên cần còn {$attendancePercent}%, đã vắng quy đổi {$effectiveAbsentLabel}/{$allowedAbsentSessions} buổi. Sắp chạm ngưỡng cấm thi 20%.",
+                    'date' => $date,
+                    'sort_date' => $sortDate,
+                    'route' => 'student.attendance.history',
+                    'action_label' => 'Xem lịch sử',
+                ];
+            }
+
+            // Vắng có phép vượt quỹ buổi cho phép -> cảnh báo (có thể đi kèm hai mức trên).
+            if ($excusedSessions > $allowedAbsentSessions) {
+                $excusedLabel = rtrim(rtrim(number_format($excusedSessions, 1), '0'), '.');
+                $warnings[] = [
+                    'type' => 'warning',
+                    'icon' => 'file-text',
+                    'title' => 'Vắng có phép nhiều',
+                    'message' => "Lớp {$classLabel}. Bạn đã vắng có phép {$excusedLabel} buổi, vượt mức {$allowedAbsentSessions} buổi khuyến nghị. Hãy sắp xếp tham gia học đầy đủ hơn.",
+                    'date' => $date,
+                    'sort_date' => $sortDate,
+                    'route' => 'student.attendance.history',
+                    'action_label' => 'Xem lịch sử',
+                ];
+            }
         }
 
         return $warnings;
@@ -369,7 +400,7 @@ class StudentsService
         $plannedByMember = $members->mapWithKeys(function (ClassMember $member) use ($attendanceRows) {
             $studied = (int) ($attendanceRows->get($member->id)->total_sessions ?? 0);
 
-            return [$member->id => max((int) ($member->courseClass?->total_sessions ?? 0), $studied)];
+            return [$member->id => AttendanceCalculator::baseSessions((int) ($member->courseClass?->total_sessions ?? 0), $studied)];
         });
 
         // Tổng hợp theo tổng buổi dự kiến: phần trăm dùng điểm trừ quy đổi từ AttendanceCalculator.
@@ -414,7 +445,7 @@ class StudentsService
 
                 $studiedSessions = (int) ($row->total_sessions ?? 0);
                 $absentSessions = (int) ($row->absent_sessions ?? 0);
-                $totalCourseSessions = max((int) ($courseClass?->total_sessions ?? 0), $studiedSessions);
+                $totalCourseSessions = AttendanceCalculator::baseSessions((int) ($courseClass?->total_sessions ?? 0), $studiedSessions);
 
                 $rules = $courseClass ? $courseClass->getAttendanceRules() : [];
 

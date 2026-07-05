@@ -64,21 +64,7 @@
                     Xóa phiên
                 </button>
                 
-                @if ($canExportExcel)
-                    <button type="button" wire:click="exportExcel" class="inline-flex shrink-0 items-center justify-center gap-2 rounded-xl bg-white border border-slate-200 px-4 py-2.5 text-[14px] font-medium text-slate-700 shadow-sm transition hover:bg-slate-50 hover:border-slate-300 hover:text-slate-900">
-                        <span wire:loading.remove wire:target="exportExcel" class="flex items-center gap-2">
-                            <x-user.icon name="download" :size="18" /> Xuất dữ liệu
-                        </span>
-                        <span wire:loading wire:target="exportExcel" class="flex items-center gap-2">
-                            <x-user.icon name="loader" :size="18" class="animate-spin" /> Đang xử lý...
-                        </span>
-                    </button>
-                @else
-                    <a href="{{ route('upgrade') }}" class="inline-flex shrink-0 items-center justify-center gap-2 rounded-xl bg-white border border-slate-200 px-4 py-2.5 text-[14px] font-medium text-amber-600 shadow-sm transition hover:bg-amber-50 hover:border-amber-300 hover:text-amber-700">
-                        <x-user.icon name="download" :size="18" />
-                        Xuất dữ liệu (Pro)
-                    </a>
-                @endif
+                <x-user.export-button action="exportExcel" label="Xuất dữ liệu" :can="$canExportExcel" />
 
                 <button type="button" @click="createSessionModalOpen = true" class="inline-flex shrink-0 items-center justify-center gap-2 rounded-xl bg-blue-600 border border-transparent px-5 py-2.5 text-[14px] font-medium text-white shadow-sm transition hover:bg-blue-700 hover:shadow-md">
                     <x-user.icon name="plus" :size="18" />

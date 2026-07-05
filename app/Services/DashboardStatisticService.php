@@ -107,7 +107,8 @@ class DashboardStatisticService
             ->map(function ($student) use ($rowsByMember, $absenceLimitRatio, $warningLimitRatio) {
                 $counts = AttendanceCalculator::consolidateByMeeting($rowsByMember->get($student->id, collect()));
 
-                $plannedSessions  = (int) $student->planned_sessions;
+                // Số buổi cơ sở = lớn nhất giữa dự kiến và số buổi đã diễn ra (quy tắc quỹ vắng 20%).
+                $plannedSessions  = AttendanceCalculator::baseSessions((int) $student->planned_sessions, (int) $counts['total']);
                 $absentSessions   = $counts['absent'];
                 $lateSessions     = $counts['late'];
                 $excusedSessions  = $counts['excused'];

@@ -118,11 +118,7 @@
                             <x-user.icon name="refresh-cw" :size="16" />
                             Làm mới
                         </button>
-                        <button type="button" wire:click="exportExcel" class="flex items-center gap-1.5 rounded-lg bg-emerald-600 px-4 py-2 text-sm font-bold text-white shadow-sm transition-all hover:bg-emerald-700 hover:shadow-md">
-                            <x-user.icon name="download" :size="16" />
-                            <span wire:loading.remove wire:target="exportExcel">Xuất báo cáo</span>
-                            <span wire:loading wire:target="exportExcel">Đang xuất...</span>
-                        </button>
+                        <x-user.export-button action="exportExcel" label="Xuất báo cáo" :can="$canExportExcel" />
                     </div>
                 </div>
 

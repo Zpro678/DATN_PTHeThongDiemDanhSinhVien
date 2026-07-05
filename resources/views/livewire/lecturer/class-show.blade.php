@@ -11,14 +11,11 @@
                 <x-user.icon name="upload" :size="16" />
                 <span>Import</span>
             </button>
-            <a
-                href="{{ route('lecturer.students.index', ['class_id' => $class->id, 'action' => 'export']) }}"
-                wire:navigate
-                class="inline-flex w-full sm:w-auto justify-center items-center gap-2 rounded-lg border border-slate-200 bg-white px-4 py-2 text-sm font-medium text-slate-600 transition-colors hover:bg-slate-50 hover:text-slate-900"
-            >
-                <x-user.icon name="download" :size="16" />
-                <span>Xuất Excel</span>
-            </a>
+            <x-user.export-button
+                label="Xuất Excel"
+                :can="$canExportExcel"
+                action="exportExcel"
+                class="w-full sm:w-auto" />
             <button
                 type="button"
                 class="inline-flex w-full sm:w-auto justify-center items-center gap-2 rounded-lg border border-slate-200 bg-white px-4 py-2 text-sm font-medium text-slate-600 transition-colors hover:bg-slate-50 hover:text-slate-900"
@@ -79,7 +76,7 @@
                 </div>
                 <div class="min-w-0">
                     <span class="text-sm text-white/70">Điểm danh</span>
-                    <p class="mt-1 text-2xl sm:text-[28px] font-bold text-white leading-none">{{ $sessionsCompleted }} <span class="text-base font-medium text-white/80">buổi</span></p>
+                    <p class="mt-1 text-2xl sm:text-[28px] font-bold text-white leading-none">{{ $sessionsCompleted }}<span class="text-base font-medium text-white/80">{{ $class->total_sessions > 0 ? '/'.$class->total_sessions : '' }} buổi</span></p>
                 </div>
                 <div class="min-w-0">
                     <span class="text-sm text-white/70">Tiến độ</span>
@@ -151,6 +148,59 @@
             @endif
         </a>
     </div>
+    {{-- Thanh tìm kiếm + bộ lọc trạng thái chuyên cần --}}
+    <div class="mb-4 flex flex-col gap-3 px-1 lg:flex-row lg:items-center lg:justify-between">
+        {{-- Ô tìm kiếm --}}
+        <div class="relative w-full lg:max-w-xs">
+            <span class="pointer-events-none absolute inset-y-0 left-3 flex items-center text-slate-400">
+                <x-user.icon name="search" :size="18" />
+            </span>
+            <input
+                type="text"
+                wire:model.live.debounce.300ms="search"
+                placeholder="Tìm theo tên, MSSV, email..."
+                class="w-full rounded-xl border border-slate-200 bg-white py-2.5 pl-10 pr-9 text-sm text-slate-700 placeholder-slate-400 transition-colors focus:border-blue-400 focus:outline-none focus:ring-2 focus:ring-blue-100"
+            >
+            @if($search !== '')
+                <button type="button" wire:click="$set('search', '')" class="absolute inset-y-0 right-2 flex items-center rounded-full p-1 text-slate-400 transition-colors hover:bg-slate-100 hover:text-slate-600" title="Xóa tìm kiếm">
+                    <x-user.icon name="x" :size="16" />
+                </button>
+            @endif
+        </div>
+
+        {{-- Cụm nút lọc trạng thái --}}
+        <div class="flex flex-wrap items-center gap-1 rounded-xl bg-slate-100 p-1">
+            @php
+                $filterTabs = [
+                    ['key' => '',        'label' => 'Tất cả',            'count' => null,          'active' => 'bg-white text-slate-900 shadow-sm'],
+                    ['key' => 'warning', 'label' => 'Sắp vượt ngưỡng',  'count' => $warningTotal, 'active' => 'bg-white text-amber-700 shadow-sm'],
+                    ['key' => 'banned',  'label' => 'Nguy cơ cấm thi',   'count' => $bannedTotal,  'active' => 'bg-white text-red-700 shadow-sm'],
+                ];
+            @endphp
+            @foreach($filterTabs as $tab)
+                @php $isActive = $activeFilter === $tab['key']; @endphp
+                <button
+                    type="button"
+                    wire:click="$set('filter', '{{ $tab['key'] }}')"
+                    @class([
+                        'inline-flex items-center gap-1.5 rounded-lg px-3 py-1.5 text-sm font-bold transition-colors',
+                        $tab['active'] => $isActive,
+                        'text-slate-500 hover:text-slate-700' => ! $isActive,
+                    ])
+                >
+                    {{ $tab['label'] }}
+                    @if(!is_null($tab['count']))
+                        <span @class([
+                            'rounded-full px-1.5 text-xs',
+                            'bg-amber-100 text-amber-700' => $tab['key'] === 'warning',
+                            'bg-red-100 text-red-700'     => $tab['key'] === 'banned',
+                        ])>{{ $tab['count'] }}</span>
+                    @endif
+                </button>
+            @endforeach
+        </div>
+    </div>
+
     <div class="mb-8 rounded-[20px] border border-slate-200 bg-white overflow-hidden">
         {{-- Table --}}
         @if($students->isEmpty())
@@ -158,20 +208,26 @@
                 <div class="mb-4 flex h-14 w-14 items-center justify-center rounded-full bg-slate-100 text-slate-400">
                     <x-user.icon name="users" :size="28" />
                 </div>
-                <h3 class="text-base font-bold text-slate-700">Chưa học viên</h3>
-                <p class="mt-1 text-sm text-slate-500">Lớp học này hiện chưa có sinh viên nào.</p>
+                @if(!empty($activeFilter) || $search !== '')
+                    <h3 class="text-base font-bold text-slate-700">Không có sinh viên phù hợp</h3>
+                    <p class="mt-1 text-sm text-slate-500">Không tìm thấy sinh viên khớp bộ lọc. <button type="button" wire:click="clearFilter" class="font-bold text-blue-600 hover:underline">Xóa lọc &amp; tìm kiếm</button></p>
+                @else
+                    <h3 class="text-base font-bold text-slate-700">Chưa học viên</h3>
+                    <p class="mt-1 text-sm text-slate-500">Lớp học này hiện chưa có sinh viên nào.</p>
+                @endif
             </div>
         @else
             <div class="overflow-x-auto {{ $students->count() > 30 ? 'max-h-[800px] overflow-y-auto relative' : '' }}">
-                <table class="w-full min-w-[750px] table-fixed text-left text-sm whitespace-nowrap">
+                <table class="w-full min-w-[900px] table-fixed text-left text-sm whitespace-nowrap">
                     <thead class="border-b border-slate-200 bg-slate-50 text-sm uppercase text-black">
                         <tr class="{{ $students->count() > 30 ? 'sticky top-0 z-10 bg-slate-50' : '' }}">
-                            <th scope="col" class="w-[10%] px-6 py-4 font-bold text-center">STT</th>
-                            <th scope="col" class="w-[15%] px-6 py-4 font-bold text-center">MSSV</th>
-                            <th scope="col" class="w-[20%] pl-6 pr-6 py-4 font-bold">Họ & Tên</th>
-                            <th scope="col" class="w-[20%] pl-6 pr-6 py-4 font-bold">Email</th>
-                            <th scope="col" class="w-[20%] px-6 py-4 font-bold text-center">Liên kết</th>
-                            <th scope="col" class="w-[15%] px-6 py-4 font-bold text-center">Chuyên cần</th>
+                            <th scope="col" class="w-[7%] px-4 py-4 font-bold text-center">STT</th>
+                            <th scope="col" class="w-[12%] px-4 py-4 font-bold text-center">MSSV</th>
+                            <th scope="col" class="w-[22%] pl-6 pr-4 py-4 font-bold">Họ & Tên</th>
+                            <th scope="col" class="w-[20%] pl-6 pr-4 py-4 font-bold">Email</th>
+                            <th scope="col" class="w-[13%] px-4 py-4 font-bold text-center">Liên kết</th>
+                            <th scope="col" class="w-[11%] px-4 py-4 font-bold text-center">Chuyên cần</th>
+                            <th scope="col" class="w-[15%] px-4 py-4 font-bold text-center">Hành động</th>
                         </tr>
                     </thead>
                     <tbody class="divide-y divide-slate-100">
@@ -228,13 +284,49 @@
                                         </span>
                                     @endif
                                 </td>
-                                <td class="px-6 py-4 text-center">
+                                <td class="px-4 py-4 text-center">
                                     <span @class([
                                         'inline-flex rounded-md px-2 py-1 text-xs font-bold',
                                         'bg-red-100 text-red-700'    => $isBanned,
                                         'bg-amber-100 text-amber-700' => $isWarning,
                                         'bg-green-50 text-green-600'  => !$isBanned && !$isWarning,
                                     ])>{{ $rate }}%</span>
+                                </td>
+                                <td class="px-4 py-4 text-center">
+                                    @if($isBanned)
+                                        @if($student->user_id)
+                                            <button
+                                                type="button"
+                                                wire:click="sendExamBan({{ $student->id }})"
+                                                wire:confirm="Gửi thông báo CẤM THI cho sinh viên {{ $student->full_name }}?"
+                                                wire:loading.attr="disabled"
+                                                wire:target="sendExamBan"
+                                                class="inline-flex items-center gap-1.5 rounded-lg bg-red-600 px-3 py-1.5 text-xs font-bold text-white transition-colors hover:bg-red-700 disabled:opacity-60"
+                                            >
+                                                <x-user.icon name="alert-triangle" :size="14" />
+                                                Cấm thi
+                                            </button>
+                                        @else
+                                            <span class="text-xs font-medium text-slate-400" title="Chưa liên kết tài khoản">Chưa liên kết</span>
+                                        @endif
+                                    @elseif($isWarning)
+                                        @if($student->user_id)
+                                            <button
+                                                type="button"
+                                                wire:click="sendAttendanceWarning({{ $student->id }})"
+                                                wire:loading.attr="disabled"
+                                                wire:target="sendAttendanceWarning"
+                                                class="inline-flex items-center gap-1.5 rounded-lg border border-amber-300 bg-amber-50 px-3 py-1.5 text-xs font-bold text-amber-700 transition-colors hover:bg-amber-100 disabled:opacity-60"
+                                            >
+                                                <x-user.icon name="bell" :size="14" />
+                                                Gửi cảnh báo
+                                            </button>
+                                        @else
+                                            <span class="text-xs font-medium text-slate-400" title="Chưa liên kết tài khoản">Chưa liên kết</span>
+                                        @endif
+                                    @else
+                                        <span class="text-slate-300">—</span>
+                                    @endif
                                 </td>
                             </tr>
                         @endforeach
