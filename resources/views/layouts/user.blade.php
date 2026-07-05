@@ -76,7 +76,7 @@
         ['label' => 'Khác', 'items' => [
             ['label' => 'Cảnh báo', 'icon' => 'alert-triangle', 'route' => 'student.warnings', 'active' => 'student.warnings'],
             ['label' => 'Nâng cấp gói', 'icon' => 'zap', 'route' => 'upgrade', 'active' => 'upgrade'],
-            ['label' => 'Lịch sử giao dịch', 'icon' => 'receipt', 'route' => 'transaction-history', 'active' => 'transaction-history'],
+            ['label' => 'Lịch sử giao dịch', 'icon' => 'credit-card', 'route' => 'transaction-history', 'active' => 'transaction-history'],
         ]],
     ];
 
@@ -224,7 +224,7 @@
                                         <x-user.icon name="zap" :size="17" /> Nâng cấp gói
                                     </a>
                                     <a href="{{ route('transaction-history') }}" wire:navigate class="flex items-center gap-3 px-4 py-2.5 text-sm text-on-surface transition-colors hover:bg-surface-container">
-                                        <x-user.icon name="receipt" :size="17" class="text-on-surface-variant" /> Lịch sử giao dịch
+                                        <x-user.icon name="credit-card" :size="16" /> Lịch sử giao dịch
                                     </a>
                                     <a href="{{ route('profile.edit') }}" wire:navigate class="flex items-center gap-3 px-4 py-2.5 text-sm text-on-surface transition-colors hover:bg-surface-container">
                                         <x-user.icon name="user" :size="17" class="text-on-surface-variant" /> Thông tin cá nhân

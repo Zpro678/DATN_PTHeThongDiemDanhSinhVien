@@ -41,21 +41,21 @@
                     <div class="p-6 grid grid-cols-1 md:grid-cols-2 gap-5">
                         <label class="col-span-1 md:col-span-2 block">
                             <span class="mb-2 block text-base font-bold text-on-surface">Tên lớp / môn học <span class="text-error">*</span></span>
-                            <input type="text" wire:model="name" class="w-full rounded-xl border border-outline-variant/30 bg-surface-container-lowest px-4 py-3 text-base outline-none transition-all focus:border-primary focus:ring-2 focus:ring-primary/20" placeholder="Nhập tên môn học">
+                            <input type="text" wire:model="name" class="w-full rounded-xl border-2 border-outline-variant/80 hover:border-primary bg-surface-container-lowest px-4 py-3 text-base outline-none transition-all focus:border-primary focus:ring-2 focus:ring-primary/20" placeholder="Nhập tên môn học">
                             @error('name') <span class="text-error text-sm mt-1 block">{{ $message }}</span> @enderror
                         </label>
 
                         {{-- Mã lớp --}}
                         <label class="col-span-1 md:col-span-2 block">
                             <span class="mb-2 block text-base font-bold text-on-surface">Mã lớp <span class="ml-1.5 rounded-full bg-surface-container px-2 py-0.5 text-[12px] font-bold text-on-surface-variant">(Tùy chọn)</span></span>
-                            <input type="text" wire:model="classCode" class="w-full rounded-xl border border-outline-variant/30 bg-surface-container-lowest px-4 py-3 text-base outline-none uppercase font-mono tracking-widest text-lg font-bold transition-all focus:border-primary focus:ring-2 focus:ring-primary/20" placeholder="VD: CS101, WEB-2026-01" maxlength="50">
+                            <input type="text" wire:model="classCode" class="w-full rounded-xl border-2 border-outline-variant/80 hover:border-primary bg-surface-container-lowest px-4 py-3 text-base outline-none uppercase font-mono tracking-widest text-lg font-bold transition-all focus:border-primary focus:ring-2 focus:ring-primary/20" placeholder="VD: CS101, WEB-2026-01" maxlength="50">
                             <p class="mt-2 text-sm text-on-surface-variant">Mã nhận diện lớp theo môn học / học phần của trường. Nếu để trống sẽ dùng mã tham gia lớp.</p>
                             @error('classCode') <span class="text-error text-sm mt-1 block">{{ $message }}</span> @enderror
                         </label>
 
                         <label class="col-span-1 md:col-span-2 block">
                             <span class="mb-2 block text-base font-bold text-on-surface">Mô tả lớp học <span class="text-sm font-normal text-on-surface-variant">(Tùy chọn)</span></span>
-                            <textarea wire:model="description" class="h-24 w-full resize-none rounded-xl border border-outline-variant/30 bg-surface-container-lowest px-4 py-3 text-base outline-none transition-all focus:border-primary focus:ring-2 focus:ring-primary/20" placeholder="Nhập mô tả..."></textarea>
+                            <textarea wire:model="description" class="h-24 w-full resize-none rounded-xl border-2 border-outline-variant/80 hover:border-primary bg-surface-container-lowest px-4 py-3 text-base outline-none transition-all focus:border-primary focus:ring-2 focus:ring-primary/20" placeholder="Nhập mô tả..."></textarea>
                             @error('description') <span class="text-error text-sm mt-1 block">{{ $message }}</span> @enderror
                         </label>
                     </div>
@@ -72,7 +72,7 @@
                     <div class="p-6">
                         <div class="flex items-center gap-3">
                             <input type="text" wire:model="join_key"
-                                class="w-full rounded-xl border border-outline-variant/30 bg-surface-container-lowest px-4 py-3 outline-none uppercase font-mono tracking-widest text-lg font-bold transition-all focus:border-primary focus:ring-2 focus:ring-primary/20"
+                                class="w-full rounded-xl border-2 border-outline-variant/80 hover:border-primary bg-surface-container-lowest px-4 py-3 outline-none uppercase font-mono tracking-widest text-lg font-bold transition-all focus:border-primary focus:ring-2 focus:ring-primary/20"
                                 placeholder="Mã lớp">
                             <button type="button" wire:click="regenerateCode"
                                 class="shrink-0 inline-flex items-center gap-2 rounded-xl border border-outline-variant/30 bg-surface-container-lowest px-4 py-3 text-base font-bold text-on-surface-variant hover:bg-primary hover:text-white hover:border-primary transition-colors"
@@ -100,7 +100,7 @@
                             {{-- Ngưỡng đi muộn --}}
                             <label class="block">
                                 <span class="mb-2 block text-base font-bold text-on-surface">Ngưỡng đi muộn (phút) <span class="text-error">*</span></span>
-                                <input type="number" wire:model.live.debounce.300ms="lateThreshold" min="0" max="300" class="w-full rounded-xl border border-outline-variant/30 bg-surface-container-lowest px-4 py-3 text-base outline-none transition-all focus:border-primary focus:ring-2 focus:ring-primary/20">
+                                <input type="number" wire:model.live.debounce.300ms="lateThreshold" min="0" max="300" class="w-full rounded-xl border-2 border-outline-variant/80 hover:border-primary bg-surface-container-lowest px-4 py-3 text-base outline-none transition-all focus:border-primary focus:ring-2 focus:ring-primary/20">
                                 @error('lateThreshold') <span class="text-error text-sm mt-1 block">{{ $message }}</span> @enderror
                             </label>
 
@@ -112,37 +112,37 @@
                                 <span class="block text-base font-bold text-on-surface">Bảng cấu hình điểm trừ chuyên cần (Quy đổi đi muộn)</span>
                                 <span class="text-sm text-on-surface-variant block mt-1">Thiết lập mức điểm trừ cho từng trạng thái (ví dụ: 0.5 điểm trừ = 2 lần vi phạm thành 1 buổi vắng).</span>
                             </div>
+
+                            {{-- Toggle: Trừ chuyên cần khi vắng có phép --}}
+                            <div class="flex items-center justify-between rounded-xl border border-outline-variant/20 bg-surface-container-lowest/60 p-4 mb-5">
+                                <div class="pr-4">
+                                    <span class="block text-base font-bold text-on-surface">Trừ chuyên cần khi vắng có phép</span>
+                                    <span class="text-sm text-on-surface-variant">Bật để vắng có phép vẫn bị tính làm giảm % chuyên cần (chỉ không bị cảnh báo cấm thi).</span>
+                                </div>
+                                <button type="button" wire:click="$toggle('deductExcusedAbsence')"
+                                    class="relative shrink-0 h-6 w-12 rounded-full transition-colors {{ $deductExcusedAbsence ? 'bg-primary' : 'bg-outline-variant/50' }}">
+                                    <span class="absolute top-1 h-4 w-4 rounded-full bg-white shadow transition-all {{ $deductExcusedAbsence ? 'right-1' : 'left-1' }}"></span>
+                                </button>
+                            </div>
                             
                             <div class="grid grid-cols-2 md:grid-cols-4 gap-4">
                                 <div>
                                     <label class="block text-sm font-bold text-on-surface mb-1">Có mặt</label>
-                                    <input wire:model="attendanceRules.present" type="number" step="0.5" max="0" class="w-full rounded-xl border border-outline-variant/30 px-3 py-2 text-base focus:border-primary focus:ring-1 focus:ring-primary">
+                                    <input wire:model="attendanceRules.present" type="number" step="0.5" max="0" class="w-full rounded-xl border-2 border-outline-variant/80 hover:border-primary px-3 py-2 text-base outline-none transition-all focus:border-primary focus:ring-2 focus:ring-primary/20">
                                 </div>
                                 <div>
                                     <label class="block text-sm font-bold text-on-surface mb-1">Đi muộn</label>
-                                    <input wire:model="attendanceRules.late" type="number" step="0.5" class="w-full rounded-xl border border-outline-variant/30 px-3 py-2 text-base focus:border-primary focus:ring-1 focus:ring-primary">
+                                    <input wire:model="attendanceRules.late" type="number" step="0.5" class="w-full rounded-xl border-2 border-outline-variant/80 hover:border-primary px-3 py-2 text-base outline-none transition-all focus:border-primary focus:ring-2 focus:ring-primary/20">
                                 </div>
                                 <div>
                                     <label class="block text-sm font-bold text-on-surface mb-1">Vắng</label>
-                                    <input wire:model="attendanceRules.absent" type="number" step="0.5" class="w-full rounded-xl border border-outline-variant/30 px-3 py-2 text-base focus:border-primary focus:ring-1 focus:ring-primary">
+                                    <input wire:model="attendanceRules.absent" type="number" step="0.5" class="w-full rounded-xl border-2 border-outline-variant/80 hover:border-primary px-3 py-2 text-base outline-none transition-all focus:border-primary focus:ring-2 focus:ring-primary/20">
                                 </div>
                                 <div>
                                     <label class="block text-sm font-bold text-on-surface mb-1">Có phép</label>
-                                    <input wire:model="attendanceRules.excused" type="number" step="0.5" class="w-full rounded-xl border border-outline-variant/30 px-3 py-2 text-base focus:border-primary focus:ring-1 focus:ring-primary">
+                                    <input wire:model="attendanceRules.excused" type="number" step="0.5" class="w-full rounded-xl border-2 border-outline-variant/80 hover:border-primary px-3 py-2 text-base outline-none transition-all focus:border-primary focus:ring-2 focus:ring-primary/20">
                                 </div>
                             </div>
-                        </div>
-
-                        {{-- Toggle: Trừ chuyên cần khi vắng có phép --}}
-                        <div class="flex items-center justify-between rounded-xl border border-outline-variant/20 bg-surface-container-lowest/60 p-4 mt-5">
-                            <div class="pr-4">
-                                <span class="block text-base font-bold text-on-surface">Trừ chuyên cần khi vắng có phép</span>
-                                <span class="text-sm text-on-surface-variant">Bật để vắng có phép vẫn bị tính làm giảm % chuyên cần (chỉ không bị cảnh báo cấm thi).</span>
-                            </div>
-                            <button type="button" wire:click="$toggle('deductExcusedAbsence')"
-                                class="relative shrink-0 h-6 w-12 rounded-full transition-colors {{ $deductExcusedAbsence ? 'bg-primary' : 'bg-outline-variant/50' }}">
-                                <span class="absolute top-1 h-4 w-4 rounded-full bg-white shadow transition-all {{ $deductExcusedAbsence ? 'right-1' : 'left-1' }}"></span>
-                            </button>
                         </div>
                     </div>
                 </div>
@@ -183,7 +183,7 @@
                         }" @click.outside="open = false" @keydown.escape.window="open = false">
                         <div class="relative">
                             <button type="button" @click="open = !open; if(open) checkPosition();" x-ref="btn"
-                                class="flex w-full items-center justify-between gap-3 rounded-xl border border-outline-variant/30 bg-surface-container-lowest px-4 py-3 text-left text-base font-bold text-on-surface outline-none transition-all hover:border-primary"
+                                class="flex w-full items-center justify-between gap-3 rounded-xl border-2 border-outline-variant/40 bg-surface-container-lowest px-4 py-3 text-left text-base font-bold text-on-surface outline-none transition-all hover:border-primary/50"
                                 :class="open ? 'border-primary ring-2 ring-primary/20' : ''">
                                 <span x-text="selected.label"></span>
                                 <x-user.icon name="chevron-down" :size="16" class="shrink-0 text-on-surface-variant transition-transform duration-200" x-bind:class="open ? 'rotate-180 text-primary' : ''" />
