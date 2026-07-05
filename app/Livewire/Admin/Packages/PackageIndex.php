@@ -17,12 +17,6 @@ class PackageIndex extends Component
         $package->save();
     }
 
-    public function deletePackage(Plan $package)
-    {
-        abort_unless(Auth::user()?->isAdmin(), 403);
-
-        $package->delete();
-    }
 
     #[Layout('components.admin-layout')]
     public function render()

@@ -42,8 +42,7 @@
         }
         
         if ($package->can_export_excel) {
-            $features[] = 'Import học viên từ Excel/CSV';
-            $features[] = 'Có xuất báo cáo Excel';
+            $features[] = 'Xuất báo cáo ra Excel';
         }
     @endphp
 

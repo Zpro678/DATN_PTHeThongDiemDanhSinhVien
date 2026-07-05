@@ -51,19 +51,12 @@
                         @error('description') <span class="text-xs text-red-500">{{ $message }}</span> @enderror
                     </div>
                     <div>
-                        <label class="mb-2 block text-sm font-semibold text-slate-700">Hình thức tính giá</label>
-                        @php
-                        $priceTypeOptions = [
-                            ['value' => 'fixed', 'label' => 'Cố định (VND)', 'sub_label' => 'Thanh toán một mức giá cố định'],
-                            ['value' => 'contact', 'label' => 'Thỏa thuận (Liên hệ)', 'sub_label' => 'Khách hàng liên hệ để nhận báo giá'],
-                            ['value' => 'free', 'label' => 'Miễn phí', 'sub_label' => 'Không thu phí người dùng'],
-                        ];
-                        @endphp
-                        <x-custom-select wire:model.live="priceType" :options="$priceTypeOptions" :value="$priceType" placeholder="Chọn hình thức" />
-                        @error('priceType') <span class="text-xs text-red-500">{{ $message }}</span> @enderror
+                        <label class="mb-2 block text-sm font-semibold text-slate-700">Mức giá (VND) <span class="text-red-500">*</span></label>
+                        <input type="number" wire:model="price" placeholder="VD: 5000000" class="w-full rounded-xl border border-slate-300 bg-transparent px-4 py-2.5 text-slate-900 transition-colors focus:border-blue-500 focus:ring-2 focus:ring-blue-500">
+                        @error('price') <span class="text-xs text-red-500">{{ $message }}</span> @enderror
                     </div>
                     <div>
-                        <label class="mb-2 block text-sm font-semibold text-slate-700">Thời hạn sử dụng</label>
+                        <label class="mb-2 block text-sm font-semibold text-slate-700">Thời hạn sử dụng <span class="text-red-500">*</span></label>
                         @php
                         $durationOptions = [
                             ['value' => '30', 'label' => '1 Tháng', 'sub_label' => 'Sử dụng trong 30 ngày'],
@@ -76,13 +69,6 @@
                         <x-custom-select wire:model="duration_days" :options="$durationOptions" :value="$duration_days" placeholder="Chọn thời hạn" />
                         @error('duration_days') <span class="text-xs text-red-500">{{ $message }}</span> @enderror
                     </div>
-                    @if($priceType === 'fixed')
-                    <div class="md:col-span-2">
-                        <label class="mb-2 block text-sm font-semibold text-slate-700">Mức giá (VND)</label>
-                        <input type="number" wire:model="price" placeholder="VD: 5000000" class="w-full rounded-xl border border-slate-300 bg-transparent px-4 py-2.5 text-slate-900 transition-colors focus:border-blue-500 focus:ring-2 focus:ring-blue-500">
-                        @error('price') <span class="text-xs text-red-500">{{ $message }}</span> @enderror
-                    </div>
-                    @endif
                 </div>
             </div>
 
@@ -151,8 +137,8 @@
                     
                     <div class="flex items-center justify-between p-6 transition-colors hover:bg-blue-50/40">
                         <div>
-                            <p class="text-base font-bold text-slate-800">Import học viên từ Excel/CSV</p>
-                            <p class="mt-1 text-sm text-slate-500">Hỗ trợ upload file danh sách lớp thay vì nhập tay thủ công từng học viên.</p>
+                            <p class="text-base font-bold text-slate-800">Xuất báo cáo ra Excel</p>
+                            <p class="mt-1 text-sm text-slate-500">Hỗ trợ xuất bảng điểm danh ra file Excel để lưu trữ và báo cáo.</p>
                         </div>
                         <label class="relative ml-4 inline-flex shrink-0 cursor-pointer items-center">
                             <input type="checkbox" wire:model="hasImport" class="peer sr-only">

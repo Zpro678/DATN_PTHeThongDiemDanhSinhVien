@@ -87,7 +87,22 @@
                         <div class="space-y-5">
                             <div>
                                 <label class="mb-2 block text-[10px] font-bold uppercase tracking-widest text-slate-400">Vai trò</label>
-                                <input type="text" value="{{ $user->isAdmin() ? 'Admin' : 'Người dùng' }}" disabled class="w-full rounded-xl border border-slate-200 bg-slate-50 px-4 py-3 text-sm font-bold text-slate-500 cursor-not-allowed">
+                                @php
+                                $roleOptions = [
+                                    ['value' => \App\Models\User::ROLE_USER, 'label' => 'Người dùng', 'sub_label' => 'Giảng viên & Học viên'],
+                                    ['value' => \App\Models\User::ROLE_ADMIN, 'label' => 'Admin', 'sub_label' => 'Quản trị viên hệ thống'],
+                                ];
+                                if ($user->isSuperAdmin()) {
+                                    $roleOptions[] = ['value' => \App\Models\User::ROLE_SUPER_ADMIN, 'label' => 'Super Admin', 'sub_label' => 'Quản trị viên tối cao'];
+                                }
+                                $canEditRole = auth()->user()->isSuperAdmin() || (!auth()->user()->isSuperAdmin() && !$user->isAdmin());
+                                // Không cho phép tự đổi quyền của chính mình
+                                if ($user->id === auth()->id()) {
+                                    $canEditRole = false;
+                                }
+                                @endphp
+                                <x-custom-select wire:model.live="role" :options="$roleOptions" placeholder="Chọn vai trò" {{ $canEditRole ? '' : 'disabled' }} />
+                                @error('role')<p class="mt-1 text-xs text-red-500">{{ $message }}</p>@enderror
                             </div>
 
                             <div>
