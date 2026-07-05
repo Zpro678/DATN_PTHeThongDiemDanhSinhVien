@@ -16,6 +16,26 @@ use Livewire\Component;
  */
 class NotificationBell extends Component
 {
+    /** Id người dùng hiện tại — dùng để dựng tên kênh Echo notifications.{userId}. */
+    public int $userId = 0;
+
+    public function mount(): void
+    {
+        $this->userId = (int) auth()->id();
+    }
+
+    /**
+     * Tên kênh socket.io mà client cần lắng nghe cho tài khoản hiện tại.
+     *
+     * Laravel broadcast qua Redis pub/sub với prefix của Redis (Predis áp prefix vào
+     * cả channel PUBLISH), server.cjs relay nguyên tên kênh đó sang socket.io. Vì vậy
+     * client phải nghe đúng: {redis_prefix}notifications.{userId}.
+     */
+    public function realtimeChannel(): string
+    {
+        return (string) config('database.redis.options.prefix') . 'notifications.' . $this->userId;
+    }
+
     /**
      * Xóa một thông báo của người dùng hiện tại (Livewire, không reload).
      */

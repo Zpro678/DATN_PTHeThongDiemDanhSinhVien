@@ -2,6 +2,7 @@
 
 namespace App\Services;
 
+use App\Events\NotificationReceived;
 use App\Models\ClassMeeting;
 use App\Models\ClassSession;
 use App\Models\CourseClass;
@@ -304,6 +305,9 @@ class NotificationService
             ], $extra),
             'read_at' => null,
         ]);
+
+        // Phát tín hiệu realtime để chuông thông báo của người nhận tự cập nhật (không reload).
+        event(new NotificationReceived($userId));
     }
 
     /**

@@ -14,7 +14,12 @@
     ];
 @endphp
 
-<div class="relative" x-data="{ openNotification: false }" @click.away="openNotification = false">
+<div
+    class="relative"
+    x-data="{ openNotification: false }"
+    @click.away="openNotification = false"
+    x-init="window.listenNotifications && window.listenNotifications(@js($this->realtimeChannel()), () => $wire.$refresh())"
+>
     <button
         type="button"
         @click="openNotification = !openNotification"
