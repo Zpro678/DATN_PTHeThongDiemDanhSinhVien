@@ -159,6 +159,7 @@ class AttendanceCheckIn extends Component
         $gpsLatRecorded = null;
         $gpsLngRecorded = null;
         $gpsFraudFlag = null;
+        $fraudNote = null;
 
         $ipAddress = request()->ip();
         $userAgent = request()->userAgent();
@@ -232,9 +233,20 @@ class AttendanceCheckIn extends Component
                     $distanceMeters
                 );
             }
+
+            // Nghi ngờ giả lập vị trí (mock GPS): chỉ gắn cờ nếu chưa dính cờ nặng hơn
+            // (out_of_radius/device_duplicate). Đây là cờ mềm — vẫn cho điểm danh,
+            // chỉ để lại dấu vết cho giảng viên rà soát.
+            if ($gpsFraudFlag === null) {
+                $suspiciousReason = $service->detectSuspiciousGps($gpsAccuracy);
+                if ($suspiciousReason !== null) {
+                    $gpsFraudFlag = 'suspected_mock';
+                    $fraudNote = $suspiciousReason;
+                }
+            }
         }
 
-        $this->record->update([
+        $updateData = [
             'status' => $gpsFraudFlag === 'out_of_radius' ? 'invalid' : $status,
             'check_in_time' => now('Asia/Ho_Chi_Minh'),
             'distance_meters' => $distanceMeters,
@@ -245,7 +257,14 @@ class AttendanceCheckIn extends Component
             'ip_address' => $ipAddress,
             'device_fingerprint' => $deviceFingerprint,
             'is_account' => true,
-        ]);
+        ];
+
+        // Nối lý do nghi ngờ vào note hiện có (không ghi đè) để giảng viên xem được.
+        if ($fraudNote !== null) {
+            $updateData['note'] = trim(($this->record->note ? $this->record->note . ' | ' : '') . $fraudNote);
+        }
+
+        $this->record->update($updateData);
 
         \App\Jobs\SaveAuditLogJob::dispatch([
             'user_id' => auth()->id() ?? null,

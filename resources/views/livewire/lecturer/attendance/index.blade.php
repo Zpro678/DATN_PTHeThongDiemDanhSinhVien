@@ -34,7 +34,7 @@
 
                 {{-- Bộ lọc trạng thái (dropdown tùy biến) --}}
                 <div class="w-full sm:w-60">
-                    <x-custom-select wire:model.live="filter" placeholder="Tất cả trạng thái" :options="[
+                    <x-custom-select wire:model.live="filter" :value="$filter" placeholder="Tất cả trạng thái" :options="[
                         ['value' => 'unclosed', 'label' => 'Chưa kết thúc (chưa chốt)'],
                         ['value' => 'closed', 'label' => 'Đã chốt'],
                     ]" />
