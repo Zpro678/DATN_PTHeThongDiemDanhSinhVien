@@ -3,17 +3,35 @@
 namespace App\Livewire\User;
 
 use App\Models\CourseClass;
+use App\Services\AuditLogService;
 use App\Services\NotificationService;
 use App\Services\SubscriptionService;
 use Illuminate\Contracts\View\View;
 use Livewire\Component;
+use Livewire\WithFileUploads;
+use Maatwebsite\Excel\Facades\Excel;
+use App\Imports\StudentsImport;
 
 class CreateClass extends Component
 {
+    use WithFileUploads;
+
     // Tên của lớp học
     public string $name = '';
 
-    // Mã lớp được sinh tự động khi mở form hoặc khi lưu.
+    // File Excel/CSV được chọn để import khi tạo lớp
+    public $importFile;
+
+    // Mảng lưu các lỗi import
+    public array $importErrors = [];
+
+    // Số lượng học viên import thành công
+    public int $importSuccess = 0;
+
+    // Mã lớp học phần do giảng viên tự nhập (VD: CS101, WEB-2026-01)
+    public string $classCode = '';
+
+    // Mã tham gia lớp — được sinh tự động khi mở form hoặc khi lưu.
     public string $generatedCode = '';
 
     // 4 số ngẫu nhiên được sinh ra khi load trang để ghép vào mã lớp
@@ -74,8 +92,11 @@ class CreateClass extends Component
             return;
         }
 
+
+
         $validated = $this->validate([
             'name' => ['required', 'string', 'max:255'],
+            'classCode' => ['nullable', 'string', 'max:50'],
             'description' => ['nullable', 'string', 'max:5000'],
             'lateThreshold' => ['required', 'integer', 'min:0', 'max:300'],
             'attendanceRules' => ['required', 'array'],
@@ -84,8 +105,11 @@ class CreateClass extends Component
             'attendanceRules.absent' => ['required', 'numeric'],
             'attendanceRules.excused' => ['required', 'numeric'],
             'requireApproval' => ['boolean'],
+            'importFile' => ['required', 'file', 'extensions:xlsx,xls,csv', 'max:5120'],
         ], [
             'name.required' => 'Vui lòng nhập tên lớp.',
+            'importFile.required' => 'Vui lòng chọn tệp danh sách sinh viên Excel/CSV để import.',
+            'importFile.extensions' => 'Định dạng file import không hỗ trợ. Vui lòng dùng .xlsx, .xls, .csv',
         ]);
 
         $code = $this->generateUniqueCode();
@@ -94,6 +118,7 @@ class CreateClass extends Component
             'owner_user_id' => auth()->id(),
             'name' => $this->name,
             'join_key' => $code,
+            'class_code' => $this->classCode ?: $code, // fallback sang join_key nếu không nhập
             'description' => $this->description ?: null,
             'late_threshold' => $this->lateThreshold,
             'deduct_excused_absence' => ($this->attendanceRules['excused'] ?? 0) > 0,
@@ -104,9 +129,55 @@ class CreateClass extends Component
 
         app(NotificationService::class)->classCreated((int) auth()->id(), $courseClass);
 
-        session()->flash('status', 'Lớp học đã được tạo thành công.');
+        app(AuditLogService::class)->log('class_created', [
+            'class_id'   => $courseClass->id,
+            'table_name' => 'classes',
+            'row_id'     => null,
+            'new_values' => [
+                'name'       => $courseClass->name,
+                'join_key'   => $courseClass->join_key,
+                'class_code' => $courseClass->class_code,
+            ],
+        ]);
 
+        // Tiến hành import file nếu có tải lên
+        if ($this->importFile) {
+            $importToken = \Illuminate\Support\Str::uuid()->toString();
+            $import = new StudentsImport($courseClass->id, $importToken, false);
+            $extension = $this->importFile->getClientOriginalExtension();
+            $readerType = match (strtolower($extension)) {
+                'csv' => \Maatwebsite\Excel\Excel::CSV,
+                'xls' => \Maatwebsite\Excel\Excel::XLS,
+                default => \Maatwebsite\Excel\Excel::XLSX,
+            };
+
+            try {
+                Excel::import($import, $this->importFile->getRealPath(), null, $readerType);
+                $this->importSuccess = $import->successCount;
+                $this->importErrors = $import->errors;
+
+                if (!empty($this->importErrors)) {
+                    session()->flash('import_errors', $this->importErrors);
+                }
+                
+                // Nếu import thành công/đang chạy ngầm, thêm flash status
+                session()->flash('status', "Tạo lớp học thành công. Đang ghi nhận {$this->importSuccess} học viên vào lớp học.");
+            } catch (\Exception $e) {
+                session()->flash('status', 'Tạo lớp thành công nhưng lỗi khi đọc file import: ' . $e->getMessage());
+            }
+            
+            // Redirect thẳng vào chi tiết lớp học vừa tạo để theo dõi tiến độ import
+            $this->redirectRoute('lecturer.classes.show', ['courseClass' => $courseClass->id, 'importToken' => $importToken ?? null], navigate: true);
+            return;
+        }
+
+        session()->flash('status', 'Lớp học đã được tạo thành công.');
         $this->redirectRoute('managed-classes', navigate: true);
+    }
+
+    public function downloadBasicTemplate()
+    {
+        return Excel::download(new \App\Exports\ImportTemplateExport(), 'Danh_sach_sinh_vien_mau.xlsx');
     }
 
     public function render(): View

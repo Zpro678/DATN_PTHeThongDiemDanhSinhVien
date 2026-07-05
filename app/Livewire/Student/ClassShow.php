@@ -28,6 +28,9 @@ class ClassShow extends Component
 
         $this->class = $courseClass->load('owner');
         $this->fromAttendanceStats = request()->query('from') === 'attendance-stats';
+        
+        // Remember the last viewed class for the attendance history filter
+        session(['last_student_class_id' => $this->class->id]);
 
         $statisticalService = app(StatisticalService::class);
         $statistics = $statisticalService->getStudentAttendanceStatistics((int) auth()->id());

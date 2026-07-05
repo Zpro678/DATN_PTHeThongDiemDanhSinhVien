@@ -5,6 +5,7 @@ namespace App\Livewire\Lecturer\Attendance;
 use App\Exports\ClassSessionExport;
 use App\Livewire\Lecturer\Attendance\Concerns\OwnsAttendanceSessions;
 use App\Models\AttendanceRecord;
+use App\Services\AuditLogService;
 use App\Services\NotificationService;
 use App\Services\SubscriptionService;
 use Illuminate\Contracts\View\View;
@@ -138,6 +139,13 @@ class QrAttendanceSession extends Component
         $this->isClosed = true;
 
         app(NotificationService::class)->attendanceSessionClosed((int) auth()->id(), $session, isQr: true);
+
+        app(AuditLogService::class)->log('session_closed', [
+            'class_id'   => $session->class_id,
+            'table_name' => 'class_sessions',
+            'row_id'     => $session->id,
+            'new_values' => ['name' => $session->name, 'type' => 'qr'],
+        ]);
 
         $this->dispatch('toast', message: 'Phiên QR đã được chốt.', type: 'success');
     }

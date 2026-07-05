@@ -53,7 +53,6 @@
             <thead class="sticky top-0 z-10 border-b border-slate-200 bg-slate-50 text-sm font-bold uppercase tracking-wider text-black shadow-sm">
                 <tr>
                     <th class="w-16 px-6 py-4 text-center">STT</th>
-                    <th class="w-32 px-6 py-4">MSSV</th>
                     <th class="px-6 py-4 w-72">HỌ TÊN</th>
                     <th class="px-6 py-4">TRẠNG THÁI ĐIỂM DANH</th>
                     <th class="px-6 py-4 min-w-[350px]">GHI CHÚ</th>
@@ -71,7 +70,6 @@
                         <td class="px-6 py-5 font-medium text-slate-500 text-center">
                             {{ method_exists($records, 'firstItem') ? ($records->firstItem() + $loop->index) : $loop->iteration }}
                         </td>
-                        <td class="px-6 py-5 font-bold text-slate-700">{{ $record->classMember?->student_code ?? 'N/A' }}</td>
                         <td class="px-6 py-5">
                             <div class="flex items-center gap-3.5">
                                 @if($record->classMember && $record->classMember->user_id && $record->classMember->user)

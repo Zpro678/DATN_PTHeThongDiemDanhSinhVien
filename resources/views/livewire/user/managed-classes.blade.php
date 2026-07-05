@@ -130,7 +130,7 @@
                         <h3 class="truncate font-normal text-white text-[22px] tracking-wide leading-tight" title="{{ $class->name }}">
                             <a href="{{ route('lecturer.classes.show', $class->id) }}" wire:navigate class="hover:underline focus:outline-none">{{ $class->name }}</a>
                         </h3>
-                        <p class="mt-1 truncate text-[13px] font-light text-white/95 tracking-wide">Mã lớp: {{ $class->join_key }}</p>
+                        <p class="mt-1 truncate text-[13px] font-light text-white/95 tracking-wide">Mã lớp: {{ $class->class_code ?? $class->join_key }}</p>
                     </div>
 
                     {{-- Background Icon --}}
@@ -159,7 +159,7 @@
                                 <x-user.icon name="shield" :size="10" class="mr-1" /> Chủ lớp
                             </span>
                         </div>
-                        <span class="text-[11px] font-medium text-slate-700">Mã lớp: <span class="font-bold">{{ $class->join_key }}</span></span>
+                        <span class="text-[11px] font-medium text-slate-700">Mã lớp: <span class="font-bold">{{ $class->class_code ?? $class->join_key }}</span></span>
                     </div>
 
                     <div class="flex gap-8 mb-3">
@@ -202,7 +202,7 @@
                     <div x-data="{ copied: false }" class="relative z-20">
                         <button
                             type="button"
-                            title="Sao chép mã lớp: {{ $class->join_key }}"
+                            title="Sao chép mã tham gia lớp: {{ $class->join_key }}"
                             class="group/action rounded-lg p-2 transition-colors hover:bg-surface-container"
                             x-on:click="navigator.clipboard.writeText('{{ $class->join_key }}'); copied = true; setTimeout(() => copied = false, 2000); $event.stopPropagation()"
                         >

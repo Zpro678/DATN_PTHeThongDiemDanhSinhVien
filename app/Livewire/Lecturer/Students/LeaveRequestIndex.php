@@ -122,7 +122,7 @@ class LeaveRequestIndex extends Component
         $classes = CourseClass::query()
             ->where('owner_user_id', auth()->id())
             ->orderBy('name')
-            ->get(['id', 'name', 'join_key']);
+            ->get(['id', 'name', 'join_key', 'class_code']);
 
         $leaveRequests = LeaveRequest::query()
             ->with([

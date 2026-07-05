@@ -42,25 +42,6 @@
                             @enderror
                         </label>
 
-                        <label class="block">
-                            <span class="mb-2 block text-sm font-bold text-on-surface">Mã học viên <span class="text-error">*</span></span>
-                            <span class="relative block">
-                                <x-user.icon name="credit-card" :size="20" class="absolute left-4 top-1/2 -translate-y-1/2 text-outline" />
-                                <input
-                                    type="text"
-                                    wire:model="student_code"
-                                    id="student_code"
-                                    class="w-full rounded-xl border border-outline-variant/30 bg-surface-container-lowest py-3 pl-12 pr-4 outline-none transition-all focus:border-tertiary focus:ring-2 focus:ring-tertiary/20"
-                                    placeholder="Nhập mã học viên của bạn"
-                                >
-                            </span>
-                            @error('student_code')
-                                <span class="mt-1.5 flex items-center gap-1.5 text-xs font-bold text-error">
-                                    <x-user.icon name="alert-circle" :size="13" />
-                                    {{ $message }}
-                                </span>
-                            @enderror
-                        </label>
 
                         <label class="block">
                             <span class="mb-2 block text-sm font-bold text-on-surface">Họ và tên <span class="text-error">*</span></span>

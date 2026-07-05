@@ -72,7 +72,15 @@ class ClassMember extends Model
 
     protected function fullName(): Attribute
     {
-        return Attribute::get(fn () => $this->profile?->full_name ?? $this->user?->name);
+        return Attribute::get(function () {
+            $profileName = $this->profile?->full_name;
+            $userName = $this->user?->name;
+            
+            if ($profileName) {
+                return $profileName;
+            }
+            return $userName;
+        });
     }
 
     protected function email(): Attribute
@@ -85,7 +93,18 @@ class ClassMember extends Model
      */
     protected function displayName(): Attribute
     {
-        return Attribute::get(fn () => $this->user?->name ?? $this->profile?->full_name ?? '—');
+        return Attribute::get(function () {
+            $profileName = $this->profile?->full_name;
+            $userName = $this->user?->name;
+            
+            if ($profileName) {
+                return $profileName;
+            }
+            if ($userName && !filter_var($userName, FILTER_VALIDATE_EMAIL)) {
+                return $userName;
+            }
+            return $userName ?? '—';
+        });
     }
 
     public function attendanceRecords(): HasMany

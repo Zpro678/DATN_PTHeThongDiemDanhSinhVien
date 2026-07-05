@@ -51,7 +51,8 @@ class MomoController extends Controller
             if ($paidOk) {
                 $fresh->update([
                     'status' => 'success',
-                    'partner_reference_id' => (string) ($data['transId'] ?? ''),
+                    'gateway_transaction_id' => (string) ($data['transId'] ?? ''),
+                    'payment_response' => json_encode($data),
                 ]);
 
                 // Kích hoạt gói qua đúng service mà luồng FREE cũng dùng.

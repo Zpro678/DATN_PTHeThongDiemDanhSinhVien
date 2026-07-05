@@ -15,7 +15,10 @@ class ClassSettings extends Component
     // Tên của lớp học
     public string $name = '';
 
-    // Mã lớp học (duy nhất để tham gia lớp)
+    // Mã lớp học phần do giảng viên tự đặt (VD: CS101, WEB-2026-01)
+    public string $classCode = '';
+
+    // Mã tham gia lớp (duy nhất — tự sinh ngẫu nhiên)
     public string $join_key = '';
 
     // Mô tả chi tiết về lớp học
@@ -59,6 +62,7 @@ class ClassSettings extends Component
         $this->courseClass = $courseClass;
 
         $this->name = $courseClass->name;
+        $this->classCode = $courseClass->class_code ?? $courseClass->join_key;
         $this->join_key = $courseClass->join_key;
         $this->description = $courseClass->description ?? '';
         $this->lateThreshold = $courseClass->late_threshold ?? 15;
@@ -72,6 +76,7 @@ class ClassSettings extends Component
     {
         $validated = $this->validate([
             'name' => ['required', 'string', 'max:255'],
+            'classCode' => ['nullable', 'string', 'max:50'],
             'join_key' => ['required', 'string', 'max:20', Rule::unique('classes', 'join_key')->ignore($this->courseClass->id)],
             'description' => ['nullable', 'string', 'max:5000'],
             'lateThreshold' => ['required', 'integer', 'min:0', 'max:300'],
@@ -80,13 +85,13 @@ class ClassSettings extends Component
             'status' => ['required', 'string', Rule::in(['active', 'archived', 'ended'])],
         ], [
             'name.required' => 'Vui lòng nhập tên lớp.',
-            'join_key.required' => 'Mã lớp không được để trống.',
-            'join_key.unique' => 'Mã lớp đã tồn tại.',
-
+            'join_key.required' => 'Mã tham gia lớp không được để trống.',
+            'join_key.unique' => 'Mã tham gia lớp đã tồn tại.',
         ]);
 
         $this->courseClass->update([
             'name' => $validated['name'],
+            'class_code' => $validated['classCode'] ?: strtoupper($validated['join_key']),
             'join_key' => strtoupper($validated['join_key']),
             'description' => $validated['description'] ?: null,
             'late_threshold' => $validated['lateThreshold'],

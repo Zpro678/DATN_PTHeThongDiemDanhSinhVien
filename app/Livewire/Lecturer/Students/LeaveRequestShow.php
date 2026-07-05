@@ -4,6 +4,7 @@ namespace App\Livewire\Lecturer\Students;
 
 use App\Models\LeaveRequest;
 use App\Models\User;
+use App\Services\AuditLogService;
 use App\Services\LeaveRequestReviewService;
 use Illuminate\Contracts\View\View;
 use Illuminate\Database\Eloquent\Builder;
@@ -30,6 +31,14 @@ class LeaveRequestShow extends Component
         $leaveRequest = $this->ownedRequest($this->leaveRequestId);
         $reviewService->approve($leaveRequest, $this->reviewer());
         $this->showApproveForm = false;
+
+        app(AuditLogService::class)->log('leave_request_approved', [
+            'class_id'   => $leaveRequest->classMember->class_id ?? null,
+            'table_name' => 'leave_requests',
+            'row_id'     => $leaveRequest->id,
+            'new_values' => ['student_code' => $leaveRequest->classMember->student_code],
+        ]);
+
         $this->dispatch('toast', message: 'Bạn đã duyệt đơn xin nghỉ phép của sinh viên ' . $leaveRequest->classMember->student_code . ' thành công.', type: 'success');
     }
 
@@ -45,6 +54,17 @@ class LeaveRequestShow extends Component
         $leaveRequest = $this->ownedRequest($this->leaveRequestId);
         $reviewService->reject($leaveRequest, $this->reviewer(), $validated['rejectedReason']);
         $this->showRejectForm = false;
+
+        app(AuditLogService::class)->log('leave_request_rejected', [
+            'class_id'   => $leaveRequest->classMember->class_id ?? null,
+            'table_name' => 'leave_requests',
+            'row_id'     => $leaveRequest->id,
+            'new_values' => [
+                'student_code'    => $leaveRequest->classMember->student_code,
+                'rejected_reason' => $validated['rejectedReason'],
+            ],
+        ]);
+
         $this->dispatch('toast', message: 'Bạn đã từ chối đơn xin nghỉ phép của sinh viên ' . $leaveRequest->classMember->student_code . ' thành công.', type: 'success');
     }
 

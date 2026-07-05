@@ -6,6 +6,14 @@
 
     $notificationData = app(\App\Services\NotificationService::class)->getDropdownData(Auth::user());
 
+    $currentClassId = request()->route('courseClass') instanceof \App\Models\CourseClass
+        ? request()->route('courseClass')->id
+        : (request()->route('courseClass') ?? request()->route('class_id') ?? session('last_student_class_id'));
+
+    $getRouteUrl = function ($item) {
+        return route($item['route']);
+    };
+
     $matchesActive = function ($activePattern) use ($activeNav): bool {
         $patterns = is_array($activePattern) ? $activePattern : [$activePattern];
         foreach ($patterns as $pattern) {
@@ -54,6 +62,7 @@
 
     $dashboardActive = $matchesActive('dashboard');
     $warningsActive = $matchesActive('student.warnings');
+    $transactionActive = $matchesActive('transaction-history');
     $teachGroupActive = $menuActive($teachItems);
     $learnGroupActive = $menuActive($learnItems);
 
@@ -67,6 +76,7 @@
         ['label' => 'Khác', 'items' => [
             ['label' => 'Cảnh báo', 'icon' => 'alert-triangle', 'route' => 'student.warnings', 'active' => 'student.warnings'],
             ['label' => 'Nâng cấp gói', 'icon' => 'zap', 'route' => 'upgrade', 'active' => 'upgrade'],
+            ['label' => 'Lịch sử giao dịch', 'icon' => 'receipt', 'route' => 'transaction-history', 'active' => 'transaction-history'],
         ]],
     ];
 
@@ -213,6 +223,9 @@
                                     <a href="{{ route('upgrade') }}" wire:navigate class="flex items-center gap-3 px-4 py-2.5 text-sm font-semibold text-primary transition-colors hover:bg-primary/5">
                                         <x-user.icon name="zap" :size="17" /> Nâng cấp gói
                                     </a>
+                                    <a href="{{ route('transaction-history') }}" wire:navigate class="flex items-center gap-3 px-4 py-2.5 text-sm text-on-surface transition-colors hover:bg-surface-container">
+                                        <x-user.icon name="receipt" :size="17" class="text-on-surface-variant" /> Lịch sử giao dịch
+                                    </a>
                                     <a href="{{ route('profile.edit') }}" wire:navigate class="flex items-center gap-3 px-4 py-2.5 text-sm text-on-surface transition-colors hover:bg-surface-container">
                                         <x-user.icon name="user" :size="17" class="text-on-surface-variant" /> Thông tin cá nhân
                                     </a>
@@ -349,7 +362,7 @@
                                         @endif
                                         @foreach ($section['items'] as $item)
                                             @php $isActive = $matchesActive($item['active'] ?? $item['route']); @endphp
-                                            <a href="{{ route($item['route']) }}" wire:navigate x-on:click="navOpen = false"
+                                            <a href="{{ $getRouteUrl($item) }}" wire:navigate x-on:click="navOpen = false"
                                                 @class([
                                                     'flex items-center gap-3 rounded-lg px-3 py-2 text-[17px] font-medium transition-colors',
                                                     'bg-primary/10 text-primary' => $isActive,
@@ -388,7 +401,7 @@
                                     @if ($teachGroupActive)
                                         @foreach ($teachItems as $item)
                                             @php $isActive = $matchesActive($item['active'] ?? $item['route']); @endphp
-                                            <a href="{{ route($item['route']) }}" wire:navigate
+                                            <a href="{{ $getRouteUrl($item) }}" wire:navigate
                                                 @class([
                                                     'relative inline-flex h-14 shrink-0 items-center px-2 text-[15px] font-medium transition-colors',
                                                     'text-[#1a73e8] after:absolute after:left-2 after:right-2 after:bottom-0 after:h-1 after:rounded-t-[4px] after:bg-[#1a73e8]' => $isActive,
@@ -400,7 +413,7 @@
                                     @elseif ($learnGroupActive)
                                         @foreach ($learnItems as $item)
                                             @php $isActive = $matchesActive($item['active'] ?? $item['route']); @endphp
-                                            <a href="{{ route($item['route']) }}" wire:navigate
+                                            <a href="{{ $getRouteUrl($item) }}" wire:navigate
                                                 @class([
                                                     'relative inline-flex h-14 shrink-0 items-center px-2 text-[15px] font-medium transition-colors',
                                                     'text-[#1a73e8] after:absolute after:left-2 after:right-2 after:bottom-0 after:h-1 after:rounded-t-[4px] after:bg-[#1a73e8]' => $isActive,

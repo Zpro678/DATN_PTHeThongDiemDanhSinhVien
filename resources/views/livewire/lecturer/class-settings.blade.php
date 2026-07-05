@@ -7,7 +7,7 @@
                 <h1 class="flex items-center gap-3 text-2xl font-bold text-on-surface">
                     Cài đặt lớp học
                 </h1>
-                <p class="mt-1 text-sm text-on-surface-variant">Chỉnh sửa thông tin và thiết lập cho lớp <span class="font-bold text-primary">{{ $courseClass->join_key }}</span></p>
+                <p class="mt-1 text-sm text-on-surface-variant">Chỉnh sửa thông tin và thiết lập cho lớp <span class="font-bold text-primary">{{ $courseClass->class_code ?? $courseClass->join_key }}</span></p>
             </div>
             <button type="button" wire:click="confirmDelete"
                class="inline-flex shrink-0 whitespace-nowrap items-center gap-2 rounded-xl border border-error/30 bg-white px-4 py-2 text-sm font-bold text-error transition-colors hover:bg-error/10">
@@ -45,6 +45,14 @@
                             @error('name') <span class="text-error text-sm mt-1 block">{{ $message }}</span> @enderror
                         </label>
 
+                        {{-- Mã lớp --}}
+                        <label class="col-span-1 md:col-span-2 block">
+                            <span class="mb-2 block text-base font-bold text-on-surface">Mã lớp <span class="ml-1.5 rounded-full bg-surface-container px-2 py-0.5 text-[12px] font-bold text-on-surface-variant">(Tùy chọn)</span></span>
+                            <input type="text" wire:model="classCode" class="w-full rounded-xl border border-outline-variant/30 bg-surface-container-lowest px-4 py-3 text-base outline-none uppercase font-mono tracking-widest text-lg font-bold transition-all focus:border-primary focus:ring-2 focus:ring-primary/20" placeholder="VD: CS101, WEB-2026-01" maxlength="50">
+                            <p class="mt-2 text-sm text-on-surface-variant">Mã nhận diện lớp theo môn học / học phần của trường. Nếu để trống sẽ dùng mã tham gia lớp.</p>
+                            @error('classCode') <span class="text-error text-sm mt-1 block">{{ $message }}</span> @enderror
+                        </label>
+
                         <label class="col-span-1 md:col-span-2 block">
                             <span class="mb-2 block text-base font-bold text-on-surface">Mô tả lớp học <span class="text-sm font-normal text-on-surface-variant">(Tùy chọn)</span></span>
                             <textarea wire:model="description" class="h-24 w-full resize-none rounded-xl border border-outline-variant/30 bg-surface-container-lowest px-4 py-3 text-base outline-none transition-all focus:border-primary focus:ring-2 focus:ring-primary/20" placeholder="Nhập mô tả..."></textarea>
@@ -73,7 +81,7 @@
                                 Tạo mới
                             </button>
                         </div>
-                        <p class="mt-2 text-sm text-on-surface-variant">Sinh viên dùng mã này để tham gia lớp. Đổi mã nếu bị lộ — mã cũ sẽ hết hiệu lực ngay.</p>
+                        <p class="mt-2 text-sm text-on-surface-variant">Học viên dùng mã này để tham gia lớp. Đổi mã nếu bị lộ — mã cũ sẽ hết hiệu lực ngay.</p>
                         @error('join_key') <span class="text-error text-sm mt-1 block">{{ $message }}</span> @enderror
                     </div>
                 </div>

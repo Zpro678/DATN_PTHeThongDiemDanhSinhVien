@@ -66,7 +66,8 @@ class PayosController extends Controller
                 if ($paidOk) {
                     $fresh->update([
                         'status' => 'success',
-                        'partner_reference_id' => (string) ($webhookData['reference'] ?? ''),
+                        'gateway_transaction_id' => (string) ($webhookData['reference'] ?? ''),
+                        'payment_response' => json_encode($webhookData),
                     ]);
 
                     if ($fresh->plan) {
@@ -96,15 +97,42 @@ class PayosController extends Controller
     /**
      * Người dùng được chuyển về sau khi hoàn tất hoặc huỷ thanh toán trên giao diện PayOS.
      */
-    public function return(Request $request): RedirectResponse
+    public function return(Request $request, PayosService $payos, SubscriptionService $subscriptions): RedirectResponse
     {
         // PayOS trả về cancel=true nếu người dùng bấm huỷ.
         // Còn nếu thanh toán thành công, thường sẽ có code=00 hoặc status=PAID.
         $isCancelled = $request->query('cancel') === 'true';
         $code = $request->query('code');
         $status = $request->query('status');
+        $orderCode = $request->query('orderCode');
         
         $success = !$isCancelled && (in_array($code, ['00']) || in_array($status, ['PAID']));
+
+        if ($success && $orderCode) {
+            try {
+                $paymentInfo = $payos->getPaymentLinkInformation((int) $orderCode);
+                if ($paymentInfo && $paymentInfo['status'] === 'PAID') {
+                    $transaction = Transaction::where('transaction_code', (string) $orderCode)->first();
+                    if ($transaction && $transaction->status === 'pending') {
+                        DB::transaction(function () use ($transaction, $subscriptions, $paymentInfo) {
+                            $fresh = Transaction::whereKey($transaction->id)->where('status', 'pending')->lockForUpdate()->first();
+                            if ($fresh && (int)$paymentInfo['amountPaid'] >= (int)$fresh->amount) {
+                                $fresh->update([
+                                    'status' => 'success',
+                                    'gateway_transaction_id' => (string) ($paymentInfo['id'] ?? ''),
+                                ]);
+                                if ($fresh->plan) {
+                                    $subscriptions->activate($fresh->user, $fresh->plan);
+                                }
+                            }
+                        });
+                    }
+                }
+            } catch (\Exception $e) {
+                // Ignore and let webhook handle it if local verification fails
+                Log::error('PayOS return verification error: ' . $e->getMessage());
+            }
+        }
 
         return redirect()
             ->route('upgrade')

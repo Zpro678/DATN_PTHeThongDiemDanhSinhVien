@@ -42,9 +42,6 @@ class StudentIndex extends Component
     // Họ tên của sinh viên đang được chỉnh sửa
     public string $editingName = '';
 
-    // Mã số sinh viên đang được chỉnh sửa
-    public string $editingStudentCode = '';
-
     // Email của sinh viên đang được chỉnh sửa
     public string $editingEmail = '';
 
@@ -66,9 +63,6 @@ class StudentIndex extends Component
 
     // Họ tên sinh viên khi thêm mới
     public string $newName = '';
-
-    // Mã số sinh viên khi thêm mới
-    public string $newStudentCode = '';
 
     // Email sinh viên khi thêm mới
     public string $newEmail = '';
@@ -242,14 +236,13 @@ class StudentIndex extends Component
 
         $this->editingMemberId = $member->id;
         $this->editingName = (string) $member->full_name;
-        $this->editingStudentCode = (string) $member->student_code;
         $this->editingEmail = $member->email ?? '';
         $this->editingStatus = $member->status === ClassMember::STATUS_ACTIVE ? 'active' : 'dropped';
     }
 
     public function closeEdit(): void
     {
-        $this->reset(['editingMemberId', 'editingName', 'editingStudentCode', 'editingEmail']);
+        $this->reset(['editingMemberId', 'editingName', 'editingEmail']);
         $this->editingStatus = 'active';
         $this->resetValidation();
     }
@@ -264,7 +257,7 @@ class StudentIndex extends Component
     public function closeAdd(): void
     {
         $this->isAdding = false;
-        $this->reset(['newName', 'newStudentCode', 'newClassId', 'newEmail']);
+        $this->reset(['newName', 'newClassId', 'newEmail']);
         $this->resetValidation();
     }
 
@@ -273,12 +266,10 @@ class StudentIndex extends Component
         $validated = $this->validate([
             'newClassId' => ['required', 'exists:classes,id'],
             'newName' => ['required', 'string', 'max:255'],
-            'newStudentCode' => ['required', 'string', 'max:50'],
             'newEmail' => ['nullable', 'email', 'max:255'],
         ], [
             'newClassId.required' => 'Vui lòng chọn lớp học.',
             'newName.required' => 'Vui lòng nhập họ tên.',
-            'newStudentCode.required' => 'Vui lòng nhập mã sinh viên.',
             'newEmail.email' => 'Email không đúng định dạng.',
         ]);
 
@@ -287,11 +278,11 @@ class StudentIndex extends Component
 
         $duplicateExists = ClassMember::query()
             ->where('class_id', $courseClass->id)
-            ->whereHas('profile', fn (Builder $q) => $q->where('student_code', strtoupper($validated['newStudentCode'])))
+            ->whereHas('profile', fn (Builder $q) => $q->where('email', strtolower($validated['newEmail'] ?? '')))
             ->exists();
 
-        if ($duplicateExists) {
-            $this->addError('newStudentCode', 'Mã sinh viên đã tồn tại trong lớp này.');
+        if ($validated['newEmail'] && $duplicateExists) {
+            $this->addError('newEmail', 'Email sinh viên đã tồn tại trong lớp này.');
 
             return;
         }
@@ -304,7 +295,7 @@ class StudentIndex extends Component
             ->count();
 
         if ($currentCount >= $maxStudents) {
-            $this->addError('newStudentCode', "Lớp đã đạt giới hạn {$maxStudents} sinh viên của gói hiện tại. Vui lòng nâng cấp gói để thêm sinh viên.");
+            $this->addError('newName', "Lớp đã đạt giới hạn {$maxStudents} sinh viên của gói hiện tại. Vui lòng nâng cấp gói để thêm sinh viên.");
 
             return;
         }
@@ -321,7 +312,6 @@ class StudentIndex extends Component
         ]);
 
         $member->syncProfile([
-            'student_code' => strtoupper($validated['newStudentCode']),
             'full_name' => $validated['newName'],
             'email' => $validated['newEmail'] ?: null,
         ]);
@@ -345,34 +335,12 @@ class StudentIndex extends Component
 
     public function downloadFullTemplate()
     {
-        $lines = [
-            "Mã SV,Họ và tên,Email (Bắt buộc),22/06,23/06,24/06",
-            "CT030101,Nguyễn Tuấn An, Annt@gmail.com,c,m,c",
-            "CT030102,Trần Thị Bích,bichttt@gmail.com,v,c,v",
-            "CT030103,Lê Văn Cường,cuonglv@gmail.com,c,v,p",
-            "",
-            "Chú thích ký hiệu:,c=Có mặt,m=Đi muộn,v=Vắng không phép,p=Vắng có phép",
-        ];
-        $csvContent = implode("\n", $lines);
-
-        return response()->streamDownload(function () use ($csvContent) {
-            echo "\xEF\xBB\xBF" . $csvContent; // UTF-8 BOM cho Excel
-        }, 'Danh_sach_sinh_vien_mau_day_du.csv');
+        return Excel::download(new \App\Exports\ImportTemplateExport(), 'Danh_sach_sinh_vien_mau_day_du.xlsx');
     }
 
     public function downloadBasicTemplate()
     {
-        $lines = [
-            "Mã SV,Họ và tên,Email (Bắt buộc)",
-            "CT030101,Nguyễn Tuấn An, Annt@gmail.com",
-            "CT030102,Trần Thị Bích,bichttt@gmail.com",
-            "CT030103,Lê Văn Cường,cuonglv@gmail.com",
-        ];
-        $csvContent = implode("\n", $lines);
-
-        return response()->streamDownload(function () use ($csvContent) {
-            echo "\xEF\xBB\xBF" . $csvContent; // UTF-8 BOM cho Excel
-        }, 'Danh_sach_sinh_vien_mau_co_ban.csv');
+        return Excel::download(new \App\Exports\ImportTemplateExport(), 'Danh_sach_sinh_vien_mau_co_ban.xlsx');
     }
 
     public function processImport(): void
@@ -428,7 +396,6 @@ class StudentIndex extends Component
 
         $validated = $this->validate([
             'editingName' => ['required', 'string', 'max:255'],
-            'editingStudentCode' => ['required', 'string', 'max:50'],
             'editingEmail' => ['nullable', 'email', 'max:255'],
             'editingStatus' => ['required', 'in:active,dropped'],
         ], [
@@ -437,12 +404,12 @@ class StudentIndex extends Component
 
         $duplicateExists = ClassMember::query()
             ->where('class_id', $member->class_id)
-            ->whereHas('profile', fn (Builder $q) => $q->where('student_code', strtoupper($validated['editingStudentCode'])))
+            ->whereHas('profile', fn (Builder $q) => $q->where('email', strtolower($validated['editingEmail'] ?? '')))
             ->whereKeyNot($member->id)
             ->exists();
 
-        if ($duplicateExists) {
-            $this->addError('editingStudentCode', 'Mã sinh viên đã tồn tại trong lớp này.');
+        if ($validated['editingEmail'] && $duplicateExists) {
+            $this->addError('editingEmail', 'Email sinh viên đã tồn tại trong lớp này.');
 
             return;
         }
@@ -463,7 +430,6 @@ class StudentIndex extends Component
         ]);
 
         $member->syncProfile([
-            'student_code' => strtoupper($validated['editingStudentCode']),
             'full_name' => $validated['editingName'],
             'email' => $validated['editingEmail'] ?: null,
         ]);
@@ -564,11 +530,11 @@ class StudentIndex extends Component
         $classes = CourseClass::query()
             ->where('owner_user_id', auth()->id()) // Chỉ lấy các lớp do giảng viên hiện tại quản lý.
             ->orderBy('name') // Sắp xếp lớp theo tên để dropdown dễ nhìn.
-            ->get(['id', 'name', 'join_key']); // Chỉ lấy cột cần dùng cho bộ lọc lớp.
+            ->get(['id', 'name', 'join_key', 'class_code']); // Chỉ lấy cột cần dùng cho bộ lọc lớp.
 
         if ($this->statusFilter === 'pending') {
             $members = ClassJoinRequest::query()
-                ->with(['courseClass:id,name,join_key', 'user:id,name,email,avatar'])
+                ->with(['courseClass:id,name,join_key,class_code', 'user:id,name,email,avatar'])
                 ->whereHas('courseClass', fn (Builder $query) => $query->where('owner_user_id', auth()->id()))
                 ->where('status', ClassJoinRequest::STATUS_PENDING)
                 ->when($this->classFilter !== 'all', fn (Builder $query) => $query->where('class_id', $this->classFilter))
@@ -582,7 +548,7 @@ class StudentIndex extends Component
                 ->get();
         } else {
             $members = ClassMember::query()
-                ->with(['courseClass:id,name,join_key', 'user:id,name,email,avatar', 'profile', 'attendanceSummary'])
+                ->with(['courseClass:id,name,join_key,class_code', 'user:id,name,email,avatar', 'profile', 'attendanceSummary'])
                 ->leftJoin('class_member_profiles', 'class_member_profiles.class_member_id', '=', 'class_members.id')
                 ->select('class_members.*')
                 ->whereHas('courseClass', fn (Builder $query) => $query->where('owner_user_id', auth()->id()))

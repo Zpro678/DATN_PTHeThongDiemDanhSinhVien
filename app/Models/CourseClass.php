@@ -18,7 +18,8 @@ class CourseClass extends Model
 
     protected $fillable = [
         'owner_user_id', // ID của chủ lớp tạo lớp học.
-        'join_key', // Mã lớp (SV nhập để vào lớp).
+        'join_key', // Mã tham gia lớp — mã ngẫu nhiên để học viên nhập vào lớp.
+        'class_code', // Mã lớp — do giảng viên tự đặt theo trường/khoa (VD: CS101).
         'name', // Tên lớp học.
         'description', // Mô tả môn học.
         'late_threshold', // Ngưỡng phút trễ tối đa để tính đi muộn.

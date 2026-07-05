@@ -1,6 +1,7 @@
 <?php
 
 use App\Http\Controllers\Auth\GoogleController;
+use App\Livewire\Admin\Transactions\TransactionIndex;
 use App\Livewire\Admin\Users\UserIndex;
 use App\Livewire\Lecturer\Attendance\AttendanceCreate;
 use App\Livewire\Lecturer\Attendance\AttendanceIndex;
@@ -24,11 +25,13 @@ use App\Livewire\Student\LeaveRequestEdit;
 use App\Livewire\Student\LeaveRequestHistory;
 use App\Livewire\Student\LeaveRequestShow as StudentLeaveRequestShow;
 use App\Livewire\Student\Warnings;
+use App\Livewire\User\ActivityLog as UserActivityLog;
 use App\Livewire\User\Classes as UserClasses;
 use App\Livewire\User\CreateClass;
 use App\Livewire\User\Dashboard as UserDashboard;
 use App\Livewire\User\JoinedClasses;
 use App\Livewire\User\ManagedClasses;
+use App\Livewire\User\TransactionHistory;
 use App\Livewire\User\Upgrade;
 use App\Models\AuditLog;
 use App\Models\CourseClass;
@@ -91,11 +94,14 @@ Route::middleware(['auth', 'verified', 'user.route'])->group(function () {
         Route::get('/reports', [\App\Http\Controllers\Admin\AdminController::class, 'reportsIndex'])->name('reports.index');
 
         Route::get('/logs', \App\Livewire\Admin\Logs\LogIndex::class)->name('logs.index');
+        Route::get('/transactions', TransactionIndex::class)->name('transactions.index');
 
         Route::get('/settings', [\App\Http\Controllers\Admin\AdminController::class, 'settingsIndex'])->name('settings.index');
     });
 
     Route::prefix('user/{ma_user}')->group(function () {
+        Route::get('/activity-log', UserActivityLog::class)->name('activity-log');
+        Route::get('/transaction-history', TransactionHistory::class)->name('transaction-history');
         Route::get('/dashboard', UserDashboard::class)->name('dashboard');
         Route::get('/classes', UserClasses::class)->name('classes');
         Route::get('/managed-classes', ManagedClasses::class)->name('managed-classes');

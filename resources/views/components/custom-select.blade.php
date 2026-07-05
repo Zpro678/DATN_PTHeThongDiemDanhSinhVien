@@ -5,7 +5,7 @@
     value: '',
     options: {{ json_encode($options) }},
     get selectedOption() {
-        return this.options.find(o => o.value == this.value);
+        return this.options.find(o => String(o.value) === String(this.value));
     },
     select(val) {
         this.value = val;
@@ -25,6 +25,19 @@ x-init="
     // Listen to livewire changes if hidden select is updated externally
     $refs.hiddenSelect.addEventListener('change', (e) => {
         if(value !== e.target.value) value = e.target.value;
+    });
+    
+    // Create an observer to detect when Livewire updates the select options / selected attribute
+    const observer = new MutationObserver(() => {
+        if (value !== $refs.hiddenSelect.value) {
+            value = $refs.hiddenSelect.value;
+        }
+    });
+    observer.observe($refs.hiddenSelect, {
+        attributes: true,
+        childList: true,
+        subtree: true,
+        attributeFilter: ['selected']
     });
 "
 @click.away="open = false"

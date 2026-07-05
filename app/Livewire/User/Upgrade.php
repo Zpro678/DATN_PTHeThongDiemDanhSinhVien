@@ -91,6 +91,7 @@ class Upgrade extends Component
             'payment_method' => $isPayos ? 'PAYOS' : 'MOMO',
             'transaction_code' => (string) $transactionCode,
             'status' => 'pending',
+            'expired_at' => now()->addMinutes(15),
             'created_at' => now(),
         ]);
 
@@ -108,6 +109,8 @@ class Upgrade extends Component
 
             return null;
         }
+
+        $transaction->update(['payment_url' => $payUrl]);
 
         // Chuyển hướng trình duyệt sang trang thanh toán.
         return $this->redirect($payUrl);

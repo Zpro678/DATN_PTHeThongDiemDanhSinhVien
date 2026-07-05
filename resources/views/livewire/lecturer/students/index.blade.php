@@ -40,7 +40,7 @@
             <input wire:model.live.debounce.300ms="search" type="search" placeholder="Tìm theo tên, mã học viên hoặc email..." class="w-full rounded-xl border-slate-200 py-2.5 pl-11 pr-4 text-sm focus:border-primary focus:ring-primary/20">
         </label>
         <x-custom-select wire:model.live="classFilter" placeholder="" :options="collect($classes)
-            ->map(fn ($class) => ['value' => (string) $class->id, 'label' => $class->join_key . ' - ' . $class->name])
+            ->map(fn ($class) => ['value' => (string) $class->id, 'label' => ($class->class_code ?? $class->join_key) . ' - ' . $class->name])
             ->values()->all()" />
         <div class="inline-flex w-max ml-auto rounded-xl bg-slate-100 p-1">
             <button type="button" wire:click="setStatusFilter('active')" @class(['rounded-lg px-4 py-2 text-xs font-bold transition-colors', 'bg-white text-primary shadow-sm' => $statusFilter === 'active', 'text-slate-500' => $statusFilter !== 'active'])>Đang học</button>
@@ -82,24 +82,24 @@
                             <td class="px-6 py-4">
                                 <a href="{{ route('lecturer.students.show', $member) }}" class="flex items-center gap-3">
                                     @if($member->user && $member->user->avatar)
-                                        <img src="{{ asset('storage/' . $member->user->avatar) }}" alt="{{ $member->full_name }}" class="h-10 w-10 shrink-0 rounded-full object-cover">
+                                        <img src="{{ str_starts_with($member->user->avatar, 'http') ? $member->user->avatar : asset('storage/' . $member->user->avatar) }}" alt="{{ $member->displayName }}" class="h-10 w-10 shrink-0 rounded-full object-cover">
                                     @else
                                         <span @class([
                                             'flex h-10 w-10 shrink-0 items-center justify-center rounded-full font-bold',
                                             'bg-red-100 text-red-600'     => $isBanned,
                                             'bg-amber-100 text-amber-600' => $isWarning && !$isBanned,
                                             'bg-primary/10 text-primary'  => !$isBanned && !$isWarning,
-                                        ])>{{ mb_strtoupper(mb_substr($member->full_name, 0, 1)) }}</span>
+                                        ])>{{ mb_strtoupper(mb_substr(trim((string)$member->displayName) ?: 'S', 0, 1)) }}</span>
                                     @endif
                                     <span>
-                                        <span class="block text-sm font-bold text-slate-900">{{ $member->full_name }}</span>
-                                        <span class="block text-xs text-slate-500">{{ $member->student_code }} · {{ $member->email ?? ($member->user?->email ?? 'Chưa có email') }}</span>
+                                        <span class="block text-sm font-bold text-slate-900">{{ $member->displayName }}</span>
+                                        <span class="block text-xs text-slate-500">{{ $member->email ?? ($member->user?->email ?? 'Chưa có email') }}</span>
                                     </span>
                                 </a>
                             </td>
                             <td class="px-4 py-4">
                                 <span class="block text-sm font-semibold text-slate-700">{{ $member->courseClass->name }}</span>
-                                <span class="text-xs text-slate-500">{{ $member->courseClass->join_key }}</span>
+                                <span class="text-xs text-slate-500">{{ $member->courseClass->class_code ?? $member->courseClass->join_key }}</span>
                             </td>
                             <td class="px-4 py-4 text-center text-sm font-bold text-emerald-600">{{ $stats['present_sessions'] }}</td>
                             <td class="px-4 py-4 text-center text-sm font-bold text-amber-600">{{ $stats['late_sessions'] }}</td>
@@ -167,7 +167,6 @@
                     </div>
                     <div class="space-y-4">
                         <label class="block space-y-2"><span class="text-sm font-semibold text-slate-700">Họ và tên</span><input wire:model="editingName" class="w-full rounded-xl border-slate-200 focus:border-primary focus:ring-primary/20">@error('editingName')<span class="text-xs text-red-600">{{ $message }}</span>@enderror</label>
-                        <label class="block space-y-2"><span class="text-sm font-semibold text-slate-700">Mã học viên</span><input wire:model="editingStudentCode" class="w-full rounded-xl border-slate-200 uppercase focus:border-primary focus:ring-primary/20">@error('editingStudentCode')<span class="text-xs text-red-600">{{ $message }}</span>@enderror</label>
                         <label class="block space-y-2">
                             <span class="text-sm font-semibold text-slate-700">Email</span>
                             <input type="email" wire:model="editingEmail" class="w-full rounded-xl border-slate-200 focus:border-primary focus:ring-primary/20" placeholder="nva@email.com">
@@ -197,7 +196,6 @@
                             @error('newClassId')<span class="text-xs text-red-600">{{ $message }}</span>@enderror
                         </label>
                         <label class="block space-y-2"><span class="text-sm font-semibold text-slate-700">Họ và tên</span><input wire:model="newName" class="w-full rounded-xl border-slate-200 focus:border-primary focus:ring-primary/20" placeholder="Nguyễn Văn A">@error('newName')<span class="text-xs text-red-600">{{ $message }}</span>@enderror</label>
-                        <label class="block space-y-2"><span class="text-sm font-semibold text-slate-700">Mã học viên</span><input wire:model="newStudentCode" class="w-full rounded-xl border-slate-200 uppercase focus:border-primary focus:ring-primary/20" placeholder="SV001">@error('newStudentCode')<span class="text-xs text-red-600">{{ $message }}</span>@enderror</label>
                         <label class="block space-y-2">
                             <span class="text-sm font-semibold text-slate-700">Email (Không bắt buộc)</span>
                             <input type="email" wire:model="newEmail" class="w-full rounded-xl border-slate-200 focus:border-primary focus:ring-primary/20" placeholder="nva@email.com">
@@ -225,8 +223,7 @@
                             <h3 class="text-[20px] font-bold text-slate-900">Import danh sách học viên</h3>
                             <p class="mt-1 text-[14px] text-slate-600">
                                 Tải lên tệp Excel hoặc CSV chứa danh sách học viên. Bạn có thể tải: 
-                                <button type="button" wire:click="downloadBasicTemplate" class="font-bold text-blue-700 hover:underline">Mẫu cơ bản</button> hoặc 
-                                <button type="button" wire:click="downloadFullTemplate" class="font-bold text-blue-700 hover:underline">Mẫu đầy đủ</button>.
+                                <button type="button" wire:click="downloadBasicTemplate" class="font-bold text-blue-700 hover:underline">File mẫu Excel</button>
                             </p>
                         </div>
                     </div>

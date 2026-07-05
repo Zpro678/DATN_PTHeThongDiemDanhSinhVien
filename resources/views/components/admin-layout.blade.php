@@ -21,6 +21,7 @@
         ['label' => 'Dashboard', 'href' => route('admin.dashboard'), 'icon' => 'layout-dashboard', 'active' => ['admin.dashboard']],
         ['label' => 'Quản lý tài khoản', 'href' => route('admin.users.index'), 'icon' => 'user-square', 'active' => ['admin.users.*']],
         ['label' => 'Quản lý gói dịch vụ', 'href' => route('admin.packages.index'), 'icon' => 'star', 'active' => ['admin.packages.*']],
+        ['label' => 'Giao dịch', 'href' => route('admin.transactions.index'), 'icon' => 'credit-card', 'active' => ['admin.transactions.*']],
         ['label' => 'Nhật ký hệ thống', 'href' => route('admin.logs.index'), 'icon' => 'activity', 'active' => ['admin.logs.*']],
         ['label' => 'Báo cáo & thống kê', 'href' => route('admin.reports.index'), 'icon' => 'bar-chart', 'active' => ['admin.reports.*']],
     ];

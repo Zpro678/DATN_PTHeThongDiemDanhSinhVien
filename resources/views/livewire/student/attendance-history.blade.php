@@ -133,11 +133,12 @@
                             <x-user.icon name="search" :size="16" class="absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-400" />
                             <input wire:model.live.debounce.300ms="search" type="text" placeholder="Tìm tên môn học, mã..." class="w-full rounded-xl bg-[#f4f5f9] border-none py-2.5 pl-10 pr-4 text-sm font-medium text-slate-700 outline-none transition focus:ring-2 focus:ring-[#0a46b5]/30">
                         </div>
-                        <x-custom-select wire:model.live="classFilter" placeholder="" :options="collect($classes)
-                            ->map(fn ($class) => ['value' => (string) $class->id, 'label' => $class->join_key . ' - ' . $class->name])
-                            ->prepend(['value' => 'all', 'label' => 'Tất cả lớp học'])
-                            ->values()->all()" />
-                        <x-custom-select wire:model.live="statusFilter" placeholder="" :options="collect($statusMeta)
+                        <x-custom-select :value="$classFilter" wire:key="class-filter-select" wire:model.live="classFilter" placeholder="" :options="collect($classes)
+                            ->map(fn ($class) => ['value' => (string) $class->id, 'label' => ($class->class_code ?? $class->join_key) . ' - ' . $class->name])
+                            ->values()
+                            ->prepend(['value' => 'all', 'label' => 'Tất cả các lớp'])
+                            ->all()" />
+                        <x-custom-select :value="$statusFilter" wire:key="status-filter-select" wire:model.live="statusFilter" placeholder="" :options="collect($statusMeta)
                             ->map(fn ($meta, $status) => ['value' => (string) $status, 'label' => $meta['label']])
                             ->values()
                             ->prepend(['value' => 'all', 'label' => 'Mọi trạng thái'])

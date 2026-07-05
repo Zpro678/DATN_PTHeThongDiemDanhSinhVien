@@ -92,4 +92,26 @@ class MomoService
 
         return hash_equals($expected, $d['signature'] ?? '');
     }
+
+    /**
+     * Query trạng thái giao dịch từ MoMo (dùng cho Cron Job đối soát).
+     */
+    public function checkTransactionStatus(string $orderId, string $requestId): ?array
+    {
+        $c = config('services.momo');
+        $rawHash = "accessKey={$c['access_key']}&orderId={$orderId}&partnerCode={$c['partner_code']}&requestId={$requestId}";
+        $signature = hash_hmac('sha256', $rawHash, $c['secret_key']);
+
+        $queryEndpoint = str_replace('/create', '/query', $c['endpoint']);
+
+        $response = Http::post($queryEndpoint, [
+            'partnerCode' => $c['partner_code'],
+            'requestId' => $requestId,
+            'orderId' => $orderId,
+            'signature' => $signature,
+            'lang' => 'vi'
+        ]);
+
+        return $response->json();
+    }
 }

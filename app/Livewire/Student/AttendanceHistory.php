@@ -18,14 +18,38 @@ class AttendanceHistory extends Component
 {
     use WithPagination;
 
+    #[Url(keep: true)]
     public string $statusFilter = 'all';
 
-    #[Url]
-    public string $classFilter = 'all';
+    #[Url(keep: true)]
+    public string $classFilter = '';
 
+    #[Url(keep: true)]
     public string $search = '';
 
     public int $perPage = 10;
+
+    public function mount()
+    {
+        if (empty($this->classFilter)) {
+            $this->classFilter = 'all';
+        }
+    }
+
+    public function updatedClassFilter($value): void
+    {
+        $this->resetPage();
+    }
+
+    public function updatedStatusFilter($value): void
+    {
+        $this->resetPage();
+    }
+
+    public function updatedSearch(): void
+    {
+        $this->resetPage();
+    }
 
     public function updatedPerPage(): void
     {
@@ -41,8 +65,8 @@ class AttendanceHistory extends Component
     public function clearFilters(): void
     {
         $this->statusFilter = 'all';
-        $this->classFilter = 'all';
         $this->search = '';
+        $this->classFilter = 'all';
     }
 
     public function render(): View
@@ -53,11 +77,18 @@ class AttendanceHistory extends Component
             ->where('status', ClassMember::STATUS_ACTIVE)
             ->get();
 
+        // When a specific class is selected, filter members for summary stats
+        $summaryMembers = $members;
+        if (!empty($this->classFilter) && $this->classFilter !== 'all') {
+            $filterId = (string) $this->classFilter;
+            $summaryMembers = $members->filter(fn ($m) => (string) $m->courseClass?->id === $filterId);
+        }
+
         // Summary: dùng LectureManageStudentService — tính theo TIẾT, chỉ buổi đã chốt.
         // Đồng nhất với trang "Lớp tôi tham gia" và trang giảng viên.
-        $memberIds = $members->pluck('id')->all();
-        $statsMap  = $memberIds
-            ? app(LectureManageStudentService::class)->getStudentsAttendanceStats($memberIds)
+        $summaryMemberIds = $summaryMembers->pluck('id')->all();
+        $statsMap  = $summaryMemberIds
+            ? app(LectureManageStudentService::class)->getStudentsAttendanceStats($summaryMemberIds)
             : [];
 
         $allRecords = $this->attendanceRecords($members);
@@ -120,8 +151,11 @@ class AttendanceHistory extends Component
             ])
             ->values();
 
-        if ($this->classFilter !== 'all') {
-            $records = $records->where('class_id', $this->classFilter)->values();
+        if (!empty($this->classFilter) && $this->classFilter !== 'all') {
+            $filterId = (string) $this->classFilter;
+            $records = $records->filter(function ($record) use ($filterId) {
+                return (string) $record['class_id'] === $filterId;
+            })->values();
         }
 
         if ($this->statusFilter !== 'all') {

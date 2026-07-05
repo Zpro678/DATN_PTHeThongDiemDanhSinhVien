@@ -103,7 +103,6 @@ class StudentsSheet implements FromArray, ShouldAutoSize, WithStyles, WithTitle
 
         $headers = [
             'STT', 
-            'MSSV', 
             'Họ và tên', 
             'Email',
             'Lớp học'
@@ -194,7 +193,6 @@ class StudentsSheet implements FromArray, ShouldAutoSize, WithStyles, WithTitle
 
             $row = [
                 $currentRow - 6, // STT
-                $member->student_code,
                 $member->full_name,
                 $member->email ?? $member->user?->email ?? '',
                 $member->courseClass?->join_key ?? '',
@@ -244,7 +242,7 @@ class StudentsSheet implements FromArray, ShouldAutoSize, WithStyles, WithTitle
             $start = $this->dataStartRow;
             $end   = $this->dataEndRow;
             
-            $colIdx = 5 + $this->sessionCount + 2; // 5 columns before sessions, +1 is "Tổng số buổi", +2 is "Có mặt"
+            $colIdx = 4 + $this->sessionCount + 2; // 4 columns before sessions, +1 is "Tổng số buổi", +2 is "Có mặt"
             
             $cCol      = Coordinate::stringFromColumnIndex($colIdx);
             $mCol      = Coordinate::stringFromColumnIndex($colIdx + 1);
@@ -254,7 +252,7 @@ class StudentsSheet implements FromArray, ShouldAutoSize, WithStyles, WithTitle
             $ccCol     = Coordinate::stringFromColumnIndex($colIdx + 5);
 
             $rows[] = [
-                'TỔNG KẾT LỚP', '', '', '', '',
+                'TỔNG KẾT LỚP', '', '', '',
                 'TB có mặt',  "=AVERAGE({$cCol}{$start}:{$cCol}{$end})",
                 'TB muộn',    "=AVERAGE({$mCol}{$start}:{$mCol}{$end})",
                 'TB vắng', "=AVERAGE({$vCol}{$start}:{$vCol}{$end})",
@@ -318,14 +316,14 @@ class StudentsSheet implements FromArray, ShouldAutoSize, WithStyles, WithTitle
 
             // Cột session: căn giữa
             if ($this->sessionCount > 0) {
-                $sessionStartCol = Coordinate::stringFromColumnIndex(6);
-                $sessionEndCol   = Coordinate::stringFromColumnIndex(5 + $this->sessionCount);
+                $sessionStartCol = Coordinate::stringFromColumnIndex(5);
+                $sessionEndCol   = Coordinate::stringFromColumnIndex(4 + $this->sessionCount);
                 $sheet->getStyle("{$sessionStartCol}6:{$sessionEndCol}{$this->dataEndRow}")
                       ->getAlignment()->setHorizontal(Alignment::HORIZONTAL_CENTER);
             }
 
             // Cột tổng kết (sau sessions): nền xanh nhạt + bold
-            $summaryStartIdx = 5 + $this->sessionCount + 1;
+            $summaryStartIdx = 4 + $this->sessionCount + 1;
             $summaryStartCol = Coordinate::stringFromColumnIndex($summaryStartIdx);
             $sheet->getStyle("{$summaryStartCol}6:{$lastCol}{$this->dataEndRow}")->applyFromArray([
                 'font'      => ['bold' => true],
@@ -348,27 +346,26 @@ class StudentsSheet implements FromArray, ShouldAutoSize, WithStyles, WithTitle
         ]);
         $sheet->getRowDimension($summaryRow)->setRowHeight(24);
 
-        // ── Cột A-E: cố định độ rộng ──
+        // ── Cột A-D: cố định độ rộng ──
         $sheet->getColumnDimension('A')->setWidth(6);
-        $sheet->getColumnDimension('B')->setWidth(12);
-        $sheet->getColumnDimension('C')->setWidth(24);
-        $sheet->getColumnDimension('D')->setWidth(28);
-        $sheet->getColumnDimension('E')->setWidth(16);
+        $sheet->getColumnDimension('B')->setWidth(24);
+        $sheet->getColumnDimension('C')->setWidth(28);
+        $sheet->getColumnDimension('D')->setWidth(16);
 
         // ── Cột session: hẹp lại ──
-        for ($i = 6; $i <= 5 + $this->sessionCount; $i++) {
+        for ($i = 5; $i <= 4 + $this->sessionCount; $i++) {
             $col = Coordinate::stringFromColumnIndex($i);
             $sheet->getColumnDimension($col)->setWidth(8);
         }
 
         // ── Cột tổng: vừa ──
-        for ($i = 5 + $this->sessionCount + 1; $i <= $lastColIdx; $i++) {
+        for ($i = 4 + $this->sessionCount + 1; $i <= $lastColIdx; $i++) {
             $col = Coordinate::stringFromColumnIndex($i);
             $sheet->getColumnDimension($col)->setWidth(16);
         }
 
-        // ── Freeze panes (đóng băng dòng header + 5 cột đầu) ──
-        $sheet->freezePane('F7');
+        // ── Freeze panes (đóng băng dòng header + 4 cột đầu) ──
+        $sheet->freezePane('E7');
 
         return [];
     }

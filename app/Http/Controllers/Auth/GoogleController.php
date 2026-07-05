@@ -4,6 +4,7 @@ namespace App\Http\Controllers\Auth;
 
 use App\Http\Controllers\Controller;
 use App\Models\User;
+use App\Services\AuditLogService;
 use Illuminate\Support\Facades\Auth;
 use Laravel\Socialite\Facades\Socialite;
 
@@ -61,6 +62,15 @@ class GoogleController extends Controller
 
         // Đăng nhập người dùng
         Auth::login($user, true);
+
+        app(AuditLogService::class)->log('login', [
+            'user_id' => $user->id,
+            'new_values' => [
+                'method'     => 'google',
+                'user_agent' => request()->userAgent(),
+                'ip'         => request()->ip(),
+            ],
+        ]);
 
         // Chuyển hướng theo logic (admin về admin dashboard, user về user dashboard)
         if ($user->isAdmin()) {

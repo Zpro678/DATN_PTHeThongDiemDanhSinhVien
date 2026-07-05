@@ -189,6 +189,11 @@ class ClassShow extends Component
             $this->openImport();
             session()->flash('status', 'Vui lòng import danh sách lớp trước khi điểm danh.');
         }
+
+        if (request()->has('importToken')) {
+            $this->importToken = request()->query('importToken');
+            $this->isImportingStatus = true;
+        }
     }
     
     public function updatedQuickMeetingId()
@@ -427,34 +432,12 @@ class ClassShow extends Component
 
     public function downloadFullTemplate()
     {
-        $lines = [
-            "M\u00e3 h\u1ecdc vi\u00ean,H\u1ecd v\u00e0 t\u00ean,Email,22/06,23/06,24/06",
-            "HV001,Nguy\u1ec5n V\u0103n A,nva@email.com,c,m,c",
-            "HV002,Tr\u1ea7n Th\u1ecb B,ttb@email.com,v,c,v",
-            "HV003,L\u00ea V\u0103n C,lvc@email.com,c,v,p",
-            "",
-            "Ch\u00fa th\u00edch k\u00fd hi\u1ec7u:,c=C\u00f3 m\u1eb7t,m=\u0110i mu\u1ed9n,v=V\u1eafng kh\u00f4ng ph\u00e9p,p=V\u1eafng c\u00f3 ph\u00e9p",
-        ];
-        $csvContent = implode("\n", $lines);
-
-        return response()->streamDownload(function () use ($csvContent) {
-            echo "\xEF\xBB\xBF" . $csvContent; // UTF-8 BOM cho Excel
-        }, 'Danh_sach_hoc_vien_mau_day_du.csv');
+        return Excel::download(new \App\Exports\ImportTemplateExport(), 'Danh_sach_hoc_vien_mau_day_du.xlsx');
     }
 
     public function downloadBasicTemplate()
     {
-        $lines = [
-            "M\u00e3 h\u1ecdc vi\u00ean,H\u1ecd v\u00e0 t\u00ean,Email",
-            "HV001,Nguy\u1ec5n V\u0103n A,nva@email.com",
-            "HV002,Tr\u1ea7n Th\u1ecb B,ttb@email.com",
-            "HV003,L\u00ea V\u0103n C,lvc@email.com",
-        ];
-        $csvContent = implode("\n", $lines);
-
-        return response()->streamDownload(function () use ($csvContent) {
-            echo "\xEF\xBB\xBF" . $csvContent; // UTF-8 BOM cho Excel
-        }, 'Danh_sach_hoc_vien_mau_co_ban.csv');
+        return Excel::download(new \App\Exports\ImportTemplateExport(), 'Danh_sach_hoc_vien_mau_co_ban.xlsx');
     }
 
     public function processImport(): void

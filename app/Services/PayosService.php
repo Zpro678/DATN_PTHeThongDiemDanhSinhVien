@@ -58,6 +58,11 @@ class PayosService
         }
     }
 
+    public function getPaymentLinkInformation(int $orderCode): array
+    {
+        return $this->payOS->getPaymentLinkInformation($orderCode);
+    }
+
     /**
      * Xác thực Webhook data trả về từ PayOS.
      * 

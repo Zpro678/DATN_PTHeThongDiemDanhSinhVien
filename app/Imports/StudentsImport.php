@@ -68,21 +68,23 @@ class StudentsImport implements ToCollection, WithStartRow, WithMultipleSheets
         
         // Tìm dòng tiêu đề (bỏ qua các dòng trống phía trên)
         foreach ($rows as $index => $row) {
-            $col0Str = mb_strtolower(trim((string) ($row[0] ?? '')));
-            $col1Str = mb_strtolower(trim((string) ($row[1] ?? '')));
-            
-            // Nếu dòng này có chứa các từ khóa quen thuộc, đây chính là dòng tiêu đề
             $isHeader = false;
-            // Bao gồm cả trường hợp có dấu, không dấu, viết tắt
-            $keywords = [
-                'mã', 'ma', 'mssv', 'mshv', 'mahv', 'định danh', 'dinh danh', 
-                'id', 'student', 'họ', 'ho', 'tên', 'ten', 'name'
-            ];
-            foreach ($keywords as $keyword) {
-                if (str_contains($col0Str, $keyword) || str_contains($col1Str, $keyword)) {
-                    $isHeader = true;
-                    $headerRowNumber = $index + 2; // +2 vì index bắt đầu từ 0 và startRow là 1
-                    break;
+            // Duyệt qua tất cả các cột trong dòng để tìm từ khóa tiêu đề
+            foreach ($row as $cellValue) {
+                $cellStr = mb_strtolower(trim((string) $cellValue));
+                if (empty($cellStr)) {
+                    continue;
+                }
+                
+                $keywords = [
+                    'mã sv', 'mssv', 'mã học viên', 'mahv', 'email', 'họ và tên', 'họ tên', 'tên học viên', 'tên sinh viên'
+                ];
+                foreach ($keywords as $keyword) {
+                    if (str_contains($cellStr, $keyword)) {
+                        $isHeader = true;
+                        $headerRowNumber = $index + 2;
+                        break 2;
+                    }
                 }
             }
 
@@ -97,11 +99,13 @@ class StudentsImport implements ToCollection, WithStartRow, WithMultipleSheets
         }
 
         if ($headerRowNumber === -1) {
-            $this->errors[] = "Không tìm thấy dòng tiêu đề chứa 'Mã SV' hoặc 'Họ và tên'. Vui lòng kiểm tra lại xem bạn có để thừa Sheet rỗng nào không, hoặc cột tiêu đề đã viết đúng chưa.";
+            $this->errors[] = "Không tìm thấy dòng tiêu đề chứa 'Họ và tên' hoặc 'Email'. Vui lòng kiểm tra lại xem bạn có để thừa Sheet rỗng nào không, hoặc cột tiêu đề đã viết đúng chưa.";
             return;
         }
 
         $emailColIndex = -1;
+        $nameColIndex = -1;
+        $codeColIndex = -1;
         $dateSeenCounts = []; // Theo dõi số lần xuất hiện của một ngày để xử lý nhiều buổi/ngày
 
         // Map column indices to ClassSession IDs
@@ -111,8 +115,16 @@ class StudentsImport implements ToCollection, WithStartRow, WithMultipleSheets
                 $emailColIndex = $colIndex;
                 continue;
             }
+            if (str_contains($colValueLower, 'họ và tên') || str_contains($colValueLower, 'họ tên') || $colValueLower === 'tên' || $colValueLower === 'ten' || $colValueLower === 'name' || $colValueLower === 'full name' || $colValueLower === 'fullname') {
+                $nameColIndex = $colIndex;
+                continue;
+            }
+            if (str_contains($colValueLower, 'mã') || str_contains($colValueLower, 'mssv') || str_contains($colValueLower, 'ms') || str_contains($colValueLower, 'stt')) {
+                $codeColIndex = $colIndex;
+                continue;
+            }
 
-            if ($colIndex < 2) continue;
+            if ($colIndex < max(1, $nameColIndex, $codeColIndex, $emailColIndex) && !preg_match('/^\d{1,2}[\/\-\.]\d{1,2}/', trim((string) $colValue))) continue;
             
             $colValue = trim((string) $colValue);
             if (empty($colValue)) continue;
@@ -187,21 +199,21 @@ class StudentsImport implements ToCollection, WithStartRow, WithMultipleSheets
             // Index in startRow=1 means index 0 is row 2
             $actualRowNumber = $index + 2;
 
-            $studentCode = trim((string) ($row[0] ?? ''));
-            $fullName = trim((string) ($row[1] ?? ''));
+            $studentCode = $codeColIndex !== -1 ? trim((string) ($row[$codeColIndex] ?? '')) : null;
+            $fullName = $nameColIndex !== -1 ? trim((string) ($row[$nameColIndex] ?? '')) : null;
             $email = $emailColIndex !== -1 ? trim((string) ($row[$emailColIndex] ?? '')) : null;
 
-            if (empty($studentCode) && empty($fullName)) {
+            if (empty($fullName) && empty($email)) {
                 continue; // Skip empty rows
             }
 
-            // Bỏ qua các dòng dữ liệu rác (ví dụ Mã SV lại là một ngày tháng, hoặc Tên là công thức Excel)
-            if (preg_match('/^\d{1,2}[\/\-\.]\d{1,2}/', $studentCode) || str_starts_with($fullName, '=')) {
+            // Bỏ qua các dòng dữ liệu rác (ví dụ Tên là công thức Excel)
+            if (str_starts_with($fullName, '=')) {
                 continue;
             }
 
-            if (empty($studentCode) || empty($fullName) || empty($email)) {
-                $this->errors[] = "Dòng {$actualRowNumber}: Thiếu thông tin Mã sinh viên, Họ tên hoặc Email";
+            if (empty($fullName) || empty($email)) {
+                $this->errors[] = "Dòng {$actualRowNumber}: Thiếu thông tin Họ tên hoặc Email";
                 continue;
             }
 
@@ -243,6 +255,8 @@ class StudentsImport implements ToCollection, WithStartRow, WithMultipleSheets
                     $dateHeaders,
                     $meetingHeaders,
                     $emailColIndex,
+                    $nameColIndex,
+                    $codeColIndex,
                     (int) auth()->id(),
                     $this->importToken,
                     $this->syncAttendance

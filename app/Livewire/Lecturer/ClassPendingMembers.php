@@ -70,6 +70,10 @@ class ClassPendingMembers extends Component
                 'email' => $request->user?->email,
             ]);
 
+            if ($request->user) {
+                $request->user->notify(new \App\Notifications\ClassJoinedNotification($this->courseClass));
+            }
+
             $this->dispatch('toast', message: 'Đã duyệt học viên ' . ($request->user?->name ?? 'này') . ' thành công.', type: 'success');
         }
     }
@@ -83,6 +87,11 @@ class ClassPendingMembers extends Component
 
         if ($request) {
             $request->update(['status' => ClassJoinRequest::STATUS_REJECTED]);
+            
+            if ($request->user) {
+                $request->user->notify(new \App\Notifications\ClassJoinRejectedNotification($this->courseClass));
+            }
+
             $this->dispatch('toast', message: 'Đã từ chối học viên ' . ($request->user?->name ?? 'này') . '.', type: 'success');
             $this->dispatch('close-modal', 'confirm-reject');
         }
@@ -113,6 +122,10 @@ class ClassPendingMembers extends Component
                     'full_name' => $request->user?->name,
                     'email' => $request->user?->email,
                 ]);
+
+                if ($request->user) {
+                    $request->user->notify(new \App\Notifications\ClassJoinedNotification($this->courseClass));
+                }
             }
             $this->dispatch('toast', message: 'Đã duyệt tất cả ' . $requests->count() . ' học viên thành công.', type: 'success');
             $this->dispatch('close-modal', 'confirm-approve-all');

@@ -44,6 +44,7 @@ class StudentsService
                     ->with('classSession:id,class_id,date,status,meeting_id,qr_token'),
                 'leaveRequests.classSession:id,class_id,name,date',
             ])
+            ->whereHas('courseClass')
             ->where('user_id', $studentUserId)
             ->where('status', ClassMember::STATUS_ACTIVE)
             ->get();
@@ -316,6 +317,7 @@ class StudentsService
                 'courseClass.owner:id,name',
                 'profile',
             ])
+            ->whereHas('courseClass')
             ->where('user_id', $studentUserId)
             ->where('status', ClassMember::STATUS_ACTIVE)
             ->get(['id', 'class_id', 'user_id', 'status']);

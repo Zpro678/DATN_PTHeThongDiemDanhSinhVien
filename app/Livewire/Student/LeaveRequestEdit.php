@@ -5,6 +5,7 @@ namespace App\Livewire\Student;
 use App\Models\ClassMember;
 use App\Models\ClassSession;
 use App\Models\LeaveRequest;
+use App\Services\AuditLogService;
 use Illuminate\Contracts\View\View;
 use Livewire\Attributes\Computed;
 use Livewire\Component;
@@ -111,6 +112,16 @@ class LeaveRequestEdit extends Component
         ]);
 
         session()->flash('success', 'Đã lưu thay đổi thành công.');
+
+        app(AuditLogService::class)->log('leave_request_edited', [
+            'class_id'   => $this->class_id,
+            'table_name' => 'leave_requests',
+            'row_id'     => $this->leaveRequest->id,
+            'new_values' => [
+                'class_session_id' => $this->class_session_id,
+                'reason'           => $this->reason,
+            ],
+        ]);
 
         return redirect()->route('student.leave-requests.history');
     }

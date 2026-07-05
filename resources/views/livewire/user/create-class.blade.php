@@ -43,16 +43,24 @@
                             @error('name') <span class="block text-xs font-medium text-error">{{ $message }}</span> @enderror
                         </label>
 
-                        {{-- Mã lớp: ẩn input, hiển thị preview sinh tự động --}}
+                        {{-- Mã lớp: giảng viên tự nhập --}}
+                        <label class="space-y-2 sm:col-span-2">
+                            <span class="block text-sm font-semibold text-on-surface">Mã lớp <span class="ml-1.5 rounded-full bg-surface-container px-2 py-0.5 text-[11px] font-bold text-on-surface-variant">(Tùy chọn)</span></span>
+                            <input wire:model.live.debounce.300ms="classCode" type="text" placeholder="VD: CS101, WEB-2026-01" class="h-12 w-full rounded-xl border border-outline-variant/40 bg-white px-4 text-sm font-semibold text-on-surface outline-none transition-all placeholder:text-on-surface-variant/50 hover:border-outline-variant focus:border-primary focus:ring-2 focus:ring-primary/20" maxlength="50">
+                            <p class="text-xs text-on-surface-variant">Mã nhận diện lớp học theo mã môn học / học phần của trường. Nếu để trống sẽ dùng mã tham gia lớp.</p>
+                            @error('classCode') <span class="block text-xs font-medium text-error">{{ $message }}</span> @enderror
+                        </label>
+
+                        {{-- Mã tham gia lớp: ẩn input, hiển thị preview sinh tự động --}}
                         <div class="space-y-2 sm:col-span-2">
-                            <span class="block text-sm font-semibold text-on-surface">Mã lớp học <span class="ml-1.5 rounded-full bg-primary/10 px-2 py-0.5 text-[11px] font-bold text-primary">Tự động sinh</span></span>
+                            <span class="block text-sm font-semibold text-on-surface">Mã tham gia lớp <span class="ml-1.5 rounded-full bg-primary/10 px-2 py-0.5 text-[11px] font-bold text-primary">Tự động sinh</span></span>
                             <div class="flex h-12 w-full items-center gap-3 rounded-xl border border-dashed border-outline-variant/50 bg-surface-container-low px-4">
                                 <x-user.icon name="key" :size="16" class="shrink-0 text-on-surface-variant/60" />
                                 @if($generatedCode)
                                     <span class="font-mono text-base font-black tracking-widest text-primary truncate">{{ $generatedCode }}</span>
                                     <span class="ml-auto text-xs text-on-surface-variant/70 shrink-0">Mã sẽ được xác nhận khi lưu</span>
                                 @else
-                                    <span class="text-sm text-on-surface-variant/70 truncate">Mã lớp sẽ được tự động sinh khi lưu.</span>
+                                    <span class="text-sm text-on-surface-variant/70 truncate">Mã tham gia lớp sẽ được tự động sinh khi lưu.</span>
                                 @endif
                             </div>
                         </div>
@@ -63,6 +71,41 @@
                             <textarea wire:model.blur="description" placeholder="Nhập mô tả thêm về lớp học..." rows="4" class="w-full rounded-xl border border-outline-variant/40 bg-white px-4 py-3 text-sm font-semibold text-on-surface outline-none transition-all placeholder:text-on-surface-variant/50 hover:border-outline-variant focus:border-primary focus:ring-2 focus:ring-primary/20"></textarea>
                             @error('description') <span class="block text-xs font-medium text-error">{{ $message }}</span> @enderror
                         </label>
+
+                        {{-- Import Danh Sách Sinh Viên (Tùy chọn khi tạo lớp) --}}
+                        <div class="space-y-2 sm:col-span-2 mt-4">
+                            <label class="block text-sm font-semibold text-on-surface">Import danh sách sinh viên <span class="ml-1 rounded-full bg-red-100 px-2 py-0.5 text-[11px] font-bold text-red-600">Bắt buộc</span></label>
+                            
+                            <label class="group relative flex cursor-pointer flex-col items-center justify-center rounded-[20px] border-2 border-dashed border-outline-variant/30 bg-surface-container-low/30 py-6 transition-colors hover:border-primary hover:bg-primary/5">
+                                <input type="file" wire:model="importFile" accept=".xlsx,.xls,.csv" class="peer absolute inset-0 h-full w-full cursor-pointer opacity-0">
+                                
+                                <div class="flex flex-col items-center justify-center gap-2">
+                                    <div class="flex h-9 w-9 items-center justify-center rounded-full border border-primary text-primary transition-colors">
+                                        <div wire:loading.remove wire:target="importFile">
+                                            <x-user.icon name="upload" :size="18" />
+                                        </div>
+                                        <div wire:loading wire:target="importFile">
+                                            <x-user.icon name="loader" class="animate-spin" :size="18" />
+                                        </div>
+                                    </div>
+                                    
+                                    <div class="text-center">
+                                        <span class="text-sm font-bold text-slate-700 transition-colors group-hover:text-primary" wire:loading.remove wire:target="importFile">
+                                            @if($importFile)
+                                                {{ $importFile->getClientOriginalName() }}
+                                            @else
+                                                Nhấn để chọn file import (.xlsx, .xls, .csv)
+                                            @endif
+                                        </span>
+                                        <span class="text-sm font-bold text-primary" wire:loading wire:target="importFile">
+                                            Đang tải file lên...
+                                        </span>
+                                    </div>
+                                </div>
+                            </label>
+                            @error('importFile') <span class="block text-xs font-medium text-error mt-1">{{ $message }}</span> @enderror
+                            <p class="text-[12px] text-on-surface-variant">Bạn có thể tải: <button type="button" wire:click="downloadBasicTemplate" class="font-bold text-primary hover:underline">File mẫu Excel</button> để điền danh sách.</p>
+                        </div>
                     </div>
                 </section>
 
@@ -173,11 +216,14 @@
                                 <x-user.icon name="eye" :size="20" class="text-white/90" />
                             </div>
                             <h3 class="mt-5 text-2xl font-bold leading-tight">{{ $previewName }}</h3>
-                            <p class="mt-2 text-sm font-medium text-primary-fixed">Mã lớp: {{ $previewCode }}</p>
+                            @if($classCode)
+                                <p class="mt-1 text-sm font-medium text-primary-fixed">Mã lớp: {{ strtoupper($classCode) }}</p>
+                            @endif
                             @if($generatedCode)
                                 <div class="mt-3 inline-flex items-center gap-2 rounded-xl bg-white/15 px-3 py-1.5">
                                     <x-user.icon name="key" :size="14" class="text-white/80" />
                                     <span class="font-mono text-sm font-black tracking-widest text-white">{{ $generatedCode }}</span>
+                                    <span class="text-xs text-white/70">Mã tham gia</span>
                                 </div>
                             @endif
                         </div>

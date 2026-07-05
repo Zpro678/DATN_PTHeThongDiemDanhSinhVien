@@ -6,6 +6,7 @@ use App\Exports\ClassSessionExport;
 use App\Livewire\Lecturer\Attendance\Concerns\OwnsAttendanceSessions;
 use App\Models\AttendanceRecord;
 use App\Models\ClassSession;
+use App\Services\AuditLogService;
 use App\Services\NotificationService;
 use App\Services\SubscriptionService;
 use Illuminate\Contracts\View\View;
@@ -144,6 +145,13 @@ class ManualAttendanceSession extends Component
         }
 
         session()->flash('status', 'Đã lưu phiên điểm danh.');
+
+        app(AuditLogService::class)->log('manual_attendance', [
+            'class_id'   => $this->ownedSession($this->sessionId)->class_id,
+            'table_name' => 'class_sessions',
+            'row_id'     => $this->sessionId,
+            'new_values' => ['saved_records' => count($this->draftStatuses)],
+        ]);
 
         // Quay về trang chi tiết buổi (danh sách phiên) sau khi lưu.
         $meetingId = $this->ownedSession($this->sessionId)->meeting_id;

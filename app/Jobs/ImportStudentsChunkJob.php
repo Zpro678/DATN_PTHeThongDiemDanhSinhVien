@@ -24,6 +24,8 @@ class ImportStudentsChunkJob implements ShouldQueue
     protected array $dateHeaders;
     protected array $meetingHeaders;
     protected int $emailColIndex;
+    protected int $nameColIndex;
+    protected int $codeColIndex;
     protected int $authUserId;
     protected ?string $importToken;
     protected bool $syncAttendance;
@@ -31,13 +33,15 @@ class ImportStudentsChunkJob implements ShouldQueue
     /**
      * Create a new job instance.
      */
-    public function __construct(string $classId, array $rows, array $dateHeaders, array $meetingHeaders, int $emailColIndex, int $authUserId, ?string $importToken = null, bool $syncAttendance = false)
+    public function __construct(string $classId, array $rows, array $dateHeaders, array $meetingHeaders, int $emailColIndex, int $nameColIndex, int $codeColIndex, int $authUserId, ?string $importToken = null, bool $syncAttendance = false)
     {
         $this->classId = $classId;
         $this->rows = $rows;
         $this->dateHeaders = $dateHeaders;
         $this->meetingHeaders = $meetingHeaders;
         $this->emailColIndex = $emailColIndex;
+        $this->nameColIndex = $nameColIndex;
+        $this->codeColIndex = $codeColIndex;
         $this->authUserId = $authUserId;
         $this->importToken = $importToken;
         $this->syncAttendance = $syncAttendance;
@@ -63,29 +67,28 @@ class ImportStudentsChunkJob implements ShouldQueue
             : PHP_INT_MAX;
 
         foreach ($this->rows as $row) {
-            $studentCode = trim((string) ($row[0] ?? ''));
-            $fullName = trim((string) ($row[1] ?? ''));
+            $studentCode = $this->codeColIndex !== -1 ? trim((string) ($row[$this->codeColIndex] ?? '')) : null;
+            $fullName = $this->nameColIndex !== -1 ? trim((string) ($row[$this->nameColIndex] ?? '')) : null;
             $email = $this->emailColIndex !== -1 ? trim((string) ($row[$this->emailColIndex] ?? '')) : null;
 
-            if (empty($studentCode) && empty($fullName)) {
+            if (empty($fullName)) {
                 continue;
             }
 
-            if (preg_match('/^\d{1,2}[\/\-\.]\d{1,2}/', $studentCode) || str_starts_with($fullName, '=')) {
-                continue;
-            }
-
-            if (empty($studentCode) || empty($fullName)) {
+            if (str_starts_with($fullName, '=')) {
                 continue;
             }
 
             $activeCount = ClassMember::where('class_id', $this->classId)->where('status', ClassMember::STATUS_ACTIVE)->count();
 
-            // Tìm thành viên theo MSSV qua hồ sơ danh tính (class_member_profiles).
-            $member = ClassMember::withTrashed()
-                ->where('class_id', $this->classId)
-                ->whereHas('profile', fn ($q) => $q->where('student_code', strtoupper($studentCode)))
-                ->first();
+            // Tìm thành viên theo email vì MSSV có thể bị bỏ.
+            $member = null;
+            if ($email) {
+                $member = ClassMember::withTrashed()
+                    ->where('class_id', $this->classId)
+                    ->whereHas('profile', fn ($q) => $q->where('email', strtolower($email)))
+                    ->first();
+            }
 
             $user = null;
             if ($email) {
@@ -114,11 +117,14 @@ class ImportStudentsChunkJob implements ShouldQueue
             }
 
             // Lưu danh tính (MSSV/tên/email) vào hồ sơ thành viên.
-            $member->syncProfile([
-                'student_code' => strtoupper($studentCode),
+            $profileData = [
                 'full_name' => $fullName,
                 'email' => $email ?: null,
-            ]);
+            ];
+            if ($studentCode) {
+                $profileData['student_code'] = strtoupper($studentCode);
+            }
+            $member->syncProfile($profileData);
 
             // Gửi email thông báo được thêm vào lớp học
             if ($email && $isNewMember) {
@@ -127,7 +133,7 @@ class ImportStudentsChunkJob implements ShouldQueue
                         new StudentImportNotificationMail(
                             $courseClass->name,
                             $courseClass->join_key,
-                            strtoupper($studentCode),
+                            $studentCode ? strtoupper($studentCode) : '—',
                             $fullName,
                             $email
                         )

@@ -48,7 +48,7 @@
                 <div class="pr-2">
                     <h1 class="text-3xl sm:text-[2.5rem] leading-tight font-medium tracking-tight text-white drop-shadow-sm">{{ $class->name }}</h1>
                     <p class="mt-2 text-[15px] text-white/90 drop-shadow-sm">
-                        Mã lớp: <span class="font-bold text-white">{{ $class->join_key }}</span>
+                        Mã lớp: <span class="font-bold text-white">{{ $class->class_code ?? $class->join_key }}</span>
                     </p>
                 </div>
             </div>
@@ -82,7 +82,11 @@
                             <x-user.icon name="qr-code" :size="16" class="text-slate-600" />
                             <span class="font-medium text-slate-500">Mã lớp</span>
                         </div>
-                        <span class="font-bold text-slate-800 text-right">{{ $class->join_key }}</span>
+                        <span class="font-bold text-slate-800 text-right">{{ $class->class_code ?? $class->join_key }}</span>
+                    </div>
+                    <div class="flex items-center justify-between py-3 border-b border-slate-100">
+                        <span class="text-sm text-slate-500">Mã tham gia</span>
+                        <span class="font-bold text-slate-800 text-right font-mono tracking-widest text-blue-600">{{ $class->join_key }}</span>
                     </div>
 
                     <!-- Tổng số buổi -->

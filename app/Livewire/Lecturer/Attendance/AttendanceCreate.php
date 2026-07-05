@@ -8,6 +8,7 @@ use App\Models\ClassMeeting;
 use App\Models\ClassMember;
 use App\Models\ClassSession;
 use App\Models\CourseClass;
+use App\Services\AuditLogService;
 use App\Services\SubscriptionService;
 use Illuminate\Contracts\View\View;
 use Illuminate\Database\Eloquent\Collection;
@@ -87,7 +88,14 @@ class AttendanceCreate extends Component
             $this->dispatch('toast', message: 'Bạn đã tạo buổi điểm danh thất bại.', type: 'error');
             return;
         }
-        
+
+        app(AuditLogService::class)->log('session_created', [
+            'class_id'   => $session->class_id,
+            'table_name' => 'class_sessions',
+            'row_id'     => $session->id,
+            'new_values' => ['name' => $session->name, 'date' => $session->date, 'type' => 'manual'],
+        ]);
+
         session()->flash('success', 'Bạn đã tạo buổi điểm danh thành công.');
         $this->redirectRoute('lecturer.attendance.index', navigate: true);
     }
@@ -99,6 +107,13 @@ class AttendanceCreate extends Component
             $this->dispatch('toast', message: 'Bạn đã tạo buổi điểm danh thất bại.', type: 'error');
             return;
         }
+
+        app(AuditLogService::class)->log('session_created', [
+            'class_id'   => $meeting->class_id,
+            'table_name' => 'class_meetings',
+            'row_id'     => $meeting->id,
+            'new_values' => ['name' => $meeting->name, 'date' => $meeting->date, 'type' => 'qr'],
+        ]);
 
         session()->flash('success', 'Bạn đã tạo buổi điểm danh thành công.');
         $this->redirectRoute('lecturer.attendance.qr.create', ['ma_user' => auth()->id(), 'meeting' => $meeting->id], navigate: true);

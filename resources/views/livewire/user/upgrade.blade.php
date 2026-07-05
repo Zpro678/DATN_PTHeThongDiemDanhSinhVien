@@ -57,7 +57,9 @@
                 <div class="mt-5 inline-flex items-center gap-2 rounded-full border border-outline-variant/30 bg-white px-4 py-1.5 text-sm text-on-surface-variant shadow-sm">
                     <span class="h-2 w-2 rounded-full bg-emerald-400"></span>
                     Đang dùng gói <span class="font-bold text-on-surface">{{ $activeSubscription->plan?->name }}</span>
-                    @if ($activeSubscription->end_date)
+                    @if ($activeSubscription->start_date && $activeSubscription->end_date)
+                        &nbsp;· {{ $activeSubscription->start_date->format('d/m/Y') }} - {{ $activeSubscription->end_date->format('d/m/Y') }}
+                    @elseif ($activeSubscription->end_date)
                         &nbsp;· Hết hạn {{ $activeSubscription->end_date->format('d/m/Y') }}
                     @endif
                 </div>
@@ -165,10 +167,16 @@
             @endforeach
         </div>
 
-        <p class="mt-10 text-center text-xs text-on-surface-variant/70">
-            <x-user.icon name="shield" :size="12" class="mr-1 inline align-text-bottom" />
-            Thanh toán an toàn qua ví MoMo · Kích hoạt ngay · Hủy bất kỳ lúc nào
-        </p>
+        <div class="mt-10 flex flex-col items-center justify-center gap-4">
+            <a href="{{ route('transaction-history') }}" wire:navigate class="inline-flex items-center gap-1.5 text-sm font-bold text-primary hover:underline hover:underline-offset-2">
+                Xem lịch sử giao dịch <x-user.icon name="arrow-right" :size="14" />
+            </a>
+            
+            <p class="text-center text-xs text-on-surface-variant/70">
+                <x-user.icon name="shield" :size="12" class="mr-1 inline align-text-bottom" />
+                Thanh toán an toàn qua ví MoMo & PayOS · Kích hoạt ngay · Hủy bất kỳ lúc nào
+            </p>
+        </div>
     </main>
 
     {{-- Modal xác nhận --}}

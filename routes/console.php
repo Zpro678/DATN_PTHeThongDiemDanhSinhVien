@@ -9,4 +9,5 @@ Artisan::command('inspire', function () {
 })->purpose('Display an inspiring quote');
 
 // Tự động chốt các buổi điểm danh đã quá giờ kết thúc (cần chạy scheduler nền).
+Schedule::command('transactions:sync-status')->everyFiveMinutes();
 Schedule::command('attendance:close-expired')->everyMinute()->withoutOverlapping();

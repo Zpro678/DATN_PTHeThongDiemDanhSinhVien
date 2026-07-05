@@ -79,6 +79,13 @@
                             <p class="mt-1 text-sm font-medium text-slate-500">Cập nhật thông tin tài khoản của bạn.</p>
                         </div>
                         <div class="flex gap-2">
+                            @if(!$user->isAdmin())
+                            <a href="{{ route('activity-log', ['ma_user' => auth()->id()]) }}" wire:navigate
+                                class="admin-soft-button inline-flex items-center gap-1.5 rounded-xl border border-slate-200 bg-white px-4 py-2.5 text-xs font-bold text-slate-600 hover:bg-slate-50 transition-colors">
+                                <x-user.icon name="history" :size="14" />
+                                Lịch sử thao tác
+                            </a>
+                            @endif
                             <button type="button" @click="view = 'password'" class="admin-soft-button rounded-xl border border-slate-200 bg-white px-4 py-2.5 text-xs font-bold text-slate-600 hover:bg-slate-50">
                                 Đổi mật khẩu
                             </button>
