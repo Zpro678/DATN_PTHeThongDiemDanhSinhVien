@@ -29,9 +29,9 @@
             </div>
         </section>
 
-        <div class="grid grid-cols-1 gap-6 xl:grid-cols-[380px_minmax(0,1fr)]">
-            <section class="admin-card admin-card-hover overflow-hidden rounded-2xl border">
-                <div class="h-24 bg-gradient-to-r from-blue-600 via-cyan-500 to-emerald-500"></div>
+        <div class="grid grid-cols-1 items-stretch gap-6 xl:grid-cols-[380px_minmax(0,1fr)]">
+            <section class="admin-card admin-card-hover flex h-full flex-col overflow-hidden rounded-2xl border">
+                <div class="h-24 shrink-0 bg-gradient-to-r from-blue-600 via-cyan-500 to-emerald-500"></div>
                 <div class="px-6 pb-6">
                     <div class="-mt-12 flex justify-center">
                         @if($user->avatar)
@@ -45,7 +45,6 @@
 
                     <div class="mt-4 text-center">
                         <h2 class="text-xl font-black text-slate-900">{{ $user->name }}</h2>
-                        <p class="text-sm font-medium text-slate-500">{{ $user->member_id ?: 'Chưa có mã định danh' }}</p>
                         <div class="mt-4 flex flex-wrap justify-center gap-2">
                             <span class="rounded-lg border px-3 py-1 text-[10px] font-bold uppercase tracking-wider {{ $user->isAdmin() ? 'border-blue-100 bg-blue-50 text-blue-700' : 'border-slate-100 bg-slate-50 text-slate-600' }}">
                                 {{ $roleLabel }}
@@ -81,8 +80,8 @@
                 </div>
             </section>
 
-            <div class="space-y-6">
-                <section class="admin-grid-equal grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-4">
+            <div class="flex h-full flex-col space-y-6">
+                <section class="admin-grid-equal grid shrink-0 grid-cols-1 gap-4 sm:grid-cols-2">
                     <x-stats-card
                         title="Lớp đã tạo"
                         :value="$user->owned_classes_count ?? 0"
@@ -96,24 +95,10 @@
                         icon="users"
                         iconBg="bg-emerald-50 border-emerald-100 text-emerald-600"
                     />
-
-                    <x-stats-card
-                        title="Phiên đăng ký"
-                        :value="$user->subscriptions_count ?? 0"
-                        icon="package"
-                        iconBg="bg-amber-50 border-amber-100 text-amber-600"
-                    />
-
-                    <x-stats-card
-                        title="Yêu cầu lớp"
-                        :value="$user->class_join_requests_count ?? 0"
-                        icon="help-circle"
-                        iconBg="bg-rose-50 border-rose-100 text-rose-600"
-                    />
                 </section>
 
-                <section class="admin-card admin-card-hover overflow-hidden rounded-2xl border">
-                    <div class="flex flex-col gap-4 border-b border-slate-100 p-6 lg:flex-row lg:items-end lg:justify-between">
+                <section class="admin-card admin-card-hover flex flex-1 flex-col overflow-hidden rounded-2xl border">
+                    <div class="flex flex-col gap-4 border-b border-slate-100 p-6 lg:flex-row lg:items-end lg:justify-between shrink-0">
                         <div>
                             <h2 class="text-xl font-black text-slate-900">Thông tin hồ sơ</h2>
                             <p class="mt-1 text-sm font-medium text-slate-500">Các trường chính của tài khoản đang được quản lý.</p>
@@ -125,10 +110,6 @@
                             <div>
                                 <dt class="text-[10px] font-bold uppercase tracking-widest text-slate-400">Họ và tên</dt>
                                 <dd class="mt-1 rounded-xl border border-slate-200 bg-white/75 px-4 py-3 font-bold text-slate-900">{{ $user->name }}</dd>
-                            </div>
-                            <div>
-                                <dt class="text-[10px] font-bold uppercase tracking-widest text-slate-400">Mã số sinh viên</dt>
-                                <dd class="mt-1 rounded-xl border border-slate-200 bg-white/75 px-4 py-3 font-bold text-slate-900">{{ $user->member_id ?: 'Chưa cập nhật' }}</dd>
                             </div>
                             <div>
                                 <dt class="text-[10px] font-bold uppercase tracking-widest text-slate-400">Email</dt>

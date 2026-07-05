@@ -13,15 +13,35 @@ class LogIndex extends Component
     use WithPagination;
 
     public $search = '';
+    public $dateFilter = 'all'; // all, 1_month, 3_months, 6_months
+    public ?AuditLog $selectedLog = null;
+
+    public $perPage = 10;
 
     public function mount()
     {
         abort_unless(Auth::user()?->isAdmin(), 403);
     }
 
+    public function loadMore()
+    {
+        $this->perPage += 10;
+    }
+
     public function updatingSearch()
     {
-        $this->resetPage();
+        $this->perPage = 10;
+    }
+
+    public function updatingDateFilter()
+    {
+        $this->perPage = 10;
+    }
+
+    public function viewLog($id)
+    {
+        $this->selectedLog = AuditLog::with(['user', 'courseClass'])->find($id);
+        $this->dispatch('open-log-modal');
     }
 
     #[Layout('components.admin-layout')]
@@ -33,17 +53,32 @@ class LogIndex extends Component
 
         if (!empty($this->search)) {
             $search = $this->search;
-            $query->where('action', 'like', "%{$search}%")
-                ->orWhere('table_name', 'like', "%{$search}%")
-                ->orWhereHas('user', function ($q) use ($search) {
-                    $q->where('name', 'like', "%{$search}%");
-                });
+            $query->where(function ($q) use ($search) {
+                $q->where('action', 'like', "%{$search}%")
+                  ->orWhere('table_name', 'like', "%{$search}%")
+                  ->orWhereHas('user', function ($q2) use ($search) {
+                      $q2->where('name', 'like', "%{$search}%");
+                  });
+            });
         }
 
-        $logs = $query->latest('created_at')->paginate(20);
+        if ($this->dateFilter !== 'all') {
+            $now = \Carbon\Carbon::now();
+            if ($this->dateFilter === '1_month') {
+                $query->where('created_at', '>=', $now->subMonth());
+            } elseif ($this->dateFilter === '3_months') {
+                $query->where('created_at', '>=', $now->subMonths(3));
+            } elseif ($this->dateFilter === '6_months') {
+                $query->where('created_at', '>=', $now->subMonths(6));
+            }
+        }
+
+        $totalLogs = $query->count();
+        $logs = $query->latest('created_at')->take($this->perPage)->get();
 
         return view('livewire.admin.logs.log-index', [
             'logs' => $logs,
+            'hasMore' => $totalLogs > $this->perPage,
         ])->title('Nhật ký Hoạt động');
     }
 }

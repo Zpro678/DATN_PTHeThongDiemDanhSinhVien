@@ -35,19 +35,33 @@ class UserEdit extends Component
         $validatedData = $this->validate([
             'name' => ['required', 'string', 'max:255'],
             'email' => ['required', 'string', 'email', 'max:255', Rule::unique('users')->ignore($this->user->id)],
-            'role' => ['required', 'in:'.User::ROLE_USER.','.User::ROLE_ADMIN.','.User::ROLE_SUPER_ADMIN],
             'status' => ['required', 'in:active,blocked'],
+            'role' => ['required', 'in:'.User::ROLE_USER.','.User::ROLE_ADMIN.','.User::ROLE_SUPER_ADMIN],
         ]);
 
-        if ($this->user->id === auth()->id() && $validatedData['status'] !== $this->user->status) {
+        $authUser = auth()->user();
+
+        if ($this->user->id === $authUser->id && $validatedData['status'] !== $this->user->status) {
             session()->flash('error', 'Bạn không thể tự thay đổi trạng thái của chính mình.');
             return;
+        }
+
+        // Logic phân quyền sửa đổi role
+        if ($this->user->id !== $authUser->id && $this->user->role !== $validatedData['role']) {
+            if (!$authUser->isSuperAdmin() && $this->user->isAdmin()) {
+                session()->flash('error', 'Admin không có quyền thay đổi vai trò của một Admin khác. Chỉ Super Admin mới có quyền này.');
+                return;
+            }
+            if ($validatedData['role'] === User::ROLE_SUPER_ADMIN) {
+                session()->flash('error', 'Không thể cấp quyền Super Admin cho người dùng khác.');
+                return;
+            }
         }
 
         $this->user->update($validatedData);
 
         session()->flash('success', 'Cập nhật thông tin người dùng thành công.');
-        return redirect()->route('admin.users.index');
+        return redirect()->route('admin.users.show', $this->user);
     }
 
     #[Layout('components.admin-layout')]

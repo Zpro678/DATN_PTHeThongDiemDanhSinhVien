@@ -3,7 +3,7 @@
 <head>
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
-    <title>Attendia Tech — Hệ Thống Điểm Danh</title>
+    <title>{{ config('app.name') }} — Hệ Thống Điểm Danh</title>
     <meta name="description" content="Hệ thống quản lý điểm danh thông minh dành cho giảng viên và học viên.">
     
     <link rel="preconnect" href="https://fonts.bunny.net">
@@ -109,14 +109,21 @@
 
     <header class="flex items-center justify-between px-6 lg:px-12 py-5 bg-white/70 backdrop-blur-xl sticky top-0 z-50 border-b border-slate-200/50">
         <a href="/" wire:navigate class="flex items-center gap-3 group">
-            <div class="flex h-12 w-12 items-center justify-center rounded-[14px] bg-[#0052cc] text-white shadow-lg shadow-blue-500/25 transition-all duration-500 ease-out group-hover:rotate-[10deg] group-hover:scale-105">
-                <svg class="w-7 h-7" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4.26 10.147a60.436 60.436 0 00-.491 6.347A48.627 48.627 0 0112 20.904a48.627 48.627 0 018.232-4.41 60.46 60.46 0 00-.491-6.347m-15.482 0a50.57 50.57 0 00-2.658-.813A59.905 59.905 0 0112 3.493a59.902 59.902 0 0110.399 5.84c-.896.248-1.783.52-2.658.814m-15.482 0A50.697 50.697 0 0112 13.489a50.702 50.702 0 017.74-3.342M6.75 15a.75.75 0 100-1.5.75.75 0 000 1.5zm0 0v-3.675A55.378 55.378 0 0112 8.443m-7.007 11.55A5.981 5.981 0 006.75 15.75v-1.5" />
-                </svg>
-            </div>
+            @php $appLogo = \App\Models\Setting::get('app_logo'); @endphp
+            @if(!empty($appLogo))
+                <div class="flex h-12 w-12 items-center justify-center rounded-[14px] shadow-lg shadow-blue-500/25 transition-all duration-500 ease-out group-hover:rotate-[10deg] group-hover:scale-105 overflow-hidden border border-blue-100 bg-white">
+                    <img src="{{ asset('storage/' . $appLogo) }}" alt="{{ config('app.name') }}" class="h-full w-full object-cover">
+                </div>
+            @else
+                <div class="flex h-12 w-12 items-center justify-center rounded-[14px] bg-[#0052cc] text-white shadow-lg shadow-blue-500/25 transition-all duration-500 ease-out group-hover:rotate-[10deg] group-hover:scale-105">
+                    <svg class="w-7 h-7" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4.26 10.147a60.436 60.436 0 00-.491 6.347A48.627 48.627 0 0112 20.904a48.627 48.627 0 018.232-4.41 60.46 60.46 0 00-.491-6.347m-15.482 0a50.57 50.57 0 00-2.658-.813A59.905 59.905 0 0112 3.493a59.902 59.902 0 0110.399 5.84c-.896.248-1.783.52-2.658.814m-15.482 0A50.697 50.697 0 0112 13.489a50.702 50.702 0 017.74-3.342M6.75 15a.75.75 0 100-1.5.75.75 0 000 1.5zm0 0v-3.675A55.378 55.378 0 0112 8.443m-7.007 11.55A5.981 5.981 0 006.75 15.75v-1.5" />
+                    </svg>
+                </div>
+            @endif
             <div class="flex flex-col justify-center">
                 <span class="text-2xl font-black tracking-tight text-[#0052cc] leading-none transition-colors duration-300">
-                    Attendia Tech
+                    {{ config('app.name') }}
                 </span>
                 <span class="text-[0.65rem] font-bold text-gray-500 uppercase tracking-widest mt-1 leading-none">
                     Hệ Thống Điểm Danh
@@ -183,7 +190,7 @@
     </main>
 
     <footer class="bg-transparent border-t border-slate-200/50 py-6 text-center text-sm text-slate-500 w-full z-20">
-        <p>&copy; {{ date('Y') }} Attendia Tech. Bảo lưu mọi quyền.</p>
+        <p>&copy; {{ date('Y') }} {{ config('app.name') }}. Bảo lưu mọi quyền.</p>
     </footer>
 
     <script>

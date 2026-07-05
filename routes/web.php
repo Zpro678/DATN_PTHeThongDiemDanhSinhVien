@@ -46,6 +46,14 @@ Route::get('/', function () {
     return view('welcome');
 });
 
+Route::get('/maintenance', function () {
+    return view('maintenance');
+})->name('maintenance');
+
+Route::get('/dashboard', function () {
+    return view('dashboard');
+})->middleware(['auth', 'verified'])->name('dashboard');
+
 // Google OAuth Routes
 Route::get('/auth/google', [GoogleController::class, 'redirect'])->name('google.login');
 Route::get('/auth/google/callback', [GoogleController::class, 'callback'])->name('google.callback');
@@ -89,9 +97,14 @@ Route::middleware(['auth', 'verified', 'user.route'])->group(function () {
         Route::get('/packages/create', \App\Livewire\Admin\Packages\PackageCreate::class)->name('packages.create');
         Route::get('/packages/{package}', \App\Livewire\Admin\Packages\PackageShow::class)->whereNumber('package')->name('packages.show');
         Route::get('/packages/{package}/edit', \App\Livewire\Admin\Packages\PackageEdit::class)->whereNumber('package')->name('packages.edit');
+        Route::get('/packages/coupons', \App\Livewire\Admin\Packages\CouponIndex::class)->name('packages.coupons.index');
+        Route::get('/packages/coupons/create', \App\Livewire\Admin\Packages\CouponCreate::class)->name('packages.coupons.create');
+        Route::get('/packages/coupons/{coupon}/edit', \App\Livewire\Admin\Packages\CouponEdit::class)->whereNumber('coupon')->name('packages.coupons.edit');
 
 
         Route::get('/reports', [\App\Http\Controllers\Admin\AdminController::class, 'reportsIndex'])->name('reports.index');
+
+        Route::get('/broadcast', \App\Livewire\Admin\Broadcast\Index::class)->name('broadcast');
 
         Route::get('/logs', \App\Livewire\Admin\Logs\LogIndex::class)->name('logs.index');
         Route::get('/transactions', TransactionIndex::class)->name('transactions.index');

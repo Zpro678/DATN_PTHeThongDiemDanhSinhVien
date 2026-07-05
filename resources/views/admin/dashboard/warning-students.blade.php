@@ -14,26 +14,18 @@
                     </p>
                 </div>
             </div>
-
-            <div class="flex gap-2">
-                <button type="button" class="flex items-center gap-1.5 rounded-xl border border-slate-200 px-3.5 py-2 text-xs font-bold text-slate-600 transition hover:bg-slate-50">
-                    <x-user.icon name="download" :size="14" />
-                    <span>Xuất Excel</span>
-                </button>
-            </div>
         </div>
 
         <div class="overflow-x-auto">
             <table class="w-full border-collapse text-left text-xs">
                 <thead>
                     <tr class="border-b border-slate-100 text-[10px] font-extrabold uppercase tracking-wider text-slate-400">
-                        <th class="whitespace-nowrap px-4 py-3">MSSV</th>
-                        <th class="whitespace-nowrap px-4 py-3">Họ và tên</th>
-                        <th class="whitespace-nowrap px-4 py-3">Lớp chính</th>
-                        <th class="whitespace-nowrap px-4 py-3">Môn học</th>
+                        <th class="whitespace-nowrap px-4 py-3 w-[15%]">MSSV</th>
+                        <th class="whitespace-nowrap px-4 py-3 w-[25%]">Họ và tên</th>
+                        <th class="whitespace-nowrap px-4 py-3 text-center">Mã lớp</th>
+                        <th class="whitespace-nowrap px-4 py-3 w-[30%]">Môn học</th>
                         <th class="whitespace-nowrap px-4 py-3 text-center">Tỷ lệ đi học</th>
-                        <th class="min-w-[160px] whitespace-nowrap px-4 py-3">Đánh giá chung</th>
-                        <th class="whitespace-nowrap px-4 py-3 text-right">Chi tiết</th>
+                        <th class="min-w-[160px] whitespace-nowrap px-4 py-3 text-right">Đánh giá chung</th>
                     </tr>
                 </thead>
                 <tbody class="divide-y divide-slate-50">
@@ -41,8 +33,8 @@
                         <tr class="transition-colors hover:bg-blue-50/40">
                             <td class="whitespace-nowrap px-4 py-3.5 font-mono font-black text-slate-500">{{ $item['mssv'] }}</td>
                             <td class="px-4 py-3.5 font-extrabold text-slate-800">{{ $item['name'] }}</td>
-                            <td class="whitespace-nowrap px-4 py-3.5 font-bold text-slate-500">{{ $item['class'] }}</td>
-                            <td class="max-w-[180px] truncate px-4 py-3.5 font-medium text-slate-600">{{ $item['subject'] }}</td>
+                            <td class="whitespace-nowrap px-4 py-3.5 text-center font-bold text-slate-500">{{ $item['class'] }}</td>
+                            <td class="max-w-[250px] truncate px-4 py-3.5 font-medium text-slate-600">{{ $item['subject'] }}</td>
                             <td class="px-4 py-3.5 text-center">
                                 <span class="font-black text-xs {{ $item['attendanceRate'] < 70 ? 'text-rose-600' : 'text-amber-600' }}">
                                     {{ $item['attendanceRate'] }}%
@@ -51,25 +43,15 @@
                                     <div class="h-full rounded-full {{ $item['attendanceRate'] < 70 ? 'bg-rose-500' : 'bg-amber-500' }}" style="width: {{ $item['attendanceRate'] }}%"></div>
                                 </div>
                             </td>
-                            <td class="whitespace-nowrap px-4 py-3.5">
+                            <td class="whitespace-nowrap px-4 py-3.5 text-right">
                                 <span class="rounded-lg border px-2.5 py-1 text-[10px] font-bold {{ $item['levelColor'] }}">
                                     {{ $item['level'] }}
                                 </span>
                             </td>
-                            <td class="whitespace-nowrap px-4 py-3.5 text-right">
-                                <button
-                                    type="button"
-                                    onclick="alert('Chi tiết cảnh báo học viên: {{ $item['name'] }}\nThông báo nhắc nhở tự động đã được chuyển qua SMS/Email công tác.')"
-                                    class="inline-flex items-center gap-1 text-xs font-bold text-blue-600 hover:text-blue-700 hover:underline"
-                                >
-                                    <span>Xem</span>
-                                    <x-user.icon name="arrow-up-right" :size="14" />
-                                </button>
-                            </td>
                         </tr>
                     @empty
                         <tr>
-                            <td colspan="7" class="px-4 py-8 text-center text-slate-500">Không có học viên nào bị cảnh báo.</td>
+                            <td colspan="6" class="px-4 py-8 text-center text-slate-500">Không có học viên nào bị cảnh báo.</td>
                         </tr>
                     @endforelse
                 </tbody>

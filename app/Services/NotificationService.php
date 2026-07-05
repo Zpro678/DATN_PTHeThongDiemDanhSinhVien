@@ -521,4 +521,40 @@ class NotificationService
             );
         }
     }
+
+    /**
+     * Gửi thông báo bảo trì cho tất cả người dùng trong hệ thống.
+     * Sử dụng insert theo lô (chunk) để tối ưu hiệu suất, tránh N+1.
+     */
+    public function notifySystemMaintenance(string $startTime, string $endTime): void
+    {
+        $userIds = User::pluck('id');
+        $now = now();
+        $notifications = [];
+
+        $startDate = \Carbon\Carbon::parse($startTime)->format('H:i d/m/Y');
+        $endDate = \Carbon\Carbon::parse($endTime)->format('H:i d/m/Y');
+
+        foreach ($userIds as $userId) {
+            $notifications[] = [
+                'id' => (string) Str::uuid(),
+                'type' => 'App\\Notifications\\SystemMaintenance',
+                'notifiable_type' => User::class,
+                'notifiable_id' => $userId,
+                'data' => json_encode([
+                    'title' => 'Thông báo bảo trì hệ thống',
+                    'message' => "Hệ thống sẽ tạm ngưng hoạt động từ {$startDate} đến {$endDate}. Vui lòng lưu lại công việc của bạn.",
+                    'url' => '#',
+                    'level' => 'warning',
+                ]),
+                'read_at' => null,
+                'created_at' => $now,
+                'updated_at' => $now,
+            ];
+        }
+
+        foreach (array_chunk($notifications, 50) as $chunk) {
+            Notification::insert($chunk);
+        }
+    }
 }

@@ -95,7 +95,6 @@
 				</svg>
 			</div>
 			<div class="toast-message">
-				<div style="font-weight: 600; margin-bottom: 4px;">Vui lòng kiểm tra lại:</div>
 				<ul style="margin: 0; padding-left: 18px; line-height: 1.5; font-size: 14px;">
 					@foreach ($errors->all() as $error)
 					<li>{{ $error }}</li>
