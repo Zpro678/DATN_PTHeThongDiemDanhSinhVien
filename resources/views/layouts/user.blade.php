@@ -374,6 +374,9 @@
                                 @endforeach
                             </nav>
                             <div class="space-y-1 border-t border-outline-variant p-3">
+                                <button type="button" x-on:click="navOpen = false; $dispatch('open-qr-scanner')" class="flex w-full items-center gap-3 rounded-lg px-3 py-2 text-[17px] font-medium text-on-surface-variant transition-colors hover:bg-surface-container hover:text-on-surface">
+                                    <x-user.icon name="qr-code" :size="24" class="shrink-0" /> <span>Quét mã QR</span>
+                                </button>
                                 <a href="{{ route('support') }}" wire:navigate x-on:click="navOpen = false" class="flex items-center gap-3 rounded-lg px-3 py-2 text-[17px] font-medium text-on-surface-variant transition-colors hover:bg-surface-container hover:text-on-surface">
                                     <x-user.icon name="help-circle" :size="24" class="shrink-0" /> <span>Hỗ trợ</span>
                                 </a>
@@ -428,9 +431,11 @@
                         {{ $slot }}
                     </main>
 
-                    {{-- ============ MOBILE BOTTOM NAV (< md) ============ --}}
-                    <nav class="pb-safe fixed inset-x-0 bottom-0 z-40 grid h-16 grid-cols-4 border-t border-outline-variant bg-white/95 backdrop-blur-lg md:hidden">
-                        @foreach ($mobileItems as $mi)
+                    {{-- ============ MOBILE BOTTOM NAV (< md) ============
+                         Thanh 5 cột gọn gàng: 2 mục · nút "+" ở giữa · mục còn lại · Thêm.
+                         Bấm "+" mở menu nhanh: Tham gia lớp / Tạo lớp mới / Quét QR. --}}
+                    <nav x-data="{ openActions: false }" class="pb-safe fixed inset-x-0 bottom-0 z-40 grid h-16 grid-cols-5 border-t border-outline-variant bg-white/95 backdrop-blur-lg md:hidden">
+                        @foreach (array_slice($mobileItems, 0, 2) as $mi)
                             @php $isActive = $matchesActive($mi['active']); @endphp
                             <a href="{{ route($mi['route']) }}" wire:navigate @class([
                                 'flex flex-col items-center justify-center gap-1 text-[10px] font-medium transition-colors',
@@ -441,6 +446,51 @@
                                 {{ $mi['label'] }}
                             </a>
                         @endforeach
+
+                        {{-- Nút "+" ở giữa + menu nhanh --}}
+                        <div class="relative flex items-center justify-center">
+                            {{-- Menu bật lên phía trên nút --}}
+                            <div x-cloak x-show="openActions" x-on:click.outside="openActions = false"
+                                x-transition:enter="transition ease-out duration-150"
+                                x-transition:enter-start="opacity-0 translate-y-2 scale-95"
+                                x-transition:enter-end="opacity-100 translate-y-0 scale-100"
+                                x-transition:leave="transition ease-in duration-100"
+                                x-transition:leave-start="opacity-100" x-transition:leave-end="opacity-0"
+                                class="absolute bottom-full left-1/2 mb-4 w-52 -translate-x-1/2 rounded-2xl border border-outline-variant bg-white p-2 shadow-xl shadow-slate-900/10">
+                                <button type="button" x-on:click="openActions = false; $dispatch('open-join-class-modal')" class="flex w-full items-center gap-3 rounded-xl p-2.5 text-left transition-colors hover:bg-surface-container">
+                                    <span class="grid h-9 w-9 shrink-0 place-items-center rounded-lg bg-emerald-50 text-emerald-600"><x-user.icon name="log-in" :size="18" /></span>
+                                    <span class="text-sm font-semibold text-on-surface">Tham gia lớp</span>
+                                </button>
+                                <a href="{{ route('create-class') }}" wire:navigate x-on:click="openActions = false" class="mt-1 flex w-full items-center gap-3 rounded-xl p-2.5 text-left transition-colors hover:bg-surface-container">
+                                    <span class="grid h-9 w-9 shrink-0 place-items-center rounded-lg bg-primary/10 text-primary"><x-user.icon name="plus" :size="18" /></span>
+                                    <span class="text-sm font-semibold text-on-surface">Tạo lớp mới</span>
+                                </a>
+                                <button type="button" x-on:click="openActions = false; $dispatch('open-qr-scanner')" class="mt-1 flex w-full items-center gap-3 rounded-xl p-2.5 text-left transition-colors hover:bg-surface-container">
+                                    <span class="grid h-9 w-9 shrink-0 place-items-center rounded-lg bg-indigo-50 text-indigo-600"><x-user.icon name="qr-code" :size="18" /></span>
+                                    <span class="text-sm font-semibold text-on-surface">Quét QR</span>
+                                </button>
+                            </div>
+
+                            <button type="button" x-on:click="openActions = !openActions"
+                                class="flex h-11 w-11 items-center justify-center rounded-full bg-primary text-white shadow-md shadow-primary/30 transition active:scale-95"
+                                :class="openActions ? 'rotate-45' : ''"
+                                aria-label="Tạo nhanh">
+                                <x-user.icon name="plus" :size="24" />
+                            </button>
+                        </div>
+
+                        @foreach (array_slice($mobileItems, 2) as $mi)
+                            @php $isActive = $matchesActive($mi['active']); @endphp
+                            <a href="{{ route($mi['route']) }}" wire:navigate @class([
+                                'flex flex-col items-center justify-center gap-1 text-[10px] font-medium transition-colors',
+                                'text-primary' => $isActive,
+                                'text-on-surface-variant' => ! $isActive,
+                            ])>
+                                <x-user.icon :name="$mi['icon']" :size="20" />
+                                {{ $mi['label'] }}
+                            </a>
+                        @endforeach
+
                         <button type="button" x-on:click="navOpen = true" class="flex flex-col items-center justify-center gap-1 text-[10px] font-medium text-on-surface-variant">
                             <x-user.icon name="menu" :size="20" />
                             Thêm
@@ -451,6 +501,7 @@
         </div>
 
         <x-notification.notification />
+        <x-user.qr-scanner />
         <livewire:student.join-class />
     </body>
 </html>

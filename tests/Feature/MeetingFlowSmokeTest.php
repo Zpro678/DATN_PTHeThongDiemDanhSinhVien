@@ -82,7 +82,7 @@ class MeetingFlowSmokeTest extends TestCase
         Livewire::actingAs($owner)
             ->test(MeetingSessions::class, ['meeting' => $meeting])
             ->assertOk()
-            ->assertSee('Danh sách phiên điểm danh')
+            ->assertSee('Danh sách phiên')
             ->assertSee('Lần 1');
     }
 

@@ -67,8 +67,8 @@ class LecturerQrAttendanceTest extends TestCase
         $this->actingAs($owner)
             ->get(route('lecturer.attendance.qr.session', $session))
             ->assertOk()
-            ->assertSee('Trạm chờ điểm danh')
-            ->assertSee('Tìm MSSV, tên');
+            ->assertSee('Danh sách học viên')
+            ->assertSee('Tìm theo tên hoặc mã số');
 
         $record = AttendanceRecord::query()
             ->where('class_session_id', $session->id)
@@ -80,7 +80,7 @@ class LecturerQrAttendanceTest extends TestCase
             ->set('search', 'QR002')
             ->assertSee('Qr Beta Target')
             ->assertDontSee('Qr Alpha Hidden')
-            ->call('updateStatus', $record->id, 'present')
+            ->call('setStatus', $record->id, 'present')
             ->assertHasNoErrors();
 
         $this->assertDatabaseHas('attendance_records', [
@@ -410,6 +410,106 @@ class LecturerQrAttendanceTest extends TestCase
 
         Livewire::actingAs($owner)->test(QrAttendanceSession::class, ['session' => $session->id])
             ->assertViewHas('sameDeviceCount', 0);
+    }
+
+    public function test_device_check_toggle_off_disables_duplicate_detection(): void
+    {
+        $owner = User::factory()->create();
+        [$courseClass, $session] = $this->createOpenQrSessionNoGps($owner);
+        $session->forceFill(['device_check' => false])->save(); // Tắt kiểm tra thiết bị cho phiên.
+
+        [$userA, $memberA] = $this->enrolStudentWithRecord($courseClass, $session);
+        [$userB, $memberB] = $this->enrolStudentWithRecord($courseClass, $session);
+
+        // Cùng device_id nhưng device_check TẮT -> không gắn cờ trùng máy.
+        Livewire::actingAs($userA)->test(AttendanceCheckIn::class, ['token' => $session->qr_token])
+            ->call('checkIn', null, 'DEV-OFF-0001')->assertSet('isSuccess', true);
+        Livewire::actingAs($userB)->test(AttendanceCheckIn::class, ['token' => $session->qr_token])
+            ->call('checkIn', null, 'DEV-OFF-0001')->assertSet('isSuccess', true);
+
+        $this->assertNull(AttendanceRecord::where('class_member_id', $memberA->id)->value('gps_fraud_flag'));
+        $this->assertNull(AttendanceRecord::where('class_member_id', $memberB->id)->value('gps_fraud_flag'));
+    }
+
+    public function test_proxy_device_used_by_many_students_escalates_to_lecturer(): void
+    {
+        $owner = User::factory()->create();
+        [$courseClass, $session] = $this->createOpenQrSessionNoGps($owner);
+
+        // 3 sinh viên cùng dùng MỘT máy -> chạm ngưỡng leo thang (PROXY_DEVICE_STUDENT_THRESHOLD = 3).
+        foreach (range(1, 3) as $i) {
+            [$user] = $this->enrolStudentWithRecord($courseClass, $session);
+            Livewire::actingAs($user)->test(AttendanceCheckIn::class, ['token' => $session->qr_token])
+                ->call('checkIn', null, 'DEV-PROXY-0001')->assertSet('isSuccess', true);
+        }
+
+        $notif = \App\Models\Notification::query()
+            ->where('notifiable_id', $owner->id)
+            ->where('data->title', 'Cảnh báo máy điểm danh hộ')
+            ->first();
+        $this->assertNotNull($notif);
+        $this->assertSame(3, (int) ($notif->data['distinct_students'] ?? 0));
+    }
+
+    public function test_impossible_travel_is_flagged(): void
+    {
+        $base = Carbon::create(2026, 7, 5, 8, 0, 0);
+        $this->travelTo($base);
+
+        $owner = User::factory()->create();
+        $courseClass = CourseClass::factory()->create(['owner_user_id' => $owner->id]);
+        $student = User::factory()->create();
+        $member = ClassMember::create([
+            'class_id' => $courseClass->id,
+            'user_id' => $student->id,
+            'status' => ClassMember::STATUS_ACTIVE,
+        ]);
+
+        $meeting = ClassMeeting::factory()->create([
+            'class_id' => $courseClass->id, 'user_Created' => $owner->id,
+            'date' => $base->toDateString(), 'start_time' => '00:00:00', 'end_time' => '23:59:00', 'status' => 'active',
+        ]);
+
+        // Lần điểm danh TRƯỚC ở TP.HCM (đã có GPS ghi nhận).
+        $prevSession = ClassSession::factory()->create([
+            'class_id' => $courseClass->id, 'meeting_id' => $meeting->id, 'created_by' => $owner->id,
+            'date' => $base->toDateString(), 'status' => 'active', 'qr_token' => 'IT-PREV',
+            'token_expires_at' => $base->copy()->addDay(), 'gps_latitude' => 10.762622, 'gps_longitude' => 106.660172, 'gps_radius' => 500,
+        ]);
+        AttendanceRecord::factory()->create([
+            'class_session_id' => $prevSession->id, 'class_member_id' => $member->id,
+            'status' => 'present', 'check_in_time' => $base, 'gps_latitude_recorded' => 10.762622, 'gps_longitude_recorded' => 106.660172,
+        ]);
+
+        // Lần điểm danh HIỆN TẠI ở Hà Nội (~1140km) ngay sau đó -> bất khả thi.
+        $curSession = ClassSession::factory()->create([
+            'class_id' => $courseClass->id, 'meeting_id' => $meeting->id, 'created_by' => $owner->id,
+            'date' => $base->toDateString(), 'status' => 'active', 'qr_token' => 'IT-CUR',
+            'token_expires_at' => $base->copy()->addDay(), 'gps_latitude' => 21.028511, 'gps_longitude' => 105.804817, 'gps_radius' => 500,
+        ]);
+        $curRecord = AttendanceRecord::factory()->create([
+            'class_session_id' => $curSession->id, 'class_member_id' => $member->id,
+            'status' => 'pending', 'check_in_time' => null,
+        ]);
+
+        // Cấp check_token GPS hợp lệ tại Hà Nội (trong bán kính của phiên hiện tại).
+        \App\Models\GpsVerification::create([
+            'session_id' => $curSession->id, 'member_id' => $member->id,
+            'token' => 'IT-VERIFY-TOKEN', 'check_token' => 'IT-CHECK-TOKEN',
+            'lat' => 21.028511, 'lng' => 105.804817, 'accuracy' => 20,
+            'is_used' => false, 'expires_at' => $base->copy()->addMinutes(2),
+            'ip_address' => '127.0.0.1',
+        ]);
+
+        Livewire::actingAs($student)->test(AttendanceCheckIn::class, ['token' => 'IT-CUR'])
+            ->call('checkIn', 'IT-CHECK-TOKEN', 'DEV-IT-0001')
+            ->assertSet('isSuccess', true);
+
+        $curRecord->refresh();
+        $this->assertSame('impossible_travel', $curRecord->gps_fraud_flag);
+        $this->assertStringContainsString('bất khả thi', (string) $curRecord->note);
+
+        $this->travelBack();
     }
 
     // Lưu ý: cấu hình GPS mức lớp đã bị loại bỏ khỏi schema (DBML mới);
