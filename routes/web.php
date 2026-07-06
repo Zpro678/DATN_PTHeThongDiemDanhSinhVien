@@ -43,6 +43,14 @@ use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Route;
 
 Route::get('/', function () {
+    if (auth()->check()) {
+        $user = auth()->user();
+        if ($user->isAdmin()) {
+            return redirect()->route('admin.dashboard', ['ma_user' => $user->id]);
+        }
+        return redirect()->route('dashboard', ['ma_user' => $user->id]);
+    }
+    
     return view('welcome');
 });
 

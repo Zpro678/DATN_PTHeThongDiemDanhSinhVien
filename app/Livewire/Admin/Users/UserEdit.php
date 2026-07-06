@@ -17,6 +17,14 @@ class UserEdit extends Component
     public $role = User::ROLE_USER;
     public $status = 'active';
 
+    public function messages()
+    {
+        return [
+            'email.unique' => 'Email đã được sử dụng.',
+            '*.required' => 'Vui lòng điền đầy đủ thông tin.',
+        ];
+    }
+
     public function mount(User $user)
     {
         abort_unless(Auth::user()?->isAdmin(), 403);
@@ -34,7 +42,6 @@ class UserEdit extends Component
 
         $validatedData = $this->validate([
             'name' => ['required', 'string', 'max:255'],
-            'email' => ['required', 'string', 'email', 'max:255', Rule::unique('users')->ignore($this->user->id)],
             'status' => ['required', 'in:active,blocked'],
             'role' => ['required', 'in:'.User::ROLE_USER.','.User::ROLE_ADMIN.','.User::ROLE_SUPER_ADMIN],
         ]);
@@ -48,17 +55,21 @@ class UserEdit extends Component
 
         // Logic phân quyền sửa đổi role
         if ($this->user->id !== $authUser->id && $this->user->role !== $validatedData['role']) {
-            if (!$authUser->isSuperAdmin() && $this->user->isAdmin()) {
-                session()->flash('error', 'Admin không có quyền thay đổi vai trò của một Admin khác. Chỉ Super Admin mới có quyền này.');
-                return;
-            }
-            if ($validatedData['role'] === User::ROLE_SUPER_ADMIN) {
-                session()->flash('error', 'Không thể cấp quyền Super Admin cho người dùng khác.');
+            if (!$authUser->isSuperAdmin()) {
+                session()->flash('error', 'Chỉ có Super Admin mới có quyền thay đổi vai trò của người dùng.');
                 return;
             }
         }
 
+        $oldValues = $this->user->toArray();
         $this->user->update($validatedData);
+
+        app(\App\Services\AuditLogService::class)->log('user_edited', [
+            'table_name' => 'users',
+            'row_id' => $this->user->id,
+            'old_values' => \Illuminate\Support\Arr::except($oldValues, ['password']),
+            'new_values' => \Illuminate\Support\Arr::except($this->user->toArray(), ['password']),
+        ]);
 
         session()->flash('success', 'Cập nhật thông tin người dùng thành công.');
         return redirect()->route('admin.users.show', $this->user);

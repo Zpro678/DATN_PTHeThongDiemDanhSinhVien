@@ -49,10 +49,17 @@ class AuthenticatedSessionController extends Controller
         $request->session()->regenerate();
 
         if ($user->isAdmin()) {
-            return redirect()->route('admin.dashboard', ['ma_user' => $request->user()->id]);
+            return redirect()->intended(route('admin.dashboard', ['ma_user' => $request->user()->id], absolute: false));
         }
 
-        return redirect()->intended(route('dashboard', ['ma_user' => $request->user()->id], absolute: false));
+        // Fix: If a normal user's intended URL is an admin route (because they used it previously), redirect them to their user dashboard instead to avoid 403.
+        $intended = session()->pull('url.intended', route('dashboard', ['ma_user' => $request->user()->id], absolute: false));
+        
+        if (str_contains($intended, '/admin/')) {
+            return redirect()->route('dashboard', ['ma_user' => $request->user()->id]);
+        }
+
+        return redirect()->to($intended);
     }
 
     /**

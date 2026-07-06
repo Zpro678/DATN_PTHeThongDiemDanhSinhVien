@@ -58,22 +58,33 @@ class EditProfile extends Component
 
         $this->validate([
             'name' => ['required', 'string', 'max:255'],
-            'email' => ['required', 'string', 'lowercase', 'email', 'max:255', Rule::unique('users')->ignore($user->id)],
             'avatar' => ['nullable', 'image', 'max:10240'], // 10MB Max
         ]);
 
         $user->fill([
             'name' => $this->name,
-            'email' => $this->email,
         ]);
 
-        if ($user->isDirty('email')) {
-            $user->email_verified_at = null;
-        }
-
         if ($this->avatar) {
-            $path = $this->avatar->store('avatars', 'public');
-            $user->avatar = $path;
+            $manager = new \Intervention\Image\ImageManager(new \Intervention\Image\Drivers\Gd\Driver());
+            $image = $manager->read($this->avatar->getRealPath());
+            
+            // Resize image to max 400x400
+            $image->scaleDown(width: 400, height: 400);
+            
+            $filename = uniqid('avatar_') . '.webp';
+            $relativePath = 'avatars/' . $filename;
+            $fullPath = storage_path('app/public/' . $relativePath);
+            
+            // Đảm bảo thư mục tồn tại
+            if (!file_exists(storage_path('app/public/avatars'))) {
+                mkdir(storage_path('app/public/avatars'), 0755, true);
+            }
+
+            // Nén webp (chất lượng 80%) và lưu
+            $image->toWebp(80)->save($fullPath);
+            
+            $user->avatar = $relativePath;
         }
 
         $user->save();
@@ -99,6 +110,18 @@ class EditProfile extends Component
         $user->update([
             'password' => Hash::make($this->password),
         ]);
+
+        \App\Models\AuditLog::create([
+            'user_id' => $user->id,
+            'action' => 'Đã thay đổi mật khẩu cá nhân',
+            'table_name' => 'users',
+            'row_id' => $user->id,
+            'ip_address' => request()->ip(),
+            'user_agent' => substr(request()->userAgent() ?? '', 0, 255),
+            'created_at' => now(),
+        ]);
+
+        Auth::logoutOtherDevices($this->password);
 
         $this->reset(['current_password', 'password', 'password_confirmation']);
 
