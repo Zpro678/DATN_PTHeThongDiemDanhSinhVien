@@ -72,7 +72,7 @@ class EditProfile extends Component
             // Resize image to max 400x400
             $image->scaleDown(width: 400, height: 400);
             
-            $filename = uniqid('avatar_') . '.webp';
+            $filename = uniqid('avatar_') . '.jpg';
             $relativePath = 'avatars/' . $filename;
             $fullPath = storage_path('app/public/' . $relativePath);
             
@@ -81,8 +81,8 @@ class EditProfile extends Component
                 mkdir(storage_path('app/public/avatars'), 0755, true);
             }
 
-            // Nén webp (chất lượng 80%) và lưu
-            $image->toWebp(80)->save($fullPath);
+            // Nén JPEG (chất lượng 80%) và lưu
+            $image->toJpeg(80)->save($fullPath);
             
             $user->avatar = $relativePath;
         }

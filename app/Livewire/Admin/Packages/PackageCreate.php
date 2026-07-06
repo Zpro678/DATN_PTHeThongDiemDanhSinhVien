@@ -38,7 +38,7 @@ class PackageCreate extends Component
         abort_unless(Auth::user()?->isAdmin(), 403);
 
         $this->validate([
-            'plan_tier' => 'required|string|max:50|unique:plans,plan_tier',
+            'plan_tier' => 'required|string|max:50',
             'name' => 'required|string|max:255',
             'description' => 'nullable|string|max:1000',
             'priceType' => 'required|in:fixed,free,contact',

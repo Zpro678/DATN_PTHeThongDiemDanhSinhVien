@@ -24,6 +24,15 @@ class Upgrade extends Component
     /** Phương thức thanh toán đang chọn trong modal: 'momo' | 'vnpay'. */
     public string $paymentMethod = 'momo';
 
+    /** Mã giảm giá người dùng nhập */
+    public string $couponCode = '';
+
+    /** Mã giảm giá đã được áp dụng hợp lệ */
+    public ?\App\Models\Coupon $appliedCoupon = null;
+
+    /** Số tiền được giảm giá */
+    public float $discountAmount = 0;
+
     /**
      * Mở hộp xác nhận cho gói được chọn.
      */
@@ -31,6 +40,7 @@ class Upgrade extends Component
     {
         $this->confirmingPlanId = $planId;
         $this->paymentMethod = 'momo'; // Mặc định MoMo mỗi lần mở modal.
+        $this->removeCoupon();
     }
 
     /**
@@ -39,6 +49,75 @@ class Upgrade extends Component
     public function cancel(): void
     {
         $this->confirmingPlanId = null;
+        $this->removeCoupon();
+    }
+
+    public function applyCoupon(): void
+    {
+        $this->resetErrorBag('couponCode');
+        $code = trim($this->couponCode);
+
+        if (empty($code)) {
+            $this->addError('couponCode', 'Vui lòng nhập mã giảm giá.');
+            return;
+        }
+
+        $coupon = \App\Models\Coupon::where('code', $code)->first();
+
+        if (!$coupon) {
+            $this->addError('couponCode', 'Mã giảm giá không tồn tại.');
+            return;
+        }
+
+        if (!$coupon->is_active) {
+            $this->addError('couponCode', 'Mã giảm giá đã bị vô hiệu hóa.');
+            return;
+        }
+
+        if ($coupon->valid_from && $coupon->valid_from > now()) {
+            $this->addError('couponCode', 'Mã giảm giá chưa đến thời gian áp dụng.');
+            return;
+        }
+
+        if ($coupon->valid_until && $coupon->valid_until < now()) {
+            $this->addError('couponCode', 'Mã giảm giá đã hết hạn.');
+            return;
+        }
+
+        if ($coupon->usage_limit !== null && $coupon->used_count >= $coupon->usage_limit) {
+            $this->addError('couponCode', 'Mã giảm giá đã hết lượt sử dụng.');
+            return;
+        }
+
+        if ($coupon->applicable_plan_id !== null && $coupon->applicable_plan_id !== $this->confirmingPlanId) {
+            $this->addError('couponCode', 'Mã giảm giá không áp dụng cho gói này.');
+            return;
+        }
+
+        $plan = Plan::find($this->confirmingPlanId);
+        if (!$plan) {
+            $this->addError('couponCode', 'Lỗi không tìm thấy gói.');
+            return;
+        }
+
+        $this->appliedCoupon = $coupon;
+        
+        if ($coupon->type === 'PERCENT') {
+            $discount = ($plan->price * $coupon->value) / 100;
+        } else {
+            $discount = $coupon->value;
+        }
+
+        // Không cho phép giảm quá giá gói
+        $this->discountAmount = min($discount, $plan->price);
+    }
+
+    public function removeCoupon(): void
+    {
+        $this->couponCode = '';
+        $this->appliedCoupon = null;
+        $this->discountAmount = 0;
+        $this->resetErrorBag('couponCode');
     }
 
     /**
@@ -106,14 +185,44 @@ class Upgrade extends Component
             ? random_int(100000000, 999999999)
             : 'TXN'.now()->timestamp.Str::upper(Str::random(5));
 
+        // Tái thẩm định mã giảm giá trước khi thanh toán
+        if ($this->appliedCoupon) {
+            $this->applyCoupon(); // Kiểm tra lại và tính lại discountAmount
+        }
+        
+        $finalAmount = max(0, $plan->price - $this->discountAmount);
+
+        // Nếu mã giảm giá giúp 100% miễn phí, thanh toán thành công ngay lập tức
+        if ($finalAmount <= 0) {
+            $transaction = $user->transactions()->create([
+                'plan_id' => $plan->id,
+                'amount' => 0,
+                'payment_method' => 'COUPON',
+                'transaction_code' => (string) $transactionCode,
+                'status' => 'success',
+                'coupon_id' => $this->appliedCoupon?->id,
+                'coupon_code' => $this->appliedCoupon?->code,
+                'created_at' => now(),
+            ]);
+
+            $subscriptions->activate($user, $plan);
+            $this->appliedCoupon?->increment('used_count');
+            $this->confirmingPlanId = null;
+            
+            session()->flash('status', "Đã áp dụng mã giảm giá 100%. Gói {$plan->name} đã được kích hoạt thành công!");
+            return null;
+        }
+
         // Gói trả phí: tạo giao dịch chờ thanh toán.
         $transaction = $user->transactions()->create([
             'plan_id' => $plan->id,
-            'amount' => $plan->price,
+            'amount' => $finalAmount,
             'payment_method' => $isPayos ? 'PAYOS' : 'MOMO',
             'transaction_code' => (string) $transactionCode,
             'status' => 'pending',
             'expired_at' => now()->addMinutes(15),
+            'coupon_id' => $this->appliedCoupon?->id,
+            'coupon_code' => $this->appliedCoupon?->code,
             'created_at' => now(),
         ]);
 

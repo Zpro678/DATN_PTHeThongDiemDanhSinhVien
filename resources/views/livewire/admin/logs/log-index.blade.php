@@ -35,10 +35,10 @@
                     @php
                         $action = strtolower($log->action ?? '');
                         $icon = match (true) {
-                            str_contains($action, 'create') || str_contains($action, 'add') => 'plus-circle',
-                            str_contains($action, 'attendance') || str_contains($action, 'check') => 'calendar-check',
-                            str_contains($action, 'update') || str_contains($action, 'setting') => 'settings',
-                            str_contains($action, 'delete') || str_contains($action, 'blocked') => 'alert-triangle',
+                            str_contains($action, 'create') || str_contains($action, 'add') || str_contains($action, 'tạo') => 'plus-circle',
+                            str_contains($action, 'attendance') || str_contains($action, 'check') || str_contains($action, 'điểm danh') => 'calendar-check',
+                            str_contains($action, 'update') || str_contains($action, 'setting') || str_contains($action, 'sửa') || str_contains($action, 'cập nhật') => 'settings',
+                            str_contains($action, 'delete') || str_contains($action, 'blocked') || str_contains($action, 'xóa') => 'alert-triangle',
                             default => 'activity',
                         };
                         $tone = match ($icon) {
@@ -48,6 +48,19 @@
                             'alert-triangle' => 'text-rose-600 bg-rose-50 border-rose-100',
                             default => 'text-indigo-600 bg-indigo-50 border-indigo-100',
                         };
+
+                        // Dịch các action từ tiếng Anh sang tiếng Việt nếu hệ thống đang lưu raw key
+                        $actionMap = [
+                            'login_success' => 'vừa đăng nhập thành công vào hệ thống',
+                            'logout' => 'đã đăng xuất khỏi hệ thống',
+                            'user_created' => 'đã tạo mới người dùng',
+                            'user_edited' => 'đã cập nhật thông tin người dùng',
+                            'user_deleted' => 'đã xóa người dùng',
+                            'created' => 'đã tạo mới bản ghi',
+                            'updated' => 'đã cập nhật bản ghi',
+                            'deleted' => 'đã xóa bản ghi',
+                        ];
+                        $displayAction = $actionMap[$log->action] ?? $log->action;
                     @endphp
 
                     <div class="group relative flex items-start gap-4 md:gap-6">
@@ -70,7 +83,7 @@
                             @endphp
                             <p class="break-words text-sm font-semibold leading-relaxed text-slate-700">
                                 <span class="font-bold text-blue-600">{{ $log->user?->name ?? 'Hệ thống' }}</span>
-                                {{ $log->action }}
+                                {{ $displayAction }}
                                 @if($log->courseClass)
                                     lớp <span class="font-bold text-slate-900">{{ $log->courseClass->name }}</span>
                                 @elseif($recordName)

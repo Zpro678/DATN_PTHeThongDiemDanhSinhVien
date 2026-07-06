@@ -59,6 +59,10 @@ class MomoController extends Controller
                 if ($fresh->plan) {
                     $subscriptions->activate($fresh->user, $fresh->plan);
                 }
+
+                if ($fresh->coupon_id) {
+                    $fresh->coupon?->increment('used_count');
+                }
             } else {
                 $fresh->update(['status' => 'failed']);
             }

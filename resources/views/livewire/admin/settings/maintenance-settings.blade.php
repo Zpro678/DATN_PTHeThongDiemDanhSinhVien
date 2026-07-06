@@ -86,7 +86,7 @@
                 </div>
             </div>
 
-            <form wire:submit.prevent="save">
+            <form wire:submit.prevent="save" x-data="{ mode: @entangle('maintenance_mode') }">
                 <div class="flex flex-col items-start justify-between gap-6 md:flex-row md:items-center bg-white p-5 rounded-xl border border-rose-100 shadow-sm mb-6">
                     <div>
                         <h3 class="text-base font-bold text-slate-900">Chế độ bảo trì</h3>
@@ -99,7 +99,7 @@
                     </label>
                 </div>
 
-                <div class="grid grid-cols-1 gap-6 md:grid-cols-2">
+                <div class="grid grid-cols-1 gap-6 md:grid-cols-2" :class="mode ? '' : 'opacity-50 pointer-events-none'">
                     <div class="space-y-2">
                         <label class="block text-sm font-semibold text-slate-700">Thời gian dự kiến Bắt đầu</label>
                         <input type="datetime-local" wire:model="start_time" class="w-full rounded-xl border border-slate-200 bg-white px-4 py-2.5 text-slate-900 transition-colors focus:border-blue-500 focus:ring-2 focus:ring-blue-500">

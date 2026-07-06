@@ -234,11 +234,46 @@
                             @endif
                         </p>
                     @else
+                        <div class="mb-4">
+                            @if ($appliedCoupon)
+                                <div class="mb-3 flex items-center justify-between rounded-xl border border-emerald-200 bg-emerald-50 px-3 py-2">
+                                    <div class="flex items-center gap-2">
+                                        <x-user.icon name="ticket" :size="16" class="text-emerald-600" />
+                                        <span class="text-sm font-bold text-emerald-700">Mã: {{ $appliedCoupon->code }}</span>
+                                    </div>
+                                    <button type="button" wire:click="removeCoupon" class="text-emerald-600 hover:text-emerald-800">
+                                        <x-user.icon name="x" :size="14" />
+                                    </button>
+                                </div>
+                            @else
+                                <div class="mb-3 flex gap-2">
+                                    <input type="text" wire:model="couponCode" placeholder="Nhập mã giảm giá..." 
+                                        class="w-full rounded-xl border border-outline-variant/30 bg-white px-3 py-2 text-sm focus:border-primary focus:outline-none focus:ring-1 focus:ring-primary"
+                                        wire:keydown.enter="applyCoupon"
+                                    >
+                                    <button type="button" wire:click="applyCoupon" class="shrink-0 rounded-xl bg-surface-container-low px-4 py-2 text-sm font-bold text-on-surface-variant hover:bg-surface-container">
+                                        Áp dụng
+                                    </button>
+                                </div>
+                                @error('couponCode')
+                                    <p class="mb-3 text-xs text-rose-500">{{ $message }}</p>
+                                @enderror
+                            @endif
+                        </div>
+
                         <div class="flex items-center justify-between">
                             <span class="text-on-surface-variant">Tổng thanh toán</span>
-                            <span class="text-2xl font-extrabold text-on-surface">{{ number_format($confirmingPlan->price, 0, ',', '.') }}đ</span>
+                            <div class="text-right">
+                                @if ($appliedCoupon)
+                                    <span class="text-sm text-on-surface-variant/70 line-through">{{ number_format($confirmingPlan->price, 0, ',', '.') }}đ</span>
+                                    <br>
+                                    <span class="text-2xl font-extrabold text-on-surface">{{ number_format(max(0, $confirmingPlan->price - $discountAmount), 0, ',', '.') }}đ</span>
+                                @else
+                                    <span class="text-2xl font-extrabold text-on-surface">{{ number_format($confirmingPlan->price, 0, ',', '.') }}đ</span>
+                                @endif
+                            </div>
                         </div>
-                        <p class="mt-0.5 text-xs text-on-surface-variant/70">/ {{ $confirmingPlan->duration_days >= 365 ? round($confirmingPlan->duration_days / 365).' năm' : round($confirmingPlan->duration_days / 30).' tháng' }}</p>
+                        <p class="mt-0.5 text-right text-xs text-on-surface-variant/70">/ {{ $confirmingPlan->duration_days >= 365 ? round($confirmingPlan->duration_days / 365).' năm' : round($confirmingPlan->duration_days / 30).' tháng' }}</p>
 
                         <div class="mt-5">
                             <p class="mb-2 text-[11px] font-bold uppercase tracking-wider text-on-surface-variant">Phương thức thanh toán</p>

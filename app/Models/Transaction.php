@@ -27,6 +27,8 @@ class Transaction extends Model
         'failure_reason', // Lý do thất bại nếu lỗi.
         'paid_at', // Thời điểm thanh toán thành công.
         'expired_at', // Thời gian hết hạn thanh toán.
+        'coupon_id', // ID mã giảm giá.
+        'coupon_code', // Mã giảm giá.
     ];
 
     protected function casts(): array
@@ -47,5 +49,10 @@ class Transaction extends Model
     public function plan(): BelongsTo
     {
         return $this->belongsTo(Plan::class);
+    }
+
+    public function coupon(): BelongsTo
+    {
+        return $this->belongsTo(Coupon::class);
     }
 }

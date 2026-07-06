@@ -29,11 +29,32 @@ class MaintenanceSettings extends Component
         $this->backups = $backupService->getBackups();
     }
 
-    protected $rules = [
-        'maintenance_mode' => 'boolean',
-        'start_time' => 'nullable|date',
-        'end_time' => 'nullable|date|after_or_equal:start_time',
-    ];
+    public function rules()
+    {
+        if ($this->maintenance_mode) {
+            return [
+                'maintenance_mode' => 'boolean',
+                'start_time' => ['required', 'date', 'after_or_equal:today'],
+                'end_time' => ['required', 'date', 'after_or_equal:start_time'],
+            ];
+        }
+
+        return [
+            'maintenance_mode' => 'boolean',
+            'start_time' => ['nullable'],
+            'end_time' => ['nullable'],
+        ];
+    }
+
+    public function messages()
+    {
+        return [
+            'start_time.required_if' => 'Vui lòng chọn thời gian bắt đầu bảo trì.',
+            'start_time.after_or_equal' => 'Thời gian bắt đầu không được nằm trong quá khứ.',
+            'end_time.required_if' => 'Vui lòng chọn thời gian kết thúc bảo trì.',
+            'end_time.after_or_equal' => 'Thời gian kết thúc phải sau hoặc bằng thời gian bắt đầu.',
+        ];
+    }
 
     public function save(\App\Services\NotificationService $notificationService, BackupService $backupService)
     {
@@ -46,6 +67,10 @@ class MaintenanceSettings extends Component
                 $this->dispatch('toast', message: 'Bạn chưa sao lưu dữ liệu trong 12 giờ qua. Vui lòng tạo bản sao lưu trước khi bật bảo trì!', type: 'error');
                 return;
             }
+        } else {
+            // Nếu TẮT bảo trì, tự động xóa trắng ngày giờ
+            $this->start_time = null;
+            $this->end_time = null;
         }
         
         Setting::set('maintenance_mode', $this->maintenance_mode);
