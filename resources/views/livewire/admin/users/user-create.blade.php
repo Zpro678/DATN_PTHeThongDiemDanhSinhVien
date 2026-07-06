@@ -78,6 +78,11 @@
                                 <input type="password" wire:model="password" class="w-full rounded-xl border border-slate-200 bg-white px-4 py-3 text-sm font-bold text-slate-900 placeholder-slate-400 focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-500" placeholder="Nhập mật khẩu (tối thiểu 8 ký tự)">
                                 @error('password') <span class="text-xs text-rose-500 mt-1 block font-medium">{{ $message }}</span> @enderror
                             </div>
+                            
+                            <div>
+                                <label class="mb-2 block text-[10px] font-bold uppercase tracking-widest text-slate-400">Xác nhận mật khẩu <span class="text-rose-500">*</span></label>
+                                <input type="password" wire:model="password_confirmation" class="w-full rounded-xl border border-slate-200 bg-white px-4 py-3 text-sm font-bold text-slate-900 placeholder-slate-400 focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-500" placeholder="Nhập lại mật khẩu">
+                            </div>
                         </div>
 
                         <div class="space-y-5">

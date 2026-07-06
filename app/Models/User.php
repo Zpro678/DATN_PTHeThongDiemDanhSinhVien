@@ -184,6 +184,18 @@ class User extends Authenticatable implements MustVerifyEmail
     }
 
     /**
+     * Send the password reset notification.
+     * Overridden to push this notification to the Queue.
+     *
+     * @param  string  $token
+     * @return void
+     */
+    public function sendPasswordResetNotification($token): void
+    {
+        $this->notify(new \App\Notifications\QueuedResetPassword($token));
+    }
+
+    /**
      * Bootstrap the model and its traits.
      */
     protected static function booted(): void

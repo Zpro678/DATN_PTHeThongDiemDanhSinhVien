@@ -16,7 +16,7 @@ return [
     'reset' => 'Mật khẩu của bạn đã được đặt lại.',
     'sent' => 'Chúng tôi đã gửi link đặt lại mật khẩu vào email của bạn.',
     'throttled' => 'Vui lòng đợi trước khi thử lại.',
-    'token' => 'Mã xác nhận mật khẩu không hợp lệ.',
+    'token' => 'Liên kết đặt lại mật khẩu không hợp lệ hoặc đã hết hạn. Vui lòng yêu cầu lại.',
     'user' => "Không tìm thấy gmail.",
 
 ];

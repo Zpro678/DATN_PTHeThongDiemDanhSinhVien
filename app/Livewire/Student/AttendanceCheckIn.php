@@ -82,10 +82,9 @@ class AttendanceCheckIn extends Component
                 'is_account' => auth()->check(),
             ]);
 
-        // Chống điểm danh 2 lần trong cùng một phiên: nếu đã có giờ điểm danh hoặc trạng thái
-        // đã ghi nhận (có mặt/muộn/có phép) thì báo "đã điểm danh" và không cho quét lại.
-        if ($this->record && ($this->record->check_in_time !== null
-            || in_array($this->record->status, ['present', 'late', 'excused'], true))) {
+        // Chống điểm danh 2 lần trong cùng một phiên: chỉ chặn khi đã ghi nhận có mặt/muộn/có phép.
+        // KHÔNG chặn 'invalid' (quá xa GPS) để SV còn quét lại được sau khi vào vùng cho phép.
+        if ($this->record && in_array($this->record->status, ['present', 'late', 'excused'], true)) {
             $this->isSuccess = true;
             $this->isAutoCheckIn = false; // Chặn blade tự động bấm điểm danh lại.
             $this->statusMessage = 'Bạn đã điểm danh cho phiên này rồi. Mỗi phiên chỉ được điểm danh một lần.';
@@ -139,9 +138,10 @@ class AttendanceCheckIn extends Component
         }
 
         // Chặn điểm danh lần 2 trong cùng phiên (kể cả khi client cố gọi lại checkIn).
+        // Chỉ chặn khi đã ghi nhận có mặt/đi muộn/có phép — KHÔNG chặn 'invalid' (quá xa GPS)
+        // để SV còn quét lại được sau khi đi vào vùng cho phép.
         $this->record->refresh();
-        if ($this->record->check_in_time !== null
-            || in_array($this->record->status, ['present', 'late', 'excused'], true)) {
+        if (in_array($this->record->status, ['present', 'late', 'excused'], true)) {
             $this->isSuccess = true;
             $this->statusMessage = 'Bạn đã điểm danh cho phiên này rồi. Mỗi phiên chỉ được điểm danh một lần.';
             return;
@@ -258,18 +258,24 @@ class AttendanceCheckIn extends Component
             if ($distanceMeters > $this->session->gps_radius) {
                 $this->statusMessage = 'Vị trí của bạn quá xa lớp học (' . round($distanceMeters) . 'm). Bán kính cho phép là ' . $this->session->gps_radius . 'm.';
                 $this->isGpsError = true;
-                
+
+                // Điểm danh KHÔNG thành công (quá xa) -> chỉ báo LÝ DO cho SINH VIÊN, KHÔNG báo giảng viên.
+                // Chỉ báo ở LẦN ĐẦU ra ngoài vùng: bản ghi giữ cờ 'out_of_radius' xuyên các lần thử
+                // (tới khi điểm danh thành công), nên nếu cờ đã là 'out_of_radius' nghĩa là đã báo rồi
+                // -> bỏ qua, tránh spam khi SV quét hụt nhiều lần.
+                $alreadyReportedOutOfRadius = $this->record->gps_fraud_flag === 'out_of_radius';
+
                 // Vẫn ghi nhận nhật ký gian lận
                 $gpsFraudFlag = 'out_of_radius';
-                
-                $this->record->loadMissing('classMember');
-                app(\App\Services\NotificationService::class)->notifyGpsFraud(
-                    $this->session->courseClass->owner_user_id,
-                    $this->record->classMember->user_id ?? null,
-                    $this->session,
-                    $this->record->classMember->full_name ?? 'Sinh viên',
-                    $distanceMeters
-                );
+
+                if (! $alreadyReportedOutOfRadius) {
+                    $this->record->loadMissing('classMember');
+                    app(\App\Services\NotificationService::class)->notifyGpsFraud(
+                        $this->record->classMember->user_id ?? null,
+                        $this->session,
+                        $distanceMeters
+                    );
+                }
             }
 
             // Di chuyển bất khả thi (impossible travel): cùng một người vừa điểm danh ở nơi
@@ -295,7 +301,10 @@ class AttendanceCheckIn extends Component
 
         $updateData = [
             'status' => $gpsFraudFlag === 'out_of_radius' ? 'invalid' : $status,
-            'check_in_time' => now('Asia/Ho_Chi_Minh'),
+            // Quá xa (out_of_radius) = KHÔNG điểm danh: để check_in_time = null để (a) SV vẫn
+            // quét lại được khi đi vào vùng cho phép, (b) không bị tính là đã check-in ở khâu dò
+            // trùng máy/leo thang. Chỉ ghi giờ khi thực sự có mặt/đi muộn.
+            'check_in_time' => $gpsFraudFlag === 'out_of_radius' ? null : now('Asia/Ho_Chi_Minh'),
             'distance_meters' => $distanceMeters,
             'gps_accuracy_meters' => $gpsAccuracy,
             'gps_latitude_recorded' => $gpsLatRecorded,

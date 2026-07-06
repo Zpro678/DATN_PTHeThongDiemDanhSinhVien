@@ -45,8 +45,16 @@ class UserIndex extends Component
             return; // Ngăn chặn tự khóa tài khoản của chính mình
         }
 
+        $oldStatus = $user->status;
         $user->status = $user->status === 'active' ? 'blocked' : 'active';
         $user->save();
+
+        app(\App\Services\AuditLogService::class)->log('user_status_changed', [
+            'table_name' => 'users',
+            'row_id' => $user->id,
+            'old_values' => ['status' => $oldStatus],
+            'new_values' => ['status' => $user->status],
+        ]);
     }
 
     #[Layout('components.admin-layout')]

@@ -78,8 +78,8 @@
                             </div>
 
                             <div>
-                                <label class="mb-2 block text-[10px] font-bold uppercase tracking-widest text-slate-400">Email</label>
-                                <input type="email" wire:model.live="email" class="w-full rounded-xl border border-slate-200 bg-white px-4 py-3 text-sm font-bold text-slate-900 focus:border-blue-500 focus:ring-2 focus:ring-blue-500">
+                                <label class="mb-2 block text-[10px] font-bold uppercase tracking-widest text-slate-400">Email (Không thể thay đổi)</label>
+                                <input type="email" wire:model.live="email" readonly class="w-full rounded-xl border border-slate-200 bg-slate-50 px-4 py-3 text-sm font-bold text-slate-500 cursor-not-allowed focus:outline-none">
                                 @error('email')<p class="mt-1 text-xs text-red-500">{{ $message }}</p>@enderror
                             </div>
                         </div>
@@ -95,13 +95,17 @@
                                 if ($user->isSuperAdmin()) {
                                     $roleOptions[] = ['value' => \App\Models\User::ROLE_SUPER_ADMIN, 'label' => 'Super Admin', 'sub_label' => 'Quản trị viên tối cao'];
                                 }
-                                $canEditRole = auth()->user()->isSuperAdmin() || (!auth()->user()->isSuperAdmin() && !$user->isAdmin());
+                                $canEditRole = auth()->user()->isSuperAdmin();
                                 // Không cho phép tự đổi quyền của chính mình
                                 if ($user->id === auth()->id()) {
                                     $canEditRole = false;
                                 }
                                 @endphp
-                                <x-custom-select wire:model.live="role" :options="$roleOptions" placeholder="Chọn vai trò" {{ $canEditRole ? '' : 'disabled' }} />
+                                @if(!$canEditRole)
+                                    <x-custom-select wire:model.live="role" :options="$roleOptions" placeholder="Chọn vai trò" disabled />
+                                @else
+                                    <x-custom-select wire:model.live="role" :options="$roleOptions" placeholder="Chọn vai trò" />
+                                @endif
                                 @error('role')<p class="mt-1 text-xs text-red-500">{{ $message }}</p>@enderror
                             </div>
 

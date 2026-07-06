@@ -746,43 +746,31 @@ class NotificationService
     }
 
     /**
-     * Báo cho giảng viên và sinh viên khi phát hiện sai GPS (khoảng cách quá xa).
+     * Báo cho SINH VIÊN lý do điểm danh thất bại do sai vị trí (quá xa lớp).
+     *
+     * KHÔNG báo giảng viên: điểm danh KHÔNG thành công thì không làm phiền GV — chỉ giúp chính
+     * sinh viên biết lý do để xử lý (đến gần lớp và quét lại). Giảng viên chỉ nhận thông báo ở
+     * các sự kiện đã-điểm-danh-thành-công/đáng ngờ (vd trùng máy), không nhận với lần quét hỏng.
      */
     public function notifyGpsFraud(
-        int $lecturerUserId,
         ?int $studentUserId,
         ClassSession $session,
-        string $studentName,
         float $distanceMeters
     ): void {
-        $className = $session->courseClass?->name ?? 'lớp học';
-        $isQr = !empty($session->qr_token);
-        $url = $this->sessionUrl($lecturerUserId, $session, $isQr);
+        if (! $studentUserId) {
+            return;
+        }
 
-        // Gửi cho giảng viên
+        $studentUrl = route('student.classes.show', ['ma_user' => $studentUserId, 'courseClass' => $session->class_id]);
         $this->push(
-            $lecturerUserId,
+            $studentUserId,
             'App\\Notifications\\FraudWarning',
-            'Cảnh báo vị trí (Sai GPS)',
-            "Sinh viên {$studentName} điểm danh ngoài phạm vi cho phép (" . round($distanceMeters) . "m) trong buổi \"{$session->name}\" của lớp {$className}.",
-            $url,
+            'Điểm danh thất bại (Sai vị trí)',
+            "Hệ thống phát hiện vị trí của bạn quá xa lớp học (" . round($distanceMeters) . "m) khi điểm danh buổi \"{$session->name}\". Kết quả điểm danh không được công nhận. Vui lòng đến gần lớp học và quét lại.",
+            $studentUrl,
             'warning',
             ['class_id' => $session->class_id]
         );
-
-        // Gửi cho sinh viên
-        if ($studentUserId) {
-            $studentUrl = route('student.classes.show', ['ma_user' => $studentUserId, 'courseClass' => $session->class_id]);
-            $this->push(
-                $studentUserId,
-                'App\\Notifications\\FraudWarning',
-                'Điểm danh thất bại (Sai vị trí)',
-                "Hệ thống phát hiện vị trí của bạn quá xa lớp học (" . round($distanceMeters) . "m) khi điểm danh buổi \"{$session->name}\". Kết quả điểm danh không được công nhận.",
-                $studentUrl,
-                'warning',
-                ['class_id' => $session->class_id]
-            );
-        }
     }
 
     /**

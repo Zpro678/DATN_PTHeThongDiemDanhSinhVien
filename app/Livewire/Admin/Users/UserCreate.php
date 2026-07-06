@@ -16,9 +16,20 @@ class UserCreate extends Component
     public $name = '';
     public $email = '';
     public $password = '';
+    public $password_confirmation = '';
     public $role = User::ROLE_USER;
     public $status = 'active';
     public $avatar;
+
+    public function messages()
+    {
+        return [
+            'email.unique' => 'Email đã được sử dụng.',
+            '*.required' => 'Vui lòng điền đầy đủ thông tin.',
+            'password.confirmed' => 'Mật khẩu xác nhận không khớp.',
+            'password.min' => 'Mật khẩu phải có ít nhất 8 ký tự.',
+        ];
+    }
 
     public function mount()
     {
@@ -32,7 +43,7 @@ class UserCreate extends Component
         $validatedData = $this->validate([
             'name' => ['required', 'string', 'max:255'],
             'email' => ['required', 'string', 'email', 'max:255', 'unique:users,email'],
-            'password' => ['required', 'string', 'min:8'],
+            'password' => ['required', 'string', 'min:8', 'confirmed'],
             'role' => ['required', 'in:'.User::ROLE_USER.','.User::ROLE_ADMIN],
             'status' => ['required', 'in:active,blocked'],
             'avatar' => ['nullable', 'image', 'max:2048'],
@@ -44,7 +55,13 @@ class UserCreate extends Component
 
         $validatedData['password'] = Hash::make($validatedData['password']);
 
-        User::create($validatedData);
+        $user = User::create($validatedData);
+
+        app(\App\Services\AuditLogService::class)->log('user_created', [
+            'table_name' => 'users',
+            'row_id' => $user->id,
+            'new_values' => \Illuminate\Support\Arr::except($user->toArray(), ['password']),
+        ]);
 
         session()->flash('success', 'Thêm tài khoản người dùng thành công.');
         return redirect()->route('admin.users.index');
