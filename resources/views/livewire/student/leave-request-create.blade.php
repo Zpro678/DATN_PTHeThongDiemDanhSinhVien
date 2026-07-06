@@ -68,15 +68,15 @@
 
                         <!-- Chọn buổi học -->
                         <div>
-                            <label for="class_session_id" class="mb-2 block text-[16px] font-bold text-slate-700">Chọn buổi học</label>
-                            <div x-data="{ open: false }" class="relative w-full {{ empty($this->sessions()) ? 'opacity-50 pointer-events-none' : '' }}">
+                            <label for="class_meeting_id" class="mb-2 block text-[16px] font-bold text-slate-700">Chọn buổi học</label>
+                            <div x-data="{ open: false }" class="relative w-full {{ empty($this->meetings) ? 'opacity-50 pointer-events-none' : '' }}">
                                 <button @click="open = !open" @click.away="open = false" type="button" 
                                     class="flex w-full items-center justify-between rounded-lg border border-transparent bg-slate-50 px-4 py-3 text-[17px] text-slate-600 transition hover:bg-slate-100 focus:border-primary focus:bg-white focus:outline-none focus:ring-1 focus:ring-primary"
-                                    {{ empty($this->sessions()) ? 'disabled' : '' }}>
+                                    {{ empty($this->meetings) ? 'disabled' : '' }}>
                                     <span class="truncate">
-                                        @if($class_session_id)
-                                            @php $selectedSession = collect($this->sessions())->firstWhere('id', $class_session_id); @endphp
-                                            {{ $selectedSession ? \Carbon\Carbon::parse($selectedSession->date)->format('d/m/Y') . ' - ' . $selectedSession->name : '-- Chọn buổi học --' }}
+                                        @if($class_meeting_id)
+                                            @php $selectedMeeting = collect($this->meetings)->firstWhere('id', $class_meeting_id); @endphp
+                                            {{ $selectedMeeting ? \Carbon\Carbon::parse($selectedMeeting->date)->format('d/m/Y') . ' - ' . $selectedMeeting->name : '-- Chọn buổi học --' }}
                                         @else
                                             -- Chọn buổi học --
                                         @endif
@@ -87,28 +87,28 @@
                                     class="absolute left-0 top-full z-10 mt-1 w-full overflow-hidden rounded-xl border border-slate-200 bg-white shadow-xl">
                                     <ul class="max-h-60 overflow-y-auto p-1.5">
                                         <li>
-                                            <button @click="$wire.set('class_session_id', ''); open = false;" type="button" 
-                                                class="flex w-full items-center justify-between rounded-lg px-3 py-2.5 text-left text-[16px] transition-colors {{ empty($class_session_id) ? 'bg-primary/10 font-bold text-primary' : 'text-slate-700 hover:bg-slate-50' }}">
+                                            <button @click="$wire.set('class_meeting_id', ''); open = false;" type="button" 
+                                                class="flex w-full items-center justify-between rounded-lg px-3 py-2.5 text-left text-[16px] transition-colors {{ empty($class_meeting_id) ? 'bg-primary/10 font-bold text-primary' : 'text-slate-700 hover:bg-slate-50' }}">
                                                 <span>-- Chọn buổi học --</span>
-                                                @if(empty($class_session_id)) <x-user.icon name="check" class="h-4 w-4" /> @endif
+                                                @if(empty($class_meeting_id)) <x-user.icon name="check" class="h-4 w-4" /> @endif
                                             </button>
                                         </li>
-                                        @foreach($this->sessions() as $session)
+                                        @foreach($this->meetings as $meeting)
                                             <li>
-                                                <button @click="$wire.set('class_session_id', '{{ $session->id }}'); open = false;" type="button" 
-                                                    class="flex w-full items-center justify-between rounded-lg px-3 py-2.5 text-left text-[16px] transition-colors {{ $class_session_id == $session->id ? 'bg-primary/10 font-bold text-primary' : 'text-slate-700 hover:bg-slate-50' }}">
-                                                    <span>{{ \Carbon\Carbon::parse($session->date)->format('d/m/Y') }} - {{ $session->name }}</span>
-                                                    @if($class_session_id == $session->id) <x-user.icon name="check" class="h-4 w-4" /> @endif
+                                                <button @click="$wire.set('class_meeting_id', '{{ $meeting->id }}'); open = false;" type="button" 
+                                                    class="flex w-full items-center justify-between rounded-lg px-3 py-2.5 text-left text-[16px] transition-colors {{ $class_meeting_id == $meeting->id ? 'bg-primary/10 font-bold text-primary' : 'text-slate-700 hover:bg-slate-50' }}">
+                                                    <span>{{ \Carbon\Carbon::parse($meeting->date)->format('d/m/Y') }} - {{ $meeting->name }}</span>
+                                                    @if($class_meeting_id == $meeting->id) <x-user.icon name="check" class="h-4 w-4" /> @endif
                                                 </button>
                                             </li>
                                         @endforeach
                                     </ul>
                                 </div>
                             </div>
-                            @if(empty($this->sessions()) && $class_id)
+                            @if(empty($this->meetings) && $class_id)
                                 <span class="mt-1 block text-sm text-slate-500">Không có buổi học nào cho lớp này.</span>
                             @endif
-                            @error('class_session_id') <span class="mt-1 block text-sm text-red-500">{{ $message }}</span> @enderror
+                            @error('class_meeting_id') <span class="mt-1 block text-sm text-red-500">{{ $message }}</span> @enderror
                         </div>
                     </div>
 
@@ -135,7 +135,14 @@
                                     <div class="mb-6 grid grid-cols-2 gap-4 px-6 sm:grid-cols-3 md:grid-cols-4">
                                         @foreach ($existing_images as $index => $image)
                                             <div class="group relative flex aspect-square items-center justify-center rounded-xl border border-slate-200 bg-slate-50 p-1">
-                                                <img src="{{ asset('storage/'.$image) }}" class="h-full w-full rounded-lg object-cover shadow-sm">
+                                                @if(Str::endsWith(strtolower($image), '.pdf'))
+                                                    <div class="flex h-full w-full flex-col items-center justify-center rounded-lg bg-red-50 text-red-500">
+                                                        <x-user.icon name="file-text" :size="32" />
+                                                        <span class="mt-2 text-[10px] font-bold uppercase">PDF</span>
+                                                    </div>
+                                                @else
+                                                    <img src="{{ route('leave-requests.proof', ['leaveRequest' => $isEdit ? $this->leaveRequest->id : 0, 'filename' => basename($image)]) }}" class="h-full w-full rounded-lg object-cover shadow-sm">
+                                                @endif
                                                 <button type="button" wire:click.prevent="removeExistingImage({{ $index }})" class="absolute -right-2 -top-2 rounded-full bg-red-500 p-1.5 text-white shadow-sm transition-transform hover:scale-110 hover:bg-red-600 focus:outline-none">
                                                     <x-user.icon name="x" :size="14" stroke-width="3" />
                                                 </button>
@@ -143,7 +150,14 @@
                                         @endforeach
                                         @foreach ($proof_images as $index => $image)
                                             <div class="group relative flex aspect-square items-center justify-center rounded-xl border border-slate-200 bg-slate-50 p-1">
-                                                <img src="{{ $image->temporaryUrl() }}" class="h-full w-full rounded-lg object-cover shadow-sm">
+                                                @if(in_array(strtolower($image->getClientOriginalExtension()), ['pdf']))
+                                                    <div class="flex h-full w-full flex-col items-center justify-center rounded-lg bg-red-50 text-red-500">
+                                                        <x-user.icon name="file-text" :size="32" />
+                                                        <span class="mt-2 text-[10px] font-bold uppercase">PDF</span>
+                                                    </div>
+                                                @else
+                                                    <img src="{{ $image->temporaryUrl() }}" class="h-full w-full rounded-lg object-cover shadow-sm">
+                                                @endif
                                                 <button type="button" wire:click.prevent="removeImage({{ $index }})" class="absolute -right-2 -top-2 rounded-full bg-red-500 p-1.5 text-white shadow-sm transition-transform hover:scale-110 hover:bg-red-600 focus:outline-none">
                                                     <x-user.icon name="x" :size="14" stroke-width="3" />
                                                 </button>

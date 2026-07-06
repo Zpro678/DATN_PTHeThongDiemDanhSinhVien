@@ -13,7 +13,9 @@ trait OwnsAttendanceSessions
     {
         return CourseClass::query()
             ->where('owner_user_id', auth()->id())
-            ->orderBy('name')
+            ->withMax('sessions', 'created_at')
+            ->orderByDesc('sessions_max_created_at')
+            ->orderByDesc('created_at')
             ->get();
     }
 

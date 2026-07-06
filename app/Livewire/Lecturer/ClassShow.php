@@ -189,7 +189,7 @@ class ClassShow extends Component
         $this->studentsCount   = $courseClass->members()->where('status', \App\Models\ClassMember::STATUS_ACTIVE)->count();
         $this->sessionsCount = $courseClass->sessions()->count();
         $this->sessionsCompleted = $courseClass->sessions()->whereIn('status', ['closed', 'active'])->count();
-        $this->pendingLeaveRequests = LeaveRequest::whereHas('classSession', function ($q) use ($courseClass) {
+        $this->pendingLeaveRequests = LeaveRequest::whereHas('classMeeting', function ($q) use ($courseClass) {
             $q->where('class_id', $courseClass->id);
         })->where('status', 'pending')->count();
         $this->pendingMembersCount = $courseClass->joinRequests()

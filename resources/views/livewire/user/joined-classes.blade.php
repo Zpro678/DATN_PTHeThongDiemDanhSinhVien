@@ -73,7 +73,7 @@
                 <a href="{{ route('student.classes.show', $class['id']) }}" wire:navigate class="absolute inset-0 z-10"><span class="sr-only">Vào thông tin lớp</span></a>
 
                 {{-- Header Theme Color --}}
-                <div class="{{ $isEnded ? 'bg-on-surface-variant' : ($isWarning ? 'bg-error' : $themeColor) }} h-24 px-5 py-4 relative">
+                <div class="{{ $isEnded ? 'bg-on-surface-variant' : $themeColor }} h-24 px-5 py-4 relative">
                     <div class="relative z-10 w-3/4">
                         <h3 class="truncate font-normal text-white text-[22px] tracking-wide leading-tight" title="{{ $class['title'] }}">
                             <a href="{{ route('student.classes.show', $class['id']) }}" wire:navigate class="hover:underline focus:outline-none">{{ $class['title'] }}</a>
@@ -89,7 +89,7 @@
 
                     {{-- Avatar overlapping --}}
                     <div class="absolute -bottom-6 right-5 z-20">
-                        <span class="{{ $isEnded ? 'bg-on-surface-variant' : ($isWarning ? 'bg-error' : $themeColor) }} grid h-14 w-14 place-items-center rounded-full border-2 border-white text-[22px] font-medium text-white shadow-sm" title="{{ $class['teacher'] }}">
+                        <span class="{{ $isEnded ? 'bg-on-surface-variant' : $themeColor }} grid h-14 w-14 place-items-center rounded-full border-2 border-white text-[22px] font-medium text-white shadow-sm" title="{{ $class['teacher'] }}">
                             {{ mb_strtoupper(mb_substr($class['teacher'], 0, 1)) }}
                         </span>
                     </div>

@@ -171,6 +171,20 @@ Route::middleware(['auth', 'verified', 'user.route'])->group(function () {
             ->whereNumber('member')
             ->name('lecturer.students.show');
     });
+
+    Route::get('/student/join-class', function (Request $request) {
+        return redirect()->route('dashboard', [
+            'ma_user' => auth()->id(),
+            'join_code' => $request->query('code')
+        ]);
+    })->name('student.join-class.query');
+
+    Route::get('/join/{class_code}', function (string $class_code) {
+        return redirect()->route('dashboard', [
+            'ma_user' => auth()->id(),
+            'join_code' => $class_code
+        ]);
+    })->name('join-class');
 });
 
 Route::middleware('auth')->group(function () {
@@ -186,6 +200,10 @@ Route::middleware('auth')->group(function () {
     // Đánh dấu một thông báo là đã đọc rồi chuyển tới đích của nó (dùng khi bấm từng cái).
     Route::get('/notifications/{notification}/read', [\App\Http\Controllers\NotificationController::class, 'read'])
         ->name('notifications.read');
+    // Xem file minh chứng xin nghỉ phép
+    Route::get('/leave-requests/{leaveRequest}/proof/{filename}', [\App\Http\Controllers\LeaveProofController::class, 'show'])
+        ->whereNumber('leaveRequest')
+        ->name('leave-requests.proof');
 
     // MoMo redirect trình duyệt người dùng về đây sau khi thanh toán (chỉ hiển thị kết quả).
     Route::get('/payment/momo/return', [\App\Http\Controllers\MomoController::class, 'return'])

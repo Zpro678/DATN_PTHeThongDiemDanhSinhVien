@@ -36,19 +36,19 @@
                                 <p class="text-[12.5px] font-medium text-on-surface-variant mt-0.5">{{ $request->created_at?->format('H:i') ?? '' }}</p>
                             </td>
                             <td class="px-4 py-4 min-w-[150px]">
-                                <p class="text-sm font-bold text-on-surface group-hover:text-primary transition-colors">{{ $request->classSession->courseClass->name ?? '' }}</p>
+                                <p class="text-sm font-bold text-on-surface group-hover:text-primary transition-colors">{{ $request->classMeeting->courseClass->name ?? '' }}</p>
                                 <p class="mt-1 flex items-center gap-1.5 text-xs font-medium text-on-surface-variant">
-                                    <span>{{ $request->classSession->courseClass->join_key ?? '' }}</span>
+                                    <span>{{ $request->classMeeting->courseClass->join_key ?? '' }}</span>
                                 </p>
                             </td>
                             <td class="px-4 py-4 whitespace-nowrap">
                                 <div class="flex flex-col items-start gap-1">
                                     <span class="text-sm font-bold text-on-surface group-hover:text-primary transition-colors">
-                                        {{ $request->classSession->name ?? 'Không xác định' }}
+                                        {{ $request->classMeeting->name ?? 'Không xác định' }}
                                     </span>
                                     <span class="flex items-center gap-1 text-xs font-medium text-on-surface-variant">
                                         <x-user.icon name="calendar" :size="12" />
-                                        {{ $request->classSession->date?->format('d/m/Y') }}
+                                        {{ $request->classMeeting->date?->format('d/m/Y') }}
                                     </span>
                                 </div>
                             </td>

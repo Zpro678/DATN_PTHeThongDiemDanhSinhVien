@@ -144,6 +144,7 @@ class AttendanceHistory extends Component
             ->sortByDesc(fn (AttendanceRecord $record) => $record->classSession?->date?->timestamp ?? 0)
             ->map(fn (AttendanceRecord $record): array => [
                 'id' => $record->id,
+                'session_id' => $record->class_session_id,
                 'date' => $record->classSession?->date,
                 'session' => $record->classSession?->name ?? 'Buổi điểm danh',
                 'class_id' => $record->classMember?->courseClass?->id,

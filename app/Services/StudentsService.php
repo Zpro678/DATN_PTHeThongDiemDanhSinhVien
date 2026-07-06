@@ -42,7 +42,7 @@ class StudentsService
                     // Chỉ tính các bản ghi thuộc buổi điểm danh đã chốt.
                     ->whereHas('classSession', fn ($sessionQuery) => $sessionQuery->where('status', 'closed'))
                     ->with('classSession:id,class_id,date,status,meeting_id,qr_token'),
-                'leaveRequests.classSession:id,class_id,name,date',
+                'leaveRequests.classMeeting:id,class_id,name,date',
             ])
             ->whereHas('courseClass')
             ->where('user_id', $studentUserId)
@@ -182,8 +182,8 @@ class StudentsService
             // Chỉ nhắc những đơn chưa có ảnh/tệp minh chứng.
             ->filter(fn (LeaveRequest $leaveRequest) => ! $this->hasProofImage($leaveRequest))
             ->map(function (LeaveRequest $leaveRequest) use ($classLabel): array {
-                $warningDate = $leaveRequest->created_at ?? $leaveRequest->classSession?->date ?? now();
-                $sessionDate = $leaveRequest->classSession?->date?->format('d/m/Y');
+                $warningDate = $leaveRequest->created_at ?? $leaveRequest->classMeeting?->date ?? now();
+                $sessionDate = $leaveRequest->classMeeting?->date?->format('d/m/Y');
                 $message = $sessionDate
                     ? "Đơn xin nghỉ lớp {$classLabel} ngày {$sessionDate} chưa có minh chứng. Vui lòng bổ sung để giảng viên xét duyệt."
                     : "Đơn xin nghỉ lớp {$classLabel} chưa có minh chứng. Vui lòng bổ sung để giảng viên xét duyệt.";

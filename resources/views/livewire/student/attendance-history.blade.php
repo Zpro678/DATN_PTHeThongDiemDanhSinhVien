@@ -197,6 +197,12 @@
                                                     {{ $record['distance'] }}m
                                                 </span>
                                             @endif
+                                            @if($record['status'] === 'absent')
+                                                <a href="{{ route('student.leave-requests.create', ['class_id' => $record['class_id'], 'class_session_id' => $record['session_id']]) }}" wire:navigate class="mt-1 inline-flex items-center gap-1 text-[12px] font-bold text-amber-600 hover:text-amber-700 transition-colors bg-amber-50 rounded px-2 py-1 max-w-fit border border-amber-200/60">
+                                                    <x-user.icon name="file-plus" :size="12" />
+                                                    Tạo đơn
+                                                </a>
+                                            @endif
                                         </div>
                                     </td>
                                 </tr>

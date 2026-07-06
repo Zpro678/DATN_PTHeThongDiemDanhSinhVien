@@ -13,7 +13,7 @@ class LeaveRequestShow extends Component
     public function mount(LeaveRequest $leaveRequest)
     {
         abort_unless($leaveRequest->classMember->user_id === auth()->id(), 403);
-        $this->leaveRequest = $leaveRequest->load(['classMember.courseClass', 'classSession', 'reviewer']);
+        $this->leaveRequest = $leaveRequest->load(['classMember.courseClass', 'classMeeting', 'reviewer']);
     }
 
     public function render(): View

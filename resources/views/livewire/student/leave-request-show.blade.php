@@ -54,7 +54,7 @@
                         <dt class="text-xs font-bold uppercase text-slate-400 mb-1">Buổi xin nghỉ</dt>
                         <dd class="font-bold text-slate-800 flex items-center gap-1.5">
                             <x-user.icon name="calendar" :size="16" class="text-slate-400" />
-                            {{ $leaveRequest->classSession->name }} · {{ $leaveRequest->classSession->date->format('d/m/Y') }}
+                            {{ $leaveRequest->classMeeting->name }} · {{ $leaveRequest->classMeeting->date->format('d/m/Y') }}
                         </dd>
                     </div>
                     <div>
@@ -101,8 +101,15 @@
                         <h3 class="mb-4 text-xs font-bold uppercase tracking-wider text-slate-500">Minh chứng đính kèm ({{ count($leaveRequest->proof_image) }})</h3>
                         <div class="grid grid-cols-2 gap-4 sm:grid-cols-3 md:grid-cols-4">
                             @foreach($leaveRequest->proof_image as $img)
-                                <a href="{{ asset('storage/'.$img) }}" target="_blank" class="group block aspect-square overflow-hidden rounded-xl border border-slate-200 shadow-sm relative bg-slate-50">
-                                    <img src="{{ asset('storage/'.$img) }}" class="h-full w-full object-cover transition-transform duration-300 group-hover:scale-110" alt="Minh chứng">
+                                <a href="{{ route('leave-requests.proof', ['leaveRequest' => $leaveRequest->id, 'filename' => basename($img)]) }}" target="_blank" class="group block aspect-square overflow-hidden rounded-xl border border-slate-200 shadow-sm relative bg-slate-50">
+                                    @if(Str::endsWith(strtolower($img), '.pdf'))
+                                        <div class="flex h-full w-full flex-col items-center justify-center bg-red-50 text-red-500">
+                                            <x-user.icon name="file-text" :size="32" />
+                                            <span class="mt-2 text-[10px] font-bold uppercase">PDF</span>
+                                        </div>
+                                    @else
+                                        <img src="{{ route('leave-requests.proof', ['leaveRequest' => $leaveRequest->id, 'filename' => basename($img)]) }}" class="h-full w-full object-cover transition-transform duration-300 group-hover:scale-110" alt="Minh chứng">
+                                    @endif
                                     <div class="absolute inset-0 flex items-center justify-center bg-black/40 opacity-0 transition-opacity duration-300 group-hover:opacity-100">
                                         <div class="bg-white/20 backdrop-blur p-2 rounded-full">
                                             <x-user.icon name="external-link" class="text-white" :size="20" />

@@ -48,6 +48,15 @@ class AuthenticatedSessionController extends Controller
 
         $request->session()->regenerate();
 
+        app(\App\Services\AuditLogService::class)->log('login_success', [
+            'user_id' => $user->id,
+            'new_values' => [
+                'method'     => 'email',
+                'user_agent' => $request->userAgent(),
+                'ip'         => $request->ip(),
+            ],
+        ]);
+
         if ($user->isAdmin()) {
             return redirect()->route('admin.dashboard', ['ma_user' => $request->user()->id]);
         }

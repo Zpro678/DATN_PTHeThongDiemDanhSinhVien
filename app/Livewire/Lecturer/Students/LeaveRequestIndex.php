@@ -130,7 +130,7 @@ class LeaveRequestIndex extends Component
                 'classMember.profile:id,class_member_id,student_code,full_name,email',
                 'classMember.courseClass:id,name,join_key,owner_user_id',
                 'classMember.user:id,name,email,avatar',
-                'classSession:id,class_id,name,date,start_time',
+                'classMeeting:id,class_id,name,date,start_time,end_time',
                 'reviewer:id,name',
             ])
             ->whereHas('classMember.courseClass', fn (Builder $query) => $query->where('owner_user_id', auth()->id()))

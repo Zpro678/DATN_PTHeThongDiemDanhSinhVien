@@ -3,7 +3,8 @@
 namespace App\Livewire\Student;
 
 use App\Models\ClassMember;
-use App\Models\ClassSession;
+use App\Models\ClassMeeting;
+use App\Models\CourseClass;
 use App\Models\LeaveRequest;
 use App\Services\AuditLogService;
 use Illuminate\Contracts\View\View;
@@ -19,7 +20,7 @@ class LeaveRequestEdit extends Component
 
     public $class_id = '';
 
-    public $class_session_id = '';
+    public $class_meeting_id = '';
 
     public $reason = '';
 
@@ -34,7 +35,7 @@ class LeaveRequestEdit extends Component
 
         $this->leaveRequest = $leaveRequest;
         $this->class_id = $leaveRequest->classMember->class_id;
-        $this->class_session_id = $leaveRequest->class_session_id;
+        $this->class_meeting_id = $leaveRequest->class_meeting_id;
         $this->reason = $leaveRequest->reason;
         $this->existing_images = $leaveRequest->proof_image ?? [];
     }
@@ -42,23 +43,27 @@ class LeaveRequestEdit extends Component
     #[Computed]
     public function classes()
     {
-        return ClassMember::with('courseClass')
-            ->whereHas('courseClass')
-            ->where('user_id', auth()->id())
-            ->where('status', ClassMember::STATUS_ACTIVE)
-            ->get()
-            ->pluck('courseClass');
+        return CourseClass::whereHas('members', function ($query) {
+            $query->where('user_id', auth()->id())
+                  ->where('status', ClassMember::STATUS_ACTIVE);
+        })
+        ->withMax('sessions', 'created_at')
+        ->orderByDesc('sessions_max_created_at')
+        ->orderByDesc('created_at')
+        ->get();
     }
 
     #[Computed]
-    public function sessions()
+    public function meetings()
     {
         if (! $this->class_id) {
             return [];
         }
 
-        return ClassSession::where('class_id', $this->class_id)
-            ->orderBy('date')
+        return ClassMeeting::where('class_id', $this->class_id)
+            ->where('date', '>=', now()->subDays(14)->toDateString())
+            ->orderByDesc('date')
+            ->orderByDesc('created_at')
             ->get();
     }
 
@@ -66,19 +71,19 @@ class LeaveRequestEdit extends Component
     {
         $this->validate([
             'class_id' => 'required|exists:classes,id',
-            'class_session_id' => 'required|exists:class_sessions,id',
+            'class_meeting_id' => 'required|exists:class_meetings,id',
             'reason' => 'required|string|min:10|max:1000',
-            'proof_images.*' => 'nullable|image|max:2048', // 2MB Max
+            'proof_images.*' => 'nullable|mimes:jpg,jpeg,png,pdf|max:5120', // 5MB Max
         ], [
             'class_id.required' => 'Vui lòng chọn lớp học.',
             'class_id.exists' => 'Lớp học không tồn tại.',
-            'class_session_id.required' => 'Vui lòng chọn buổi học.',
-            'class_session_id.exists' => 'Buổi học không tồn tại.',
+            'class_meeting_id.required' => 'Vui lòng chọn buổi học.',
+            'class_meeting_id.exists' => 'Buổi học không tồn tại.',
             'reason.required' => 'Vui lòng nhập lý do xin nghỉ.',
             'reason.min' => 'Lý do xin nghỉ quá ngắn (tối thiểu 10 ký tự).',
             'reason.max' => 'Lý do xin nghỉ quá dài (tối đa 1000 ký tự).',
-            'proof_images.*.image' => 'Tệp đính kèm phải là hình ảnh.',
-            'proof_images.*.max' => 'Hình ảnh không được vượt quá 2MB.',
+            'proof_images.*.mimes' => 'Tệp đính kèm phải là hình ảnh (JPG, PNG) hoặc PDF.',
+            'proof_images.*.max' => 'Tệp đính kèm không được vượt quá 5MB.',
         ]);
 
         $member = ClassMember::where('class_id', $this->class_id)
@@ -86,9 +91,10 @@ class LeaveRequestEdit extends Component
             ->firstOrFail();
 
         // Check if changed session and already requested
-        if ($this->class_session_id != $this->leaveRequest->class_session_id) {
+        if ($this->class_meeting_id != $this->leaveRequest->class_meeting_id) {
             $existing = LeaveRequest::where('class_member_id', $member->id)
-                ->where('class_session_id', $this->class_session_id)
+                ->where('class_meeting_id', $this->class_meeting_id)
+                ->whereIn('status', ['pending', 'approved'])
                 ->first();
 
             if ($existing) {
@@ -100,13 +106,13 @@ class LeaveRequestEdit extends Component
         $proofPaths = $this->existing_images;
         if (! empty($this->proof_images)) {
             foreach ($this->proof_images as $image) {
-                $proofPaths[] = $image->storeAs('leave_proofs', $image->getClientOriginalName(), 'public');
+                $proofPaths[] = $image->storeAs('leave_proofs', $image->getClientOriginalName(), 'local');
             }
         }
 
         $this->leaveRequest->update([
             'class_member_id' => $member->id,
-            'class_session_id' => $this->class_session_id,
+            'class_meeting_id' => $this->class_meeting_id,
             'reason' => $this->reason,
             'proof_image' => $proofPaths,
         ]);
@@ -118,7 +124,7 @@ class LeaveRequestEdit extends Component
             'table_name' => 'leave_requests',
             'row_id'     => $this->leaveRequest->id,
             'new_values' => [
-                'class_session_id' => $this->class_session_id,
+                'class_meeting_id' => $this->class_meeting_id,
                 'reason'           => $this->reason,
             ],
         ]);

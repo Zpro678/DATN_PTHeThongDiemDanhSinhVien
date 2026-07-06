@@ -88,12 +88,12 @@ class LeaveRequestShow extends Component
         $leaveRequest = $this->ownedRequest($this->leaveRequestId)->load([
             'classMember.courseClass',
             'classMember.user',
-            'classSession',
+            'classMeeting',
             'reviewer',
         ]);
 
         $approvedLeaveRequests = $leaveRequest->classMember->leaveRequests()
-            ->with('classSession:id,name,date')
+            ->with('classMeeting:id,name,date')
             ->where('status', 'approved')
             ->orderByDesc('created_at')
             ->get();

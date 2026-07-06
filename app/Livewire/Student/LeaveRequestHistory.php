@@ -12,7 +12,7 @@ class LeaveRequestHistory extends Component
 
     public function render()
     {
-        $requests = LeaveRequest::with(['classSession.courseClass', 'reviewer'])
+        $requests = LeaveRequest::with(['classMeeting.courseClass', 'reviewer'])
             ->whereHas('classMember', function ($query) {
                 $query->where('user_id', auth()->id());
             })

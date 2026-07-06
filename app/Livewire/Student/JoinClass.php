@@ -25,41 +25,72 @@ class JoinClass extends Component
         $this->full_name = Auth::user()->name;
     }
 
+    public $confirmingClass = null;
+
     #[\Livewire\Attributes\On('open-join-class-modal')]
-    public function openModal()
+    public function openModal($code = null)
     {
         $this->full_name = Auth::user()->name;
+        if ($code) {
+            $this->class_code = $code;
+            // Automatically check code if it was passed in
+            $this->checkCode();
+        }
         $this->showModal = true;
     }
 
     public function closeModal()
     {
         $this->showModal = false;
-        $this->reset(['class_code']);
+        $this->reset(['class_code', 'confirmingClass']);
         $this->resetValidation();
     }
 
-    public function submit()
+    public function checkCode()
     {
         $this->validate([
             'class_code' => 'required|string',
-            'full_name' => 'required|string|max:255',
         ], [
             'class_code.required' => 'Vui lòng nhập mã lớp.',
-            'full_name.required' => 'Vui lòng nhập họ và tên.',
-            'full_name.max' => 'Họ và tên không được vượt quá 255 ký tự.',
         ]);
 
-        $courseClass = CourseClass::where('join_key', $this->class_code)->first();
+        $courseClass = CourseClass::where('join_key', $this->class_code)->with('owner')->first();
 
         if (! $courseClass) {
-            $this->addError('class_code', 'Không tìm thấy lớp học với mã này.');
+            $this->addError('class_code', 'Mã lớp không tồn tại hoặc đã hết hạn. Vui lòng kiểm tra lại.');
+            return;
+        }
 
+        $this->confirmingClass = $courseClass;
+    }
+
+    public function cancelConfirm()
+    {
+        $this->confirmingClass = null;
+    }
+
+    public function confirmJoin()
+    {
+        if (!$this->confirmingClass) {
+            return;
+        }
+
+        $courseClass = CourseClass::where('id', $this->confirmingClass['id'] ?? $this->confirmingClass->id)->first();
+
+        if (! $courseClass) {
             return;
         }
 
         $userId = Auth::id();
         $userEmail = Auth::user()->email;
+
+        if ($courseClass->teacher_id === $userId) {
+            session()->flash('status', 'Bạn đang là giảng viên của lớp học này.');
+            $this->reset(['class_code', 'confirmingClass']);
+            $this->showModal = false;
+            
+            return $this->redirectRoute('lecturer.classes.show', ['ma_user' => $userId, 'courseClass' => $courseClass->id], navigate: true);
+        }
 
         $existingMember = ClassMember::with('profile')
             ->where('class_id', $courseClass->id)
@@ -69,7 +100,6 @@ class JoinClass extends Component
             })->first();
 
         if ($existingMember) {
-            // Nếu học viên đã có trong danh sách (được import) nhưng chưa liên kết user_id
             if (is_null($existingMember->user_id)) {
                 $existingMember->update([
                     'user_id' => $userId,
@@ -91,13 +121,17 @@ class JoinClass extends Component
                 ]);
 
                 session()->flash('status', 'Đã liên kết tài khoản của bạn với danh sách học viên trong lớp!');
-                $this->reset(['class_code']);
+                $this->reset(['class_code', 'confirmingClass']);
                 $this->dispatch('class-joined');
-                return;
+                
+                return $this->redirectRoute('student.classes.show', ['ma_user' => $userId, 'courseClass' => $courseClass->id], navigate: true);
             }
 
-            $this->addError('class_code', 'Bạn đã là thành viên của lớp học này.');
-            return;
+            session()->flash('status', 'Bạn đã là thành viên của lớp học này.');
+            $this->reset(['class_code', 'confirmingClass']);
+            $this->showModal = false;
+            
+            return $this->redirectRoute('student.classes.show', ['ma_user' => $userId, 'courseClass' => $courseClass->id], navigate: true);
         }
 
         if (!$courseClass->require_approval) {
@@ -122,9 +156,10 @@ class JoinClass extends Component
             ]);
 
             session()->flash('status', 'Đã tham gia lớp học thành công!');
-            $this->reset(['class_code']);
+            $this->reset(['class_code', 'confirmingClass']);
             $this->dispatch('class-joined');
-            return;
+            
+            return $this->redirectRoute('student.classes.show', ['ma_user' => $userId, 'courseClass' => $courseClass->id], navigate: true);
         }
 
         // Nếu yêu cầu duyệt -> Bắt buộc phải qua bước duyệt
@@ -135,7 +170,7 @@ class JoinClass extends Component
 
         if ($existingRequest) {
             session()->flash('status', 'Bạn đã gửi yêu cầu tham gia lớp này rồi, vui lòng chờ giảng viên phê duyệt.');
-            $this->reset(['class_code']);
+            $this->reset(['class_code', 'confirmingClass']);
             return;
         }
 
@@ -147,7 +182,7 @@ class JoinClass extends Component
 
         session()->flash('status', 'Yêu cầu tham gia đã được gửi và đang chờ giảng viên xác nhận!');
 
-        $this->reset(['class_code']);
+        $this->reset(['class_code', 'confirmingClass']);
     }
 
     public function render(): View

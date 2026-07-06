@@ -56,8 +56,8 @@ class GoogleController extends Controller
         }
 
         // Kiểm tra xem tài khoản có bị khóa không
-        if ($user->status === 'blocked') {
-            return redirect()->route('login')->withErrors(['email' => 'Tài khoản của bạn đã bị khóa. Vui lòng liên hệ quản trị viên.']);
+        if ($user->status !== 'active') {
+            return redirect()->route('login')->withErrors(['email' => 'Tài khoản của bạn đã bị vô hiệu hóa. Vui lòng liên hệ Admin.']);
         }
 
         // Đăng nhập người dùng

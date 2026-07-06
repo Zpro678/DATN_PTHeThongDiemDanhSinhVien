@@ -516,10 +516,15 @@ class StudentIndex extends Component
         $fileName = 'danh_sach_sinh_vien_' . date('Ymd_His') . '.xlsx';
         $this->isExporting = false;
 
-        return Excel::download(
-            new StudentsExport(auth()->id(), $this->exportClassId, $this->statusFilter, $this->search, $formulaToUse),
-            $fileName
-        );
+        try {
+            return Excel::download(
+                new StudentsExport(auth()->id(), $this->exportClassId, $this->statusFilter, $this->search, $formulaToUse),
+                $fileName
+            );
+        } catch (\Throwable $e) {
+            $this->dispatch('toast', message: 'Đã xảy ra lỗi trong quá trình tạo file. Vui lòng thử lại sau hoặc liên hệ Admin.', type: 'error');
+            return null;
+        }
     }
 
     private function ownedMember(int $memberId, bool $withTrashed = false): ClassMember

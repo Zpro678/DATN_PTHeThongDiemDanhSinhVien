@@ -58,29 +58,30 @@ class LoginRequest extends FormRequest
 
         $user = \App\Models\User::where('email', $this->string('email'))->first();
 
-        if (! $user) {
+        if (! $user || ! Auth::attempt($this->only('email', 'password'), $this->boolean('remember'))) {
             RateLimiter::hit($this->throttleKey());
 
+            app(\App\Services\AuditLogService::class)->log('login_failed', [
+                'user_id' => $user ? $user->id : null,
+                'new_values' => [
+                    'email'      => $this->string('email'),
+                    'ip'         => $this->ip(),
+                    'user_agent' => $this->userAgent(),
+                ]
+            ]);
+
             throw ValidationException::withMessages([
-                'email' => 'Tài khoản không tồn tại trong hệ thống.',
+                'email' => 'Thông tin đăng nhập không chính xác.',
             ]);
         }
 
-        if (! Auth::attempt($this->only('email', 'password'), $this->boolean('remember'))) {
-            RateLimiter::hit($this->throttleKey());
-
-            throw ValidationException::withMessages([
-                'password' => 'Mật khẩu không chính xác.',
-            ]);
-        }
-
-        if (Auth::user()->status === 'blocked') {
+        if (Auth::user()->status !== 'active') {
             Auth::logout();
 
             RateLimiter::hit($this->throttleKey());
 
             throw ValidationException::withMessages([
-                'email' => 'Tài khoản của bạn đã bị khóa. Vui lòng liên hệ quản trị viên.',
+                'email' => 'Tài khoản của bạn đã bị vô hiệu hóa. Vui lòng liên hệ Admin.',
             ]);
         }
 

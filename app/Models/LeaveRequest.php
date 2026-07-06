@@ -20,7 +20,7 @@ class LeaveRequest extends Model
 
     protected $fillable = [
         'class_member_id', // ID thành viên lớp xin nghỉ.
-        'class_session_id', // ID buổi học xin nghỉ.
+        'class_meeting_id', // ID buổi học xin nghỉ.
         'reason', // Lý do vắng mặt.
         'proof_image', // Hình ảnh minh chứng.
         'status', // Trạng thái đơn pending/approved/rejected.
@@ -58,9 +58,9 @@ class LeaveRequest extends Model
         return $this->belongsTo(ClassMember::class);
     }
 
-    public function classSession(): BelongsTo
+    public function classMeeting(): BelongsTo
     {
-        return $this->belongsTo(ClassSession::class);
+        return $this->belongsTo(ClassMeeting::class);
     }
 
     public function reviewer(): BelongsTo

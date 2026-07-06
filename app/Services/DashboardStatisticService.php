@@ -205,7 +205,7 @@ class DashboardStatisticService
         return LeaveRequest::query()
             ->join('class_members', 'leave_requests.class_member_id', '=', 'class_members.id')
             ->join('classes', 'class_members.class_id', '=', 'classes.id')
-            ->leftJoin('class_sessions', 'leave_requests.class_session_id', '=', 'class_sessions.id')
+            ->leftJoin('class_meetings', 'leave_requests.class_meeting_id', '=', 'class_meetings.id')
             ->leftJoin('class_member_profiles', 'class_member_profiles.class_member_id', '=', 'class_members.id')
             ->whereIn('class_members.class_id', $classIds)
             ->where('leave_requests.status', 'pending')
@@ -217,8 +217,8 @@ class DashboardStatisticService
                 'class_member_profiles.full_name',
                 'class_members.class_id',
                 'classes.name as class_name',
-                'class_sessions.date as session_date',
-                'class_sessions.name as session_name',
+                'class_meetings.date as session_date',
+                'class_meetings.name as session_name',
             ])
             ->orderByDesc('leave_requests.created_at')
             ->take($limit)

@@ -27,10 +27,17 @@ class Dashboard extends Component
 
     public $classId = null;
 
+    #[\Livewire\Attributes\Url]
+    public $join_code = '';
+
     public function mount(): void
     {
         $this->loadStatistics();
         $this->workspace = $this->defaultWorkspace();
+        
+        if ($this->join_code) {
+            $this->dispatch('open-join-class-modal', code: $this->join_code);
+        }
     }
 
     public function updatedClassId(): void

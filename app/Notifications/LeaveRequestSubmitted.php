@@ -4,10 +4,13 @@ namespace App\Notifications;
 
 use App\Models\LeaveRequest;
 use Illuminate\Bus\Queueable;
+use Illuminate\Contracts\Broadcasting\ShouldBroadcast;
 use Illuminate\Contracts\Queue\ShouldQueue;
+use Illuminate\Notifications\Messages\BroadcastMessage;
 use Illuminate\Notifications\Notification;
+use Illuminate\Broadcasting\PrivateChannel;
 
-class LeaveRequestSubmitted extends Notification
+class LeaveRequestSubmitted extends Notification implements ShouldBroadcast
 {
     use Queueable;
 
@@ -28,7 +31,7 @@ class LeaveRequestSubmitted extends Notification
      */
     public function via(object $notifiable): array
     {
-        return ['database'];
+        return ['database', 'broadcast'];
     }
 
     /**
@@ -40,18 +43,39 @@ class LeaveRequestSubmitted extends Notification
     {
         $member = $this->leaveRequest->classMember;
         $student = $member ? $member->user : auth()->user();
-        $class = $member ? $member->courseClass : null;
-        $session = $this->leaveRequest->classSession;
+        $studentName = $this->leaveRequest->classMember->full_name ?? 'Học viên';
+        $session = $this->leaveRequest->classMeeting;
+        $class = $session?->courseClass;
+        $className = $class?->name ?? 'Lớp học';
         $date = $session && $session->date ? $session->date->format('d/m/Y') : 'Buổi học';
 
         return [
             'title' => 'Đơn xin phép mới',
-            'message' => "Sinh viên {$student->name} đã gửi đơn xin phép cho lớp " . ($class ? $class->join_key : '') . " vào ngày {$date}.",
+            'message' => "Sinh viên {$studentName} đã gửi đơn xin phép cho lớp {$className} vào ngày {$date}.",
             'leave_request_id' => $this->leaveRequest->id,
-            'class_id' => $class ? $class->id : null,
+            'class_id' => $class?->id,
             'type' => 'leave_request',
             'icon' => 'file-text',
             'url' => route('lecturer.leave-requests.index', ['ma_user' => $notifiable->id, 'class' => $class ? $class->id : null]),
         ];
+    }
+
+    public function broadcastOn(): array
+    {
+        return [
+            new PrivateChannel('App.Models.User.' . $this->leaveRequest->classMember->courseClass->owner_user_id),
+        ];
+    }
+
+    public function broadcastAs(): string
+    {
+        return 'NotificationEvent';
+    }
+
+    public function toBroadcast(object $notifiable): BroadcastMessage
+    {
+        return new BroadcastMessage([
+            'notification' => $this->toArray($notifiable),
+        ]);
     }
 }

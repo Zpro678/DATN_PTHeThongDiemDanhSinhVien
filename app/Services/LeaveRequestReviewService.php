@@ -8,6 +8,7 @@ use App\Models\User;
 use App\Notifications\LeaveRequestApproved;
 use App\Notifications\LeaveRequestRejected;
 use Illuminate\Support\Facades\DB;
+use App\Jobs\SaveAuditLogJob;
 
 class LeaveRequestReviewService
 {
@@ -21,27 +22,44 @@ class LeaveRequestReviewService
                 'reviewed_at' => now(),
             ]);
 
-            $record = AttendanceRecord::withTrashed()->firstOrNew([
-                'class_session_id' => $leaveRequest->class_session_id,
-                'class_member_id' => $leaveRequest->class_member_id,
-            ]);
+            // Lấy tất cả các phiên thuộc về buổi học (Meeting)
+            $sessions = \App\Models\ClassSession::where('meeting_id', $leaveRequest->class_meeting_id)->get();
 
-            if ($record->exists && $record->trashed()) {
-                $record->restore();
+            foreach ($sessions as $session) {
+                $record = AttendanceRecord::withTrashed()->firstOrNew([
+                    'class_session_id' => $session->id,
+                    'class_member_id' => $leaveRequest->class_member_id,
+                ]);
+
+                if ($record->exists && $record->trashed()) {
+                    $record->restore();
+                }
+
+                $record->fill([
+                    'status' => 'excused',
+                    'is_account' => $leaveRequest->classMember->user_id !== null,
+                    'check_in_time' => null,
+                    'note' => 'Đơn xin nghỉ đã được duyệt.',
+                ])->save();
             }
 
-            $record->fill([
-                'status' => 'excused',
-                'is_account' => $leaveRequest->classMember->user_id !== null,
-                'check_in_time' => null,
-                'note' => 'Đơn xin nghỉ đã được duyệt.',
-            ])->save();
+            SaveAuditLogJob::dispatch([
+                'user_id' => $reviewer->id,
+                'class_id' => $leaveRequest->classMember->class_id,
+                'action' => 'Duyệt đơn xin phép',
+                'table_name' => 'leave_requests',
+                'row_id' => $leaveRequest->id,
+                'old_values' => json_encode(['status' => 'pending']),
+                'new_values' => json_encode(['status' => 'approved', 'reviewed_by' => $reviewer->id]),
+                'ip_address' => request()->ip(),
+                'user_agent' => request()->userAgent(),
+            ]);
         });
 
         // Gửi thông báo cho học viên sau khi transaction hoàn thành.
         $studentUser = $leaveRequest->classMember?->user;
         if ($studentUser) {
-            $studentUser->notify(new LeaveRequestApproved($leaveRequest->fresh(['classMember.courseClass', 'classSession'])));
+            $studentUser->notify(new LeaveRequestApproved($leaveRequest->fresh(['classMember.courseClass', 'classMeeting'])));
         }
     }
 
@@ -54,10 +72,22 @@ class LeaveRequestReviewService
             'reviewed_at' => now(),
         ]);
 
+        SaveAuditLogJob::dispatch([
+            'user_id' => $reviewer->id,
+            'class_id' => $leaveRequest->classMember->class_id,
+            'action' => 'Từ chối đơn xin phép',
+            'table_name' => 'leave_requests',
+            'row_id' => $leaveRequest->id,
+            'old_values' => json_encode(['status' => 'pending']),
+            'new_values' => json_encode(['status' => 'rejected', 'reviewed_by' => $reviewer->id, 'rejected_reason' => $reason]),
+            'ip_address' => request()->ip(),
+            'user_agent' => request()->userAgent(),
+        ]);
+
         // Gửi thông báo cho học viên.
         $studentUser = $leaveRequest->classMember?->user;
         if ($studentUser) {
-            $studentUser->notify(new LeaveRequestRejected($leaveRequest->fresh(['classMember.courseClass', 'classSession'])));
+            $studentUser->notify(new LeaveRequestRejected($leaveRequest->fresh(['classMember.courseClass', 'classMeeting'])));
         }
     }
 }

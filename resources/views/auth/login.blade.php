@@ -168,6 +168,12 @@
                 e.preventDefault();
             }
         });
+
+        // Đảm bảo dọn dẹp sạch sẽ dữ liệu phiên làm việc cũ ở local/session storage khi về trang login (UC-AUTH-03)
+        window.onload = function() {
+            localStorage.clear();
+            sessionStorage.clear();
+        };
     </script>
     <x-notification.notification />
 </body>

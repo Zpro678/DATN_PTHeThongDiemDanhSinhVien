@@ -4,9 +4,12 @@ namespace App\Notifications;
 
 use App\Models\LeaveRequest;
 use Illuminate\Bus\Queueable;
+use Illuminate\Contracts\Broadcasting\ShouldBroadcast;
+use Illuminate\Notifications\Messages\BroadcastMessage;
 use Illuminate\Notifications\Notification;
+use Illuminate\Broadcasting\PrivateChannel;
 
-class LeaveRequestRejected extends Notification
+class LeaveRequestRejected extends Notification implements ShouldBroadcast
 {
     use Queueable;
 
@@ -14,12 +17,12 @@ class LeaveRequestRejected extends Notification
 
     public function via(object $notifiable): array
     {
-        return ['database'];
+        return ['database', 'broadcast'];
     }
 
     public function toArray(object $notifiable): array
     {
-        $session = $this->leaveRequest->classSession;
+        $session = $this->leaveRequest->classMeeting;
         $class   = $this->leaveRequest->classMember?->courseClass;
         $date    = $session?->date?->format('d/m/Y') ?? 'Buổi học';
         $reason  = $this->leaveRequest->rejected_reason ?? '';
@@ -37,5 +40,24 @@ class LeaveRequestRejected extends Notification
             ]),
             'rejected_reason'  => $reason,
         ];
+    }
+
+    public function broadcastOn(): array
+    {
+        return [
+            new PrivateChannel('App.Models.User.' . $this->leaveRequest->classMember->user_id),
+        ];
+    }
+
+    public function broadcastAs(): string
+    {
+        return 'NotificationEvent';
+    }
+
+    public function toBroadcast(object $notifiable): BroadcastMessage
+    {
+        return new BroadcastMessage([
+            'notification' => $this->toArray($notifiable),
+        ]);
     }
 }
