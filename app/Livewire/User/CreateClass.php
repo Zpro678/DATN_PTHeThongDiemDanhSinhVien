@@ -142,8 +142,6 @@ class CreateClass extends Component
 
         // Tiến hành import file nếu có tải lên
         if ($this->importFile) {
-            $importToken = \Illuminate\Support\Str::uuid()->toString();
-            $import = new StudentsImport($courseClass->id, $importToken, false);
             $extension = $this->importFile->getClientOriginalExtension();
             $readerType = match (strtolower($extension)) {
                 'csv' => \Maatwebsite\Excel\Excel::CSV,
@@ -152,23 +150,54 @@ class CreateClass extends Component
             };
 
             try {
-                Excel::import($import, $this->importFile->getRealPath(), null, $readerType);
-                $this->importSuccess = $import->successCount;
-                $this->importErrors = $import->errors;
+                // Bước 1: Phân tích header trước (đọc 10 dòng đầu)
+                $headingImport = new \App\Imports\HeadingRowImport($courseClass->id);
+                Excel::import($headingImport, $this->importFile->getRealPath(), null, $readerType);
 
-                if (!empty($this->importErrors)) {
-                    session()->flash('import_errors', $this->importErrors);
+                if (!empty($headingImport->errors)) {
+                    session()->flash('import_errors', $headingImport->errors);
+                    session()->flash('status', "Tạo lớp học thành công, nhưng đọc file có lỗi.");
+                    $this->redirectRoute('lecturer.classes.show', ['courseClass' => $courseClass->id], navigate: true);
+                    return;
                 }
-                
-                // Nếu import thành công/đang chạy ngầm, thêm flash status
-                session()->flash('status', "Tạo lớp học thành công. Đang ghi nhận {$this->importSuccess} học viên vào lớp học.");
+
+                $meetingHeaders = array_unique($headingImport->meetingHeaders);
+
+                // Bước 2: Tạo Bus::batch và StartImportJob
+                $batch = \Illuminate\Support\Facades\Bus::batch([
+                    new \App\Jobs\StartImportJob(
+                        $this->importFile->getRealPath(),
+                        $courseClass->id,
+                        $headingImport->dateHeaders,
+                        $headingImport->meetingHeaders,
+                        $headingImport->emailColIndex,
+                        $headingImport->nameColIndex,
+                        $headingImport->codeColIndex,
+                        $headingImport->headerRowNumber,
+                        auth()->id(),
+                        $readerType,
+                        null
+                    )
+                ])
+                ->then(function (\Illuminate\Bus\Batch $batch) use ($meetingHeaders) {
+                    foreach ($meetingHeaders as $meetingId) {
+                        $meeting = \App\Models\ClassMeeting::with(['courseClass', 'sessions'])->find($meetingId);
+                        if ($meeting) {
+                            \App\Services\AttendanceCalculator::syncSummaries($meeting);
+                        }
+                    }
+                })
+                ->name('Import Students')
+                ->dispatch();
+
+                session()->flash('status', "Tạo lớp học thành công. Đang tiến hành xử lý ngầm file danh sách sinh viên.");
+                $this->redirectRoute('lecturer.classes.show', ['courseClass' => $courseClass->id, 'importToken' => $batch->id], navigate: true);
+                return;
             } catch (\Exception $e) {
                 session()->flash('status', 'Tạo lớp thành công nhưng lỗi khi đọc file import: ' . $e->getMessage());
+                $this->redirectRoute('lecturer.classes.show', ['courseClass' => $courseClass->id], navigate: true);
+                return;
             }
-            
-            // Redirect thẳng vào chi tiết lớp học vừa tạo để theo dõi tiến độ import
-            $this->redirectRoute('lecturer.classes.show', ['courseClass' => $courseClass->id, 'importToken' => $importToken ?? null], navigate: true);
-            return;
         }
 
         session()->flash('status', 'Lớp học đã được tạo thành công.');
