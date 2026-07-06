@@ -29,9 +29,9 @@ class LeaveProofController extends Controller
 
         // 2. Kiểm tra quyền truy cập (Người nộp đơn HOẶC Chủ lớp HOẶC Admin)
         $isOwner = $leaveRequest->classMember && $leaveRequest->classMember->user_id === $user->id;
-        $isLecturer = $leaveRequest->classMember && 
-                      $leaveRequest->classMember->courseClass && 
-                      $leaveRequest->classMember->courseClass->owner_user_id === $user->id;
+        $isLecturer = $leaveRequest->classMember &&
+                      $leaveRequest->classMember->courseClass &&
+                      $leaveRequest->classMember->courseClass->isManagedBy($user->id);
         $isAdmin = $user->isAdmin();
 
         abort_if(! ($isOwner || $isLecturer || $isAdmin), 403, 'Bạn không có quyền truy cập file này.');

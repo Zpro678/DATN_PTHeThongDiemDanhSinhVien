@@ -22,7 +22,7 @@ class DashboardStatisticService
     private function getClassesSessionProgress(int $userId, ?string $classId = null): array
     {
         $classes = CourseClass::query()
-            ->where('owner_user_id', $userId)
+            ->managedBy($userId)
             ->when($classId, fn ($query) => $query->where('id', $classId))
             ->orderBy('name')
             ->get(['id', 'name', 'total_sessions']);
@@ -409,7 +409,7 @@ class DashboardStatisticService
     public function getOwnerOverview(int $userId, ?string $classId = null): array
     {
         $ownedClassesQuery = CourseClass::query()
-            ->where('owner_user_id', $userId)
+            ->managedBy($userId)
             ->when($classId, function ($query) use ($classId) {
                 $query->where('id', $classId);
             });

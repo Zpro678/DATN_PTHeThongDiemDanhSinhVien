@@ -21,7 +21,7 @@ class ClassPendingMembers extends Component
     {
         $this->courseClass = $courseClass;
 
-        if ($this->courseClass->owner_user_id !== auth()->id()) {
+        if (! $this->courseClass->isManagedBy(auth()->id())) {
             abort(403);
         }
 

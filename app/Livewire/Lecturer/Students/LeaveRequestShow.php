@@ -71,7 +71,7 @@ class LeaveRequestShow extends Component
     private function ownedRequest(int $requestId): LeaveRequest
     {
         return LeaveRequest::query()
-            ->whereHas('classMember.courseClass', fn (Builder $query) => $query->where('owner_user_id', auth()->id()))
+            ->whereHas('classMember.courseClass', fn (Builder $query) => $query->managedBy(auth()->id()))
             ->findOrFail($requestId);
     }
 

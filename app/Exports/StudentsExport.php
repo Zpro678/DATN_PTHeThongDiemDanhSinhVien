@@ -32,7 +32,7 @@ class StudentsExport implements WithMultipleSheets
         if ($this->classFilter !== 'all') {
             $sheets[] = new StudentsSheet($this->ownerUserId, $this->classFilter, $this->statusFilter, $this->search, $this->formula);
         } else {
-            $classes = CourseClass::where('owner_user_id', $this->ownerUserId)->get();
+            $classes = CourseClass::managedBy($this->ownerUserId)->get();
             if ($classes->isEmpty()) {
                 $sheets[] = new StudentsSheet($this->ownerUserId, 'all', $this->statusFilter, $this->search, $this->formula);
             } else {

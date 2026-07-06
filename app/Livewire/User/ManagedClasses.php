@@ -34,7 +34,7 @@ class ManagedClasses extends Component
 
     public function render(): View
     {
-        $query = CourseClass::where('owner_user_id', auth()->id())
+        $query = CourseClass::managedBy(auth()->id())
             ->withCount([
                 'members as students_count' => fn ($q) => $q->where('status', \App\Models\ClassMember::STATUS_ACTIVE),
                 'sessions as completed_sessions_count' => fn ($q) => $q->where('status', 'closed'),

@@ -113,14 +113,14 @@ class LeaveRequestIndex extends Component
     {
         return LeaveRequest::query()
             ->with('classMember')
-            ->whereHas('classMember.courseClass', fn (Builder $query) => $query->where('owner_user_id', auth()->id()))
+            ->whereHas('classMember.courseClass', fn (Builder $query) => $query->managedBy(auth()->id()))
             ->findOrFail($requestId);
     }
 
     public function render(): View
     {
         $classes = CourseClass::query()
-            ->where('owner_user_id', auth()->id())
+            ->managedBy(auth()->id())
             ->orderBy('name')
             ->get(['id', 'name', 'join_key', 'class_code']);
 
@@ -133,7 +133,7 @@ class LeaveRequestIndex extends Component
                 'classMeeting:id,class_id,name,date,start_time,end_time',
                 'reviewer:id,name',
             ])
-            ->whereHas('classMember.courseClass', fn (Builder $query) => $query->where('owner_user_id', auth()->id()))
+            ->whereHas('classMember.courseClass', fn (Builder $query) => $query->managedBy(auth()->id()))
             ->where('status', $this->status)
             ->when($this->classFilter !== 'all', fn (Builder $query) => $query->whereHas('classMember', fn (Builder $query) => $query->where('class_id', $this->classFilter)))
             ->when($this->search !== '', function (Builder $query): void {

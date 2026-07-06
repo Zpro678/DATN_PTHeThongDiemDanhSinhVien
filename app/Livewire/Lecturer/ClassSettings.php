@@ -53,13 +53,17 @@ class ClassSettings extends Component
     // Trạng thái hiển thị modal xác nhận xóa lớp học
     public bool $isConfirmingDelete = false;
 
+    // Email người muốn thêm làm đồng chủ lớp.
+    public string $coOwnerEmail = '';
+
     public function mount(CourseClass $courseClass): void
     {
-        // Kiểm tra quyền — chỉ chủ lớp mới được xem
+        // Cài đặt lớp (đổi cấu hình, xóa lớp, quản lý đồng chủ) chỉ dành cho CHỦ CHÍNH.
+        // Đồng chủ vẫn quản lý được điểm danh/học viên/đơn nghỉ ở các trang khác, nhưng không đụng cấu hình lớp.
         abort_unless(
-            $courseClass->owner_user_id === auth()->id(),
+            $courseClass->isPrimaryOwner(auth()->id()),
             403,
-            'Bạn không có quyền chỉnh sửa lớp học này.'
+            'Chỉ chủ chính của lớp mới được chỉnh sửa cài đặt.'
         );
 
         $this->courseClass = $courseClass;
@@ -141,9 +145,72 @@ class ClassSettings extends Component
         $this->redirectRoute('managed-classes');
     }
 
+    // ─── Đồng chủ lớp ─────────────────────────────────────────────────────────────
+
+    public function addCoOwner(): void
+    {
+        // Chỉ chủ chính được thêm đồng chủ.
+        abort_unless($this->courseClass->isPrimaryOwner(auth()->id()), 403);
+
+        $this->validate([
+            'coOwnerEmail' => ['required', 'email'],
+        ], [
+            'coOwnerEmail.required' => 'Vui lòng nhập email người muốn thêm.',
+            'coOwnerEmail.email' => 'Email không hợp lệ.',
+        ]);
+
+        $user = \App\Models\User::where('email', $this->coOwnerEmail)->first();
+
+        if (! $user) {
+            $this->addError('coOwnerEmail', 'Không tìm thấy người dùng với email này.');
+            return;
+        }
+
+        if ($this->courseClass->isPrimaryOwner($user->id)) {
+            $this->addError('coOwnerEmail', 'Người này đã là chủ chính của lớp.');
+            return;
+        }
+
+        if ($this->courseClass->coOwners()->where('users.id', $user->id)->exists()) {
+            $this->addError('coOwnerEmail', 'Người này đã là đồng chủ của lớp.');
+            return;
+        }
+
+        $this->courseClass->coOwners()->attach($user->id, [
+            'role' => 'co_owner',
+            'invited_by' => auth()->id(),
+            'accepted_at' => now(),
+        ]);
+
+        // Báo cho người vừa được thêm.
+        app(\App\Services\NotificationService::class)->push(
+            (int) $user->id,
+            'App\\Notifications\\ClassCoOwnerAdded',
+            'Bạn được thêm làm đồng chủ lớp',
+            'Bạn vừa được thêm làm đồng chủ lớp "' . $this->courseClass->name . '". Bạn có thể quản lý điểm danh, học viên và đơn nghỉ của lớp này.',
+            route('lecturer.classes.show', ['ma_user' => $user->id, 'courseClass' => $this->courseClass->id]),
+            'info',
+            ['class_id' => $this->courseClass->id],
+        );
+
+        $this->coOwnerEmail = '';
+        session()->flash('coowner_status', 'Đã thêm đồng chủ lớp thành công.');
+    }
+
+    public function removeCoOwner(int $userId): void
+    {
+        abort_unless($this->courseClass->isPrimaryOwner(auth()->id()), 403);
+
+        $this->courseClass->coOwners()->detach($userId);
+
+        session()->flash('coowner_status', 'Đã gỡ đồng chủ khỏi lớp.');
+    }
+
     public function render(): View
     {
-        return view('livewire.lecturer.class-settings')
+        $coOwners = $this->courseClass->coOwners()->get();
+
+        return view('livewire.lecturer.class-settings', compact('coOwners'))
             ->layout('layouts.user', ['title' => 'Cài đặt · ' . $this->courseClass->name]);
     }
 }

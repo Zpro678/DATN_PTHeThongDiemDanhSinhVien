@@ -124,7 +124,7 @@ class QrAttendanceSession extends Component
 
         $record = AttendanceRecord::query()
             ->where('class_session_id', $this->sessionId)
-            ->whereHas('classSession.courseClass', fn ($query) => $query->where('owner_user_id', auth()->id()))
+            ->whereHas('classSession.courseClass', fn ($query) => $query->managedBy(auth()->id()))
             ->findOrFail($recordId);
 
         $record->update([
@@ -152,7 +152,7 @@ class QrAttendanceSession extends Component
 
         $records = AttendanceRecord::query()
             ->where('class_session_id', $this->sessionId)
-            ->whereHas('classSession.courseClass', fn ($query) => $query->where('owner_user_id', auth()->id()))
+            ->whereHas('classSession.courseClass', fn ($query) => $query->managedBy(auth()->id()))
             ->where('status', 'pending')
             ->get();
 
@@ -209,7 +209,7 @@ class QrAttendanceSession extends Component
 
         $records = AttendanceRecord::query()
             ->where('class_session_id', $this->sessionId)
-            ->whereHas('classSession.courseClass', fn ($query) => $query->where('owner_user_id', auth()->id()))
+            ->whereHas('classSession.courseClass', fn ($query) => $query->managedBy(auth()->id()))
             ->get();
 
         foreach ($records as $record) {

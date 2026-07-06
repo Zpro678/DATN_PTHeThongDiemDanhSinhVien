@@ -99,7 +99,7 @@ class LectureManageStudentService
         $memberIds = ClassMember::query()
             ->where('status', ClassMember::STATUS_ACTIVE)
             ->whereHas('courseClass', function ($query) use ($ownerUserId, $classId) {
-                $query->where('owner_user_id', $ownerUserId)
+                $query->managedBy($ownerUserId)
                     ->when($classId, fn ($query) => $query->where('id', $classId));
             })
             ->pluck('id');

@@ -147,7 +147,7 @@ class StudentIndex extends Component
     public function mount(): void
     {
         if (empty($this->classFilter) || $this->classFilter === 'all') {
-            $latestClass = CourseClass::where('owner_user_id', auth()->id())->latest()->first();
+            $latestClass = CourseClass::managedBy(auth()->id())->latest()->first();
             if ($latestClass) {
                 $this->classFilter = (string) $latestClass->id;
             }
@@ -189,7 +189,7 @@ class StudentIndex extends Component
     public function approveRequest(int $requestId): void
     {
         $request = ClassJoinRequest::whereHas('courseClass', function ($q) {
-            $q->where('owner_user_id', auth()->id());
+            $q->managedBy(auth()->id());
         })->findOrFail($requestId);
 
         // Yêu cầu vào lớp gắn với tài khoản; tìm thành viên theo user_id.
@@ -230,7 +230,7 @@ class StudentIndex extends Component
     public function rejectRequest(int $requestId): void
     {
         $request = ClassJoinRequest::whereHas('courseClass', function ($q) {
-            $q->where('owner_user_id', auth()->id());
+            $q->managedBy(auth()->id());
         })->findOrFail($requestId);
 
         $request->update(['status' => ClassJoinRequest::STATUS_REJECTED]);
@@ -281,7 +281,7 @@ class StudentIndex extends Component
         ]);
 
         // Ensure the class belongs to the lecturer
-        $courseClass = CourseClass::where('owner_user_id', auth()->id())->findOrFail($validated['newClassId']);
+        $courseClass = CourseClass::managedBy(auth()->id())->findOrFail($validated['newClassId']);
 
         $duplicateExists = ClassMember::query()
             ->where('class_id', $courseClass->id)
@@ -361,7 +361,7 @@ class StudentIndex extends Component
             'importFile.extensions' => 'Định dạng file không hỗ trợ. Vui lòng dùng .xlsx, .xls, .csv',
         ]);
 
-        $courseClass = CourseClass::where('owner_user_id', auth()->id())->findOrFail($this->importClassId);
+        $courseClass = CourseClass::managedBy(auth()->id())->findOrFail($this->importClassId);
 
         $this->isImportingStatus = true;
         $this->importTotalRows = 0;
@@ -569,7 +569,7 @@ class StudentIndex extends Component
     {
         $query = ClassMember::query()
             ->when($withTrashed, fn (Builder $query) => $query->withTrashed())
-            ->whereHas('courseClass', fn (Builder $query) => $query->where('owner_user_id', auth()->id()));
+            ->whereHas('courseClass', fn (Builder $query) => $query->managedBy(auth()->id()));
 
         return $query->findOrFail($memberId);
     }
@@ -579,14 +579,14 @@ class StudentIndex extends Component
         $studentService = app(LectureManageStudentService::class); // Gọi service xử lý thống kê chuyên cần sinh viên.
 
         $classes = CourseClass::query()
-            ->where('owner_user_id', auth()->id()) // Chỉ lấy các lớp do giảng viên hiện tại quản lý.
+            ->managedBy(auth()->id()) // Chỉ lấy các lớp mà giảng viên hiện tại được quản lý (chủ chính hoặc đồng chủ).
             ->orderBy('name') // Sắp xếp lớp theo tên để dropdown dễ nhìn.
             ->get(['id', 'name', 'join_key', 'class_code']); // Chỉ lấy cột cần dùng cho bộ lọc lớp.
 
         if ($this->statusFilter === 'pending') {
             $members = ClassJoinRequest::query()
                 ->with(['courseClass:id,name,join_key,class_code', 'user:id,name,email,avatar'])
-                ->whereHas('courseClass', fn (Builder $query) => $query->where('owner_user_id', auth()->id()))
+                ->whereHas('courseClass', fn (Builder $query) => $query->managedBy(auth()->id()))
                 ->where('status', ClassJoinRequest::STATUS_PENDING)
                 ->when($this->classFilter !== 'all', fn (Builder $query) => $query->where('class_id', $this->classFilter))
                 ->when($this->search !== '', function (Builder $query): void {
@@ -602,7 +602,7 @@ class StudentIndex extends Component
                 ->with(['courseClass:id,name,join_key,class_code', 'user:id,name,email,avatar', 'profile', 'attendanceSummary'])
                 ->leftJoin('class_member_profiles', 'class_member_profiles.class_member_id', '=', 'class_members.id')
                 ->select('class_members.*')
-                ->whereHas('courseClass', fn (Builder $query) => $query->where('owner_user_id', auth()->id()))
+                ->whereHas('courseClass', fn (Builder $query) => $query->managedBy(auth()->id()))
                 ->when(
                     $this->statusFilter === 'archived',
                     fn (Builder $query) => $query->onlyTrashed(),

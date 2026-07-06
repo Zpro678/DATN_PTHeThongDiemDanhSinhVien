@@ -16,7 +16,7 @@ class MeetingSessions extends Component
     {
         $this->meeting = $meeting->load('courseClass');
 
-        if ($this->meeting->courseClass->owner_user_id !== auth()->id()) {
+        if (! $this->meeting->courseClass->isManagedBy(auth()->id())) {
             abort(403);
         }
 

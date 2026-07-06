@@ -61,7 +61,7 @@ class QrAttendanceCreate extends Component
 
         if ($this->meetingId) {
             $meeting = ClassMeeting::query()->with('courseClass')->findOrFail($this->meetingId);
-            abort_unless($meeting->courseClass->owner_user_id === auth()->id(), 403);
+            abort_unless($meeting->courseClass->isManagedBy(auth()->id()), 403);
 
             $this->classId = (string) $meeting->class_id;
             $this->loadConfigForClass($this->classId);
@@ -236,7 +236,7 @@ class QrAttendanceCreate extends Component
         // ===== Thêm phiên QR vào buổi đã có =====
         if ($this->meetingId) {
             $meeting = ClassMeeting::query()
-                ->whereHas('courseClass', fn ($query) => $query->where('owner_user_id', auth()->id()))
+                ->whereHas('courseClass', fn ($query) => $query->managedBy(auth()->id()))
                 ->findOrFail($this->meetingId);
 
             if (! $meeting->canAddSession()) {

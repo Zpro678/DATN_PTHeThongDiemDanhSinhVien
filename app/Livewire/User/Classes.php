@@ -16,18 +16,18 @@ class Classes extends Component
     {
         $userId = auth()->id();
 
-        $totalClasses = CourseClass::where('owner_user_id', $userId)->count();
+        $totalClasses = CourseClass::managedBy($userId)->count();
 
         $totalStudents = ClassMember::whereHas('courseClass', function ($q) use ($userId) {
-            $q->where('owner_user_id', $userId);
+            $q->managedBy($userId);
         })->where('status', ClassMember::STATUS_ACTIVE)->count();
 
         $sessionsToday = ClassSession::whereHas('courseClass', function ($q) use ($userId) {
-            $q->where('owner_user_id', $userId);
+            $q->managedBy($userId);
         })->whereDate('created_at', today())->count();
 
         $pendingLeaves = LeaveRequest::whereHas('classMember.courseClass', function ($q) use ($userId) {
-            $q->where('owner_user_id', $userId);
+            $q->managedBy($userId);
         })->whereIn('status', [ClassJoinRequest::STATUS_PENDING, 'pending'])->count();
 
         $stats = [
@@ -37,7 +37,7 @@ class Classes extends Component
             ['label' => 'Đơn nghỉ chờ duyệt', 'value' => $pendingLeaves, 'icon' => 'clock', 'color' => 'text-error', 'bg' => 'bg-error/10'],
         ];
 
-        $classesQuery = CourseClass::where('owner_user_id', $userId)
+        $classesQuery = CourseClass::managedBy($userId)
             ->where('status', 'active')
             ->withCount([
                 'members as students_count' => function ($q) {

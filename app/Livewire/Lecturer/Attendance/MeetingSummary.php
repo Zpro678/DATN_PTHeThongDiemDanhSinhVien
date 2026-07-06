@@ -29,7 +29,7 @@ class MeetingSummary extends Component
     public function mount(ClassMeeting $meeting): void
     {
         $meeting->load('courseClass');
-        abort_unless($meeting->courseClass->owner_user_id === auth()->id(), 403);
+        abort_unless($meeting->courseClass->isManagedBy(auth()->id()), 403);
 
         // Hết giờ thì chốt buổi; sau đó dựng/đồng bộ bảng tổng kết từ các phiên.
         $meeting->closeIfExpired();

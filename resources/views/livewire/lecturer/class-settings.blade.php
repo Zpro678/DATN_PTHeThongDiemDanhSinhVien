@@ -264,6 +264,77 @@
         </div>
     </form>
 
+    {{-- ===== Đồng chủ lớp (chỉ chủ chính thấy trang này) ===== --}}
+    <div class="mt-6 rounded-2xl border border-outline-variant/20 bg-white shadow-sm overflow-hidden">
+        <div class="flex items-center gap-3 border-b border-outline-variant/10 bg-surface-container-lowest/50 px-6 py-4">
+            <span class="flex h-8 w-8 items-center justify-center rounded-lg bg-tertiary/10 text-tertiary">
+                <x-user.icon name="users" :size="16" />
+            </span>
+            <div>
+                <h2 class="text-lg font-bold text-on-surface">Đồng chủ lớp</h2>
+                <p class="text-sm text-on-surface-variant">Người được thêm sẽ cùng quản lý điểm danh, học viên và đơn nghỉ. Không được đổi cài đặt hay xóa lớp.</p>
+            </div>
+        </div>
+
+        <div class="p-6 space-y-5">
+            @if (session('coowner_status'))
+                <div class="flex items-center rounded-xl border border-green-200 bg-green-50 p-3 text-sm font-bold text-green-700">
+                    <x-user.icon name="check-circle" :size="18" class="mr-2 text-green-500" />
+                    {{ session('coowner_status') }}
+                </div>
+            @endif
+
+            {{-- Thêm đồng chủ theo email --}}
+            <div>
+                <label class="mb-2 block text-sm font-bold text-on-surface">Thêm đồng chủ theo email</label>
+                <div class="flex flex-col gap-2 sm:flex-row">
+                    <div class="relative flex-1">
+                        <x-user.icon name="mail" :size="18" class="absolute left-3 top-1/2 -translate-y-1/2 text-outline" />
+                        <input type="email" wire:model="coOwnerEmail" wire:keydown.enter.prevent="addCoOwner"
+                            placeholder="email@vidu.com"
+                            class="w-full rounded-xl border border-outline-variant/30 bg-surface-container-lowest py-2.5 pl-10 pr-4 text-sm outline-none transition-all focus:border-tertiary focus:ring-2 focus:ring-tertiary/20">
+                    </div>
+                    <button type="button" wire:click="addCoOwner" wire:loading.attr="disabled" wire:target="addCoOwner"
+                        class="inline-flex items-center justify-center gap-2 rounded-xl bg-tertiary px-5 py-2.5 text-sm font-bold text-white shadow-sm transition-all hover:bg-tertiary/90 active:scale-95 disabled:opacity-60">
+                        <x-user.icon name="plus" :size="16" />
+                        Thêm
+                    </button>
+                </div>
+                @error('coOwnerEmail')
+                    <span class="mt-1.5 flex items-center gap-1.5 text-xs font-bold text-error">
+                        <x-user.icon name="alert-circle" :size="13" /> {{ $message }}
+                    </span>
+                @enderror
+            </div>
+
+            {{-- Danh sách đồng chủ hiện tại --}}
+            <div class="space-y-2">
+                @forelse ($coOwners as $coOwner)
+                    <div class="flex items-center justify-between gap-3 rounded-xl border border-outline-variant/20 bg-surface-container-lowest/40 px-4 py-3">
+                        <div class="flex min-w-0 items-center gap-3">
+                            <span class="grid h-9 w-9 shrink-0 place-items-center rounded-full bg-tertiary/10 text-sm font-bold text-tertiary">
+                                {{ mb_strtoupper(mb_substr($coOwner->name, 0, 1)) }}
+                            </span>
+                            <div class="min-w-0">
+                                <p class="truncate text-sm font-bold text-on-surface">{{ $coOwner->name }}</p>
+                                <p class="truncate text-xs text-on-surface-variant">{{ $coOwner->email }}</p>
+                            </div>
+                        </div>
+                        <button type="button" wire:click="removeCoOwner({{ $coOwner->id }})"
+                            wire:confirm="Gỡ {{ $coOwner->name }} khỏi vai trò đồng chủ lớp?"
+                            class="inline-flex shrink-0 items-center gap-1.5 rounded-lg border border-error/30 px-3 py-1.5 text-xs font-bold text-error transition-colors hover:bg-error/10">
+                            <x-user.icon name="x" :size="14" /> Gỡ
+                        </button>
+                    </div>
+                @empty
+                    <p class="rounded-xl border border-dashed border-outline-variant/30 px-4 py-6 text-center text-sm text-on-surface-variant">
+                        Lớp chưa có đồng chủ nào. Thêm email ở trên để mời người cùng quản lý.
+                    </p>
+                @endforelse
+            </div>
+        </div>
+    </div>
+
     {{-- Modal xác nhận XÓA --}}
     @if ($isConfirmingDelete)
         <template x-teleport="body">

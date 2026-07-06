@@ -22,7 +22,7 @@ class StudentShow extends Component
     {
         return ClassMember::query()
             ->withTrashed()
-            ->whereHas('courseClass', fn (Builder $query) => $query->where('owner_user_id', auth()->id()));
+            ->whereHas('courseClass', fn (Builder $query) => $query->managedBy(auth()->id()));
     }
 
     public function render(): View

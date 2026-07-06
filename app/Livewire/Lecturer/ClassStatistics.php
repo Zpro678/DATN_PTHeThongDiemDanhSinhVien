@@ -16,7 +16,7 @@ class ClassStatistics extends Component
         $this->class_id = (int) $class_id;
 
         CourseClass::where('id', $class_id)
-            ->where('owner_user_id', auth()->id())
+            ->managedBy(auth()->id())
             ->firstOrFail();
     }
 

@@ -51,7 +51,7 @@ class Dashboard extends Component
         $classId = $this->classId ?: null;
 
         $this->classes = CourseClass::query()
-            ->where('owner_user_id', $userId)
+            ->managedBy($userId)
             ->orderBy('name')
             ->get(['id', 'name'])
             ->toArray();
@@ -75,7 +75,7 @@ class Dashboard extends Component
         ];
 
         return CourseClass::query()
-            ->where('owner_user_id', $userId)
+            ->managedBy($userId)
             ->where('status', 'active') // Chỉ hiển thị các lớp đang hoạt động
             ->withCount(['members as students_count' => fn ($query) => $query->where('status', \App\Models\ClassMember::STATUS_ACTIVE)])
             ->withCount(['meetings as studied_sessions' => fn ($query) => $query->whereHas('sessions', fn ($s) => $s->where('status', 'closed'))])

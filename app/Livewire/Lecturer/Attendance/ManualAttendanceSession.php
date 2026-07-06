@@ -125,7 +125,7 @@ class ManualAttendanceSession extends Component
 
         $records = AttendanceRecord::query()
             ->where('class_session_id', $this->sessionId)
-            ->whereHas('classSession.courseClass', fn ($query) => $query->where('owner_user_id', auth()->id()))
+            ->whereHas('classSession.courseClass', fn ($query) => $query->managedBy(auth()->id()))
             ->whereHas('classMember')
             ->with('classMember:id,user_id')
             ->get();

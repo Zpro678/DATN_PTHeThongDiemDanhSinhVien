@@ -4,6 +4,7 @@ namespace App\Models;
 
 use App\Traits\Auditable;
 
+use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Concerns\HasUuids;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
@@ -45,6 +46,48 @@ class CourseClass extends Model
     public function owner(): BelongsTo
     {
         return $this->belongsTo(User::class, 'owner_user_id');
+    }
+
+    /**
+     * Các ĐỒNG CHỦ lớp (ngoài chủ chính owner_user_id) — cùng quyền quản lý nghiệp vụ dạy.
+     */
+    public function coOwners(): BelongsToMany
+    {
+        return $this->belongsToMany(User::class, 'class_owners', 'class_id', 'user_id')
+            ->withPivot(['role', 'accepted_at'])
+            ->withTimestamps();
+    }
+
+    /**
+     * Giới hạn truy vấn về những lớp mà $userId ĐƯỢC QUẢN LÝ = chủ chính HOẶC đồng chủ.
+     * Thay cho câu where('owner_user_id', $userId) rải rác trước đây.
+     */
+    public function scopeManagedBy(Builder $query, int|string|null $userId): Builder
+    {
+        return $query->where(function (Builder $q) use ($userId) {
+            $q->where('owner_user_id', $userId)
+                ->orWhereHas('coOwners', fn (Builder $c) => $c->where('users.id', $userId));
+        });
+    }
+
+    /** True nếu $userId được quản lý lớp này (chủ chính hoặc đồng chủ). */
+    public function isManagedBy(int|string|null $userId): bool
+    {
+        if ($userId === null) {
+            return false;
+        }
+
+        if ((string) $this->owner_user_id === (string) $userId) {
+            return true;
+        }
+
+        return $this->coOwners()->where('users.id', $userId)->exists();
+    }
+
+    /** True nếu $userId là CHỦ CHÍNH (người tạo) — người duy nhất được làm thao tác hủy diệt. */
+    public function isPrimaryOwner(int|string|null $userId): bool
+    {
+        return $userId !== null && (string) $this->owner_user_id === (string) $userId;
     }
 
     public function members(): HasMany

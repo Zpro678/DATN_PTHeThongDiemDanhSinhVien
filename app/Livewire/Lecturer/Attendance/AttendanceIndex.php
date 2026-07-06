@@ -81,7 +81,7 @@ class AttendanceIndex extends Component
     #[Computed]
     public function activeClasses()
     {
-        return \App\Models\CourseClass::where('owner_user_id', auth()->id())
+        return \App\Models\CourseClass::managedBy(auth()->id())
             ->where('status', 'active')
             ->get();
     }
@@ -201,7 +201,7 @@ class AttendanceIndex extends Component
 
         $meeting = ClassMeeting::query()
             ->with('courseClass')
-            ->whereHas('courseClass', fn ($query) => $query->where('owner_user_id', auth()->id()))
+            ->whereHas('courseClass', fn ($query) => $query->managedBy(auth()->id()))
             ->findOrFail($this->quickMeetingId);
 
         if (! $meeting->canAddSession()) {
@@ -243,7 +243,7 @@ class AttendanceIndex extends Component
     public function closeSession(int $sessionId): void
     {
         $meeting = ClassMeeting::query()
-            ->whereHas('courseClass', fn (Builder $query) => $query->where('owner_user_id', auth()->id()))
+            ->whereHas('courseClass', fn (Builder $query) => $query->managedBy(auth()->id()))
             ->findOrFail($sessionId);
 
         $meeting->sessions()->update(['status' => 'closed']);
@@ -258,7 +258,7 @@ class AttendanceIndex extends Component
     {
         $meeting = ClassMeeting::query()
             ->with('courseClass')
-            ->whereHas('courseClass', fn (Builder $query) => $query->where('owner_user_id', auth()->id()))
+            ->whereHas('courseClass', fn (Builder $query) => $query->managedBy(auth()->id()))
             ->findOrFail($meetingId);
 
         $courseClass = $meeting->courseClass;
@@ -284,7 +284,7 @@ class AttendanceIndex extends Component
     {
         $meetings = ClassMeeting::query()
             ->with(['courseClass:id,name,join_key,owner_user_id', 'sessions'])
-            ->whereHas('courseClass', fn (Builder $query) => $query->where('owner_user_id', auth()->id()))
+            ->whereHas('courseClass', fn (Builder $query) => $query->managedBy(auth()->id()))
             ->when($this->filter === 'unclosed', fn (Builder $query) => $query->where('status', '!=', 'closed'))
             ->when($this->filter === 'closed', fn (Builder $query) => $query->where('status', 'closed'))
             ->when($this->search !== '', function (Builder $query) {

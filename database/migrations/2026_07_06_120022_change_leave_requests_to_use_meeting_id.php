@@ -23,33 +23,55 @@ return new class extends Migration
 
         // Đảm bảo không có record nào null (nếu data chuẩn)
         // Sau đó xóa cột cũ
-        Schema::table('leave_requests', function (Blueprint $table) {
-            if (collect(DB::select("SHOW KEYS FROM leave_requests WHERE Key_name = 'leave_requests_class_member_id_class_session_id_unique'"))->isNotEmpty()) {
-                $table->index('class_member_id', 'temp_class_member_index');
-                $table->dropUnique(['class_member_id', 'class_session_id']);
-            }
-            if (collect(DB::select("SELECT CONSTRAINT_NAME FROM information_schema.KEY_COLUMN_USAGE WHERE TABLE_NAME = 'leave_requests' AND CONSTRAINT_NAME = 'leave_requests_class_session_id_foreign'"))->isNotEmpty()) {
-                $table->dropForeign(['class_session_id']);
-            }
-            if (collect(DB::select("SHOW KEYS FROM leave_requests WHERE Key_name = 'leave_requests_class_session_id_status_index'"))->isNotEmpty()) {
-                $table->dropIndex(['class_session_id', 'status']);
-            }
-            
-            if (Schema::hasColumn('leave_requests', 'class_session_id')) {
-                $table->dropColumn('class_session_id');
-            }
+        // MySQL dùng SHOW KEYS/information_schema để kiểm tra index/khoá trước khi drop (an toàn
+        // khi chạy lại trên DB thật). Các driver khác (vd SQLite lúc chạy test) không hiểu SHOW,
+        // và migrate luôn chạy từ đầu trên schema sạch nên chỉ cần thao tác schema trực tiếp.
+        if (DB::getDriverName() === 'mysql') {
+            Schema::table('leave_requests', function (Blueprint $table) {
+                if (collect(DB::select("SHOW KEYS FROM leave_requests WHERE Key_name = 'leave_requests_class_member_id_class_session_id_unique'"))->isNotEmpty()) {
+                    $table->index('class_member_id', 'temp_class_member_index');
+                    $table->dropUnique(['class_member_id', 'class_session_id']);
+                }
+                if (collect(DB::select("SELECT CONSTRAINT_NAME FROM information_schema.KEY_COLUMN_USAGE WHERE TABLE_NAME = 'leave_requests' AND CONSTRAINT_NAME = 'leave_requests_class_session_id_foreign'"))->isNotEmpty()) {
+                    $table->dropForeign(['class_session_id']);
+                }
+                if (collect(DB::select("SHOW KEYS FROM leave_requests WHERE Key_name = 'leave_requests_class_session_id_status_index'"))->isNotEmpty()) {
+                    $table->dropIndex(['class_session_id', 'status']);
+                }
 
-            // Thêm các constraints mới
-            if (collect(DB::select("SHOW KEYS FROM leave_requests WHERE Key_name = 'leave_requests_class_member_id_class_meeting_id_unique'"))->isEmpty()) {
+                if (Schema::hasColumn('leave_requests', 'class_session_id')) {
+                    $table->dropColumn('class_session_id');
+                }
+
+                // Thêm các constraints mới
+                if (collect(DB::select("SHOW KEYS FROM leave_requests WHERE Key_name = 'leave_requests_class_member_id_class_meeting_id_unique'"))->isEmpty()) {
+                    $table->unique(['class_member_id', 'class_meeting_id']);
+                }
+                if (collect(DB::select("SHOW KEYS FROM leave_requests WHERE Key_name = 'leave_requests_class_meeting_id_status_index'"))->isEmpty()) {
+                    $table->index(['class_meeting_id', 'status']);
+                }
+                if (collect(DB::select("SHOW KEYS FROM leave_requests WHERE Key_name = 'temp_class_member_index'"))->isNotEmpty()) {
+                    $table->dropIndex('temp_class_member_index');
+                }
+            });
+        } elseif (Schema::hasColumn('leave_requests', 'class_session_id')) {
+            // SQLite (test) không drop được cột còn bị FK/unique/index tham chiếu — gỡ ràng buộc
+            // trước, mỗi bước một lần rebuild bảng, rồi mới bỏ cột và thêm ràng buộc mới.
+            Schema::table('leave_requests', function (Blueprint $table) {
+                $table->dropUnique(['class_member_id', 'class_session_id']);
+                $table->dropIndex(['class_session_id', 'status']);
+            });
+            Schema::table('leave_requests', function (Blueprint $table) {
+                $table->dropForeign(['class_session_id']);
+            });
+            Schema::table('leave_requests', function (Blueprint $table) {
+                $table->dropColumn('class_session_id');
+            });
+            Schema::table('leave_requests', function (Blueprint $table) {
                 $table->unique(['class_member_id', 'class_meeting_id']);
-            }
-            if (collect(DB::select("SHOW KEYS FROM leave_requests WHERE Key_name = 'leave_requests_class_meeting_id_status_index'"))->isEmpty()) {
                 $table->index(['class_meeting_id', 'status']);
-            }
-            if (collect(DB::select("SHOW KEYS FROM leave_requests WHERE Key_name = 'temp_class_member_index'"))->isNotEmpty()) {
-                $table->dropIndex('temp_class_member_index');
-            }
-        });
+            });
+        }
     }
 
     public function down(): void

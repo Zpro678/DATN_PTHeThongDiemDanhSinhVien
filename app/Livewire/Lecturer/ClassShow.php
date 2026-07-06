@@ -172,7 +172,7 @@ class ClassShow extends Component
     {
         // Kiểm tra quyền — chỉ chủ lớp mới được xem
         abort_unless(
-            $courseClass->owner_user_id === auth()->id(),
+            $courseClass->isManagedBy(auth()->id()),
             403,
             'Bạn không có quyền xem lớp học này.'
         );

@@ -71,7 +71,7 @@ class StudentsSheet implements FromArray, ShouldAutoSize, WithStyles, WithTitle
             ->with(['courseClass:id,name,join_key', 'user:id,name,email', 'profile'])
             ->leftJoin('class_member_profiles', 'class_member_profiles.class_member_id', '=', 'class_members.id')
             ->select('class_members.*')
-            ->whereHas('courseClass', fn (Builder $q) => $q->where('owner_user_id', $this->ownerUserId))
+            ->whereHas('courseClass', fn (Builder $q) => $q->managedBy($this->ownerUserId))
             ->when(
                 $this->statusFilter === 'archived',
                 fn (Builder $q) => $q->onlyTrashed(),
