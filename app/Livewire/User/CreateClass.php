@@ -109,12 +109,16 @@ class CreateClass extends Component
             'attendanceRules.absent' => ['required', 'numeric'],
             'attendanceRules.excused' => ['required', 'numeric'],
             'requireApproval' => ['boolean'],
-            'importFile' => ['required', 'file', 'extensions:xlsx,xls,csv', 'max:5120'],
+            // Import danh sách là TÙY CHỌN khi tạo lớp; nếu chưa import, giảng viên sẽ được
+            // nhắc import khi tạo điểm danh (lớp phải có sinh viên mới tạo được buổi điểm danh).
+            'importFile' => ['nullable', 'file', 'extensions:xlsx,xls,csv', 'max:5120'],
         ], [
             'name.required' => 'Vui lòng nhập tên lớp.',
             'totalSessions.required' => 'Vui lòng nhập tổng số buổi dự kiến.',
             'totalSessions.min' => 'Tổng số buổi dự kiến phải từ 1 trở lên.',
             'totalSessions.max' => 'Tổng số buổi dự kiến tối đa là 200.',
+            'importFile.extensions' => 'File danh sách phải có định dạng .xlsx, .xls hoặc .csv.',
+            'importFile.max' => 'File danh sách tối đa 5MB.',
         ]);
 
         $code = $this->generateUniqueCode();

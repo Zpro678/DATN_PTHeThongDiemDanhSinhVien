@@ -74,7 +74,8 @@
 
                         {{-- Import Danh Sách Sinh Viên (Tùy chọn khi tạo lớp) --}}
                         <div class="space-y-2 sm:col-span-2 mt-4">
-                            <label class="block text-sm font-semibold text-on-surface">Import danh sách sinh viên <span class="ml-1 rounded-full bg-red-100 px-2 py-0.5 text-[11px] font-bold text-red-600">Bắt buộc</span></label>
+                            <label class="block text-sm font-semibold text-on-surface">Import danh sách sinh viên <span class="ml-1 rounded-full bg-surface-container px-2 py-0.5 text-[11px] font-bold text-on-surface-variant">Tùy chọn</span></label>
+                            <p class="text-xs text-on-surface-variant/70">Có thể import ngay hoặc để sau — nhưng cần có danh sách sinh viên trước khi tạo điểm danh.</p>
                             
                             <label class="group relative flex cursor-pointer flex-col items-center justify-center rounded-[20px] border-2 border-dashed border-outline-variant/30 bg-surface-container-low/30 py-6 transition-colors hover:border-primary hover:bg-primary/5">
                                 <input type="file" wire:model="importFile" accept=".xlsx,.xls,.csv" class="peer absolute inset-0 h-full w-full cursor-pointer opacity-0">

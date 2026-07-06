@@ -230,6 +230,7 @@ class QrAttendanceCreate extends Component
             'gps_latitude' => $validated['gpsEnabled'] ? $this->gpsLatitude : null,
             'gps_longitude' => $validated['gpsEnabled'] ? $this->gpsLongitude : null,
             'gps_radius' => $validated['gpsEnabled'] ? $validated['gpsRadius'] : null,
+            'device_check' => (bool) ($validated['deviceCheck'] ?? true),
         ];
 
         // ===== Thêm phiên QR vào buổi đã có =====

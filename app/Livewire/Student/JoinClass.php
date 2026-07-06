@@ -26,9 +26,13 @@ class JoinClass extends Component
     }
 
     #[\Livewire\Attributes\On('open-join-class-modal')]
-    public function openModal()
+    public function openModal($code = null)
     {
         $this->full_name = Auth::user()->name;
+        // Điền sẵn mã lớp khi mở từ bộ quét QR (QR dạng 2 = join_key).
+        if (! empty($code)) {
+            $this->class_code = (string) $code;
+        }
         $this->showModal = true;
     }
 

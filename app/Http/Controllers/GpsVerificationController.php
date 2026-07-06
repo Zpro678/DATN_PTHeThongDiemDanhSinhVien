@@ -35,14 +35,31 @@ class GpsVerificationController extends Controller
             'lat' => 'required|numeric',
             'lng' => 'required|numeric',
             'accuracy' => 'required|numeric',
+            'altitude' => 'nullable|numeric',
+            'altitude_accuracy' => 'nullable|numeric',
+            'speed' => 'nullable|numeric',
+            'heading' => 'nullable|numeric',
+            'samples' => 'nullable|array|max:10',
+            'samples.*.lat' => 'required_with:samples|numeric',
+            'samples.*.lng' => 'required_with:samples|numeric',
         ]);
+
+        // Tín hiệu bổ sung để chấm nghi vấn fake GPS (altitude gửi kèm để phân biệt null thật).
+        $signals = [
+            'altitude' => $request->input('altitude'),
+            'altitude_accuracy' => $request->input('altitude_accuracy'),
+            'speed' => $request->input('speed'),
+            'heading' => $request->input('heading'),
+            'samples' => $validated['samples'] ?? [],
+        ];
 
         $result = $service->verifyLocation(
             $validated['token'],
             (float) $validated['lat'],
             (float) $validated['lng'],
             (float) $validated['accuracy'],
-            $request->ip()
+            $request->ip(),
+            $signals,
         );
 
         return response()->json($result);
