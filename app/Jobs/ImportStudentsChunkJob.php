@@ -15,9 +15,11 @@ use Illuminate\Queue\SerializesModels;
 use Illuminate\Support\Facades\Mail;
 use App\Mail\StudentImportNotificationMail;
 
+use Illuminate\Bus\Batchable;
+
 class ImportStudentsChunkJob implements ShouldQueue
 {
-    use Dispatchable, InteractsWithQueue, Queueable, SerializesModels;
+    use Batchable, Dispatchable, InteractsWithQueue, Queueable, SerializesModels;
 
     protected string $classId;
     protected array $rows;
@@ -188,40 +190,6 @@ class ImportStudentsChunkJob implements ShouldQueue
                 }
             }
 
-            // Cập nhật thanh tiến trình ngay sau khi xong 1 sinh viên (tránh frontend bị timeout vì tưởng job chết)
-            if ($this->importToken) {
-                $progress = \Illuminate\Support\Facades\Cache::get("import_progress_{$this->importToken}");
-                if ($progress) {
-                    $progress['processed_rows'] += 1;
-                    \Illuminate\Support\Facades\Cache::put("import_progress_{$this->importToken}", $progress, now()->addMinutes(15));
-                }
-            }
-        }
-
-        if ($this->importToken) {
-            $progress = \Illuminate\Support\Facades\Cache::get("import_progress_{$this->importToken}");
-            if ($progress) {
-                $progress['completed_chunks']++;
-                if ($progress['completed_chunks'] >= $progress['total_chunks']) {
-                    $progress['status'] = 'completed';
-                    // Đồng bộ tổng kết buổi học sau khi toàn bộ job hoàn thành
-                    foreach (array_unique($this->meetingHeaders) as $meetingId) {
-                        $meeting = \App\Models\ClassMeeting::with(['courseClass', 'sessions'])->find($meetingId);
-                        if ($meeting) {
-                            \App\Services\AttendanceCalculator::syncSummaries($meeting);
-                        }
-                    }
-                }
-                \Illuminate\Support\Facades\Cache::put("import_progress_{$this->importToken}", $progress, now()->addMinutes(15));
-            }
-        } else {
-            // Không có token -> chỉ chạy 1 lần
-            foreach (array_unique($this->meetingHeaders) as $meetingId) {
-                $meeting = \App\Models\ClassMeeting::with(['courseClass', 'sessions'])->find($meetingId);
-                if ($meeting) {
-                    \App\Services\AttendanceCalculator::syncSummaries($meeting);
-                }
-            }
         }
     }
 }

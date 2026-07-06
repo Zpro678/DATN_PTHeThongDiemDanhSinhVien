@@ -38,6 +38,7 @@ class ClassSession extends Model
         'gps_latitude', // Vĩ độ vị trí điểm danh.
         'gps_longitude', // Kinh độ vị trí điểm danh.
         'gps_radius', // Bán kính GPS cho phép.
+        'device_check', // Bật/tắt kiểm tra thiết bị (chống điểm danh hộ) cho phiên.
         'status', // Trạng thái phiên pending/active/closed.
     ];
 
@@ -49,6 +50,7 @@ class ClassSession extends Model
             'gps_latitude' => 'decimal:8', // Ép kiểu vĩ độ GPS.
             'gps_longitude' => 'decimal:8', // Ép kiểu kinh độ GPS.
             'gps_radius' => 'integer', // Ép kiểu bán kính GPS.
+            'device_check' => 'boolean', // Ép kiểu cờ kiểm tra thiết bị.
         ];
     }
 

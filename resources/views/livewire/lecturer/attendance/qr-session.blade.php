@@ -58,7 +58,7 @@
             return s + 's';
         }
     }"
-    x-init="setInterval(() => tick(), 1000)"
+    x-init="setInterval(() => tick(), 1000); window.listenRealtime && window.listenRealtime(@js($this->realtimeChannel()), () => $wire.$refresh(), 400)"
 >
     <!-- Header -->
     <div class="flex flex-col gap-4 md:flex-row md:items-center md:justify-between border-b border-slate-100 pb-5">

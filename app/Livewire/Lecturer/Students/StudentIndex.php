@@ -103,38 +103,45 @@ class StudentIndex extends Component
             return;
         }
 
-        $progress = \Illuminate\Support\Facades\Cache::get("import_progress_{$this->importToken}");
-        if ($progress) {
-            $this->importTotalRows = $progress['total_rows'];
+        $batch = \Illuminate\Support\Facades\Bus::findBatch($this->importToken);
+        if ($batch) {
+            $this->importTotalRows = $batch->totalJobs;
             
-            if ($progress['processed_rows'] === $this->importProcessedRows) {
+            if ($batch->processedJobs() === $this->importProcessedRows) {
                 $this->importQuietTicks++;
             } else {
-                $this->importProcessedRows = $progress['processed_rows'];
+                $this->importProcessedRows = $batch->processedJobs();
                 $this->importQuietTicks = 0;
             }
 
-            if ($progress['status'] === 'completed') {
+            if ($batch->finished()) {
                 $this->finalizeImport();
                 return;
-            }
-
-            // Nếu sau 3 giây (6 lần poll 500ms) không thấy tiến trình chạy (do Queue Worker không chạy)
-            if ($this->importQuietTicks >= 6) {
-                // Tự động chuyển sang xử lý đồng bộ để tránh bị treo
-                $this->finalizeImport();
             }
         }
     }
 
     protected function finalizeImport(): void
     {
-        $count = $this->importSuccess;
-        $this->closeImport();
-        $message = "Đã nhập thành công {$count} sinh viên vào lớp.";
+        // Lấy tất cả lỗi nếu có
+        $dbErrors = \App\Models\ImportError::where('import_token', $this->importToken)->orderBy('row_index')->get();
+        if ($dbErrors->count() > 0) {
+            $this->importErrors = $dbErrors->map(function ($error) {
+                return ($error->row_index ? "Dòng {$error->row_index}: " : "") . $error->error_message;
+            })->toArray();
+        }
+
+        $message = "Đã xử lý xong file dữ liệu. " . ($dbErrors->count() > 0 ? "Tuy nhiên có một số dòng bị lỗi." : "");
+        if ($dbErrors->count() === 0) {
+            $this->closeImport();
+            $this->isImportingStatus = false;
+            $this->dispatch('toast', message: $message, type: 'success');
+        } else {
+            $this->isImportingStatus = false;
+        }
+
         session()->flash('success', $message);
-        $this->dispatch('toast', message: $message, type: 'success');
-        $this->reset(['importToken', 'isImportingStatus', 'importTotalRows', 'importProcessedRows', 'importQuietTicks']);
+        $this->reset(['importToken', 'importTotalRows', 'importProcessedRows', 'importQuietTicks']);
     }
 
     public function mount(): void
@@ -356,13 +363,10 @@ class StudentIndex extends Component
 
         $courseClass = CourseClass::where('owner_user_id', auth()->id())->findOrFail($this->importClassId);
 
-        $this->importToken = \Illuminate\Support\Str::uuid()->toString();
         $this->isImportingStatus = true;
         $this->importTotalRows = 0;
         $this->importProcessedRows = 0;
         $this->importQuietTicks = 0;
-
-        $import = new StudentsImport($courseClass->id, $this->importToken);
 
         $extension = $this->importFile->getClientOriginalExtension();
         $readerType = match (strtolower($extension)) {
@@ -372,17 +376,51 @@ class StudentIndex extends Component
         };
 
         try {
-            Excel::import($import, $this->importFile->getRealPath(), null, $readerType);
+            // Bước 1: Phân tích header trước (đọc 10 dòng đầu)
+            $headingImport = new \App\Imports\HeadingRowImport($courseClass->id);
+            Excel::import($headingImport, $this->importFile->getRealPath(), null, $readerType);
 
-            $this->importSuccess = $import->successCount;
-            $this->importErrors = $import->errors;
-
-            if (empty($this->importErrors)) {
-                // Do not close import yet. We will poll progress.
-            } else {
+            if (!empty($headingImport->errors)) {
+                $this->importErrors = $headingImport->errors;
                 $this->isImportingStatus = false;
-                $this->importToken = null;
+                return;
             }
+
+            $meetingHeaders = array_unique($headingImport->meetingHeaders);
+
+            // Bước 2: Tạo Bus::batch và StartImportJob
+            $batch = \Illuminate\Support\Facades\Bus::batch([
+                new \App\Jobs\StartImportJob(
+                    $this->importFile->getRealPath(),
+                    $courseClass->id,
+                    $headingImport->dateHeaders,
+                    $headingImport->meetingHeaders,
+                    $headingImport->emailColIndex,
+                    $headingImport->nameColIndex,
+                    $headingImport->codeColIndex,
+                    $headingImport->headerRowNumber,
+                    auth()->id(),
+                    $readerType,
+                    null // Sẽ được cập nhật sau
+                )
+            ])
+            ->then(function (\Illuminate\Bus\Batch $batch) use ($meetingHeaders) {
+                // Đồng bộ chuyên cần khi batch hoàn thành
+                foreach ($meetingHeaders as $meetingId) {
+                    $meeting = \App\Models\ClassMeeting::with(['courseClass', 'sessions'])->find($meetingId);
+                    if ($meeting) {
+                        \App\Services\AttendanceCalculator::syncSummaries($meeting);
+                    }
+                }
+            })
+            ->name('Import Students')
+            ->dispatch();
+
+            $this->importToken = $batch->id;
+            
+            // Cập nhật import_token vào StartImportJob vừa dispatch (Lưu ý: StartImportJob đã tạo không lấy được Token vì nó đang chạy)
+            // Khắc phục bằng cách truyền ID vào db, nhưng an toàn nhất là truyền thẳng batchId thông qua constructor của class đã nhận.
+            // Wait, StartImportJob lấy importToken từ đâu? Nó có thể dùng $this->batch()->id !
         } catch (\Exception $e) {
             $this->isImportingStatus = false;
             $this->importToken = null;

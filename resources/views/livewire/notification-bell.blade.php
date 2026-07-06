@@ -16,8 +16,8 @@
 
 <div
     class="relative"
-    x-data="{ openNotification: false }"
-    @click.away="openNotification = false"
+    x-data="{ openNotification: false, confirmTarget: null }"
+    @click.away="openNotification = false; confirmTarget = null"
     x-init="window.listenNotifications && window.listenNotifications(@js($this->realtimeChannel()), () => $wire.$refresh())"
 >
     <button
@@ -58,8 +58,7 @@
                 @if (! empty($notifications))
                     <button
                         type="button"
-                        wire:click="deleteAll"
-                        wire:confirm="Xóa tất cả thông báo?"
+                        @click="confirmTarget = 'all'"
                         class="inline-flex items-center gap-1 text-xs font-medium text-slate-400 transition-colors hover:text-error"
                     >
                         <x-user.icon name="trash-2" :size="14" />
@@ -109,10 +108,10 @@
                             @endif
                         </a>
 
-                        {{-- Nút xóa từng thông báo: hiện khi hover / focus, không điều hướng --}}
+                        {{-- Nút xóa từng thông báo: hiện khi hover / focus, mở popup xác nhận (không điều hướng) --}}
                         <button
                             type="button"
-                            wire:click="deleteNotification('{{ $notification['id'] }}')"
+                            @click.stop="confirmTarget = '{{ $notification['id'] }}'"
                             title="Xóa thông báo"
                             class="absolute right-2 top-1/2 flex h-7 w-7 -translate-y-1/2 items-center justify-center rounded-full text-slate-400 opacity-0 transition-all hover:bg-rose-100 hover:text-error focus:opacity-100 group-hover:opacity-100"
                         >
@@ -125,6 +124,39 @@
                     Chưa có thông báo mới.
                 </div>
             @endforelse
+        </div>
+
+        {{-- Popup xác nhận xóa (dùng chung: 'all' = xóa tất cả, còn lại = id 1 thông báo) --}}
+        <div
+            x-show="confirmTarget !== null"
+            x-transition:enter="transition ease-out duration-150"
+            x-transition:enter-start="opacity-0"
+            x-transition:enter-end="opacity-100"
+            x-transition:leave="transition ease-in duration-100"
+            x-transition:leave-start="opacity-100"
+            x-transition:leave-end="opacity-0"
+            @click.self="confirmTarget = null"
+            class="absolute inset-0 z-20 flex items-center justify-center bg-slate-900/40 p-4"
+            style="display: none;"
+        >
+            <div class="w-full max-w-[260px] rounded-2xl bg-white p-4 text-center shadow-xl ring-1 ring-black/5" @click.stop>
+                <div class="mx-auto mb-3 flex h-10 w-10 items-center justify-center rounded-full bg-rose-50 text-error">
+                    <x-user.icon name="trash-2" :size="20" />
+                </div>
+                <p class="text-sm font-bold text-slate-900" x-text="confirmTarget === 'all' ? 'Xóa tất cả thông báo?' : 'Xóa thông báo này?'"></p>
+                <p class="mt-1 text-xs text-slate-500">Hành động này không thể hoàn tác.</p>
+                <div class="mt-4 flex gap-2">
+                    <button type="button" @click="confirmTarget = null"
+                        class="flex-1 rounded-xl border border-slate-200 px-3 py-2 text-xs font-bold text-slate-600 transition-colors hover:bg-slate-50">
+                        Hủy
+                    </button>
+                    <button type="button"
+                        @click="confirmTarget === 'all' ? $wire.deleteAll() : $wire.deleteNotification(confirmTarget); confirmTarget = null"
+                        class="flex-1 rounded-xl bg-error px-3 py-2 text-xs font-bold text-white transition-colors hover:bg-error/90">
+                        Xóa
+                    </button>
+                </div>
+            </div>
         </div>
     </div>
 </div>

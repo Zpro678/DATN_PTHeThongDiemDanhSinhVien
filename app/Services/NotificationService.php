@@ -716,6 +716,36 @@ class NotificationService
     }
 
     /**
+     * Leo thang: một thiết bị đã điểm danh cho nhiều SV khác nhau trong lớp (xuyên buổi).
+     * Chỉ báo cho giảng viên (chủ lớp), chống spam bằng hasUnreadLike theo lớp.
+     */
+    public function notifyProxyDeviceAbuse(int $lecturerUserId, ClassSession $session, int $distinctStudents): void
+    {
+        if ($lecturerUserId <= 0) {
+            return;
+        }
+
+        if ($this->hasUnreadLike($lecturerUserId, 'App\\Notifications\\ProxyDeviceWarning', (string) $session->class_id)) {
+            return;
+        }
+
+        $className = $session->courseClass?->name ?? 'lớp học';
+        $isQr = !empty($session->qr_token);
+        $url = $this->sessionUrl($lecturerUserId, $session, $isQr);
+        $url .= (str_contains($url, '?') ? '&' : '?') . 'filter=same_device';
+
+        $this->push(
+            $lecturerUserId,
+            'App\\Notifications\\ProxyDeviceWarning',
+            'Cảnh báo máy điểm danh hộ',
+            "Một thiết bị đã điểm danh cho {$distinctStudents} sinh viên khác nhau trong lớp {$className} (qua nhiều buổi). Nghi vấn máy điểm danh hộ — bấm để xem danh sách dùng chung máy.",
+            $url,
+            'danger',
+            ['class_id' => $session->class_id, 'distinct_students' => $distinctStudents],
+        );
+    }
+
+    /**
      * Báo cho giảng viên và sinh viên khi phát hiện sai GPS (khoảng cách quá xa).
      */
     public function notifyGpsFraud(

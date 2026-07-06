@@ -31,6 +31,10 @@ class JoinClass extends Component
     public function openModal($code = null)
     {
         $this->full_name = Auth::user()->name;
+        // Điền sẵn mã lớp khi mở từ bộ quét QR (QR dạng 2 = join_key).
+        if (! empty($code)) {
+            $this->class_code = (string) $code;
+        }
         if ($code) {
             $this->class_code = $code;
             // Automatically check code if it was passed in

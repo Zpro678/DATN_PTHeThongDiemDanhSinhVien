@@ -40,4 +40,24 @@ class NotificationBellScopeTest extends TestCase
         $res->assertSee('ThongBaoCuaA');
         $res->assertDontSee('ThongBaoCuaB');
     }
+
+    public function test_delete_one_and_delete_all_notifications(): void
+    {
+        $a = User::factory()->create();
+        $svc = app(NotificationService::class);
+        $svc->push($a->id, 'App\Notifications\Test', 'T1', 'x');
+        $svc->push($a->id, 'App\Notifications\Test', 'T2', 'y');
+
+        $firstId = $a->notifications()->orderBy('created_at')->value('id');
+
+        // Xóa 1 thông báo (popup "Xóa" gọi $wire.deleteNotification).
+        Livewire::actingAs($a)->test(NotificationBell::class)
+            ->call('deleteNotification', $firstId);
+        $this->assertSame(1, $a->notifications()->count());
+
+        // Xóa tất cả (popup "Xóa" gọi $wire.deleteAll).
+        Livewire::actingAs($a)->test(NotificationBell::class)
+            ->call('deleteAll');
+        $this->assertSame(0, $a->notifications()->count());
+    }
 }

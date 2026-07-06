@@ -115,56 +115,51 @@ class ClassShow extends Component
             return;
         }
 
-        $progress = \Illuminate\Support\Facades\Cache::get("import_progress_{$this->importToken}");
-        if ($progress) {
-            $this->importTotalRows = $progress['total_rows'];
+        $batch = \Illuminate\Support\Facades\Bus::findBatch($this->importToken);
+        if ($batch) {
+            $this->importTotalRows = $batch->totalJobs;
             
-            if ($progress['processed_rows'] === $this->importProcessedRows) {
+            if ($batch->processedJobs() === $this->importProcessedRows) {
                 $this->importQuietTicks++;
             } else {
-                $this->importProcessedRows = $progress['processed_rows'];
+                $this->importProcessedRows = $batch->processedJobs();
                 $this->importQuietTicks = 0;
             }
 
-            if ($progress['status'] === 'completed') {
+            if ($batch->finished()) {
                 $this->finalizeImport();
                 return;
-            }
-
-            // Nếu sau 30 giây (60 lần poll 500ms) không thấy tiến trình chạy (do Queue Worker không chạy)
-            if ($this->importQuietTicks >= 60) {
-                // Tự động chuyển sang xử lý đồng bộ để tránh bị treo
-                $this->finalizeImport();
             }
         }
     }
 
     protected function finalizeImport(): void
     {
-        $count = $this->importSuccess;
-        
         // Cập nhật lại số sinh viên và số buổi
         $this->studentsCount = $this->class->members()->where('status', \App\Models\ClassMember::STATUS_ACTIVE)->count();
         $this->sessionsCount = $this->class->sessions()->count();
         $this->sessionsCompleted = $this->class->sessions()->whereIn('status', ['closed', 'active'])->count();
         
-        if (empty($this->importErrors)) {
-            $progress = $this->importToken ? \Illuminate\Support\Facades\Cache::get("import_progress_{$this->importToken}") : null;
-            if ($progress && $progress['status'] !== 'completed') {
-                $message = "Hệ thống đang xử lý ngầm {$count} sinh viên. Vui lòng tải lại trang sau ít phút.";
-                $this->dispatch('toast', message: $message, type: 'info');
-            } else {
-                $message = "Đã nhập thành công {$count} sinh viên vào lớp.";
-                $this->dispatch('toast', message: $message, type: 'success');
-            }
+        $dbErrors = \App\Models\ImportError::where('import_token', $this->importToken)->orderBy('row_index')->get();
+        if ($dbErrors->count() > 0) {
+            $this->importErrors = $dbErrors->map(function ($error) {
+                return ($error->row_index ? "Dòng {$error->row_index}: " : "") . $error->error_message;
+            })->toArray();
+        }
+
+        if ($dbErrors->count() === 0) {
+            $this->isImportingStatus = false;
+            $message = "Đã xử lý xong file dữ liệu sinh viên thành công.";
+            $this->dispatch('toast', message: $message, type: 'success');
         } else {
             // Có cảnh báo/lỗi thì mở lại modal để người dùng đọc
             $this->isImporting = true;
-            $message = "Đã tiếp nhận {$count} sinh viên, nhưng có một số lỗi. Vui lòng xem chi tiết.";
+            $this->isImportingStatus = false;
+            $message = "Đã xử lý xong dữ liệu, nhưng có một số dòng bị lỗi. Vui lòng xem chi tiết.";
             $this->dispatch('toast', message: $message, type: 'warning');
         }
 
-        $this->reset(['importToken', 'isImportingStatus', 'importTotalRows', 'importProcessedRows', 'importQuietTicks']);
+        $this->reset(['importToken', 'importTotalRows', 'importProcessedRows', 'importQuietTicks']);
     }
 
     public function openImportFromPopup(): void
@@ -618,13 +613,11 @@ class ClassShow extends Component
             'importFile.extensions' => 'Định dạng file không hỗ trợ. Vui lòng dùng .xlsx, .xls, .csv',
         ]);
 
-        $this->importToken = \Illuminate\Support\Str::uuid()->toString();
         $this->isImportingStatus = true;
         $this->importTotalRows = 0;
         $this->importProcessedRows = 0;
         $this->importQuietTicks = 0;
 
-        $import = new StudentsImport($this->class->id, $this->importToken, false);
         $extension = $this->importFile->getClientOriginalExtension();
         $readerType = match (strtolower($extension)) {
             'csv' => \Maatwebsite\Excel\Excel::CSV,
@@ -633,18 +626,50 @@ class ClassShow extends Component
         };
 
         try {
-            Excel::import($import, $this->importFile->getRealPath(), null, $readerType);
+            // Bước 1: Phân tích header trước (đọc 10 dòng đầu)
+            $headingImport = new \App\Imports\HeadingRowImport($this->class->id);
+            Excel::import($headingImport, $this->importFile->getRealPath(), null, $readerType);
 
-            $this->importSuccess = $import->successCount;
-            $this->importErrors = $import->errors;
-
-            if ($this->importSuccess > 0) {
-                // Đóng popup để người dùng rảnh tay, hiện thanh tiến trình chạy ngầm
-                $this->isImporting = false;
-            } else {
+            if (!empty($headingImport->errors)) {
+                $this->importErrors = $headingImport->errors;
                 $this->isImportingStatus = false;
-                $this->importToken = null;
+                return;
             }
+
+            $meetingHeaders = array_unique($headingImport->meetingHeaders);
+
+            // Bước 2: Tạo Bus::batch và StartImportJob
+            $batch = \Illuminate\Support\Facades\Bus::batch([
+                new \App\Jobs\StartImportJob(
+                    $this->importFile->getRealPath(),
+                    $this->class->id,
+                    $headingImport->dateHeaders,
+                    $headingImport->meetingHeaders,
+                    $headingImport->emailColIndex,
+                    $headingImport->nameColIndex,
+                    $headingImport->codeColIndex,
+                    $headingImport->headerRowNumber,
+                    auth()->id(),
+                    $readerType,
+                    null // Sẽ được cập nhật sau
+                )
+            ])
+            ->then(function (\Illuminate\Bus\Batch $batch) use ($meetingHeaders) {
+                // Đồng bộ chuyên cần khi batch hoàn thành
+                foreach ($meetingHeaders as $meetingId) {
+                    $meeting = \App\Models\ClassMeeting::with(['courseClass', 'sessions'])->find($meetingId);
+                    if ($meeting) {
+                        \App\Services\AttendanceCalculator::syncSummaries($meeting);
+                    }
+                }
+            })
+            ->name('Import Students')
+            ->dispatch();
+
+            $this->importToken = $batch->id;
+            
+            // Đóng popup để người dùng rảnh tay, hiện thanh tiến trình chạy ngầm
+            $this->isImporting = false;
         } catch (\Exception $e) {
             $this->isImportingStatus = false;
             $this->importToken = null;

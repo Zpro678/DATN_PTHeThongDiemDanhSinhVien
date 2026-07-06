@@ -11,7 +11,6 @@ use App\Services\SubscriptionService;
 use Illuminate\Contracts\View\View;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Support\Str;
-use Livewire\Attributes\On;
 use Livewire\Component;
 use Livewire\WithPagination;
 use Maatwebsite\Excel\Facades\Excel;
@@ -135,10 +134,16 @@ class QrAttendanceSession extends Component
         ]);
     }
 
-    #[On('echo:attendance.{sessionId},StudentCheckedIn')]
-    public function onStudentCheckedIn(): void
+    /**
+     * Tên kênh socket.io mà bảng điểm danh cần lắng nghe cho phiên hiện tại.
+     *
+     * StudentCheckedIn broadcast qua Redis (kèm prefix), server.cjs relay sang socket.io;
+     * client (Alpine x-init) nghe đúng kênh này rồi gọi $wire.$refresh() để cập nhật realtime.
+     * (Dùng socket.io thô thay vì Echo vì server.cjs không nói giao thức của laravel-echo.)
+     */
+    public function realtimeChannel(): string
     {
-        // Livewire v3 automatically re-renders the component when this is hit
+        return (string) config('database.redis.options.prefix') . 'attendance.' . $this->sessionId;
     }
 
     public function markAllPresent(): void
@@ -288,7 +293,7 @@ class QrAttendanceSession extends Component
             })
             // Ở chế độ "cùng 1 máy": gom các SV cùng device_id đứng cạnh nhau cho dễ đối chiếu.
             ->when($this->statusFilter === 'same_device', fn (Builder $query) => $query->orderBy('device_id'))
-            ->orderByRaw("CASE WHEN gps_fraud_flag IN ('device_duplicate', 'out_of_radius') OR note LIKE '%Cảnh báo:%' OR note LIKE '%Nghi ngờ Fake GPS%' THEN 0 ELSE 1 END")
+            ->orderByRaw("CASE WHEN gps_fraud_flag IN ('device_duplicate', 'out_of_radius', 'impossible_travel', 'suspected_mock') OR note LIKE '%Cảnh báo:%' OR note LIKE '%Nghi ngờ%' THEN 0 ELSE 1 END")
             ->orderBy('id')
             ->get();
 
