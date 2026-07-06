@@ -19,6 +19,7 @@ class MeetingSummary extends Model
         'deduction', // Điểm trừ chuyên cần: 0 / 0.5 / 1.
         'auto_status', // Trạng thái hệ thống tự tính.
         'is_overridden', // Giảng viên đã chỉnh sửa thủ công hay chưa.
+        'notified_status', // Trạng thái tổng kết đã gửi thông báo cho học viên (chống gửi trùng).
         'note', // Ghi chú tổng kết.
     ];
 

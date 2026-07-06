@@ -27,18 +27,28 @@ class AuthenticatedSessionController extends Controller
     {
         $request->authenticate();
 
+        $user = $request->user();
+
+        // Kiểm tra chế độ bảo trì ngay lúc đăng nhập
+        $isMaintenance = \App\Models\Setting::get('maintenance_mode', false);
+        $start = \App\Models\Setting::get('maintenance_start');
+        $end = \App\Models\Setting::get('maintenance_end');
+
+        if ($isMaintenance && $start && $end) {
+            if (now()->between(\Carbon\Carbon::parse($start), \Carbon\Carbon::parse($end))) {
+                if ($user->role !== \App\Models\User::ROLE_SUPER_ADMIN) {
+                    Auth::guard('web')->logout();
+                    $request->session()->invalidate();
+                    $request->session()->regenerateToken();
+                    
+                    return redirect()->route('maintenance')->with('error', 'Hệ thống đang bảo trì, bạn không thể đăng nhập lúc này.');
+                }
+            }
+        }
+
         $request->session()->regenerate();
 
-        app(AuditLogService::class)->log('login', [
-            'user_id' => $request->user()->id,
-            'new_values' => [
-                'method'     => 'email',
-                'user_agent' => $request->userAgent(),
-                'ip'         => $request->ip(),
-            ],
-        ]);
-
-        if ($request->user()->isAdmin()) {
+        if ($user->isAdmin()) {
             return redirect()->route('admin.dashboard', ['ma_user' => $request->user()->id]);
         }
 

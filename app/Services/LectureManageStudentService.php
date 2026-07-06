@@ -53,8 +53,9 @@ class LectureManageStudentService
             $rules = $class ? $class->getAttendanceRules() : (new CourseClass())->getAttendanceRules();
             $plannedSessions = (int) ($class?->total_sessions ?? 0);
 
-            // Mẫu số là tổng buổi dự kiến; fallback về số buổi đã diễn ra nếu chưa cấu hình.
-            $effectivePlanned = $plannedSessions > 0 ? $plannedSessions : $studiedSessions;
+            // Mẫu số = số buổi cơ sở: lớn nhất giữa dự kiến và số buổi đã diễn ra.
+            // Nếu số buổi thực tế vượt dự kiến, quỹ vắng 20% được tính lại trên số lớn hơn.
+            $effectivePlanned = AttendanceCalculator::baseSessions($plannedSessions, $studiedSessions);
 
             $countedSessions = $effectivePlanned; // Trong hệ thống mới, luôn là tổng số buổi dự kiến, trừ điểm qua $rules
             $attendedSessions = $presentSessions + $lateSessions; // Số buổi có đến lớp (gồm cả muộn).

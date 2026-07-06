@@ -81,17 +81,7 @@
                     <span class="leading-none">Reset</span>
                 </button>
             @endif
-            @if($canExportExcel)
-                <button type="button" wire:click="exportExcel" class="group inline-flex h-10 items-center justify-center gap-2 rounded-xl bg-blue-600 px-5 text-sm font-bold text-white shadow-sm transition-all hover:bg-blue-700 hover:shadow-md">
-                    <x-user.icon name="download" :size="16" />
-                    <span class="leading-none">Xuất file</span>
-                </button>
-            @else
-                <a href="{{ route('upgrade') }}" class="group inline-flex h-10 items-center justify-center gap-2 rounded-xl bg-amber-100 px-5 text-sm font-bold text-amber-700 shadow-sm transition-all hover:bg-amber-200">
-                    <x-user.icon name="download" :size="16" />
-                    <span class="leading-none flex items-center gap-1.5">Xuất file <span class="text-[10px] font-semibold opacity-80">(Nâng cấp Pro)</span></span>
-                </a>
-            @endif
+            <x-user.export-button action="exportExcel" label="Xuất file" :can="$canExportExcel" />
             @if($isLocked)
                 <button type="button" wire:click="unlock" class="group inline-flex h-10 items-center justify-center gap-2 rounded-xl bg-[#059669] px-5 text-sm font-bold text-white shadow-sm transition-all hover:bg-emerald-700 hover:shadow-md">
                     <x-user.icon name="edit" :size="16" class="transition-transform group-hover:scale-110" />

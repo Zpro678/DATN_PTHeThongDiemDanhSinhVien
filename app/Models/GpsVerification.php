@@ -21,6 +21,8 @@ class GpsVerification extends Model
         'lat',
         'lng',
         'accuracy',
+        'fraud_score',
+        'fraud_reasons',
         'is_used',
         'expires_at',
     ];
@@ -31,6 +33,7 @@ class GpsVerification extends Model
             'lat' => 'float',
             'lng' => 'float',
             'accuracy' => 'float',
+            'fraud_score' => 'integer',
             'is_used' => 'boolean',
             'expires_at' => 'datetime',
         ];

@@ -31,6 +31,16 @@
                 </div>
             @endif
 
+            {{-- Quét lại khi đã điểm danh: báo "đã điểm danh cho phiên này rồi". --}}
+            @if($isSuccess && $statusMessage && !session('success'))
+                <div class="mb-8 rounded-2xl border border-emerald-100 bg-emerald-50 p-6 text-center shadow-inner">
+                    <div class="mx-auto flex h-16 w-16 items-center justify-center rounded-2xl bg-emerald-100 text-emerald-600 mb-4 shadow-sm">
+                        <x-user.icon name="check-circle-2" :size="32" />
+                    </div>
+                    <h3 class="text-lg font-bold text-emerald-700">{{ $statusMessage }}</h3>
+                </div>
+            @endif
+
             @if($statusMessage && !$isSuccess && !session('success'))
                 <div class="mb-8 rounded-2xl border border-rose-100 bg-rose-50 p-6 text-center shadow-inner">
                     <div class="mx-auto flex h-16 w-16 items-center justify-center rounded-2xl bg-rose-100 text-rose-600 mb-4 shadow-sm">
@@ -122,6 +132,38 @@
                         getMemberId() {
                             return @this.get('memberId');
                         },
+                        getDeviceId() {
+                            // Mã định danh trình duyệt bền: ưu tiên localStorage, mirror sang cookie
+                            // để không mất khi xóa một bên. Dùng phát hiện "1 máy điểm danh nhiều SV".
+                            try {
+                                let id = localStorage.getItem('att_device_id');
+                                if (!id) {
+                                    id = (window.crypto && crypto.randomUUID)
+                                        ? crypto.randomUUID()
+                                        : ('d-' + Date.now() + '-' + Math.random().toString(36).slice(2));
+                                    localStorage.setItem('att_device_id', id);
+                                }
+                                document.cookie = 'att_device_id=' + id + '; max-age=31536000; path=/; SameSite=Lax';
+                                return id;
+                            } catch (e) {
+                                const m = document.cookie.match(/(?:^|; )att_device_id=([^;]+)/);
+                                return m ? m[1] : null;
+                            }
+                        },
+                        collectPositions(count = 3, gapMs = 800) {
+                            // Lấy nhiều mẫu vị trí cách nhau ~1s: GPS thật luôn "rung", fake thường đứng yên.
+                            const getOne = () => new Promise((resolve, reject) =>
+                                navigator.geolocation.getCurrentPosition(resolve, reject, { enableHighAccuracy: true, timeout: 10000, maximumAge: 0 })
+                            );
+                            return (async () => {
+                                const positions = [];
+                                for (let i = 0; i < count; i++) {
+                                    positions.push(await getOne());
+                                    if (i < count - 1) await new Promise(r => setTimeout(r, gapMs));
+                                }
+                                return positions;
+                            })();
+                        },
                         async performCheckIn() {
                             if (this.isCheckingIn) return;
                             this.isCheckingIn = true;
@@ -162,51 +204,52 @@
 
                                         const verificationToken = tokenData.verification_token;
 
-                                        navigator.geolocation.getCurrentPosition(
-                                            async (position) => {
-                                                try {
-                                                    const verifyResp = await fetch('/gps/verify', {
-                                                        method: 'POST',
-                                                        headers: {
-                                                            'Content-Type': 'application/json',
-                                                            'X-CSRF-TOKEN': csrfToken
-                                                        },
-                                                        body: JSON.stringify({
-    token: verificationToken,
-    lat: position.coords.latitude,
-    lng: position.coords.longitude,
-    accuracy: position.coords.accuracy,
-    altitude: position.coords.altitude // Bổ sung bắt độ cao cho Lớp 2
-})
-                                                    });
-                                                    const verifyData = await verifyResp.json();
-                                                    if (!verifyData.success) {
-                                                        alert('Xác thực tọa độ GPS không thành công: ' + verifyData.error);
-                                                        // Gửi checkIn không token để kích hoạt thông báo lỗi của Livewire
-                                                        await $wire.checkIn(null);
-                                                        this.isCheckingIn = false;
-                                                        return;
-                                                    }
+                                        let samples;
+                                        try {
+                                            samples = await this.collectPositions(3, 800);
+                                        } catch (error) {
+                                            let msg = 'Không thể lấy vị trí. Vui lòng bật vị trí (GPS) và cấp quyền cho trình duyệt.';
+                                            if (error && error.code === 1) msg = 'Bạn đã từ chối cấp quyền vị trí cho trình duyệt.';
+                                            if (error && error.code === 2) msg = 'Không thể xác định được vị trí hiện tại của thiết bị.';
+                                            if (error && error.code === 3) msg = 'Quá thời gian lấy vị trí (Timeout).';
+                                            alert(msg);
+                                            this.isCheckingIn = false;
+                                            return;
+                                        }
 
-                                                    $wire.checkIn(verifyData.check_token).then(() => {
-                                                        this.isCheckingIn = false;
-                                                    });
-                                                } catch (e) {
-                                                    alert('Lỗi kết nối máy chủ xác thực.');
-                                                    this.isCheckingIn = false;
-                                                }
-                                            },
-                                            (error) => {
-                                                console.warn('Cannot get location', error);
-                                                let msg = 'Không thể lấy vị trí. Vui lòng bật vị trí (GPS) và cấp quyền cho trình duyệt.';
-                                                if (error.code === 1) msg = 'Bạn đã từ chối cấp quyền vị trí cho trình duyệt.';
-                                                if (error.code === 2) msg = 'Không thể xác định được vị trí hiện tại của thiết bị.';
-                                                if (error.code === 3) msg = 'Quá thời gian lấy vị trí (Timeout).';
-                                                alert(msg);
+                                        // Mẫu chính xác nhất dùng để tính khoảng cách; gửi kèm tất cả mẫu để server chấm jitter.
+                                        const best = samples.reduce((a, b) => (b.coords.accuracy < a.coords.accuracy ? b : a));
+                                        try {
+                                            const verifyResp = await fetch('/gps/verify', {
+                                                method: 'POST',
+                                                headers: { 'Content-Type': 'application/json', 'X-CSRF-TOKEN': csrfToken },
+                                                body: JSON.stringify({
+                                                    token: verificationToken,
+                                                    lat: best.coords.latitude,
+                                                    lng: best.coords.longitude,
+                                                    accuracy: best.coords.accuracy,
+                                                    altitude: best.coords.altitude,
+                                                    altitude_accuracy: best.coords.altitudeAccuracy,
+                                                    speed: best.coords.speed,
+                                                    heading: best.coords.heading,
+                                                    samples: samples.map(p => ({ lat: p.coords.latitude, lng: p.coords.longitude })),
+                                                })
+                                            });
+                                            const verifyData = await verifyResp.json();
+                                            if (!verifyData.success) {
+                                                alert('Xác thực tọa độ GPS không thành công: ' + verifyData.error);
+                                                // Gửi checkIn không token để kích hoạt thông báo lỗi của Livewire
+                                                await $wire.checkIn(null, this.getDeviceId());
                                                 this.isCheckingIn = false;
-                                            },
-                                            { enableHighAccuracy: true, timeout: 10000, maximumAge: 0 }
-                                        );
+                                                return;
+                                            }
+                                            $wire.checkIn(verifyData.check_token, this.getDeviceId()).then(() => {
+                                                this.isCheckingIn = false;
+                                            });
+                                        } catch (e) {
+                                            alert('Lỗi kết nối máy chủ xác thực.');
+                                            this.isCheckingIn = false;
+                                        }
                                     } catch (err) {
                                         alert('Lỗi kết nối máy chủ khi lấy token.');
                                         this.isCheckingIn = false;
@@ -216,7 +259,7 @@
                                     this.isCheckingIn = false;
                                 }
                             } else {
-                                $wire.checkIn(null).then(() => {
+                                $wire.checkIn(null, this.getDeviceId()).then(() => {
                                     this.isCheckingIn = false;
                                 });
                             }

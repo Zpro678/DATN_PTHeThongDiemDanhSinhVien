@@ -1,10 +1,6 @@
 <div class="w-full space-y-8 px-6 py-6 pb-24 sm:px-10 lg:px-16 animate-in fade-in slide-in-from-bottom-4 duration-500">
     <div class="flex justify-end">
-        <button type="button" wire:click="exportExcel" class="inline-flex items-center gap-2 rounded-xl bg-white border border-slate-200 px-5 py-2.5 text-sm font-bold text-slate-700 shadow-sm transition-all hover:bg-slate-50 hover:border-slate-300 active:scale-95">
-            <x-user.icon name="download" :size="18" class="text-emerald-600" />
-            <span wire:loading.remove wire:target="exportExcel">Xuất báo cáo</span>
-            <span wire:loading wire:target="exportExcel">Đang xuất...</span>
-        </button>
+        <x-user.export-button action="exportExcel" label="Xuất báo cáo" :can="$canExportExcel" />
     </div>
 
     <!-- Alerts (if any) -->

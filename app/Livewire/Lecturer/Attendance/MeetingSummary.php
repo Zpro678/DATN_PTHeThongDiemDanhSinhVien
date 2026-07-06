@@ -6,6 +6,7 @@ use App\Exports\MeetingSummaryExport;
 use App\Models\ClassMeeting;
 use App\Models\MeetingSummary as MeetingSummaryModel;
 use App\Services\AttendanceCalculator;
+use App\Services\NotificationService;
 use App\Services\SubscriptionService;
 use Illuminate\Contracts\View\View;
 use Illuminate\Support\Str;
@@ -64,7 +65,7 @@ class MeetingSummary extends Component
     {
         $rules = $this->meeting->courseClass->getAttendanceRules();
 
-        $summaries = $this->meeting->summaries()->with('classMember.user')->get()->keyBy('class_member_id');
+        $summaries = $this->meeting->summaries()->get()->keyBy('class_member_id');
 
         foreach ($this->draftStatuses as $memberId => $status) {
             $summary = $summaries->get($memberId);
@@ -80,11 +81,10 @@ class MeetingSummary extends Component
                 'is_overridden' => $status !== $summary->auto_status,
                 'note' => $note !== '' ? $note : null,
             ]);
-
-            if ($summary->classMember && $summary->classMember->user) {
-                $summary->classMember->user->notify(new \App\Notifications\AttendanceResultNotification($summary));
-            }
         }
+
+        // Chỉ gửi cho học viên có trạng thái tổng kết vừa thay đổi (tránh gửi trùng).
+        app(NotificationService::class)->notifyMeetingResults($this->meeting);
 
         $this->isLocked = true;
         $this->dispatch('toast', message: 'Đã lưu tổng kết và gửi thông báo cho học viên.', type: 'success');

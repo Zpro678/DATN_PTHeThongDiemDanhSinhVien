@@ -223,12 +223,14 @@ class QrAttendanceCreate extends Component
         $this->saveConfig();
 
         $qrFields = [
-            'qr_token' => Str::upper(Str::random(24)),
-            'token_expires_at' => now()->addMinutes($validated['durationMinutes']),
+            'qr_token' => ClassSession::generateQrToken(),
+            // Hạn token ban đầu ngắn theo nhịp làm mới; sau đó refreshToken sẽ xoay liên tục.
+            'token_expires_at' => ClassSession::qrTokenExpiryFor((int) $validated['qrRefreshRate']),
             'qr_refresh_rate' => $validated['qrRefreshRate'],
             'gps_latitude' => $validated['gpsEnabled'] ? $this->gpsLatitude : null,
             'gps_longitude' => $validated['gpsEnabled'] ? $this->gpsLongitude : null,
             'gps_radius' => $validated['gpsEnabled'] ? $validated['gpsRadius'] : null,
+            'device_check' => (bool) ($validated['deviceCheck'] ?? true),
         ];
 
         // ===== Thêm phiên QR vào buổi đã có =====

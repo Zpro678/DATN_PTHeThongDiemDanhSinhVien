@@ -20,7 +20,7 @@
     <div class="admin-card flex-none overflow-visible rounded-2xl border p-4 lg:p-5 relative z-20">
         <div class="grid grid-cols-1 gap-4 md:grid-cols-4">
             <div class="relative col-span-1 md:col-span-2">
-                <div class="pointer-events-none absolute inset-y-0 left-0 flex items-center pl-3">
+                <div class="pointer-events-none absolute inset-y-0 left-0 z-20 flex items-center pl-3">
                     <x-user.icon name="search" :size="18" class="text-gray-400" />
                 </div>
                 <input

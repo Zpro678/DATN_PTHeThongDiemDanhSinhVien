@@ -2,13 +2,15 @@
 
 namespace App\Models;
 
+use App\Traits\Auditable;
+
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
 class ClassJoinRequest extends Model
 {
-    use HasFactory;
+    use HasFactory, Auditable;
 
     // Trạng thái yêu cầu vào lớp.
     public const STATUS_PENDING = 'PENDING';

@@ -520,6 +520,14 @@ class StudentIndex extends Component
 
     public function openExport()
     {
+        // Chỉ mở bảng xuất khi gói bật tính năng xuất Excel; FREE bị chặn ngay từ đây.
+        if (! app(SubscriptionService::class)->canExportExcel(auth()->user())) {
+            session()->flash('upgrade_required', 'Xuất báo cáo Excel là tính năng của gói Pro trở lên. Vui lòng nâng cấp để sử dụng.');
+            $this->redirect(route('upgrade'), navigate: true);
+
+            return;
+        }
+
         $this->exportClassId = $this->classFilter;
         $this->exportFormula = '(c + m + p) / t * 100';
         $this->selectedTemplate = '(c + m + p) / t * 100';

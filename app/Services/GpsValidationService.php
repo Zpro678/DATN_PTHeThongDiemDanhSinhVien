@@ -5,6 +5,8 @@ namespace App\Services;
 use App\Models\ClassSession;
 use App\Models\ClassMember;
 use App\Models\GpsVerification;
+use Illuminate\Support\Facades\Cache;
+use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Str;
 
 class GpsValidationService
@@ -27,13 +29,19 @@ class GpsValidationService
         ]);
     }
 
-    // Xác thực tọa độ GPS + trả về check_token
+    /**
+     * Xác thực tọa độ GPS + trả về check_token.
+     *
+     * @param array $signals Tín hiệu bổ sung để chấm nghi vấn fake GPS:
+     *   altitude, altitude_accuracy, speed, heading (float|null) và samples (mảng {lat,lng}).
+     */
     public function verifyLocation(
         string $verificationToken,
         float $lat,
         float $lng,
         float $accuracy,
-        string $ip
+        string $ip,
+        array $signals = []
     ): array {
         $verification = GpsVerification::where('token', $verificationToken)
             ->where('is_used', false)
@@ -85,6 +93,9 @@ class GpsValidationService
             }
         }
 
+        // Chấm điểm nghi vấn fake GPS (đa tín hiệu) và lưu để bước check-in đọc lại.
+        $fraud = $this->computeFakeGpsScore($lat, $lng, $accuracy, $signals, $ip);
+
         // Cập nhật thông tin định vị thành công
         $checkToken = Str::random(64);
         $verification->update([
@@ -92,6 +103,8 @@ class GpsValidationService
             'lat' => $lat,
             'lng' => $lng,
             'accuracy' => $accuracy,
+            'fraud_score' => $fraud['score'],
+            'fraud_reasons' => $fraud['reasons'] !== [] ? implode('; ', $fraud['reasons']) : null,
             'expires_at' => now()->addMinutes(2), // Check token chỉ có hiệu lực trong 2 phút
         ]);
 
@@ -100,6 +113,7 @@ class GpsValidationService
             'check_token' => $checkToken,
             'error' => null,
             'distance' => $distance,
+            'fraud_score' => $fraud['score'],
         ];
     }
 
@@ -145,6 +159,110 @@ class GpsValidationService
         }
 
         return null;
+    }
+
+    /** Ngưỡng điểm nghi vấn để coi là nghi giả lập vị trí (cờ mềm). */
+    public const FAKE_GPS_SUSPICION_THRESHOLD = 2;
+
+    /** Khoảng cách tối đa (km) giữa vị trí theo IP và GPS trước khi coi là bất thường. */
+    public const IP_GPS_MAX_DISTANCE_KM = 150;
+
+    /**
+     * Chấm điểm nghi vấn fake GPS từ nhiều tín hiệu độc lập.
+     *
+     * @param  array  $signals  altitude/altitude_accuracy/speed/heading (float|null) + samples (mảng {lat,lng}).
+     * @return array{score:int, reasons:array<int,string>}
+     */
+    public function computeFakeGpsScore(float $lat, float $lng, float $accuracy, array $signals, ?string $ip): array
+    {
+        $score = 0;
+        $reasons = [];
+
+        // (1) Độ chính xác quá đẹp — app fake thường gán cứng ~0/1m.
+        if ($accuracy <= self::IMPLAUSIBLE_ACCURACY_METERS) {
+            $score += 2;
+            $reasons[] = 'độ chính xác bất thường (' . round($accuracy, 2) . 'm)';
+        }
+
+        // (2) Toạ độ đứng yên tuyệt đối qua nhiều mẫu — GPS thật luôn "rung".
+        if ($this->samplesLookStatic($signals['samples'] ?? [])) {
+            $score += 2;
+            $reasons[] = 'toạ độ không đổi qua nhiều lần đọc';
+        }
+
+        // (3) Thiếu độ cao — nhiều app fake để altitude null.
+        if (array_key_exists('altitude', $signals) && $signals['altitude'] === null) {
+            $score += 1;
+            $reasons[] = 'thiết bị không cung cấp độ cao';
+        }
+
+        // (4) Lệch IP↔GPS — fake chỉ giả toạ độ trình duyệt, không đổi IP (tín hiệu mạnh nhất).
+        $ipLoc = $this->lookupIpLocation($ip);
+        if ($ipLoc !== null) {
+            $ipDistanceKm = $this->calculateDistance($ipLoc['lat'], $ipLoc['lng'], $lat, $lng) / 1000;
+            if ($ipDistanceKm > self::IP_GPS_MAX_DISTANCE_KM) {
+                $score += 3;
+                $reasons[] = 'vị trí mạng (IP) cách GPS ~' . round($ipDistanceKm) . 'km';
+            }
+        }
+
+        return ['score' => $score, 'reasons' => $reasons];
+    }
+
+    /**
+     * Các mẫu toạ độ có "đứng yên tuyệt đối" không (≥2 mẫu trùng tới 6 chữ số thập phân).
+     *
+     * @param  array<int, array{lat?:mixed, lng?:mixed}>  $samples
+     */
+    private function samplesLookStatic(array $samples): bool
+    {
+        if (count($samples) < 2) {
+            return false;
+        }
+
+        $firstKey = null;
+        foreach ($samples as $sample) {
+            $key = round((float) ($sample['lat'] ?? 0), 6) . ',' . round((float) ($sample['lng'] ?? 0), 6);
+            if ($firstKey === null) {
+                $firstKey = $key;
+            } elseif ($key !== $firstKey) {
+                return false;
+            }
+        }
+
+        return true;
+    }
+
+    /**
+     * Tra vị trí thô theo IP (ip-api.com), cache 24h, fail-open (trả null khi lỗi hoặc IP nội bộ).
+     *
+     * @return array{lat:float, lng:float}|null
+     */
+    public function lookupIpLocation(?string $ip): ?array
+    {
+        if (! $ip || $this->isPrivateIp($ip)) {
+            return null;
+        }
+
+        return Cache::remember('ipgeo:' . $ip, now()->addHours(24), function () use ($ip): ?array {
+            try {
+                $response = Http::timeout(3)->get("http://ip-api.com/json/{$ip}", ['fields' => 'status,lat,lon']);
+                $data = $response->json();
+                if (($data['status'] ?? null) === 'success' && isset($data['lat'], $data['lon'])) {
+                    return ['lat' => (float) $data['lat'], 'lng' => (float) $data['lon']];
+                }
+            } catch (\Throwable $e) {
+                // fail-open: không có tín hiệu IP -> không gắn cờ nhầm.
+            }
+
+            return null;
+        });
+    }
+
+    /** IP có thuộc dải nội bộ/không định tuyến được không (không thể tra vị trí). */
+    private function isPrivateIp(string $ip): bool
+    {
+        return ! filter_var($ip, FILTER_VALIDATE_IP, FILTER_FLAG_NO_PRIV_RANGE | FILTER_FLAG_NO_RES_RANGE);
     }
 
     /**

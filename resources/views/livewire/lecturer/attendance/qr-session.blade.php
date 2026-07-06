@@ -2,7 +2,9 @@
     $isClosed = $session->status === 'closed';
     $selectedSubject = $session->courseClass->join_key;
     $sessionDateLabel = $session->date->format('d/m/Y');
-    $openMinutes = max(1, (int) now()->diffInMinutes($session->token_expires_at ?? now()->addMinutes(15), false));
+    // "Phiên còn mở" tính theo GIỜ KẾT THÚC BUỔI (không phải hạn token QR — token nay xoay theo giây).
+    $sessionEndsAt = $session->meeting?->endsAt() ?? now()->addMinutes(15);
+    $openMinutes = max(1, (int) now()->diffInMinutes($sessionEndsAt, false));
     $qrRefreshRate = $session->qr_refresh_rate ?? 10;
     $statusMeta = [
         'present' => ['label' => 'CÓ MẶT', 'short' => 'Có mặt', 'card' => 'border border-slate-400 bg-white', 'text' => 'text-emerald-500', 'icon' => 'check-circle-2', 'activeBtn' => 'bg-emerald-600 text-white border-emerald-700 shadow-md ring-2 ring-emerald-600/20'],
@@ -21,7 +23,7 @@
         isClosed: @entangle('isClosed').live,
         timeLeft: {{ $qrRefreshRate }},
         refreshRate: {{ $qrRefreshRate }},
-        sessionTimeLeft: {{ max(0, (int) now()->diffInSeconds($session->token_expires_at ?? now()->addMinutes($session->open_minutes ?? 15), false)) }},
+        sessionTimeLeft: {{ max(0, (int) now()->diffInSeconds($sessionEndsAt, false)) }},
         showEndModal: false,
         showQrModal: false,
         showClassSettingsModal: false,
@@ -56,7 +58,7 @@
             return s + 's';
         }
     }"
-    x-init="setInterval(() => tick(), 1000)"
+    x-init="setInterval(() => tick(), 1000); window.listenRealtime && window.listenRealtime(@js($this->realtimeChannel()), () => $wire.$refresh(), 400)"
 >
     <!-- Header -->
     <div class="flex flex-col gap-4 md:flex-row md:items-center md:justify-between border-b border-slate-100 pb-5">
@@ -81,6 +83,7 @@
             <button type="button" wire:click="refreshToken" @disabled($isClosed) class="inline-flex items-center justify-center rounded-lg bg-blue-600 px-5 py-2.5 text-sm font-bold text-white shadow-sm hover:bg-blue-700 disabled:opacity-50">
                 Làm mới QR
             </button>
+            <x-user.export-button action="exportExcel" label="Xuất Excel" :can="$canExportExcel" />
             @if(!$isClosed)
             <button type="button" @click="showEndModal = true" class="inline-flex items-center justify-center rounded-lg bg-rose-600 px-5 py-2.5 text-sm font-bold text-white shadow-sm hover:bg-rose-700">
                 Kết thúc phiên
@@ -203,16 +206,24 @@
                     </div>
                 </button>
 
-                <!-- Trùng máy -->
-                <button type="button" @if(($fraudStats['device_duplicate'] ?? 0) > 0) wire:click="setStatusFilter('invalid')" @endif class="rounded-xl border border-slate-200 bg-white shadow-sm flex overflow-hidden transition hover:bg-slate-50 text-left w-full">
+                <!-- Trùng máy (điểm danh cùng 1 máy) -->
+                <button type="button" @if(($sameDeviceCount ?? 0) > 0) wire:click="setStatusFilter('{{ $statusFilter === 'same_device' ? 'all' : 'same_device' }}')" @endif
+                    @class([
+                        'rounded-xl border bg-white shadow-sm flex overflow-hidden transition hover:bg-slate-50 text-left w-full',
+                        'border-rose-400 ring-2 ring-rose-200' => $statusFilter === 'same_device',
+                        'border-slate-200' => $statusFilter !== 'same_device',
+                    ])>
                     <div class="w-1.5 bg-gradient-to-b from-rose-400 to-rose-600"></div>
                     <div class="p-6 lg:py-8 flex gap-5 flex-1 items-center">
                         <div class="h-12 w-12 shrink-0 rounded-xl bg-rose-50 flex items-center justify-center text-rose-500">
                             <x-user.icon name="laptop" :size="24" />
                         </div>
                         <div>
-                            <p class="text-sm font-bold uppercase tracking-wider text-slate-600">Trùng máy</p>
-                            <h3 class="text-3xl font-black text-rose-500 mt-1">{{ $fraudStats['device_duplicate'] ?? 0 }}</h3>
+                            <p class="text-sm font-bold uppercase tracking-wider text-slate-600">Điểm danh cùng 1 máy</p>
+                            <h3 class="text-3xl font-black text-rose-500 mt-1">{{ $sameDeviceCount ?? 0 }}</h3>
+                            @if(($sameDeviceCount ?? 0) > 0)
+                                <p class="mt-0.5 text-xs font-semibold text-rose-500">Bấm để lọc các SV dùng chung máy</p>
+                            @endif
                         </div>
                     </div>
                 </button>

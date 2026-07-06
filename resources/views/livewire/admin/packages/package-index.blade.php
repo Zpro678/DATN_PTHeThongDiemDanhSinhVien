@@ -2,11 +2,17 @@
     <div class="mx-auto max-w-[1400px]">
         <div class="mb-6 p-5 lg:p-6">
             <div class="relative z-10 flex flex-col items-start justify-between gap-4 md:flex-row md:items-center">
-            <div>
-                <p class="text-[10px] font-bold uppercase tracking-[0.3em] text-slate-400">Packages</p>
-                <h1 class="mb-1 text-[28px] font-bold text-slate-900">Quản lý gói dịch vụ</h1>
-                <p class="text-sm text-slate-500">Xem và cấu hình các gói dịch vụ trên hệ thống.</p>
-            </div>
+                <div>
+                    <p class="text-[10px] font-bold uppercase tracking-[0.3em] text-slate-400">Packages</p>
+                    <h1 class="mb-1 text-[28px] font-bold text-slate-900">Quản lý gói dịch vụ</h1>
+                    <p class="text-sm text-slate-500">Xem và cấu hình các gói dịch vụ trên hệ thống.</p>
+                </div>
+                <div class="flex gap-3">
+                    <a href="{{ route('admin.packages.coupons.index', ['ma_user' => auth()->user()->id]) }}" class="admin-soft-button flex items-center gap-2 rounded-xl border border-slate-200 bg-white px-5 py-2.5 text-sm font-semibold text-slate-700 transition-colors hover:bg-slate-50">
+                        <x-user.icon name="ticket" :size="16" />
+                        Quản lý mã giảm giá
+                    </a>
+                </div>
             </div>
         </div>
 
@@ -64,30 +70,22 @@
                                     style="display: none;">
                                     
                                     <a href="{{ route('admin.packages.edit', $package) }}" class="flex w-full items-center gap-2 rounded-lg px-3 py-2 text-left text-sm font-medium text-slate-700 transition-colors hover:bg-slate-50 hover:text-blue-600">
-                                        <x-user.icon name="edit-3" :size="16" />
+                                        <x-user.icon name="edit" :size="16" />
                                         Sửa thông tin
                                     </a>
                                     
                                     <button type="button" wire:click="toggleStatus({{ $package->id }})" @click="open = false" class="flex w-full items-center gap-2 rounded-lg px-3 py-2 text-left text-sm font-medium text-slate-700 transition-colors hover:bg-slate-50 hover:text-amber-600">
                                         @if($package->is_active)
-                                            <x-user.icon name="pause-circle" :size="16" />
-                                            Tạm dừng
+                                            <x-user.icon name="minus-circle" :size="16" />
+                                            Vô hiệu hóa
                                         @else
-                                            <x-user.icon name="play-circle" :size="16" />
-                                            Mở hoạt động
+                                            <x-user.icon name="check-circle" :size="16" />
+                                            Kích hoạt
                                         @endif
                                     </button>
                                     
                                     <div class="my-1 h-px bg-slate-100"></div>
                                     
-                                    <button type="button" 
-                                        wire:click="deletePackage({{ $package->id }})"
-                                        wire:confirm="Bạn có chắc chắn muốn xóa gói dịch vụ này? Hành động này sẽ xóa mềm gói dịch vụ."
-                                        @click="open = false"
-                                        class="flex w-full items-center gap-2 rounded-lg px-3 py-2 text-left text-sm font-medium text-rose-600 transition-colors hover:bg-rose-50 hover:text-rose-700">
-                                        <x-user.icon name="trash-2" :size="16" />
-                                        Xóa gói dịch vụ
-                                    </button>
                                 </div>
                             </div>
                         </div>

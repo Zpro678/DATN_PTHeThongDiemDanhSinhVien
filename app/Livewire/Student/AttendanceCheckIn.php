@@ -79,12 +79,16 @@ class AttendanceCheckIn extends Component
                 'class_member_id' => $memberId,
             ], [
                 'status' => 'pending',
-                'is_account' => true,
+                'is_account' => auth()->check(),
             ]);
 
-        if ($this->record && in_array($this->record->status, ['present', 'late', 'excused'])) {
+        // Chống điểm danh 2 lần trong cùng một phiên: nếu đã có giờ điểm danh hoặc trạng thái
+        // đã ghi nhận (có mặt/muộn/có phép) thì báo "đã điểm danh" và không cho quét lại.
+        if ($this->record && ($this->record->check_in_time !== null
+            || in_array($this->record->status, ['present', 'late', 'excused'], true))) {
             $this->isSuccess = true;
-            $this->statusMessage = 'Bạn đã điểm danh thành công trước đó.';
+            $this->isAutoCheckIn = false; // Chặn blade tự động bấm điểm danh lại.
+            $this->statusMessage = 'Bạn đã điểm danh cho phiên này rồi. Mỗi phiên chỉ được điểm danh một lần.';
         }
     }
 
@@ -128,9 +132,18 @@ class AttendanceCheckIn extends Component
         $this->isAutoCheckIn = true;
     }
 
-    public function checkIn(?string $gpsCheckToken = null): void
+    public function checkIn(?string $gpsCheckToken = null, ?string $deviceId = null): void
     {
         if (!$this->session || !$this->record) {
+            return;
+        }
+
+        // Chặn điểm danh lần 2 trong cùng phiên (kể cả khi client cố gọi lại checkIn).
+        $this->record->refresh();
+        if ($this->record->check_in_time !== null
+            || in_array($this->record->status, ['present', 'late', 'excused'], true)) {
+            $this->isSuccess = true;
+            $this->statusMessage = 'Bạn đã điểm danh cho phiên này rồi. Mỗi phiên chỉ được điểm danh một lần.';
             return;
         }
 
@@ -140,17 +153,25 @@ class AttendanceCheckIn extends Component
             return;
         }
 
-        if ($this->session->token_expires_at && $this->session->token_expires_at->isPast()) {
-            $this->statusMessage = 'Mã QR này đã hết hạn. Vui lòng quét lại mã mới.';
+        // Đã mở được trang này nghĩa là cú quét hợp lệ (token khớp lúc mount). Việc HOÀN TẤT
+        // điểm danh không phụ thuộc hạn token QR ngắn (vốn để chống dùng lại ảnh chụp), mà dựa
+        // vào "phiên còn mở" theo giờ kết thúc buổi — nên bấm chậm vẫn điểm danh được, không phải quét lại.
+        $this->session->meeting?->closeIfExpired();
+        if ($this->session->fresh()?->status === 'closed') {
+            $this->statusMessage = 'Phiên điểm danh này đã kết thúc.';
             return;
         }
 
+        // "Đi muộn" = quá GIỜ MỞ BUỔI cộng ngưỡng phút cấu hình ở lớp (late_threshold).
+        // - Mốc: thời điểm tạo buổi = lúc mở phiên điểm danh ĐẦU TIÊN (meeting->created_at),
+        //   ổn định cho mọi phiên trong buổi (phiên thêm sau vẫn tính theo mốc buổi, không theo
+        //   thời điểm tạo từng phiên).
+        // - Ngưỡng: lấy từ cấu hình lớp, KHÔNG hardcode 15 nữa.
         $status = 'present';
-        // Check if late based on when the QR session was opened
-        if ($this->session->created_at) {
-            if (now()->greaterThan($this->session->created_at->addMinutes(15))) {
-                $status = 'late';
-            }
+        $lateThresholdMinutes = (int) ($this->session->courseClass->late_threshold ?? 15);
+        $meetingStartedAt = $this->session->meeting?->created_at ?? $this->session->created_at;
+        if ($meetingStartedAt && now()->greaterThan($meetingStartedAt->copy()->addMinutes($lateThresholdMinutes))) {
+            $status = 'late';
         }
 
         $this->isGpsError = false;
@@ -164,31 +185,48 @@ class AttendanceCheckIn extends Component
         $ipAddress = request()->ip();
         $userAgent = request()->userAgent();
         $deviceFingerprint = md5($ipAddress . $userAgent);
+        // Mã định danh trình duyệt bền do client gửi (localStorage + cookie). Khóa CHÍNH.
+        $persistentDeviceId = $this->sanitizeDeviceId($deviceId);
 
-        // Check for device duplication (Điểm danh hộ)
-        // Check if there is already a record in this session with the same fingerprint but a different member ID that has already checked in
-        $duplicateRecord = \App\Models\AttendanceRecord::query()
-            ->with(['classMember.user'])
-            ->where('class_session_id', $this->session->id)
-            ->where('class_member_id', '!=', $this->record->class_member_id)
-            ->where('device_fingerprint', $deviceFingerprint)
-            ->whereNotNull('device_fingerprint')
-            ->whereNotNull('check_in_time')
-            ->first();
+        // Chỉ kiểm tra thiết bị khi phiên bật toggle device_check (tôn trọng cấu hình giảng viên).
+        $deviceCheckEnabled = (bool) ($this->session->device_check ?? true);
 
-        if ($duplicateRecord) {
-            $gpsFraudFlag = 'device_duplicate';
-            
-            $this->record->loadMissing('classMember');
-            
-            app(\App\Services\NotificationService::class)->notifyDeviceDuplicate(
-                $this->session->courseClass->owner_user_id,
-                $this->record->classMember->user_id ?? null,
-                $duplicateRecord->classMember->user_id ?? null,
-                $this->session,
-                $this->record->classMember->full_name ?? 'Sinh viên',
-                $duplicateRecord->classMember->full_name ?? 'Sinh viên'
-            );
+        if ($deviceCheckEnabled) {
+            // Phát hiện "một máy điểm danh cho nhiều SV": ưu tiên device_id bền (không đụng nhau
+            // giữa 2 máy khác dù cùng NAT/cùng model); chỉ fallback về md5(IP+UA) cho client cũ.
+            $duplicateQuery = \App\Models\AttendanceRecord::query()
+                ->with(['classMember.user'])
+                ->where('class_session_id', $this->session->id)
+                ->where('class_member_id', '!=', $this->record->class_member_id)
+                ->whereNotNull('check_in_time');
+
+            if ($persistentDeviceId !== null) {
+                $duplicateQuery->where('device_id', $persistentDeviceId);
+            } else {
+                $duplicateQuery->whereNotNull('device_fingerprint')->where('device_fingerprint', $deviceFingerprint);
+            }
+
+            $duplicateRecord = $duplicateQuery->first();
+
+            if ($duplicateRecord) {
+                $gpsFraudFlag = 'device_duplicate';
+
+                // Gắn cờ cho CẢ bản ghi trùng trước đó để giảng viên thấy đủ 2 SV cùng một máy.
+                if ($duplicateRecord->gps_fraud_flag === null) {
+                    $duplicateRecord->forceFill(['gps_fraud_flag' => 'device_duplicate'])->save();
+                }
+
+                $this->record->loadMissing('classMember');
+
+                app(\App\Services\NotificationService::class)->notifyDeviceDuplicate(
+                    $this->session->courseClass->owner_user_id,
+                    $this->record->classMember->user_id ?? null,
+                    $duplicateRecord->classMember->user_id ?? null,
+                    $this->session,
+                    $this->record->classMember->full_name ?? 'Sinh viên',
+                    $duplicateRecord->classMember->full_name ?? 'Sinh viên'
+                );
+            }
         }
 
         if ($this->session->gps_radius && $this->session->gps_latitude && $this->session->gps_longitude) {
@@ -234,15 +272,24 @@ class AttendanceCheckIn extends Component
                 );
             }
 
-            // Nghi ngờ giả lập vị trí (mock GPS): chỉ gắn cờ nếu chưa dính cờ nặng hơn
-            // (out_of_radius/device_duplicate). Đây là cờ mềm — vẫn cho điểm danh,
-            // chỉ để lại dấu vết cho giảng viên rà soát.
+            // Di chuyển bất khả thi (impossible travel): cùng một người vừa điểm danh ở nơi
+            // khác cách quá xa trong thời gian quá ngắn -> nghi vấn giả mạo vị trí/điểm danh hộ.
+            // Cờ mềm: vẫn cho điểm danh, chỉ gắn nếu chưa dính cờ nặng hơn.
             if ($gpsFraudFlag === null) {
-                $suspiciousReason = $service->detectSuspiciousGps($gpsAccuracy);
-                if ($suspiciousReason !== null) {
-                    $gpsFraudFlag = 'suspected_mock';
-                    $fraudNote = $suspiciousReason;
+                $impossibleReason = $this->detectImpossibleTravel($gpsLatRecorded, $gpsLngRecorded);
+                if ($impossibleReason !== null) {
+                    $gpsFraudFlag = 'impossible_travel';
+                    $fraudNote = $impossibleReason;
                 }
+            }
+
+            // Nghi ngờ giả lập vị trí (fake GPS): dựa trên ĐIỂM tổng hợp đa tín hiệu đã chấm ở
+            // bước /gps/verify (độ chính xác, jitter toạ độ, thiếu độ cao, lệch IP↔GPS). Cờ mềm —
+            // vẫn cho điểm danh, chỉ để dấu vết cho GV rà soát; chỉ gắn nếu chưa dính cờ nặng hơn.
+            if ($gpsFraudFlag === null
+                && (int) ($verification->fraud_score ?? 0) >= \App\Services\GpsValidationService::FAKE_GPS_SUSPICION_THRESHOLD) {
+                $gpsFraudFlag = 'suspected_mock';
+                $fraudNote = 'Nghi ngờ giả lập vị trí: ' . ($verification->fraud_reasons ?: 'nhiều dấu hiệu bất thường') . '.';
             }
         }
 
@@ -256,7 +303,8 @@ class AttendanceCheckIn extends Component
             'gps_fraud_flag' => $gpsFraudFlag,
             'ip_address' => $ipAddress,
             'device_fingerprint' => $deviceFingerprint,
-            'is_account' => true,
+            'device_id' => $persistentDeviceId,
+            'is_account' => auth()->check(),
         ];
 
         // Nối lý do nghi ngờ vào note hiện có (không ghi đè) để giảng viên xem được.
@@ -265,6 +313,20 @@ class AttendanceCheckIn extends Component
         }
 
         $this->record->update($updateData);
+
+        // Ghi nhật ký quét (bảng check_in_scans) — phục vụ lịch sử thiết bị xuyên phiên & rà soát.
+        $this->logCheckInScan(
+            isValid: $gpsFraudFlag !== 'out_of_radius',
+            failReason: match ($gpsFraudFlag) {
+                'out_of_radius' => 'out_of_range',
+                'device_duplicate' => 'device_duplicate',
+                'suspected_mock' => 'suspected_mock',
+                default => null,
+            },
+            ip: $ipAddress,
+            deviceFingerprint: $deviceFingerprint,
+            deviceId: $persistentDeviceId,
+        );
 
         \App\Jobs\SaveAuditLogJob::dispatch([
             'user_id' => auth()->id() ?? null,
@@ -285,6 +347,12 @@ class AttendanceCheckIn extends Component
             ])
         ]);
 
+        // Leo thang: nếu cùng một device_id đã điểm danh cho nhiều SV khác nhau trong lớp
+        // (xuyên nhiều buổi) -> nghi vấn "máy điểm danh hộ chuyên nghiệp", báo giảng viên.
+        if ($deviceCheckEnabled && $persistentDeviceId !== null) {
+            $this->escalateProxyDevice($persistentDeviceId);
+        }
+
         if ($gpsFraudFlag === 'out_of_radius') {
             $this->isSuccess = false;
             $this->statusMessage = 'Vị trí của bạn quá xa lớp học (' . round($distanceMeters) . 'm).';
@@ -298,6 +366,138 @@ class AttendanceCheckIn extends Component
 
         // Trigger real-time update
         event(new \App\Events\StudentCheckedIn($this->session->id));
+    }
+
+    /**
+     * Làm sạch device_id do client gửi: chỉ nhận chuỗi token hợp lệ (UUID/base tự sinh),
+     * tránh nhồi dữ liệu rác/độc. Trả null nếu không hợp lệ (để fallback fingerprint).
+     */
+    private function sanitizeDeviceId(?string $deviceId): ?string
+    {
+        $deviceId = is_string($deviceId) ? trim($deviceId) : '';
+
+        return preg_match('/^[A-Za-z0-9\-_]{8,191}$/', $deviceId) ? $deviceId : null;
+    }
+
+    /**
+     * Chữ ký HMAC của một lần quét (chống replay + phục vụ đối chiếu nhật ký).
+     */
+    private function scanSignature(int $memberId, ?string $deviceId): string
+    {
+        return hash_hmac('sha256', implode('|', [
+            $this->session->id,
+            $memberId,
+            $deviceId ?? '',
+            now()->timestamp,
+        ]), (string) config('app.key'));
+    }
+
+    /**
+     * Ghi một dòng nhật ký quét vào bảng check_in_scans (immutable) để dựng lịch sử thiết bị.
+     */
+    private function logCheckInScan(bool $isValid, ?string $failReason, string $ip, ?string $deviceFingerprint, ?string $deviceId): void
+    {
+        \App\Models\CheckInScan::query()->create([
+            'class_session_id' => $this->session->id,
+            'user_id' => auth()->id(),
+            'student_code_attempt' => $this->studentCode ?: null,
+            'scan_type' => 'qr',
+            'payload_signature' => $this->scanSignature((int) $this->record->class_member_id, $deviceId),
+            'is_valid' => $isValid,
+            'fail_reason' => $failReason,
+            'ip_address' => substr($ip, 0, 45),
+            'device_fingerprint' => $deviceFingerprint,
+            'device_id' => $deviceId,
+            'scanned_at' => now(),
+        ]);
+    }
+
+    /** Số sinh viên KHÁC NHAU tối đa một thiết bị được phép điểm danh trong lớp trước khi bị leo thang. */
+    private const PROXY_DEVICE_STUDENT_THRESHOLD = 3;
+
+    /** Tốc độ di chuyển tối đa hợp lý giữa 2 lần điểm danh (km/h). */
+    private const IMPOSSIBLE_TRAVEL_MAX_KMH = 300;
+
+    /** Khoảng cách tối thiểu (m) mới xét di chuyển bất khả thi — tránh nhiễu GPS gây báo nhầm. */
+    private const IMPOSSIBLE_TRAVEL_MIN_METERS = 1000;
+
+    /**
+     * Phát hiện "di chuyển bất khả thi": so vị trí lần này với lần điểm danh GẦN NHẤT của cùng
+     * người (theo user_id, xuyên lớp/buổi). Nếu quãng đường/thời gian ra tốc độ vô lý -> nghi vấn.
+     *
+     * Dùng updated_at (app timezone) làm mốc thời gian để tránh lệch múi giờ của check_in_time.
+     * Trả về câu mô tả nếu nghi ngờ, null nếu bình thường.
+     */
+    private function detectImpossibleTravel(?float $lat, ?float $lng): ?string
+    {
+        if ($lat === null || $lng === null) {
+            return null;
+        }
+
+        $this->record->loadMissing('classMember');
+        $userId = $this->record->classMember->user_id ?? null;
+        if (! $userId) {
+            return null; // Khách không có tài khoản -> không thể nối lịch sử xuyên buổi.
+        }
+
+        $prior = \App\Models\AttendanceRecord::query()
+            ->join('class_members as cm', 'cm.id', '=', 'attendance_records.class_member_id')
+            ->where('cm.user_id', $userId)
+            ->where('attendance_records.id', '!=', $this->record->id)
+            ->whereNotNull('attendance_records.check_in_time')
+            ->whereNotNull('attendance_records.gps_latitude_recorded')
+            ->whereNotNull('attendance_records.gps_longitude_recorded')
+            ->orderByDesc('attendance_records.updated_at')
+            ->first([
+                'attendance_records.gps_latitude_recorded as lat',
+                'attendance_records.gps_longitude_recorded as lng',
+                'attendance_records.updated_at as ts',
+            ]);
+
+        if (! $prior) {
+            return null;
+        }
+
+        $service = app(\App\Services\GpsValidationService::class);
+        $distanceM = $service->calculateDistance((float) $prior->lat, (float) $prior->lng, $lat, $lng);
+        if ($distanceM < self::IMPOSSIBLE_TRAVEL_MIN_METERS) {
+            return null;
+        }
+
+        $seconds = max((int) abs(now()->diffInSeconds(\Illuminate\Support\Carbon::parse($prior->ts))), 1);
+        $speedKmh = ($distanceM / 1000) / ($seconds / 3600);
+        if ($speedKmh <= self::IMPOSSIBLE_TRAVEL_MAX_KMH) {
+            return null;
+        }
+
+        return 'Nghi ngờ di chuyển bất khả thi: cách lần điểm danh trước ' . round($distanceM) . 'm trong ' . $seconds . 's (~' . round($speedKmh) . ' km/h).';
+    }
+
+    /**
+     * Leo thang khi một thiết bị (device_id) đã điểm danh cho quá nhiều SV KHÁC NHAU trong lớp
+     * (tính xuyên tất cả buổi) — dấu hiệu "máy điểm danh hộ chuyên nghiệp". Báo giảng viên (chống trùng).
+     */
+    private function escalateProxyDevice(string $deviceId): void
+    {
+        $classId = $this->session->class_id;
+
+        $distinctStudents = \App\Models\AttendanceRecord::query()
+            ->join('class_sessions as cs', 'cs.id', '=', 'attendance_records.class_session_id')
+            ->where('cs.class_id', $classId)
+            ->where('attendance_records.device_id', $deviceId)
+            ->whereNotNull('attendance_records.check_in_time')
+            ->distinct()
+            ->count('attendance_records.class_member_id');
+
+        if ($distinctStudents < self::PROXY_DEVICE_STUDENT_THRESHOLD) {
+            return;
+        }
+
+        app(\App\Services\NotificationService::class)->notifyProxyDeviceAbuse(
+            (int) $this->session->courseClass->owner_user_id,
+            $this->session,
+            $distinctStudents,
+        );
     }
 
     public function render(): View

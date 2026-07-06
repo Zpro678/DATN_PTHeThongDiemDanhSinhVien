@@ -19,7 +19,7 @@
         </div>
     </section>
 
-    <div class="grid grid-cols-1 items-stretch gap-6 xl:grid-cols-[380px_minmax(0,1fr)]">
+    <div class="grid grid-cols-1 items-start gap-6 xl:grid-cols-[380px_minmax(0,1fr)]">
         <section class="admin-card admin-card-hover flex h-full flex-col overflow-hidden rounded-2xl border bg-white">
             <div class="h-24 bg-gradient-to-r from-blue-600 via-cyan-500 to-emerald-500"></div>
             <div class="px-6 pb-6">
@@ -70,8 +70,8 @@
             </div>
         </section>
 
-        <div class="relative h-full min-h-[550px]" x-cloak>
-            <div x-show="view === 'profile'" class="absolute inset-0 h-full w-full" x-transition:enter="transition ease-out duration-300" x-transition:enter-start="opacity-0 translate-x-4" x-transition:enter-end="opacity-100 translate-x-0" x-transition:leave="transition ease-in duration-200" x-transition:leave-start="opacity-100 translate-x-0" x-transition:leave-end="opacity-0 -translate-x-4">
+        <div class="grid min-h-[400px]" x-cloak>
+            <div x-show="view === 'profile'" class="col-start-1 row-start-1 w-full h-full" x-transition:enter="transition ease-out duration-300" x-transition:enter-start="opacity-0 translate-x-4" x-transition:enter-end="opacity-100 translate-x-0" x-transition:leave="transition ease-in duration-200" x-transition:leave-start="opacity-100 translate-x-0" x-transition:leave-end="opacity-0 -translate-x-4">
                 <section class="admin-card admin-card-hover flex h-full flex-col overflow-hidden rounded-2xl border bg-white">
                     <div class="flex flex-col gap-4 border-b border-slate-100 p-6 lg:flex-row lg:items-end lg:justify-between">
                         <div>
@@ -87,18 +87,14 @@
                             </a>
                             @endif
                             <button type="button" @click="view = 'password'" class="admin-soft-button rounded-xl border border-slate-200 bg-white px-4 py-2.5 text-xs font-bold text-slate-600 hover:bg-slate-50">
-                                Đổi mật khẩu
+                                {{ auth()->user()->password ? 'Đổi mật khẩu' : 'Thiết lập mật khẩu' }}
                             </button>
                         </div>
                     </div>
 
                     <form wire:submit.prevent="updateProfileInformation" class="flex flex-1 flex-col">
                         <div class="flex-1 p-6">
-                            @if (session('status'))
-                                <div class="font-medium text-sm text-emerald-600 bg-emerald-50 p-4 rounded-xl border border-emerald-200 mb-6">
-                                    {{ session('status') }}
-                                </div>
-                            @endif
+
 
                             <div class="space-y-5">
                                 <div>
@@ -107,13 +103,6 @@
                                     @error('name') <span class="text-red-500 text-xs mt-1 block">{{ $message }}</span> @enderror
                                 </div>
 
-                                @if(!$user->isAdmin())
-                                <div>
-                                    <label class="mb-2 block text-[10px] font-bold uppercase tracking-widest text-slate-400">Mã số sinh viên (nếu có)</label>
-                                    <input type="text" wire:model="member_id" class="w-full rounded-xl border border-slate-200 bg-white px-4 py-3 text-sm font-bold text-slate-900 focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-500">
-                                    @error('member_id') <span class="text-red-500 text-xs mt-1 block">{{ $message }}</span> @enderror
-                                </div>
-                                @endif
 
                                 <div>
                                     <label class="mb-2 block text-[10px] font-bold uppercase tracking-widest text-slate-400">Email</label>
@@ -136,27 +125,24 @@
             </div>
 
             <!-- Password Form -->
-            <div x-cloak x-show="view === 'password'" class="absolute inset-0 h-full w-full" x-transition:enter="transition ease-out duration-300" x-transition:enter-start="opacity-0 translate-x-4" x-transition:enter-end="opacity-100 translate-x-0" x-transition:leave="transition ease-in duration-200" x-transition:leave-start="opacity-100 translate-x-0" x-transition:leave-end="opacity-0 -translate-x-4">
+            <div x-cloak x-show="view === 'password'" class="col-start-1 row-start-1 w-full h-full" x-transition:enter="transition ease-out duration-300" x-transition:enter-start="opacity-0 translate-x-4" x-transition:enter-end="opacity-100 translate-x-0" x-transition:leave="transition ease-in duration-200" x-transition:leave-start="opacity-100 translate-x-0" x-transition:leave-end="opacity-0 -translate-x-4">
                 <section class="admin-card admin-card-hover flex h-full flex-col overflow-hidden rounded-2xl border bg-white">
                     <div class="border-b border-slate-100 px-6 py-6 lg:p-6 lg:pb-4 flex flex-col gap-4 lg:flex-row lg:items-end lg:justify-between bg-white relative z-10">
                         <div>
-                            <h2 class="text-xl font-black text-slate-900">Đổi mật khẩu</h2>
+                            <h2 class="text-xl font-black text-slate-900">{{ auth()->user()->password ? 'Đổi mật khẩu' : 'Thiết lập mật khẩu' }}</h2>
                             <p class="mt-1 text-sm font-medium text-slate-500">Đảm bảo tài khoản của bạn sử dụng mật khẩu dài, ngẫu nhiên để an toàn.</p>
                         </div>
                     </div>
                     
                     <form wire:submit.prevent="updatePassword" class="relative z-10 flex flex-1 flex-col bg-white">
                         <div class="flex-1 space-y-4 px-6 py-5">
-                            @if (session('password_status'))
-                                <div class="font-medium text-sm text-emerald-600 bg-emerald-50 p-4 rounded-xl border border-emerald-200">
-                                    {{ session('password_status') }}
-                                </div>
-                            @endif
 
-                            <div x-data="{ showPass1: false }">
+
+                            @if(auth()->user()->password)
+                            <div x-data="{ showPass1: false }" wire:key="current-password-field">
                                 <label class="mb-2 block text-[10px] font-bold uppercase tracking-widest text-slate-400">Mật khẩu hiện tại</label>
                                 <div class="relative">
-                                    <input :type="showPass1 ? 'text' : 'password'" wire:model="current_password" class="block w-full rounded-xl border border-slate-200 bg-white px-4 py-3 text-sm font-bold text-slate-900 focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-500 pr-10">
+                                    <input :type="showPass1 ? 'text' : 'password'" wire:model="current_password" autocomplete="new-password" class="block w-full rounded-xl border border-slate-200 bg-white px-4 py-3 text-sm font-bold text-slate-900 focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-500 pr-10">
                                     <button type="button" @click="showPass1 = !showPass1" class="absolute inset-y-0 right-0 pr-3 flex items-center text-slate-400 hover:text-slate-600 focus:outline-none">
                                         <x-user.icon name="eye" x-show="!showPass1" class="w-5 h-5" />
                                         <x-user.icon name="eye-off" x-show="showPass1" class="w-5 h-5" style="display: none;" />
@@ -164,11 +150,12 @@
                                 </div>
                                 @error('current_password') <span class="text-red-500 text-xs mt-1 block">{{ $message }}</span> @enderror
                             </div>
+                            @endif
 
                             <div x-data="{ showPass2: false }">
                                 <label class="mb-2 block text-[10px] font-bold uppercase tracking-widest text-slate-400">Mật khẩu mới</label>
                                 <div class="relative">
-                                    <input :type="showPass2 ? 'text' : 'password'" wire:model="password" class="block w-full rounded-xl border border-slate-200 bg-white px-4 py-3 text-sm font-bold text-slate-900 focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-500 pr-10">
+                                    <input :type="showPass2 ? 'text' : 'password'" wire:model="password" autocomplete="new-password" class="block w-full rounded-xl border border-slate-200 bg-white px-4 py-3 text-sm font-bold text-slate-900 focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-500 pr-10">
                                     <button type="button" @click="showPass2 = !showPass2" class="absolute inset-y-0 right-0 pr-3 flex items-center text-slate-400 hover:text-slate-600 focus:outline-none">
                                         <x-user.icon name="eye" x-show="!showPass2" class="w-5 h-5" />
                                         <x-user.icon name="eye-off" x-show="showPass2" class="w-5 h-5" style="display: none;" />
@@ -180,7 +167,7 @@
                             <div x-data="{ showPass3: false }">
                                 <label class="mb-2 block text-[10px] font-bold uppercase tracking-widest text-slate-400">Xác nhận mật khẩu mới</label>
                                 <div class="relative">
-                                    <input :type="showPass3 ? 'text' : 'password'" wire:model="password_confirmation" class="block w-full rounded-xl border border-slate-200 bg-white px-4 py-3 text-sm font-bold text-slate-900 focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-500 pr-10">
+                                    <input :type="showPass3 ? 'text' : 'password'" wire:model="password_confirmation" autocomplete="new-password" class="block w-full rounded-xl border border-slate-200 bg-white px-4 py-3 text-sm font-bold text-slate-900 focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-500 pr-10">
                                     <button type="button" @click="showPass3 = !showPass3" class="absolute inset-y-0 right-0 pr-3 flex items-center text-slate-400 hover:text-slate-600 focus:outline-none">
                                         <x-user.icon name="eye" x-show="!showPass3" class="w-5 h-5" />
                                         <x-user.icon name="eye-off" x-show="showPass3" class="w-5 h-5" style="display: none;" />
@@ -195,7 +182,7 @@
                                 Quay lại
                             </button>
                             <button type="submit" class="rounded-xl bg-slate-900 px-4 py-2.5 text-sm font-bold text-white shadow-sm transition-all hover:-translate-y-0.5 hover:bg-slate-800">
-                                Xác nhận đổi
+                                {{ auth()->user()->password ? 'Xác nhận đổi' : 'Xác nhận thiết lập' }}
                             </button>
                         </div>
                     </form>

@@ -5,6 +5,7 @@ namespace App\Livewire\Admin\Packages;
 use App\Models\Plan;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Str;
+use Illuminate\Validation\Rule;
 use Livewire\Attributes\Layout;
 use Livewire\Component;
 
@@ -12,6 +13,7 @@ class PackageEdit extends Component
 {
     public Plan $package;
     
+    public $plan_tier = '';
     public $name = '';
     public $description = '';
     public $priceType = 'fixed';
@@ -28,14 +30,26 @@ class PackageEdit extends Component
     
     public $hasGps = false;
     public $hasImport = false;
-    public $hasReports = false;
-    public $hasApi = false;
 
     public function mount(Plan $package)
     {
         abort_unless(Auth::user()?->isAdmin(), 403);
         
         $this->package = $package;
+        
+        $currentTier = strtoupper($package->plan_tier);
+        if (in_array($currentTier, ['FREE', 'PRO', 'ENTERPRISE'])) {
+            $this->plan_tier = $currentTier;
+        } else {
+            if ($package->price <= 0) {
+                $this->plan_tier = 'FREE';
+            } elseif (stripos($package->name, 'enterprise') !== false || stripos($currentTier, 'enterprise') !== false) {
+                $this->plan_tier = 'ENTERPRISE';
+            } else {
+                $this->plan_tier = 'PRO';
+            }
+        }
+        
         $this->name = $package->name;
         $this->description = $package->description;
         $this->price = $package->price;
@@ -50,8 +64,6 @@ class PackageEdit extends Component
         
         $this->hasGps = $package->max_gps_radius > 0;
         $this->hasImport = (bool) $package->can_export_excel;
-        $this->hasReports = in_array($package->support_level, ['Nâng cao', 'Premium']);
-        $this->hasApi = (bool) $package->api_access;
     }
 
     public function save()
@@ -59,6 +71,7 @@ class PackageEdit extends Component
         abort_unless(Auth::user()?->isAdmin(), 403);
 
         $this->validate([
+            'plan_tier' => ['required', 'string', 'max:50', Rule::unique('plans')->ignore($this->package->id)],
             'name' => 'required|string|max:255',
             'description' => 'nullable|string|max:1000',
             'priceType' => 'required|in:fixed,free,contact',
@@ -71,26 +84,23 @@ class PackageEdit extends Component
         $finalPrice = $this->priceType === 'free' ? 0 : ($this->priceType === 'contact' ? 0 : $this->price);
         $finalMaxClasses = $this->isUnlimitedClasses ? 999999 : ($this->max_classes ?: 1);
         $finalMaxStudents = $this->isUnlimitedStudents ? 999999 : ($this->max_students_per_class ?: 1);
-        
-        $features = [];
-        if ($this->hasGps) $features[] = 'Xác thực vị trí GPS';
-        if ($this->hasImport) $features[] = 'Import học viên từ Excel/CSV';
-        if ($this->hasReports) $features[] = 'Báo cáo Thống kê Nâng cao';
-        if ($this->hasApi) $features[] = 'Tích hợp API (SSO, LMS)';
-
         $this->package->update([
+            'plan_tier' => $this->plan_tier,
             'name' => $this->name,
             'description' => $this->description,
             'price' => $finalPrice,
             'duration_days' => (int) $this->duration_days,
-            'max_classes' => $finalMaxClasses,
-            'max_students_per_class' => $finalMaxStudents,
-            'max_gps_radius' => $this->hasGps ? 100 : 0,
-            'can_export_excel' => $this->hasImport,
-            'api_access' => $this->hasApi,
-            'support_level' => $this->hasReports ? 'Nâng cao' : 'Cơ bản',
-            'features' => $features,
         ]);
+
+        $this->package->config()->updateOrCreate(
+            ['plan_id' => $this->package->id],
+            [
+                'max_classes' => $finalMaxClasses,
+                'max_students_per_class' => $finalMaxStudents,
+                'max_gps_radius' => $this->hasGps ? 100 : 0,
+                'can_export_excel' => $this->hasImport,
+            ]
+        );
 
         session()->flash('success', 'Cập nhật gói dịch vụ thành công.');
         return redirect()->route('admin.packages.index');

@@ -74,7 +74,8 @@
 
                         {{-- Import Danh Sách Sinh Viên (Tùy chọn khi tạo lớp) --}}
                         <div class="space-y-2 sm:col-span-2 mt-4">
-                            <label class="block text-sm font-semibold text-on-surface">Import danh sách sinh viên <span class="ml-1 rounded-full bg-red-100 px-2 py-0.5 text-[11px] font-bold text-red-600">Bắt buộc</span></label>
+                            <label class="block text-sm font-semibold text-on-surface">Import danh sách sinh viên <span class="ml-1 rounded-full bg-surface-container px-2 py-0.5 text-[11px] font-bold text-on-surface-variant">Tùy chọn</span></label>
+                            <p class="text-xs text-on-surface-variant/70">Có thể import ngay hoặc để sau — nhưng cần có danh sách sinh viên trước khi tạo điểm danh.</p>
                             
                             <label class="group relative flex cursor-pointer flex-col items-center justify-center rounded-[20px] border-2 border-dashed border-outline-variant/30 bg-surface-container-low/30 py-6 transition-colors hover:border-primary hover:bg-primary/5">
                                 <input type="file" wire:model="importFile" accept=".xlsx,.xls,.csv" class="peer absolute inset-0 h-full w-full cursor-pointer opacity-0">
@@ -125,6 +126,13 @@
                             <span class="block text-sm font-semibold text-on-surface">Ngưỡng đi muộn (phút) <span class="text-error">*</span></span>
                             <input wire:model.live.debounce.300ms="lateThreshold" type="number" min="0" max="300" class="h-12 w-full rounded-xl border border-outline-variant/40 bg-white px-4 text-sm font-semibold text-on-surface outline-none transition-all hover:border-outline-variant focus:border-primary focus:ring-2 focus:ring-primary/20">
                             @error('lateThreshold') <span class="block text-xs font-medium text-error">{{ $message }}</span> @enderror
+                        </label>
+
+                        <label class="space-y-2 sm:col-span-2 md:col-span-1">
+                            <span class="block text-sm font-semibold text-on-surface">Tổng số buổi dự kiến <span class="text-error">*</span></span>
+                            <input wire:model.live.debounce.300ms="totalSessions" type="number" min="1" max="200" class="h-12 w-full rounded-xl border border-outline-variant/40 bg-white px-4 text-sm font-semibold text-on-surface outline-none transition-all hover:border-outline-variant focus:border-primary focus:ring-2 focus:ring-primary/20">
+                            <span class="block text-xs text-on-surface-variant/70">Dùng để tính quỹ vắng cho phép (20%) và tiến độ lớp.</span>
+                            @error('totalSessions') <span class="block text-xs font-medium text-error">{{ $message }}</span> @enderror
                         </label>
                     </div>
 
@@ -230,7 +238,10 @@
 
                         <div class="space-y-4 p-6">
                             <div class="grid grid-cols-1 gap-3">
-                                <!-- Đã bỏ Tổng số buổi dự kiến -->
+                                <div class="rounded-2xl bg-slate-50 p-4">
+                                    <p class="text-xs font-bold uppercase tracking-wide text-slate-400">Tổng số buổi dự kiến</p>
+                                    <p class="mt-2 text-2xl font-extrabold text-slate-950">{{ $totalSessions ?: 0 }}</p>
+                                </div>
                             </div>
 
                             <div class="rounded-2xl border border-outline-variant/20 p-4">

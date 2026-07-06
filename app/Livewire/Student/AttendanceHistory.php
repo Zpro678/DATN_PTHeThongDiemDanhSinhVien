@@ -12,6 +12,7 @@ use Livewire\Component;
 use Livewire\WithPagination;
 use Illuminate\Pagination\LengthAwarePaginator;
 use App\Exports\StudentAttendanceHistoryExport;
+use App\Services\SubscriptionService;
 use Maatwebsite\Excel\Facades\Excel;
 
 class AttendanceHistory extends Component
@@ -58,6 +59,13 @@ class AttendanceHistory extends Component
 
     public function exportExcel()
     {
+        // Chỉ cho xuất khi gói hiện tại bật tính năng xuất Excel.
+        if (! app(SubscriptionService::class)->canExportExcel(auth()->user())) {
+            session()->flash('upgrade_required', 'Xuất báo cáo Excel là tính năng của gói Pro trở lên. Vui lòng nâng cấp để sử dụng.');
+
+            return $this->redirectRoute('upgrade', navigate: true);
+        }
+
         $fileName = 'lich_su_diem_danh_' . date('Ymd_His') . '.xlsx';
         return Excel::download(new StudentAttendanceHistoryExport(auth()->id(), $this->classFilter, $this->statusFilter, $this->search), $fileName);
     }
@@ -112,6 +120,7 @@ class AttendanceHistory extends Component
             'classes' => $members->pluck('courseClass')->filter()->unique('id')->values(),
             'summary' => $this->summary($allRecords, $statsMap),
             'isDemo' => false,
+            'canExportExcel' => app(SubscriptionService::class)->canExportExcel(auth()->user()),
         ])->layout('layouts.user', ['title' => 'Lịch sử điểm danh']);
     }
 

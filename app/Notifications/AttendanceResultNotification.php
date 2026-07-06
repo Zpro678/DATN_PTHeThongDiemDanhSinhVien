@@ -37,7 +37,7 @@ class AttendanceResultNotification extends Notification
             'class_id'         => $this->summary->meeting->course_class_id,
             'type'             => 'attendance_result',
             'icon'             => 'calendar-check',
-            'url'              => route('student.attendance.history'),
+            'url'              => route('student.attendance.history', ['ma_user' => $notifiable->getKey()]),
         ];
     }
 }

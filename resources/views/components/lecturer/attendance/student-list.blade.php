@@ -22,14 +22,21 @@
             
             <div class="flex gap-3">
                 <div class="w-44 shrink-0">
-                    <x-custom-select wire:change="setStatusFilter($event.target.value)" placeholder="" :value="$statusFilter" :options="[
-                        ['value' => 'all', 'label' => 'Tất cả trạng thái'],
-                        ['value' => 'pending', 'label' => 'Chưa ĐD'],
-                        ['value' => 'present', 'label' => 'Có mặt'],
-                        ['value' => 'absent', 'label' => 'Vắng'],
-                        ['value' => 'late', 'label' => 'Đi muộn'],
-                        ['value' => 'excused', 'label' => 'Có phép'],
-                    ]" />
+                    @php
+                        $statusOptions = [
+                            ['value' => 'all', 'label' => 'Tất cả trạng thái'],
+                            ['value' => 'pending', 'label' => 'Chưa ĐD'],
+                            ['value' => 'present', 'label' => 'Có mặt'],
+                            ['value' => 'absent', 'label' => 'Vắng'],
+                            ['value' => 'late', 'label' => 'Đi muộn'],
+                            ['value' => 'excused', 'label' => 'Có phép'],
+                        ];
+                        // Chỉ hiện ở phiên QR khi có nhóm dùng chung máy (biến $sameDeviceCount do QrAttendanceSession truyền).
+                        if (isset($sameDeviceCount) && $sameDeviceCount > 0) {
+                            $statusOptions[] = ['value' => 'same_device', 'label' => 'Điểm danh cùng 1 máy'];
+                        }
+                    @endphp
+                    <x-custom-select wire:change="setStatusFilter($event.target.value)" placeholder="" :value="$statusFilter" :options="$statusOptions" />
                 </div>
 
                 @if($showMarkAllPresent ?? true)

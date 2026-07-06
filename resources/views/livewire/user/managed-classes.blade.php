@@ -84,7 +84,7 @@
                 $excused  = $class->sum_excused  ?? 0;
 
                 $totalStudied    = $present + $late + $absent + $excused;
-                $plannedSessions = max((int) ($class->total_sessions ?? 0), $totalStudied);
+                $plannedSessions = \App\Services\AttendanceCalculator::baseSessions((int) ($class->total_sessions ?? 0), $totalStudied);
 
                 $attendancePct = \App\Services\AttendanceCalculator::percentOfPlanned(
                     $plannedSessions,

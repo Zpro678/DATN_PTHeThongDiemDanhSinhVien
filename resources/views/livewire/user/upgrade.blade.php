@@ -149,7 +149,13 @@
                         @else
                             <button type="button" wire:click="selectPlan({{ $plan->id }})"
                                 class="w-full rounded-xl py-3 text-sm font-bold transition-all {{ $style['btnClass'] }}">
-                                {{ $plan->plan_tier === 'FREE' ? 'Chuyển về Miễn phí' : 'Nâng cấp lên '.$plan->name }}
+                                @if ($plan->plan_tier === 'FREE')
+                                    Chuyển về Miễn phí
+                                @elseif ($activeSubscription && (int) $plan->id === (int) $paidPlanId)
+                                    Chuyển sang {{ $plan->name }}
+                                @else
+                                    Nâng cấp lên {{ $plan->name }}
+                                @endif
                             </button>
                         @endif
                     </div>
@@ -181,7 +187,12 @@
 
     {{-- Modal xác nhận --}}
     @if ($confirmingPlan)
-        @php $mStyle = $planStyles[$confirmingPlan->plan_tier] ?? $planStyles['FREE']; @endphp
+        @php
+            $mStyle = $planStyles[$confirmingPlan->plan_tier] ?? $planStyles['FREE'];
+            // Đổi miễn phí được khi còn hạn VÀ đích là FREE hoặc đúng gói đã mua.
+            $confirmCanSwitch = $activeSubscription !== null
+                && ($confirmingPlan->plan_tier === 'FREE' || (int) $confirmingPlan->id === (int) $paidPlanId);
+        @endphp
         <div class="fixed inset-0 z-[100] flex items-end justify-center p-4 sm:items-center"
              wire:click.self="cancel">
             <div class="absolute inset-0 bg-on-background/40 backdrop-blur-sm"></div>
@@ -197,14 +208,31 @@
                         <x-user.icon :name="$mStyle['icon']" :size="24" />
                     </div>
                     <div>
-                        <h3 class="text-lg font-bold text-on-surface">Xác nhận đăng ký</h3>
+                        <h3 class="text-lg font-bold text-on-surface">
+                            {{ ((float) $confirmingPlan->price > 0 && $confirmCanSwitch) ? 'Xác nhận đổi gói' : 'Xác nhận đăng ký' }}
+                        </h3>
                         <p class="text-sm text-on-surface-variant">{{ $confirmingPlan->name }}</p>
                     </div>
                 </div>
 
                 <div class="mb-6 rounded-2xl border border-outline-variant/20 bg-surface-container-low p-4 text-sm">
                     @if ((float) $confirmingPlan->price <= 0)
-                        <p class="text-on-surface-variant">Bạn sẽ chuyển về gói <strong class="text-on-surface">Miễn phí</strong>. Các quyền lợi gói trả phí hiện tại sẽ kết thúc.</p>
+                        @if ($confirmCanSwitch && $activeSubscription?->end_date)
+                            <p class="text-on-surface-variant">
+                                Bạn sẽ chuyển về gói <strong class="text-on-surface">Miễn phí</strong>.
+                                Quyền lợi gói trả phí vẫn được <strong class="text-on-surface">giữ đến {{ $activeSubscription->end_date->format('d/m/Y') }}</strong> — bạn có thể quay lại bất cứ lúc nào trong thời gian này.
+                            </p>
+                        @else
+                            <p class="text-on-surface-variant">Bạn sẽ chuyển về gói <strong class="text-on-surface">Miễn phí</strong>. Các quyền lợi gói trả phí hiện tại sẽ kết thúc.</p>
+                        @endif
+                    @elseif ($confirmCanSwitch)
+                        {{-- Còn thời hạn: đổi gói trực tiếp, không thu thêm phí, giữ nguyên hạn --}}
+                        <p class="text-on-surface-variant">
+                            Bạn sẽ chuyển sang gói <strong class="text-on-surface">{{ $confirmingPlan->name }}</strong> mà <strong class="text-on-surface">không mất thêm phí</strong>.
+                            @if ($activeSubscription?->end_date)
+                                Thời hạn sử dụng được giữ nguyên đến <strong class="text-on-surface">{{ $activeSubscription->end_date->format('d/m/Y') }}</strong>.
+                            @endif
+                        </p>
                     @else
                         <div class="flex items-center justify-between">
                             <span class="text-on-surface-variant">Tổng thanh toán</span>
@@ -249,7 +277,13 @@
                     <button type="button" wire:click="subscribe" wire:loading.attr="disabled"
                         class="flex-1 rounded-xl py-3 text-sm font-bold transition-all disabled:opacity-50 {{ $mStyle['btnClass'] }}">
                         <span wire:loading.remove wire:target="subscribe">
-                            {{ (float) $confirmingPlan->price <= 0 ? 'Xác nhận' : ($paymentMethod === 'payos' ? 'Thanh toán QR' : 'Thanh toán MoMo') }}
+                            @if ((float) $confirmingPlan->price <= 0)
+                                Xác nhận
+                            @elseif ($confirmCanSwitch)
+                                Xác nhận đổi gói
+                            @else
+                                {{ $paymentMethod === 'payos' ? 'Thanh toán QR' : 'Thanh toán MoMo' }}
+                            @endif
                         </span>
                         <span wire:loading wire:target="subscribe">Đang xử lý…</span>
                     </button>

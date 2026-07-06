@@ -33,7 +33,7 @@ class UserCreate extends Component
             'name' => ['required', 'string', 'max:255'],
             'email' => ['required', 'string', 'email', 'max:255', 'unique:users,email'],
             'password' => ['required', 'string', 'min:8'],
-            'role' => ['required', 'in:'.User::ROLE_USER.','.User::ROLE_ADMIN.','.User::ROLE_SUPER_ADMIN],
+            'role' => ['required', 'in:'.User::ROLE_USER.','.User::ROLE_ADMIN],
             'status' => ['required', 'in:active,blocked'],
             'avatar' => ['nullable', 'image', 'max:2048'],
         ]);

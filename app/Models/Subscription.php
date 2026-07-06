@@ -14,7 +14,8 @@ class Subscription extends Model
 
     protected $fillable = [
         'user_id', // ID người dùng đăng ký thuê bao.
-        'plan_id', // ID gói dịch vụ được đăng ký.
+        'plan_id', // ID gói đang dùng hiện tại (có thể là FREE khi tạm hạ cấp).
+        'paid_plan_id', // ID gói ĐÃ TRẢ TIỀN — gói duy nhất được đổi qua lại miễn phí cùng FREE.
         'start_date', // Ngày kích hoạt gói cước.
         'end_date', // Ngày hết hạn gói cước.
         'status', // Trạng thái thuê bao active/expired/canceled.

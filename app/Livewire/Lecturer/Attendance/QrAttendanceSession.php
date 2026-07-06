@@ -11,7 +11,6 @@ use App\Services\SubscriptionService;
 use Illuminate\Contracts\View\View;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Support\Str;
-use Livewire\Attributes\On;
 use Livewire\Component;
 use Livewire\WithPagination;
 use Maatwebsite\Excel\Facades\Excel;
@@ -31,8 +30,6 @@ class QrAttendanceSession extends Component
     public array $draftNotes = [];
 
     public bool $isClosed = false;
-    
-    public string $qrAnimationStr = '';
 
     public function mount(int $session): void
     {
@@ -43,6 +40,11 @@ class QrAttendanceSession extends Component
 
         $this->sessionId = $model->id;
         $this->isClosed = $model->status === 'closed';
+
+        // Mở thẳng bộ lọc "cùng 1 máy" khi giảng viên bấm "xem" từ thông báo điểm danh hộ.
+        if (request()->query('filter') === 'same_device') {
+            $this->statusFilter = 'same_device';
+        }
 
         $this->initDrafts();
     }
@@ -61,9 +63,27 @@ class QrAttendanceSession extends Component
 
     public function setStatusFilter(string $status): void
     {
-        abort_unless(in_array($status, ['all', 'pending', 'present', 'late', 'absent', 'excused', 'invalid'], true), 422);
+        abort_unless(in_array($status, ['all', 'pending', 'present', 'late', 'absent', 'excused', 'invalid', 'same_device'], true), 422);
 
         $this->statusFilter = $status;
+    }
+
+    /**
+     * Các device_id được ≥2 sinh viên (đã điểm danh) dùng chung trong phiên này.
+     * Là nền cho bộ lọc "cùng 1 máy" và số đếm hiển thị.
+     *
+     * @return array<int, string>
+     */
+    private function sharedDeviceIds(): array
+    {
+        return AttendanceRecord::query()
+            ->where('class_session_id', $this->sessionId)
+            ->whereNotNull('device_id')
+            ->whereNotNull('check_in_time')
+            ->groupBy('device_id')
+            ->havingRaw('COUNT(DISTINCT class_member_id) > 1')
+            ->pluck('device_id')
+            ->all();
     }
 
     public function clearSearch(): void
@@ -72,17 +92,29 @@ class QrAttendanceSession extends Component
         $this->statusFilter = 'all';
     }
 
+    /**
+     * Làm mới mã QR: XOAY token thật (không chỉ đổi ảnh).
+     *
+     * Được vòng lặp Alpine gọi mỗi qr_refresh_rate giây (và nút "Làm mới QR"). Mỗi lần
+     * sinh token mới + đặt hạn ngắn, nên ảnh chụp mã cũ gửi đi sẽ hết hiệu lực ngay.
+     * Nếu buổi đã quá giờ kết thúc thì đóng phiên và dừng xoay.
+     */
     public function refreshToken(): void
     {
         $session = $this->ownedSession($this->sessionId);
-        
-        // Keep the token valid while the session is running
-        $session->update([
-            'token_expires_at' => now()->addMinutes(15),
-        ]);
-        
-        // Change the query parameter to force the QR code image to change
-        $this->qrAnimationStr = Str::random(8);
+
+        if ($session->status === 'closed') {
+            $this->isClosed = true;
+            return;
+        }
+
+        // Buổi hết giờ -> đóng phiên (chốt sổ), không xoay token nữa.
+        if ($session->meeting && $session->meeting->closeIfExpired()) {
+            $this->isClosed = true;
+            return;
+        }
+
+        $session->rotateQrToken();
     }
 
     public function setStatus(int $recordId, string $status): void
@@ -102,10 +134,16 @@ class QrAttendanceSession extends Component
         ]);
     }
 
-    #[On('echo:attendance.{sessionId},StudentCheckedIn')]
-    public function onStudentCheckedIn(): void
+    /**
+     * Tên kênh socket.io mà bảng điểm danh cần lắng nghe cho phiên hiện tại.
+     *
+     * StudentCheckedIn broadcast qua Redis (kèm prefix), server.cjs relay sang socket.io;
+     * client (Alpine x-init) nghe đúng kênh này rồi gọi $wire.$refresh() để cập nhật realtime.
+     * (Dùng socket.io thô thay vì Echo vì server.cjs không nói giao thức của laravel-echo.)
+     */
+    public function realtimeChannel(): string
     {
-        // Livewire v3 automatically re-renders the component when this is hit
+        return (string) config('database.redis.options.prefix') . 'attendance.' . $this->sessionId;
     }
 
     public function markAllPresent(): void
@@ -131,14 +169,24 @@ class QrAttendanceSession extends Component
     public function closeSession(): void
     {
         $session = $this->ownedSession($this->sessionId);
+
+        // Idempotent: phiên đã chốt thì không xử lý/gửi thông báo lại.
+        if ($session->status === 'closed') {
+            $this->isClosed = true;
+            return;
+        }
+
         $session->update(['status' => 'closed']);
-        
+
         // Mặc định những ai chưa điểm danh (pending) khi khóa phiên QR sẽ thành vắng (absent)
         $session->attendanceRecords()->where('status', 'pending')->update(['status' => 'absent']);
-        
+
         $this->isClosed = true;
 
-        app(NotificationService::class)->attendanceSessionClosed((int) auth()->id(), $session, isQr: true);
+        $notifier = app(NotificationService::class);
+        $notifier->attendanceSessionClosed((int) auth()->id(), $session, isQr: true);
+        // Báo trạng thái điểm danh của phiên QR cho từng học viên.
+        $notifier->notifyQrSessionResults($session);
 
         app(AuditLogService::class)->log('session_closed', [
             'class_id'   => $session->class_id,
@@ -222,23 +270,37 @@ class QrAttendanceSession extends Component
     {
         $session = $this->ownedSession($this->sessionId)->load('courseClass');
         
+        // Link luôn dựng từ qr_token hiện tại; token tự đổi mỗi lần refreshToken nên
+        // không cần tham số chống cache — ảnh QR thay đổi theo chính token mới.
         $attendanceLink = route('attendance.check-in.guest', ['token' => $session->qr_token]);
-        if ($this->qrAnimationStr) {
-            $attendanceLink .= '?r=' . $this->qrAnimationStr;
-        }
+
+        // Các device_id được từ 2 sinh viên trở lên dùng chung trong phiên (điểm danh hộ nghi vấn).
+        $sharedDeviceIds = $this->sharedDeviceIds();
+
         $records = $session->attendanceRecords()
             ->whereHas('classMember')
             ->with('classMember.user')
-            ->when($this->statusFilter !== 'all', fn (Builder $query) => $query->where('status', $this->statusFilter))
+            ->when(
+                $this->statusFilter === 'same_device',
+                fn (Builder $query) => $query->whereIn('device_id', $sharedDeviceIds ?: ['__none__']),
+                fn (Builder $query) => $query->when($this->statusFilter !== 'all', fn (Builder $q) => $q->where('status', $this->statusFilter)),
+            )
             ->when($this->search !== '', function (Builder $query): void {
                 $query->where(function (Builder $query): void {
                     $query->whereHas('classMember.profile', fn (Builder $p) => $p->where('student_code', 'like', '%'.$this->search.'%')->orWhere('full_name', 'like', '%'.$this->search.'%'))
                         ->orWhereHas('classMember.user', fn (Builder $u) => $u->where('name', 'like', '%'.$this->search.'%'));
                 });
             })
-            ->orderByRaw("CASE WHEN gps_fraud_flag IN ('device_duplicate', 'out_of_radius') OR note LIKE '%Cảnh báo:%' OR note LIKE '%Nghi ngờ Fake GPS%' THEN 0 ELSE 1 END")
+            // Ở chế độ "cùng 1 máy": gom các SV cùng device_id đứng cạnh nhau cho dễ đối chiếu.
+            ->when($this->statusFilter === 'same_device', fn (Builder $query) => $query->orderBy('device_id'))
+            ->orderByRaw("CASE WHEN gps_fraud_flag IN ('device_duplicate', 'out_of_radius', 'impossible_travel', 'suspected_mock') OR note LIKE '%Cảnh báo:%' OR note LIKE '%Nghi ngờ%' THEN 0 ELSE 1 END")
             ->orderBy('id')
             ->get();
+
+        // Số SV thuộc nhóm dùng chung máy (cho chip bộ lọc).
+        $sameDeviceCount = $sharedDeviceIds === []
+            ? 0
+            : $session->attendanceRecords()->whereHas('classMember')->whereIn('device_id', $sharedDeviceIds)->count();
 
         $stats = $session->attendanceRecords()
             ->whereHas('classMember')
@@ -272,7 +334,7 @@ class QrAttendanceSession extends Component
 
         $canExportExcel = app(SubscriptionService::class)->canExportExcel(auth()->user()); // Quyền xuất Excel theo gói (Pro trở lên).
 
-        return view('livewire.lecturer.attendance.qr-session', compact('session', 'records', 'attendanceLink', 'summary', 'fraudStats', 'qrSvg', 'qrCells', 'canExportExcel'))
+        return view('livewire.lecturer.attendance.qr-session', compact('session', 'records', 'attendanceLink', 'summary', 'fraudStats', 'qrSvg', 'qrCells', 'canExportExcel', 'sameDeviceCount'))
             ->layout('layouts.user', ['title' => 'Điểm danh QR']);
     }
 

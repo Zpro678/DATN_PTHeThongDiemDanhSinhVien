@@ -4,16 +4,6 @@
     $userName = Auth::user()?->name ?? 'Người dùng';
     $userEmail = Auth::user()?->email ?? 'user@example.com';
 
-    $notificationData = app(\App\Services\NotificationService::class)->getDropdownData(Auth::user());
-
-    $currentClassId = request()->route('courseClass') instanceof \App\Models\CourseClass
-        ? request()->route('courseClass')->id
-        : (request()->route('courseClass') ?? request()->route('class_id') ?? session('last_student_class_id'));
-
-    $getRouteUrl = function ($item) {
-        return route($item['route']);
-    };
-
     $matchesActive = function ($activePattern) use ($activeNav): bool {
         $patterns = is_array($activePattern) ? $activePattern : [$activePattern];
         foreach ($patterns as $pattern) {
@@ -29,6 +19,10 @@
         }
         return false;
     };
+
+    // Dựng URL cho một mục điều hướng. ma_user được tự chèn qua URL::defaults (xem AppServiceProvider),
+    // nên chỉ cần tên route; hỗ trợ thêm 'params' tùy chọn nếu mục nào cần tham số riêng.
+    $getRouteUrl = fn (array $item): string => route($item['route'], $item['params'] ?? []);
 
     // ── Điều hướng nhóm theo vai trò (dùng cho dropdown top-nav & drawer mobile) ──
     $teachItems = [
@@ -119,7 +113,7 @@
             x-init="$watch('sidebarCollapsed', value => localStorage.setItem('sidebarCollapsed', value ? '1' : '0'))"
             class="flex min-h-screen flex-col bg-surface"
         >
-
+            <x-maintenance-banner />
             {{-- ============================ TOP NAVBAR (full width) ============================ --}}
             <header class="sticky top-0 z-40 h-16 shrink-0 border-b border-outline-variant bg-white">
                 <div class="flex h-16 w-full items-center justify-between gap-3 px-4 sm:px-6 lg:px-8">
@@ -141,11 +135,14 @@
                         </div>
 
                         <a href="{{ route('dashboard') }}" wire:navigate class="flex min-w-0 shrink-0 items-center gap-2.5">
-                            <img src="{{ asset('favicon.svg') }}" alt="Attendia Tech"
-                                class="h-9 w-9 shrink-0 rounded-xl drop-shadow-[0_2px_4px_rgba(15,23,42,0.22)]">
+                            @if(!empty($app_logo_path))
+                                <img src="{{ asset('storage/' . $app_logo_path) }}" alt="{{ config('app.name') }}" class="h-9 w-9 shrink-0 rounded-xl drop-shadow-[0_2px_4px_rgba(15,23,42,0.22)] object-cover">
+                            @else
+                                <img src="{{ asset('favicon.svg') }}" alt="{{ config('app.name') }}" class="h-9 w-9 shrink-0 rounded-xl drop-shadow-[0_2px_4px_rgba(15,23,42,0.22)]">
+                            @endif
 
                             <span class="hidden leading-tight sm:block">
-                                <span class="block text-[16px] font-extrabold tracking-tight text-on-surface">Attendia Tech</span>
+                                <span class="block text-[16px] font-extrabold tracking-tight text-on-surface">{{ config('app.name') }}</span>
                                 <span class="block text-[10px] font-semibold uppercase tracking-wider text-on-surface-variant">Hệ thống điểm danh</span>
                             </span>
                         </a>
@@ -184,10 +181,7 @@
                         </div>
 
                         {{-- Notifications --}}
-                        <x-notification-dropdown
-                            :notifications="$notificationData['items']"
-                            :show-indicator="$notificationData['has_unread']"
-                        />
+                        <livewire:notification-bell />
 
                         {{-- Avatar --}}
                         <div class="relative" x-data="{ openProfile: false }" x-on:click.away="openProfile = false">
@@ -347,8 +341,12 @@
                             class="absolute inset-y-0 left-0 flex w-[280px] max-w-[82%] flex-col bg-white shadow-xl">
                             <div class="flex h-16 items-center justify-between border-b border-outline-variant px-5">
                                 <div class="flex items-center gap-2.5">
-                                    <img src="{{ asset('favicon.svg') }}" alt="Attendia Tech" class="h-9 w-9 rounded-xl drop-shadow-[0_2px_4px_rgba(15,23,42,0.22)]">
-                                    <span class="text-[15px] font-extrabold text-on-surface">Attendia Tech</span>
+                                    @if(!empty($app_logo_path))
+                                        <img src="{{ asset('storage/' . $app_logo_path) }}" alt="{{ config('app.name') }}" class="h-9 w-9 rounded-xl drop-shadow-[0_2px_4px_rgba(15,23,42,0.22)] object-cover">
+                                    @else
+                                        <img src="{{ asset('favicon.svg') }}" alt="{{ config('app.name') }}" class="h-9 w-9 rounded-xl drop-shadow-[0_2px_4px_rgba(15,23,42,0.22)]">
+                                    @endif
+                                    <span class="text-[15px] font-extrabold text-on-surface">{{ config('app.name') }}</span>
                                 </div>
                                 <button type="button" x-on:click="navOpen = false" class="rounded-lg p-1.5 text-on-surface-variant hover:bg-surface-container">
                                     <x-user.icon name="x" :size="20" />
@@ -376,6 +374,9 @@
                                 @endforeach
                             </nav>
                             <div class="space-y-1 border-t border-outline-variant p-3">
+                                <button type="button" x-on:click="navOpen = false; $dispatch('open-qr-scanner')" class="flex w-full items-center gap-3 rounded-lg px-3 py-2 text-[17px] font-medium text-on-surface-variant transition-colors hover:bg-surface-container hover:text-on-surface">
+                                    <x-user.icon name="qr-code" :size="24" class="shrink-0" /> <span>Quét mã QR</span>
+                                </button>
                                 <a href="{{ route('support') }}" wire:navigate x-on:click="navOpen = false" class="flex items-center gap-3 rounded-lg px-3 py-2 text-[17px] font-medium text-on-surface-variant transition-colors hover:bg-surface-container hover:text-on-surface">
                                     <x-user.icon name="help-circle" :size="24" class="shrink-0" /> <span>Hỗ trợ</span>
                                 </a>
@@ -430,9 +431,11 @@
                         {{ $slot }}
                     </main>
 
-                    {{-- ============ MOBILE BOTTOM NAV (< md) ============ --}}
-                    <nav class="pb-safe fixed inset-x-0 bottom-0 z-40 grid h-16 grid-cols-4 border-t border-outline-variant bg-white/95 backdrop-blur-lg md:hidden">
-                        @foreach ($mobileItems as $mi)
+                    {{-- ============ MOBILE BOTTOM NAV (< md) ============
+                         Thanh 5 cột gọn gàng: 2 mục · nút "+" ở giữa · mục còn lại · Thêm.
+                         Bấm "+" mở menu nhanh: Tham gia lớp / Tạo lớp mới / Quét QR. --}}
+                    <nav x-data="{ openActions: false }" class="pb-safe fixed inset-x-0 bottom-0 z-40 grid h-16 grid-cols-5 border-t border-outline-variant bg-white/95 backdrop-blur-lg md:hidden">
+                        @foreach (array_slice($mobileItems, 0, 2) as $mi)
                             @php $isActive = $matchesActive($mi['active']); @endphp
                             <a href="{{ route($mi['route']) }}" wire:navigate @class([
                                 'flex flex-col items-center justify-center gap-1 text-[10px] font-medium transition-colors',
@@ -443,6 +446,51 @@
                                 {{ $mi['label'] }}
                             </a>
                         @endforeach
+
+                        {{-- Nút "+" ở giữa + menu nhanh --}}
+                        <div class="relative flex items-center justify-center">
+                            {{-- Menu bật lên phía trên nút --}}
+                            <div x-cloak x-show="openActions" x-on:click.outside="openActions = false"
+                                x-transition:enter="transition ease-out duration-150"
+                                x-transition:enter-start="opacity-0 translate-y-2 scale-95"
+                                x-transition:enter-end="opacity-100 translate-y-0 scale-100"
+                                x-transition:leave="transition ease-in duration-100"
+                                x-transition:leave-start="opacity-100" x-transition:leave-end="opacity-0"
+                                class="absolute bottom-full left-1/2 mb-4 w-52 -translate-x-1/2 rounded-2xl border border-outline-variant bg-white p-2 shadow-xl shadow-slate-900/10">
+                                <button type="button" x-on:click="openActions = false; $dispatch('open-join-class-modal')" class="flex w-full items-center gap-3 rounded-xl p-2.5 text-left transition-colors hover:bg-surface-container">
+                                    <span class="grid h-9 w-9 shrink-0 place-items-center rounded-lg bg-emerald-50 text-emerald-600"><x-user.icon name="log-in" :size="18" /></span>
+                                    <span class="text-sm font-semibold text-on-surface">Tham gia lớp</span>
+                                </button>
+                                <a href="{{ route('create-class') }}" wire:navigate x-on:click="openActions = false" class="mt-1 flex w-full items-center gap-3 rounded-xl p-2.5 text-left transition-colors hover:bg-surface-container">
+                                    <span class="grid h-9 w-9 shrink-0 place-items-center rounded-lg bg-primary/10 text-primary"><x-user.icon name="plus" :size="18" /></span>
+                                    <span class="text-sm font-semibold text-on-surface">Tạo lớp mới</span>
+                                </a>
+                                <button type="button" x-on:click="openActions = false; $dispatch('open-qr-scanner')" class="mt-1 flex w-full items-center gap-3 rounded-xl p-2.5 text-left transition-colors hover:bg-surface-container">
+                                    <span class="grid h-9 w-9 shrink-0 place-items-center rounded-lg bg-indigo-50 text-indigo-600"><x-user.icon name="qr-code" :size="18" /></span>
+                                    <span class="text-sm font-semibold text-on-surface">Quét QR</span>
+                                </button>
+                            </div>
+
+                            <button type="button" x-on:click="openActions = !openActions"
+                                class="flex h-11 w-11 items-center justify-center rounded-full bg-primary text-white shadow-md shadow-primary/30 transition active:scale-95"
+                                :class="openActions ? 'rotate-45' : ''"
+                                aria-label="Tạo nhanh">
+                                <x-user.icon name="plus" :size="24" />
+                            </button>
+                        </div>
+
+                        @foreach (array_slice($mobileItems, 2) as $mi)
+                            @php $isActive = $matchesActive($mi['active']); @endphp
+                            <a href="{{ route($mi['route']) }}" wire:navigate @class([
+                                'flex flex-col items-center justify-center gap-1 text-[10px] font-medium transition-colors',
+                                'text-primary' => $isActive,
+                                'text-on-surface-variant' => ! $isActive,
+                            ])>
+                                <x-user.icon :name="$mi['icon']" :size="20" />
+                                {{ $mi['label'] }}
+                            </a>
+                        @endforeach
+
                         <button type="button" x-on:click="navOpen = true" class="flex flex-col items-center justify-center gap-1 text-[10px] font-medium text-on-surface-variant">
                             <x-user.icon name="menu" :size="20" />
                             Thêm
@@ -453,6 +501,7 @@
         </div>
 
         <x-notification.notification />
+        <x-user.qr-scanner />
         <livewire:student.join-class />
     </body>
 </html>

@@ -529,6 +529,11 @@
             <circle cx="12" cy="9" r="3" />
             @break
 
+        @case('crown')
+            <path d="M2 4l3 12h14l3-12-6 7-4-7-4 7-6-7z" />
+            <path d="M5 20h14" />
+            @break
+
         @default
             <circle cx="12" cy="12" r="10" />
     @endswitch

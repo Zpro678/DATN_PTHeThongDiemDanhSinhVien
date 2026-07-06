@@ -36,6 +36,7 @@ class CreateClassTest extends TestCase
             ->set('name', 'Kiểm thử phần mềm')
             ->set('randomSuffix', '2401')
             ->set('description', 'Lớp học được tạo từ Livewire.')
+            ->set('totalSessions', 20)
             ->set('requireApproval', true)
             ->call('save')
             ->assertHasNoErrors()
@@ -45,7 +46,7 @@ class CreateClassTest extends TestCase
             'owner_user_id' => $user->id,
             'name' => 'Kiểm thử phần mềm',
             'join_key' => 'CLS2401',
-            'total_sessions' => 0,
+            'total_sessions' => 20,
             'require_approval' => true,
             'status' => 'active',
         ]);

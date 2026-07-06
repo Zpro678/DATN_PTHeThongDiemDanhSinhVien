@@ -62,7 +62,7 @@ class LecturerManualAttendanceCreateTest extends TestCase
         $this->actingAs($owner)
             ->get(route('lecturer.attendance.manual.session', $session))
             ->assertOk()
-            ->assertSee('Tìm kiếm')
+            ->assertSee('Danh sách học viên')
             ->assertSee('Tìm theo tên hoặc mã số...');
 
         Livewire::actingAs($owner)
@@ -75,6 +75,25 @@ class LecturerManualAttendanceCreateTest extends TestCase
             ->call('searchStudents')
             ->assertSee('Manual Alpha Target')
             ->assertDontSee('Manual Beta Hidden');
+    }
+
+    public function test_creating_attendance_without_students_prompts_import(): void
+    {
+        $owner = User::factory()->create();
+        // Lớp KHÔNG có sinh viên active -> không được tạo điểm danh, phải báo import trước.
+        $courseClass = CourseClass::factory()->create(['owner_user_id' => $owner->id]);
+
+        Livewire::actingAs($owner)
+            ->test(AttendanceCreate::class)
+            ->set('classId', (string) $courseClass->id)
+            ->set('name', 'Buổi thủ công')
+            ->set('meetingEndTime', now()->addMinutes(90)->format('H:i'))
+            ->call('createManualSession')
+            ->assertHasErrors(['classId'])
+            ->assertRedirect(route('lecturer.classes.show', ['ma_user' => $owner->id, 'courseClass' => $courseClass->id, 'openImport' => 1]));
+
+        // Không có buổi/phiên nào được tạo.
+        $this->assertSame(0, ClassSession::query()->where('class_id', $courseClass->id)->count());
     }
 
     /**

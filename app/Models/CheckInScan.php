@@ -23,7 +23,8 @@ class CheckInScan extends Model
         'is_valid', // Cờ kết quả quét hợp lệ hay thất bại.
         'fail_reason', // Lý do lỗi khi quét không hợp lệ.
         'ip_address', // IP thiết bị thực hiện quét.
-        'device_fingerprint', // Mã định danh thiết bị thực hiện quét.
+        'device_fingerprint', // Mã định danh thiết bị (md5 IP+UA — tín hiệu yếu, phụ).
+        'device_id', // Mã định danh trình duyệt bền (client sinh) — dùng cho lịch sử thiết bị.
         'scanned_at', // Thời điểm quét.
     ];
 
