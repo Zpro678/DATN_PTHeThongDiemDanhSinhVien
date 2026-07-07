@@ -65,7 +65,7 @@
                 <span class="truncate">{{ $class->name }}</span>
             </h1>
             
-            <div class="grid grid-cols-2 gap-x-4 gap-y-6 sm:grid-cols-4">
+            <div class="grid grid-cols-2 gap-x-4 gap-y-6 sm:grid-cols-5">
                 <div class="min-w-0">
                     <span class="text-sm text-white/70">Mã lớp</span>
                     <p class="mt-1 text-2xl sm:text-[28px] font-bold text-white truncate leading-none" title="{{ $class->class_code ?? $class->join_key }}">{{ $class->class_code ?? $class->join_key }}</p>
@@ -75,14 +75,18 @@
                     <p class="mt-1 text-2xl sm:text-[28px] font-bold text-white leading-none">{{ $studentsCount }}</p>
                 </div>
                 <div class="min-w-0">
-                    <span class="text-sm text-white/70">Điểm danh</span>
-                    <p class="mt-1 text-2xl sm:text-[28px] font-bold text-white leading-none">{{ $sessionsCompleted }}<span class="text-base font-medium text-white/80">{{ $class->total_sessions > 0 ? '/'.$class->total_sessions : '' }} buổi</span></p>
+                    <span class="text-sm text-white/70">Buổi dự kiến</span>
+                    <p class="mt-1 text-2xl sm:text-[28px] font-bold text-white leading-none">{{ $class->total_sessions }}<span class="text-base font-medium text-white/80"> buổi</span></p>
+                </div>
+                <div class="min-w-0">
+                    <span class="text-sm text-white/70">Đã điểm danh</span>
+                    <p class="mt-1 text-2xl sm:text-[28px] font-bold text-white leading-none">{{ $sessionsCompleted }}<span class="text-base font-medium text-white/80"> buổi</span></p>
                 </div>
                 <div class="min-w-0">
                     <span class="text-sm text-white/70">Tiến độ</span>
                     <p class="mt-1 text-2xl sm:text-[28px] font-bold text-white leading-none">{{ $sessionsCount > 0 ? round(($sessionsCompleted / $sessionsCount) * 100) : 0 }}%</p>
                 </div>
-                <div class="col-span-2 sm:col-span-4 flex items-end sm:justify-end mt-2">
+                <div class="col-span-2 sm:col-span-5 flex items-end sm:justify-end mt-2">
                 </div>
             </div>
         </div>

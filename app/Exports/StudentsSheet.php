@@ -137,47 +137,41 @@ class StudentsSheet implements FromArray, ShouldAutoSize, WithStyles, WithTitle
         $this->dataStartRow = 7;
         $currentRow = $this->dataStartRow;
 
+        // NGUỒN DUY NHẤT: cùng service với giao diện web để số chuyên cần KHỚP nhau.
+        // (Trước đây Excel tự tính từ MeetingSummary với mẫu số = số buổi đã chốt, còn web dùng
+        //  attendance_records thô + mẫu số max(dự kiến, đã học) -> lệch nhau.)
+        $statsMap = app(LectureManageStudentService::class)->getStudentsAttendanceStats($members->pluck('id')->all());
+
         foreach ($members as $member) {
             $memberSummaries = $meetingSummaries->get($member->id, collect())->keyBy('meeting_id');
-            $counts = ['present' => 0, 'late' => 0, 'excused' => 0, 'absent' => 0, 'total' => 0, 'deduction' => 0.0];
-            
-            // Loop through all $meetings to build counts. Only closed meetings of this class are considered.
-            foreach ($meetings as $meeting) {
-                if ($meeting->class_id === $member->class_id) {
-                    $counts['total']++;
-                    if ($summary = $memberSummaries->get($meeting->id)) {
-                        $counts[$summary->status] = ($counts[$summary->status] ?? 0) + 1;
-                        $counts['deduction'] += (float)$summary->deduction;
-                    } else {
-                        // Trạng thái pending hoặc chưa tổng kết coi như vắng (nếu buổi đã đóng)
-                        $counts['absent']++;
-                        $counts['deduction'] += \App\Services\AttendanceCalculator::deductionForStatus('absent');
-                    }
-                }
-            }
+            $stats = $statsMap[$member->id] ?? [];
 
-            $rules = $member->courseClass->getAttendanceRules();
-            $plannedSessions = $counts['total'];
-            $classPercent = \App\Services\AttendanceCalculator::percentOfPlanned($plannedSessions, $counts, $rules);
+            $present      = (int) ($stats['present_sessions'] ?? 0);
+            $late         = (int) ($stats['late_sessions'] ?? 0);
+            $absent       = (int) ($stats['absent_sessions'] ?? 0);
+            $excused      = (int) ($stats['excused_sessions'] ?? 0);
+            $studied      = (int) ($stats['studied_sessions'] ?? 0);           // số buổi đã học
+            $baseSessions = (int) ($stats['planned_sessions'] ?? 0);           // mẫu số = max(dự kiến, đã học)
+            $deduction    = round((float) ($stats['effective_absent_sessions'] ?? 0), 2); // tổng điểm trừ (vắng quy đổi)
+            $classPercent = (int) ($stats['attendance_percent'] ?? 0);         // == % trên web
 
-            // Tính phần trăm theo công thức tự nhập
+            // Công thức tự nhập tính trên chính các đếm này (t = số buổi đã học).
             $percent = 0;
-            if ($plannedSessions > 0) {
+            if ($studied > 0) {
                 $formulaStr = strtolower($this->formula);
-                
-                $formulaStr = preg_replace_callback('/[a-z]+/', function($matches) {
-                    $word = $matches[0];
+
+                $formulaStr = preg_replace_callback('/[a-z]+/', function ($matches) {
                     $allowed = ['c', 'm', 'v', 'p', 't', 'floor', 'ceil', 'round', 'max', 'min', 'abs'];
-                    return in_array($word, $allowed) ? $word : '';
+                    return in_array($matches[0], $allowed, true) ? $matches[0] : '';
                 }, $formulaStr);
 
                 $formulaStr = preg_replace('/[^a-z0-9\+\-\*\/\(\)\.\s,]/', '', $formulaStr);
-                
-                $formulaStr = preg_replace('/\bc\b/', $counts['present'], $formulaStr);
-                $formulaStr = preg_replace('/\bm\b/', $counts['late'], $formulaStr);
-                $formulaStr = preg_replace('/\bv\b/', $counts['absent'], $formulaStr);
-                $formulaStr = preg_replace('/\bp\b/', $counts['excused'], $formulaStr);
-                $formulaStr = preg_replace('/\bt\b/', $counts['total'], $formulaStr);
+
+                $formulaStr = preg_replace('/\bc\b/', (string) $present, $formulaStr);
+                $formulaStr = preg_replace('/\bm\b/', (string) $late, $formulaStr);
+                $formulaStr = preg_replace('/\bv\b/', (string) $absent, $formulaStr);
+                $formulaStr = preg_replace('/\bp\b/', (string) $excused, $formulaStr);
+                $formulaStr = preg_replace('/\bt\b/', (string) $studied, $formulaStr);
 
                 if (!empty($formulaStr)) {
                     try {
@@ -198,32 +192,24 @@ class StudentsSheet implements FromArray, ShouldAutoSize, WithStyles, WithTitle
                 $member->courseClass?->join_key ?? '',
             ];
 
+            // Timeline từng buổi vẫn lấy từ MeetingSummary (chi tiết hiển thị).
             foreach ($meetings as $meeting) {
                 if ($meeting->class_id === $member->class_id) {
                     $summary = $memberSummaries->get($meeting->id);
-                    if ($summary) {
-                        $statusMap = [
-                            'present'     => 'c',
-                            'late'        => 'm',
-                            'absent'      => 'v',
-                            'excused'     => 'p',
-                        ];
-                        $row[] = $statusMap[$summary->status] ?? '-';
-                    } else {
-                        $row[] = '-'; // Không có summary (chưa điểm danh)
-                    }
+                    $statusMap = ['present' => 'c', 'late' => 'm', 'absent' => 'v', 'excused' => 'p'];
+                    $row[] = $summary ? ($statusMap[$summary->status] ?? '-') : '-';
                 } else {
                     $row[] = '';
                 }
             }
 
             $row = array_merge($row, [
-                $counts['total'],
-                $counts['present'],
-                $counts['late'],
-                $counts['absent'],
-                $counts['excused'],
-                $counts['deduction'],
+                $baseSessions,
+                $present,
+                $late,
+                $absent,
+                $excused,
+                $deduction,
                 $classPercent . '%',
                 $percent . '%',
             ]);
