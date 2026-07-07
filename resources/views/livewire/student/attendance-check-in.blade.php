@@ -126,7 +126,7 @@
                         },
                         getDeviceId() {
                             // Mã định danh trình duyệt bền: ưu tiên localStorage, mirror sang cookie
-                            // để không mất khi xóa một bên. Dùng phát hiện "1 máy điểm danh nhiều SV".
+                            // để không mất khi xóa một bên. Dùng phát hiện '1 máy điểm danh nhiều SV'.
                             try {
                                 let id = localStorage.getItem('att_device_id');
                                 if (!id) {
@@ -143,7 +143,7 @@
                             }
                         },
                         collectPositions(count = 3, gapMs = 800) {
-                            // Lấy nhiều mẫu vị trí cách nhau ~1s: GPS thật luôn "rung", fake thường đứng yên.
+                            // Lấy nhiều mẫu vị trí cách nhau ~1s: GPS thật luôn 'rung', fake thường đứng yên.
                             const getOne = () => new Promise((resolve, reject) =>
                                 navigator.geolocation.getCurrentPosition(resolve, reject, { enableHighAccuracy: true, timeout: 10000, maximumAge: 0 })
                             );
