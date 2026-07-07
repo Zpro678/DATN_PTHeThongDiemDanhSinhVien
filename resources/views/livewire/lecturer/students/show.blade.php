@@ -40,7 +40,7 @@
         <div class="pointer-events-none absolute -bottom-8 -left-8 h-32 w-32 rounded-full bg-white/5"></div>
         <div class="relative flex flex-col gap-6 md:flex-row md:items-center">
             @if($member->user && $member->user->avatar)
-                <img src="{{ asset('storage/' . $member->user->avatar) }}" alt="{{ $member->full_name }}" class="h-20 w-20 shrink-0 rounded-2xl object-cover ring-2 ring-white/25">
+                <img src="{{ $member->user->avatar_url }}" alt="{{ $member->full_name }}" class="h-20 w-20 shrink-0 rounded-2xl object-cover ring-2 ring-white/25">
             @else
                 <div class="flex h-20 w-20 shrink-0 items-center justify-center rounded-2xl bg-white/20 text-3xl font-extrabold backdrop-blur-sm ring-2 ring-white/25">{{ mb_strtoupper(mb_substr($member->full_name, 0, 1)) }}</div>
             @endif

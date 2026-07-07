@@ -21,7 +21,7 @@
                 <div class="mb-5 flex items-center justify-between"><h2 class="text-sm font-extrabold uppercase tracking-wider text-slate-900">Thông tin học viên</h2><span class="rounded-full border px-3 py-1 text-sm font-bold {{ $statusClass }}">{{ $statusLabel }}</span></div>
                 <div class="flex items-center gap-4">
                     @if($leaveRequest->classMember->user && $leaveRequest->classMember->user->avatar)
-                        <img src="{{ asset('storage/' . $leaveRequest->classMember->user->avatar) }}" alt="{{ $leaveRequest->classMember->full_name }}" class="h-16 w-16 shrink-0 rounded-2xl object-cover">
+                        <img src="{{ $leaveRequest->classMember->user->avatar_url }}" alt="{{ $leaveRequest->classMember->full_name }}" class="h-16 w-16 shrink-0 rounded-2xl object-cover">
                     @else
                         <span class="flex h-16 w-16 shrink-0 items-center justify-center rounded-2xl bg-primary/10 text-2xl font-extrabold text-primary">{{ mb_strtoupper(mb_substr($leaveRequest->classMember->full_name, 0, 1)) }}</span>
                     @endif

@@ -1,4 +1,4 @@
-@props(['options' => [], 'placeholder' => 'Chọn...', 'value' => null])
+@props(['options' => [], 'placeholder' => 'Chọn...', 'value' => null, 'allowClear' => false])
 
 <div x-data="{
     open: false,
@@ -73,7 +73,7 @@ class="relative w-full"
          class="scrollbar-custom absolute z-50 mt-2 w-full rounded-xl border border-slate-100 bg-white shadow-xl max-h-60 overflow-y-auto p-1.5"
          style="display: none;">
          
-        @if($placeholder)
+        @if($placeholder && $allowClear)
         <div @click="select('')"
              class="cursor-pointer rounded-lg px-3 py-2.5 transition-colors flex justify-between items-center mb-1"
              :class="value == '' ? 'bg-blue-50 text-blue-900 font-bold' : 'hover:bg-slate-50 text-slate-700 font-medium'">

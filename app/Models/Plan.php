@@ -18,12 +18,12 @@ class Plan extends Model
     // Hạng gói dịch vụ.
     public const TIER_FREE = 'FREE';
     public const TIER_PRO = 'PRO';
-    public const TIER_ENTERPRISE = 'ENTERPRISE';
+    public const TIER_PREMIUM = 'PREMIUM';
 
     protected $table = 'plans';
 
     protected $fillable = [
-        'plan_tier', // Hạng gói dịch vụ (FREE/PRO/ENTERPRISE).
+        'plan_tier', // Hạng gói dịch vụ (FREE/PRO/PREMIUM).
         'name', // Tên gói dịch vụ.
         'description', // Mô tả gói dịch vụ.
         'price', // Giá gói dịch vụ.

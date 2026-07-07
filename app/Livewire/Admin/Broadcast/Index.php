@@ -12,11 +12,19 @@ class Index extends Component
     public $content;
     public $target = 'all';
 
-    protected $rules = [
-        'subject' => 'required|min:5|max:255',
-        'content' => 'required|min:10',
-        'target' => 'required|in:all,free,pro',
-    ];
+    protected function rules()
+    {
+        $planIds = \App\Models\Plan::pluck('id')->toArray();
+        $planKeys = array_map(fn($id) => "plan_{$id}", $planIds);
+        
+        $validTargets = array_merge(['all'], $planKeys);
+
+        return [
+            'subject' => 'required|min:5|max:255',
+            'content' => 'required|min:10',
+            'target' => ['required', \Illuminate\Validation\Rule::in($validTargets)],
+        ];
+    }
 
     public function sendBroadcast()
     {
@@ -24,18 +32,33 @@ class Index extends Component
 
         $query = User::query()->where('status', 'active');
 
-        if ($this->target === 'free') {
-            $query->whereDoesntHave('subscriptions', function($q) {
-                $q->where('status', 'active')->where(function($sq) {
-                    $sq->whereNull('end_date')->orWhere('end_date', '>=', now());
+        if (str_starts_with($this->target, 'plan_')) {
+            $planId = str_replace('plan_', '', $this->target);
+            $selectedPlan = \App\Models\Plan::find($planId);
+            
+            if ($selectedPlan && $selectedPlan->plan_tier === \App\Models\Plan::TIER_FREE) {
+                $query->where(function($q) use ($planId) {
+                    $q->whereDoesntHave('subscriptions', function($subQ) {
+                        $subQ->where('status', 'active')->where(function($sq) {
+                            $sq->whereNull('end_date')->orWhere('end_date', '>=', now());
+                        });
+                    })->orWhereHas('subscriptions', function($subQ) use ($planId) {
+                        $subQ->where('plan_id', $planId)
+                             ->where('status', 'active')
+                             ->where(function($sq) {
+                                 $sq->whereNull('end_date')->orWhere('end_date', '>=', now());
+                             });
+                    });
                 });
-            });
-        } elseif ($this->target === 'pro') {
-            $query->whereHas('subscriptions', function($q) {
-                $q->where('status', 'active')->where(function($sq) {
-                    $sq->whereNull('end_date')->orWhere('end_date', '>=', now());
+            } else {
+                $query->whereHas('subscriptions', function($q) use ($planId) {
+                    $q->where('plan_id', $planId)
+                      ->where('status', 'active')
+                      ->where(function($sq) {
+                          $sq->whereNull('end_date')->orWhere('end_date', '>=', now());
+                      });
                 });
-            });
+            }
         }
 
         $emails = $query->pluck('email')->toArray();

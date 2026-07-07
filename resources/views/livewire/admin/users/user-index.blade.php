@@ -82,7 +82,7 @@
                                 <div class="flex items-center">
                                     <div class="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-blue-100 text-sm font-black text-blue-700 overflow-hidden {{ $user->status === 'blocked' ? 'grayscale' : '' }}">
                                         @if($user->avatar)
-                                            <img src="{{ asset('storage/'.$user->avatar) }}" alt="{{ $user->name }}" class="h-full w-full object-cover">
+                                            <img src="{{ $user->avatar_url }}" alt="{{ $user->name }}" class="h-full w-full object-cover">
                                         @else
                                             {{ $initial }}
                                         @endif
@@ -133,7 +133,7 @@
                                 <a href="{{ route('admin.users.edit', $user) }}" class="mr-3 text-indigo-600 transition-colors hover:text-indigo-900" title="Chỉnh sửa">
                                     <x-user.icon name="edit" :size="20" class="inline" />
                                 </a>
-                                <button type="button" wire:click="toggleStatus({{ $user->id }})" class="{{ $user->status === 'active' ? 'text-red-600 hover:text-red-900' : 'text-green-600 hover:text-green-900' }} transition-colors" title="{{ $user->status === 'active' ? 'Khóa tài khoản' : 'Mở khóa tài khoản' }}">
+                                <button type="button" @click="$dispatch('open-toggle-user-modal', { id: {{ $user->id }}, name: '{{ addslashes($user->name) }}', isLocking: {{ $user->status === 'active' ? 'true' : 'false' }} })" class="{{ $user->status === 'active' ? 'text-red-600 hover:text-red-900' : 'text-green-600 hover:text-green-900' }} transition-colors" title="{{ $user->status === 'active' ? 'Khóa tài khoản' : 'Mở khóa tài khoản' }}">
                                     <x-user.icon name="{{ $user->status === 'active' ? 'lock' : 'shield-check' }}" :size="20" class="inline" />
                                 </button>
                             </td>
@@ -153,4 +153,50 @@
             {{ $users->links('vendor.livewire.tailwind') }}
         </div>
     </div>
+
+    <!-- Modal Khóa/Mở Khóa Người Dùng (AlpineJS) -->
+    @teleport('body')
+    <div x-data="{ showModal: false, userId: null, userName: '', isLocking: true }"
+         @open-toggle-user-modal.window="userId = $event.detail.id; userName = $event.detail.name; isLocking = $event.detail.isLocking; showModal = true"
+         x-cloak
+         x-show="showModal"
+         class="fixed inset-0 z-[9999] flex items-center justify-center bg-slate-900/50 p-4 backdrop-blur-sm">
+         
+         <div x-show="showModal" 
+              x-transition:enter="ease-out duration-300"
+              x-transition:enter-start="opacity-0 translate-y-4 sm:translate-y-0 sm:scale-95"
+              x-transition:enter-end="opacity-100 translate-y-0 sm:scale-100"
+              x-transition:leave="ease-in duration-200"
+              x-transition:leave-start="opacity-100 translate-y-0 sm:scale-100"
+              x-transition:leave-end="opacity-0 translate-y-4 sm:translate-y-0 sm:scale-95"
+              class="w-full max-w-md rounded-2xl bg-white p-6 shadow-2xl" @click.away="showModal = false">
+             <div class="mb-4 flex items-center gap-3">
+                 <div class="flex h-10 w-10 shrink-0 items-center justify-center rounded-full" :class="isLocking ? 'bg-amber-100' : 'bg-emerald-100'">
+                     <template x-if="isLocking">
+                         <svg class="h-5 w-5 text-amber-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />
+                         </svg>
+                     </template>
+                     <template x-if="!isLocking">
+                         <svg class="h-5 w-5 text-emerald-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 11V7a4 4 0 118 0m-4 8v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2z" />
+                         </svg>
+                     </template>
+                 </div>
+                 <h3 class="text-lg font-bold text-slate-900" x-text="isLocking ? 'Xác nhận khóa tài khoản' : 'Xác nhận mở khóa tài khoản'"></h3>
+             </div>
+             <p class="text-sm text-slate-500">
+                 Bạn có chắc chắn muốn <span class="font-bold text-slate-700" x-text="isLocking ? 'khóa' : 'mở khóa'"></span> tài khoản của người dùng <span class="font-bold text-slate-700" x-text="userName"></span> không?
+             </p>
+             <div class="mt-6 flex justify-end gap-3">
+                 <button type="button" @click="showModal = false"
+                     class="rounded-xl border border-slate-200 px-5 py-2.5 text-sm font-bold text-slate-600 hover:bg-slate-50 transition-colors">Hủy</button>
+                 <button type="button" @click="$wire.toggleStatus(userId); showModal = false"
+                     class="rounded-xl px-5 py-2.5 text-sm font-bold text-white transition-colors shadow-sm"
+                     :class="isLocking ? 'bg-amber-600 hover:bg-amber-700 shadow-amber-500/25' : 'bg-emerald-600 hover:bg-emerald-700 shadow-emerald-500/25'"
+                     x-text="isLocking ? 'Khóa tài khoản' : 'Mở khóa tài khoản'"></button>
+             </div>
+         </div>
+    </div>
+    @endteleport
 </div>

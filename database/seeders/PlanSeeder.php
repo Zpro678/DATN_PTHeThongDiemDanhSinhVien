@@ -37,8 +37,8 @@ class PlanSeeder extends Seeder
                 ],
             ],
             [
-                'plan_tier' => Plan::TIER_ENTERPRISE,
-                'name' => 'Doanh nghiệp',
+                'plan_tier' => Plan::TIER_PREMIUM,
+                'name' => 'Cao cấp',
                 'description' => 'Giải pháp toàn diện cho tổ chức giáo dục quy mô lớn.',
                 'price' => 299000,
                 'duration_days' => 30,

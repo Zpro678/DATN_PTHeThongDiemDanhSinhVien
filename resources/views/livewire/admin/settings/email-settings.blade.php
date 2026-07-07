@@ -83,12 +83,13 @@
     </div>
 
     <!-- Modal Gửi Test Mail -->
+    @teleport('body')
     <div x-data="{ open: false }" 
          x-on:open-test-mail-modal.window="open = true" 
          x-on:close-test-mail-modal.window="open = false" 
          x-cloak 
          x-show="open" 
-         class="relative z-50">
+         class="relative z-[9999]">
          
         <div x-show="open" x-transition.opacity class="fixed inset-0 bg-slate-900/50 backdrop-blur-sm"></div>
 
@@ -146,4 +147,5 @@
             </div>
         </div>
     </div>
+    @endteleport
 </div>

@@ -17,11 +17,19 @@
                 <div class="md:col-span-1 space-y-6">
                     <div>
                         <label for="target" class="block text-sm font-medium text-on-surface mb-2">Nhóm đối tượng nhận</label>
-                        <select wire:model="target" id="target" class="w-full rounded-lg border-outline-variant/50 bg-surface-container-lowest px-4 py-2 text-on-surface focus:border-primary focus:ring-primary/20 transition-all">
-                            <option value="all">Tất cả người dùng (Active)</option>
-                            <option value="free">Người dùng gói Miễn phí (Free)</option>
-                            <option value="pro">Người dùng có gói Đăng ký (Pro)</option>
-                        </select>
+                        @php
+                        $targetOptions = [
+                            ['value' => 'all', 'label' => 'Tất cả người dùng (Active)'],
+                        ];
+                        $plans = \App\Models\Plan::where('is_active', true)->get();
+                        foreach ($plans as $plan) {
+                            $targetOptions[] = [
+                                'value' => 'plan_' . $plan->id,
+                                'label' => 'Người dùng gói ' . $plan->name,
+                            ];
+                        }
+                        @endphp
+                        <x-custom-select wire:model="target" :value="$target" :options="$targetOptions" placeholder="Chọn đối tượng nhận" />
                         @error('target') <span class="text-error text-sm mt-1 block">{{ $message }}</span> @enderror
                     </div>
                 </div>

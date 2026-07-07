@@ -82,7 +82,7 @@
                             <td class="px-6 py-4">
                                 <a href="{{ route('lecturer.students.show', $member) }}" class="flex items-center gap-3">
                                     @if($member->user && $member->user->avatar)
-                                        <img src="{{ str_starts_with($member->user->avatar, 'http') ? $member->user->avatar : asset('storage/' . $member->user->avatar) }}" alt="{{ $member->displayName }}" class="h-10 w-10 shrink-0 rounded-full object-cover">
+                                        <img src="{{ $member->user->avatar_url }}" alt="{{ $member->displayName }}" class="h-10 w-10 shrink-0 rounded-full object-cover">
                                     @else
                                         <span @class([
                                             'flex h-10 w-10 shrink-0 items-center justify-center rounded-full font-bold',

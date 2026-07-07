@@ -132,7 +132,7 @@ class SubscriptionService
     }
 
     /**
-     * Quyền truy cập API (gói Doanh nghiệp).
+     * Quyền truy cập API (gói Cao cấp).
      */
     public function hasApiAccess(User $user): bool
     {

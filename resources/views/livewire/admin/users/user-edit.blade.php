@@ -27,7 +27,7 @@
                 <div class="p-6">
                     <div class="flex items-center gap-4">
                         @if($user->avatar)
-                            <img src="{{ asset('storage/'.$user->avatar) }}" alt="{{ $user->name }}" class="h-20 w-20 rounded-3xl object-cover bg-blue-100 shadow-sm">
+                            <img src="{{ $user->avatar_url }}" alt="{{ $user->name }}" class="h-20 w-20 rounded-3xl object-cover bg-blue-100 shadow-sm">
                         @else
                             <div class="flex h-20 w-20 items-center justify-center rounded-3xl bg-blue-100 text-3xl font-black text-blue-700 shadow-sm">
                                 {{ $initial }}
@@ -102,9 +102,9 @@
                                 }
                                 @endphp
                                 @if(!$canEditRole)
-                                    <x-custom-select wire:model.live="role" :options="$roleOptions" placeholder="Chọn vai trò" disabled />
+                                    <x-custom-select wire:model.live="role" :value="$role" :options="$roleOptions" placeholder="Chọn vai trò" disabled />
                                 @else
-                                    <x-custom-select wire:model.live="role" :options="$roleOptions" placeholder="Chọn vai trò" />
+                                    <x-custom-select wire:model.live="role" :value="$role" :options="$roleOptions" placeholder="Chọn vai trò" />
                                 @endif
                                 @error('role')<p class="mt-1 text-xs text-red-500">{{ $message }}</p>@enderror
                             </div>
@@ -116,8 +116,13 @@
                                     ['value' => 'active', 'label' => 'Đang hoạt động', 'sub_label' => 'Tài khoản bình thường'],
                                     ['value' => 'blocked', 'label' => 'Đã khóa', 'sub_label' => 'Tài khoản bị vô hiệu hóa'],
                                 ];
+                                $canEditStatus = $user->id !== auth()->id();
                                 @endphp
-                                <x-custom-select wire:model.live="status" :options="$statusOptions" placeholder="Chọn trạng thái" />
+                                @if(!$canEditStatus)
+                                    <x-custom-select wire:model.live="status" :value="$status" :options="$statusOptions" placeholder="Chọn trạng thái" disabled />
+                                @else
+                                    <x-custom-select wire:model.live="status" :value="$status" :options="$statusOptions" placeholder="Chọn trạng thái" />
+                                @endif
                                 @error('status')<p class="mt-1 text-xs text-red-500">{{ $message }}</p>@enderror
                             </div>
                         </div>

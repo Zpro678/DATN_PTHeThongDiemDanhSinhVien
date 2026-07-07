@@ -21,10 +21,7 @@
 	@php $toastId = \Illuminate\Support\Str::random(10); @endphp
 
 	{{-- Success Messages --}}
-	@if (session('success') || session('status'))
-    @php
-        $successMessage = session('success') ?? session('status');
-    @endphp
+	@if (session('success'))
 	<div wire:key="toast-success-{{ $toastId }}" x-data="{ show: !sessionStorage.getItem('toast_{{ $toastId }}') }" x-show="show" x-init="if(show) { sessionStorage.setItem('toast_{{ $toastId }}', '1'); setTimeout(() => { show = false; setTimeout(() => $el.remove(), 500); }, 5000); }" x-transition:leave="hiding" class="custom-toast server-toast toast-success">
 		<div class="toast-content">
 			<div class="toast-icon">
@@ -34,7 +31,7 @@
 				</svg>
 			</div>
 			<div class="toast-message">
-				{{ $successMessage }}
+				{{ session('success') }}
 			</div>
 		</div>
 		<span class="toast-close" @click="show = false">
@@ -56,6 +53,10 @@
 			<div class="toast-message">
 				@if(session('status') == 'verification-link-sent')
 					Mã xác thực mới đã được gửi tới email của bạn.
+				@elseif(session('status') == 'password-updated')
+					Mật khẩu đã được cập nhật thành công.
+				@elseif(session('status') == 'profile-updated')
+					Thông tin hồ sơ đã được cập nhật thành công.
 				@else
 					{{ session('status') }}
 				@endif

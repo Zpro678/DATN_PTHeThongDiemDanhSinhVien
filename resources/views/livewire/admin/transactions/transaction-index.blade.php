@@ -89,7 +89,7 @@
                             <div class="flex items-center gap-3">
                                 <span class="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-blue-100 text-sm font-bold text-blue-600 ring-2 ring-white">
                                     @if($tx->user?->avatar)
-                                        <img src="{{ asset('storage/'.$tx->user->avatar) }}" alt="" class="h-full w-full rounded-full object-cover">
+                                        <img src="{{ $tx->user->avatar_url }}" alt="" class="h-full w-full rounded-full object-cover">
                                     @else
                                         {{ mb_substr($tx->user?->name ?? 'U', 0, 1) }}
                                     @endif

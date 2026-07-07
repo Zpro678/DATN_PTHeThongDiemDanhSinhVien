@@ -111,7 +111,7 @@
                         <tr class="transition-colors hover:bg-slate-50/70 cursor-pointer" onclick="if(!event.target.closest('a, button')) window.location.href='{{ route('lecturer.leave-requests.show', $request) }}'">
                             <td class="px-6 py-4"><div class="flex items-center gap-3">
                                 @if($request->classMember->user && $request->classMember->user->avatar)
-                                    <img src="{{ asset('storage/' . $request->classMember->user->avatar) }}" alt="{{ $request->classMember->full_name }}" class="h-10 w-10 shrink-0 rounded-full object-cover">
+                                    <img src="{{ $request->classMember->user->avatar_url }}" alt="{{ $request->classMember->full_name }}" class="h-10 w-10 shrink-0 rounded-full object-cover">
                                 @else
                                     <span class="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-primary/10 font-bold text-primary">{{ mb_strtoupper(mb_substr($request->classMember->full_name, 0, 1)) }}</span>
                                 @endif

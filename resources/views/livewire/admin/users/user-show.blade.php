@@ -35,7 +35,7 @@
                 <div class="px-6 pb-6">
                     <div class="-mt-12 flex justify-center">
                         @if($user->avatar)
-                            <img src="{{ asset('storage/'.$user->avatar) }}" alt="{{ $user->name }}" class="h-24 w-24 rounded-3xl border-4 border-white object-cover bg-blue-100 shadow-sm">
+                            <img src="{{ $user->avatar_url }}" alt="{{ $user->name }}" class="h-24 w-24 rounded-3xl border-4 border-white object-cover bg-blue-100 shadow-sm">
                         @else
                             <div class="flex h-24 w-24 items-center justify-center rounded-3xl border-4 border-white bg-blue-100 text-3xl font-black text-blue-700 shadow-sm">
                                 {{ $initial }}

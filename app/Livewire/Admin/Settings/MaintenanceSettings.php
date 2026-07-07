@@ -58,6 +58,11 @@ class MaintenanceSettings extends Component
 
     public function save(\App\Services\NotificationService $notificationService, BackupService $backupService)
     {
+        if (!auth()->user()?->isSuperAdmin()) {
+            $this->dispatch('toast', message: 'Chỉ Super Admin mới có quyền thay đổi cấu hình bảo trì.', type: 'error');
+            return;
+        }
+
         $this->validate();
 
         // Check if turning ON maintenance mode
@@ -88,6 +93,11 @@ class MaintenanceSettings extends Component
 
     public function createBackup(BackupService $backupService)
     {
+        if (!auth()->user()?->isSuperAdmin()) {
+            $this->dispatch('toast', message: 'Chỉ Super Admin mới có quyền tạo bản sao lưu.', type: 'error');
+            return;
+        }
+
         try {
             $backupService->createBackup();
             $this->loadBackups($backupService);
@@ -99,6 +109,11 @@ class MaintenanceSettings extends Component
 
     public function deleteBackup(string $fileName, BackupService $backupService)
     {
+        if (!auth()->user()?->isSuperAdmin()) {
+            $this->dispatch('toast', message: 'Chỉ Super Admin mới có quyền xóa bản sao lưu.', type: 'error');
+            return;
+        }
+
         $backupService->deleteBackup($fileName);
         $this->loadBackups($backupService);
         $this->dispatch('toast', message: 'Đã xóa bản sao lưu.', type: 'success');

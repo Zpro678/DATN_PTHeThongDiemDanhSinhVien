@@ -38,13 +38,13 @@ class PackageEdit extends Component
         $this->package = $package;
         
         $currentTier = strtoupper($package->plan_tier);
-        if (in_array($currentTier, ['FREE', 'PRO', 'ENTERPRISE'])) {
+        if (in_array($currentTier, ['FREE', 'PRO', 'PREMIUM'])) {
             $this->plan_tier = $currentTier;
         } else {
             if ($package->price <= 0) {
                 $this->plan_tier = 'FREE';
             } elseif (stripos($package->name, 'enterprise') !== false || stripos($currentTier, 'enterprise') !== false) {
-                $this->plan_tier = 'ENTERPRISE';
+                $this->plan_tier = 'PREMIUM';
             } else {
                 $this->plan_tier = 'PRO';
             }
