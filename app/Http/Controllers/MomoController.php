@@ -72,9 +72,45 @@ class MomoController extends Controller
         return response()->json(['resultCode' => 0, 'message' => 'Received']);
     }
 
-    public function return(Request $request): RedirectResponse
+    public function return(Request $request, MomoService $momo, SubscriptionService $subscriptions): RedirectResponse
     {
         $success = (int) $request->query('resultCode', -1) === 0;
+        $orderId = $request->query('orderId');
+
+        if ($success && $orderId) {
+            try {
+                // Verify signature from redirect
+                $data = $request->all();
+                if ($momo->verifySignature($data)) {
+                    // Check transaction status from MoMo to ensure it's actually paid
+                    // In MomoService, requestId is the same as orderId
+                    $momoStatus = $momo->checkTransactionStatus($orderId, $orderId);
+
+                    if ($momoStatus && (int) ($momoStatus['resultCode'] ?? -1) === 0) {
+                        $transaction = Transaction::where('transaction_code', (string) $orderId)->first();
+                        
+                        if ($transaction && $transaction->status === 'pending') {
+                            DB::transaction(function () use ($transaction, $subscriptions, $momoStatus) {
+                                $fresh = Transaction::whereKey($transaction->id)->where('status', 'pending')->lockForUpdate()->first();
+                                if ($fresh && (int) ($momoStatus['amount'] ?? 0) === (int) $fresh->amount) {
+                                    $fresh->update([
+                                        'status' => 'success',
+                                        'gateway_transaction_id' => (string) ($momoStatus['transId'] ?? ''),
+                                        'payment_response' => json_encode($momoStatus),
+                                    ]);
+                                    if ($fresh->plan) {
+                                        $subscriptions->activate($fresh->user, $fresh->plan);
+                                    }
+                                }
+                            });
+                        }
+                    }
+                }
+            } catch (\Exception $e) {
+                // Ignore and let IPN handle it if local verification fails
+                \Illuminate\Support\Facades\Log::error('MoMo return verification error: ' . $e->getMessage());
+            }
+        }
 
         return redirect()
             ->route('upgrade')

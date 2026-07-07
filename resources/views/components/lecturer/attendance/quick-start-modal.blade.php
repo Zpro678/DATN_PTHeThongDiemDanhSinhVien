@@ -257,43 +257,12 @@
                         </div>
 
                         {{-- ═══ End Time ═══ --}}
-                        <div x-data="{
-                            time: @entangle('meetingEndTime'),
-                            _hour: '00',
-                            _minute: '00',
-                            init() {
-                                this.syncFromTime();
-                                $watch('time', () => this.syncFromTime());
-                            },
-                            syncFromTime() {
-                                if (this.time && this.time.includes(':')) {
-                                    this._hour = this.time.split(':')[0];
-                                    this._minute = this.time.split(':')[1];
-                                }
-                            },
-                            updateTime() {
-                                let h = parseInt(this._hour);
-                                let m = parseInt(this._minute);
-                                if (isNaN(h)) h = 0;
-                                if (isNaN(m)) m = 0;
-                                if (h > 23) h = 23;
-                                if (h < 0) h = 0;
-                                if (m > 59) m = 59;
-                                if (m < 0) m = 0;
-                                this.time = String(h).padStart(2, '0') + ':' + String(m).padStart(2, '0');
-                                this.syncFromTime();
-                            }
-                        }">
+                        <div>
                             <label class="mb-2 block text-sm font-bold text-slate-700">Thời gian kết thúc</label>
-                            <div class="flex items-center gap-2">
-                                <div class="relative flex-1 group">
-                                    <input type="number" min="0" max="23" x-model="_hour" @blur="updateTime()" @keydown.enter.prevent="updateTime()" placeholder="Giờ" class="w-full rounded-xl border-2 border-slate-200 bg-slate-50/80 px-4 py-3 text-center text-sm font-bold text-slate-900 shadow-sm outline-none transition-all duration-200 hover:border-slate-300 hover:bg-white focus:bg-white focus:ring-4 focus:shadow-md disabled:opacity-60 disabled:bg-slate-100" :class="$wire.quickStartType === 'qr' ? 'focus:border-blue-500 focus:ring-blue-500/10 focus:shadow-blue-500/5' : 'focus:border-amber-500 focus:ring-amber-500/10 focus:shadow-amber-500/5'" :disabled="$wire.quickMeetingId && $wire.quickMeetingId !== 'NEW'" />
-                                </div>
-                                <span class="text-xl font-extrabold text-slate-400 mb-1">:</span>
-                                <div class="relative flex-1 group">
-                                    <input type="number" min="0" max="59" x-model="_minute" @blur="updateTime()" @keydown.enter.prevent="updateTime()" placeholder="Phút" class="w-full rounded-xl border-2 border-slate-200 bg-slate-50/80 px-4 py-3 text-center text-sm font-bold text-slate-900 shadow-sm outline-none transition-all duration-200 hover:border-slate-300 hover:bg-white focus:bg-white focus:ring-4 focus:shadow-md disabled:opacity-60 disabled:bg-slate-100" :class="$wire.quickStartType === 'qr' ? 'focus:border-blue-500 focus:ring-blue-500/10 focus:shadow-blue-500/5' : 'focus:border-amber-500 focus:ring-amber-500/10 focus:shadow-amber-500/5'" :disabled="$wire.quickMeetingId && $wire.quickMeetingId !== 'NEW'" />
-                                </div>
-                            </div>
+                            <input type="time" wire:model="meetingEndTime"
+                                class="w-full rounded-xl border-2 border-slate-200 bg-slate-50/80 px-4 py-3 text-sm font-bold text-slate-900 shadow-sm outline-none transition-all duration-200 hover:border-slate-300 hover:bg-white focus:bg-white focus:ring-4 focus:shadow-md disabled:opacity-60 disabled:bg-slate-100"
+                                :class="$wire.quickStartType === 'qr' ? 'focus:border-blue-500 focus:ring-blue-500/10 focus:shadow-blue-500/5' : 'focus:border-amber-500 focus:ring-amber-500/10 focus:shadow-amber-500/5'"
+                                :disabled="$wire.quickMeetingId && $wire.quickMeetingId !== 'NEW'" />
                             @error('meetingEndTime') <span class="mt-1.5 block text-xs font-semibold text-red-500">{{ $message }}</span> @enderror
                         </div>
 
