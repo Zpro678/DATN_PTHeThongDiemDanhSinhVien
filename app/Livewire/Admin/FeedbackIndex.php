@@ -11,7 +11,7 @@ use Livewire\Attributes\Rule;
 use Livewire\Component;
 use Livewire\WithPagination;
 
-#[Layout('layouts.admin')]
+#[Layout('components.admin-layout')]
 class FeedbackIndex extends Component
 {
     use WithPagination;
@@ -20,6 +20,9 @@ class FeedbackIndex extends Component
     
     public $showReplyModal = false;
     public $selectedFeedbackId = null;
+    
+    public $showDetailModal = false;
+    public $detailFeedback = null;
 
     #[Rule('required|min:10|max:1000')]
     public $replyContent = '';
@@ -27,6 +30,18 @@ class FeedbackIndex extends Component
     public function updatedStatusFilter()
     {
         $this->resetPage();
+    }
+
+    public function viewDetails($id)
+    {
+        $this->detailFeedback = SystemFeedback::with(['user', 'replier'])->findOrFail($id);
+        $this->showDetailModal = true;
+    }
+
+    public function closeDetailModal()
+    {
+        $this->showDetailModal = false;
+        $this->detailFeedback = null;
     }
 
     public function openReplyModal($feedbackId)
@@ -58,7 +73,14 @@ class FeedbackIndex extends Component
         $feedback->user->notify(new FeedbackRepliedNotification($feedback));
 
         $this->closeReplyModal();
-        $this->dispatch('notify', message: 'Đã trả lời phản hồi thành công!', type: 'success');
+        $this->dispatch('notify', message: 'Cập nhật trạng thái thành công', type: 'success');
+    }
+
+    public function deleteFeedback($id)
+    {
+        $feedback = SystemFeedback::findOrFail($id);
+        $feedback->delete();
+        $this->dispatch('notify', message: 'Đã xóa phản hồi', type: 'success');
     }
 
     public function markAsInProgress($feedbackId)

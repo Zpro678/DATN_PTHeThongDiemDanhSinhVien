@@ -31,7 +31,7 @@ class NewFeedbackNotification extends Notification
         return [
             'title'   => 'Phản hồi hệ thống mới',
             'message' => "{$sender} vừa gửi một phản hồi: {$this->feedback->title}",
-            'url'     => route('admin.feedbacks'),
+            'url'     => route('admin.feedbacks', ['ma_user' => $notifiable->id], false),
             'icon'    => 'message-square',
             'type'    => 'new_feedback',
         ];

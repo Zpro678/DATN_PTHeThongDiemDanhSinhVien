@@ -120,7 +120,7 @@ Route::middleware(['auth', 'verified', 'user.route'])->group(function () {
 
     Route::prefix('user/{ma_user}')->group(function () {
         Route::get('/activity-log', UserActivityLog::class)->name('activity-log');
-        Route::get('/feedbacks', \App\Livewire\User\FeedbackIndex::class)->name('user.feedbacks');
+
         Route::get('/transaction-history', TransactionHistory::class)->name('transaction-history');
         Route::get('/dashboard', UserDashboard::class)->name('dashboard');
         Route::get('/classes', UserClasses::class)->name('classes');
@@ -199,6 +199,7 @@ Route::middleware('auth')->group(function () {
     Route::patch('/profile', [\App\Http\Controllers\ProfileController::class, 'update'])->name('profile.update');
     Route::delete('/profile', [\App\Http\Controllers\ProfileController::class, 'destroy'])->name('profile.destroy');
     Route::get('/support', \App\Livewire\User\SupportPage::class)->name('support');
+    Route::view('/docs', 'pages.docs')->name('docs');
 
     // Đánh dấu tất cả thông báo của người dùng hiện tại là đã đọc.
     Route::post('/notifications/read-all', [\App\Http\Controllers\NotificationController::class, 'readAll'])

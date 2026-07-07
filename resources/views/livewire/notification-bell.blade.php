@@ -18,7 +18,7 @@
     class="relative"
     x-data="{ openNotification: false, confirmTarget: null }"
     @click.away="openNotification = false; confirmTarget = null"
-    x-init="window.listenNotifications && window.listenNotifications(@js($this->realtimeChannel()), () => $wire.$refresh())"
+    x-init="window.listenNotifications && window.listenNotifications(@js($this->realtimeChannel()), () => { $wire.$refresh(); window.dispatchEvent(new CustomEvent('notify', { detail: { message: 'Bạn có thông báo mới', type: 'info' } })); })"
 >
     <button
         type="button"

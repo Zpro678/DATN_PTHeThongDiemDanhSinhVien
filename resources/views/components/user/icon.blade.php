@@ -41,6 +41,15 @@
             <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z" />
             @break
 
+        @case('message-circle')
+            <path d="M7.9 20A9 9 0 1 0 4 16.1L2 22Z" />
+            @break
+
+        @case('corner-down-right')
+            <polyline points="15 10 20 15 15 20" />
+            <path d="M4 4v7a4 4 0 0 0 4 4h12" />
+            @break
+
         @case('loader')
             <line x1="12" x2="12" y1="2" y2="6" />
             <line x1="12" x2="12" y1="18" y2="22" />
@@ -350,6 +359,11 @@
             <path d="M21 16h-2v3" />
             <path d="M16 21h2" />
             <path d="M21 21h.01" />
+            @break
+
+        @case('camera')
+            <path d="M14.5 4h-5L7 7H4a2 2 0 0 0-2 2v9a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2V9a2 2 0 0 0-2-2h-3l-2.5-3z" />
+            <circle cx="12" cy="13" r="3" />
             @break
 
         @case('save')

@@ -9,6 +9,8 @@ export default {
         './resources/views/**/*.blade.php',
         './resources/js/**/*.js',
         './app/Livewire/**/*.php',
+        // Add pages directory explicitly to trigger Vite watch
+        './resources/views/pages/**/*.blade.php',
     ],
     safelist: [
         'bg-blue-600', 'bg-violet-600', 'bg-orange-600', 'bg-green-600', 'bg-pink-600',

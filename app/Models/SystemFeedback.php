@@ -21,6 +21,7 @@ class SystemFeedback extends Model
     ];
 
     protected $casts = [
+        'attachment_path' => 'array',
         'replied_at' => 'datetime',
     ];
 
