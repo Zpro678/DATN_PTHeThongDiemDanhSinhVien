@@ -125,21 +125,33 @@
                             return @this.get('memberId');
                         },
                         getDeviceId() {
-                            // Mã định danh trình duyệt bền: ưu tiên localStorage, mirror sang cookie
-                            // để không mất khi xóa một bên. Dùng phát hiện '1 máy điểm danh nhiều SV'.
-                            try {
-                                let id = localStorage.getItem('att_device_id');
-                                if (!id) {
-                                    id = (window.crypto && crypto.randomUUID)
-                                        ? crypto.randomUUID()
-                                        : ('d-' + Date.now() + '-' + Math.random().toString(36).slice(2));
-                                    localStorage.setItem('att_device_id', id);
-                                }
-                                document.cookie = 'att_device_id=' + id + '; max-age=31536000; path=/; SameSite=Lax';
-                                return id;
-                            } catch (e) {
+                            // Mã định danh trình duyệt BỀN (chống '1 máy điểm danh nhiều SV').
+                            // Giữ ở CẢ localStorage lẫn cookie. Nếu localStorage trống (vd bị trang login
+                            // xoá) thì KHÔI PHỤC TỪ COOKIE trước, chỉ sinh mới khi cả hai đều không có.
+                            // Nhờ vậy id ổn định QUA CÁC LẦN ĐĂNG NHẬP -> cảnh báo trùng máy mới chính xác.
+                            const readCookie = () => {
                                 const m = document.cookie.match(/(?:^|; )att_device_id=([^;]+)/);
                                 return m ? m[1] : null;
+                            };
+                            const newId = () => (window.crypto && crypto.randomUUID)
+                                ? crypto.randomUUID()
+                                : ('d-' + Date.now() + '-' + Math.random().toString(36).slice(2));
+                            const persistCookie = (id) => {
+                                document.cookie = 'att_device_id=' + id + '; max-age=31536000; path=/; SameSite=Lax';
+                            };
+                            try {
+                                let id = localStorage.getItem('att_device_id') || readCookie() || newId();
+                                localStorage.setItem('att_device_id', id);
+                                persistCookie(id);
+                                return id;
+                            } catch (e) {
+                                // localStorage bị chặn -> dựa hoàn toàn vào cookie.
+                                let id = readCookie();
+                                if (!id) {
+                                    id = newId();
+                                    persistCookie(id);
+                                }
+                                return id;
                             }
                         },
                         collectPositions(count = 3, gapMs = 800) {

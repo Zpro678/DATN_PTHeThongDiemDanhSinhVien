@@ -223,13 +223,14 @@ class LecturerQrAttendanceTest extends TestCase
         $this->travelBack();
     }
 
-    public function test_late_uses_class_threshold_and_meeting_start_time(): void
+    public function test_qr_checkin_always_records_present_not_late(): void
     {
         $base = Carbon::create(2026, 7, 5, 8, 0, 0);
         $this->travelTo($base);
 
         $owner = User::factory()->create();
-        // Ngưỡng đi muộn của lớp = 5 phút (khác 15 cứng cũ) để phân biệt rõ hành vi.
+        // Ngưỡng đi muộn của lớp = 5 phút — dù quét trễ hơn ngưỡng, PHIÊN QR vẫn chỉ ghi 'present'
+        // (đi muộn để dành cho tổng kết buổi), nên ngưỡng này KHÔNG còn tác động lúc quét.
         $courseClass = CourseClass::factory()->create([
             'owner_user_id' => $owner->id,
             'late_threshold' => 5,
@@ -288,7 +289,7 @@ class LecturerQrAttendanceTest extends TestCase
             'status' => 'present',
         ]);
 
-        // Quá ngưỡng (8 phút > 5) -> đi muộn (chứng minh dùng ngưỡng lớp = 5, không phải 15 cứng).
+        // Quá ngưỡng (8 phút > 5) -> VẪN 'present' (không tự tính đi muộn ở phiên QR).
         $this->travelTo($base->copy()->addMinutes(8));
         Livewire::actingAs($lateUser)
             ->test(AttendanceCheckIn::class, ['token' => 'LATETOKEN1'])
@@ -297,6 +298,12 @@ class LecturerQrAttendanceTest extends TestCase
         $this->assertDatabaseHas('attendance_records', [
             'class_session_id' => $session->id,
             'class_member_id' => $lateMember->id,
+            'status' => 'present',
+        ]);
+
+        // Không record nào bị đánh 'late' ở mức phiên khi quét QR.
+        $this->assertDatabaseMissing('attendance_records', [
+            'class_session_id' => $session->id,
             'status' => 'late',
         ]);
 
@@ -508,6 +515,60 @@ class LecturerQrAttendanceTest extends TestCase
         $curRecord->refresh();
         $this->assertSame('impossible_travel', $curRecord->gps_fraud_flag);
         $this->assertStringContainsString('bất khả thi', (string) $curRecord->note);
+
+        $this->travelBack();
+    }
+
+    public function test_share_token_link_stays_valid_after_qr_rotation(): void
+    {
+        $base = Carbon::create(2026, 7, 5, 8, 0, 0);
+        $this->travelTo($base);
+
+        $owner = User::factory()->create();
+        $courseClass = CourseClass::factory()->create(['owner_user_id' => $owner->id]);
+        $meeting = ClassMeeting::factory()->create([
+            'class_id' => $courseClass->id, 'user_Created' => $owner->id,
+            'date' => $base->toDateString(), 'start_time' => '00:00:00', 'end_time' => '23:59:00', 'status' => 'active',
+        ]);
+        $session = ClassSession::factory()->create([
+            'class_id' => $courseClass->id, 'meeting_id' => $meeting->id, 'created_by' => $owner->id,
+            'date' => $base->toDateString(), 'status' => 'active',
+            'qr_token' => 'ROTATE-OLD-TOKEN', 'token_expires_at' => $base->copy()->addSeconds(15),
+            'qr_refresh_rate' => 10, 'gps_latitude' => null, 'gps_longitude' => null, 'gps_radius' => null,
+        ]);
+
+        // Phiên mới phải tự có share_token ổn định.
+        $shareToken = $session->share_token;
+        $this->assertNotEmpty($shareToken);
+        $this->assertNotSame('ROTATE-OLD-TOKEN', $shareToken);
+
+        $student = User::factory()->create();
+        $member = ClassMember::create([
+            'class_id' => $courseClass->id, 'user_id' => $student->id, 'status' => ClassMember::STATUS_ACTIVE,
+        ]);
+        AttendanceRecord::factory()->create([
+            'class_session_id' => $session->id, 'class_member_id' => $member->id, 'status' => 'pending', 'check_in_time' => null,
+        ]);
+
+        // Xoay QR nhiều lần -> qr_token cũ biến mất khỏi DB.
+        $session->rotateQrToken();
+        $session->rotateQrToken();
+
+        // Link theo qr_token CŨ -> không còn hợp lệ (đúng tinh thần chống chụp lại ảnh QR).
+        Livewire::actingAs($student)
+            ->test(AttendanceCheckIn::class, ['token' => 'ROTATE-OLD-TOKEN'])
+            ->assertSet('session', null)
+            ->assertSet('isSuccess', false);
+
+        // Link chia sẻ ổn định (share_token) -> VẪN mở & điểm danh được dù QR đã xoay.
+        Livewire::actingAs($student)
+            ->test(AttendanceCheckIn::class, ['token' => $shareToken])
+            ->call('checkIn', null)
+            ->assertSet('isSuccess', true);
+
+        $this->assertDatabaseHas('attendance_records', [
+            'class_session_id' => $session->id, 'class_member_id' => $member->id, 'status' => 'present',
+        ]);
 
         $this->travelBack();
     }

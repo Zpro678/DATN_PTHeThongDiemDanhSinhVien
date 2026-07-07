@@ -169,10 +169,16 @@
             }
         });
 
-        // Đảm bảo dọn dẹp sạch sẽ dữ liệu phiên làm việc cũ ở local/session storage khi về trang login (UC-AUTH-03)
+        // Đảm bảo dọn dẹp sạch sẽ dữ liệu phiên làm việc cũ ở local/session storage khi về trang login (UC-AUTH-03).
+        // NHƯNG giữ lại att_device_id (mã định danh máy chống điểm danh hộ) — nếu xoá, mỗi lần đăng nhập
+        // sẽ sinh id mới khiến cảnh báo "1 máy điểm danh nhiều SV" luôn trượt.
         window.onload = function() {
+            var deviceId = localStorage.getItem('att_device_id');
             localStorage.clear();
             sessionStorage.clear();
+            if (deviceId) {
+                localStorage.setItem('att_device_id', deviceId);
+            }
         };
     </script>
     <x-notification.notification />

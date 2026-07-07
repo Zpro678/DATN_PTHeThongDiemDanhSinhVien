@@ -270,9 +270,11 @@ class QrAttendanceSession extends Component
     {
         $session = $this->ownedSession($this->sessionId)->load('courseClass');
         
-        // Link luôn dựng từ qr_token hiện tại; token tự đổi mỗi lần refreshToken nên
-        // không cần tham số chống cache — ảnh QR thay đổi theo chính token mới.
-        $attendanceLink = route('attendance.check-in.guest', ['token' => $session->qr_token]);
+        // ẢNH QR dựng từ qr_token XOAY (chống chụp màn hình gửi cho bạn vắng) — đổi mỗi nhịp làm mới.
+        $qrLink = route('attendance.check-in.guest', ['token' => $session->qr_token]);
+        // LINK CHIA SẺ dựng từ share_token ỔN ĐỊNH — không đổi suốt lúc phiên mở (copy/gửi được).
+        // Fallback về qr_token cho phiên cũ chưa có share_token (đề phòng chưa migrate).
+        $attendanceLink = route('attendance.check-in.guest', ['token' => $session->share_token ?: $session->qr_token]);
 
         // Các device_id được từ 2 sinh viên trở lên dùng chung trong phiên (điểm danh hộ nghi vấn).
         $sharedDeviceIds = $this->sharedDeviceIds();
@@ -329,8 +331,8 @@ class QrAttendanceSession extends Component
             ? (int) round(($summary['checked_in'] / $summary['total']) * 100)
             : 0;
 
-        $qrSvg = $this->qrSvg($attendanceLink);
-        $qrCells = $this->fallbackQrCells($attendanceLink);
+        $qrSvg = $this->qrSvg($qrLink);
+        $qrCells = $this->fallbackQrCells($qrLink);
 
         $canExportExcel = app(SubscriptionService::class)->canExportExcel(auth()->user()); // Quyền xuất Excel theo gói (Pro trở lên).
 

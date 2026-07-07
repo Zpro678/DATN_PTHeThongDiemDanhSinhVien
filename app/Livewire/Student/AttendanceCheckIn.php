@@ -29,9 +29,13 @@ class AttendanceCheckIn extends Component
     public function mount(string $token): void
     {
         $this->token = $token;
+        // Nhận CẢ HAI dạng token: qr_token (quét ảnh QR, xoay) HOẶC share_token (link chia sẻ ổn định).
         $this->session = ClassSession::query()
             ->with('courseClass')
-            ->where('qr_token', $this->token)
+            ->where(function ($query) {
+                $query->where('qr_token', $this->token)
+                    ->orWhere('share_token', $this->token);
+            })
             ->first();
 
         if (!$this->session) {
@@ -44,7 +48,10 @@ class AttendanceCheckIn extends Component
             return;
         }
 
-        if ($this->session->token_expires_at && $this->session->token_expires_at->isPast()) {
+        // Hạn token NGẮN chỉ áp cho luồng QUÉT ẢNH QR (qr_token xoay, chống chụp lại). Link chia sẻ
+        // ổn định (khớp share_token) KHÔNG bị chặn bởi hạn này — nó sống suốt lúc phiên còn mở.
+        $matchedByShareToken = $this->session->share_token && $this->session->share_token === $this->token;
+        if (!$matchedByShareToken && $this->session->token_expires_at && $this->session->token_expires_at->isPast()) {
             $this->statusMessage = 'Mã QR này đã hết hạn. Vui lòng làm mới trang hoặc quét lại mã mới.';
             return;
         }
@@ -153,17 +160,10 @@ class AttendanceCheckIn extends Component
             return;
         }
 
-        // "Đi muộn" = quá GIỜ MỞ BUỔI cộng ngưỡng phút cấu hình ở lớp (late_threshold).
-        // - Mốc: thời điểm tạo buổi = lúc mở phiên điểm danh ĐẦU TIÊN (meeting->created_at),
-        //   ổn định cho mọi phiên trong buổi (phiên thêm sau vẫn tính theo mốc buổi, không theo
-        //   thời điểm tạo từng phiên).
-        // - Ngưỡng: lấy từ cấu hình lớp, KHÔNG hardcode 15 nữa.
+        // Điểm danh QR trong PHIÊN chỉ ghi CÓ MẶT — KHÔNG tự tính "đi muộn" ở mức phiên.
+        // "Đi muộn" chỉ được xác định ở TỔNG KẾT BUỔI (AttendanceCalculator::consolidateMeeting):
+        // vắng phiên đầu nhưng có mặt phiên sau -> đi muộn; hoặc giảng viên chỉnh tay ở trang tổng kết.
         $status = 'present';
-        $lateThresholdMinutes = (int) ($this->session->courseClass->late_threshold ?? 15);
-        $meetingStartedAt = $this->session->meeting?->created_at ?? $this->session->created_at;
-        if ($meetingStartedAt && now()->greaterThan($meetingStartedAt->copy()->addMinutes($lateThresholdMinutes))) {
-            $status = 'late';
-        }
 
         $this->isGpsError = false;
         $distanceMeters = null;
