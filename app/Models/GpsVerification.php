@@ -13,18 +13,18 @@ class GpsVerification extends Model
     protected $table = 'gps_verifications';
 
     protected $fillable = [
-        'session_id',
-        'member_id',
-        'token',
-        'check_token',
-        'ip_address',
-        'lat',
-        'lng',
-        'accuracy',
-        'fraud_score',
-        'fraud_reasons',
-        'is_used',
-        'expires_at',
+        'session_id',    // FK -> class_sessions: phiên điểm danh mà vé GPS này thuộc về
+        'member_id',     // FK -> class_members: thành viên (SV) được cấp vé để check-in
+        'token',         // Mã vé một lần (64 ký tự, unique) gắn vào link/QR để mở form điểm danh
+        'check_token',   // Mã xác nhận bước 2 (unique) cấp sau khi qua kiểm tra, chống dùng lại/giả mạo
+        'ip_address',    // IP của thiết bị lúc điểm danh, dùng đối chiếu và phát hiện gian lận
+        'lat',           // Vĩ độ toạ độ GPS mà thiết bị gửi lên
+        'lng',           // Kinh độ toạ độ GPS mà thiết bị gửi lên
+        'accuracy',      // Sai số định vị (mét) do trình duyệt báo; càng nhỏ càng đáng tin
+        'fraud_score',   // Điểm nghi ngờ gian lận (số nguyên) do hệ thống tính toán
+        'fraud_reasons', // Chi tiết lý do bị nghi gian lận (ví dụ: sai vị trí, trùng IP...)
+        'is_used',       // Đã dùng vé này để điểm danh hay chưa (true = không cho dùng lại)
+        'expires_at',    // Thời điểm vé hết hạn; quá hạn thì không thể điểm danh bằng token này
     ];
 
     protected function casts(): array

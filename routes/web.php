@@ -86,11 +86,7 @@ Route::post('/payment/payos/webhook', [\App\Http\Controllers\PayosController::cl
     ->name('payos.webhook');
 
 Route::middleware(['auth', 'verified', 'user.route'])->group(function () {
-    $ensureAdmin = function (): void {
-        abort_unless(auth()->user()?->isAdmin(), 403);
-    };
-
-    Route::prefix('admin/{ma_user}')->name('admin.')->group(function () use ($ensureAdmin) {
+    Route::prefix('admin/{ma_user}')->name('admin.')->middleware('admin')->group(function () {
         Route::get('/', [\App\Http\Controllers\Admin\AdminController::class, 'dashboard'])->name('dashboard');
         Route::redirect('/dashboard', '/admin')->name('dashboard.alias');
 
@@ -127,7 +123,7 @@ Route::middleware(['auth', 'verified', 'user.route'])->group(function () {
         Route::get('/classes', UserClasses::class)->name('classes');
         Route::get('/managed-classes', ManagedClasses::class)->name('managed-classes');
         Route::get('/joined-classes', JoinedClasses::class)->name('joined-classes');
-        Route::get('/managed-classes/create-class', CreateClass::class)->name('create-class');
+        Route::get('/managed-classes/create-class', CreateClass::class)->middleware('plan:create_class')->name('create-class');
         Route::get('/student/attendance/history', StudentAttendanceHistory::class)->name('student.attendance.history');
         Route::get('/student/attendance/stats', StudentAttendanceStats::class)->name('student.attendance.stats');
         Route::get('/student/leave-requests/create', LeaveRequestCreate::class)->name('student.leave-requests.create');

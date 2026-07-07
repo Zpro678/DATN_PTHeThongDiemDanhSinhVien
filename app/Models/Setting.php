@@ -6,7 +6,10 @@ use Illuminate\Database\Eloquent\Model;
 
 class Setting extends Model
 {
-    protected $fillable = ['key', 'value'];
+    protected $fillable = [
+        'key',   // Khóa định danh cấu hình (ví dụ: maintenance_mode, site_name)
+        'value', // Giá trị của cấu hình dưới dạng chuỗi
+    ];
 
     /**
      * Lấy giá trị của một setting theo key.

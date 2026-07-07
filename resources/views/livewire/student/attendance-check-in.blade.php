@@ -96,14 +96,6 @@
                             Bạn chưa đăng nhập. Vui lòng nhập thông tin để điểm danh.
                         </div>
                         <div class="space-y-1.5">
-                            <label class="block text-sm font-black text-slate-700">Mã số học viên <span class="text-slate-400 font-semibold">(Tùy chọn)</span></label>
-                            <div class="relative">
-                                <x-user.icon name="credit-card" :size="20" class="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400" />
-                                <input type="text" wire:model="studentCode" class="w-full rounded-2xl border-slate-200 bg-slate-50 py-3.5 pl-12 pr-4 font-bold text-slate-900 transition focus:border-blue-500 focus:bg-white focus:ring-4 focus:ring-blue-500/10" placeholder="Nhập MSSV của bạn">
-                            </div>
-                            @error('studentCode') <span class="mt-1 block text-sm font-bold text-rose-500">{{ $message }}</span> @enderror
-                        </div>
-                        <div class="space-y-1.5">
                             <label class="block text-sm font-black text-slate-700">Họ và tên <span class="text-rose-500">*</span></label>
                             <div class="relative">
                                 <x-user.icon name="user" :size="20" class="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400" />
@@ -133,25 +125,37 @@
                             return @this.get('memberId');
                         },
                         getDeviceId() {
-                            // Mã định danh trình duyệt bền: ưu tiên localStorage, mirror sang cookie
-                            // để không mất khi xóa một bên. Dùng phát hiện "1 máy điểm danh nhiều SV".
-                            try {
-                                let id = localStorage.getItem('att_device_id');
-                                if (!id) {
-                                    id = (window.crypto && crypto.randomUUID)
-                                        ? crypto.randomUUID()
-                                        : ('d-' + Date.now() + '-' + Math.random().toString(36).slice(2));
-                                    localStorage.setItem('att_device_id', id);
-                                }
-                                document.cookie = 'att_device_id=' + id + '; max-age=31536000; path=/; SameSite=Lax';
-                                return id;
-                            } catch (e) {
+                            // Mã định danh trình duyệt BỀN (chống '1 máy điểm danh nhiều SV').
+                            // Giữ ở CẢ localStorage lẫn cookie. Nếu localStorage trống (vd bị trang login
+                            // xoá) thì KHÔI PHỤC TỪ COOKIE trước, chỉ sinh mới khi cả hai đều không có.
+                            // Nhờ vậy id ổn định QUA CÁC LẦN ĐĂNG NHẬP -> cảnh báo trùng máy mới chính xác.
+                            const readCookie = () => {
                                 const m = document.cookie.match(/(?:^|; )att_device_id=([^;]+)/);
                                 return m ? m[1] : null;
+                            };
+                            const newId = () => (window.crypto && crypto.randomUUID)
+                                ? crypto.randomUUID()
+                                : ('d-' + Date.now() + '-' + Math.random().toString(36).slice(2));
+                            const persistCookie = (id) => {
+                                document.cookie = 'att_device_id=' + id + '; max-age=31536000; path=/; SameSite=Lax';
+                            };
+                            try {
+                                let id = localStorage.getItem('att_device_id') || readCookie() || newId();
+                                localStorage.setItem('att_device_id', id);
+                                persistCookie(id);
+                                return id;
+                            } catch (e) {
+                                // localStorage bị chặn -> dựa hoàn toàn vào cookie.
+                                let id = readCookie();
+                                if (!id) {
+                                    id = newId();
+                                    persistCookie(id);
+                                }
+                                return id;
                             }
                         },
                         collectPositions(count = 3, gapMs = 800) {
-                            // Lấy nhiều mẫu vị trí cách nhau ~1s: GPS thật luôn "rung", fake thường đứng yên.
+                            // Lấy nhiều mẫu vị trí cách nhau ~1s: GPS thật luôn 'rung', fake thường đứng yên.
                             const getOne = () => new Promise((resolve, reject) =>
                                 navigator.geolocation.getCurrentPosition(resolve, reject, { enableHighAccuracy: true, timeout: 10000, maximumAge: 0 })
                             );
@@ -243,9 +247,9 @@
                                                 this.isCheckingIn = false;
                                                 return;
                                             }
-                                            $wire.checkIn(verifyData.check_token, this.getDeviceId()).then(() => {
-                                                this.isCheckingIn = false;
-                                            });
+                                            $wire.checkIn(verifyData.check_token, this.getDeviceId())
+                                                .catch(() => alert('Có lỗi khi ghi nhận điểm danh. Điểm danh có thể đã được lưu — hãy tải lại trang để kiểm tra.'))
+                                                .finally(() => { this.isCheckingIn = false; });
                                         } catch (e) {
                                             alert('Lỗi kết nối máy chủ xác thực.');
                                             this.isCheckingIn = false;
@@ -259,9 +263,9 @@
                                     this.isCheckingIn = false;
                                 }
                             } else {
-                                $wire.checkIn(null, this.getDeviceId()).then(() => {
-                                    this.isCheckingIn = false;
-                                });
+                                $wire.checkIn(null, this.getDeviceId())
+                                    .catch(() => alert('Có lỗi khi ghi nhận điểm danh. Điểm danh có thể đã được lưu — hãy tải lại trang để kiểm tra.'))
+                                    .finally(() => { this.isCheckingIn = false; });
                             }
                         }
                     }" x-init="if (@js($isAutoCheckIn)) { performCheckIn(); }">

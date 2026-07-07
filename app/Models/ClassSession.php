@@ -32,8 +32,9 @@ class ClassSession extends Model
         'date', // Ngày diễn ra buổi học.
         'start_time', // Thời gian bắt đầu.
         'end_time', // Thời gian kết thúc.
-        'qr_token', // Chuỗi token mã QR.
+        'qr_token', // Chuỗi token mã QR (xoay theo nhịp làm mới).
         'token_expires_at', // Thời điểm hết hạn của mã QR.
+        'share_token', // Token ỔN ĐỊNH cho link chia sẻ (không xoay); sống suốt lúc phiên mở.
         'qr_refresh_rate', // Tốc độ làm mới mã QR.
         'gps_latitude', // Vĩ độ vị trí điểm danh.
         'gps_longitude', // Kinh độ vị trí điểm danh.
@@ -88,10 +89,26 @@ class ClassSession extends Model
      * TOKEN QR — xoay token để chống dùng lại ảnh chụp
      * ==================================================================== */
 
+    /** Tự cấp share_token ổn định khi tạo phiên mới (nếu chưa có). */
+    protected static function booted(): void
+    {
+        static::creating(function (self $session): void {
+            if (empty($session->share_token)) {
+                $session->share_token = self::generateShareToken();
+            }
+        });
+    }
+
     /** Sinh một token QR mới (ngẫu nhiên, in hoa). */
     public static function generateQrToken(): string
     {
         return Str::upper(Str::random(24));
+    }
+
+    /** Sinh token ổn định cho link chia sẻ (khác dạng qr_token: chữ thường 32 ký tự). */
+    public static function generateShareToken(): string
+    {
+        return Str::lower(Str::random(32));
     }
 
     /** Tuổi thọ token QR (giây) = nhịp làm mới + ân hạn. */
