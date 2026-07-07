@@ -96,14 +96,6 @@
                             Bạn chưa đăng nhập. Vui lòng nhập thông tin để điểm danh.
                         </div>
                         <div class="space-y-1.5">
-                            <label class="block text-sm font-black text-slate-700">Mã số học viên <span class="text-slate-400 font-semibold">(Tùy chọn)</span></label>
-                            <div class="relative">
-                                <x-user.icon name="credit-card" :size="20" class="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400" />
-                                <input type="text" wire:model="studentCode" class="w-full rounded-2xl border-slate-200 bg-slate-50 py-3.5 pl-12 pr-4 font-bold text-slate-900 transition focus:border-blue-500 focus:bg-white focus:ring-4 focus:ring-blue-500/10" placeholder="Nhập MSSV của bạn">
-                            </div>
-                            @error('studentCode') <span class="mt-1 block text-sm font-bold text-rose-500">{{ $message }}</span> @enderror
-                        </div>
-                        <div class="space-y-1.5">
                             <label class="block text-sm font-black text-slate-700">Họ và tên <span class="text-rose-500">*</span></label>
                             <div class="relative">
                                 <x-user.icon name="user" :size="20" class="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400" />
@@ -243,9 +235,9 @@
                                                 this.isCheckingIn = false;
                                                 return;
                                             }
-                                            $wire.checkIn(verifyData.check_token, this.getDeviceId()).then(() => {
-                                                this.isCheckingIn = false;
-                                            });
+                                            $wire.checkIn(verifyData.check_token, this.getDeviceId())
+                                                .catch(() => alert('Có lỗi khi ghi nhận điểm danh. Điểm danh có thể đã được lưu — hãy tải lại trang để kiểm tra.'))
+                                                .finally(() => { this.isCheckingIn = false; });
                                         } catch (e) {
                                             alert('Lỗi kết nối máy chủ xác thực.');
                                             this.isCheckingIn = false;
@@ -259,9 +251,9 @@
                                     this.isCheckingIn = false;
                                 }
                             } else {
-                                $wire.checkIn(null, this.getDeviceId()).then(() => {
-                                    this.isCheckingIn = false;
-                                });
+                                $wire.checkIn(null, this.getDeviceId())
+                                    .catch(() => alert('Có lỗi khi ghi nhận điểm danh. Điểm danh có thể đã được lưu — hãy tải lại trang để kiểm tra.'))
+                                    .finally(() => { this.isCheckingIn = false; });
                             }
                         }
                     }" x-init="if (@js($isAutoCheckIn)) { performCheckIn(); }">

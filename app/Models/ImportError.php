@@ -10,8 +10,8 @@ class ImportError extends Model
     use HasFactory;
 
     protected $fillable = [
-        'import_token',
-        'row_index',
-        'error_message',
+        'import_token',  // Mã phiên import (gom các lỗi cùng một lần import file danh sách)
+        'row_index',     // Số thứ tự dòng trong file bị lỗi, để người dùng biết dòng nào cần sửa
+        'error_message', // Nội dung lỗi cụ thể của dòng đó (ví dụ: thiếu MSSV, email sai định dạng)
     ];
 }

@@ -16,11 +16,11 @@ class ClassOwner extends Model
     protected $table = 'class_owners';
 
     protected $fillable = [
-        'class_id',
-        'user_id',
-        'role',
-        'invited_by',
-        'accepted_at',
+        'class_id',    // FK -> classes: lớp mà người này được mời làm đồng chủ
+        'user_id',     // FK -> users: tài khoản được cấp quyền đồng chủ lớp
+        'role',        // Vai trò quản lý trong lớp (ví dụ: co_owner)
+        'invited_by',  // FK -> users: chủ chính (hoặc đồng chủ) đã gửi lời mời
+        'accepted_at', // Thời điểm chấp nhận lời mời; null = đang chờ chấp nhận
     ];
 
     protected function casts(): array
