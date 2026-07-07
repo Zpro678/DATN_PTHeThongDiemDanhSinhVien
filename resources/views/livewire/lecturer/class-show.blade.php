@@ -218,16 +218,15 @@
             </div>
         @else
             <div class="overflow-x-auto {{ $students->count() > 30 ? 'max-h-[800px] overflow-y-auto relative' : '' }}">
-                <table class="w-full min-w-[900px] table-fixed text-left text-sm whitespace-nowrap">
-                    <thead class="border-b border-slate-200 bg-slate-50 text-sm uppercase text-black">
+                <table class="w-full min-w-[760px] table-fixed text-left text-sm whitespace-nowrap">
+                    <thead class="border-b border-slate-200 bg-slate-50 text-xs font-bold uppercase tracking-wider text-slate-500">
                         <tr class="{{ $students->count() > 30 ? 'sticky top-0 z-10 bg-slate-50' : '' }}">
-                            <th scope="col" class="w-[7%] px-4 py-4 font-bold text-center">STT</th>
-                            <th scope="col" class="w-[12%] px-4 py-4 font-bold text-center">MSSV</th>
-                            <th scope="col" class="w-[22%] pl-6 pr-4 py-4 font-bold">Họ & Tên</th>
-                            <th scope="col" class="w-[20%] pl-6 pr-4 py-4 font-bold">Email</th>
-                            <th scope="col" class="w-[13%] px-4 py-4 font-bold text-center">Liên kết</th>
-                            <th scope="col" class="w-[11%] px-4 py-4 font-bold text-center">Chuyên cần</th>
-                            <th scope="col" class="w-[15%] px-4 py-4 font-bold text-center">Hành động</th>
+                            <th scope="col" class="w-[6%] px-4 py-4 text-center">STT</th>
+                            <th scope="col" class="w-[32%] pl-6 pr-4 py-4">Họ & Tên</th>
+                            <th scope="col" class="w-[26%] pl-6 pr-4 py-4">Email</th>
+                            <th scope="col" class="w-[13%] px-4 py-4 text-center">Liên kết</th>
+                            <th scope="col" class="w-[10%] px-4 py-4 text-center">Chuyên cần</th>
+                            <th scope="col" class="w-[13%] px-4 py-4 text-center">Hành động</th>
                         </tr>
                     </thead>
                     <tbody class="divide-y divide-slate-100">
@@ -243,8 +242,8 @@
                                 $rowBg = $isBanned ? 'bg-red-50/40' : ($isWarning ? 'bg-amber-50/40' : '');
                             @endphp
                             <tr class="transition-colors hover:bg-slate-50/50 {{ $rowBg }}">
-                                <td class="px-6 py-4 font-medium text-slate-700 text-center">{{ $loop->iteration }}</td>
-                                <td class="pl-6 pr-6 py-4 text-left">
+                                <td class="px-4 py-4 font-medium text-slate-500 text-center">{{ $loop->iteration }}</td>
+                                <td class="pl-6 pr-4 py-4 text-left">
                                     <div class="flex items-center gap-3">
                                         @if($student->user && $student->user->avatar)
                                             <img src="{{ str_starts_with($student->user->avatar, 'http') ? $student->user->avatar : asset('storage/' . $student->user->avatar) }}" alt="{{ $student->displayName }}" class="h-8 w-8 shrink-0 rounded-full object-cover">
@@ -269,8 +268,8 @@
                                         </div>
                                     </div>
                                 </td>
-                                <td class="pl-6 pr-6 py-4 text-slate-500">{{ $student->email ?? ($student->user ? $student->user->email : '—') }}</td>
-                                <td class="px-6 py-4 text-center">
+                                <td class="pl-6 pr-4 py-4 text-slate-500 truncate">{{ $student->email ?? ($student->user ? $student->user->email : '—') }}</td>
+                                <td class="px-4 py-4 text-center">
                                     @if($student->user_id)
                                         <span class="inline-flex items-center gap-1 rounded-full bg-green-50 px-2.5 py-1 text-xs font-bold text-green-700">
                                             <span class="h-1.5 w-1.5 rounded-full bg-green-600"></span>
