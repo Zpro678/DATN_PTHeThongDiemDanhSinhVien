@@ -114,10 +114,13 @@ Route::middleware(['auth', 'verified', 'user.route'])->group(function () {
         Route::get('/transactions', TransactionIndex::class)->name('transactions.index');
 
         Route::get('/settings', [\App\Http\Controllers\Admin\AdminController::class, 'settingsIndex'])->name('settings.index');
+
+        Route::get('/feedbacks', \App\Livewire\Admin\FeedbackIndex::class)->name('feedbacks');
     });
 
     Route::prefix('user/{ma_user}')->group(function () {
         Route::get('/activity-log', UserActivityLog::class)->name('activity-log');
+        Route::get('/feedbacks', \App\Livewire\User\FeedbackIndex::class)->name('user.feedbacks');
         Route::get('/transaction-history', TransactionHistory::class)->name('transaction-history');
         Route::get('/dashboard', UserDashboard::class)->name('dashboard');
         Route::get('/classes', UserClasses::class)->name('classes');

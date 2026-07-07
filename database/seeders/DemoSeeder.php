@@ -185,10 +185,10 @@ class DemoSeeder extends Seeder
         }
 
         // 8) Đơn xin nghỉ: 1 đã duyệt (SV1) + 1 đang chờ (SV2).
-        $firstSession = $webClass->sessions()->orderBy('id')->first();
+        $firstMeeting = ClassMeeting::where('class_id', $webClass->id)->orderBy('id')->first();
         LeaveRequest::create([
             'class_member_id' => $members[0]->id,
-            'class_session_id' => $firstSession->id,
+            'class_meeting_id' => $firstMeeting->id,
             'reason' => 'Nghỉ ốm có giấy bác sĩ.',
             'status' => 'approved',
             'reviewed_by' => $teacher->id,
@@ -196,7 +196,7 @@ class DemoSeeder extends Seeder
         ]);
         LeaveRequest::create([
             'class_member_id' => $members[1]->id,
-            'class_session_id' => $webClass->sessions()->orderBy('id')->skip(1)->first()->id,
+            'class_meeting_id' => ClassMeeting::where('class_id', $webClass->id)->orderBy('id')->skip(1)->first()->id,
             'reason' => 'Xin phép nghỉ vì việc gia đình.',
             'status' => 'pending',
         ]);
