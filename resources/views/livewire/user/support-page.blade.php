@@ -1,4 +1,4 @@
-<div class="w-full space-y-6 px-6 py-6 sm:px-10 lg:px-16 animate-in fade-in slide-in-from-bottom-4 duration-500">
+<div class="w-full space-y-6 px-6 py-6 sm:px-10 lg:px-16 animate-in fade-in slide-in-from-bottom-4 duration-500" x-data="{ showImageModal: false, activeImageUrl: '', scale: 1 }" @open-image.window="activeImageUrl = $event.detail; showImageModal = true; scale = 1">
     
     {{-- Hero Section --}}
     <div class="mb-8 rounded-2xl bg-primary px-8 py-12 text-center text-white shadow-lg shadow-primary/20">
@@ -89,12 +89,15 @@
                                 @if (!empty($attachments))
                                     <div class="mb-6 grid grid-cols-2 gap-4 px-6 sm:grid-cols-3">
                                         @foreach ($attachments as $index => $image)
-                                            <div class="group relative flex aspect-square items-center justify-center rounded-xl border border-slate-200 bg-slate-50 p-1">
+                                            <a href="#" @click.prevent="$dispatch('open-image', '{{ $image->temporaryUrl() }}')" class="relative group block aspect-square">
                                                 <img src="{{ $image->temporaryUrl() }}" class="h-full w-full rounded-lg object-cover shadow-sm">
-                                                <button type="button" wire:click.prevent="removeAttachment({{ $index }})" class="absolute -right-2 -top-2 rounded-full bg-red-500 p-1.5 text-white shadow-sm transition-transform hover:scale-110 hover:bg-red-600 focus:outline-none">
-                                                    <x-user.icon name="x" :size="14" stroke-width="3" />
-                                                </button>
-                                            </div>
+                                                <div class="absolute inset-0 flex items-center justify-center rounded-lg bg-black/40 opacity-0 transition-opacity group-hover:opacity-100">
+                                                    <x-user.icon name="eye" :size="24" class="text-white" />
+                                                </div>
+                                            </a>
+                                            <button type="button" wire:click.prevent="removeAttachment({{ $index }})" class="absolute -right-2 -top-2 rounded-full bg-red-500 p-1.5 text-white shadow-sm transition-transform hover:scale-110 hover:bg-red-600 focus:outline-none">
+                                                <x-user.icon name="x" :size="14" stroke-width="3" />
+                                            </button>
                                         @endforeach
                                     </div>
                                 @else
@@ -166,7 +169,7 @@
                                     @if(is_array($feedback->attachment_path) && count($feedback->attachment_path) > 0)
                                         <div class="mt-3 flex flex-wrap gap-2">
                                             @foreach($feedback->attachment_path as $path)
-                                                <a href="{{ asset('storage/' . $path) }}" target="_blank" class="block">
+                                                <a href="#" @click.prevent="$dispatch('open-image', '{{ asset('storage/' . $path) }}')" class="block shrink-0">
                                                     <img src="{{ asset('storage/' . $path) }}" class="h-16 w-16 rounded object-cover ring-1 ring-outline-variant/20 hover:opacity-80 transition-opacity">
                                                 </a>
                                             @endforeach
@@ -212,7 +215,7 @@
     <!-- Detail Modal -->
     @if($showDetailModal && $detailFeedback)
     <template x-teleport="body">
-        <div class="fixed inset-0 z-[100] flex items-center justify-center bg-slate-900/50 p-4 backdrop-blur-sm">
+        <div class="fixed inset-0 z-[9998] flex items-center justify-center bg-slate-900/50 p-4 backdrop-blur-sm">
             <div class="w-full max-w-2xl rounded-2xl bg-white shadow-2xl flex flex-col max-h-[90vh]">
                 <div class="flex items-center justify-between border-b border-slate-100 px-6 py-4 shrink-0">
                     <h3 class="text-lg font-bold text-slate-800">Chi tiết yêu cầu hỗ trợ</h3>
@@ -246,7 +249,7 @@
                             <h5 class="text-sm font-semibold text-slate-700 mb-3">Hình ảnh đính kèm</h5>
                             <div class="flex flex-wrap gap-3">
                                 @foreach($detailFeedback->attachment_path as $path)
-                                    <a href="{{ asset('storage/' . $path) }}" target="_blank" class="block">
+                                    <a href="#" @click.prevent="$dispatch('open-image', '{{ asset('storage/' . $path) }}')" class="block">
                                         <img src="{{ asset('storage/' . $path) }}" class="h-24 w-24 rounded-lg object-cover ring-1 ring-slate-200 hover:opacity-80 transition-opacity">
                                     </a>
                                 @endforeach
@@ -274,4 +277,45 @@
         </div>
     </template>
     @endif
+
+    <!-- Image Viewer Modal (Alpine.js) -->
+    <template x-teleport="body">
+        <div class="fixed inset-0 z-[9999] flex items-center justify-center bg-slate-900/90 backdrop-blur-sm transition-opacity"
+            x-show="showImageModal"
+            x-transition:enter="ease-out duration-300"
+            x-transition:enter-start="opacity-0"
+            x-transition:enter-end="opacity-100"
+            x-transition:leave="ease-in duration-200"
+            x-transition:leave-start="opacity-100"
+            x-transition:leave-end="opacity-0"
+            style="display: none;"
+        >
+            <div class="relative w-full h-full p-4 flex items-center justify-center overflow-hidden" 
+                 x-data="{ isDragging: false, startX: 0, startY: 0, translateX: 0, translateY: 0 }"
+                 @mousedown="isDragging = true; startX = $event.clientX - translateX; startY = $event.clientY - translateY"
+                 @mousemove="if (isDragging) { translateX = $event.clientX - startX; translateY = $event.clientY - startY }"
+                 @mouseup="isDragging = false"
+                 @mouseleave="isDragging = false"
+                 @wheel.prevent="scale = Math.min(Math.max(0.5, scale + $event.deltaY * -0.005), 5)"
+                 @click.self="showImageModal = false; scale = 1; translateX = 0; translateY = 0">
+                <img :src="activeImageUrl" 
+                    @click.stop="scale = scale === 1 ? 2.5 : 1; translateX = 0; translateY = 0"
+                    :style="`transform: translate(${translateX}px, ${translateY}px) scale(${scale});`"
+                    :class="{'cursor-zoom-in': scale === 1, 'cursor-zoom-out': scale > 1, 'cursor-move': scale > 1}"
+                    class="max-h-full max-w-full rounded-xl object-contain shadow-2xl transition-transform duration-100" 
+                    draggable="false"
+                    x-show="showImageModal"
+                    x-transition:enter="ease-out duration-300"
+                    x-transition:enter-start="scale-95 opacity-0"
+                    x-transition:enter-end="scale-100 opacity-100"
+                    x-transition:leave="ease-in duration-200"
+                    x-transition:leave-start="scale-100 opacity-100"
+                    x-transition:leave-end="scale-95 opacity-0"
+                >
+            </div>
+            <button type="button" @click="showImageModal = false; scale = 1; translateX = 0; translateY = 0" class="absolute top-4 right-4 z-50 rounded-full bg-transparent p-2 text-slate-400 hover:text-error hover:scale-125 transition-all duration-300 cursor-pointer">
+                <x-user.icon name="x" :size="24" />
+            </button>
+        </div>
+    </template>
 </div>

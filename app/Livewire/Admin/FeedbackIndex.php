@@ -23,6 +23,9 @@ class FeedbackIndex extends Component
     
     public $showDetailModal = false;
     public $detailFeedback = null;
+    
+    public $showDeleteModal = false;
+    public $feedbackToDeleteId = null;
 
     #[Rule('required|min:10|max:1000')]
     public $replyContent = '';
@@ -76,11 +79,25 @@ class FeedbackIndex extends Component
         $this->dispatch('notify', message: 'Cập nhật trạng thái thành công', type: 'success');
     }
 
-    public function deleteFeedback($id)
+    public function confirmDelete($id)
     {
-        $feedback = SystemFeedback::findOrFail($id);
+        $this->feedbackToDeleteId = $id;
+        $this->showDeleteModal = true;
+    }
+
+    public function executeDelete()
+    {
+        $feedback = SystemFeedback::findOrFail($this->feedbackToDeleteId);
         $feedback->delete();
+        
+        $this->closeDeleteModal();
         $this->dispatch('notify', message: 'Đã xóa phản hồi', type: 'success');
+    }
+
+    public function closeDeleteModal()
+    {
+        $this->showDeleteModal = false;
+        $this->feedbackToDeleteId = null;
     }
 
     public function markAsInProgress($feedbackId)

@@ -1,4 +1,4 @@
-<div class="space-y-6">
+<div class="space-y-6" x-data="{ showImageModal: false, activeImageUrl: '', scale: 1 }" @open-image.window="activeImageUrl = $event.detail; showImageModal = true; scale = 1">
     <div class="flex items-center justify-between">
         <div>
             <h1 class="text-2xl font-bold text-slate-800">Quản lý phản hồi</h1>
@@ -46,7 +46,7 @@
                                 @if(is_array($feedback->attachment_path) && count($feedback->attachment_path) > 0)
                                     <div class="mt-2 flex flex-wrap gap-2">
                                         @foreach($feedback->attachment_path as $path)
-                                            <a href="{{ asset('storage/' . $path) }}" target="_blank" class="block">
+                                            <a href="#" @click.prevent="$dispatch('open-image', '{{ asset('storage/' . $path) }}')" class="block">
                                                 <img src="{{ asset('storage/' . $path) }}" class="h-12 w-12 rounded object-cover ring-1 ring-slate-200 hover:opacity-80 transition-opacity">
                                             </a>
                                         @endforeach
@@ -74,7 +74,7 @@
                                             <x-user.icon name="message-square" :size="18" />
                                         </button>
                                     @endif
-                                    <button wire:click="deleteFeedback({{ $feedback->id }})" wire:confirm="Bạn có chắc chắn muốn xóa phản hồi này không? Thao tác này không thể hoàn tác." title="Xóa" class="rounded-lg p-2 text-slate-400 hover:bg-red-50 hover:text-red-600 transition-colors">
+                                    <button wire:click="confirmDelete({{ $feedback->id }})" title="Xóa" class="rounded-lg p-2 text-slate-400 hover:bg-red-50 hover:text-red-600 transition-colors">
                                         <x-user.icon name="trash-2" :size="18" />
                                     </button>
                                 </div>
@@ -173,7 +173,7 @@
                             <h5 class="text-sm font-semibold text-slate-700 mb-3">Hình ảnh đính kèm</h5>
                             <div class="flex flex-wrap gap-3">
                                 @foreach($detailFeedback->attachment_path as $path)
-                                    <a href="{{ asset('storage/' . $path) }}" target="_blank" class="block">
+                                    <a href="#" @click.prevent="$dispatch('open-image', '{{ asset('storage/' . $path) }}')" class="block">
                                         <img src="{{ asset('storage/' . $path) }}" class="h-24 w-24 rounded-lg object-cover ring-1 ring-slate-200 hover:opacity-80 transition-opacity">
                                     </a>
                                 @endforeach
@@ -201,4 +201,97 @@
         </div>
     </template>
     @endif
+
+    <!-- Delete Confirmation Modal -->
+    @if($showDeleteModal)
+    <template x-teleport="body">
+        <div class="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/50 backdrop-blur-sm transition-opacity"
+            x-data="{ show: false }"
+            x-init="setTimeout(() => show = true, 10)"
+            x-show="show"
+            x-transition:enter="ease-out duration-300"
+            x-transition:enter-start="opacity-0"
+            x-transition:enter-end="opacity-100"
+            x-transition:leave="ease-in duration-200"
+            x-transition:leave-start="opacity-100"
+            x-transition:leave-end="opacity-0"
+        >
+            <div class="w-full max-w-md transform overflow-hidden rounded-2xl bg-white shadow-2xl transition-all"
+                x-show="show"
+                x-transition:enter="ease-out duration-300"
+                x-transition:enter-start="opacity-0 translate-y-4 sm:translate-y-0 sm:scale-95"
+                x-transition:enter-end="opacity-100 translate-y-0 sm:scale-100"
+                x-transition:leave="ease-in duration-200"
+                x-transition:leave-start="opacity-100 translate-y-0 sm:scale-100"
+                x-transition:leave-end="opacity-0 translate-y-4 sm:translate-y-0 sm:scale-95"
+                @click.outside="$wire.closeDeleteModal()"
+            >
+                <div class="flex items-center justify-between border-b border-slate-100 px-6 py-4 bg-red-50/50">
+                    <h3 class="font-semibold text-red-600 flex items-center gap-2">
+                        <x-user.icon name="alert-triangle" :size="20" />
+                        Xác nhận xóa
+                    </h3>
+                    <button type="button" wire:click="closeDeleteModal" class="text-slate-400 hover:text-slate-600 transition-colors">
+                        <x-user.icon name="x" :size="20" />
+                    </button>
+                </div>
+                
+                <div class="p-6">
+                    <p class="text-slate-600">Bạn có chắc chắn muốn xóa phản hồi này không? Thao tác này không thể hoàn tác và mọi hình ảnh đính kèm (nếu có) cũng sẽ bị xóa vĩnh viễn.</p>
+                </div>
+
+                <div class="flex justify-end gap-3 border-t border-slate-100 px-6 py-4 bg-slate-50">
+                    <button type="button" wire:click="closeDeleteModal" class="rounded-lg border border-slate-200 bg-white px-4 py-2 text-sm font-medium text-slate-700 shadow-sm transition-colors hover:bg-slate-50 hover:text-slate-900">
+                        Hủy
+                    </button>
+                    <button type="button" wire:click="executeDelete" class="rounded-lg bg-red-600 px-4 py-2 text-sm font-medium text-white shadow-sm transition-colors hover:bg-red-700 flex items-center gap-2">
+                        <x-user.icon name="trash-2" :size="16" />
+                        Xóa vĩnh viễn
+                    </button>
+                </div>
+            </div>
+        </div>
+    </template>
+    @endif
+
+    <!-- Image Viewer Modal (Alpine.js) -->
+    <template x-teleport="body">
+        <div class="fixed inset-0 z-[9999] flex items-center justify-center bg-slate-900/90 backdrop-blur-sm transition-opacity"
+            x-show="showImageModal"
+            x-transition:enter="ease-out duration-300"
+            x-transition:enter-start="opacity-0"
+            x-transition:enter-end="opacity-100"
+            x-transition:leave="ease-in duration-200"
+            x-transition:leave-start="opacity-100"
+            x-transition:leave-end="opacity-0"
+            style="display: none;"
+        >
+            <div class="relative w-full h-full p-4 flex items-center justify-center overflow-hidden" 
+                 x-data="{ isDragging: false, startX: 0, startY: 0, translateX: 0, translateY: 0 }"
+                 @mousedown="isDragging = true; startX = $event.clientX - translateX; startY = $event.clientY - translateY"
+                 @mousemove="if (isDragging) { translateX = $event.clientX - startX; translateY = $event.clientY - startY }"
+                 @mouseup="isDragging = false"
+                 @mouseleave="isDragging = false"
+                 @wheel.prevent="scale = Math.min(Math.max(0.5, scale + $event.deltaY * -0.005), 5)"
+                 @click.self="showImageModal = false; scale = 1; translateX = 0; translateY = 0">
+                <img :src="activeImageUrl" 
+                    @click.stop="scale = scale === 1 ? 2.5 : 1; translateX = 0; translateY = 0"
+                    :style="`transform: translate(${translateX}px, ${translateY}px) scale(${scale});`"
+                    :class="{'cursor-zoom-in': scale === 1, 'cursor-zoom-out': scale > 1, 'cursor-move': scale > 1}"
+                    class="max-h-full max-w-full rounded-xl object-contain shadow-2xl transition-transform duration-100" 
+                    draggable="false"
+                    x-show="showImageModal"
+                    x-transition:enter="ease-out duration-300"
+                    x-transition:enter-start="scale-95 opacity-0"
+                    x-transition:enter-end="scale-100 opacity-100"
+                    x-transition:leave="ease-in duration-200"
+                    x-transition:leave-start="scale-100 opacity-100"
+                    x-transition:leave-end="scale-95 opacity-0"
+                >
+            </div>
+            <button type="button" @click="showImageModal = false; scale = 1; translateX = 0; translateY = 0" class="absolute top-4 right-4 z-50 rounded-full bg-transparent p-2 text-slate-400 hover:text-error hover:scale-125 transition-all duration-300 cursor-pointer">
+                <x-user.icon name="x" :size="24" />
+            </button>
+        </div>
+    </template>
 </div>
