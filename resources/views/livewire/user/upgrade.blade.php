@@ -84,7 +84,7 @@
                     'accent'  => 'text-primary',
                     'dot'     => 'bg-primary',
                 ],
-                'ENTERPRISE' => [
+                'PREMIUM' => [
                     'icon'    => 'zap',
                     'badge'   => 'bg-tertiary/10 text-tertiary',
                     'ring'    => 'ring-tertiary/60',
@@ -101,8 +101,8 @@
             @foreach ($plans as $plan)
                 @php
                     $style     = $planStyles[$plan->plan_tier] ?? $planStyles['FREE'];
-                    $isCurrent = $plan->plan_tier === $currentPlanCode;
-                    $isRec     = $plan->plan_tier === $recommended;
+                    $isCurrent = $activeSubscription ? (int) $plan->id === (int) $activeSubscription->plan_id : $plan->plan_tier === 'FREE';
+                    $isRec     = $plan->name === 'Chuyên nghiệp';
                 @endphp
 
                 <article @class([
@@ -251,7 +251,7 @@
                                         class="w-full rounded-xl border border-outline-variant/30 bg-white px-3 py-2 text-sm focus:border-primary focus:outline-none focus:ring-1 focus:ring-primary"
                                         wire:keydown.enter="applyCoupon"
                                     >
-                                    <button type="button" wire:click="applyCoupon" class="shrink-0 rounded-xl bg-surface-container-low px-4 py-2 text-sm font-bold text-on-surface-variant hover:bg-surface-container">
+                                    <button type="button" wire:click="applyCoupon" class="shrink-0 rounded-xl bg-emerald-600 px-4 py-2 text-sm font-bold text-white shadow-sm hover:bg-emerald-700 transition-colors">
                                         Áp dụng
                                     </button>
                                 </div>

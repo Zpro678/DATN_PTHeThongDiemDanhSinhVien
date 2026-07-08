@@ -31,6 +31,11 @@ class GeneralSettings extends Component
 
     public function save()
     {
+        if (!auth()->user()?->isSuperAdmin()) {
+            $this->dispatch('toast', message: 'Chỉ Super Admin mới có quyền lưu cấu hình.', type: 'error');
+            return;
+        }
+
         $this->validate();
 
         if ($this->new_logo) {

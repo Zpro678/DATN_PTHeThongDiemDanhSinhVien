@@ -188,7 +188,7 @@
                             <button type="button" x-on:click="openProfile = !openProfile" class="flex items-center gap-2 rounded-xl p-1 pr-1.5 transition-colors hover:bg-surface-container focus:outline-none">
                                 <span class="grid h-9 w-9 shrink-0 place-items-center overflow-hidden rounded-full bg-primary/10 text-sm font-bold text-primary ring-1 ring-primary/15">
                                     @if(Auth::user()?->avatar)
-                                        <img src="{{ asset('storage/'.Auth::user()->avatar) }}" alt="{{ $userName }}" class="h-full w-full object-cover">
+                                        <img src="{{ Auth::user()->avatar_url }}" alt="{{ $userName }}" class="h-full w-full object-cover">
                                     @else
                                         {{ $userInitial }}
                                     @endif
@@ -203,7 +203,7 @@
                                 <div class="flex items-center gap-3 border-b border-outline-variant px-4 py-3">
                                     <span class="grid h-10 w-10 shrink-0 place-items-center overflow-hidden rounded-full bg-primary/10 text-sm font-bold text-primary">
                                         @if(Auth::user()?->avatar)
-                                            <img src="{{ asset('storage/'.Auth::user()->avatar) }}" alt="{{ $userName }}" class="h-full w-full object-cover">
+                                            <img src="{{ Auth::user()->avatar_url }}" alt="{{ $userName }}" class="h-full w-full object-cover">
                                         @else
                                             {{ $userInitial }}
                                         @endif

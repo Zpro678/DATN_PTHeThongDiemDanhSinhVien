@@ -41,8 +41,8 @@ class PayosService
             orderCode: $orderCode,
             amount: (int) $tx->amount,
             description: trim($safeDescription),
-            returnUrl: $c['return_url'],
-            cancelUrl: $c['cancel_url']
+            returnUrl: route('payos.return'),
+            cancelUrl: route('payos.return', ['cancel' => 'true'])
         );
 
         try {

@@ -250,7 +250,7 @@
                                 <td class="pl-6 pr-4 py-4 text-left">
                                     <div class="flex items-center gap-3">
                                         @if($student->user && $student->user->avatar)
-                                            <img src="{{ str_starts_with($student->user->avatar, 'http') ? $student->user->avatar : asset('storage/' . $student->user->avatar) }}" alt="{{ $student->displayName }}" class="h-8 w-8 shrink-0 rounded-full object-cover">
+                                            <img src="{{ $student->user->avatar_url }}" alt="{{ $student->displayName }}" class="h-8 w-8 shrink-0 rounded-full object-cover">
                                         @else
                                             <div class="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-blue-50 text-[13px] font-bold text-blue-600 uppercase">
                                                 {{ mb_substr(collect(explode(' ', trim((string)$student->displayName)))->last() ?: 'S', 0, 1) }}

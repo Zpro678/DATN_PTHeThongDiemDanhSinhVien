@@ -61,7 +61,7 @@
                             <a href="{{ route('lecturer.students.show', $m->id) }}" wire:navigate
                                 class="flex items-center gap-3 rounded-xl border p-3 {{ $banned ? 'border-error/20 bg-error/5' : 'border-amber-500/20 bg-amber-500/5' }}">
                                 @if($m->user && $m->user->avatar)
-                                    <img src="{{ asset('storage/' . $m->user->avatar) }}" alt="{{ $m->full_name }}" class="h-9 w-9 shrink-0 rounded-full object-cover">
+                                    <img src="{{ $m->user->avatar_url }}" alt="{{ $m->full_name }}" class="h-9 w-9 shrink-0 rounded-full object-cover">
                                 @else
                                     <div class="flex h-9 w-9 shrink-0 items-center justify-center rounded-full {{ $banned ? 'bg-error/15 text-error' : 'bg-amber-500/15 text-amber-600' }} text-sm font-bold">
                                         {{ mb_strtoupper(mb_substr($m->full_name, 0, 1)) }}
@@ -221,7 +221,7 @@
                                         <a href="{{ route('lecturer.students.show', $m->id) }}" wire:navigate
                                             class="flex items-center gap-3">
                                             @if($m->user && $m->user->avatar)
-                                                <img src="{{ asset('storage/' . $m->user->avatar) }}" alt="{{ $m->full_name }}" class="h-10 w-10 shrink-0 rounded-full object-cover">
+                                                <img src="{{ $m->user->avatar_url }}" alt="{{ $m->full_name }}" class="h-10 w-10 shrink-0 rounded-full object-cover">
                                             @else
                                                 <div class="flex h-10 w-10 shrink-0 items-center justify-center rounded-full {{ $banned ? 'bg-error/15 text-error' : ($warn ? 'bg-amber-500/15 text-amber-600' : 'bg-primary/10 text-primary') }} text-sm font-bold">
                                                     {{ mb_strtoupper(mb_substr($m->full_name, 0, 1)) }}

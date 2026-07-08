@@ -49,14 +49,14 @@ class UserEdit extends Component
         $authUser = auth()->user();
 
         if ($this->user->id === $authUser->id && $validatedData['status'] !== $this->user->status) {
-            session()->flash('error', 'Bạn không thể tự thay đổi trạng thái của chính mình.');
+            $this->dispatch('toast', message: 'Bạn không thể tự thay đổi trạng thái của chính mình.', type: 'error');
             return;
         }
 
         // Logic phân quyền sửa đổi role
         if ($this->user->id !== $authUser->id && $this->user->role !== $validatedData['role']) {
             if (!$authUser->isSuperAdmin()) {
-                session()->flash('error', 'Chỉ có Super Admin mới có quyền thay đổi vai trò của người dùng.');
+                $this->dispatch('toast', message: 'Chỉ có Super Admin mới có quyền thay đổi vai trò của người dùng.', type: 'error');
                 return;
             }
         }

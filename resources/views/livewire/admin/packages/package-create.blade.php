@@ -1,5 +1,5 @@
 <div>
-    <div class="mx-auto max-w-[1000px] space-y-6">
+    <div class="w-full space-y-6">
 
         <div class="flex flex-col items-start justify-between gap-4 p-6 md:flex-row md:items-center lg:p-7 mb-2">
             <div>
@@ -33,7 +33,7 @@
                         $tierOptions = [
                             ['value' => 'FREE', 'label' => 'FREE', 'sub_label' => 'Gói miễn phí cơ bản'],
                             ['value' => 'PRO', 'label' => 'PRO', 'sub_label' => 'Gói trả phí nâng cao'],
-                            ['value' => 'ENTERPRISE', 'label' => 'ENTERPRISE', 'sub_label' => 'Gói doanh nghiệp lớn'],
+                            ['value' => 'PREMIUM', 'label' => 'PREMIUM', 'sub_label' => 'Gói cao cấp'],
                         ];
                         @endphp
                         <x-custom-select wire:model="plan_tier" :options="$tierOptions" :value="$plan_tier" placeholder="Chọn hạng gói" />

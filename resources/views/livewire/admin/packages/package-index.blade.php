@@ -28,7 +28,7 @@
             @forelse ($packages as $index => $package)
                 @php
                     $isFree = (float) $package->price <= 0;
-                    $isEnterprise = strtolower($package->plan_tier) === 'enterprise';
+                    $isEnterprise = strtolower($package->plan_tier) === 'premium';
                     
                     if ($isEnterprise) {
                         $accent = 'from-purple-500 via-fuchsia-500 to-pink-500';

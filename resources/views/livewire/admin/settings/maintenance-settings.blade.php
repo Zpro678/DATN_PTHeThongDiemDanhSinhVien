@@ -59,7 +59,7 @@
                                 <td class="whitespace-nowrap px-4 py-3 text-sm text-slate-500">{{ number_format($backup['size'] / 1024, 2) }} KB</td>
                                 <td class="whitespace-nowrap px-4 py-3 text-right text-sm font-medium">
                                     <button wire:click="openRestoreModal('{{ $backup['name'] }}')" class="text-emerald-600 hover:text-emerald-900 mr-3 font-bold">Phục hồi</button>
-                                    <button wire:click="deleteBackup('{{ $backup['name'] }}')" class="text-rose-600 hover:text-rose-900 font-bold" wire:confirm="Bạn có chắc chắn muốn xóa bản sao lưu này?">Xóa</button>
+                                    <button type="button" @click="$dispatch('open-delete-backup-modal', '{{ $backup['name'] }}')" class="text-rose-600 hover:text-rose-900 font-bold">Xóa</button>
                                 </td>
                             </tr>
                         @empty
@@ -162,4 +162,39 @@
     </div>
     @endteleport
     @endif
+
+    <!-- Modal Xóa Sao Lưu (AlpineJS) -->
+    @teleport('body')
+    <div x-data="{ showDeleteModal: false, backupToDelete: '' }" 
+         @open-delete-backup-modal.window="backupToDelete = $event.detail; showDeleteModal = true"
+         x-cloak
+         x-show="showDeleteModal"
+         class="fixed inset-0 z-[9999] flex items-center justify-center bg-slate-900/50 p-4 backdrop-blur-sm">
+        
+        <div x-show="showDeleteModal" 
+             x-transition:enter="ease-out duration-300"
+             x-transition:enter-start="opacity-0 translate-y-4 sm:translate-y-0 sm:scale-95"
+             x-transition:enter-end="opacity-100 translate-y-0 sm:scale-100"
+             x-transition:leave="ease-in duration-200"
+             x-transition:leave-start="opacity-100 translate-y-0 sm:scale-100"
+             x-transition:leave-end="opacity-0 translate-y-4 sm:translate-y-0 sm:scale-95"
+             class="w-full max-w-md rounded-2xl bg-white p-6 shadow-2xl" @click.away="showDeleteModal = false">
+            <div class="mb-4 flex items-center gap-3">
+                <div class="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-rose-100">
+                    <svg class="h-6 w-6 text-rose-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                    </svg>
+                </div>
+                <h3 class="text-lg font-bold text-slate-900">Xác nhận xóa bản sao lưu</h3>
+            </div>
+            <p class="text-sm text-slate-500">Bạn có chắc chắn muốn xóa bản sao lưu <span class="font-bold text-slate-700" x-text="backupToDelete"></span> này không? Hành động này không thể hoàn tác.</p>
+            <div class="mt-6 flex justify-end gap-3">
+                <button type="button" @click="showDeleteModal = false"
+                    class="rounded-xl border border-slate-200 px-5 py-2.5 text-sm font-bold text-slate-600 hover:bg-slate-50 transition-colors">Hủy</button>
+                <button type="button" @click="$wire.deleteBackup(backupToDelete); showDeleteModal = false"
+                    class="rounded-xl bg-rose-600 px-5 py-2.5 text-sm font-bold text-white hover:bg-rose-700 transition-colors shadow-sm shadow-rose-500/25">Xóa bản sao lưu</button>
+            </div>
+        </div>
+    </div>
+    @endteleport
 </div>

@@ -97,10 +97,19 @@ class BackupService
 
         foreach ($files as $file) {
             if (pathinfo($file, PATHINFO_EXTENSION) === 'sql') {
+                $basename = basename($file);
+                $createdAt = Carbon::createFromTimestamp(Storage::disk('local')->lastModified($file));
+                
+                if (preg_match('/backup_(\d{4}_\d{2}_\d{2}_\d{6})\.sql/', $basename, $matches)) {
+                    try {
+                        $createdAt = Carbon::createFromFormat('Y_m_d_His', $matches[1]);
+                    } catch (\Exception $e) {}
+                }
+
                 $backups[] = [
-                    'name' => basename($file),
+                    'name' => $basename,
                     'size' => Storage::disk('local')->size($file),
-                    'created_at' => Carbon::createFromTimestamp(Storage::disk('local')->lastModified($file)),
+                    'created_at' => $createdAt,
                 ];
             }
         }

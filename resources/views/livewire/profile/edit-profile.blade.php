@@ -28,7 +28,7 @@
                         @if ($avatar)
                             <img src="{{ $avatar->temporaryUrl() }}" class="flex h-24 w-24 items-center justify-center rounded-3xl border-4 border-white object-cover bg-blue-100 shadow-sm transition-all group-hover:opacity-90">
                         @elseif(auth()->user()->avatar)
-                            <img src="{{ asset('storage/'.auth()->user()->avatar) }}" class="flex h-24 w-24 items-center justify-center rounded-3xl border-4 border-white object-cover bg-blue-100 shadow-sm transition-all group-hover:opacity-90">
+                            <img src="{{ auth()->user()->avatar_url }}" class="flex h-24 w-24 items-center justify-center rounded-3xl border-4 border-white object-cover bg-blue-100 shadow-sm transition-all group-hover:opacity-90">
                         @else
                             <div class="flex h-24 w-24 items-center justify-center rounded-3xl border-4 border-white bg-blue-100 text-3xl font-black text-blue-700 shadow-sm transition-all group-hover:opacity-90">
                                 {{ $initial }}

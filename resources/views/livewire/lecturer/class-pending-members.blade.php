@@ -59,7 +59,7 @@
                                 <td class="px-6 py-4">
                                     <div class="flex items-center gap-3">
                                         @if($member->user && $member->user->avatar)
-                                            <img src="{{ asset('storage/' . $member->user->avatar) }}" alt="{{ $member->user->name }}" class="h-10 w-10 shrink-0 rounded-2xl object-cover border border-slate-200">
+                                            <img src="{{ $member->user->avatar_url }}" alt="{{ $member->user->name }}" class="h-10 w-10 shrink-0 rounded-2xl object-cover border border-slate-200">
                                         @else
                                             <div class="flex h-10 w-10 shrink-0 items-center justify-center rounded-2xl font-bold bg-blue-100 text-blue-700 border border-blue-200">
                                                 {{ mb_substr($member->user?->name ?? 'H', 0, 1) }}

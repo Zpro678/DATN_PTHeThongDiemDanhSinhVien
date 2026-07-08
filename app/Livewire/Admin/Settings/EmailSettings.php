@@ -44,6 +44,11 @@ class EmailSettings extends Component
 
     public function save()
     {
+        if (!auth()->user()?->isSuperAdmin()) {
+            $this->dispatch('toast', message: 'Chỉ Super Admin mới có quyền lưu cấu hình.', type: 'error');
+            return;
+        }
+
         $this->validate();
 
         Setting::set('mail_driver', $this->mail_driver);
@@ -60,6 +65,11 @@ class EmailSettings extends Component
 
     public function sendTestEmail()
     {
+        if (!auth()->user()?->isSuperAdmin()) {
+            $this->dispatch('toast', message: 'Chỉ Super Admin mới có quyền thử nghiệm.', type: 'error');
+            return;
+        }
+
         $this->validate([
             'test_email' => 'required|email',
         ], [

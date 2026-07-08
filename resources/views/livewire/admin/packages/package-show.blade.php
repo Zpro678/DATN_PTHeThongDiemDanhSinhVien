@@ -9,7 +9,7 @@
             $priceClass = 'text-purple-600';
             $iconBg = 'border-purple-100 bg-purple-50 text-purple-600';
             $btnClass = 'from-purple-600 to-pink-600 hover:from-purple-700 hover:to-pink-700 shadow-purple-500/30';
-            $packageLabel = 'ENTERPRISE PACKAGE';
+            $packageLabel = 'PREMIUM PACKAGE';
             $progressClass = 'bg-purple-500';
         } elseif ($isFree) {
             $accent = 'from-blue-500 via-indigo-500 to-violet-500';
