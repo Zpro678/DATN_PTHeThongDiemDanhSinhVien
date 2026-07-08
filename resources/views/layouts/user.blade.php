@@ -224,7 +224,7 @@
                                         <x-user.icon name="user" :size="17" class="text-on-surface-variant" /> Thông tin cá nhân
                                     </a>
                                     <a href="{{ route('support') }}" wire:navigate class="flex items-center gap-3 px-4 py-2.5 text-sm text-on-surface transition-colors hover:bg-surface-container">
-                                        <x-user.icon name="help-circle" :size="17" class="text-on-surface-variant" /> Hỗ trợ
+                                        <x-user.icon name="help-circle" :size="17" class="text-on-surface-variant" /> Phản hồi
                                     </a>
                                 </div>
                                 <div class="border-t border-outline-variant py-1">
@@ -313,11 +313,12 @@
                     </nav>
 
                     <div class="space-y-1 border-t border-outline-variant p-3">
-                        <a href="{{ route('support') }}" wire:navigate title="Hỗ trợ"
+                        <a href="{{ route('support') }}" class="group relative flex h-14 items-center gap-3 rounded-full px-4 text-on-surface-variant transition-colors hover:bg-surface-container-highest hover:text-on-surface {{ request()->routeIs('support') ? 'bg-secondary-container text-on-secondary-container font-semibold' : '' }}"
                             :class="sidebarCollapsed ? 'justify-center px-0' : ''"
-                            class="flex items-center gap-3 rounded-lg px-3 py-2 text-[17px] font-medium text-on-surface-variant transition-colors hover:bg-surface-container hover:text-on-surface">
-                            <x-user.icon name="help-circle" :size="24" class="shrink-0" /> <span class="sidebar-text whitespace-nowrap" x-show="!sidebarCollapsed" x-transition:enter="transition-opacity duration-200 delay-100" x-transition:enter-start="opacity-0" x-transition:enter-end="opacity-100" x-transition:leave="transition-opacity duration-100" x-transition:leave-start="opacity-100" x-transition:leave-end="opacity-0">Hỗ trợ</span>
+                            title="Phản hồi">
+                            <x-user.icon name="help-circle" :size="24" class="shrink-0" /> <span class="sidebar-text whitespace-nowrap" x-show="!sidebarCollapsed" x-transition:enter="transition-opacity duration-200 delay-100" x-transition:enter-start="opacity-0" x-transition:enter-end="opacity-100" x-transition:leave="transition-opacity duration-100" x-transition:leave-start="opacity-100" x-transition:leave-end="opacity-0">Phản hồi</span>
                         </a>
+
                         <form method="POST" action="{{ route('logout') }}">
                             @csrf
                             <button type="submit" title="Đăng xuất"
@@ -378,7 +379,7 @@
                                     <x-user.icon name="qr-code" :size="24" class="shrink-0" /> <span>Quét mã QR</span>
                                 </button>
                                 <a href="{{ route('support') }}" wire:navigate x-on:click="navOpen = false" class="flex items-center gap-3 rounded-lg px-3 py-2 text-[17px] font-medium text-on-surface-variant transition-colors hover:bg-surface-container hover:text-on-surface">
-                                    <x-user.icon name="help-circle" :size="24" class="shrink-0" /> <span>Hỗ trợ</span>
+                                    <x-user.icon name="help-circle" :size="24" class="shrink-0" /> <span>Phản hồi</span>
                                 </a>
                                 <form method="POST" action="{{ route('logout') }}">
                                     @csrf

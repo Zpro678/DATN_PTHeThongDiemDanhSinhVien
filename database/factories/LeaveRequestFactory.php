@@ -13,7 +13,7 @@ class LeaveRequestFactory extends Factory
     {
         return [
             'class_member_id' => ClassMember::factory(),
-            'class_session_id' => ClassSession::factory(),
+            'class_meeting_id' => \App\Models\ClassMeeting::factory(),
             'reason' => fake()->sentence(),
             'proof_image' => null,
             'status' => 'pending',

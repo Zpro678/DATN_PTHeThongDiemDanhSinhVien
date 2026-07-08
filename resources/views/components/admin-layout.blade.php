@@ -33,6 +33,12 @@
             'href' => route('admin.broadcast'),
             'active' => ['admin.broadcast'],
         ],
+        [
+            'label' => 'Quản lý phản hồi',
+            'icon' => 'message-square',
+            'href' => route('admin.feedbacks'),
+            'active' => ['admin.feedbacks'],
+        ],
         ['label' => 'Báo cáo & thống kê', 'href' => route('admin.reports.index'), 'icon' => 'bar-chart', 'active' => ['admin.reports.*']],
     ];
 @endphp
