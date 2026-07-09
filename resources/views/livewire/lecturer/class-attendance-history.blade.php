@@ -2,7 +2,8 @@
     <x-user.export-button
         label="Xuất Excel"
         :can="$canExportExcel"
-        :href="route('lecturer.students.index', ['ma_user' => auth()->id(), 'class_id' => $this->courseClass->id, 'action' => 'export'])" />
+        :href="route('lecturer.classes.attendance.export', ['ma_user' => auth()->id(), 'courseClass' => $this->courseClass->id])"
+        :navigate="false" />
 </x-slot:headerActions>
 
 <div x-data="{ 

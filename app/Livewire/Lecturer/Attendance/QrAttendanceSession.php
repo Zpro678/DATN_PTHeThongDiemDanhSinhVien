@@ -6,6 +6,7 @@ use App\Exports\ClassSessionExport;
 use App\Livewire\Lecturer\Attendance\Concerns\OwnsAttendanceSessions;
 use App\Models\AttendanceRecord;
 use App\Services\AuditLogService;
+use App\Services\AttendanceCalculator;
 use App\Services\NotificationService;
 use App\Services\SubscriptionService;
 use Illuminate\Contracts\View\View;
@@ -57,6 +58,7 @@ class QrAttendanceSession extends Component
             ->get(['id', 'status', 'note']);
 
         foreach ($records as $record) {
+            $this->draftStatuses[$record->id] = $record->status;
             $this->draftNotes[$record->id] = $record->note ?? '';
         }
     }
@@ -132,6 +134,9 @@ class QrAttendanceSession extends Component
             'check_in_time' => in_array($status, ['present', 'late'], true) ? now('Asia/Ho_Chi_Minh') : null,
             'is_account' => $record->classMember->user_id !== null,
         ]);
+
+        $this->draftStatuses[$recordId] = $status;
+        $this->syncCurrentMeetingSummaries();
     }
 
     /**
@@ -161,7 +166,10 @@ class QrAttendanceSession extends Component
                 'status' => 'present',
                 'check_in_time' => now('Asia/Ho_Chi_Minh'),
             ]);
+            $this->draftStatuses[$record->id] = 'present';
         }
+
+        $this->syncCurrentMeetingSummaries();
 
         session()->flash('success', 'Đã đánh dấu tất cả học viên chưa điểm danh là có mặt.');
     }
@@ -182,6 +190,7 @@ class QrAttendanceSession extends Component
         $session->attendanceRecords()->where('status', 'pending')->update(['status' => 'absent']);
 
         $this->isClosed = true;
+        $this->syncCurrentMeetingSummaries();
 
         $notifier = app(NotificationService::class);
         $notifier->attendanceSessionClosed((int) auth()->id(), $session, isQr: true);
@@ -221,7 +230,12 @@ class QrAttendanceSession extends Component
             }
         }
 
-        $meetingId = $this->ownedSession($this->sessionId)->meeting_id;
+        $session = $this->ownedSession($this->sessionId)->load('meeting');
+        if ($session->meeting) {
+            AttendanceCalculator::syncSummaries($session->meeting);
+        }
+
+        $meetingId = $session->meeting_id;
 
         session()->flash('status', 'Đã lưu phiên điểm danh.');
 
@@ -254,7 +268,7 @@ class QrAttendanceSession extends Component
             return $this->redirectRoute('upgrade', navigate: true);
         }
 
-        $session = $this->ownedSession($this->sessionId)->load('courseClass');
+        $session = $this->ownedSession($this->sessionId)->load(['courseClass', 'meeting']);
 
         $date = $session->date->format('Y-m-d');
         $className = Str::slug($session->courseClass->name);
@@ -342,7 +356,27 @@ class QrAttendanceSession extends Component
 
     private function ensureSessionIsOpen(): void
     {
-        abort_if($this->ownedSession($this->sessionId)->status === 'closed', 403);
+        $session = $this->ownedSession($this->sessionId)->load('meeting');
+        $meeting = $session->meeting;
+
+        if (! $meeting) {
+            abort_if($session->status === 'closed', 403);
+            return;
+        }
+
+        $meeting->closeIfExpired();
+        $meeting->refresh();
+
+        abort_if($meeting->status === 'closed' || $meeting->isExpired(), 403);
+    }
+
+    private function syncCurrentMeetingSummaries(): void
+    {
+        $meeting = $this->ownedSession($this->sessionId)->load('meeting')->meeting;
+
+        if ($meeting) {
+            AttendanceCalculator::syncSummaries($meeting);
+        }
     }
 
     private function qrSvg(string $attendanceLink): ?string
