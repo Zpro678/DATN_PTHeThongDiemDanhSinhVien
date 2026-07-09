@@ -99,7 +99,12 @@
                                 </div>
                             </td>
                             <td class="whitespace-nowrap px-6 py-4">
-                                @if($user->isAdmin())
+                                @if($user->isSuperAdmin())
+                                    <span class="inline-flex items-center rounded-full bg-fuchsia-100 px-2.5 py-0.5 text-xs font-medium text-fuchsia-800">
+                                        <span class="-ml-0.5 mr-1.5 h-2 w-2 rounded-full bg-fuchsia-400"></span>
+                                        Super Admin
+                                    </span>
+                                @elseif($user->isAdmin())
                                     <span class="inline-flex items-center rounded-full bg-purple-100 px-2.5 py-0.5 text-xs font-medium text-purple-800">
                                         <span class="-ml-0.5 mr-1.5 h-2 w-2 rounded-full bg-purple-400"></span>
                                         Admin
@@ -133,9 +138,15 @@
                                 <a href="{{ route('admin.users.edit', $user) }}" class="mr-3 text-indigo-600 transition-colors hover:text-indigo-900" title="Chỉnh sửa">
                                     <x-user.icon name="edit" :size="20" class="inline" />
                                 </a>
+                                @if(!$user->isAdmin() || (Auth::user()->isSuperAdmin() && !$user->isSuperAdmin()))
                                 <button type="button" @click="$dispatch('open-toggle-user-modal', { id: {{ $user->id }}, name: '{{ addslashes($user->name) }}', isLocking: {{ $user->status === 'active' ? 'true' : 'false' }} })" class="{{ $user->status === 'active' ? 'text-red-600 hover:text-red-900' : 'text-green-600 hover:text-green-900' }} transition-colors" title="{{ $user->status === 'active' ? 'Khóa tài khoản' : 'Mở khóa tài khoản' }}">
                                     <x-user.icon name="{{ $user->status === 'active' ? 'lock' : 'shield-check' }}" :size="20" class="inline" />
                                 </button>
+                                @else
+                                <span class="text-gray-300 cursor-not-allowed" title="Không thể khóa Quản trị viên">
+                                    <x-user.icon name="lock" :size="20" class="inline" />
+                                </span>
+                                @endif
                             </td>
                         </tr>
                     @empty

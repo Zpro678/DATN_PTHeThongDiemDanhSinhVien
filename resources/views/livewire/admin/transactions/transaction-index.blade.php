@@ -147,7 +147,7 @@
                                                 <div class="mt-4 border-t border-slate-200 pt-3">
                                                     <dt class="mb-2 font-medium text-slate-500">Dữ liệu cổng thanh toán trả về (Raw):</dt>
                                                     <dd>
-                                                        <pre class="overflow-x-auto rounded-lg bg-slate-900 p-3 text-[10px] text-emerald-400 font-mono">{{ json_encode(json_decode($tx->payment_response), JSON_PRETTY_PRINT | JSON_UNESCAPED_UNICODE) }}</pre>
+                                                        <pre class="overflow-x-auto rounded-lg bg-slate-900 p-3 text-[10px] text-emerald-400 font-mono">{{ json_encode($tx->payment_response, JSON_PRETTY_PRINT | JSON_UNESCAPED_UNICODE) }}</pre>
                                                     </dd>
                                                 </div>
                                             @endif

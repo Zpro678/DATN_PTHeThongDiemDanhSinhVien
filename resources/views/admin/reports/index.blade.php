@@ -69,7 +69,18 @@
                             </div>
                             <div class="flex flex-wrap items-center gap-2 text-xs font-bold">
                                 <span class="rounded-lg border border-blue-100 bg-blue-50 px-2 py-0.5 text-blue-700">{{ $transaction->payment_method ?? 'MoMo' }}</span>
-                                <span class="rounded-lg border border-emerald-100 bg-emerald-50 px-2 py-0.5 text-emerald-700">Thành công</span>
+                                @php
+                                    $statusUpper = strtoupper($transaction->status);
+                                    $isSuccess = in_array($statusUpper, ['PAID', 'SUCCESS']);
+                                    $isPending = $statusUpper === 'PENDING';
+                                @endphp
+                                @if($isSuccess)
+                                    <span class="rounded-lg border border-emerald-100 bg-emerald-50 px-2 py-0.5 text-emerald-700">Thành công</span>
+                                @elseif($isPending)
+                                    <span class="rounded-lg border border-amber-100 bg-amber-50 px-2 py-0.5 text-amber-700">Đang chờ</span>
+                                @else
+                                    <span class="rounded-lg border border-rose-100 bg-rose-50 px-2 py-0.5 text-rose-700">Thất bại</span>
+                                @endif
                             </div>
                             <p class="truncate text-sm font-medium text-slate-500">
                                 {{ $transaction->user?->name ?? 'Người dùng ẩn' }} mua gói <span class="font-bold text-slate-700">{{ $transaction->plan?->name ?? 'Không rõ' }}</span>

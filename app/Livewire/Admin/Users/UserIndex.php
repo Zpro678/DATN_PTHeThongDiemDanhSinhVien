@@ -45,6 +45,16 @@ class UserIndex extends Component
             return; // Ngăn chặn tự khóa tài khoản của chính mình
         }
 
+        if ($user->isAdmin() && !Auth::user()->isSuperAdmin()) {
+            $this->dispatch('toast', message: 'Bạn không có quyền khóa tài khoản của Quản trị viên khác.', type: 'error');
+            return;
+        }
+
+        if ($user->isSuperAdmin()) {
+            $this->dispatch('toast', message: 'Không ai có thể khóa tài khoản Super Admin.', type: 'error');
+            return;
+        }
+
         $oldStatus = $user->status;
         $user->status = $user->status === 'active' ? 'blocked' : 'active';
         $user->save();
@@ -55,6 +65,12 @@ class UserIndex extends Component
             'old_values' => ['status' => $oldStatus],
             'new_values' => ['status' => $user->status],
         ]);
+
+        $message = $user->status === 'active' 
+            ? 'Đã mở khóa tài khoản thành công.' 
+            : 'Đã khóa tài khoản thành công.';
+            
+        $this->dispatch('toast', message: $message, type: 'success');
     }
 
     #[Layout('components.admin-layout')]

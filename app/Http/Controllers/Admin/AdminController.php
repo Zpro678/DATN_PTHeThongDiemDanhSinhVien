@@ -41,10 +41,10 @@ class AdminController extends Controller
             $total = $summary->total_present + $summary->total_late + $summary->total_absent;
             $rate = $total > 0 ? round((($summary->total_present + $summary->total_late) / $total) * 100, 1) : 100;
             return [
-                'mssv' => $summary->classMember->student_code ?? 'N/A',
-                'name' => $summary->classMember->full_name ?? 'N/A',
-                'class' => $summary->courseClass->join_key ?? 'N/A',
-                'subject' => $summary->courseClass->name ?? 'N/A',
+                'mssv' => $summary->classMember?->student_code ?? 'N/A',
+                'name' => $summary->classMember?->full_name ?? 'N/A',
+                'class' => $summary->courseClass?->join_key ?? 'N/A',
+                'subject' => $summary->courseClass?->name ?? 'N/A',
                 'attendanceRate' => $rate,
                 'level' => $rate < 70 ? 'Nguy cấp' : 'Cảnh cáo',
                 'levelColor' => $rate < 70 ? 'bg-rose-50 text-rose-700 border-rose-200' : 'bg-amber-50 text-amber-700 border-amber-200',
@@ -62,9 +62,9 @@ class AdminController extends Controller
                 $total = \App\Models\ClassMember::where('class_id', $session->class_id)->count();
                 $percentage = $total > 0 ? round(($session->checked_in_count / $total) * 100, 1) : 0;
                 return [
-                    'className' => $session->courseClass->name ?? 'N/A',
-                    'room' => $session->courseClass->join_key ?? 'N/A', // Using code as room/identifier
-                    'instructor' => $session->courseClass->owner->name ?? 'N/A',
+                    'className' => $session->courseClass?->name ?? 'N/A',
+                    'room' => $session->courseClass?->join_key ?? 'N/A', // Using code as room/identifier
+                    'instructor' => $session->courseClass?->owner?->name ?? 'N/A',
                     'checkedIn' => $session->checked_in_count,
                     'total' => $total,
                     'startedAt' => $session->created_at->diffForHumans(),
@@ -84,7 +84,7 @@ class AdminController extends Controller
         // Attendance Chart Data (Last 6 months)
         $months = collect();
         for ($i = 5; $i >= 0; $i--) {
-            $date = now()->subMonths($i);
+            $date = now()->startOfMonth()->subMonths($i);
             $months->push([
                 'month' => $date->format('m/y'),
                 'start' => $date->copy()->startOfMonth(),
@@ -100,11 +100,11 @@ class AdminController extends Controller
                 ->pluck('total', 'status');
             
             // Bỏ vắng có phép (excused) ra khỏi mẫu số: không tính là chuyên cần cũng không tính là vắng.
-            $excused = $records['excused'] ?? 0;
+            $excused = $records->get('excused', 0);
             $total = $records->sum() - $excused;
-            $present = $records['present'] ?? 0;
-            $late = $records['late'] ?? 0;
-            $absent = $records['absent'] ?? 0;
+            $present = $records->get('present', 0);
+            $late = $records->get('late', 0);
+            $absent = $records->get('absent', 0);
 
             $chartData[] = [
                 'name' => 'T' . $month['month'],
@@ -159,7 +159,7 @@ class AdminController extends Controller
         // Doanh thu theo 6 tháng gần nhất (Mock hoặc thật nếu có dl)
         $monthlyRevenue = [];
         for ($i = 5; $i >= 0; $i--) {
-            $month = now()->subMonths($i);
+            $month = now()->startOfMonth()->subMonths($i);
             $amount = \App\Models\Transaction::where('status', 'PAID')
                 ->whereYear('created_at', $month->year)
                 ->whereMonth('created_at', $month->month)
@@ -172,6 +172,7 @@ class AdminController extends Controller
         }
 
         $recentTransactions = \App\Models\Transaction::query()
+            ->whereIn('status', ['PAID', 'SUCCESS', 'paid', 'success'])
             ->with(['user', 'plan'])
             ->latest('created_at')
             ->take(8)
