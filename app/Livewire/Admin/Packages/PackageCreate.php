@@ -25,7 +25,6 @@ class PackageCreate extends Component
     
     public $max_gps_radius = 100;
     
-    public $hasGps = false;
     public $hasImport = false;
 
     public function mount()
@@ -46,6 +45,7 @@ class PackageCreate extends Component
             'duration_days' => 'required|in:30,90,180,365,0',
             'max_classes' => 'nullable|numeric|min:1',
             'max_students_per_class' => 'nullable|numeric|min:1',
+            'max_gps_radius' => 'required|numeric|min:10',
         ]);
 
         $finalPrice = $this->priceType === 'free' ? 0 : ($this->priceType === 'contact' ? 0 : $this->price);
@@ -63,7 +63,7 @@ class PackageCreate extends Component
         $plan->config()->create([
             'max_classes' => $finalMaxClasses,
             'max_students_per_class' => $finalMaxStudents,
-            'max_gps_radius' => $this->hasGps ? 100 : 0,
+            'max_gps_radius' => $this->max_gps_radius,
             'can_export_excel' => $this->hasImport,
         ]);
 
