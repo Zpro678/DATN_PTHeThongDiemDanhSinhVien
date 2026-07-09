@@ -114,16 +114,7 @@
                         @endif
                     </div>
 
-                    <div class="admin-form-panel relative rounded-xl border p-5 md:col-span-2">
-                        <div class="mb-4">
-                            <label class="text-sm font-bold text-slate-800">Bán kính điểm danh GPS tối đa (mét)</label>
-                            <p class="text-xs text-slate-500 mt-1">Giới hạn khoảng cách tối đa học viên được phép điểm danh tính từ vị trí của lớp học.</p>
-                        </div>
-                        <div class="mt-3">
-                            <input type="number" wire:model="max_gps_radius" placeholder="VD: 100" class="w-full rounded-xl border border-slate-300 bg-transparent px-4 py-2.5 text-slate-900 transition-colors focus:border-blue-500 focus:ring-2 focus:ring-blue-500">
-                            @error('max_gps_radius') <span class="text-xs text-red-500">{{ $message }}</span> @enderror
-                        </div>
-                    </div>
+
                 </div>
             </div>
 

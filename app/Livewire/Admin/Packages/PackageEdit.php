@@ -26,8 +26,7 @@ class PackageEdit extends Component
     public $isUnlimitedStudents = false;
     public $max_students_per_class = 50;
     
-    public $max_gps_radius = 100;
-    
+
     public $hasImport = false;
 
     public function mount(Plan $package)
@@ -61,7 +60,7 @@ class PackageEdit extends Component
         $this->isUnlimitedStudents = $package->max_students_per_class >= 99999;
         $this->max_students_per_class = $this->isUnlimitedStudents ? 50 : $package->max_students_per_class;
         
-        $this->max_gps_radius = $package->max_gps_radius > 0 ? $package->max_gps_radius : 100;
+
         $this->hasImport = (bool) $package->can_export_excel;
     }
 
@@ -78,7 +77,7 @@ class PackageEdit extends Component
             'duration_days' => 'required|in:30,90,180,365,0',
             'max_classes' => 'nullable|numeric|min:1',
             'max_students_per_class' => 'nullable|numeric|min:1',
-            'max_gps_radius' => 'required|numeric|min:10',
+
         ]);
 
         $finalPrice = $this->priceType === 'free' ? 0 : ($this->priceType === 'contact' ? 0 : $this->price);
@@ -97,7 +96,7 @@ class PackageEdit extends Component
             [
                 'max_classes' => $finalMaxClasses,
                 'max_students_per_class' => $finalMaxStudents,
-                'max_gps_radius' => $this->max_gps_radius,
+
                 'can_export_excel' => $this->hasImport,
             ]
         );

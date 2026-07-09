@@ -32,18 +32,7 @@
         $priceLabel = $isFree ? '0đ' : number_format($package->price, 0, ',', '.') . 'đ';
         $durationLabel = $package->duration_days > 0 ? ($package->duration_days >= 365 ? round($package->duration_days / 365) . ' năm' : round($package->duration_days / 30) . ' tháng') : 'Vĩnh viễn';
         
-        $features = [
-            'Điểm danh bằng QR Code / Link',
-            'Quản lý chuyên cần & cảnh báo',
-        ];
-        
-        if ($package->max_gps_radius > 0) {
-            $features[] = 'Xác thực vị trí GPS';
-        }
-        
-        if ($package->can_export_excel) {
-            $features[] = 'Xuất báo cáo ra Excel';
-        }
+        $features = $package->features;
     @endphp
 
     <div class="mx-auto max-w-[1200px] space-y-6">
@@ -98,7 +87,7 @@
 
         <div class="space-y-6">
             <div class="space-y-6">
-                <div class="admin-grid-equal grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
+                <div class="admin-grid-equal grid grid-cols-1 gap-4 sm:grid-cols-3 lg:grid-cols-3">
                     <div class="admin-card admin-card-hover rounded-2xl border p-6">
                         <div class="mb-4 flex h-12 w-12 items-center justify-center rounded-xl {{ $iconBg }}">
                             <x-user.icon name="users" :size="24" />
@@ -115,14 +104,7 @@
                         <p class="text-3xl font-extrabold text-slate-900">{{ $package->max_classes >= 9999 ? 'Không giới hạn' : $package->max_classes }}</p>
                     </div>
 
-                    <div class="admin-card admin-card-hover rounded-2xl border p-6">
-                        <div class="mb-4 flex h-12 w-12 items-center justify-center rounded-xl {{ $iconBg }}">
-                            <x-user.icon name="map-pin" :size="24" />
-                        </div>
-                        <p class="mb-1 text-sm font-semibold uppercase tracking-wider text-slate-500">Bán kính GPS</p>
-                        <p class="text-3xl font-extrabold text-slate-900">{{ $package->max_gps_radius }}m</p>
-                    </div>
-                    
+
                     <div class="admin-card admin-card-hover rounded-2xl border p-6">
                         <div class="mb-4 flex h-12 w-12 items-center justify-center rounded-xl {{ $iconBg }}">
                             <x-user.icon name="user-check" :size="24" />

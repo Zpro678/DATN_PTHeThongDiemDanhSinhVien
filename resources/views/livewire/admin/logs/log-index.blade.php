@@ -14,17 +14,9 @@
                     <input type="text" wire:model.live.debounce.300ms="search" placeholder="Tìm kiếm hành động, bảng, user..." class="w-64 rounded-xl border border-slate-200 bg-white py-2 pl-10 pr-4 text-sm text-slate-900 shadow-sm transition-colors focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-500">
                 </div>
                 <div class="relative">
-                    <select wire:model.live="dateFilter" class="w-40 appearance-none rounded-xl border border-slate-200 bg-white py-2 pl-4 pr-10 text-sm text-slate-900 shadow-sm transition-colors focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-500">
-                        <option value="all">Tất cả thời gian</option>
-                        <option value="1_month">1 tháng gần nhất</option>
-                        <option value="3_months">3 tháng gần nhất</option>
-                        <option value="6_months">6 tháng gần nhất</option>
-                    </select>
-                    <x-user.icon name="chevron-down" :size="16" class="pointer-events-none absolute right-3 top-1/2 -translate-y-1/2 text-slate-400" />
+                    <input type="date" wire:model.live="selectedDate" class="w-44 appearance-none rounded-xl border border-slate-200 bg-white py-2 px-4 text-sm text-slate-900 shadow-sm transition-colors focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-500">
                 </div>
-                @if($search)
-                    <button wire:click="$set('search', '')" class="text-sm font-semibold text-blue-600 hover:text-blue-700 hover:underline">Xóa lọc</button>
-                @endif
+
             </div>
             </div>
         </div>

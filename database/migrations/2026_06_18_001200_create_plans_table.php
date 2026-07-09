@@ -26,7 +26,6 @@ return new class extends Migration
             $table->foreignId('plan_id')->unique()->constrained('plans')->cascadeOnDelete();
             $table->integer('max_classes');
             $table->integer('max_students_per_class')->default(50);
-            $table->integer('max_gps_radius')->default(100);
             $table->boolean('can_export_excel')->default(false);
         });
     }

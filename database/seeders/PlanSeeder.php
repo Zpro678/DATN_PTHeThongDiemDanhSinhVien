@@ -19,7 +19,6 @@ class PlanSeeder extends Seeder
                 'config' => [
                     'max_classes' => 2,
                     'max_students_per_class' => 50,
-                    'max_gps_radius' => 50,
                     'can_export_excel' => false,
                 ],
             ],
@@ -32,7 +31,6 @@ class PlanSeeder extends Seeder
                 'config' => [
                     'max_classes' => 10,
                     'max_students_per_class' => 100,
-                    'max_gps_radius' => 100,
                     'can_export_excel' => true,
                 ],
             ],
@@ -45,7 +43,6 @@ class PlanSeeder extends Seeder
                 'config' => [
                     'max_classes' => 9999,
                     'max_students_per_class' => 9999,
-                    'max_gps_radius' => 500,
                     'can_export_excel' => true,
                 ],
             ],
