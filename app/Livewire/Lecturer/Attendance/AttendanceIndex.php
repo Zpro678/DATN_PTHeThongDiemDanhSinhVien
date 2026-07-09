@@ -107,6 +107,11 @@ class AttendanceIndex extends Component
         }
 
         $courseClass = \App\Models\CourseClass::findOrFail($this->quickClassId);
+
+        if ($courseClass->members()->where('status', \App\Models\ClassMember::STATUS_ACTIVE)->count() === 0) {
+            $this->addError('quickClassId', 'Vui lòng import danh sách lớp trước khi điểm danh.');
+            return;
+        }
         
         $date = now()->toDateString();
         $startTime = now()->format('H:i');
@@ -180,8 +185,13 @@ class AttendanceIndex extends Component
 
         $this->validate($rules, $messages);
         
+        $courseClass = \App\Models\CourseClass::findOrFail($this->quickClassId);
+        if ($courseClass->members()->where('status', \App\Models\ClassMember::STATUS_ACTIVE)->count() === 0) {
+            $this->addError('quickClassId', 'Vui lòng import danh sách lớp trước khi điểm danh.');
+            return;
+        }
+        
         if ($this->quickMeetingId === 'NEW') {
-            $courseClass = \App\Models\CourseClass::findOrFail($this->quickClassId);
             $date = now()->toDateString();
             $startTime = now()->format('H:i');
             $endTime = $this->meetingEndTime ?: now()->addMinutes(120)->format('H:i');
@@ -206,11 +216,6 @@ class AttendanceIndex extends Component
 
         if (! $meeting->canAddSession()) {
             $this->addError('quickMeetingId', 'Buổi điểm danh đã kết thúc, không thể thêm phiên mới.');
-            return;
-        }
-
-        if ($meeting->courseClass->members()->where('status', \App\Models\ClassMember::STATUS_ACTIVE)->count() === 0) {
-            $this->addError('quickClassId', 'Vui lòng import danh sách lớp trước khi điểm danh.');
             return;
         }
 

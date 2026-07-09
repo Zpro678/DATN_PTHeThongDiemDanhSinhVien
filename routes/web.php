@@ -144,6 +144,7 @@ Route::middleware(['auth', 'verified', 'user.route'])->group(function () {
         Route::get('/lecturer/classes/{courseClass}', App\Livewire\Lecturer\ClassShow::class)->name('lecturer.classes.show');
         Route::get('/lecturer/classes/{courseClass}/settings', ClassSettings::class)->name('lecturer.classes.settings');
         Route::get('/lecturer/classes/{courseClass}/pending-members', \App\Livewire\Lecturer\ClassPendingMembers::class)->name('lecturer.classes.pending-members');
+        Route::get('/lecturer/classes/{courseClass}/attendance/export', \App\Http\Controllers\Lecturer\ClassAttendanceHistoryExportController::class)->name('lecturer.classes.attendance.export');
         Route::get('/lecturer/classes/{courseClass}/attendance', \App\Livewire\Lecturer\ClassAttendanceHistory::class)->name('lecturer.classes.attendance');
         Route::get('/lecturer/classes/{class_id}/statistics', ClassStatistics::class)->name('lecturer.class.statistics');
         Route::get('/lecturer/attendance', AttendanceIndex::class)->name('lecturer.attendance.index');

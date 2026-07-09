@@ -113,6 +113,17 @@
                         </div>
                         @endif
                     </div>
+                    
+                    <div class="admin-form-panel relative rounded-xl border p-5 md:col-span-2">
+                        <div class="mb-4">
+                            <label class="text-sm font-bold text-slate-800">Bán kính điểm danh GPS tối đa (mét)</label>
+                            <p class="text-xs text-slate-500 mt-1">Giới hạn khoảng cách tối đa học viên được phép điểm danh tính từ vị trí của lớp học.</p>
+                        </div>
+                        <div class="mt-3">
+                            <input type="number" wire:model="max_gps_radius" placeholder="VD: 100" class="w-full rounded-xl border border-slate-300 bg-transparent px-4 py-2.5 text-slate-900 transition-colors focus:border-blue-500 focus:ring-2 focus:ring-blue-500">
+                            @error('max_gps_radius') <span class="text-xs text-red-500">{{ $message }}</span> @enderror
+                        </div>
+                    </div>
                 </div>
             </div>
 
@@ -124,17 +135,6 @@
                     <h2 class="text-lg font-bold text-slate-900">Bật / Tắt tính năng</h2>
                 </div>
                 <div class="divide-y divide-slate-100">
-                    <div class="flex items-center justify-between p-6 transition-colors hover:bg-blue-50/40">
-                        <div>
-                            <p class="text-base font-bold text-slate-800">Xác thực vị trí GPS</p>
-                            <p class="mt-1 text-sm text-slate-500">Cho phép giới hạn bán kính điểm danh của học viên quanh vị trí lớp học.</p>
-                        </div>
-                        <label class="relative ml-4 inline-flex shrink-0 cursor-pointer items-center">
-                            <input type="checkbox" wire:model="hasGps" class="peer sr-only">
-                            <div class="peer h-7 w-14 rounded-full bg-slate-300 after:absolute after:left-[2px] after:top-[2px] after:h-6 after:w-6 after:rounded-full after:border after:border-slate-300 after:bg-white after:transition-all after:content-[''] peer-checked:bg-emerald-500 peer-checked:after:translate-x-full peer-checked:after:border-white"></div>
-                        </label>
-                    </div>
-                    
                     <div class="flex items-center justify-between p-6 transition-colors hover:bg-blue-50/40">
                         <div>
                             <p class="text-base font-bold text-slate-800">Xuất báo cáo ra Excel</p>

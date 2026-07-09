@@ -32,11 +32,19 @@ class AppServiceProvider extends ServiceProvider
 
                 $mailDriver = \App\Models\Setting::get('mail_driver');
                 if ($mailDriver) {
+                    $mailEncryption = \App\Models\Setting::get('mail_encryption');
+                    $mailScheme = match ($mailEncryption) {
+                        'ssl' => 'smtps',
+                        'tls' => 'smtp',
+                        default => config("mail.mailers.{$mailDriver}.scheme"),
+                    };
+
                     config([
                         'mail.default' => $mailDriver,
                         'mail.mailers.' . $mailDriver . '.host' => \App\Models\Setting::get('mail_host', config("mail.mailers.{$mailDriver}.host")),
                         'mail.mailers.' . $mailDriver . '.port' => \App\Models\Setting::get('mail_port', config("mail.mailers.{$mailDriver}.port")),
-                        'mail.mailers.' . $mailDriver . '.encryption' => \App\Models\Setting::get('mail_encryption', config("mail.mailers.{$mailDriver}.encryption")),
+                        'mail.mailers.' . $mailDriver . '.scheme' => $mailScheme ?: null,
+                        'mail.mailers.' . $mailDriver . '.encryption' => $mailEncryption ?: null,
                         'mail.mailers.' . $mailDriver . '.username' => \App\Models\Setting::get('mail_username', config("mail.mailers.{$mailDriver}.username")),
                         'mail.mailers.' . $mailDriver . '.password' => \App\Models\Setting::get('mail_password', config("mail.mailers.{$mailDriver}.password")),
                         'mail.from.address' => \App\Models\Setting::get('mail_from_address', config('mail.from.address')),
@@ -102,6 +110,19 @@ class AppServiceProvider extends ServiceProvider
             if ($event->channel === 'database' && $event->notifiable instanceof \App\Models\User) {
                 event(new \App\Events\NotificationReceived((int) $event->notifiable->getKey()));
             }
+        });
+
+        \Illuminate\Support\Facades\View::composer('layouts.user', function ($view) {
+            $warningCount = 0;
+
+            if (auth()->check()) {
+                $studentDashboard = app(\App\Services\StudentsService::class)
+                    ->getDashboardForStudent((int) auth()->id());
+
+                $warningCount = (int) ($studentDashboard['stats']['warning_count'] ?? 0);
+            }
+
+            $view->with('sidebarWarningCount', $warningCount);
         });
     }
 }

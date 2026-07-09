@@ -32,9 +32,9 @@
                 <button type="button" wire:click="addManualSession" class="group inline-flex items-center justify-center gap-2 rounded-full bg-emerald-600 px-6 py-2.5 text-sm font-bold text-white shadow-lg shadow-emerald-600/30 transition-all duration-300 hover:-translate-y-0.5 hover:bg-emerald-700 hover:shadow-xl hover:shadow-emerald-600/40">
                     <x-user.icon name="check-square" :size="18" class="transition-transform group-hover:scale-110" />Thêm thủ công
                 </button>
-                <a href="{{ route('lecturer.attendance.qr.create') }}?meeting={{ $meeting->id }}" class="group inline-flex items-center justify-center gap-2 rounded-full bg-blue-600 px-6 py-2.5 text-sm font-bold text-white shadow-lg shadow-blue-600/30 transition-all duration-300 hover:-translate-y-0.5 hover:bg-blue-700 hover:shadow-xl hover:shadow-blue-600/40">
+                <button type="button" wire:click="$dispatch('open-quick-attendance-modal', { type: 'qr', meetingId: {{ $meeting->id }} })" class="group inline-flex items-center justify-center gap-2 rounded-full bg-blue-600 px-6 py-2.5 text-sm font-bold text-white shadow-lg shadow-blue-600/30 transition-all duration-300 hover:-translate-y-0.5 hover:bg-blue-700 hover:shadow-xl hover:shadow-blue-600/40">
                     <x-user.icon name="qr-code" :size="18" class="transition-transform group-hover:scale-110" />Thêm QR
-                </a>
+                </button>
             @else
                 <span class="inline-flex items-center gap-1.5 rounded-full bg-sky-50 px-4 py-2 text-xs font-bold text-sky-700 ring-1 ring-inset ring-sky-600/20">
                     <x-user.icon name="lock" :size="15" />Buổi đã kết thúc
@@ -105,5 +105,7 @@
             </table>
         </div>
     </section>
+
+    <livewire:lecturer.attendance.quick-attendance-modal />
 
 </div>

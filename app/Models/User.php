@@ -41,6 +41,7 @@ class User extends Authenticatable implements MustVerifyEmail
         'password', // Mật khẩu đã hash.
         'avatar', // URL ảnh đại diện.
         'status', // Trạng thái tài khoản active/blocked.
+        'notification_preferences', // Tùy chọn kênh nhận thông báo.
     ];
 
     /**
@@ -63,7 +64,45 @@ class User extends Authenticatable implements MustVerifyEmail
         return [
             'email_verified_at' => 'datetime', // Thời gian xác thực email.
             'password' => 'hashed', // Tự động hash mật khẩu.
+            'notification_preferences' => 'array',
         ];
+    }
+
+    /**
+     * Kênh mặc định: luôn bật thông báo trong ứng dụng, email là opt-in.
+     *
+     * @return array<string, bool>
+     */
+    public static function defaultNotificationPreferences(): array
+    {
+        return [
+            'database' => true,
+            'mail' => false,
+        ];
+    }
+
+    /**
+     * @return array<string, bool>
+     */
+    public function notificationPreferences(): array
+    {
+        return array_merge(
+            self::defaultNotificationPreferences(),
+            $this->notification_preferences ?? [],
+        );
+    }
+
+    public function wantsNotificationChannel(string $channel): bool
+    {
+        $channel = $channel === 'broadcast' ? 'database' : $channel;
+
+        if ($channel === 'mail' && blank($this->email)) {
+            return false;
+        }
+
+        $preferences = $this->notificationPreferences();
+
+        return (bool) ($preferences[$channel] ?? false);
     }
 
     /**

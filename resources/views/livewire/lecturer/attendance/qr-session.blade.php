@@ -1,5 +1,6 @@
 @php
     $isClosed = $session->status === 'closed';
+    $isAttendanceLocked = ! $session->meeting || $session->meeting->status === 'closed' || $session->meeting->isExpired();
     $selectedSubject = $session->courseClass->join_key;
     $sessionDateLabel = $session->date->format('d/m/Y');
     // "Phiên còn mở" tính theo GIỜ KẾT THÚC BUỔI (không phải hạn token QR — token nay xoay theo giây).

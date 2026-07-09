@@ -43,10 +43,36 @@ class MeetingSummary extends Component
     {
         $summaries = $this->meeting->summaries()->get();
 
+        // 1. Nạp gốc từ DB trước
         foreach ($summaries as $summary) {
             $this->draftStatuses[$summary->class_member_id] = $summary->status;
             $this->draftNotes[$summary->class_member_id] = $summary->note ?? '';
         }
+
+        // 2. Ghi đè bằng Session nếu có
+        if (session()->has('draft_summary_' . $this->meeting->id . '_has_draft')) {
+            $sessionStatuses = session()->get('draft_summary_' . $this->meeting->id . '_statuses', []);
+            $sessionNotes = session()->get('draft_summary_' . $this->meeting->id . '_notes', []);
+            
+            foreach ($sessionStatuses as $id => $st) {
+                $this->draftStatuses[$id] = $st;
+            }
+            foreach ($sessionNotes as $id => $nt) {
+                $this->draftNotes[$id] = $nt;
+            }
+        }
+    }
+
+    public function updatedDraftStatuses()
+    {
+        session()->put('draft_summary_' . $this->meeting->id . '_statuses', $this->draftStatuses);
+        session()->put('draft_summary_' . $this->meeting->id . '_has_draft', true);
+    }
+
+    public function updatedDraftNotes()
+    {
+        session()->put('draft_summary_' . $this->meeting->id . '_notes', $this->draftNotes);
+        session()->put('draft_summary_' . $this->meeting->id . '_has_draft', true);
     }
 
     public function setStatus(int $memberId, string $status): void
@@ -55,6 +81,7 @@ class MeetingSummary extends Component
 
         if (array_key_exists($memberId, $this->draftStatuses)) {
             $this->draftStatuses[$memberId] = $status;
+            $this->updatedDraftStatuses();
         }
     }
 
@@ -86,6 +113,12 @@ class MeetingSummary extends Component
         // Chỉ gửi cho học viên có trạng thái tổng kết vừa thay đổi (tránh gửi trùng).
         app(NotificationService::class)->notifyMeetingResults($this->meeting);
 
+        session()->forget([
+            'draft_summary_' . $this->meeting->id . '_statuses',
+            'draft_summary_' . $this->meeting->id . '_notes',
+            'draft_summary_' . $this->meeting->id . '_has_draft'
+        ]);
+
         $this->isLocked = true;
         $this->dispatch('toast', message: 'Đã lưu tổng kết và gửi thông báo cho học viên.', type: 'success');
     }
@@ -108,6 +141,11 @@ class MeetingSummary extends Component
 
         $this->draftStatuses = [];
         $this->draftNotes = [];
+        session()->forget([
+            'draft_summary_' . $this->meeting->id . '_statuses',
+            'draft_summary_' . $this->meeting->id . '_notes',
+            'draft_summary_' . $this->meeting->id . '_has_draft'
+        ]);
         $this->loadDrafts();
 
         $this->dispatch('toast', message: 'Đã tính lại tổng kết từ các phiên điểm danh.', type: 'success');

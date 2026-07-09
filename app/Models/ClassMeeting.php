@@ -150,8 +150,8 @@ class ClassMeeting extends Model
             'status' => $status,
         ], $overrides));
 
-        // Phiên thủ công mặc định "Có mặt" (giảng viên chỉ sửa ngoại lệ); phiên QR giữ "chưa điểm danh".
-        $defaultStatus = empty($overrides['qr_token']) ? 'present' : 'pending';
+        // Phiên thủ công mặc định "Vắng" (giảng viên đánh dấu ai CÓ MẶT); phiên QR giữ "chưa điểm danh".
+        $defaultStatus = empty($overrides['qr_token']) ? 'absent' : 'pending';
 
         $this->courseClass->members()->where('status', ClassMember::STATUS_ACTIVE)->get()->each(fn ($member) => AttendanceRecord::query()->firstOrCreate([
             'class_session_id' => $session->id,

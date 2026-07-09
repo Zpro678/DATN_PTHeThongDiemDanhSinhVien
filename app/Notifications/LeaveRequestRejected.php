@@ -3,6 +3,7 @@
 namespace App\Notifications;
 
 use App\Models\LeaveRequest;
+use App\Notifications\Traits\ChecksNotificationPreferences;
 use Illuminate\Bus\Queueable;
 use Illuminate\Contracts\Broadcasting\ShouldBroadcast;
 use Illuminate\Notifications\Messages\BroadcastMessage;
@@ -11,7 +12,10 @@ use Illuminate\Broadcasting\PrivateChannel;
 
 class LeaveRequestRejected extends Notification implements ShouldBroadcast
 {
-    use Queueable;
+    use Queueable, ChecksNotificationPreferences;
+
+    /** @var array<int, string> */
+    public array $supportedChannels = ['database', 'broadcast', 'mail'];
 
     public function __construct(public LeaveRequest $leaveRequest) {}
 

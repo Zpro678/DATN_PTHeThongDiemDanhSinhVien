@@ -2,9 +2,21 @@
     <div>
         <div class="mb-1 flex items-center justify-between">
             <h2 class="text-lg font-bold text-slate-900">Cấu hình Mail Server (SMTP)</h2>
-            <button type="button" x-data @click="$dispatch('open-test-mail-modal')" class="text-sm font-semibold text-blue-600 hover:underline">Gửi mail test</button>
+            <div class="flex items-center gap-3">
+                <button type="button" wire:click="applyGmailPreset" class="text-sm font-semibold text-emerald-600 hover:underline">Dùng cấu hình Gmail</button>
+                <button type="button" x-data @click="$dispatch('open-test-mail-modal')" class="text-sm font-semibold text-blue-600 hover:underline">Gửi mail test</button>
+            </div>
         </div>
         <p class="mb-6 text-sm text-slate-500">Thiết lập kết nối để hệ thống gửi các thông báo tự động tới người dùng.</p>
+
+        <div @class([
+            'mb-6 rounded-xl border p-4 text-sm',
+            'border-amber-200 bg-amber-50 text-amber-800' => $deliveryStatus['warning'] ?? false,
+            'border-emerald-200 bg-emerald-50 text-emerald-800' => ! ($deliveryStatus['warning'] ?? false),
+        ])>
+            <p class="font-bold">{{ $deliveryStatus['title'] ?? 'Trạng thái gửi email' }}</p>
+            <p class="mt-1 font-medium">{{ $deliveryStatus['message'] ?? '' }}</p>
+        </div>
 
         @if (session()->has('email_success'))
             <div class="mb-6 rounded-xl border border-emerald-200 bg-emerald-50 p-4 font-medium text-emerald-700 text-sm">
@@ -29,19 +41,19 @@
                     <label class="block text-sm font-semibold text-slate-700">Mail Driver</label>
                     <select wire:model="mail_driver" class="w-full rounded-xl border border-slate-200 bg-slate-50 px-4 py-2.5 text-slate-900 transition-colors focus:border-blue-500 focus:ring-2 focus:ring-blue-500">
                         <option value="smtp">SMTP</option>
-                        <option value="mailgun">Mailgun</option>
-                        <option value="ses">Amazon SES</option>
                     </select>
                     @error('mail_driver') <span class="text-xs text-red-500">{{ $message }}</span> @enderror
                 </div>
                 <div class="space-y-2">
                     <label class="block text-sm font-semibold text-slate-700">Mail Host</label>
                     <input type="text" wire:model="mail_host" placeholder="smtp.gmail.com" class="w-full rounded-xl border border-slate-200 bg-slate-50 px-4 py-2.5 text-slate-900 transition-colors focus:border-blue-500 focus:ring-2 focus:ring-blue-500">
+                    <p class="text-xs font-medium text-slate-500">Gmail: smtp.gmail.com</p>
                     @error('mail_host') <span class="text-xs text-red-500">{{ $message }}</span> @enderror
                 </div>
                 <div class="space-y-2">
                     <label class="block text-sm font-semibold text-slate-700">Mail Port</label>
                     <input type="text" wire:model="mail_port" placeholder="465" class="w-full rounded-xl border border-slate-200 bg-slate-50 px-4 py-2.5 text-slate-900 transition-colors focus:border-blue-500 focus:ring-2 focus:ring-blue-500">
+                    <p class="text-xs font-medium text-slate-500">Gmail khuyến nghị: 587 với TLS.</p>
                     @error('mail_port') <span class="text-xs text-red-500">{{ $message }}</span> @enderror
                 </div>
                 <div class="space-y-2">
@@ -56,6 +68,7 @@
                 <div class="space-y-2">
                     <label class="block text-sm font-semibold text-slate-700">Mail Username</label>
                     <input type="text" wire:model="mail_username" placeholder="your_email@gmail.com" class="w-full rounded-xl border border-slate-200 bg-slate-50 px-4 py-2.5 text-slate-900 transition-colors focus:border-blue-500 focus:ring-2 focus:ring-blue-500">
+                    <p class="text-xs font-medium text-slate-500">Email Gmail dùng để gửi.</p>
                     @error('mail_username') <span class="text-xs text-red-500">{{ $message }}</span> @enderror
                 </div>
                 <div class="space-y-2" x-data="{ show: false }">
@@ -67,6 +80,7 @@
                             <x-user.icon name="eye-off" :size="20" x-show="show" style="display: none;" />
                         </button>
                     </div>
+                    <p class="text-xs font-medium text-slate-500">Dùng Gmail App Password 16 ký tự, không dùng mật khẩu đăng nhập Gmail thường.</p>
                     @error('mail_password') <span class="text-xs text-red-500">{{ $message }}</span> @enderror
                 </div>
                 <div class="space-y-2">

@@ -35,6 +35,13 @@
                         if (isset($sameDeviceCount) && $sameDeviceCount > 0) {
                             $statusOptions[] = ['value' => 'same_device', 'label' => 'Điểm danh cùng 1 máy'];
                         }
+
+                        $statusRadioClasses = [
+                            'present' => 'peer-checked:border-emerald-700 peer-checked:bg-emerald-600 peer-checked:text-white peer-checked:shadow-md peer-checked:ring-2 peer-checked:ring-emerald-600/20',
+                            'absent' => 'peer-checked:border-rose-700 peer-checked:bg-rose-600 peer-checked:text-white peer-checked:shadow-md peer-checked:ring-2 peer-checked:ring-rose-600/20',
+                            'late' => 'peer-checked:border-amber-600 peer-checked:bg-amber-500 peer-checked:text-white peer-checked:shadow-md peer-checked:ring-2 peer-checked:ring-amber-500/20',
+                            'excused' => 'peer-checked:border-blue-700 peer-checked:bg-blue-600 peer-checked:text-white peer-checked:shadow-md peer-checked:ring-2 peer-checked:ring-blue-600/20',
+                        ];
                     @endphp
                     <x-custom-select wire:change="setStatusFilter($event.target.value)" placeholder="" :value="$statusFilter" :options="$statusOptions" />
                 </div>
@@ -43,7 +50,7 @@
                     <button
                         type="button"
                         wire:click="markAllPresent"
-                        @disabled($isClosed)
+                        @disabled($isAttendanceLocked ?? $isClosed)
                         class="inline-flex shrink-0 items-center justify-center gap-2 rounded-xl bg-white border border-slate-200 px-5 py-2.5 text-sm font-medium text-slate-600 transition hover:bg-slate-50 hover:text-slate-800 disabled:opacity-50"
                     >
                         <x-user.icon name="check-square" :size="16" />
@@ -68,7 +75,8 @@
             <tbody class="divide-y divide-slate-50 text-[15px]">
                 @forelse ($records as $record)
                     @php
-                        $current = $draftStatuses[$record->id] ?? $record->status;
+                        $usesDraftStatuses = $this instanceof \App\Livewire\Lecturer\Attendance\ManualAttendanceSession;
+                        $current = $usesDraftStatuses ? ($draftStatuses[$record->id] ?? $record->status) : $record->status;
                         $statusLabel = $statusMeta[$current]['short'] ?? 'Chưa ĐD';
                         $statusColor = $statusMeta[$current]['text'] ?? 'text-slate-400';
                         if ($current == 'pending') $statusLabel = 'Chưa điểm danh';
@@ -101,26 +109,28 @@
                             </div>
                         </td>
                         <td class="px-6 py-5">
-                            <div class="flex items-center gap-2">
+                            <div class="inline-flex items-center gap-1 rounded-xl border border-slate-200 bg-slate-100/80 p-1" role="radiogroup" aria-label="Trạng thái điểm danh của {{ $record->classMember?->full_name ?? 'học viên' }}">
                                 @foreach (['present', 'absent', 'late', 'excused'] as $option)
-                                    @if($current === $option)
-                                        <button
-                                            type="button"
-                                            disabled
-                                            class="w-[84px] rounded-lg border py-2 text-center text-[13px] font-semibold transition cursor-default {{ $statusMeta[$option]['activeBtn'] }} shadow-sm"
+                                    @php $inputId = "attendance-status-{$session->id}-{$record->id}-{$option}"; @endphp
+                                    <div class="relative">
+                                        <input
+                                            id="{{ $inputId }}"
+                                            type="radio"
+                                            name="attendance_status_{{ $record->id }}"
+                                            value="{{ $option }}"
+                                            wire:model="draftStatuses.{{ $record->id }}"
+                                            wire:change="setStatus({{ $record->id }}, '{{ $option }}')"
+                                            @checked($current === $option)
+                                            @disabled($isAttendanceLocked ?? $isClosed)
+                                            class="peer sr-only"
+                                        >
+                                        <label
+                                            for="{{ $inputId }}"
+                                            class="flex w-[84px] cursor-pointer select-none items-center justify-center rounded-lg border border-transparent bg-white px-2.5 py-2 text-center text-[13px] font-semibold text-slate-700 transition hover:border-slate-300 hover:bg-slate-50 hover:text-black peer-focus-visible:outline peer-focus-visible:outline-2 peer-focus-visible:outline-offset-2 peer-focus-visible:outline-blue-500 peer-disabled:cursor-not-allowed peer-disabled:opacity-60 {{ $statusRadioClasses[$option] }}"
                                         >
                                             {{ $statusMeta[$option]['short'] }}
-                                        </button>
-                                    @else
-                                        <button
-                                            type="button"
-                                            wire:click="setStatus({{ $record->id }}, '{{ $option }}')"
-                                            @disabled($isClosed)
-                                            class="w-[84px] rounded-lg border border-slate-200 bg-white py-2 text-center text-[13px] font-medium text-slate-800 hover:bg-slate-50 hover:text-black hover:border-slate-300 disabled:opacity-50 transition"
-                                        >
-                                            {{ $statusMeta[$option]['short'] }}
-                                        </button>
-                                    @endif
+                                        </label>
+                                    </div>
                                 @endforeach
                             </div>
                         </td>
@@ -129,8 +139,8 @@
                                 type="text"
                                 wire:model="draftNotes.{{ $record->id }}"
                                 placeholder="Nhập ghi chú..."
-                                @disabled($isClosed)
-                                class="w-full rounded-lg border border-slate-200 bg-slate-50/50 px-3.5 py-2.5 text-[14px] text-slate-700 placeholder-slate-400 outline-none transition focus:bg-white focus:border-blue-300 focus:ring-2 focus:ring-blue-100 disabled:opacity-60"
+                                @disabled($isAttendanceLocked ?? $isClosed)
+                                class="w-full rounded-lg border border-transparent bg-transparent px-3.5 py-2.5 text-[14px] text-slate-700 placeholder-slate-400 outline-none transition hover:bg-slate-50 focus:bg-white focus:border-blue-300 focus:ring-2 focus:ring-blue-100 disabled:opacity-60"
                             >
                         </td>
                     </tr>

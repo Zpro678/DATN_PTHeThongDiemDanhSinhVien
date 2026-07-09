@@ -25,15 +25,15 @@ class DemoSeeder extends Seeder
     public function run(): void
     {
         // Skip seeding if demo data already exists
-        if (User::where('email', 'admin@example.com')->exists()) {
+        if (User::where('email', 'superadmin@example.com')->exists()) {
             $this->command->info('Demo data already exists. Skipping...');
             return;
         }
 
         // 1) Tài khoản cố định để kiểm thử thủ công.
-        User::factory()->superAdmin()->create(['name' => 'Quản trị hệ thống', 'email' => 'admin@example.com']);
+        User::factory()->superAdmin()->create(['name' => 'Quản trị hệ thống', 'email' => 'superadmin@example.com']);
 
-        $teacher = User::factory()->create(['name' => 'Giảng viên Demo', 'email' => 'teacher@example.com']);
+        $teacher = User::factory()->create(['name' => 'Giảng viên Demo', 'email' => 'minhhieut947@gmail.com']);
 
         $students = collect(range(1, 10))->map(fn ($i) => User::factory()->create([
             'name' => 'Sinh viên '.$i,

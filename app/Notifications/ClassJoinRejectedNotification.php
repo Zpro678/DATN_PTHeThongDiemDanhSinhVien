@@ -3,16 +3,18 @@
 namespace App\Notifications;
 
 use App\Models\CourseClass;
+use App\Notifications\Traits\ChecksNotificationPreferences;
 use Illuminate\Bus\Queueable;
-use Illuminate\Contracts\Queue\ShouldQueue;
-use Illuminate\Notifications\Messages\MailMessage;
 use Illuminate\Notifications\Notification;
 
 class ClassJoinRejectedNotification extends Notification
 {
-    use Queueable;
+    use Queueable, ChecksNotificationPreferences;
 
     public CourseClass $courseClass;
+
+    /** @var array<int, string> */
+    public array $supportedChannels = ['database', 'mail'];
 
     /**
      * Create a new notification instance.

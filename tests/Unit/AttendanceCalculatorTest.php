@@ -74,10 +74,10 @@ class AttendanceCalculatorTest extends TestCase
         $this->assertSame('absent', AttendanceCalculator::consolidateStatuses(['late', 'absent'])['status']);
     }
 
-    public function test_pending_interpreted_by_session_type(): void
+    public function test_pending_interpreted_as_absent_for_both_session_types(): void
     {
-        $this->assertSame('absent', AttendanceCalculator::interpretStatus('pending', true));   // QR chưa quét
-        $this->assertSame('present', AttendanceCalculator::interpretStatus('pending', false)); // thủ công chưa đánh dấu
+        $this->assertSame('absent', AttendanceCalculator::interpretStatus('pending', true));  // QR chưa quét
+        $this->assertSame('absent', AttendanceCalculator::interpretStatus('pending', false)); // thủ công chưa đánh dấu -> VẮNG
     }
 
     /**

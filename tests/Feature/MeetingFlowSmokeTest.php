@@ -2,21 +2,30 @@
 
 namespace Tests\Feature;
 
+use App\Exports\ClassAttendanceHistoryExport;
 use App\Livewire\Lecturer\Attendance\AttendanceCreate;
 use App\Livewire\Lecturer\Attendance\AttendanceIndex;
 use App\Livewire\Lecturer\Attendance\ManualAttendanceSession;
 use App\Livewire\Lecturer\Attendance\MeetingSessions;
 use App\Livewire\Lecturer\Attendance\MeetingSummary;
+use App\Livewire\Lecturer\Attendance\QuickAttendanceModal;
 use App\Livewire\Lecturer\Attendance\QrAttendanceCreate;
+use App\Livewire\Lecturer\Attendance\QrAttendanceSession;
+use App\Livewire\Lecturer\ClassAttendanceHistory;
+use App\Livewire\Lecturer\ClassShow as LecturerClassShow;
 use App\Models\AttendanceRecord;
 use App\Models\ClassMeeting;
 use App\Models\ClassMember;
 use App\Models\ClassSession;
 use App\Models\CourseClass;
+use App\Models\Plan;
+use App\Models\Subscription;
 use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Support\Str;
 use Illuminate\Support\Facades\URL;
 use Livewire\Livewire;
+use Maatwebsite\Excel\Facades\Excel;
 use Tests\TestCase;
 
 class MeetingFlowSmokeTest extends TestCase
@@ -84,6 +93,22 @@ class MeetingFlowSmokeTest extends TestCase
             ->assertOk()
             ->assertSee('Danh sách phiên')
             ->assertSee('Lần 1');
+    }
+
+    public function test_class_show_renders_with_shared_quick_modal(): void
+    {
+        $owner = User::factory()->create();
+        URL::defaults(['ma_user' => $owner->id]);
+        $courseClass = CourseClass::factory()->create(['owner_user_id' => $owner->id]);
+        ClassMember::factory()->create([
+            'class_id' => $courseClass->id,
+            'status' => ClassMember::STATUS_ACTIVE,
+        ]);
+
+        Livewire::actingAs($owner)
+            ->test(LecturerClassShow::class, ['courseClass' => $courseClass])
+            ->assertOk()
+            ->assertSee('QR');
     }
 
     public function test_meeting_summary_keeps_explicit_late_status(): void
@@ -168,6 +193,30 @@ class MeetingFlowSmokeTest extends TestCase
         $this->assertNotNull($newSession->qr_token);
     }
 
+    public function test_quick_modal_adds_qr_session_to_current_meeting(): void
+    {
+        [$owner, , $meeting] = $this->makeMeetingWithClosedSession();
+        // Buổi còn trong giờ (ngày mai) nên modal được phép tạo thêm phiên QR.
+        $meeting->update(['date' => now()->addDay()->toDateString(), 'status' => 'active']);
+
+        Livewire::actingAs($owner)
+            ->test(QuickAttendanceModal::class)
+            ->call('open', 'qr', null, $meeting->id)
+            ->assertSet('showQuickStart', true)
+            ->assertSet('lockClassSelector', true)
+            ->assertSet('lockMeetingSelector', true)
+            ->assertSet('quickMeetingId', (string) $meeting->id)
+            ->set('gpsEnabled', false)
+            ->call('startQuick')
+            ->assertHasNoErrors();
+
+        $meeting->refresh();
+        $this->assertSame(2, $meeting->sessions()->count());
+        $newSession = $meeting->sessions()->latest('id')->first();
+        $this->assertNotNull($newSession->qr_token);
+        $this->assertSame('Phiên 2', $newSession->name);
+    }
+
     public function test_cannot_add_session_after_meeting_ended(): void
     {
         [$owner, , $meeting] = $this->makeMeetingWithClosedSession();
@@ -213,5 +262,168 @@ class MeetingFlowSmokeTest extends TestCase
         $component->call('saveSession')->assertHasNoErrors();
         $this->assertSame('present', $record->fresh()->status);
         $this->assertSame('active', $session->fresh()->status);
+    }
+
+    public function test_closed_manual_session_can_be_edited_while_meeting_is_still_open(): void
+    {
+        [$owner, , $meeting] = $this->makeMeetingWithClosedSession();
+        $meeting->update([
+            'date' => now()->addDay()->toDateString(),
+            'status' => 'active',
+        ]);
+
+        $session = $meeting->sessions()->firstOrFail();
+        $record = AttendanceRecord::query()
+            ->where('class_session_id', $session->id)
+            ->where('status', 'absent')
+            ->firstOrFail();
+
+        Livewire::actingAs($owner)
+            ->test(ManualAttendanceSession::class, ['session' => $session->id])
+            ->call('setStatus', $record->id, 'present')
+            ->call('saveSession')
+            ->assertHasNoErrors();
+
+        $this->assertSame('present', $record->fresh()->status);
+        $this->assertDatabaseHas('meeting_summaries', [
+            'meeting_id' => $meeting->id,
+            'class_member_id' => $record->class_member_id,
+            'status' => 'present',
+            'auto_status' => 'present',
+        ]);
+    }
+
+    public function test_closed_qr_session_can_be_corrected_while_meeting_is_still_open(): void
+    {
+        [$owner, , $meeting] = $this->makeMeetingWithClosedSession();
+        $meeting->update([
+            'date' => now()->addDay()->toDateString(),
+            'status' => 'active',
+        ]);
+
+        $session = $meeting->sessions()->firstOrFail();
+        $session->update([
+            'qr_token' => ClassSession::generateQrToken(),
+            'qr_refresh_rate' => 10,
+            'status' => 'closed',
+        ]);
+        $record = AttendanceRecord::query()
+            ->where('class_session_id', $session->id)
+            ->where('status', 'absent')
+            ->firstOrFail();
+
+        Livewire::actingAs($owner)
+            ->test(QrAttendanceSession::class, ['session' => $session->id])
+            ->call('setStatus', $record->id, 'late')
+            ->assertHasNoErrors();
+
+        $this->assertSame('late', $record->fresh()->status);
+        $this->assertDatabaseHas('meeting_summaries', [
+            'meeting_id' => $meeting->id,
+            'class_member_id' => $record->class_member_id,
+            'status' => 'late',
+            'auto_status' => 'late',
+        ]);
+    }
+
+    public function test_class_attendance_history_renders_with_shared_report_data(): void
+    {
+        [$owner, $courseClass] = $this->makeMeetingWithClosedSession();
+
+        Livewire::actingAs($owner)
+            ->test(ClassAttendanceHistory::class, ['courseClass' => $courseClass])
+            ->assertOk()
+            ->assertSee('An')
+            ->assertSee('SV01');
+    }
+
+    public function test_class_attendance_history_export_route_downloads_file(): void
+    {
+        [$owner, $courseClass] = $this->makeMeetingWithClosedSession();
+        $plan = Plan::factory()->withConfig(['can_export_excel' => true])->create(['plan_tier' => 'PRO']);
+        Subscription::factory()->create([
+            'user_id' => $owner->id,
+            'plan_id' => $plan->id,
+            'paid_plan_id' => $plan->id,
+            'status' => 'active',
+            'end_date' => now()->addMonth(),
+        ]);
+
+        $this->travelTo(now()->startOfSecond());
+        Excel::fake();
+
+        $this->actingAs($owner)
+            ->get(route('lecturer.classes.attendance.export', [
+                'ma_user' => $owner->id,
+                'courseClass' => $courseClass->id,
+            ]))
+            ->assertOk();
+
+        $fileCode = $courseClass->class_code ?: $courseClass->join_key ?: $courseClass->name;
+        $expectedFileName = 'lich_su_diem_danh_'.(Str::slug($fileCode) ?: 'lop').'_'.now()->format('Ymd_His').'.xlsx';
+
+        Excel::assertDownloaded($expectedFileName, fn (ClassAttendanceHistoryExport $export) => true);
+    }
+
+    public function test_class_attendance_history_export_uses_current_attendance_formula(): void
+    {
+        [$owner, $courseClass, $firstMeeting] = $this->makeMeetingWithClosedSession();
+        $courseClass->update(['total_sessions' => 2]);
+        $firstSession = $firstMeeting->sessions()->firstOrFail();
+        $firstSession->update([
+            'date' => $firstMeeting->date->toDateString(),
+            'start_time' => '07:00:00',
+            'end_time' => '09:30:00',
+        ]);
+
+        $members = ClassMember::query()
+            ->where('class_id', $courseClass->id)
+            ->with('profile')
+            ->get()
+            ->keyBy('student_code');
+
+        $secondMeeting = ClassMeeting::query()->create([
+            'class_id' => $courseClass->id,
+            'user_Created' => $owner->id,
+            'name' => 'Buổi 2 - Demo',
+            'date' => now()->addDay()->toDateString(),
+            'start_time' => '07:00:00',
+            'end_time' => '09:30:00',
+            'status' => 'closed',
+        ]);
+
+        $secondSession = ClassSession::factory()->create([
+            'class_id' => $courseClass->id,
+            'meeting_id' => $secondMeeting->id,
+            'created_by' => $owner->id,
+            'date' => $secondMeeting->date->toDateString(),
+            'start_time' => '07:00:00',
+            'end_time' => '09:30:00',
+            'qr_token' => null,
+            'status' => 'closed',
+        ]);
+
+        AttendanceRecord::factory()->create([
+            'class_session_id' => $secondSession->id,
+            'class_member_id' => $members['SV01']->id,
+            'status' => 'late',
+        ]);
+        AttendanceRecord::factory()->create([
+            'class_session_id' => $secondSession->id,
+            'class_member_id' => $members['SV02']->id,
+            'status' => 'absent',
+        ]);
+
+        $rows = (new ClassAttendanceHistoryExport($courseClass->fresh()))->array();
+
+        $this->assertSame(['STT', 'MSSV', 'Họ và tên', 'Email', 'Chuyên cần (%)', 'Buổi 1'."\n".$firstMeeting->date->format('d/m/Y'), 'Buổi 2'."\n".$secondMeeting->date->format('d/m/Y')], $rows[5]);
+        $this->assertSame('SV01', $rows[6][1]);
+        $this->assertSame('75%', $rows[6][4]);
+        $this->assertSame('Có mặt', $rows[6][5]);
+        $this->assertSame('Đi muộn', $rows[6][6]);
+        $this->assertSame('SV02', $rows[7][1]);
+        $this->assertSame('0%', $rows[7][4]);
+        $this->assertSame('Vắng', $rows[7][5]);
+        $this->assertSame('Vắng', $rows[7][6]);
     }
 }

@@ -2,15 +2,19 @@
 
 namespace App\Livewire\Lecturer;
 
+use App\Exports\ClassAttendanceHistoryExport;
 use App\Models\ClassSession;
 use App\Models\CourseClass;
-use App\Services\AttendanceCalculator;
+use App\Services\ClassAttendanceHistoryReport;
 use App\Services\SubscriptionService;
 use Illuminate\Contracts\View\View;
-use Illuminate\Database\Eloquent\Builder;
+use Illuminate\Support\Str;
 use Livewire\Component;
 use Livewire\WithPagination;
 use Livewire\Attributes\Url;
+use Livewire\Attributes\On;
+use Maatwebsite\Excel\Facades\Excel;
+use Throwable;
 
 class ClassAttendanceHistory extends Component
 {
@@ -46,156 +50,41 @@ class ClassAttendanceHistory extends Component
         session()->flash('status', 'Phiên điểm danh đã được chốt.');
     }
 
-    public function render(): View
+    #[On('export-class-history')]
+    public function exportExcel()
     {
-        $members = $this->courseClass->members()
-            ->where('class_members.status', \App\Models\ClassMember::STATUS_ACTIVE)
-            ->leftJoin('class_member_profiles', 'class_member_profiles.class_member_id', '=', 'class_members.id')
-            ->orderBy('class_member_profiles.student_code')
-            ->select('class_members.*')
-            ->with('profile')
-            ->paginate($this->perPage);
-        $sessions = ClassSession::query()
-            ->where('class_id', $this->courseClass->id)
-            ->where('status', 'closed')
-            ->orderBy('date', 'asc')
-            ->orderBy('start_time', 'asc')
-            ->orderBy('created_at', 'asc')
-            ->get();
-        
-        // Gộp theo BUỔI (meeting_id) — mỗi buổi là 1 cột trong lưới.
-        $groupedSessions = $sessions->groupBy('meeting_id');
-        $rules = $this->courseClass->getAttendanceRules();
+        if (! app(SubscriptionService::class)->canExportExcel(auth()->user())) {
+            session()->flash('upgrade_required', 'Xuất báo cáo Excel là tính năng của gói Pro trở lên. Vui lòng nâng cấp để sử dụng.');
 
-        $records = \App\Models\AttendanceRecord::query()
-            ->whereIn('class_session_id', $sessions->pluck('id'))
-            ->whereIn('class_member_id', $members->pluck('id'))
-            ->get()
-            ->groupBy('class_member_id');
-
-        $matrix = [];
-        $totalAttended = [];
-        $memberStats = [];
-        foreach ($members as $member) {
-            $memberRecords = $records->get($member->id, collect())->keyBy('class_session_id');
-            $counts = ['present' => 0, 'late' => 0, 'excused' => 0, 'absent' => 0];
-
-            foreach ($groupedSessions as $groupKey => $daySessions) {
-                // Sắp phiên theo id (~ thời gian) để xác định "phiên cuối quyết định".
-                $ordered = $daySessions->sortBy('id')->values();
-                $dayDetailsArr = [];
-                $statuses = [];
-                $hasRecord = false;
-
-                $iteration = 1;
-                foreach ($ordered as $session) {
-                    $record = $memberRecords->get($session->id);
-                    if ($record) {
-                        $hasRecord = true;
-                    }
-
-                    // Diễn giải "chưa điểm danh": phiên thủ công -> có mặt; phiên QR chưa quét -> vắng.
-                    $status = AttendanceCalculator::interpretStatus($record?->status ?? 'pending', $session->qr_token !== null);
-                    $statuses[] = $status;
-
-                    $dayDetailsArr[] = [
-                        'iteration' => $iteration,
-                        'time' => $session->start_time ? \Carbon\Carbon::parse($session->start_time)->format('H:i') : 'Lần '.$iteration,
-                        'type' => $session->qr_token ? 'Quét QR' : 'Thủ công',
-                        'status' => $status,
-                        'statusText' => AttendanceCalculator::statusLabel($status),
-                    ];
-                    $iteration++;
-                }
-
-                // Gộp cả buổi theo quy tắc tổng kết (phiên cuối quyết định).
-                $result = AttendanceCalculator::consolidateStatuses($statuses, $rules);
-                $finalStatus = $result['status']; // present / late / absent / excused
-                $finalText = $result['label'];     // Có mặt / Đi muộn / Vắng / Có phép
-
-                // Chỉ tính vào chuyên cần các buổi mà sinh viên thực sự có bản ghi.
-                if ($hasRecord) {
-                    $counts[$finalStatus] = ($counts[$finalStatus] ?? 0) + 1;
-                }
-
-                $attendedSessions = in_array($finalStatus, ['present', 'late', 'excused'], true) ? 1 : 0;
-                $absentSessions = $finalStatus === 'absent' ? 1 : 0;
-
-                $tooltipStr = collect($dayDetailsArr)
-                    ->map(fn($d) => "Lần {$d['iteration']} ({$d['time']}): {$d['statusText']}")
-                    ->join("\n") . "\nChốt: " . $finalText;
-
-                $matrix[$member->id][$groupKey] = [
-                    'status' => $finalStatus,
-                    'text' => $finalText,
-                    'details' => $dayDetailsArr,
-                    'tooltip' => $tooltipStr,
-                    'attendedSessions' => $attendedSessions,
-                    'absentSessions' => $absentSessions,
-                ];
-            }
-
-            // % chuyên cần chuẩn theo 3 trạng thái tổng kết và có phép.
-            $studied = array_sum($counts);
-            $planned = AttendanceCalculator::baseSessions((int) ($this->courseClass->total_sessions ?? 0), $studied);
-            $totalAttended[$member->id] = $counts['present'] + $counts['late'] + $counts['excused'];
-            $memberStats[$member->id] = AttendanceCalculator::percentOfPlanned($planned, $counts, $rules);
+            return $this->redirectRoute('upgrade', navigate: true);
         }
 
-        $dayIndex = 1;
-        $groupedSessionsInfo = $groupedSessions->map(function($sessions, $key) use (&$dayIndex) {
-            $first = $sessions->first();
-            $timeStr = $first->start_time ? \Carbon\Carbon::parse($first->start_time)->format('H:i') . ' - ' . \Carbon\Carbon::parse($first->end_time)->format('H:i') : '';
-            
-            $sessionCols = [];
-            $iteration = 1;
-            foreach($sessions as $s) {
-                 $sessionCols[] = [
-                      'iteration' => $iteration,
-                      'time' => $s->start_time ? \Carbon\Carbon::parse($s->start_time)->format('H:i') : ''
-                 ];
-                 $iteration++;
-            }
+        $fileCode = $this->courseClass->class_code ?: $this->courseClass->join_key ?: $this->courseClass->name;
+        $slug = Str::slug($fileCode) ?: 'lop';
+        $fileName = 'lich_su_diem_danh_'.$slug.'_'.now()->format('Ymd_His').'.xlsx';
 
-            return [
-                'key' => $key,
-                'name' => 'Buổi ' . $dayIndex++,
-                'date' => $first->date->format('d/m/Y'),
-                'timeStr' => $timeStr,
-                'columns' => $sessionCols
-            ];
-        });
+        try {
+            return Excel::download(new ClassAttendanceHistoryExport($this->courseClass), $fileName);
+        } catch (Throwable $e) {
+            report($e);
+            $this->dispatch('toast', message: 'Đã xảy ra lỗi trong quá trình tạo file. Vui lòng thử lại.', type: 'error');
 
-        $colors = [
-            ['bg' => 'bg-indigo-100', 'text' => 'text-indigo-700', 'border' => 'border-indigo-200/60'],
-            ['bg' => 'bg-emerald-100', 'text' => 'text-emerald-700', 'border' => 'border-emerald-200/60'],
-            ['bg' => 'bg-rose-100', 'text' => 'text-rose-700', 'border' => 'border-rose-200/60'],
-            ['bg' => 'bg-amber-100', 'text' => 'text-amber-700', 'border' => 'border-amber-200/60'],
-            ['bg' => 'bg-sky-100', 'text' => 'text-sky-700', 'border' => 'border-sky-200/60'],
-            ['bg' => 'bg-fuchsia-100', 'text' => 'text-fuchsia-700', 'border' => 'border-fuchsia-200/60'],
-            ['bg' => 'bg-orange-100', 'text' => 'text-orange-700', 'border' => 'border-orange-200/60'],
-            ['bg' => 'bg-teal-100', 'text' => 'text-teal-700', 'border' => 'border-teal-200/60'],
-            ['bg' => 'bg-violet-100', 'text' => 'text-violet-700', 'border' => 'border-violet-200/60'],
-            ['bg' => 'bg-pink-100', 'text' => 'text-pink-700', 'border' => 'border-pink-200/60'],
-        ];
+            return null;
+        }
+    }
 
-        $totalCourseSessions = $this->courseClass->total_sessions ?? 0;
+    public function render(): View
+    {
+        $report = app(ClassAttendanceHistoryReport::class);
 
-        $membersData = $members->map(function($m) use ($colors, $totalAttended, $totalCourseSessions, $memberStats) {
-            $color = $colors[$m->id % count($colors)];
-            return [
-                'id' => $m->id,
-                'full_name' => $m->full_name,
-                'student_code' => $m->student_code,
-                'avatar_bg' => $color['bg'],
-                'avatar_text' => $color['text'],
-                'avatar_border' => $color['border'],
-                'avatar_url' => $m->user && $m->user->avatar ? asset('storage/' . $m->user->avatar) : null,
-                'total_attended_sessions' => $totalAttended[$m->id] ?? 0,
-                'total_course_sessions' => $totalCourseSessions,
-                'attendance_percent' => $memberStats[$m->id] ?? 100,
-            ];
-        })->keyBy('id');
+        $members = $report->activeMembersQuery($this->courseClass)
+            ->paginate($this->perPage);
+        $history = $report->build($this->courseClass, $members->getCollection());
+        $sessions = $history['sessions'];
+        $groupedSessions = $history['groupedSessions'];
+        $matrix = $history['matrix'];
+        $groupedSessionsInfo = $history['groupedSessionsInfo'];
+        $membersData = $history['membersData'];
 
         $canExportExcel = app(SubscriptionService::class)->canExportExcel(auth()->user());
 
