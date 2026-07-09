@@ -71,21 +71,21 @@
             </div>
             
             <div class="grid grid-cols-2 gap-x-4 gap-y-6 sm:grid-cols-4">
-                <div class="min-w-0">
-                    <span class="text-sm text-white/70">Mã lớp</span>
-                    <p class="mt-1 text-2xl sm:text-[28px] font-bold text-white truncate leading-none" title="{{ $class->class_code ?? $class->join_key }}">{{ $class->class_code ?? $class->join_key }}</p>
+                <div class="flex flex-col justify-between rounded-xl bg-white/10 p-4 shadow-sm backdrop-blur-sm transition-colors hover:bg-white/20">
+                    <span class="text-sm font-medium text-white/80">Sĩ số</span>
+                    <p class="mt-2 text-3xl font-black text-white">{{ $studentsCount }}</p>
                 </div>
                 <div class="flex flex-col justify-between rounded-xl bg-white/10 p-4 shadow-sm backdrop-blur-sm transition-colors hover:bg-white/20">
                     <span class="text-sm font-medium text-white/80">Dự kiến (buổi)</span>
                     <p class="mt-2 text-3xl font-black text-white">{{ $class->total_sessions }}</p>
                 </div>
-                <div class="min-w-0">
-                    <span class="text-sm text-white/70">Tổng số buổi</span>
-                    <p class="mt-1 text-2xl sm:text-[28px] font-bold text-white leading-none">{{ $sessionsCompleted }}<span class="text-base font-medium text-white/80"> buổi</span></p>
+                <div class="flex flex-col justify-between rounded-xl bg-white/10 p-4 shadow-sm backdrop-blur-sm transition-colors hover:bg-white/20">
+                    <span class="text-sm font-medium text-white/80">Đã ĐĐ (buổi)</span>
+                    <p class="mt-2 text-3xl font-black text-white">{{ $sessionsCompleted }}</p>
                 </div>
-                <div class="min-w-0">
-                    <span class="text-sm text-white/70">Tiến độ</span>
-                    <p class="mt-1 text-2xl sm:text-[28px] font-bold text-white leading-none">{{ $sessionsCount > 0 ? round(($sessionsCompleted / $sessionsCount) * 100) : 0 }}%</p>
+                <div class="flex flex-col justify-between rounded-xl bg-white/10 p-4 shadow-sm backdrop-blur-sm transition-colors hover:bg-white/20">
+                    <span class="text-sm font-medium text-white/80">Tiến độ</span>
+                    <p class="mt-2 text-3xl font-black text-white">{{ $sessionsCount > 0 ? round(($sessionsCompleted / $sessionsCount) * 100) : 0 }}%</p>
                 </div>
                 <div class="col-span-2 sm:col-span-4 flex items-end sm:justify-end mt-2">
                 </div>
