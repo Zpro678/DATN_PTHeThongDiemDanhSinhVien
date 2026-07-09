@@ -13,6 +13,17 @@
         @endif
 
         <form wire:submit.prevent="save">
+            <div class="mb-8 p-5 bg-slate-50 border border-slate-200 rounded-2xl space-y-4">
+                <h3 class="text-sm font-bold text-slate-800">Cài đặt chung cho thông báo</h3>
+
+                <div class="pt-2 border-t border-slate-200">
+                    <label class="block text-sm font-semibold text-slate-700 mb-2">Telegram Bot Token</label>
+                    <input type="text" wire:model="telegram_bot_token" placeholder="VD: 1234567890:AAH_..." class="w-full rounded-xl border border-slate-200 bg-white px-4 py-2.5 text-slate-900 transition-colors focus:border-blue-500 focus:ring-2 focus:ring-blue-500">
+                    <p class="text-xs text-slate-500 mt-1">Tạo bot qua <a href="https://t.me/BotFather" target="_blank" class="text-blue-600 hover:underline">@BotFather</a> để lấy token.</p>
+                    @error('telegram_bot_token') <span class="text-xs text-red-500">{{ $message }}</span> @enderror
+                </div>
+            </div>
+
             <div class="grid grid-cols-1 gap-6 md:grid-cols-2">
                 <div class="space-y-2">
                     <label class="block text-sm font-semibold text-slate-700">Mail Driver</label>

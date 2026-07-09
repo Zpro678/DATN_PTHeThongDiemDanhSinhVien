@@ -14,7 +14,37 @@ class AttendanceResultNotification extends Notification
 
     public function via(object $notifiable): array
     {
-        return ['database'];
+        $channels = ['database'];
+        if (\App\Models\Setting::get('enable_email_notifications', '1') == '1' && $notifiable->email) {
+            $channels[] = 'mail';
+        }
+        if (\App\Models\Setting::get('enable_telegram_notifications', '0') == '1' && $notifiable->telegram_chat_id) {
+            $channels[] = \App\Channels\SafeTelegramChannel::class;
+        }
+        return $channels;
+    }
+
+    public function toMail(object $notifiable)
+    {
+        $data = $this->toArray($notifiable);
+        return (new \Illuminate\Notifications\Messages\MailMessage)
+            ->subject($data['title'])
+            ->line($data['message'])
+            ->action('Xem chi tiết', $data['url'] ?? url('/'));
+    }
+
+    public function toTelegram(object $notifiable)
+    {
+        $data = $this->toArray($notifiable);
+        $message = \NotificationChannels\Telegram\TelegramMessage::create()
+            ->to($notifiable->telegram_chat_id)
+            ->content("*" . $data['title'] . "*\n\n" . $data['message']);
+            
+        if (isset($data['url'])) {
+            $message->button('Xem chi tiết', $data['url']);
+        }
+        
+        return $message;
     }
 
     public function toArray(object $notifiable): array

@@ -236,7 +236,7 @@
                                 </div>
                                 <div class="relative flex h-10 w-10 items-center justify-center rounded-full border-2 border-blue-600 bg-blue-50 p-0.5">
                                     @if(Auth::user()?->avatar)
-                                        <img src="{{ Auth::user()->avatar_url }}" alt="{{ $userName }}" class="h-full w-full rounded-full object-cover">
+                                        <img src="{{ Auth::user()->avatar_url }}" alt="{{ $userName }}" class="h-full w-full rounded-full object-cover" referrerpolicy="no-referrer">
                                     @else
                                         <span class="flex h-full w-full items-center justify-center rounded-full bg-blue-100 text-sm font-bold text-blue-700">{{ $userInitial }}</span>
                                     @endif

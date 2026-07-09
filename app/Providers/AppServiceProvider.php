@@ -43,6 +43,11 @@ class AppServiceProvider extends ServiceProvider
                         'mail.from.name' => \App\Models\Setting::get('mail_from_name', config('mail.from.name')),
                     ]);
                 }
+
+                $telegramToken = \App\Models\Setting::get('telegram_bot_token');
+                if ($telegramToken) {
+                    config(['services.telegram-bot-api.token' => $telegramToken]);
+                }
             }
         } catch (\Exception $e) {
             // Ignore DB errors during deployment/migrations

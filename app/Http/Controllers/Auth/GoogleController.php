@@ -36,11 +36,17 @@ class GoogleController extends Controller
         if ($user) {
             // Nếu email đã tồn tại, kiểm tra xem nó có liên kết với Google chưa
             if (! $user->google_id) {
-                // Liên kết tài khoản hiện tại với Google ID và cập nhật ảnh nếu chưa có
-                $user->update([
-                    'google_id' => $googleUser->getId(),
-                    'avatar' => $user->avatar ?? $googleUser->getAvatar(),
-                ]);
+                // Liên kết tài khoản hiện tại với Google ID
+                $user->google_id = $googleUser->getId();
+            }
+            
+            // Cập nhật ảnh đại diện nếu chưa có
+            if (empty($user->avatar)) {
+                $user->avatar = $googleUser->getAvatar();
+            }
+            
+            if ($user->isDirty()) {
+                $user->save();
             }
         } else {
             // Nếu chưa tồn tại, tạo tài khoản mới

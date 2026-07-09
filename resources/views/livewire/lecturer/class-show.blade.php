@@ -65,7 +65,7 @@
                 <span class="truncate">{{ $class->name }}</span>
             </h1>
             
-            <div class="grid grid-cols-2 gap-x-4 gap-y-6 sm:grid-cols-5">
+            <div class="grid grid-cols-2 gap-x-4 gap-y-6 sm:grid-cols-4">
                 <div class="min-w-0">
                     <span class="text-sm text-white/70">Mã lớp</span>
                     <p class="mt-1 text-2xl sm:text-[28px] font-bold text-white truncate leading-none" title="{{ $class->class_code ?? $class->join_key }}">{{ $class->class_code ?? $class->join_key }}</p>
@@ -75,18 +75,14 @@
                     <p class="mt-1 text-2xl sm:text-[28px] font-bold text-white leading-none">{{ $studentsCount }}</p>
                 </div>
                 <div class="min-w-0">
-                    <span class="text-sm text-white/70">Buổi dự kiến</span>
-                    <p class="mt-1 text-2xl sm:text-[28px] font-bold text-white leading-none">{{ $class->total_sessions }}<span class="text-base font-medium text-white/80"> buổi</span></p>
-                </div>
-                <div class="min-w-0">
-                    <span class="text-sm text-white/70">Đã điểm danh</span>
+                    <span class="text-sm text-white/70">Tổng số buổi</span>
                     <p class="mt-1 text-2xl sm:text-[28px] font-bold text-white leading-none">{{ $sessionsCompleted }}<span class="text-base font-medium text-white/80"> buổi</span></p>
                 </div>
                 <div class="min-w-0">
                     <span class="text-sm text-white/70">Tiến độ</span>
                     <p class="mt-1 text-2xl sm:text-[28px] font-bold text-white leading-none">{{ $sessionsCount > 0 ? round(($sessionsCompleted / $sessionsCount) * 100) : 0 }}%</p>
                 </div>
-                <div class="col-span-2 sm:col-span-5 flex items-end sm:justify-end mt-2">
+                <div class="col-span-2 sm:col-span-4 flex items-end sm:justify-end mt-2">
                 </div>
             </div>
         </div>
@@ -153,16 +149,16 @@
         </a>
     </div>
     {{-- Thanh tìm kiếm + bộ lọc trạng thái chuyên cần --}}
-    <div class="mb-4 flex flex-col gap-3 px-1 lg:flex-row lg:items-center lg:justify-between">
+    <div class="mb-4 flex flex-col gap-3 px-1 sm:flex-row sm:items-center sm:gap-4">
         {{-- Ô tìm kiếm --}}
-        <div class="relative w-full lg:max-w-xs">
+        <div class="relative flex-1">
             <span class="pointer-events-none absolute inset-y-0 left-3 flex items-center text-slate-400">
                 <x-user.icon name="search" :size="18" />
             </span>
             <input
                 type="text"
                 wire:model.live.debounce.300ms="search"
-                placeholder="Tìm theo tên, MSSV, email..."
+                placeholder="Tìm học viên..."
                 class="w-full rounded-xl border border-slate-200 bg-white py-2.5 pl-10 pr-9 text-sm text-slate-700 placeholder-slate-400 transition-colors focus:border-blue-400 focus:outline-none focus:ring-2 focus:ring-blue-100"
             >
             @if($search !== '')
@@ -173,7 +169,7 @@
         </div>
 
         {{-- Cụm nút lọc trạng thái --}}
-        <div class="flex flex-wrap items-center gap-1 rounded-xl bg-slate-100 p-1">
+        <div class="flex shrink-0 items-center gap-1 overflow-x-auto rounded-xl bg-slate-100 p-1 hide-scrollbar">
             @php
                 $filterTabs = [
                     ['key' => '',        'label' => 'Tất cả',            'count' => null,          'active' => 'bg-white text-slate-900 shadow-sm'],
@@ -187,7 +183,7 @@
                     type="button"
                     wire:click="$set('filter', '{{ $tab['key'] }}')"
                     @class([
-                        'inline-flex items-center gap-1.5 rounded-lg px-3 py-1.5 text-sm font-bold transition-colors',
+                        'inline-flex items-center gap-1.5 rounded-lg px-3 py-1.5 text-sm font-bold transition-colors shrink-0',
                         $tab['active'] => $isActive,
                         'text-slate-500 hover:text-slate-700' => ! $isActive,
                     ])

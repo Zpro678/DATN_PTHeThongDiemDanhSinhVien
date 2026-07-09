@@ -108,6 +108,13 @@
                                     <label class="mb-2 block text-[10px] font-bold uppercase tracking-widest text-slate-400">Email (Không thể thay đổi)</label>
                                     <input type="email" wire:model="email" readonly class="w-full rounded-xl border border-slate-200 bg-slate-50 px-4 py-3 text-sm font-bold text-slate-500 cursor-not-allowed focus:outline-none">
                                 </div>
+
+                                <div>
+                                    <label class="mb-2 block text-[10px] font-bold uppercase tracking-widest text-slate-400">Telegram Chat ID</label>
+                                    <input type="text" wire:model="telegram_chat_id" placeholder="VD: 123456789" class="w-full rounded-xl border border-slate-200 bg-white px-4 py-3 text-sm font-bold text-slate-900 focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-500">
+                                    <p class="mt-1.5 text-xs text-slate-500">Nhắn tin cho <a href="https://t.me/userinfobot" target="_blank" class="text-blue-600 hover:underline">@userinfobot</a> để lấy ID của bạn.</p>
+                                    @error('telegram_chat_id') <span class="text-red-500 text-xs mt-1 block">{{ $message }}</span> @enderror
+                                </div>
                             </div>
                         </div>
 

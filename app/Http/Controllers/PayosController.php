@@ -140,6 +140,16 @@ class PayosController extends Controller
                 // Ignore and let webhook handle it if local verification fails
                 Log::error('PayOS return verification error: ' . $e->getMessage());
             }
+        } else {
+            if ($orderCode) {
+                $transaction = Transaction::where('transaction_code', (string) $orderCode)->first();
+                if ($transaction && $transaction->status === 'pending') {
+                    $transaction->update([
+                        'status' => 'failed',
+                        'failure_reason' => $isCancelled ? 'Người dùng chủ động hủy thanh toán.' : 'Thanh toán bị hủy hoặc thất bại.',
+                    ]);
+                }
+            }
         }
 
         return redirect()

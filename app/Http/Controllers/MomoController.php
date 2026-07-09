@@ -110,6 +110,16 @@ class MomoController extends Controller
                 // Ignore and let IPN handle it if local verification fails
                 \Illuminate\Support\Facades\Log::error('MoMo return verification error: ' . $e->getMessage());
             }
+        } else {
+            if ($orderId) {
+                $transaction = Transaction::where('transaction_code', (string) $orderId)->first();
+                if ($transaction && $transaction->status === 'pending') {
+                    $transaction->update([
+                        'status' => 'failed',
+                        'failure_reason' => 'Thanh toán bị hủy hoặc thất bại.',
+                    ]);
+                }
+            }
         }
 
         return redirect()

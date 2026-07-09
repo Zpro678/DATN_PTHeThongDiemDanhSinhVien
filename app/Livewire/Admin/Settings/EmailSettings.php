@@ -17,6 +17,10 @@ class EmailSettings extends Component
     public $mail_from_address = '';
     public $mail_from_name = 'SAMS System Notification';
 
+    public $enable_email_notifications = false;
+    public $enable_telegram_notifications = false;
+    public $telegram_bot_token = '';
+
     public $test_email = '';
 
     public function mount()
@@ -29,6 +33,10 @@ class EmailSettings extends Component
         $this->mail_password = Setting::get('mail_password', env('MAIL_PASSWORD', ''));
         $this->mail_from_address = Setting::get('mail_from_address', env('MAIL_FROM_ADDRESS', ''));
         $this->mail_from_name = Setting::get('mail_from_name', env('MAIL_FROM_NAME', 'SAMS System Notification'));
+        
+        $this->enable_email_notifications = (bool) Setting::get('enable_email_notifications', '1');
+        $this->enable_telegram_notifications = (bool) Setting::get('enable_telegram_notifications', '0');
+        $this->telegram_bot_token = Setting::get('telegram_bot_token', env('TELEGRAM_BOT_TOKEN', ''));
     }
 
     protected $rules = [
@@ -40,6 +48,9 @@ class EmailSettings extends Component
         'mail_password' => 'nullable|string',
         'mail_from_address' => 'required|email',
         'mail_from_name' => 'required|string',
+        'enable_email_notifications' => 'boolean',
+        'enable_telegram_notifications' => 'boolean',
+        'telegram_bot_token' => 'nullable|string',
     ];
 
     public function save()
@@ -59,8 +70,12 @@ class EmailSettings extends Component
         Setting::set('mail_password', $this->mail_password);
         Setting::set('mail_from_address', $this->mail_from_address);
         Setting::set('mail_from_name', $this->mail_from_name);
+        
+        Setting::set('enable_email_notifications', $this->enable_email_notifications ? '1' : '0');
+        Setting::set('enable_telegram_notifications', $this->enable_telegram_notifications ? '1' : '0');
+        Setting::set('telegram_bot_token', $this->telegram_bot_token);
 
-        session()->flash('email_success', 'Đã lưu cấu hình Email & Thông báo.');
+        session()->flash('email_success', 'Đã lưu cấu hình Thông báo & Email.');
     }
 
     public function sendTestEmail()

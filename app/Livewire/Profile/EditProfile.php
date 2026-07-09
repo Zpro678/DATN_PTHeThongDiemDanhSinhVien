@@ -17,6 +17,8 @@ class EditProfile extends Component
 
     public $email;
 
+    public $telegram_chat_id;
+
     public $avatar;
 
     public $current_password;
@@ -50,6 +52,7 @@ class EditProfile extends Component
         $user = Auth::user();
         $this->name = $user->name;
         $this->email = $user->email;
+        $this->telegram_chat_id = $user->telegram_chat_id;
     }
 
     public function updateProfileInformation()
@@ -58,11 +61,13 @@ class EditProfile extends Component
 
         $this->validate([
             'name' => ['required', 'string', 'max:255'],
+            'telegram_chat_id' => ['nullable', 'string', 'max:50'],
             'avatar' => ['nullable', 'image', 'max:10240'], // 10MB Max
         ]);
 
         $user->fill([
             'name' => $this->name,
+            'telegram_chat_id' => $this->telegram_chat_id,
         ]);
 
         if ($this->avatar) {

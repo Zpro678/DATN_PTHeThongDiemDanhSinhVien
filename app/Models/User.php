@@ -37,6 +37,7 @@ class User extends Authenticatable implements MustVerifyEmail
         'google_id', // ID Google phục vụ đăng nhập OAuth.
         'name', // Họ và tên.
         'email', // Email đăng nhập duy nhất.
+        'telegram_chat_id', // Telegram Chat ID.
         'password', // Mật khẩu đã hash.
         'avatar', // URL ảnh đại diện.
         'status', // Trạng thái tài khoản active/blocked.
