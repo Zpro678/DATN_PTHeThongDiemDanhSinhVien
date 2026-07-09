@@ -3,19 +3,18 @@
 namespace App\Notifications;
 
 use App\Models\MeetingSummary;
+use App\Notifications\Traits\ChecksNotificationPreferences;
 use Illuminate\Bus\Queueable;
 use Illuminate\Notifications\Notification;
 
 class AttendanceResultNotification extends Notification
 {
-    use Queueable;
+    use Queueable, ChecksNotificationPreferences;
+
+    /** @var array<int, string> */
+    public array $supportedChannels = ['database', 'mail'];
 
     public function __construct(public MeetingSummary $summary) {}
-
-    public function via(object $notifiable): array
-    {
-        return ['database'];
-    }
 
     public function toArray(object $notifiable): array
     {

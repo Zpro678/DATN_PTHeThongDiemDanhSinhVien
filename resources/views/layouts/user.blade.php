@@ -3,6 +3,9 @@
 @php
     $userName = Auth::user()?->name ?? 'Người dùng';
     $userEmail = Auth::user()?->email ?? 'user@example.com';
+    $sidebarWarningCount = (int) ($sidebarWarningCount ?? 0);
+    $hasSidebarWarnings = $sidebarWarningCount > 0;
+    $sidebarWarningBadge = $sidebarWarningCount > 99 ? '99+' : (string) $sidebarWarningCount;
 
     $matchesActive = function ($activePattern) use ($activeNav): bool {
         $patterns = is_array($activePattern) ? $activePattern : [$activePattern];
@@ -68,7 +71,7 @@
         ['label' => 'Giảng dạy', 'items' => $teachItems],
         ['label' => 'Học tập', 'items' => $learnItems],
         ['label' => 'Khác', 'items' => [
-            ['label' => 'Cảnh báo', 'icon' => 'alert-triangle', 'route' => 'student.warnings', 'active' => 'student.warnings'],
+            ['label' => 'Cảnh báo', 'icon' => 'alert-triangle', 'route' => 'student.warnings', 'active' => 'student.warnings', 'badge' => $sidebarWarningCount],
             ['label' => 'Nâng cấp gói', 'icon' => 'zap', 'route' => 'upgrade', 'active' => 'upgrade'],
             ['label' => 'Lịch sử giao dịch', 'icon' => 'credit-card', 'route' => 'transaction-history', 'active' => 'transaction-history'],
         ]],
@@ -303,12 +306,26 @@
                         <a href="{{ route('student.warnings') }}" wire:navigate title="Cảnh báo"
                             :class="sidebarCollapsed ? 'justify-center px-0' : ''"
                             @class([
-                                'flex items-center gap-3 rounded-lg px-3 py-3 text-[17px] font-medium transition-colors',
+                                'relative flex items-center gap-3 rounded-lg px-3 py-3 text-[17px] font-medium transition-colors',
                                 'bg-primary/10 text-primary' => $warningsActive,
                                 'text-on-surface-variant hover:bg-surface-container hover:text-on-surface' => ! $warningsActive,
                             ])>
-                            <x-user.icon name="alert-triangle" :size="24" class="shrink-0" />
-                            <span class="sidebar-text truncate whitespace-nowrap" x-show="!sidebarCollapsed" x-transition:enter="transition-opacity duration-200 delay-100" x-transition:enter-start="opacity-0" x-transition:enter-end="opacity-100" x-transition:leave="transition-opacity duration-100" x-transition:leave-start="opacity-100" x-transition:leave-end="opacity-0">Cảnh báo</span>
+                            <span class="relative shrink-0">
+                                <x-user.icon name="alert-triangle" :size="24" class="shrink-0" />
+                                @if ($hasSidebarWarnings)
+                                    <span x-show="sidebarCollapsed" class="absolute -right-2 -top-2 inline-flex h-5 min-w-5 items-center justify-center rounded-full bg-error px-1 text-[10px] font-bold leading-none text-white ring-2 ring-white">
+                                        {{ $sidebarWarningBadge }}
+                                    </span>
+                                @endif
+                            </span>
+                            <span class="sidebar-text flex min-w-0 flex-1 items-center justify-between gap-2 whitespace-nowrap" x-show="!sidebarCollapsed" x-transition:enter="transition-opacity duration-200 delay-100" x-transition:enter-start="opacity-0" x-transition:enter-end="opacity-100" x-transition:leave="transition-opacity duration-100" x-transition:leave-start="opacity-100" x-transition:leave-end="opacity-0">
+                                <span class="truncate">Cảnh báo</span>
+                                @if ($hasSidebarWarnings)
+                                    <span class="inline-flex h-5 min-w-5 shrink-0 items-center justify-center rounded-full bg-error px-1.5 text-[11px] font-bold leading-none text-white">
+                                        {{ $sidebarWarningBadge }}
+                                    </span>
+                                @endif
+                            </span>
                         </a>
                     </nav>
 
@@ -368,7 +385,12 @@
                                                     'text-on-surface-variant hover:bg-surface-container hover:text-on-surface' => ! $isActive,
                                                 ])>
                                                 <x-user.icon :name="$item['icon']" :size="24" class="shrink-0" />
-                                                <span class="truncate">{{ $item['label'] }}</span>
+                                                <span class="min-w-0 flex-1 truncate">{{ $item['label'] }}</span>
+                                                @if (($item['badge'] ?? 0) > 0)
+                                                    <span class="inline-flex h-5 min-w-5 shrink-0 items-center justify-center rounded-full bg-error px-1.5 text-[11px] font-bold leading-none text-white">
+                                                        {{ ($item['badge'] ?? 0) > 99 ? '99+' : $item['badge'] }}
+                                                    </span>
+                                                @endif
                                             </a>
                                         @endforeach
                                     </div>
@@ -493,7 +515,12 @@
                         @endforeach
 
                         <button type="button" x-on:click="navOpen = true" class="flex flex-col items-center justify-center gap-1 text-[10px] font-medium text-on-surface-variant">
-                            <x-user.icon name="menu" :size="20" />
+                            <span class="relative">
+                                <x-user.icon name="menu" :size="20" />
+                                @if ($hasSidebarWarnings)
+                                    <span class="absolute -right-1 -top-1 h-2.5 w-2.5 rounded-full bg-error ring-2 ring-white"></span>
+                                @endif
+                            </span>
                             Thêm
                         </button>
                     </nav>

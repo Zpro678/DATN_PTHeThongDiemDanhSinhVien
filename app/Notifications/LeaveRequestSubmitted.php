@@ -3,18 +3,21 @@
 namespace App\Notifications;
 
 use App\Models\LeaveRequest;
+use App\Notifications\Traits\ChecksNotificationPreferences;
 use Illuminate\Bus\Queueable;
 use Illuminate\Contracts\Broadcasting\ShouldBroadcast;
-use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Notifications\Messages\BroadcastMessage;
 use Illuminate\Notifications\Notification;
 use Illuminate\Broadcasting\PrivateChannel;
 
 class LeaveRequestSubmitted extends Notification implements ShouldBroadcast
 {
-    use Queueable;
+    use Queueable, ChecksNotificationPreferences;
 
     public LeaveRequest $leaveRequest;
+
+    /** @var array<int, string> */
+    public array $supportedChannels = ['database', 'broadcast', 'mail'];
 
     /**
      * Create a new notification instance.
@@ -22,16 +25,6 @@ class LeaveRequestSubmitted extends Notification implements ShouldBroadcast
     public function __construct(LeaveRequest $leaveRequest)
     {
         $this->leaveRequest = $leaveRequest;
-    }
-
-    /**
-     * Get the notification's delivery channels.
-     *
-     * @return array<int, string>
-     */
-    public function via(object $notifiable): array
-    {
-        return ['database', 'broadcast'];
     }
 
     /**

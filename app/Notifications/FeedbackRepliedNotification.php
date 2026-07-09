@@ -2,6 +2,7 @@
 
 namespace App\Notifications;
 
+use App\Notifications\Traits\ChecksNotificationPreferences;
 use Illuminate\Bus\Queueable;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Notifications\Messages\MailMessage;
@@ -9,7 +10,10 @@ use Illuminate\Notifications\Notification;
 
 class FeedbackRepliedNotification extends Notification implements ShouldQueue
 {
-    use Queueable;
+    use Queueable, ChecksNotificationPreferences;
+
+    /** @var array<int, string> */
+    public array $supportedChannels = ['database', 'mail'];
 
     /**
      * Create a new notification instance.
@@ -17,11 +21,6 @@ class FeedbackRepliedNotification extends Notification implements ShouldQueue
     public function __construct(public \App\Models\SystemFeedback $feedback)
     {
         //
-    }
-
-    public function via(object $notifiable): array
-    {
-        return ['database', 'mail'];
     }
 
     public function toMail(object $notifiable): MailMessage

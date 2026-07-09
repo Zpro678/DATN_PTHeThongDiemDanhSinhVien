@@ -2,13 +2,13 @@
 
 namespace App\Services;
 
-use App\Events\NotificationReceived;
 use App\Models\ClassMeeting;
 use App\Models\ClassSession;
 use App\Models\CourseClass;
 use App\Models\Notification;
 use App\Models\User;
 use App\Notifications\AttendanceResultNotification;
+use App\Notifications\GenericNotification;
 use Illuminate\Pagination\LengthAwarePaginator;
 use Illuminate\Support\Carbon;
 use Illuminate\Support\Facades\DB;
@@ -292,22 +292,21 @@ class NotificationService
             return;
         }
 
-        Notification::query()->create([
-            'id' => (string) Str::uuid(),
-            'type' => $type,
-            'notifiable_type' => User::class,
-            'notifiable_id' => $userId,
-            'data' => array_merge([
+        $user = User::find($userId);
+
+        if (! $user) {
+            return;
+        }
+
+        $user->notify(new GenericNotification(
+            $type,
+            array_merge([
                 'title' => $title,
                 'message' => $message,
                 'url' => $url,
                 'level' => $level,
             ], $extra),
-            'read_at' => null,
-        ]);
-
-        // Phát tín hiệu realtime để chuông thông báo của người nhận tự cập nhật (không reload).
-        event(new NotificationReceived($userId));
+        ));
     }
 
     /**
@@ -779,7 +778,10 @@ class NotificationService
      */
     public function notifySystemMaintenance(string $startTime, string $endTime): void
     {
-        $userIds = User::pluck('id');
+        $userIds = User::query()
+            ->get(['id', 'notification_preferences', 'email'])
+            ->filter(fn (User $user): bool => $user->wantsNotificationChannel('database'))
+            ->pluck('id');
         $now = now();
         $notifications = [];
 

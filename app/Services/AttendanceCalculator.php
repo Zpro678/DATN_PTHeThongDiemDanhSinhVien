@@ -23,9 +23,9 @@ use Illuminate\Support\Collection;
  *    late    (Đi muộn) : phiên cuối có mặt, nhưng phiên đầu vắng hoặc có phiên bị đánh dấu đi muộn.
  *    present (Có mặt)  : phiên cuối có mặt, phiên đầu có mặt, và không có phiên đi muộn.
  *
- * DIỄN GIẢI "pending" (record chưa được điểm danh) theo LOẠI phiên:
- *  - Phiên QR  (qr_token != null): sinh viên chưa quét  -> coi như VẮNG (0).
- *  - Phiên thủ công (qr_token null): giảng viên chưa đánh dấu -> mặc định CÓ MẶT (1).
+ * DIỄN GIẢI "pending" (record chưa được điểm danh): coi như VẮNG (0) cho CẢ hai loại phiên.
+ *  - Phiên QR  (qr_token != null): sinh viên chưa quét -> VẮNG.
+ *  - Phiên thủ công (qr_token null): giảng viên chưa đánh dấu -> VẮNG (đánh dấu ai có mặt).
  *
  * ĐIỂM TRỪ & % CHUYÊN CẦN:
  *  - Mỗi trạng thái có 1 "điểm trừ" (số dương) lấy từ bảng tạm self::DEDUCTIONS.
@@ -102,7 +102,10 @@ class AttendanceCalculator
     public static function interpretStatus(string $status, bool $isQr): string
     {
         if ($status === 'pending') {
-            return $isQr ? 'absent' : 'present';
+            // Chưa điểm danh -> mặc định VẮNG cho CẢ hai loại phiên:
+            //  - QR: chưa quét = vắng.
+            //  - Thủ công: chưa đánh dấu = vắng (giảng viên đánh dấu ai có mặt).
+            return 'absent';
         }
 
         return $status;

@@ -46,7 +46,8 @@ class ManualAttendanceSession extends Component
      */
     private function initDrafts(): void
     {
-        // Phiên thủ công: học viên chưa đánh dấu mặc định là "Có mặt"; giảng viên chỉ sửa người vắng/trễ.
+        // Phiên thủ công: mặc định TẤT CẢ là "Vắng"; giảng viên đánh dấu ai có mặt/muộn/có phép.
+        // (Bản ghi phiên thủ công vốn đã tạo với status 'absent'; nhánh dưới chỉ phòng dữ liệu cũ còn 'pending'.)
         $isManual = $this->ownedSession($this->sessionId)->qr_token === null;
 
         $records = AttendanceRecord::query()
@@ -58,7 +59,7 @@ class ManualAttendanceSession extends Component
             $status = $record->status;
 
             if ($isManual && $status === 'pending') {
-                $status = 'present';
+                $status = 'absent';
             }
 
             $this->draftStatuses[$record->id] = $status;
@@ -107,12 +108,13 @@ class ManualAttendanceSession extends Component
         $this->ensureSessionIsOpen();
 
         foreach ($this->draftStatuses as $recordId => $status) {
-            if ($status === 'pending') {
+            // Mặc định giờ là "Vắng", nên nút này chuyển cả pending lẫn absent -> có mặt (giữ nguyên muộn/có phép đã đánh).
+            if (in_array($status, ['pending', 'absent'], true)) {
                 $this->draftStatuses[$recordId] = 'present';
             }
         }
 
-        session()->flash('success', 'Đã đánh dấu tạm thời tất cả học viên chưa điểm danh là có mặt. Nhấn "Lưu phiên" để lưu lại.');
+        session()->flash('success', 'Đã đánh dấu tạm thời tất cả học viên là có mặt. Nhấn "Lưu phiên" để lưu lại.');
     }
 
     /**

@@ -7,7 +7,9 @@ use App\Livewire\Lecturer\Attendance\AttendanceIndex;
 use App\Livewire\Lecturer\Attendance\ManualAttendanceSession;
 use App\Livewire\Lecturer\Attendance\MeetingSessions;
 use App\Livewire\Lecturer\Attendance\MeetingSummary;
+use App\Livewire\Lecturer\Attendance\QuickAttendanceModal;
 use App\Livewire\Lecturer\Attendance\QrAttendanceCreate;
+use App\Livewire\Lecturer\ClassShow as LecturerClassShow;
 use App\Models\AttendanceRecord;
 use App\Models\ClassMeeting;
 use App\Models\ClassMember;
@@ -84,6 +86,22 @@ class MeetingFlowSmokeTest extends TestCase
             ->assertOk()
             ->assertSee('Danh sách phiên')
             ->assertSee('Lần 1');
+    }
+
+    public function test_class_show_renders_with_shared_quick_modal(): void
+    {
+        $owner = User::factory()->create();
+        URL::defaults(['ma_user' => $owner->id]);
+        $courseClass = CourseClass::factory()->create(['owner_user_id' => $owner->id]);
+        ClassMember::factory()->create([
+            'class_id' => $courseClass->id,
+            'status' => ClassMember::STATUS_ACTIVE,
+        ]);
+
+        Livewire::actingAs($owner)
+            ->test(LecturerClassShow::class, ['courseClass' => $courseClass])
+            ->assertOk()
+            ->assertSee('QR');
     }
 
     public function test_meeting_summary_keeps_explicit_late_status(): void
@@ -166,6 +184,30 @@ class MeetingFlowSmokeTest extends TestCase
         $this->assertSame(2, $meeting->sessions()->count());
         $newSession = $meeting->sessions()->latest('id')->first();
         $this->assertNotNull($newSession->qr_token);
+    }
+
+    public function test_quick_modal_adds_qr_session_to_current_meeting(): void
+    {
+        [$owner, , $meeting] = $this->makeMeetingWithClosedSession();
+        // Buổi còn trong giờ (ngày mai) nên modal được phép tạo thêm phiên QR.
+        $meeting->update(['date' => now()->addDay()->toDateString(), 'status' => 'active']);
+
+        Livewire::actingAs($owner)
+            ->test(QuickAttendanceModal::class)
+            ->call('open', 'qr', null, $meeting->id)
+            ->assertSet('showQuickStart', true)
+            ->assertSet('lockClassSelector', true)
+            ->assertSet('lockMeetingSelector', true)
+            ->assertSet('quickMeetingId', (string) $meeting->id)
+            ->set('gpsEnabled', false)
+            ->call('startQuick')
+            ->assertHasNoErrors();
+
+        $meeting->refresh();
+        $this->assertSame(2, $meeting->sessions()->count());
+        $newSession = $meeting->sessions()->latest('id')->first();
+        $this->assertNotNull($newSession->qr_token);
+        $this->assertSame('Phiên 2', $newSession->name);
     }
 
     public function test_cannot_add_session_after_meeting_ended(): void

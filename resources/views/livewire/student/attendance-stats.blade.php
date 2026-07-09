@@ -149,7 +149,7 @@
                         }
                     @endphp
                     
-                    <a href="{{ route('student.classes.show', ['ma_user' => auth()->id(), 'courseClass' => $subject['class_id'], 'from' => 'attendance-stats']) }}"
+                    <a href="{{ route('student.attendance.history', ['ma_user' => auth()->id(), 'classFilter' => $subject['class_id']]) }}"
                        wire:navigate
                        class="group relative flex flex-col justify-between overflow-hidden rounded-3xl border {{ $cardBorder }} {{ $bgGradient }} p-6 shadow-sm transition-all duration-300 hover:shadow-lg">
                        

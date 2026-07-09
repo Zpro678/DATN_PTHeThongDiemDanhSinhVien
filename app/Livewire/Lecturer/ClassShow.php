@@ -9,7 +9,6 @@ use App\Models\LeaveRequest;
 use App\Services\LectureManageStudentService;
 use App\Services\SubscriptionService;
 use Illuminate\Support\Str;
-use Livewire\Attributes\Computed;
 use Livewire\Attributes\Url;
 use Livewire\Component;
 use Livewire\WithFileUploads;
@@ -86,21 +85,6 @@ class ClassShow extends Component
 
     public bool $isEditingCode = false;
     public string $newClassCode = '';
-
-    // Quick Start Modal State
-    public bool $showQuickStart = false;
-    public string $quickStartType = 'manual';
-    public string $quickClassId = '';
-    public string $quickMeetingId = '';
-    public string $newMeetingName = '';
-    public string $meetingEndTime = '';
-    public string $sessionName = '';
-    public int $durationMinutes = 15;
-    public int $gpsRadius = 100;
-    public int $qrRefreshRate = 10;
-    public bool $gpsEnabled = true;
-    public ?float $gpsLatitude = null;
-    public ?float $gpsLongitude = null;
 
     // Các thuộc tính phục vụ theo dõi tiến trình import dạng chunk qua Cache/Polling
     public ?string $importToken = null;
@@ -202,19 +186,6 @@ class ClassShow extends Component
         }
     }
     
-    public function updatedQuickMeetingId()
-    {
-        if ($this->quickMeetingId) {
-            $meeting = \App\Models\ClassMeeting::find($this->quickMeetingId);
-            if ($meeting) {
-                $count = $meeting->sessions()->count();
-                $this->sessionName = 'Phiên ' . ($count + 1);
-            }
-        } else {
-            $this->sessionName = 'Phiên 1';
-        }
-    }
-
     public function checkBeforeAttendance(string $type): void
     {
         if ($this->studentsCount === 0) {
@@ -222,128 +193,7 @@ class ClassShow extends Component
             return;
         }
 
-        $this->quickStartType = $type;
-        $this->showQuickStart = true;
-        
-        $this->quickClassId = (string) $this->class->id;
-        $this->quickMeetingId = '';
-        $this->sessionName = 'Phiên 1';
-        $this->durationMinutes = 15;
-        $this->gpsRadius = 100;
-        $this->qrRefreshRate = 10;
-        $this->gpsEnabled = true;
-        $this->gpsLatitude = null;
-        $this->gpsLongitude = null;
-        $this->meetingEndTime = now()->addMinutes(120)->format('H:i');
-    }
-
-    public function createTodayMeeting()
-    {
-        $date = now()->toDateString();
-        $startTime = now()->format('H:i');
-        $endTime = $this->meetingEndTime ?: now()->addMinutes(120)->format('H:i');
-
-        $meetingCount = $this->class->meetings()->count() + 1;
-        $meetingName = 'Buổi ' . $meetingCount;
-
-        $meeting = \App\Models\ClassMeeting::create([
-            'class_id' => $this->class->id,
-            'user_Created' => auth()->id(),
-            'name' => $meetingName,
-            'date' => $date,
-            'start_time' => $startTime,
-            'end_time' => $endTime,
-            'status' => 'active',
-        ]);
-
-        $this->quickMeetingId = (string) $meeting->id;
-        $this->sessionName = 'Phiên 1';
-    }
-
-    public function startQuick()
-    {
-        $rules = [
-            'sessionName' => 'required|string|max:255',
-            'meetingEndTime' => 'required|date_format:H:i',
-        ];
-        $messages = [
-            'sessionName.required' => 'Vui lòng nhập tên phiên.',
-            'meetingEndTime.required' => 'Vui lòng chọn thời gian kết thúc.',
-        ];
-
-        if ($this->quickMeetingId === 'NEW') {
-            $rules['newMeetingName'] = 'required|string|max:255';
-            $messages['newMeetingName.required'] = 'Vui lòng nhập tên buổi học mới.';
-        } else {
-            $rules['quickMeetingId'] = 'required';
-            $messages['quickMeetingId.required'] = 'Vui lòng chọn buổi học.';
-        }
-
-        if ($this->quickStartType === 'qr') {
-            $rules['durationMinutes'] = 'required|integer|min:1';
-            $rules['qrRefreshRate'] = 'required|integer|min:5';
-            $rules['gpsRadius'] = 'required|integer|min:5';
-            
-            if ($this->gpsEnabled) {
-                $rules['gpsLatitude'] = 'required|numeric';
-                $rules['gpsLongitude'] = 'required|numeric';
-                $messages['gpsLatitude.required'] = 'Vui lòng cấp quyền truy cập vị trí GPS để chống gian lận.';
-            }
-        }
-
-        $this->validate($rules, $messages);
-        
-        if ($this->quickMeetingId === 'NEW') {
-            $date = now()->toDateString();
-            $startTime = now()->format('H:i');
-            $endTime = $this->meetingEndTime ?: now()->addMinutes(120)->format('H:i');
-            
-            $meeting = \App\Models\ClassMeeting::create([
-                'class_id' => $this->class->id,
-                'user_Created' => auth()->id(),
-                'name' => $this->newMeetingName,
-                'date' => $date,
-                'start_time' => $startTime,
-                'end_time' => $endTime,
-                'status' => 'active',
-            ]);
-            
-            $this->quickMeetingId = (string) $meeting->id;
-        }
-
-        $meeting = \App\Models\ClassMeeting::query()
-            ->where('class_id', $this->class->id)
-            ->findOrFail($this->quickMeetingId);
-
-        if (! $meeting->canAddSession()) {
-            $this->addError('quickMeetingId', 'Buổi điểm danh đã kết thúc, không thể thêm phiên mới.');
-            return;
-        }
-
-        $meeting->update([
-            'status' => 'active',
-            'end_time' => $this->meetingEndTime ?: $meeting->end_time,
-        ]);
-
-        if ($this->quickStartType === 'manual') {
-            $session = $meeting->createSession('active', [
-                'name' => $this->sessionName,
-            ]);
-            $this->redirectRoute('lecturer.attendance.manual.session', ['ma_user' => auth()->id(), 'session' => $session->id], navigate: true);
-        } else {
-            $session = $meeting->createSession('active', [
-                'name' => $this->sessionName,
-                'qr_token' => \App\Models\ClassSession::generateQrToken(),
-                'token_expires_at' => \App\Models\ClassSession::qrTokenExpiryFor((int) $this->qrRefreshRate),
-                'qr_refresh_rate' => $this->qrRefreshRate,
-                'gps_latitude' => $this->gpsEnabled ? $this->gpsLatitude : null,
-                'gps_longitude' => $this->gpsEnabled ? $this->gpsLongitude : null,
-                'gps_radius' => $this->gpsEnabled ? $this->gpsRadius : null,
-            ]);
-
-            app(\App\Services\NotificationService::class)->attendanceSessionCreated((int) auth()->id(), $session, isQr: true);
-            $this->redirectRoute('lecturer.attendance.qr.session', ['ma_user' => auth()->id(), 'session' => $session->id], navigate: true);
-        }
+        $this->dispatch('open-quick-attendance-modal', type: $type, classId: (string) $this->class->id);
     }
 
     public function toggleEditCode(): void
@@ -381,22 +231,6 @@ class ClassShow extends Component
         } while (CourseClass::where('join_key', $code)->where('id', '!=', $this->class->id)->exists());
 
         $this->newClassCode = $code;
-    }
-
-    #[Computed]
-    public function classMeetings()
-    {
-        return \App\Models\ClassMeeting::where('class_id', $this->class->id)
-            ->whereDate('date', now()->toDateString())
-            ->orderBy('created_at', 'desc')
-            ->get()
-            ->filter(fn ($meeting) => !$meeting->isExpired());
-    }
-
-    #[Computed]
-    public function activeClasses()
-    {
-        return collect([$this->class]);
     }
 
     public function render()

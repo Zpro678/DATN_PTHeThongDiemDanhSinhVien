@@ -1,4 +1,4 @@
-<div x-data="{ showImportModal: false, showShareModal: false }" wire:poll.2s class="w-full space-y-6 px-6 py-6 pb-24 sm:px-10 lg:px-16 animate-in fade-in slide-in-from-bottom-4 duration-500">
+<div x-data="{ showImportModal: false, showShareModal: false, showBan: false }" wire:poll.2s class="w-full space-y-6 px-6 py-6 pb-24 sm:px-10 lg:px-16 animate-in fade-in slide-in-from-bottom-4 duration-500">
 
     {{-- Header --}}
     <div class="mb-6 flex justify-end">
@@ -61,32 +61,31 @@
                 @endif
             </div>
 
-            <h1 class="flex items-center gap-3 text-2xl font-bold text-white min-w-0 mb-8 pr-8">
-                <span class="truncate">{{ $class->name }}</span>
-            </h1>
+            <div class="mb-8 flex flex-col items-start gap-2 pr-8">
+                <h1 class="text-2xl sm:text-3xl font-bold text-white min-w-0 truncate w-full">
+                    {{ $class->name }}
+                </h1>
+                <span class="inline-block rounded-full bg-white/20 px-3 py-1 text-sm font-semibold text-white shadow-sm backdrop-blur-sm">
+                    Mã lớp: {{ $class->class_code ?? $class->join_key }}
+                </span>
+            </div>
             
-            <div class="grid grid-cols-2 gap-x-4 gap-y-6 sm:grid-cols-5">
-                <div class="min-w-0">
-                    <span class="text-sm text-white/70">Mã lớp</span>
-                    <p class="mt-1 text-2xl sm:text-[28px] font-bold text-white truncate leading-none" title="{{ $class->class_code ?? $class->join_key }}">{{ $class->class_code ?? $class->join_key }}</p>
+            <div class="grid grid-cols-2 gap-4 sm:grid-cols-4">
+                <div class="flex flex-col justify-between rounded-xl bg-white/10 p-4 shadow-sm backdrop-blur-sm transition-colors hover:bg-white/20">
+                    <span class="text-sm font-medium text-white/80">Sĩ số</span>
+                    <p class="mt-2 text-3xl font-black text-white">{{ $studentsCount }}</p>
                 </div>
-                <div class="min-w-0">
-                    <span class="text-sm text-white/70">Sinh viên</span>
-                    <p class="mt-1 text-2xl sm:text-[28px] font-bold text-white leading-none">{{ $studentsCount }}</p>
+                <div class="flex flex-col justify-between rounded-xl bg-white/10 p-4 shadow-sm backdrop-blur-sm transition-colors hover:bg-white/20">
+                    <span class="text-sm font-medium text-white/80">Dự kiến (buổi)</span>
+                    <p class="mt-2 text-3xl font-black text-white">{{ $class->total_sessions }}</p>
                 </div>
-                <div class="min-w-0">
-                    <span class="text-sm text-white/70">Buổi dự kiến</span>
-                    <p class="mt-1 text-2xl sm:text-[28px] font-bold text-white leading-none">{{ $class->total_sessions }}<span class="text-base font-medium text-white/80"> buổi</span></p>
+                <div class="flex flex-col justify-between rounded-xl bg-white/10 p-4 shadow-sm backdrop-blur-sm transition-colors hover:bg-white/20">
+                    <span class="text-sm font-medium text-white/80">Đã ĐD (buổi)</span>
+                    <p class="mt-2 text-3xl font-black text-white">{{ $sessionsCompleted }}</p>
                 </div>
-                <div class="min-w-0">
-                    <span class="text-sm text-white/70">Đã điểm danh</span>
-                    <p class="mt-1 text-2xl sm:text-[28px] font-bold text-white leading-none">{{ $sessionsCompleted }}<span class="text-base font-medium text-white/80"> buổi</span></p>
-                </div>
-                <div class="min-w-0">
-                    <span class="text-sm text-white/70">Tiến độ</span>
-                    <p class="mt-1 text-2xl sm:text-[28px] font-bold text-white leading-none">{{ $sessionsCount > 0 ? round(($sessionsCompleted / $sessionsCount) * 100) : 0 }}%</p>
-                </div>
-                <div class="col-span-2 sm:col-span-5 flex items-end sm:justify-end mt-2">
+                <div class="flex flex-col justify-between rounded-xl bg-white/10 p-4 shadow-sm backdrop-blur-sm transition-colors hover:bg-white/20">
+                    <span class="text-sm font-medium text-white/80">Tiến độ</span>
+                    <p class="mt-2 text-3xl font-black text-white">{{ $sessionsCount > 0 ? round(($sessionsCompleted / $sessionsCount) * 100) : 0 }}%</p>
                 </div>
             </div>
         </div>
@@ -142,15 +141,27 @@
     {{-- Danh sách học viên --}}
     <div class="mt-8 mb-4 flex items-center justify-between px-1">
         <h2 class="text-lg font-bold text-slate-800">Danh sách học viên ({{ $studentsCount }})</h2>
-        <a href="{{ route('lecturer.classes.pending-members', $class->id) }}" wire:navigate class="relative inline-flex items-center gap-2 rounded-lg bg-blue-50 px-3 py-1.5 text-sm font-bold text-blue-600 transition-colors hover:bg-blue-100">
-            <x-user.icon name="user-check" :size="16" />
-            Duyệt học viên
-            @if($pendingMembersCount > 0)
-                <span class="absolute -right-2 -top-2 flex h-5 w-5 items-center justify-center rounded-full bg-rose-500 text-[10px] font-bold text-white shadow-sm ring-2 ring-white">
-                    {{ $pendingMembersCount }}
-                </span>
-            @endif
-        </a>
+        <div class="flex items-center gap-4">
+            {{-- Công tắc chung: ẩn/hiện nút "Cấm thi"/"Gửi cảnh báo" ở cột Hành động (mặc định ẩn, chỉ hiển thị phía GV, không lưu). --}}
+            <div class="flex items-center gap-2" title="Hiển thị sinh viên cấm thi">
+                <span class="text-sm font-medium text-slate-500">Hiển thị sinh viên cấm thi</span>
+                <button type="button" @click="showBan = !showBan"
+                    :class="showBan ? 'bg-primary' : 'bg-outline-variant/50'"
+                    class="relative h-6 w-12 shrink-0 rounded-full transition-colors"
+                    :aria-pressed="showBan">
+                    <span :class="showBan ? 'right-1' : 'left-1'" class="absolute top-1 h-4 w-4 rounded-full bg-white shadow transition-all"></span>
+                </button>
+            </div>
+            <a href="{{ route('lecturer.classes.pending-members', $class->id) }}" wire:navigate class="relative inline-flex items-center gap-2 rounded-lg bg-blue-50 px-3 py-1.5 text-sm font-bold text-blue-600 transition-colors hover:bg-blue-100">
+                <x-user.icon name="user-check" :size="16" />
+                Duyệt học viên
+                @if($pendingMembersCount > 0)
+                    <span class="absolute -right-2 -top-2 flex h-5 w-5 items-center justify-center rounded-full bg-rose-500 text-[10px] font-bold text-white shadow-sm ring-2 ring-white">
+                        {{ $pendingMembersCount }}
+                    </span>
+                @endif
+            </a>
+        </div>
     </div>
     {{-- Thanh tìm kiếm + bộ lọc trạng thái chuyên cần --}}
     <div class="mb-4 flex flex-col gap-3 px-1 lg:flex-row lg:items-center lg:justify-between">
@@ -245,7 +256,7 @@
                                 // Màu row: đỏ nhạt = cấm thi, vàng nhạt = cảnh báo.
                                 $rowBg = $isBanned ? 'bg-red-50/40' : ($isWarning ? 'bg-amber-50/40' : '');
                             @endphp
-                            <tr class="transition-colors hover:bg-slate-50/50 {{ $rowBg }}">
+                            <tr wire:key="stu-{{ $student->id }}" class="transition-colors hover:bg-slate-50/50" :class="showBan ? '{{ $rowBg }}' : ''">
                                 <td class="px-4 py-4 font-medium text-slate-500 text-center">{{ $loop->iteration }}</td>
                                 <td class="pl-6 pr-4 py-4 text-left">
                                     <div class="flex items-center gap-3">
@@ -258,17 +269,19 @@
                                         @endif
                                         <div class="flex flex-col gap-0.5">
                                             <span class="font-bold text-slate-800">{{ $student->displayName }}</span>
-                                            @if ($isBanned)
-                                                <span class="inline-flex w-fit items-center gap-1 rounded-full bg-red-100 px-2 py-0.5 text-[10px] font-bold uppercase tracking-wide text-red-700">
-                                                    <x-user.icon name="alert-triangle" :size="10" />
-                                                    Nguy cơ cấm thi
-                                                </span>
-                                            @elseif ($isWarning)
-                                                <span class="inline-flex w-fit items-center gap-1 rounded-full bg-amber-100 px-2 py-0.5 text-[10px] font-bold uppercase tracking-wide text-amber-700">
-                                                    <x-user.icon name="alert-triangle" :size="10" />
-                                                    Cảnh báo chuyên cần
-                                                </span>
-                                            @endif
+                                            <div x-show="showBan" x-cloak>
+                                                @if ($isBanned)
+                                                    <span class="inline-flex w-fit items-center gap-1 rounded-full bg-red-100 px-2 py-0.5 text-[10px] font-bold uppercase tracking-wide text-red-700">
+                                                        <x-user.icon name="alert-triangle" :size="10" />
+                                                        Nguy cơ cấm thi
+                                                    </span>
+                                                @elseif ($isWarning)
+                                                    <span class="inline-flex w-fit items-center gap-1 rounded-full bg-amber-100 px-2 py-0.5 text-[10px] font-bold uppercase tracking-wide text-amber-700">
+                                                        <x-user.icon name="alert-triangle" :size="10" />
+                                                        Cảnh báo chuyên cần
+                                                    </span>
+                                                @endif
+                                            </div>
                                         </div>
                                     </div>
                                 </td>
@@ -295,37 +308,43 @@
                                     ])>{{ $rate }}%</span>
                                 </td>
                                 <td class="px-4 py-4 text-center">
-                                    @if($isBanned)
-                                        @if($student->user_id)
-                                            <button
-                                                type="button"
-                                                wire:click="sendExamBan({{ $student->id }})"
-                                                wire:confirm="Gửi thông báo CẤM THI cho sinh viên {{ $student->full_name }}?"
-                                                wire:loading.attr="disabled"
-                                                wire:target="sendExamBan"
-                                                class="inline-flex items-center gap-1.5 rounded-lg bg-red-600 px-3 py-1.5 text-xs font-bold text-white transition-colors hover:bg-red-700 disabled:opacity-60"
-                                            >
-                                                <x-user.icon name="alert-triangle" :size="14" />
-                                                Cấm thi
-                                            </button>
-                                        @else
-                                            <span class="text-xs font-medium text-slate-400" title="Chưa liên kết tài khoản">Chưa liên kết</span>
-                                        @endif
-                                    @elseif($isWarning)
-                                        @if($student->user_id)
-                                            <button
-                                                type="button"
-                                                wire:click="sendAttendanceWarning({{ $student->id }})"
-                                                wire:loading.attr="disabled"
-                                                wire:target="sendAttendanceWarning"
-                                                class="inline-flex items-center gap-1.5 rounded-lg border border-amber-300 bg-amber-50 px-3 py-1.5 text-xs font-bold text-amber-700 transition-colors hover:bg-amber-100 disabled:opacity-60"
-                                            >
-                                                <x-user.icon name="bell" :size="14" />
-                                                Gửi cảnh báo
-                                            </button>
-                                        @else
-                                            <span class="text-xs font-medium text-slate-400" title="Chưa liên kết tài khoản">Chưa liên kết</span>
-                                        @endif
+                                    @if($isBanned || $isWarning)
+                                        {{-- Ẩn/hiện theo công tắc chung "Hiển thị sinh viên cấm thi" ở đầu bảng (mặc định ẩn). --}}
+                                        <span x-show="!showBan" class="text-slate-300">—</span>
+                                        <span x-show="showBan" x-cloak>
+                                                @if($isBanned)
+                                                    @if($student->user_id)
+                                                        <button
+                                                            type="button"
+                                                            wire:click="sendExamBan({{ $student->id }})"
+                                                            wire:confirm="Gửi thông báo CẤM THI cho sinh viên {{ $student->full_name }}?"
+                                                            wire:loading.attr="disabled"
+                                                            wire:target="sendExamBan"
+                                                            class="inline-flex items-center gap-1.5 rounded-lg bg-red-600 px-3 py-1.5 text-xs font-bold text-white transition-colors hover:bg-red-700 disabled:opacity-60"
+                                                        >
+                                                            <x-user.icon name="alert-triangle" :size="14" />
+                                                            Cấm thi
+                                                        </button>
+                                                    @else
+                                                        <span class="text-xs font-medium text-slate-400" title="Chưa liên kết tài khoản">Chưa liên kết</span>
+                                                    @endif
+                                                @elseif($isWarning)
+                                                    @if($student->user_id)
+                                                        <button
+                                                            type="button"
+                                                            wire:click="sendAttendanceWarning({{ $student->id }})"
+                                                            wire:loading.attr="disabled"
+                                                            wire:target="sendAttendanceWarning"
+                                                            class="inline-flex items-center gap-1.5 rounded-lg border border-amber-300 bg-amber-50 px-3 py-1.5 text-xs font-bold text-amber-700 transition-colors hover:bg-amber-100 disabled:opacity-60"
+                                                        >
+                                                            <x-user.icon name="bell" :size="14" />
+                                                            Gửi cảnh báo
+                                                        </button>
+                                                    @else
+                                                        <span class="text-xs font-medium text-slate-400" title="Chưa liên kết tài khoản">Chưa liên kết</span>
+                                                    @endif
+                                                @endif
+                                        </span>
                                     @else
                                         <span class="text-slate-300">—</span>
                                     @endif
@@ -572,5 +591,5 @@
         </div>
     </template>
 
-    <x-lecturer.attendance.quick-start-modal :hideClassSelector="true" />
+    <livewire:lecturer.attendance.quick-attendance-modal />
 </div>

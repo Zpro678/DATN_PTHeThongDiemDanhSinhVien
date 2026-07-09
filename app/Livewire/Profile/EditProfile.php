@@ -2,10 +2,9 @@
 
 namespace App\Livewire\Profile;
 
+use App\Models\User;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Hash;
-use Illuminate\Validation\Rule;
-use Illuminate\Validation\Rules\Password;
 use Livewire\Component;
 use Livewire\WithFileUploads;
 
@@ -24,6 +23,9 @@ class EditProfile extends Component
     public $password;
 
     public $password_confirmation;
+
+    /** @var array<string, bool> */
+    public array $notificationPreferences = [];
 
     public function messages()
     {
@@ -50,6 +52,7 @@ class EditProfile extends Component
         $user = Auth::user();
         $this->name = $user->name;
         $this->email = $user->email;
+        $this->notificationPreferences = $user->notificationPreferences();
     }
 
     public function updateProfileInformation()
@@ -92,6 +95,94 @@ class EditProfile extends Component
         $this->dispatch('toast', message: 'Thông tin cá nhân đã được cập nhật thành công.', type: 'success');
     }
 
+    public function updatedNotificationPreferences(): void
+    {
+        $this->saveNotificationPreferences();
+    }
+
+    public function toggleNotificationPreference(string $channel): void
+    {
+        $allowedChannels = array_keys(User::defaultNotificationPreferences());
+
+        if (! in_array($channel, $allowedChannels, true)) {
+            return;
+        }
+
+        $this->notificationPreferences = array_merge(
+            User::defaultNotificationPreferences(),
+            $this->notificationPreferences,
+        );
+
+        $this->notificationPreferences[$channel] = ! (bool) $this->notificationPreferences[$channel];
+
+        $this->saveNotificationPreferences();
+    }
+
+    public function saveNotificationPreferences(): void
+    {
+        $this->validate([
+            'notificationPreferences.database' => ['required', 'boolean'],
+            'notificationPreferences.mail' => ['required', 'boolean'],
+        ]);
+
+        $preferences = array_merge(
+            User::defaultNotificationPreferences(),
+            $this->notificationPreferences,
+        );
+
+        $preferences = array_map(fn ($value): bool => filter_var($value, FILTER_VALIDATE_BOOLEAN), $preferences);
+        $this->notificationPreferences = $preferences;
+
+        Auth::user()->update([
+            'notification_preferences' => $preferences,
+        ]);
+
+        $mailStatus = $this->mailDeliveryStatus();
+        $mailEnabledButNotReady = $preferences['mail'] && ! $mailStatus['ready'];
+
+        $this->dispatch(
+            'toast',
+            message: $mailEnabledButNotReady
+                ? 'Đã bật Email, nhưng máy chủ gửi mail chưa được cấu hình SMTP.'
+                : 'Tùy chọn thông báo đã được cập nhật.',
+            type: $mailEnabledButNotReady ? 'warning' : 'success',
+        );
+    }
+
+    /**
+     * @return array{ready: bool, message: string}
+     */
+    public function mailDeliveryStatus(): array
+    {
+        $mailer = (string) config('mail.default', 'log');
+
+        if (in_array($mailer, ['log', 'array'], true)) {
+            return [
+                'ready' => false,
+                'message' => 'Máy chủ email đang ở chế độ log, nên email chỉ được ghi vào log và không gửi tới Gmail.',
+            ];
+        }
+
+        if ($mailer === 'smtp') {
+            $host = config('mail.mailers.smtp.host');
+            $username = config('mail.mailers.smtp.username');
+            $password = config('mail.mailers.smtp.password');
+            $fromAddress = config('mail.from.address');
+
+            if (blank($host) || blank($username) || blank($password) || blank($fromAddress)) {
+                return [
+                    'ready' => false,
+                    'message' => 'SMTP chưa đủ host, username, app password hoặc email người gửi.',
+                ];
+            }
+        }
+
+        return [
+            'ready' => true,
+            'message' => 'Máy chủ email đã được cấu hình.',
+        ];
+    }
+
     public function updatePassword()
     {
         $user = Auth::user();
@@ -132,6 +223,8 @@ class EditProfile extends Component
     {
         $layout = Auth::user()->isAdmin() ? 'components.admin-layout' : 'layouts.user';
 
-        return view('livewire.profile.edit-profile')->layout($layout, ['title' => 'Thông tin cá nhân']);
+        return view('livewire.profile.edit-profile', [
+            'mailDeliveryStatus' => $this->mailDeliveryStatus(),
+        ])->layout($layout, ['title' => 'Thông tin cá nhân']);
     }
 }
