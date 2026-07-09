@@ -18,14 +18,18 @@ class CheckClassOwner
     public function handle(Request $request, Closure $next): Response
     {
         // Try to find the class ID in the route parameters
-        $classId = $request->route('classId') ?? $request->route('courseClass');
+        $classId = $request->route('classId') ?? $request->route('courseClass') ?? $request->route('class_id');
         
         if ($classId) {
             $id = $classId instanceof CourseClass ? $classId->id : $classId;
             $classroom = CourseClass::findOrFail($id);
             
-            if ($classroom->owner_user_id !== Auth::id()) {
+            if (!$classroom->isManagedBy(Auth::id())) {
                 abort(403, 'Bạn không có quyền quản trị lớp học này.');
+            }
+
+            if ($classroom->status === 'archived') {
+                abort(403, 'Lớp học này đã bị lưu trữ do giới hạn gói cước.');
             }
         }
         

@@ -77,6 +77,7 @@
         @forelse ($classes as $class)
             @php
                 $isEnded = $class->status === 'ended';
+                $isArchived = $class->status === 'archived';
 
                 $present  = $class->sum_present  ?? 0;
                 $late     = $class->sum_late     ?? 0;
@@ -96,7 +97,7 @@
                 $isBanned  = $plannedSessions > 0 && ($absent > $allowedAbsent || $attendancePct < \App\Services\AttendanceCalculator::MIN_ATTENDANCE_PERCENT);
                 $isWarning = ! $isBanned && $attendancePct < 85;
 
-                if ($isEnded) {
+                if ($isEnded || $isArchived) {
                     $barClass = 'bg-on-surface-variant'; $textClass = 'text-on-surface-variant';
                 } elseif ($attendancePct < 70) {
                     $barClass = 'bg-error'; $textClass = 'text-error';
@@ -119,16 +120,23 @@
 
             <article @class([
                 'group relative flex flex-col overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm transition-all duration-300',
-                'hover:border-slate-300 hover:shadow-md hover:-translate-y-0.5' => ! $isEnded,
+                'hover:border-slate-300 hover:shadow-md hover:-translate-y-0.5' => ! $isEnded && ! $isArchived,
                 'opacity-75' => $isEnded,
+                'opacity-50 grayscale bg-slate-50' => $isArchived,
             ])>
-                <a href="{{ route('lecturer.classes.show', $class->id) }}" wire:navigate class="absolute inset-0 z-10"><span class="sr-only">Xem chi tiết lớp</span></a>
+                @if (! $isArchived)
+                    <a href="{{ route('lecturer.classes.show', $class->id) }}" wire:navigate class="absolute inset-0 z-10"><span class="sr-only">Xem chi tiết lớp</span></a>
+                @endif
 
                 {{-- Header Theme Color --}}
-                <div class="{{ $isEnded ? 'bg-on-surface-variant' : $themeColor }} h-24 px-5 py-4 relative">
+                <div class="{{ ($isEnded || $isArchived) ? 'bg-on-surface-variant' : $themeColor }} h-24 px-5 py-4 relative">
                     <div class="relative z-10 w-3/4">
                         <h3 class="truncate font-normal text-white text-[22px] tracking-wide leading-tight" title="{{ $class->name }}">
-                            <a href="{{ route('lecturer.classes.show', $class->id) }}" wire:navigate class="hover:underline focus:outline-none">{{ $class->name }}</a>
+                            @if ($isArchived)
+                                <span class="focus:outline-none">{{ $class->name }}</span>
+                            @else
+                                <a href="{{ route('lecturer.classes.show', $class->id) }}" wire:navigate class="hover:underline focus:outline-none">{{ $class->name }}</a>
+                            @endif
                         </h3>
                         <p class="mt-1 truncate text-[13px] font-light text-white/95 tracking-wide">Mã lớp: {{ $class->class_code ?? $class->join_key }}</p>
                     </div>
@@ -140,7 +148,7 @@
 
                     {{-- Avatar overlapping --}}
                     <div class="absolute -bottom-6 right-5 z-20">
-                        <span class="{{ $isEnded ? 'bg-on-surface-variant' : $themeColor }} grid h-14 w-14 place-items-center rounded-full border-2 border-white text-[22px] font-medium text-white shadow-sm" title="{{ auth()->user()->name }}">
+                        <span class="{{ ($isEnded || $isArchived) ? 'bg-on-surface-variant' : $themeColor }} grid h-14 w-14 place-items-center rounded-full border-2 border-white text-[22px] font-medium text-white shadow-sm" title="{{ auth()->user()->name }}">
                             {{ mb_strtoupper(mb_substr(auth()->user()->name, 0, 1)) }}
                         </span>
                     </div>
@@ -152,9 +160,18 @@
                         <div class="flex flex-wrap gap-1.5">
                             <span @class([
                                 'inline-flex items-center rounded-sm px-1.5 py-0.5 text-[10px] font-bold uppercase tracking-wide',
-                                'bg-blue-50 text-blue-600' => ! $isEnded,
+                                'bg-blue-50 text-blue-600' => ! $isEnded && ! $isArchived,
+                                'bg-slate-100 text-slate-500' => $isArchived,
                                 'bg-surface-container text-on-surface-variant' => $isEnded,
-                            ])>{{ $isEnded ? 'Đã kết thúc' : 'Đang hoạt động' }}</span>
+                            ])>
+                                @if ($isArchived)
+                                    Đã lưu trữ
+                                @elseif ($isEnded)
+                                    Đã kết thúc
+                                @else
+                                    Đang hoạt động
+                                @endif
+                            </span>
                             <span class="inline-flex items-center rounded-sm bg-amber-50 px-1.5 py-0.5 text-[10px] font-bold uppercase tracking-wide text-amber-600">
                                 <x-user.icon name="shield" :size="10" class="mr-1" /> Chủ lớp
                             </span>
@@ -218,24 +235,26 @@
                     ] as $action)
                         <a href="{{ match ($action['label']) { 'Điểm danh QR' => route('lecturer.attendance.create', ['class_id' => $class->id]), 'Thủ công' => route('lecturer.attendance.create', ['class_id' => $class->id]), 'Quản lý SV' => route('lecturer.students.index', ['class_id' => $class->id]), 'Thống kê' => route('lecturer.class.statistics', ['class_id' => $class->id]), default => '#' } }}" wire:navigate @class([
                             'group/action rounded-lg p-2 transition-colors hover:bg-surface-container',
-                            'pointer-events-none opacity-40' => $isEnded && in_array($action['icon'], ['qr-code', 'check-square'], true),
+                            'pointer-events-none opacity-40' => $isArchived || ($isEnded && in_array($action['icon'], ['qr-code', 'check-square'], true)),
                         ]) title="{{ $action['label'] }}">
                             <x-user.icon :name="$action['icon']" class="text-on-surface-variant transition-colors group-hover/action:text-primary" :size="18"/>
                         </a>
                     @endforeach
 
-                    <div class="relative z-20" x-data="{ open: false }">
-                        <button type="button" x-on:click.stop="open = ! open" class="rounded-lg p-2 text-on-surface-variant transition-colors hover:bg-surface-container">
-                            <x-user.icon name="more-vertical" :size="18" />
-                        </button>
-                        <div x-cloak x-show="open" x-on:click.outside="open = false" class="absolute right-0 bottom-full z-50 mb-1 w-44 overflow-hidden rounded-lg border border-outline-variant bg-white py-1 shadow-lg">
-                            <a href="{{ route('lecturer.classes.show', $class->id) }}" wire:navigate class="block px-4 py-2 text-sm text-on-surface hover:bg-surface-container">Xem lớp học</a>
-                            @if (! $isEnded)
-                                <a href="{{ route('lecturer.classes.settings', $class->id) }}" wire:navigate class="block px-4 py-2 text-sm text-on-surface hover:bg-surface-container">Cài đặt lớp</a>
-                                <button type="button" wire:click.stop.prevent="confirmEndClass('{{ $class->id }}')" class="block w-full px-4 py-2 text-left text-sm text-error hover:bg-error/10">Kết thúc lớp</button>
-                            @endif
+                    @if (! $isArchived)
+                        <div class="relative z-20" x-data="{ open: false }">
+                            <button type="button" x-on:click.stop="open = ! open" class="rounded-lg p-2 text-on-surface-variant transition-colors hover:bg-surface-container">
+                                <x-user.icon name="more-vertical" :size="18" />
+                            </button>
+                            <div x-cloak x-show="open" x-on:click.outside="open = false" class="absolute right-0 bottom-full z-50 mb-1 w-44 overflow-hidden rounded-lg border border-outline-variant bg-white py-1 shadow-lg">
+                                <a href="{{ route('lecturer.classes.show', $class->id) }}" wire:navigate class="block px-4 py-2 text-sm text-on-surface hover:bg-surface-container">Xem lớp học</a>
+                                @if (! $isEnded)
+                                    <a href="{{ route('lecturer.classes.settings', $class->id) }}" wire:navigate class="block px-4 py-2 text-sm text-on-surface hover:bg-surface-container">Cài đặt lớp</a>
+                                    <button type="button" wire:click.stop.prevent="confirmEndClass('{{ $class->id }}')" class="block w-full px-4 py-2 text-left text-sm text-error hover:bg-error/10">Kết thúc lớp</button>
+                                @endif
+                            </div>
                         </div>
-                    </div>
+                    @endif
                 </div>
             </article>
         @empty

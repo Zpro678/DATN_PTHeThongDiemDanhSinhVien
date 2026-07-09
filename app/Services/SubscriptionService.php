@@ -5,6 +5,7 @@ namespace App\Services;
 use App\Models\Plan;
 use App\Models\Subscription;
 use App\Models\User;
+use Carbon\Carbon;
 
 /**
  * Cổng kiểm tra quyền lợi theo gói dịch vụ (plan gate).
@@ -15,6 +16,9 @@ use App\Models\User;
  */
 class SubscriptionService
 {
+    /** Số ngày ân hạn cho phép người dùng tự chọn lớp giữ lại sau khi hạ gói. */
+    public const GRACE_PERIOD_DAYS = 7;
+
     /**
      * Kích hoạt gói cho người dùng (nguồn sự thật duy nhất cho việc "đổi gói").
      *
@@ -32,16 +36,21 @@ class SubscriptionService
 
         // FREE là gói mặc định (currentPlan() tự fallback) nên không tạo bản ghi.
         if ($plan->plan_tier === 'FREE') {
+            $this->autoReactivateClasses($user);
             return null;
         }
 
-        return $user->subscriptions()->create([
-            'plan_id' => $plan->id,
+        $sub = $user->subscriptions()->create([
+            'plan_id'      => $plan->id,
             'paid_plan_id' => $plan->id, // Ghi nhận đây là gói đã trả tiền.
-            'start_date' => now(),
-            'end_date' => $plan->duration_days > 0 ? now()->addDays($plan->duration_days) : null,
-            'status' => 'active',
+            'start_date'   => now(),
+            'end_date'     => $plan->duration_days > 0 ? now()->addDays($plan->duration_days) : null,
+            'status'       => 'active',
         ]);
+
+        $this->autoReactivateClasses($user);
+
+        return $sub;
     }
 
     /**
@@ -81,6 +90,9 @@ class SubscriptionService
      * Nhờ giữ paid_plan_id nên về FREE vẫn nhớ được gói đã trả tiền để quay lại; còn muốn lên
      * gói trả phí khác thì phải mua (không đi qua hàm này).
      *
+     * Khi hạ xuống gói có giới hạn lớp thấp hơn, tự động đặt thời gian ân hạn 7 ngày
+     * để người dùng có thời gian tự chọn lớp giữ lại.
+     *
      * @return Subscription|null Thuê bao đang chạy đã đổi gói, hoặc null nếu không còn hạn.
      */
     public function switchTo(User $user, Plan $plan): ?Subscription
@@ -98,11 +110,29 @@ class SubscriptionService
             ->where('id', '!=', $current->id)
             ->update(['status' => 'expired']);
 
+        // Kiểm tra nếu gói mới có giới hạn lớp thấp hơn -> kích hoạt ân hạn.
+        $newMaxClasses      = $plan->max_classes ?? null;
+        $currentOwnedCount  = $this->ownedClassCount($user);
+        $graceEndsAt        = $current->class_limit_grace_ends_at; // giữ nguyên nếu đang trong ân hạn
+
+        if ($newMaxClasses !== null && $currentOwnedCount > $newMaxClasses) {
+            // Chỉ đặt mới nếu chưa có hoặc đã qua (tránh reset đồng hồ đếm ngược).
+            if (! $graceEndsAt || $graceEndsAt->isPast()) {
+                $graceEndsAt = now()->addDays(self::GRACE_PERIOD_DAYS);
+            }
+        } else {
+            // Không vượt giới hạn -> xóa ân hạn nếu có.
+            $graceEndsAt = null;
+        }
+
         // Đổi gói đang dùng tại chỗ; giữ nguyên paid_plan_id & end_date đã mua.
         $current->update([
-            'plan_id' => $plan->id,
-            'status' => 'active',
+            'plan_id'                   => $plan->id,
+            'status'                    => 'active',
+            'class_limit_grace_ends_at' => $graceEndsAt,
         ]);
+
+        $this->autoReactivateClasses($user);
 
         return $current;
     }
@@ -113,13 +143,13 @@ class SubscriptionService
     public function planFor(User $user): Plan
     {
         return $user->currentPlan() ?? new Plan([
-            'plan_tier' => 'FREE',
-            'name' => 'Miễn phí',
-            'max_classes' => 2,
+            'plan_tier'              => 'FREE',
+            'name'                   => 'Miễn phí',
+            'max_classes'            => 2,
             'max_students_per_class' => 50,
-            'max_gps_radius' => 50,
-            'can_export_excel' => false,
-            'api_access' => false,
+            'max_gps_radius'         => 50,
+            'can_export_excel'       => false,
+            'api_access'             => false,
         ]);
     }
 
@@ -150,11 +180,11 @@ class SubscriptionService
     }
 
     /**
-     * Số lớp người dùng đang sở hữu.
+     * Số lớp người dùng đang sở hữu (không bao gồm lớp đã xóa mềm).
      */
     public function ownedClassCount(User $user): int
     {
-        return $user->ownedClasses()->count();
+        return $user->ownedClasses()->where('status', '!=', 'archived')->count();
     }
 
     /**
@@ -195,5 +225,91 @@ class SubscriptionService
     public function maxGpsRadius(User $user): int
     {
         return (int) $this->planFor($user)->max_gps_radius;
+    }
+
+    // =========================================================================
+    // Grace Period (Ân hạn số lớp khi hạ cấp gói)
+    // =========================================================================
+
+    /**
+     * Người dùng có đang trong thời gian ân hạn (số lớp vượt giới hạn gói mới) không?
+     * Ân hạn = subscription còn active VÀ class_limit_grace_ends_at chưa qua.
+     */
+    public function isInGracePeriod(User $user): bool
+    {
+        $sub = $user->activeSubscription()->first();
+        if (! $sub || ! $sub->class_limit_grace_ends_at) {
+            return false;
+        }
+
+        return $sub->class_limit_grace_ends_at->isFuture();
+    }
+
+    /**
+     * Thời điểm kết thúc ân hạn, hoặc null nếu không có.
+     */
+    public function gracePeriodEndsAt(User $user): ?Carbon
+    {
+        return $user->activeSubscription()->first()?->class_limit_grace_ends_at;
+    }
+
+    /**
+     * Người dùng có đang vượt quá giới hạn số lớp của gói hiện tại không?
+     */
+    public function isOverClassLimit(User $user): bool
+    {
+        $max = $this->maxClasses($user);
+        if ($max === null) {
+            return false;
+        }
+
+        return $this->ownedClassCount($user) > $max;
+    }
+
+    /**
+     * Người dùng cần phải vào trang chọn lớp để giữ lại không?
+     * = Vượt giới hạn VÀ hết thời gian ân hạn (hoặc chưa từng được ân hạn).
+     */
+    public function needsClassSelection(User $user): bool
+    {
+        if (! $this->isOverClassLimit($user)) {
+            return false;
+        }
+
+        // Còn trong ân hạn -> chưa cần chặn.
+        if ($this->isInGracePeriod($user)) {
+            return false;
+        }
+
+        return true;
+    }
+
+    /**
+     * Tự động kích hoạt lại các lớp đã lưu trữ khi giới hạn của người dùng tăng lên.
+     */
+    public function autoReactivateClasses(User $user): void
+    {
+        $max = $this->maxClasses($user);
+        if ($max === null) {
+            // Không giới hạn -> kích hoạt lại toàn bộ lớp đã lưu trữ
+            $user->ownedClasses()->where('status', 'archived')->update(['status' => 'active']);
+            return;
+        }
+
+        $activeCount = $user->ownedClasses()->where('status', '!=', 'archived')->count();
+        $slots = $max - $activeCount;
+
+        if ($slots > 0) {
+            // Lấy ra N lớp đã lưu trữ mới nhất để kích hoạt lại
+            $archivedIds = $user->ownedClasses()
+                ->where('status', 'archived')
+                ->orderByDesc('created_at')
+                ->limit($slots)
+                ->pluck('id');
+
+            if ($archivedIds->isNotEmpty()) {
+                \App\Models\CourseClass::whereIn('id', $archivedIds)->update(['status' => 'active']);
+            }
+        }
     }
 }

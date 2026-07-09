@@ -455,6 +455,33 @@
                             </div>
                         @endif
 
+                        @php
+                            $layoutUser = auth()->user();
+                            $layoutSvc  = app(\App\Services\SubscriptionService::class);
+                            $showGraceBanner = $layoutUser && $layoutSvc->isInGracePeriod($layoutUser);
+                            $graceBannerEndsAt = $showGraceBanner ? $layoutSvc->gracePeriodEndsAt($layoutUser) : null;
+                        @endphp
+
+                        @if ($showGraceBanner && request()->routeIs('managed-classes'))
+                            <div class="mx-6 mt-4 flex items-start gap-3 rounded-2xl border border-amber-200 bg-amber-50 px-5 py-3.5 sm:mx-10 lg:mx-16">
+                                <div class="mt-0.5 shrink-0 grid h-8 w-8 place-items-center rounded-xl bg-amber-100 text-amber-600">
+                                    <x-user.icon name="clock" :size="16" />
+                                </div>
+                                <div class="flex flex-1 flex-wrap items-center justify-between gap-2">
+                                    <p class="text-sm text-amber-800">
+                                        <strong>Thời gian ân hạn:</strong>
+                                        Bạn đang vượt giới hạn số lớp của gói hiện tại.
+                                        Vui lòng chọn lớp muốn giữ lại trước
+                                        <strong>{{ $graceBannerEndsAt?->format('H:i, d/m/Y') }}</strong>.
+                                    </p>
+                                    <a href="{{ route('select-active-classes', ['ma_user' => auth()->id()]) }}" wire:navigate
+                                       class="shrink-0 rounded-lg border border-amber-300 bg-amber-100 px-3 py-1.5 text-xs font-bold text-amber-800 transition hover:bg-amber-200">
+                                        Chọn lớp ngay
+                                    </a>
+                                </div>
+                            </div>
+                        @endif
+
                         {{ $slot }}
                     </main>
 

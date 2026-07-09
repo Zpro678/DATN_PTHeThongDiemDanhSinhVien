@@ -89,15 +89,17 @@
                                 @if (!empty($attachments))
                                     <div class="mb-6 grid grid-cols-2 gap-4 px-6 sm:grid-cols-3">
                                         @foreach ($attachments as $index => $image)
-                                            <a href="#" @click.prevent="$dispatch('open-image', '{{ $image->temporaryUrl() }}')" class="relative group block aspect-square">
-                                                <img src="{{ $image->temporaryUrl() }}" class="h-full w-full rounded-lg object-cover shadow-sm">
-                                                <div class="absolute inset-0 flex items-center justify-center rounded-lg bg-black/40 opacity-0 transition-opacity group-hover:opacity-100">
-                                                    <x-user.icon name="eye" :size="24" class="text-white" />
-                                                </div>
-                                            </a>
-                                            <button type="button" wire:click.prevent="removeAttachment({{ $index }})" class="absolute -right-2 -top-2 rounded-full bg-red-500 p-1.5 text-white shadow-sm transition-transform hover:scale-110 hover:bg-red-600 focus:outline-none">
-                                                <x-user.icon name="x" :size="14" stroke-width="3" />
-                                            </button>
+                                            <div class="relative aspect-square group">
+                                                <a href="#" @click.prevent="$dispatch('open-image', '{{ $image->temporaryUrl() }}')" class="block h-full w-full">
+                                                    <img src="{{ $image->temporaryUrl() }}" class="h-full w-full rounded-lg object-cover shadow-sm">
+                                                    <div class="absolute inset-0 flex items-center justify-center rounded-lg bg-black/40 opacity-0 transition-opacity group-hover:opacity-100">
+                                                        <x-user.icon name="eye" :size="24" class="text-white" />
+                                                    </div>
+                                                </a>
+                                                <button type="button" wire:click.prevent="removeAttachment({{ $index }})" class="absolute -right-1.5 -top-1.5 z-20 rounded-full bg-red-500 p-1 text-white shadow-md transition-transform hover:scale-110 hover:bg-red-600 focus:outline-none">
+                                                    <x-user.icon name="x" :size="12" stroke-width="3" />
+                                                </button>
+                                            </div>
                                         @endforeach
                                     </div>
                                 @else
@@ -178,15 +180,16 @@
                                 </div>
                                 <div class="shrink-0 text-right flex flex-col items-end gap-2">
                                     <span class="inline-flex items-center rounded-full px-2.5 py-1 text-xs font-bold
-                                        {{ $feedback->status === 'resolved' ? 'bg-green-100 text-green-700' : ($feedback->status === 'in_progress' ? 'bg-amber-100 text-amber-700' : ($feedback->status === 'cancelled' ? 'bg-slate-100 text-slate-500 line-through' : 'bg-blue-100 text-blue-700')) }}">
-                                        {{ $feedback->status === 'resolved' ? 'Đã xử lý' : ($feedback->status === 'in_progress' ? 'Đang xử lý' : ($feedback->status === 'cancelled' ? 'Đã hủy' : 'Chờ xử lý')) }}
+                                        {{ $feedback->status === 'resolved' ? 'bg-green-100 text-green-700' : ($feedback->status === 'cancelled' ? 'bg-slate-100 text-slate-500 line-through' : 'bg-amber-100 text-amber-700') }}">
+                                        {{ $feedback->status === 'resolved' ? 'Đã xử lý' : ($feedback->status === 'cancelled' ? 'Đã hủy' : 'Đang xử lý') }}
                                     </span>
                                     <p class="text-[11px] text-on-surface-variant">{{ $feedback->created_at->format('d/m/Y H:i') }}</p>
-                                    @if($feedback->status === 'pending')
-                                        <button wire:click="cancelFeedback({{ $feedback->id }})" wire:confirm="Bạn có chắc chắn muốn hủy yêu cầu này không?" class="text-xs text-red-500 hover:text-red-700 hover:underline">
-                                            Hủy yêu cầu
-                                        </button>
-                                    @endif
+                                     @if($feedback->status === 'pending')
+                                         <button wire:click="confirmCancel({{ $feedback->id }})" class="text-[13px] font-semibold text-rose-500 hover:text-rose-700 hover:underline transition-colors flex items-center gap-1">
+                                             <x-user.icon name="x-circle" :size="14" />
+                                             Hủy yêu cầu
+                                         </button>
+                                     @endif
                                 </div>
                             </div>
 
@@ -209,6 +212,11 @@
                         </div>
                     @endforelse
                 </div>
+                @if($feedbacks->hasPages())
+                    <div class="mt-6 border-t border-slate-100 pt-6">
+                        {{ $feedbacks->links() }}
+                    </div>
+                @endif
         </div>
     </div>
 
@@ -234,8 +242,8 @@
                                 {{ $detailFeedback->type === 'bug' ? 'Báo lỗi' : ($detailFeedback->type === 'feature' ? 'Góp ý' : 'Khác') }}
                             </span>
                             <span class="inline-flex items-center rounded-full px-2 py-0.5 text-[10px] font-bold uppercase tracking-wider
-                                {{ $detailFeedback->status === 'resolved' ? 'bg-green-100 text-green-700' : ($detailFeedback->status === 'in_progress' ? 'bg-amber-100 text-amber-700' : ($detailFeedback->status === 'cancelled' ? 'bg-slate-100 text-slate-500 line-through' : 'bg-blue-100 text-blue-700')) }}">
-                                {{ $detailFeedback->status === 'resolved' ? 'Đã xử lý' : ($detailFeedback->status === 'in_progress' ? 'Đang xử lý' : ($detailFeedback->status === 'cancelled' ? 'Đã hủy' : 'Chờ xử lý')) }}
+                                {{ $detailFeedback->status === 'resolved' ? 'bg-green-100 text-green-700' : ($detailFeedback->status === 'cancelled' ? 'bg-slate-100 text-slate-500 line-through' : 'bg-amber-100 text-amber-700') }}">
+                                {{ $detailFeedback->status === 'resolved' ? 'Đã xử lý' : ($detailFeedback->status === 'cancelled' ? 'Đã hủy' : 'Đang xử lý') }}
                             </span>
                         </div>
                     </div>
@@ -271,6 +279,58 @@
                 <div class="flex justify-end gap-3 border-t border-slate-100 px-6 py-4 shrink-0">
                     <button type="button" wire:click="closeDetailModal" class="rounded-full bg-slate-100 px-6 py-2.5 text-sm font-medium text-slate-700 transition-colors hover:bg-slate-200">
                         Đóng
+                    </button>
+                </div>
+            </div>
+        </div>
+    </template>
+    @endif
+
+    <!-- Cancel Confirmation Modal -->
+    @if($showCancelModal)
+    <template x-teleport="body">
+        <div class="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/50 backdrop-blur-sm transition-opacity"
+            x-data="{ show: false }"
+            x-init="setTimeout(() => show = true, 10)"
+            x-show="show"
+            x-transition:enter="ease-out duration-300"
+            x-transition:enter-start="opacity-0"
+            x-transition:enter-end="opacity-100"
+            x-transition:leave="ease-in duration-200"
+            x-transition:leave-start="opacity-100"
+            x-transition:leave-end="opacity-0"
+        >
+            <div class="w-full max-w-md transform overflow-hidden rounded-2xl bg-white shadow-2xl transition-all"
+                x-show="show"
+                x-transition:enter="ease-out duration-300"
+                x-transition:enter-start="opacity-0 translate-y-4 sm:translate-y-0 sm:scale-95"
+                x-transition:enter-end="opacity-100 translate-y-0 sm:scale-100"
+                x-transition:leave="ease-in duration-200"
+                x-transition:leave-start="opacity-100 translate-y-0 sm:scale-100"
+                x-transition:leave-end="opacity-0 translate-y-4 sm:translate-y-0 sm:scale-95"
+                @click.outside="$wire.closeCancelModal()"
+            >
+                <div class="flex items-center justify-between border-b border-slate-100 px-6 py-4 bg-rose-50/50">
+                    <h3 class="font-semibold text-rose-600 flex items-center gap-2">
+                        <x-user.icon name="alert-triangle" :size="20" />
+                        Xác nhận hủy yêu cầu
+                    </h3>
+                    <button type="button" wire:click="closeCancelModal" class="text-slate-400 hover:text-slate-600 transition-colors">
+                        <x-user.icon name="x" :size="20" />
+                    </button>
+                </div>
+                
+                <div class="p-6">
+                    <p class="text-slate-600 text-sm leading-relaxed">Bạn có chắc chắn muốn hủy yêu cầu hỗ trợ này không? Thao tác này sẽ chuyển yêu cầu sang trạng thái đã hủy và không thể hoàn tác.</p>
+                </div>
+
+                <div class="flex justify-end gap-3 border-t border-slate-100 px-6 py-4 bg-slate-50">
+                    <button type="button" wire:click="closeCancelModal" class="rounded-full border border-slate-200 bg-white px-5 py-2 text-sm font-medium text-slate-700 shadow-sm transition-colors hover:bg-slate-50 hover:text-slate-900">
+                        Quay lại
+                    </button>
+                    <button type="button" wire:click="executeCancel" class="rounded-full bg-rose-600 px-5 py-2 text-sm font-medium text-white shadow-sm transition-colors hover:bg-rose-700 flex items-center gap-2">
+                        <x-user.icon name="x-circle" :size="16" />
+                        Xác nhận hủy
                     </button>
                 </div>
             </div>

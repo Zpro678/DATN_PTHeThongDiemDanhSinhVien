@@ -36,7 +36,7 @@ class SyncPendingTransactions extends Command
                     $res = $momo->checkTransactionStatus($tx->transaction_code, $tx->transaction_code);
                     if ($res && isset($res['resultCode'])) {
                         if ($res['resultCode'] == 0) {
-                            $tx->update(['status' => 'success', 'payment_response' => json_encode($res)]);
+                            $tx->update(['status' => 'success', 'payment_response' => json_encode($res), 'paid_at' => now()]);
                             if ($tx->plan) {
                                 $subscriptions->activate($tx->user, $tx->plan);
                             }
@@ -50,7 +50,7 @@ class SyncPendingTransactions extends Command
                     $info = $payos->getPaymentLinkInformation((int) $tx->transaction_code);
                     if ($info && isset($info['status'])) {
                         if (in_array($info['status'], ['PAID', 'SUCCESS'])) {
-                            $tx->update(['status' => 'success', 'payment_response' => json_encode($info)]);
+                            $tx->update(['status' => 'success', 'payment_response' => json_encode($info), 'paid_at' => now()]);
                             if ($tx->plan) {
                                 $subscriptions->activate($tx->user, $tx->plan);
                             }
