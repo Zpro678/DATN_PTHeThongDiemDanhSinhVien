@@ -109,13 +109,6 @@
         </div>
     </div>
 
-    @if(session('success_config'))
-        <div class="flex items-center gap-2 rounded-xl border border-emerald-200 bg-emerald-50 p-4 text-sm font-bold text-emerald-700">
-            <x-user.icon name="check-circle" :size="20" />
-            {{ session('success_config') }}
-        </div>
-    @endif
-
     <div class="grid gap-6 xl:grid-cols-12">
         <section class="rounded-2xl border border-slate-200/60 bg-white p-6 shadow-xl shadow-slate-200/40 sm:p-8 xl:col-span-8">
             <form id="qr-setup-form" wire:submit="save" class="grid gap-10 lg:grid-cols-2">
@@ -194,11 +187,23 @@
                     </div>
 
                     <div>
-                        <label for="session_title" class="mb-2 block text-sm font-bold text-slate-600">Tiêu đề buổi học</label>
+                        <label for="meeting_title" class="mb-2 block text-sm font-bold text-slate-600">Tên buổi điểm danh</label>
+                        @if($cloneSessionId || $editSessionId)
+                        <input id="meeting_title" wire:model.blur="meetingName" type="text" readonly class="w-full cursor-default rounded-xl border-2 border-slate-100 bg-white px-4 py-3 text-sm font-bold text-slate-800 outline-none transition hover:border-blue-300 hover:bg-slate-50 focus:border-blue-500 focus:ring-4 focus:ring-blue-500/10" />
+                        @else
+                        <input id="meeting_title" wire:model.blur="meetingName" type="text" placeholder="Ví dụ: Buổi 1 - Lý thuyết..." class="w-full rounded-xl border-2 border-slate-100 bg-white px-4 py-3 text-sm font-bold text-slate-800 outline-none transition focus:border-blue-500 focus:ring-4 focus:ring-blue-500/10" />
+                        @endif
+                        @error('meetingName')
+                            <span class="mt-2 block text-sm font-medium text-red-600">{{ $message }}</span>
+                        @enderror
+                    </div>
+
+                    <div>
+                        <label for="session_title" class="mb-2 block text-sm font-bold text-slate-600">Tên phiên</label>
                         @if($cloneSessionId || $editSessionId)
                         <input id="session_title" wire:model.blur="name" type="text" readonly class="w-full cursor-default rounded-xl border-2 border-slate-100 bg-white px-4 py-3 text-sm font-bold text-slate-800 outline-none transition hover:border-blue-300 hover:bg-slate-50 focus:border-blue-500 focus:ring-4 focus:ring-blue-500/10" />
                         @else
-                        <input id="session_title" wire:model.blur="name" type="text" placeholder="Ví dụ: Buổi 1 - Lý thuyết..." class="w-full rounded-xl border-2 border-slate-100 bg-white px-4 py-3 text-sm font-bold text-slate-800 outline-none transition focus:border-blue-500 focus:ring-4 focus:ring-blue-500/10" />
+                        <input id="session_title" wire:model.blur="name" type="text" placeholder="Ví dụ: Phiên 1, Quét QR lần 1..." class="w-full rounded-xl border-2 border-slate-100 bg-white px-4 py-3 text-sm font-bold text-slate-800 outline-none transition focus:border-blue-500 focus:ring-4 focus:ring-blue-500/10" />
                         @endif
                         @error('name')
                             <span class="mt-2 block text-sm font-medium text-red-600">{{ $message }}</span>

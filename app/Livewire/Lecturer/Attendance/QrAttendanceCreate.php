@@ -21,6 +21,8 @@ class QrAttendanceCreate extends Component
 
     public string $classId = '';
 
+    public string $meetingName = '';
+
     public string $name = '';
 
     public string $date = '';
@@ -66,15 +68,17 @@ class QrAttendanceCreate extends Component
             $this->classId = (string) $meeting->class_id;
             $this->loadConfigForClass($this->classId);
 
-            $this->name = $meeting->name;
+            $this->meetingName = $meeting->name;
+            $this->name = 'Phiên ' . ($meeting->sessions()->count() + 1);
             $this->date = $meeting->date->format('Y-m-d');
             $this->startTime = $meeting->start_time ? \Carbon\Carbon::parse($meeting->start_time)->format('H:i') : '07:00';
             $this->endTime = $meeting->end_time ? \Carbon\Carbon::parse($meeting->end_time)->format('H:i') : '09:30';
         } elseif ($this->editSessionId) {
-            $session = ClassSession::query()->findOrFail($this->editSessionId);
+            $session = ClassSession::query()->with('meeting')->findOrFail($this->editSessionId);
             abort_unless($session->created_by === auth()->id(), 403);
 
             $this->classId = (string) $session->class_id;
+            $this->meetingName = $session->meeting ? $session->meeting->name : '';
             $this->name = $session->name;
             $this->date = $session->date->format('Y-m-d');
 
@@ -93,13 +97,14 @@ class QrAttendanceCreate extends Component
             }
 
         } elseif ($this->cloneSessionId) {
-            $session = ClassSession::query()->findOrFail($this->cloneSessionId);
+            $session = ClassSession::query()->with('meeting')->findOrFail($this->cloneSessionId);
             abort_unless($session->created_by === auth()->id(), 403);
 
             $this->classId = (string) $session->class_id;
             
             $this->loadConfigForClass($this->classId);
 
+            $this->meetingName = $session->meeting ? $session->meeting->name : '';
             $this->name = $session->name;
             $this->date = $session->date->format('Y-m-d');
         } else {
@@ -171,13 +176,14 @@ class QrAttendanceCreate extends Component
             'deviceCheck' => $this->deviceCheck,
         ], now()->addDays(30));
 
-        session()->flash('success_config', 'Đã lưu cấu hình làm mặc định.');
+        $this->dispatch('toast', message: 'Đã lưu cấu hình làm mặc định.', type: 'success');
     }
 
     public function save(): void
     {
         $validated = $this->validate([
             'classId' => ['required', 'string', 'exists:classes,id'],
+            'meetingName' => ['required', 'string', 'max:255'],
             'name' => ['required', 'string', 'max:255'],
             'date' => ['required', 'date'],
             'startTime' => ['nullable', 'date_format:H:i'],
@@ -192,7 +198,8 @@ class QrAttendanceCreate extends Component
         ], [
             'classId.required' => 'Vui lòng chọn lớp học.',
             'classId.exists' => 'Lớp học không hợp lệ.',
-            'name.required' => 'Vui lòng nhập tiêu đề buổi học.',
+            'meetingName.required' => 'Vui lòng nhập tên buổi điểm danh.',
+            'name.required' => 'Vui lòng nhập tên phiên.',
             'date.required' => 'Vui lòng chọn ngày học.',
             'durationMinutes.required' => 'Vui lòng nhập thời lượng mở QR.',
             'gpsRadius.required' => 'Vui lòng nhập bán kính GPS.',
@@ -244,8 +251,8 @@ class QrAttendanceCreate extends Component
                 return;
             }
 
-            $meeting->update(['status' => 'active']);
-            $session = $meeting->createSession('active', $qrFields);
+            $meeting->update(['status' => 'active', 'name' => $validated['meetingName']]);
+            $session = $meeting->createSession('active', array_merge($qrFields, ['name' => $validated['name']]));
 
             app(NotificationService::class)->attendanceSessionCreated((int) auth()->id(), $session, isQr: true);
             $this->redirectRoute('lecturer.attendance.qr.session', ['ma_user' => auth()->id(), 'session' => $session->id], navigate: true);
@@ -258,11 +265,11 @@ class QrAttendanceCreate extends Component
             abort_unless($session->created_by === auth()->id(), 403);
 
             $meetingFields = [
-                'name' => $validated['name'],
+                'name' => $validated['meetingName'],
                 'date' => $validated['date'],
             ];
 
-            $session->update(array_merge($meetingFields, $qrFields));
+            $session->update(array_merge(['name' => $validated['name'], 'date' => $validated['date']], $qrFields));
 
             // Đồng bộ thông tin buổi để các trang khác hiển thị nhất quán.
             $session->meeting?->update($meetingFields);
@@ -275,7 +282,10 @@ class QrAttendanceCreate extends Component
                 'is_account' => $member->user_id !== null,
             ]));
 
-            session()->flash('success_config', 'Đã cập nhật thiết lập phiên điểm danh.');
+            app(NotificationService::class)->attendanceSessionCreated((int) auth()->id(), $session, isQr: true);
+            
+            session()->flash('success', 'Đã cập nhật thiết lập phiên điểm danh và lưu cấu hình mặc định.');
+
             $this->redirectRoute('lecturer.attendance.qr.session', ['ma_user' => auth()->id(), 'session' => $session->id], navigate: true);
             return;
         }
@@ -303,14 +313,14 @@ class QrAttendanceCreate extends Component
         $meeting = ClassMeeting::query()->create([
             'class_id' => $courseClass->id,
             'user_Created' => auth()->id(),
-            'name' => $validated['name'],
+            'name' => $validated['meetingName'],
             'date' => $date,
             'start_time' => $startTime,
             'end_time' => $endTime,
             'status' => 'active',
         ]);
 
-        $session = $meeting->createSession('active', $qrFields);
+        $session = $meeting->createSession('active', array_merge($qrFields, ['name' => $validated['name']]));
 
         app(NotificationService::class)->attendanceSessionCreated((int) auth()->id(), $session, isQr: true);
         $this->redirectRoute('lecturer.attendance.qr.session', ['ma_user' => auth()->id(), 'session' => $session->id], navigate: true);

@@ -44,6 +44,6 @@ return Application::configure(basePath: dirname(__DIR__))
                 return response()->json(['message' => 'Unauthenticated.'], 401);
             }
 
-            return redirect()->guest(route('login'))->with('error', 'Phiên đăng nhập đã hết hạn.');
+            return redirect()->guest(route('login'));
         });
     })->create();

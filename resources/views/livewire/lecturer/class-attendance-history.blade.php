@@ -6,6 +6,17 @@
         :navigate="false" />
 </x-slot:headerActions>
 
+<x-slot:headerLeft>
+    <div x-data="{ isSessionView: @js($initialGroupKey ? true : false) }" @view-mode-changed.window="isSessionView = ($event.detail !== 'matrix')">
+        <button x-show="isSessionView" x-cloak type="button" @click="$dispatch('go-back-matrix')" class="flex h-10 w-10 items-center justify-center rounded-full text-slate-500 hover:bg-slate-100 hover:text-slate-900 transition">
+            <x-user.icon name="x" :size="24" />
+        </button>
+        <a x-show="!isSessionView" href="{{ route('lecturer.classes.show', ['ma_user' => auth()->id(), 'courseClass' => $this->courseClass->id]) }}" wire:navigate class="flex h-10 w-10 items-center justify-center rounded-full text-slate-500 hover:bg-slate-100 hover:text-slate-900 transition">
+            <x-user.icon name="x" :size="24" />
+        </a>
+    </div>
+</x-slot:headerLeft>
+
 <div x-data="{ 
     viewMode: @js($initialGroupKey ? 'session' : 'matrix'), // 'matrix', 'session'
     showModal: false,
@@ -42,15 +53,13 @@
 
     scrollToTop() {
         window.scrollTo({ top: 0, behavior: 'smooth' });
-    }
-}" class="flex flex-col flex-1 min-h-0 font-sans text-slate-800 animate-in fade-in slide-in-from-bottom-4 duration-500">
+    },
 
-    <section x-show="viewMode !== 'matrix'" x-cloak class="flex items-center justify-start p-6 pb-2 border-b border-slate-200">
-        <button @click="viewMode = 'matrix'; scrollToTop()" class="group inline-flex items-center justify-center gap-2 rounded-2xl bg-white px-5 py-2.5 text-sm font-bold text-slate-700 shadow-sm ring-1 ring-inset ring-slate-200 transition-all hover:bg-slate-50 hover:text-blue-600 hover:ring-blue-200">
-            <x-user.icon name="arrow-left" :size="18" class="transition-transform group-hover:-translate-x-1" />
-            Trở về
-        </button>
-    </section>
+    init() {
+        this.$watch('viewMode', val => this.$dispatch('view-mode-changed', val));
+    }
+}" @go-back-matrix.window="viewMode = 'matrix'; scrollToTop()" class="flex flex-col flex-1 min-h-0 font-sans text-slate-800 animate-in fade-in slide-in-from-bottom-4 duration-500">
+
 
     @if(session('status'))
         <div class="m-4 md:m-6 rounded-2xl bg-emerald-50/80 px-6 py-4 text-sm font-medium text-emerald-800 border border-emerald-100 shadow-sm backdrop-blur-sm flex items-center gap-3">
@@ -173,10 +182,10 @@
 
     <section x-cloak x-show="viewMode === 'session'" class="flex-1 flex flex-col min-h-0" x-transition:enter="transition ease-out duration-500" x-transition:enter-start="opacity-0 translate-y-4" x-transition:enter-end="opacity-100 translate-y-0">
         <div class="bg-white overflow-hidden flex flex-col flex-1 min-h-0 h-full">
-            <div class="px-8 py-8 md:px-10 border-b border-slate-50">
-                <div class="flex flex-col md:flex-row md:items-center justify-between gap-6">
+            <div class="px-8 py-2 md:px-10 border-b border-slate-50">
+                <div class="flex flex-col md:flex-row md:items-center justify-between gap-2">
                     <div>
-                        <div class="flex items-center gap-3 mb-2">
+                        <div class="flex items-center gap-3 mb-1">
                             <span class="inline-flex items-center rounded-full bg-blue-50 px-3 py-1 text-xs font-bold text-blue-600 uppercase tracking-widest"
                                   x-show="groupedSessionsInfo[selectedGroupKey]"
                                   x-text="(groupedSessionsInfo[selectedGroupKey]?.columns?.length ?? 1) + ' phiên'"></span>
@@ -216,7 +225,7 @@
                                 <template x-for="col in groupedSessionsInfo[selectedGroupKey].columns" :key="col.iteration">
                                     <th scope="col" class="px-4 py-6 text-center">
                                         <div class="flex flex-col items-center">
-                                            <span class="text-[13px] font-black uppercase tracking-widest text-slate-700" x-text="'Lần ' + col.iteration"></span>
+                                            <span class="text-[13px] font-black uppercase tracking-widest text-slate-700" x-text="col.name"></span>
                                             <span x-show="col.time" class="mt-1 text-[10px] font-medium text-slate-400 bg-slate-50 px-2 py-0.5 rounded-full" x-text="col.time"></span>
                                         </div>
                                     </th>
@@ -250,9 +259,9 @@
                                 
                                 <template x-if="sessionFilter === 'detailed' && groupedSessionsInfo[selectedGroupKey]">
                                     <template x-for="col in groupedSessionsInfo[selectedGroupKey].columns" :key="col.iteration">
-                                        <td class="px-4 py-5 align-middle text-center cursor-pointer" @click="selectedStudentId = student.id; viewMode = 'timeline'; scrollToTop()">
+                                        <td class="px-4 py-5 align-middle text-center">
                                             <template x-if="getDetail(student, col.iteration)">
-                                                <span class="inline-flex min-w-[96px] items-center justify-center rounded-xl px-3 py-2 text-[13px] font-bold transition-all hover:scale-105" 
+                                                <span class="inline-flex min-w-[96px] items-center justify-center rounded-xl px-3 py-2 text-[13px] font-bold" 
                                                     :class="{
                                                         'bg-emerald-50 text-emerald-600': getDetail(student, col.iteration).status === 'present' || getDetail(student, col.iteration).status === 'excused',
                                                         'bg-rose-50 text-rose-600': getDetail(student, col.iteration).status === 'absent',

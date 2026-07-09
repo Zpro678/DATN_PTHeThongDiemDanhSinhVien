@@ -30,6 +30,12 @@ class PayosController extends Controller
             // webhookData chứa thông tin giao dịch, ví dụ: orderCode, amount, code, success
             // code "00" có nghĩa là thành công
             if ($webhookData['code'] !== '00' && $webhookData['desc'] !== 'success') {
+                Log::critical('PayOS webhook signature invalid or failed status', [
+                    'transaction_code' => $webhookData['orderCode'] ?? null,
+                    'ip' => request()->ip(),
+                    'payload' => request()->except(['signature']),
+                ]);
+                
                 return response()->json([
                     'error' => 0,
                     'message' => 'Not a successful payment event',

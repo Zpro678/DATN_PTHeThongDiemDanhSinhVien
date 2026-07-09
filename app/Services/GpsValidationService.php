@@ -59,6 +59,14 @@ class GpsValidationService
 
         // Kiểm tra độ chính xác GPS (tối đa 150m)
         if ($accuracy > 150) {
+            \Illuminate\Support\Facades\Log::warning('Attendance check-in failed', [
+                'session_id' => $verification->session_id,
+                'member_id' => $verification->member_id,
+                'reason' => 'low_accuracy',
+                'accuracy' => $accuracy,
+                'ip' => $ip,
+            ]);
+
             return [
                 'success' => false,
                 'check_token' => null,
@@ -84,6 +92,15 @@ class GpsValidationService
             $radius = $session->gps_radius ?? 100;
 
             if ($distance > $radius) {
+                \Illuminate\Support\Facades\Log::warning('Attendance check-in failed', [
+                    'session_id' => $session->id,
+                    'member_id' => $verification->member_id,
+                    'reason' => 'out_of_range',
+                    'distance' => round($distance),
+                    'gps_radius' => $radius,
+                    'ip' => $ip,
+                ]);
+
                 return [
                     'success' => false,
                     'check_token' => null,

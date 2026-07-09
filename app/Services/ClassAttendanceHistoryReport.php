@@ -6,6 +6,8 @@ use App\Models\AttendanceRecord;
 use App\Models\ClassMember;
 use App\Models\ClassSession;
 use App\Models\CourseClass;
+use App\Models\MeetingSummary;
+use App\Services\AttendanceCalculator;
 use Carbon\Carbon;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Support\Collection;
@@ -52,6 +54,12 @@ class ClassAttendanceHistoryReport
             ->get()
             ->groupBy('class_member_id');
 
+        $meetingSummaries = MeetingSummary::query()
+            ->whereIn('meeting_id', $groupedSessions->keys())
+            ->whereIn('class_member_id', $members->pluck('id'))
+            ->get()
+            ->groupBy('class_member_id');
+
         $matrix = [];
         $totalAttended = [];
         $memberStats = [];
@@ -86,9 +94,15 @@ class ClassAttendanceHistoryReport
                     $iteration++;
                 }
 
-                $result = AttendanceCalculator::consolidateStatuses($statuses, $rules);
-                $finalStatus = $result['status'];
-                $finalText = $result['label'];
+                $summary = $meetingSummaries->get($member->id)?->firstWhere('meeting_id', $groupKey);
+                if ($summary) {
+                    $finalStatus = $summary->status;
+                    $finalText = AttendanceCalculator::statusLabel($finalStatus);
+                } else {
+                    $result = AttendanceCalculator::consolidateStatuses($statuses, $rules);
+                    $finalStatus = $result['status'];
+                    $finalText = $result['label'];
+                }
 
                 if ($hasRecord) {
                     $counts[$finalStatus] = ($counts[$finalStatus] ?? 0) + 1;
@@ -115,7 +129,9 @@ class ClassAttendanceHistoryReport
         }
 
         $dayIndex = 1;
-        $groupedSessionsInfo = $groupedSessions->map(function ($sessions, $key) use (&$dayIndex) {
+        $meetingNames = \App\Models\ClassMeeting::query()->whereIn('id', $groupedSessions->keys())->pluck('name', 'id');
+
+        $groupedSessionsInfo = $groupedSessions->map(function ($sessions, $key) use (&$dayIndex, $meetingNames) {
             $first = $sessions->first();
             $timeStr = $first->start_time
                 ? Carbon::parse($first->start_time)->format('H:i').' - '.Carbon::parse($first->end_time)->format('H:i')
@@ -124,8 +140,14 @@ class ClassAttendanceHistoryReport
             $sessionCols = [];
             $iteration = 1;
             foreach ($sessions as $session) {
+                $sessionName = $session->name;
+                if (empty($sessionName) || $sessionName === ($meetingNames[$key] ?? '')) {
+                    $sessionName = 'Lần ' . $iteration;
+                }
+
                 $sessionCols[] = [
                     'iteration' => $iteration,
+                    'name' => $sessionName,
                     'time' => $session->start_time ? Carbon::parse($session->start_time)->format('H:i') : '',
                 ];
                 $iteration++;
@@ -166,7 +188,7 @@ class ClassAttendanceHistoryReport
                 'avatar_bg' => $color['bg'],
                 'avatar_text' => $color['text'],
                 'avatar_border' => $color['border'],
-                'avatar_url' => $member->user && $member->user->avatar ? asset('storage/'.$member->user->avatar) : null,
+                'avatar_url' => $member->user ? $member->user->avatar_url : null,
                 'total_attended_sessions' => $totalAttended[$member->id] ?? 0,
                 'total_course_sessions' => $totalCourseSessions,
                 'attendance_percent' => $memberStats[$member->id] ?? 100,

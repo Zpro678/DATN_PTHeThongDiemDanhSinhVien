@@ -23,9 +23,13 @@
     <!-- Header -->
     <header class="sticky top-0 z-50 flex h-16 shrink-0 items-center justify-between border-b border-slate-200 bg-white px-4 sm:px-6">
         <div class="flex items-center gap-3">
-            <a href="{{ $backUrl ?? '#' }}" wire:navigate class="flex h-10 w-10 items-center justify-center rounded-full text-slate-500 hover:bg-slate-100 hover:text-slate-900 transition">
-                <x-user.icon name="x" :size="24" />
-            </a>
+            @if(isset($headerLeft))
+                {{ $headerLeft }}
+            @else
+                <a href="{{ $backUrl ?? '#' }}" wire:navigate class="flex h-10 w-10 items-center justify-center rounded-full text-slate-500 hover:bg-slate-100 hover:text-slate-900 transition">
+                    <x-user.icon name="x" :size="24" />
+                </a>
+            @endif
             <div class="ml-2 flex items-center gap-3 border-l border-slate-200 pl-5">
                 <div class="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-primary/10 text-primary">
                     <x-user.icon name="clipboard-check" :size="20" />

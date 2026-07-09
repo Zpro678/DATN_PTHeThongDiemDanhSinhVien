@@ -135,7 +135,7 @@
     $joinedCards = $studentJoinedCards;
 @endphp
 
-<div class="dashboard-canvas min-h-[calc(100vh-4rem)] w-full">
+<div class="min-h-[calc(100vh-4rem)] w-full">
     <div class="w-full px-6 py-6 pb-24 sm:px-10 lg:px-16">
     @php
         $heroName = Auth::user()?->name ?? 'bạn';
@@ -645,11 +645,13 @@
                                 'group relative flex flex-col overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm transition-all duration-300',
                                 'hover:border-slate-300 hover:shadow-md hover:-translate-y-0.5'
                             ])>
+                                <a href="{{ route('student.classes.show', $class['class_id']) }}" wire:navigate class="absolute inset-0 z-10"><span class="sr-only">Xem chi tiết lớp</span></a>
+
                                 {{-- Header Theme Color --}}
                                 <div class="{{ $themeColor }} h-24 px-5 py-4 relative">
                                     <div class="relative z-10 w-3/4">
                                         <h3 class="truncate font-normal text-white text-[22px] tracking-wide leading-tight" title="{{ $class['title'] }}">
-                                            {{ $class['title'] }}
+                                            <a href="{{ route('student.classes.show', $class['class_id']) }}" wire:navigate class="hover:underline focus:outline-none">{{ $class['title'] }}</a>
                                         </h3>
                                         <p class="mt-1 truncate text-[13px] font-light text-white/95 tracking-wide">Mã học phần: {{ $class['code'] ?? 'N/A' }}</p>
                                     </div>

@@ -70,6 +70,8 @@ class LoginRequest extends FormRequest
                 ]
             ]);
 
+            session()->flash('error', 'Đăng nhập thất bại! Email hoặc mật khẩu không chính xác.');
+
             throw ValidationException::withMessages([
                 'email' => 'Thông tin đăng nhập không chính xác.',
             ]);

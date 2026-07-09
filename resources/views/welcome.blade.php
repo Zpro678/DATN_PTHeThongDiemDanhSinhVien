@@ -284,6 +284,7 @@
         });
     </script>
 
+    <x-notification.notification />
     @livewireScripts
 </body>
 </html>
