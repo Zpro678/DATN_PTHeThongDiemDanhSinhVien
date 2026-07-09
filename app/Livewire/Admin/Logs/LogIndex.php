@@ -13,7 +13,7 @@ class LogIndex extends Component
     use WithPagination;
 
     public $search = '';
-    public $dateFilter = 'all'; // all, 1_month, 3_months, 6_months
+    public $selectedDate = '';
     public ?AuditLog $selectedLog = null;
 
     public $perPage = 10;
@@ -21,6 +21,8 @@ class LogIndex extends Component
     public function mount()
     {
         abort_unless(Auth::user()?->isAdmin(), 403);
+        
+        $this->selectedDate = now()->format('Y-m-d');
     }
 
     public function loadMore()
@@ -33,7 +35,7 @@ class LogIndex extends Component
         $this->perPage = 10;
     }
 
-    public function updatingDateFilter()
+    public function updatingSelectedDate()
     {
         $this->perPage = 10;
     }
@@ -62,15 +64,8 @@ class LogIndex extends Component
             });
         }
 
-        if ($this->dateFilter !== 'all') {
-            $now = \Carbon\Carbon::now();
-            if ($this->dateFilter === '1_month') {
-                $query->where('created_at', '>=', $now->subMonth());
-            } elseif ($this->dateFilter === '3_months') {
-                $query->where('created_at', '>=', $now->subMonths(3));
-            } elseif ($this->dateFilter === '6_months') {
-                $query->where('created_at', '>=', $now->subMonths(6));
-            }
+        if (!empty($this->selectedDate)) {
+            $query->whereDate('created_at', $this->selectedDate);
         }
 
         $totalLogs = $query->count();

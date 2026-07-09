@@ -5,12 +5,14 @@
             <p class="text-sm text-slate-500">Xem và xử lý các góp ý, báo lỗi từ người dùng hệ thống.</p>
         </div>
         <div class="w-48">
-            <select wire:model.live="statusFilter" class="w-full rounded-xl border border-slate-200 bg-white px-4 py-2 text-sm outline-none transition-all focus:border-blue-500 focus:ring-4 focus:ring-blue-500/10">
-                <option value="">Tất cả trạng thái</option>
-                <option value="pending">Chờ xử lý</option>
-                <option value="in_progress">Đang xử lý</option>
-                <option value="resolved">Đã xử lý</option>
-            </select>
+            @php
+            $statusOptions = [
+                ['value' => 'pending', 'label' => 'Chờ xử lý', 'sub_label' => 'Mới gửi, chưa xem'],
+                ['value' => 'in_progress', 'label' => 'Đang xử lý', 'sub_label' => 'Đang được kiểm tra'],
+                ['value' => 'resolved', 'label' => 'Đã xử lý', 'sub_label' => 'Đã có câu trả lời'],
+            ];
+            @endphp
+            <x-custom-select wire:model.live="statusFilter" :options="$statusOptions" placeholder="Tất cả trạng thái" />
         </div>
     </div>
 

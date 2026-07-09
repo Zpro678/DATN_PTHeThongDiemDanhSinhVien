@@ -69,7 +69,7 @@
         >
             <aside class="admin-sidebar fixed left-0 top-0 z-50 hidden h-screen w-sidebar-width flex-col gap-stack-sm border-r border-outline-variant/20 bg-surface-container-lowest p-stack-md xl:flex">
                 <div class="mb-4 px-4 py-6">
-                    <a href="{{ route('admin.dashboard') }}" class="flex items-center gap-3">
+                    <a href="{{ route('admin.dashboard') }}" wire:navigate class="flex items-center gap-3">
                         @if(!empty($app_logo_path))
                             <img src="{{ asset('storage/' . $app_logo_path) }}" alt="{{ config('app.name') }}" class="h-10 w-10 rounded-xl object-cover drop-shadow-[0_2px_5px_rgba(15,23,42,0.22)]">
                         @else
@@ -82,12 +82,12 @@
                     </a>
                 </div>
 
-                <nav class="flex-1 space-y-2 overflow-y-auto px-3 py-2">
+                <nav class="flex-1 space-y-2 overflow-y-auto px-3 py-2" x-data x-init="$el.scrollTop = sessionStorage.getItem('sidebarScroll') || 0; $el.addEventListener('scroll', () => sessionStorage.setItem('sidebarScroll', $el.scrollTop))">
                     @foreach ($menuItems as $item)
                         @php
                             $isItemActive = $isActive($item['active'] ?? []);
                         @endphp
-                        <a
+                        <a wire:navigate
                                     href="{{ $item['href'] }}"
                                     @class([
                                         'flex w-full items-center gap-3 rounded-lg px-3 py-3 text-[15px] font-medium transition-all',
@@ -102,7 +102,7 @@
                 </nav>
 
                 <div class="mt-auto space-y-1 border-t border-outline-variant/20 px-2 pt-2 pb-1">
-                    <a href="{{ route('admin.settings.index') }}" 
+                    <a href="{{ route('admin.settings.index') }}" wire:navigate 
                         @class([
                             'flex w-full items-center gap-3 rounded-lg px-3 py-3 text-[15px] font-medium transition-all',
                             'bg-primary-container text-on-primary-container' => request()->routeIs('admin.settings.*'),
@@ -113,7 +113,7 @@
                         <span class="whitespace-nowrap">Cấu hình hệ thống</span>
                     </a>
 
-                    <a href="{{ route('profile.edit') }}" 
+                    <a href="{{ route('profile.edit') }}" wire:navigate 
                         @class([
                             'flex w-full items-center gap-3 rounded-lg px-3 py-3 text-[15px] font-medium transition-all',
                             'bg-primary-container text-on-primary-container' => request()->routeIs('profile.*'),
@@ -140,7 +140,7 @@
                 <aside class="relative flex h-screen w-sidebar-width flex-col gap-stack-sm border-r border-outline-variant/20 bg-surface-container-lowest p-stack-md" x-transition:enter="transition ease-out duration-200" x-transition:enter-start="-translate-x-full" x-transition:enter-end="translate-x-0" x-transition:leave="transition ease-in duration-150" x-transition:leave-start="translate-x-0" x-transition:leave-end="-translate-x-full">
                     <div class="mb-4 px-4 py-6">
                         <div class="flex items-center justify-between">
-                            <a href="{{ route('admin.dashboard') }}" class="flex items-center gap-3">
+                            <a href="{{ route('admin.dashboard') }}" wire:navigate class="flex items-center gap-3">
                                 @if(!empty($app_logo_path))
                                     <img src="{{ asset('storage/' . $app_logo_path) }}" alt="{{ config('app.name') }}" class="h-10 w-10 rounded-xl object-cover drop-shadow-[0_2px_5px_rgba(15,23,42,0.22)]">
                                 @else
@@ -157,12 +157,12 @@
                         </div>
                     </div>
 
-                    <nav class="flex-1 space-y-2 overflow-y-auto px-3 py-2">
+                    <nav class="flex-1 space-y-2 overflow-y-auto px-3 py-2" x-data x-init="$el.scrollTop = sessionStorage.getItem('sidebarScrollMobile') || 0; $el.addEventListener('scroll', () => sessionStorage.setItem('sidebarScrollMobile', $el.scrollTop))">
                         @foreach ($menuItems as $item)
                             @php
                                 $isItemActive = $isActive($item['active'] ?? []);
                             @endphp
-                            <a
+                            <a wire:navigate
                                         href="{{ $item['href'] }}"
                                         @class([
                                             'flex w-full items-center gap-3 rounded-lg px-3 py-3 text-[15px] font-medium transition-all',
@@ -178,7 +178,7 @@
                     </nav>
 
                     <div class="mt-auto space-y-1 border-t border-outline-variant/20 px-2 pt-2 pb-1">
-                        <a href="{{ route('admin.settings.index') }}" 
+                        <a href="{{ route('admin.settings.index') }}" wire:navigate 
                             @class([
                                 'flex w-full items-center gap-3 rounded-lg px-3 py-3 text-[15px] font-medium transition-all',
                                 'bg-primary-container text-on-primary-container' => request()->routeIs('admin.settings.*'),
@@ -190,7 +190,7 @@
                             <span class="whitespace-nowrap">Cấu hình hệ thống</span>
                         </a>
 
-                        <a href="{{ route('profile.edit') }}" 
+                        <a href="{{ route('profile.edit') }}" wire:navigate 
                             @class([
                                 'flex w-full items-center gap-3 rounded-lg px-3 py-3 text-[15px] font-medium transition-all',
                                 'bg-primary-container text-on-primary-container' => request()->routeIs('profile.*'),
@@ -249,7 +249,7 @@
                                     <p class="text-[15px] font-bold text-slate-900">{{ $userEmail }}</p>
                                 </div>
 
-                                <a href="{{ route('profile.edit') }}" class="flex items-center gap-3 rounded-xl px-3 py-2.5 text-[15px] font-medium text-slate-600 transition-colors hover:bg-slate-50">
+                                <a href="{{ route('profile.edit') }}" wire:navigate class="flex items-center gap-3 rounded-xl px-3 py-2.5 text-[15px] font-medium text-slate-600 transition-colors hover:bg-slate-50">
                                     <x-user.icon name="user" :size="18" class="text-slate-400" />
                                     Thông tin cá nhân
                                 </a>
