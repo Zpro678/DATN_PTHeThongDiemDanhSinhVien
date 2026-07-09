@@ -7,6 +7,7 @@ use App\Livewire\Lecturer\Attendance\Concerns\OwnsAttendanceSessions;
 use App\Models\AttendanceRecord;
 use App\Models\ClassSession;
 use App\Services\AuditLogService;
+use App\Services\AttendanceCalculator;
 use App\Services\NotificationService;
 use App\Services\SubscriptionService;
 use Illuminate\Contracts\View\View;
@@ -46,8 +47,6 @@ class ManualAttendanceSession extends Component
      */
     private function initDrafts(): void
     {
-        // Phiên thủ công: mặc định TẤT CẢ là "Vắng"; giảng viên đánh dấu ai có mặt/muộn/có phép.
-        // (Bản ghi phiên thủ công vốn đã tạo với status 'absent'; nhánh dưới chỉ phòng dữ liệu cũ còn 'pending'.)
         $isManual = $this->ownedSession($this->sessionId)->qr_token === null;
 
         $records = AttendanceRecord::query()
@@ -55,16 +54,40 @@ class ManualAttendanceSession extends Component
             ->whereHas('classMember')
             ->get(['id', 'status', 'note']);
 
+        // 1. Nạp toàn bộ dữ liệu gốc từ DB để đảm bảo không bị thiếu key (Failsafe)
         foreach ($records as $record) {
             $status = $record->status;
-
             if ($isManual && $status === 'pending') {
                 $status = 'absent';
             }
-
             $this->draftStatuses[$record->id] = $status;
             $this->draftNotes[$record->id] = $record->note ?? '';
         }
+
+        // 2. Ghi đè bằng dữ liệu đang gõ dở từ Session (nếu có)
+        if (session()->has('draft_attendance_' . $this->sessionId . '_has_draft')) {
+            $sessionStatuses = session()->get('draft_attendance_' . $this->sessionId . '_statuses', []);
+            $sessionNotes = session()->get('draft_attendance_' . $this->sessionId . '_notes', []);
+            
+            foreach ($sessionStatuses as $id => $st) {
+                $this->draftStatuses[$id] = $st;
+            }
+            foreach ($sessionNotes as $id => $nt) {
+                $this->draftNotes[$id] = $nt;
+            }
+        }
+    }
+
+    public function updatedDraftStatuses()
+    {
+        session()->put('draft_attendance_' . $this->sessionId . '_statuses', $this->draftStatuses);
+        session()->put('draft_attendance_' . $this->sessionId . '_has_draft', true);
+    }
+
+    public function updatedDraftNotes()
+    {
+        session()->put('draft_attendance_' . $this->sessionId . '_notes', $this->draftNotes);
+        session()->put('draft_attendance_' . $this->sessionId . '_has_draft', true);
     }
 
     public function setStatusFilter(string $status): void
@@ -98,6 +121,7 @@ class ManualAttendanceSession extends Component
         }
 
         $this->draftStatuses[$recordId] = $status;
+        $this->updatedDraftStatuses();
     }
 
     /**
@@ -113,6 +137,7 @@ class ManualAttendanceSession extends Component
                 $this->draftStatuses[$recordId] = 'present';
             }
         }
+        $this->updatedDraftStatuses();
 
         session()->flash('success', 'Đã đánh dấu tạm thời tất cả học viên là có mặt. Nhấn "Lưu phiên" để lưu lại.');
     }
@@ -146,8 +171,8 @@ class ManualAttendanceSession extends Component
             ]);
         }
 
+        $session = $this->ownedSession($this->sessionId)->load('meeting');
         session()->flash('status', 'Đã lưu phiên điểm danh.');
-
         app(AuditLogService::class)->log('manual_attendance', [
             'class_id'   => $this->ownedSession($this->sessionId)->class_id,
             'table_name' => 'class_sessions',
@@ -155,8 +180,21 @@ class ManualAttendanceSession extends Component
             'new_values' => ['saved_records' => count($this->draftStatuses)],
         ]);
 
+        session()->forget([
+            'draft_attendance_' . $this->sessionId . '_statuses',
+            'draft_attendance_' . $this->sessionId . '_notes',
+            'draft_attendance_' . $this->sessionId . '_has_draft'
+        ]);
+
+        // Cập nhật chuyên cần cho buổi học sau khi sửa điểm danh
+        $meeting = $this->ownedSession($this->sessionId)->load('meeting')->meeting;
+        if ($meeting) {
+            \App\Services\AttendanceCalculator::syncSummaries($meeting);
+        }
+
         // Quay về trang chi tiết buổi (danh sách phiên) sau khi lưu.
-        $meetingId = $this->ownedSession($this->sessionId)->meeting_id;
+        $session = $this->ownedSession($this->sessionId);
+        $meetingId = $session->meeting_id;
 
         $this->redirectRoute('lecturer.attendance.meeting.sessions', [
             'ma_user' => auth()->id(),
@@ -212,7 +250,7 @@ class ManualAttendanceSession extends Component
             return $this->redirectRoute('upgrade', navigate: true);
         }
 
-        $session = $this->ownedSession($this->sessionId)->load('courseClass');
+        $session = $this->ownedSession($this->sessionId)->load(['courseClass', 'meeting']);
 
         $date = $session->date->format('Y-m-d');
         $className = Str::slug($session->courseClass->name);
@@ -265,6 +303,17 @@ class ManualAttendanceSession extends Component
 
     private function ensureSessionIsOpen(): void
     {
-        abort_if($this->ownedSession($this->sessionId)->status === 'closed', 403);
+        $session = $this->ownedSession($this->sessionId)->load('meeting');
+        $meeting = $session->meeting;
+
+        if (! $meeting) {
+            abort_if($session->status === 'closed', 403);
+            return;
+        }
+
+        $meeting->closeIfExpired();
+        $meeting->refresh();
+
+        abort_if($meeting->status === 'closed' || $meeting->isExpired(), 403);
     }
 }

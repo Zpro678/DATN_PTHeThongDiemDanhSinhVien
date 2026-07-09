@@ -21,7 +21,15 @@
         gpsEnabled: @entangle('gpsEnabled').live,
         gpsLatitude: @entangle('gpsLatitude').live,
         gpsLongitude: @entangle('gpsLongitude').live,
-        gpsRadius: @entangle('gpsRadius').live
+        gpsRadius: @entangle('gpsRadius').live,
+        hasStudents: @entangle('selectedClassHasStudents').live,
+        updateMeeting(id, name) {
+            this.quickMeetingId = id;
+            this.newMeetingName = name;
+        },
+        updateClass(id) {
+            this.quickClassId = id;
+        }
     }">
     <template x-teleport="body">
         <div x-cloak x-show="showQuickStart" class="fixed inset-0 z-[9999] flex items-center justify-center p-4">
@@ -134,7 +142,7 @@
                                     @foreach($this->activeClasses as $cClass)
                                         @php($displayClassCode = $cClass->class_code ?: $cClass->join_key)
                                         <button type="button" x-show="search === '' || '{{ mb_strtolower($displayClassCode . ' ' . $cClass->name, 'UTF-8') }}'.includes(search.toLowerCase())" 
-                                            @click="quickClassId = '{{ $cClass->id }}'; wire.set('quickClassId', '{{ $cClass->id }}'); search = '{{ addslashes($cClass->name) }}'; selectedId = '{{ $cClass->id }}'; open = false;" 
+                                            @click="updateClass('{{ $cClass->id }}'); search = '{{ addslashes($cClass->name) }}'; selectedId = '{{ $cClass->id }}'; open = false;" 
                                             class="flex w-full items-center justify-between gap-3 border-b border-slate-50 px-4 py-3 text-left transition-all duration-150 last:border-0 hover:bg-blue-50/50 focus:bg-blue-50/50 outline-none"
                                             :class="'{{ $quickClassId }}' == '{{ $cClass->id }}' ? 'bg-blue-50/60' : ''">
                                             
@@ -166,6 +174,11 @@
                             open: false,
                             search: '{{ $quickMeetingId && $this->classMeetings->firstWhere('id', (int)$quickMeetingId) ? addslashes($this->classMeetings->firstWhere('id', (int)$quickMeetingId)->name) : ($newMeetingName ?? '') }}',
                             selectedId: '{{ $quickMeetingId }}',
+                            init() {
+                                this.$watch('search', () => {
+                                    this.syncSelection();
+                                });
+                            },
                             get meetingsList() {
                                 return JSON.parse(this.$refs.meetingsData.textContent || '[]');
                             },
@@ -178,37 +191,24 @@
                                 this.search = name;
                                 this.selectedId = String(id);
                                 this.open = false;
-                                quickMeetingId = String(id);
-                                newMeetingName = '';
-                                wire.set('quickMeetingId', id);
-                                wire.set('newMeetingName', '');
+                                this.updateMeeting(String(id), '');
                                 if (endTime) {
-                                    meetingEndTime = endTime;
-                                    wire.set('meetingEndTime', endTime);
+                                    this.meetingEndTime = endTime;
                                 }
                             },
                             syncSelection() {
                                 let s = this.search.trim().toLowerCase();
                                 if (s === '') {
-                                    quickMeetingId = '';
-                                    newMeetingName = '';
-                                    wire.set('quickMeetingId', '');
-                                    wire.set('newMeetingName', '');
+                                    this.updateMeeting('', '');
                                     this.selectedId = '';
                                     return;
                                 }
                                 let exact = this.meetingsList.find(m => m.name.toLowerCase() === s);
                                 if (exact) {
-                                    quickMeetingId = String(exact.id);
-                                    newMeetingName = '';
-                                    wire.set('quickMeetingId', exact.id);
-                                    wire.set('newMeetingName', '');
+                                    this.updateMeeting(String(exact.id), '');
                                     this.selectedId = String(exact.id);
                                 } else {
-                                    quickMeetingId = 'NEW';
-                                    newMeetingName = this.search.trim();
-                                    wire.set('quickMeetingId', 'NEW');
-                                    wire.set('newMeetingName', this.search.trim());
+                                    this.updateMeeting('NEW', this.search.trim());
                                     this.selectedId = 'NEW';
                                 }
                             }
@@ -326,49 +326,49 @@
                                 <div x-data="{
                                     isRequestingGps: false,
                                     init() {
-                                        $watch('showQuickStart', (value) => {
-                                            if (value && quickStartType === 'qr' && gpsEnabled && !gpsLatitude) {
+                                        this.$watch('showQuickStart', (value) => {
+                                            if (value && this.quickStartType === 'qr' && this.gpsEnabled && !this.gpsLatitude) {
                                                 this.getLocation();
                                             }
                                         });
-                                        $watch('quickStartType', (value) => {
-                                            if (showQuickStart && value === 'qr' && gpsEnabled && !gpsLatitude) {
+                                        this.$watch('quickStartType', (value) => {
+                                            if (this.showQuickStart && value === 'qr' && this.gpsEnabled && !this.gpsLatitude) {
                                                 this.getLocation();
                                             }
                                         });
-                                        if (showQuickStart && quickStartType === 'qr' && gpsEnabled && !gpsLatitude) {
+                                        if (this.showQuickStart && this.quickStartType === 'qr' && this.gpsEnabled && !this.gpsLatitude) {
                                             this.getLocation();
                                         }
                                     },
                                     getLocation() {
-                                        if (!gpsEnabled) {
-                                            gpsLatitude = null;
-                                            gpsLongitude = null;
-                                            wire.set('gpsLatitude', null);
-                                            wire.set('gpsLongitude', null);
+                                        if (!this.gpsEnabled) {
+                                            this.gpsLatitude = null;
+                                            this.gpsLongitude = null;
+                                            this.wire.set('gpsLatitude', null);
+                                            this.wire.set('gpsLongitude', null);
                                             return;
                                         }
                                         this.isRequestingGps = true;
                                         if (navigator.geolocation) {
                                             navigator.geolocation.getCurrentPosition(
                                                 (position) => {
-                                                    gpsLatitude = position.coords.latitude;
-                                                    gpsLongitude = position.coords.longitude;
-                                                    wire.set('gpsLatitude', position.coords.latitude);
-                                                    wire.set('gpsLongitude', position.coords.longitude);
+                                                    this.gpsLatitude = position.coords.latitude;
+                                                    this.gpsLongitude = position.coords.longitude;
+                                                    this.wire.set('gpsLatitude', position.coords.latitude);
+                                                    this.wire.set('gpsLongitude', position.coords.longitude);
                                                     this.isRequestingGps = false;
                                                 },
                                                 (error) => {
                                                     alert('Không thể lấy vị trí. Vui lòng cấp quyền vị trí cho trình duyệt.');
-                                                    gpsEnabled = false;
-                                                    wire.set('gpsEnabled', false);
+                                                    this.gpsEnabled = false;
+                                                    this.wire.set('gpsEnabled', false);
                                                     this.isRequestingGps = false;
                                                 }
                                             );
                                         } else {
                                             alert('Trình duyệt không hỗ trợ GPS.');
-                                            gpsEnabled = false;
-                                            wire.set('gpsEnabled', false);
+                                            this.gpsEnabled = false;
+                                            this.wire.set('gpsEnabled', false);
                                             this.isRequestingGps = false;
                                         }
                                     }
@@ -397,7 +397,7 @@
                 <div class="px-7 py-5 bg-slate-50/50 rounded-b-3xl border-t border-slate-100 shrink-0 z-10">
                     <div class="flex gap-3">
                         <button type="button" @click="showQuickStart = false" class="flex-1 rounded-xl bg-slate-200/50 py-3 text-sm font-bold text-slate-600 transition-all duration-200 hover:bg-slate-200 hover:text-slate-700 active:scale-95">Hủy</button>
-                        <button type="button" @click="wire.startQuick()" class="flex-1 rounded-xl py-3 text-sm font-bold text-white shadow-md transition-all duration-200 active:scale-95" :class="quickStartType === 'manual' ? 'bg-gradient-to-r from-amber-500 to-orange-500 shadow-amber-500/25 hover:from-amber-600 hover:to-orange-600 hover:shadow-lg hover:shadow-amber-500/30' : 'bg-gradient-to-r from-blue-600 to-indigo-600 shadow-blue-600/25 hover:from-blue-700 hover:to-indigo-700 hover:shadow-lg hover:shadow-blue-600/30'" x-text="quickStartType === 'manual' ? 'Bắt đầu điểm danh' : 'Tạo mã & Trình chiếu'"></button>
+                        <button type="button" @click="wire.startQuick()" wire:loading.attr="disabled" wire:target="startQuick" class="flex-1 rounded-xl py-3 text-sm font-bold text-white shadow-md transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:shadow-md disabled:active:scale-100" :class="quickStartType === 'manual' ? 'bg-gradient-to-r from-amber-500 to-orange-500 shadow-amber-500/25 hover:from-amber-600 hover:to-orange-600 hover:shadow-lg hover:shadow-amber-500/30' : 'bg-gradient-to-r from-blue-600 to-indigo-600 shadow-blue-600/25 hover:from-blue-700 hover:to-indigo-700 hover:shadow-lg hover:shadow-blue-600/30'" x-text="quickStartType === 'manual' ? 'Bắt đầu điểm danh' : 'Tạo mã & Trình chiếu'"></button>
                     </div>
                 </div>
             </div>

@@ -50,7 +50,7 @@
                     <button
                         type="button"
                         wire:click="markAllPresent"
-                        @disabled($isClosed)
+                        @disabled($isAttendanceLocked ?? $isClosed)
                         class="inline-flex shrink-0 items-center justify-center gap-2 rounded-xl bg-white border border-slate-200 px-5 py-2.5 text-sm font-medium text-slate-600 transition hover:bg-slate-50 hover:text-slate-800 disabled:opacity-50"
                     >
                         <x-user.icon name="check-square" :size="16" />
@@ -121,7 +121,7 @@
                                             wire:model="draftStatuses.{{ $record->id }}"
                                             wire:change="setStatus({{ $record->id }}, '{{ $option }}')"
                                             @checked($current === $option)
-                                            @disabled($isClosed)
+                                            @disabled($isAttendanceLocked ?? $isClosed)
                                             class="peer sr-only"
                                         >
                                         <label
@@ -139,7 +139,7 @@
                                 type="text"
                                 wire:model="draftNotes.{{ $record->id }}"
                                 placeholder="Nhập ghi chú..."
-                                @disabled($isClosed)
+                                @disabled($isAttendanceLocked ?? $isClosed)
                                 class="w-full rounded-lg border border-transparent bg-transparent px-3.5 py-2.5 text-[14px] text-slate-700 placeholder-slate-400 outline-none transition hover:bg-slate-50 focus:bg-white focus:border-blue-300 focus:ring-2 focus:ring-blue-100 disabled:opacity-60"
                             >
                         </td>

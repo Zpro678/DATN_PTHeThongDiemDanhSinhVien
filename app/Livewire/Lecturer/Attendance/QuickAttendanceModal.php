@@ -36,6 +36,8 @@ class QuickAttendanceModal extends Component
     public bool $lockClassSelector = false;
     public bool $lockMeetingSelector = false;
 
+    public bool $selectedClassHasStudents = true;
+
     #[On('open-quick-attendance-modal')]
     public function open(string $type = 'qr', ?string $classId = null, int|string|null $meetingId = null): void
     {
@@ -91,6 +93,18 @@ class QuickAttendanceModal extends Component
         $this->quickMeetingId = '';
         $this->newMeetingName = '';
         $this->sessionName = 'Phiên 1';
+        $this->resetErrorBag('quickClassId');
+
+        if ($this->quickClassId) {
+            $courseClass = $this->ownedClass($this->quickClassId);
+            $this->selectedClassHasStudents = $this->classHasStudents($courseClass);
+            
+            if (! $this->selectedClassHasStudents) {
+                $this->addError('quickClassId', 'Vui lòng import danh sách lớp trước khi điểm danh.');
+            }
+        } else {
+            $this->selectedClassHasStudents = true;
+        }
     }
 
     public function updatedQuickMeetingId(): void
@@ -259,6 +273,7 @@ class QuickAttendanceModal extends Component
         $this->gpsLongitude = null;
         $this->lockClassSelector = false;
         $this->lockMeetingSelector = false;
+        $this->selectedClassHasStudents = true;
     }
 
     private function defaultMeetingEndTime(): string

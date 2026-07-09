@@ -8,6 +8,7 @@
     ];
 
     $isClosed = $session->status === 'closed';
+    $isAttendanceLocked = ! $session->meeting || $session->meeting->status === 'closed' || $session->meeting->isExpired();
 
     $classColor = 'bg-gradient-to-br from-orange-50/80 via-white to-white border-orange-100';
 @endphp
@@ -110,11 +111,11 @@
                 wire:click="saveSession"
                 wire:loading.attr="disabled"
                 wire:target="saveSession"
-                @disabled($isClosed)
+                @disabled($isAttendanceLocked)
                 class="inline-flex items-center justify-center gap-2 rounded-xl bg-orange-500 px-6 py-2 text-sm font-bold text-white shadow-sm shadow-orange-500/20 transition hover:bg-orange-600 active:scale-95 disabled:opacity-60"
             >
                 <x-user.icon name="save" :size="18" />
-                <span wire:loading.remove wire:target="saveSession">{{ $isClosed ? 'ĐÃ CHỐT SỔ' : 'LƯU PHIÊN' }}</span>
+                <span wire:loading.remove wire:target="saveSession">{{ $isAttendanceLocked ? 'BUỔI ĐÃ KẾT THÚC' : 'LƯU PHIÊN' }}</span>
                 <span wire:loading wire:target="saveSession">ĐANG LƯU...</span>
             </button>
         </div>
