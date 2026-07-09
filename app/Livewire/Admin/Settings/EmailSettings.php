@@ -129,8 +129,6 @@ class EmailSettings extends Component
 
     public function render()
     {
-        return view('livewire.admin.settings.email-settings', [
-            'deliveryStatus' => $this->deliveryStatus(),
-        ]);
+        return view('livewire.admin.settings.email-settings');
     }
 }

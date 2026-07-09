@@ -11,7 +11,7 @@
 
     {{-- Kênh hỗ trợ khác nằm ngang --}}
     <div class="mb-8 grid gap-4 md:grid-cols-3">
-        <a href="#" class="group flex items-center gap-4 rounded-2xl bg-white p-4 shadow-sm ring-1 ring-outline-variant/20 transition-all hover:-translate-y-1 hover:shadow-md hover:ring-primary/30">
+        <a href="https://mail.google.com/mail/?view=cm&fs=1&to=supportattendia@gmail.com" target="_blank" class="group flex items-center gap-4 rounded-2xl bg-white p-4 shadow-sm ring-1 ring-outline-variant/20 transition-all hover:-translate-y-1 hover:shadow-md hover:ring-primary/30">
             <div class="flex h-12 w-12 shrink-0 items-center justify-center rounded-full bg-primary/10 text-primary transition-colors group-hover:bg-primary group-hover:text-white">
                 <x-user.icon name="mail" :size="24" />
             </div>
@@ -21,7 +21,7 @@
             </div>
         </a>
 
-        <a href="#" class="group flex items-center gap-4 rounded-2xl bg-white p-4 shadow-sm ring-1 ring-outline-variant/20 transition-all hover:-translate-y-1 hover:shadow-md hover:ring-tertiary/30">
+        <a href="https://zalo.me/0785850551" target="_blank" class="group flex items-center gap-4 rounded-2xl bg-white p-4 shadow-sm ring-1 ring-outline-variant/20 transition-all hover:-translate-y-1 hover:shadow-md hover:ring-tertiary/30">
             <div class="flex h-12 w-12 shrink-0 items-center justify-center rounded-full bg-tertiary/10 text-tertiary transition-colors group-hover:bg-tertiary group-hover:text-white">
                 <x-user.icon name="phone-call" :size="24" />
             </div>
