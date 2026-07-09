@@ -70,13 +70,26 @@ class Plan extends Model
         return Attribute::get(fn () => $this->config?->max_students_per_class);
     }
 
-    protected function maxGpsRadius(): Attribute
-    {
-        return Attribute::get(fn () => $this->config?->max_gps_radius);
-    }
 
     protected function canExportExcel(): Attribute
     {
         return Attribute::get(fn () => (bool) $this->config?->can_export_excel);
+    }
+
+    protected function features(): Attribute
+    {
+        return Attribute::get(function () {
+            $list = [
+                'Điểm danh bằng QR Code / Link',
+                'Quản lý chuyên cần & cảnh báo',
+                'Xác thực vị trí GPS',
+            ];
+            
+            if ($this->config?->can_export_excel) {
+                $list[] = 'Xuất báo cáo ra Excel';
+            }
+            
+            return $list;
+        });
     }
 }

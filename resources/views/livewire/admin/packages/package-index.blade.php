@@ -127,7 +127,7 @@
                         </ul>
                     </div>
 
-                    <div class="relative z-10 mx-6 mb-3 mt-6 rounded-xl border border-slate-100 bg-slate-50 p-3 grid grid-cols-3 gap-2">
+                    <div class="relative z-10 mx-6 mb-3 mt-6 rounded-xl border border-slate-100 bg-slate-50 p-3 grid grid-cols-2 gap-2">
                         <div class="flex flex-col items-center justify-center">
                             <p class="mb-1 text-[9px] font-bold uppercase tracking-wider text-slate-400">SV/Lớp</p>
                             <div class="flex h-5 items-center justify-center">
@@ -138,7 +138,7 @@
                                 @endif
                             </div>
                         </div>
-                        <div class="flex flex-col items-center justify-center border-l border-r border-slate-200/80">
+                        <div class="flex flex-col items-center justify-center border-l border-slate-200/80">
                             <p class="mb-1 text-[9px] font-bold uppercase tracking-wider text-slate-400">Lớp tối đa</p>
                             <div class="flex h-5 items-center justify-center">
                                 @if($package->max_classes >= 9999)
@@ -146,12 +146,6 @@
                                 @else
                                     <span class="text-sm font-bold text-slate-700 leading-none">{{ $package->max_classes }}</span>
                                 @endif
-                            </div>
-                        </div>
-                        <div class="flex flex-col items-center justify-center">
-                            <p class="mb-1 text-[9px] font-bold uppercase tracking-wider text-slate-400">Bán kính</p>
-                            <div class="flex h-5 items-center justify-center">
-                                <span class="text-sm font-bold text-slate-700 leading-none">{{ $package->max_gps_radius }}m</span>
                             </div>
                         </div>
                     </div>

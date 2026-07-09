@@ -117,7 +117,6 @@ class SubscriptionService
             'name' => 'Miễn phí',
             'max_classes' => 2,
             'max_students_per_class' => 50,
-            'max_gps_radius' => 50,
             'can_export_excel' => false,
             'api_access' => false,
         ]);
@@ -189,11 +188,5 @@ class SubscriptionService
         return (int) $this->planFor($user)->max_students_per_class;
     }
 
-    /**
-     * Bán kính định vị GPS tối đa (m) theo gói.
-     */
-    public function maxGpsRadius(User $user): int
-    {
-        return (int) $this->planFor($user)->max_gps_radius;
-    }
+
 }
