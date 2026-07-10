@@ -1,4 +1,4 @@
-<x-admin-layout title="Báo cáo">
+<div wire:poll.10s>
     <div class="mx-auto max-w-[1500px] space-y-6">
         <section class="mb-2 p-6 lg:p-7">
             <div class="relative z-10 flex flex-col justify-between gap-4 lg:flex-row lg:items-end">
@@ -93,4 +93,4 @@
             </section>
         </div>
     </div>
-</x-admin-layout>
+</div>

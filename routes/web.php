@@ -92,7 +92,7 @@ Route::post('/telegram/webhook', [\App\Http\Controllers\TelegramWebhookControlle
 
 Route::middleware(['auth', 'verified', 'user.route'])->group(function () {
     Route::prefix('admin/{ma_user}')->name('admin.')->middleware('admin')->group(function () {
-        Route::get('/', [\App\Http\Controllers\Admin\AdminController::class, 'dashboard'])->name('dashboard');
+        Route::get('/', \App\Livewire\Admin\Dashboard::class)->name('dashboard');
         Route::redirect('/dashboard', '/admin')->name('dashboard.alias');
 
         Route::get('/users', UserIndex::class)->name('users.index');
@@ -111,7 +111,7 @@ Route::middleware(['auth', 'verified', 'user.route'])->group(function () {
         Route::get('/packages/coupons/{coupon}/edit', \App\Livewire\Admin\Packages\CouponEdit::class)->whereNumber('coupon')->name('packages.coupons.edit');
 
 
-        Route::get('/reports', [\App\Http\Controllers\Admin\AdminController::class, 'reportsIndex'])->name('reports.index');
+        Route::get('/reports', \App\Livewire\Admin\Reports\ReportIndex::class)->name('reports.index');
 
         Route::get('/broadcast', \App\Livewire\Admin\Broadcast\Index::class)->name('broadcast');
 

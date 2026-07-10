@@ -1,26 +1,17 @@
 <?php
 
-namespace App\Http\Controllers\Admin;
+namespace App\Livewire\Admin;
 
-use App\Http\Controllers\Controller;
-use App\Models\AuditLog;
 use App\Models\CourseClass;
-use App\Models\Plan;
-use App\Models\Subscription;
 use App\Models\User;
-use Illuminate\Http\Request;
-use Illuminate\Support\Facades\Hash;
+use Livewire\Attributes\Layout;
+use Livewire\Component;
 
-class AdminController extends Controller
+class Dashboard extends Component
 {
-    private function ensureAdmin()
+    public function render()
     {
         abort_unless(auth()->user()?->isAdmin(), 403);
-    }
-
-    public function dashboard()
-    {
-        $this->ensureAdmin();
 
         $totalStudents = User::where('role', User::ROLE_USER)->count();
         $activeClasses = CourseClass::where('status', 'active')->count();
@@ -114,7 +105,7 @@ class AdminController extends Controller
             ];
         }
 
-        return view('admin.dashboard', compact(
+        return view('livewire.admin.dashboard', compact(
             'totalStudents', 
             'activeClasses', 
             'attendanceRate', 
@@ -123,76 +114,6 @@ class AdminController extends Controller
             'realtimeAttendance',
             'distribution',
             'chartData'
-        ));
-    }
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-    public function reportsIndex()
-    {
-        $this->ensureAdmin();
-
-        $totalRevenue = \App\Models\Transaction::whereIn('status', ['PAID', 'SUCCESS', 'paid', 'success'])->sum('amount');
-        
-        $overview = [
-            'users' => User::count(),
-            'classes' => CourseClass::count(),
-            'plans' => Plan::count(),
-            'transactions' => \App\Models\Transaction::whereIn('status', ['PAID', 'SUCCESS', 'paid', 'success'])->count(),
-            'revenue' => $totalRevenue,
-        ];
-
-        // Doanh thu theo 6 tháng gần nhất (Mock hoặc thật nếu có dl)
-        $monthlyRevenue = [];
-        for ($i = 5; $i >= 0; $i--) {
-            $month = now()->startOfMonth()->subMonths($i);
-            $amount = \App\Models\Transaction::whereIn('status', ['PAID', 'SUCCESS', 'paid', 'success'])
-                ->whereYear('created_at', $month->year)
-                ->whereMonth('created_at', $month->month)
-                ->sum('amount');
-            
-            $monthlyRevenue[] = [
-                'month' => $month->format('m/Y'),
-                'amount' => $amount
-            ];
-        }
-
-        $recentTransactions = \App\Models\Transaction::query()
-            ->whereIn('status', ['PAID', 'SUCCESS', 'paid', 'success'])
-            ->with(['user', 'plan'])
-            ->latest('created_at')
-            ->take(8)
-            ->get();
-
-        return view('admin.reports.index', compact('overview', 'monthlyRevenue', 'recentTransactions'));
-    }
-
-    public function settingsIndex()
-    {
-        $this->ensureAdmin();
-
-        $system = [
-            'app_name' => config('app.name'),
-            'environment' => app()->environment(),
-            'timezone' => config('app.timezone'),
-            'locale' => config('app.locale'),
-            'admin_email' => auth()->user()?->email,
-        ];
-
-        return view('admin.settings.index', compact('system'));
+        ))->layout('components.admin-layout');
     }
 }
