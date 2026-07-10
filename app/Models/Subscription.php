@@ -19,6 +19,7 @@ class Subscription extends Model
         'start_date', // Ngày kích hoạt gói cước.
         'end_date', // Ngày hết hạn gói cước.
         'status', // Trạng thái thuê bao active/expired/canceled.
+        'class_limit_grace_ends_at', // Thời điểm kết thúc ân hạn số lớp khi hạ cấp gói.
     ];
 
     protected function casts(): array
@@ -26,6 +27,7 @@ class Subscription extends Model
         return [
             'start_date' => 'datetime', // Ép kiểu ngày bắt đầu.
             'end_date' => 'datetime', // Ép kiểu ngày hết hạn.
+            'class_limit_grace_ends_at' => 'datetime', // Ép kiểu ngày hết ân hạn số lớp.
         ];
     }
 

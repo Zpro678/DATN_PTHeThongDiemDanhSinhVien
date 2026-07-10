@@ -333,6 +333,13 @@
             <circle cx="19" cy="12" r="1" />
             @break
 
+        @case('receipt')
+            <path d="M4 2v20l2-1 2 1 2-1 2 1 2-1 2 1 2-1 2 1V2l-2 1-2-1-2 1-2-1-2 1-2-1-2 1Z" />
+            <path d="M16 8H8" />
+            <path d="M16 12H8" />
+            <path d="M13 16H8" />
+            @break
+
         @case('package')
             <path d="m7.5 4.3 9 5.2" />
             <path d="M21 8v8a2 2 0 0 1-1 1.7l-7 4a2 2 0 0 1-2 0l-7-4A2 2 0 0 1 3 16V8a2 2 0 0 1 1-1.7l7-4a2 2 0 0 1 2 0l7 4A2 2 0 0 1 21 8Z" />

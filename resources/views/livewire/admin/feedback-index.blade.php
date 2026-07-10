@@ -1,18 +1,18 @@
 <div class="space-y-6" x-data="{ showImageModal: false, activeImageUrl: '', scale: 1 }" @open-image.window="activeImageUrl = $event.detail; showImageModal = true; scale = 1">
-    <div class="flex items-center justify-between">
+    <div class="flex items-center justify-between relative z-20">
         <div>
             <h1 class="text-2xl font-bold text-slate-800">Quản lý phản hồi</h1>
             <p class="text-sm text-slate-500">Xem và xử lý các góp ý, báo lỗi từ người dùng hệ thống.</p>
         </div>
-        <div class="w-48">
+        <div class="w-56">
             @php
-            $statusOptions = [
-                ['value' => 'pending', 'label' => 'Chờ xử lý', 'sub_label' => 'Mới gửi, chưa xem'],
-                ['value' => 'in_progress', 'label' => 'Đang xử lý', 'sub_label' => 'Đang được kiểm tra'],
-                ['value' => 'resolved', 'label' => 'Đã xử lý', 'sub_label' => 'Đã có câu trả lời'],
+            $feedbackStatusOptions = [
+                ['value' => '', 'label' => 'Tất cả trạng thái', 'sub_label' => 'Hiển thị mọi phản hồi'],
+                ['value' => 'pending', 'label' => 'Đang xử lý', 'sub_label' => 'Phản hồi mới hoặc đang giải quyết'],
+                ['value' => 'resolved', 'label' => 'Đã xử lý', 'sub_label' => 'Phản hồi đã được trả lời'],
             ];
             @endphp
-            <x-custom-select wire:model.live="statusFilter" :options="$statusOptions" placeholder="Tất cả trạng thái" />
+            <x-custom-select id="feedback-status-filter" wire:model.live="statusFilter" :options="$feedbackStatusOptions" placeholder="" />
         </div>
     </div>
 
@@ -55,10 +55,10 @@
                                     </div>
                                 @endif
                             </td>
-                            <td class="px-6 py-4">
+                             <td class="px-6 py-4">
                                     <span class="inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-medium 
-                                        {{ $feedback->status === 'resolved' ? 'bg-green-100 text-green-800' : ($feedback->status === 'in_progress' ? 'bg-amber-100 text-amber-800' : ($feedback->status === 'cancelled' ? 'bg-slate-100 text-slate-500 line-through' : 'bg-blue-100 text-blue-800')) }}">
-                                        {{ $feedback->status === 'resolved' ? 'Đã xử lý' : ($feedback->status === 'in_progress' ? 'Đang xử lý' : ($feedback->status === 'cancelled' ? 'Đã hủy' : 'Chờ xử lý')) }}
+                                        {{ $feedback->status === 'resolved' ? 'bg-green-100 text-green-800' : ($feedback->status === 'cancelled' ? 'bg-slate-100 text-slate-500 line-through' : 'bg-amber-100 text-amber-800') }}">
+                                        {{ $feedback->status === 'resolved' ? 'Đã xử lý' : ($feedback->status === 'cancelled' ? 'Đã hủy' : 'Đang xử lý') }}
                                     </span>
                             </td>
                             <td class="px-6 py-4">
@@ -66,11 +66,6 @@
                                     <button wire:click="viewDetails({{ $feedback->id }})" title="Xem chi tiết" class="rounded-lg p-2 text-slate-400 hover:bg-slate-100 hover:text-slate-700 transition-colors">
                                         <x-user.icon name="eye" :size="18" />
                                     </button>
-                                    @if($feedback->status === 'pending')
-                                        <button wire:click="markAsInProgress({{ $feedback->id }})" title="Đánh dấu đang xử lý" class="rounded-lg p-2 text-slate-400 hover:bg-amber-50 hover:text-amber-600 transition-colors">
-                                            <x-user.icon name="clock" :size="18" />
-                                        </button>
-                                    @endif
                                     @if($feedback->status !== 'resolved' && $feedback->status !== 'cancelled')
                                         <button wire:click="openReplyModal({{ $feedback->id }})" title="Trả lời" class="rounded-lg p-2 text-slate-400 hover:bg-blue-50 hover:text-blue-600 transition-colors">
                                             <x-user.icon name="message-square" :size="18" />

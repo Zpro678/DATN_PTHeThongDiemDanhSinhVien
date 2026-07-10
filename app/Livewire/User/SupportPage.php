@@ -10,10 +10,11 @@ use Illuminate\Support\Facades\Notification;
 use Livewire\Attributes\Rule;
 use Livewire\Component;
 use Livewire\WithFileUploads;
+use Livewire\WithPagination;
 
 class SupportPage extends Component
 {
-    use WithFileUploads;
+    use WithFileUploads, WithPagination;
 
     public $showDetailModal = false;
     public $detailFeedback = null;
@@ -63,9 +64,13 @@ class SupportPage extends Component
         Notification::send($admins, new NewFeedbackNotification($feedback));
 
         $this->reset(['title', 'type', 'content', 'attachments']);
+        $this->resetPage();
         
-        $this->dispatch('notify', message: 'Gửi yêu cầu hỗ trợ thành công!', type: 'success');
+        $this->dispatch('toast', message: 'Gửi yêu cầu hỗ trợ thành công!', type: 'success');
     }
+
+    public $showCancelModal = false;
+    public $feedbackToCancelId = null;
 
     public function viewDetails($id)
     {
@@ -79,23 +84,37 @@ class SupportPage extends Component
         $this->detailFeedback = null;
     }
 
-    public function cancelFeedback($id)
+    public function confirmCancel($id)
     {
-        $feedback = SystemFeedback::where('id', $id)->where('user_id', Auth::id())->first();
+        $this->feedbackToCancelId = $id;
+        $this->showCancelModal = true;
+    }
+
+    public function closeCancelModal()
+    {
+        $this->showCancelModal = false;
+        $this->feedbackToCancelId = null;
+    }
+
+    public function executeCancel()
+    {
+        $feedback = SystemFeedback::where('id', $this->feedbackToCancelId)->where('user_id', Auth::id())->first();
 
         if ($feedback && $feedback->status === 'pending') {
             $feedback->update(['status' => 'cancelled']);
-            $this->dispatch('notify', message: 'Đã hủy yêu cầu hỗ trợ.', type: 'info');
+            $this->dispatch('toast', message: 'Đã hủy yêu cầu hỗ trợ.', type: 'success');
         } else {
-            $this->dispatch('notify', message: 'Không thể hủy yêu cầu này.', type: 'error');
+            $this->dispatch('toast', message: 'Không thể hủy yêu cầu này.', type: 'error');
         }
+
+        $this->closeCancelModal();
     }
 
     public function render()
     {
         $feedbacks = SystemFeedback::where('user_id', Auth::id())
             ->orderBy('created_at', 'desc')
-            ->get();
+            ->paginate(5);
 
         return view('livewire.user.support-page', [
             'feedbacks' => $feedbacks,

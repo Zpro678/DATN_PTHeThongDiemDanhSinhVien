@@ -199,9 +199,11 @@ class Upgrade extends Component
                 'amount' => 0,
                 'payment_method' => 'COUPON',
                 'transaction_code' => (string) $transactionCode,
+                'reference_code' => $this->appliedCoupon?->code ?? 'COUPON',
                 'status' => 'success',
                 'coupon_id' => $this->appliedCoupon?->id,
                 'coupon_code' => $this->appliedCoupon?->code,
+                'paid_at' => now(),
                 'created_at' => now(),
             ]);
 
@@ -219,6 +221,7 @@ class Upgrade extends Component
             'amount' => $finalAmount,
             'payment_method' => $isPayos ? 'PAYOS' : 'MOMO',
             'transaction_code' => (string) $transactionCode,
+            'reference_code' => (string) $transactionCode,
             'status' => 'pending',
             'expired_at' => now()->addMinutes(15),
             'coupon_id' => $this->appliedCoupon?->id,
