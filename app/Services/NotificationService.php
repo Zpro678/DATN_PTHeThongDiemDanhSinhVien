@@ -43,6 +43,66 @@ class NotificationService
     ];
 
     /**
+     * Các loại thông báo dễ lặp lại (nhiều bản ghi cùng loại) sẽ được GOM thành MỘT
+     * dòng tổng hợp trên chuông khi có từ 2 bản CHƯA ĐỌC trở lên — ví dụ "4 đơn xin
+     * nghỉ phép mới" thay vì hiện rời rạc 4 dòng.
+     *
+     * - title: tiêu đề dòng gộp.
+     * - noun : cụm danh từ đứng sau số đếm ("{n} {noun}").
+     * - route: tên route trang danh sách để bấm vào xem tất cả (chỉ cần ma_user).
+     *          null = dùng URL của bản ghi mới nhất trong nhóm.
+     *
+     * @var array<string, array{title: string, noun: string, route: ?string, level: string, icon: string, iconWrapper: string}>
+     */
+    private const GROUPABLE = [
+        'App\\Notifications\\LeaveRequestSubmitted' => [
+            'title' => 'Đơn xin nghỉ phép mới',
+            'noun' => 'đơn xin nghỉ phép đang chờ duyệt',
+            'route' => 'lecturer.leave-requests.index',
+            'level' => 'info', 'icon' => 'file-text', 'iconWrapper' => 'bg-blue-100 text-blue-600',
+        ],
+        'App\\Notifications\\ClassJoinRequestReceived' => [
+            'title' => 'Yêu cầu tham gia lớp',
+            'noun' => 'yêu cầu tham gia lớp đang chờ duyệt',
+            'route' => null,
+            'level' => 'info', 'icon' => 'log-in', 'iconWrapper' => 'bg-blue-100 text-blue-600',
+        ],
+        'App\\Notifications\\ClassMemberJoined' => [
+            'title' => 'Học viên mới tham gia lớp',
+            'noun' => 'học viên vừa tham gia lớp',
+            'route' => null,
+            'level' => 'success', 'icon' => 'user-check', 'iconWrapper' => 'bg-emerald-100 text-emerald-600',
+        ],
+        'App\\Notifications\\ExamBanned' => [
+            'title' => 'Cấm thi',
+            'noun' => 'lớp bạn đã bị cấm thi',
+            'route' => 'student.warnings',
+            'level' => 'danger', 'icon' => 'alert-triangle', 'iconWrapper' => 'bg-rose-100 text-rose-600',
+        ],
+        'App\\Notifications\\AbsenceWarning' => [
+            'title' => 'Cảnh báo chuyên cần',
+            'noun' => 'lớp bạn sắp vượt ngưỡng vắng',
+            'route' => 'student.warnings',
+            'level' => 'warning', 'icon' => 'alert-triangle', 'iconWrapper' => 'bg-amber-100 text-amber-600',
+        ],
+        'App\\Notifications\\ExcusedAbsenceWarning' => [
+            'title' => 'Vắng có phép quá nhiều',
+            'noun' => 'lớp bạn vắng có phép vượt mức',
+            'route' => 'student.warnings',
+            'level' => 'warning', 'icon' => 'alert-triangle', 'iconWrapper' => 'bg-amber-100 text-amber-600',
+        ],
+        'App\\Notifications\\ClassAbsenceWarning' => [
+            'title' => 'Cảnh báo chuyên cần lớp',
+            'noun' => 'lớp có sinh viên cảnh báo chuyên cần',
+            'route' => null,
+            'level' => 'warning', 'icon' => 'alert-triangle', 'iconWrapper' => 'bg-amber-100 text-amber-600',
+        ],
+    ];
+
+    /** Số bản ghi chưa đọc cùng loại tối thiểu để gom thành một dòng tổng hợp. */
+    private const GROUP_THRESHOLD = 2;
+
+    /**
      * Lấy dữ liệu thông báo cho dropdown ở thanh điều hướng.
      *
      * Tối ưu truy vấn:
@@ -58,11 +118,11 @@ class NotificationService
         }
 
         // notifications() đã được sắp xếp mới nhất trước (xem App\Models\User).
-        $items = $user->notifications()
+        $notifications = $user->notifications()
             ->take(self::DROPDOWN_LIMIT)
-            ->get(['id', 'type', 'data', 'read_at', 'created_at'])
-            ->map(fn (Notification $notification): array => $this->present($notification))
-            ->all();
+            ->get(['id', 'type', 'data', 'read_at', 'created_at']);
+
+        $items = $this->groupAndPresent($notifications, $user);
 
         $unreadCount = $user->notifications()->whereNull('read_at')->count();
 
@@ -71,6 +131,148 @@ class NotificationService
             'unread_count' => $unreadCount,
             'has_unread' => $unreadCount > 0,
         ];
+    }
+
+    /**
+     * Trình bày danh sách thông báo cho chuông, GOM các bản CHƯA ĐỌC cùng loại
+     * (nằm trong self::GROUPABLE) thành một dòng tổng hợp khi đạt ngưỡng.
+     *
+     * Giữ nguyên thứ tự mới-nhất-trước: dòng gộp được đặt tại vị trí của bản ghi
+     * MỚI NHẤT trong nhóm. Bản đã đọc và loại không cấu hình gom vẫn hiển thị rời.
+     *
+     * @param \Illuminate\Support\Collection<int, Notification> $notifications
+     * @return array<int, array<string, mixed>>
+     */
+    private function groupAndPresent($notifications, User $user): array
+    {
+        /** @var array<string, array<int, Notification>> $buckets */
+        $buckets = [];
+        $order = [];
+
+        foreach ($notifications as $notification) {
+            $type = (string) $notification->type;
+            $isUnread = $notification->read_at === null;
+
+            if ($isUnread && isset(self::GROUPABLE[$type])) {
+                if (! isset($buckets[$type])) {
+                    $buckets[$type] = [];
+                    // Chốt chỗ dòng gộp ngay vị trí bản đầu tiên gặp (mới nhất).
+                    $order[] = ['kind' => 'group', 'type' => $type];
+                }
+                $buckets[$type][] = $notification;
+
+                continue;
+            }
+
+            $order[] = ['kind' => 'single', 'item' => $this->present($notification)];
+        }
+
+        $items = [];
+        foreach ($order as $entry) {
+            if ($entry['kind'] === 'single') {
+                $items[] = $entry['item'];
+
+                continue;
+            }
+
+            $bucket = $buckets[$entry['type']];
+
+            // Dưới ngưỡng gom -> hiển thị rời như bình thường.
+            if (count($bucket) < self::GROUP_THRESHOLD) {
+                foreach ($bucket as $notification) {
+                    $items[] = $this->present($notification);
+                }
+
+                continue;
+            }
+
+            $items[] = $this->presentGroup($entry['type'], $bucket, $user);
+        }
+
+        return $items;
+    }
+
+    /**
+     * Dựng một dòng thông báo tổng hợp cho nhóm cùng loại (>= ngưỡng).
+     *
+     * @param array<int, Notification> $bucket Các bản ghi cùng loại, mới nhất trước.
+     * @return array<string, mixed>
+     */
+    private function presentGroup(string $type, array $bucket, User $user): array
+    {
+        $config = self::GROUPABLE[$type];
+        $newest = $bucket[0];
+        $count = count($bucket);
+        $ids = array_map(fn (Notification $n): string => (string) $n->id, $bucket);
+
+        return [
+            'id' => $newest->id,
+            'grouped' => true,
+            'group_ids' => $ids,
+            'count' => $count,
+            'href' => $this->groupUrl($config, $user, $newest),
+            'level' => $config['level'],
+            'icon' => $config['icon'],
+            'iconWrapper' => $config['iconWrapper'],
+            'title' => $config['title'],
+            'message' => $count . ' ' . $config['noun'],
+            'time' => $newest->created_at?->locale('vi')->diffForHumans() ?? '',
+            'date_group' => $this->dateGroup($newest->created_at),
+            'unread' => true,
+            'read' => false,
+        ];
+    }
+
+    /**
+     * URL đích khi bấm dòng gộp: ưu tiên route trang danh sách (chỉ cần ma_user),
+     * nếu không có thì dùng URL của bản ghi mới nhất trong nhóm.
+     *
+     * @param array{route: ?string} $config
+     */
+    private function groupUrl(array $config, User $user, Notification $newest): string
+    {
+        if (! empty($config['route'])) {
+            try {
+                return route($config['route'], ['ma_user' => $user->id]);
+            } catch (\Throwable) {
+                // Route không dựng được -> rơi xuống URL của bản ghi.
+            }
+        }
+
+        return $newest->data['url'] ?? '#';
+    }
+
+    /**
+     * Đánh dấu đã đọc một tập thông báo (dùng cho dòng gộp trên chuông).
+     * Chỉ tác động lên thông báo thuộc về $user để tránh sửa của người khác.
+     *
+     * @param array<int, string> $ids
+     */
+    public function markGroupRead(?User $user, array $ids): void
+    {
+        if (! $user || empty($ids)) {
+            return;
+        }
+
+        $user->notifications()
+            ->whereIn('id', $ids)
+            ->whereNull('read_at')
+            ->update(['read_at' => now()]);
+    }
+
+    /**
+     * Xóa một tập thông báo của $user (dùng cho nút xóa của dòng gộp).
+     *
+     * @param array<int, string> $ids
+     * @return int Số bản ghi đã xóa.
+     */
+    public function deleteGroupForUser(?User $user, array $ids): int
+    {
+        if (! $user || empty($ids)) {
+            return 0;
+        }
+
+        return $user->notifications()->whereIn('id', $ids)->delete();
     }
 
     /**

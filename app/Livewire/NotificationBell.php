@@ -60,6 +60,33 @@ class NotificationBell extends Component
         auth()->user()?->unreadNotifications()->update(['read_at' => now()]);
     }
 
+    /**
+     * Bấm vào một DÒNG GỘP: đánh dấu cả nhóm là đã đọc rồi điều hướng tới trang
+     * danh sách tương ứng (giống hành vi route notifications.read cho dòng đơn).
+     *
+     * @param array<int, string> $ids
+     */
+    public function openGroup(array $ids, string $url = '')
+    {
+        app(NotificationService::class)->markGroupRead(auth()->user(), $ids);
+
+        if ($url !== '' && $url !== '#') {
+            return $this->redirect($url, navigate: true);
+        }
+
+        return null;
+    }
+
+    /**
+     * Xóa toàn bộ thông báo trong một dòng gộp (nút xóa của dòng gộp).
+     *
+     * @param array<int, string> $ids
+     */
+    public function deleteGroup(array $ids): void
+    {
+        app(NotificationService::class)->deleteGroupForUser(auth()->user(), $ids);
+    }
+
     public function render(): View
     {
         $data = app(NotificationService::class)->getDropdownData(auth()->user());

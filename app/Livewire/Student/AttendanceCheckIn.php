@@ -203,9 +203,15 @@ class AttendanceCheckIn extends Component
                 $gpsFraudFlag = 'device_duplicate';
 
                 // Gắn cờ cho CẢ bản ghi trùng trước đó để giảng viên thấy đủ 2 SV cùng một máy.
-                if ($duplicateRecord->gps_fraud_flag === null) {
-                    $duplicateRecord->forceFill(['gps_fraud_flag' => 'device_duplicate'])->save();
+                $previousFraudFlag = $duplicateRecord->gps_fraud_flag;
+                $duplicateUpdate = ['gps_fraud_flag' => 'device_duplicate'];
+                if ($previousFraudFlag !== null && $previousFraudFlag !== 'device_duplicate') {
+                    $previousFlagNote = "Cảnh báo trước đó: {$previousFraudFlag}.";
+                    if (! str_contains($duplicateRecord->note ?? '', $previousFlagNote)) {
+                        $duplicateUpdate['note'] = trim(($duplicateRecord->note ? $duplicateRecord->note . ' | ' : '') . $previousFlagNote);
+                    }
                 }
+                $duplicateRecord->forceFill($duplicateUpdate)->save();
 
                 $this->record->loadMissing('classMember');
 

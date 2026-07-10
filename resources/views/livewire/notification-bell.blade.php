@@ -16,7 +16,7 @@
 
 <div
     class="relative"
-    x-data="{ openNotification: false, confirmTarget: null }"
+    x-data="{ openNotification: false, confirmTarget: null, groupDeleteIds: null }"
     @click.away="openNotification = false; confirmTarget = null"
     x-init="window.listenNotifications && window.listenNotifications(@js($this->realtimeChannel()), () => { $wire.$refresh(); window.dispatchEvent(new CustomEvent('notify', { detail: { message: 'Bạn có thông báo mới', type: 'info' } })); })"
 >
@@ -78,6 +78,7 @@
                 @foreach ($items as $notification)
                     @php
                         $isUnread = (bool) ($notification['unread'] ?? false);
+                        $isGroup = (bool) ($notification['grouped'] ?? false);
                         // Cho phép truyền sẵn icon/iconWrapper; nếu không thì suy ra từ level.
                         $style = $levelStyles[$notification['level'] ?? 'info'] ?? $levelStyles['info'];
                         $icon = $notification['icon'] ?? $style['icon'];
@@ -89,6 +90,40 @@
                         'bg-blue-50/60 hover:bg-blue-50' => $isUnread,
                         'hover:bg-slate-50' => ! $isUnread,
                     ])>
+                        @if ($isGroup)
+                            {{-- Dòng GỘP: đánh dấu cả nhóm đã đọc rồi điều hướng tới danh sách. --}}
+                            <button
+                                type="button"
+                                wire:click="openGroup(@js($notification['group_ids']), @js($notification['href'] ?? '#'))"
+                                @click="openNotification = false"
+                                class="flex flex-1 items-start gap-4 text-left"
+                            >
+                                <div class="relative mt-1 flex h-8 w-8 shrink-0 items-center justify-center rounded-full {{ $iconWrapper }}">
+                                    <x-user.icon :name="$icon" :size="16" />
+                                    <span class="absolute -right-1.5 -top-1.5 flex h-4 min-w-4 items-center justify-center rounded-full border-2 border-white bg-error px-1 text-[9px] font-bold leading-none text-white">
+                                        {{ $notification['count'] > 99 ? '99+' : $notification['count'] }}
+                                    </span>
+                                </div>
+
+                                <div class="flex-1 space-y-1">
+                                    <p class="text-sm font-bold text-slate-900">{{ $notification['title'] ?? 'Thông báo' }}</p>
+                                    <p class="text-xs text-slate-500">{{ $notification['message'] ?? '' }}</p>
+                                    <p class="text-[10px] font-medium text-slate-400">{{ $notification['time'] ?? '' }}</p>
+                                </div>
+
+                                <div class="mt-2 h-2 w-2 shrink-0 rounded-full bg-primary"></div>
+                            </button>
+
+                            {{-- Nút xóa cả nhóm --}}
+                            <button
+                                type="button"
+                                @click.stop="groupDeleteIds = @js($notification['group_ids']); confirmTarget = 'group'"
+                                title="Xóa nhóm thông báo"
+                                class="absolute right-2 top-1/2 flex h-7 w-7 -translate-y-1/2 items-center justify-center rounded-full text-slate-400 opacity-0 transition-all hover:bg-rose-100 hover:text-error focus:opacity-100 group-hover:opacity-100"
+                            >
+                                <x-user.icon name="x" :size="16" />
+                            </button>
+                        @else
                         <a
                             href="{{ isset($notification['id']) ? route('notifications.read', ['notification' => $notification['id']]) : ($notification['href'] ?? '#') }}"
                             class="flex flex-1 items-start gap-4"
@@ -117,6 +152,7 @@
                         >
                             <x-user.icon name="x" :size="16" />
                         </button>
+                        @endif
                     </div>
                 @endforeach
             @empty
@@ -147,15 +183,15 @@
                 <div class="mx-auto mb-3 flex h-10 w-10 items-center justify-center rounded-full bg-rose-50 text-error">
                     <x-user.icon name="trash-2" :size="20" />
                 </div>
-                <p class="text-sm font-bold text-slate-900" x-text="confirmTarget === 'all' ? 'Xóa tất cả thông báo?' : 'Xóa thông báo này?'"></p>
+                <p class="text-sm font-bold text-slate-900" x-text="confirmTarget === 'all' ? 'Xóa tất cả thông báo?' : (confirmTarget === 'group' ? 'Xóa nhóm thông báo này?' : 'Xóa thông báo này?')"></p>
                 <p class="mt-1 text-xs text-slate-500">Hành động này không thể hoàn tác.</p>
                 <div class="mt-4 flex gap-2">
-                    <button type="button" @click="confirmTarget = null"
+                    <button type="button" @click="confirmTarget = null; groupDeleteIds = null"
                         class="flex-1 rounded-xl border border-slate-200 px-3 py-2 text-xs font-bold text-slate-600 transition-colors hover:bg-slate-50">
                         Hủy
                     </button>
                     <button type="button"
-                        @click="confirmTarget === 'all' ? $wire.deleteAll() : $wire.deleteNotification(confirmTarget); confirmTarget = null"
+                        @click="confirmTarget === 'all' ? $wire.deleteAll() : (confirmTarget === 'group' ? $wire.deleteGroup(groupDeleteIds) : $wire.deleteNotification(confirmTarget)); confirmTarget = null; groupDeleteIds = null"
                         class="flex-1 rounded-xl bg-error px-3 py-2 text-xs font-bold text-white transition-colors hover:bg-error/90">
                         Xóa
                     </button>

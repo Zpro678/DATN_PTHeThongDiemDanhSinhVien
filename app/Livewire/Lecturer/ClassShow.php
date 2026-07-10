@@ -166,16 +166,8 @@ class ClassShow extends Component
             $q->orderByDesc('date')->orderByDesc('created_at');
         }]);
 
-        $this->studentsCount   = $courseClass->members()->where('status', \App\Models\ClassMember::STATUS_ACTIVE)->count();
-        $this->sessionsCount = $courseClass->sessions()->count();
-        $this->sessionsCompleted = $courseClass->sessions()->whereIn('status', ['closed', 'active'])->count();
-        $this->pendingLeaveRequests = LeaveRequest::whereHas('classMeeting', function ($q) use ($courseClass) {
-            $q->where('class_id', $courseClass->id);
-        })->where('status', 'pending')->count();
-        $this->pendingMembersCount = $courseClass->joinRequests()
-            ->whereIn('status', [\App\Models\ClassJoinRequest::STATUS_PENDING, 'pending'])
-            ->count();
-        
+        $this->loadStats();
+
         if (request()->has('openImport')) {
             $this->openImport();
             session()->flash('status', 'Vui lòng import danh sách lớp trước khi điểm danh.');
@@ -187,6 +179,34 @@ class ClassShow extends Component
         }
     }
     
+    /**
+     * Tính lại các số liệu ở thẻ đầu trang (sĩ số, số buổi, chờ duyệt...).
+     * Tách riêng để dùng chung cho mount() và làm mới realtime refreshClass().
+     */
+    private function loadStats(): void
+    {
+        $this->studentsCount = $this->class->members()->where('status', \App\Models\ClassMember::STATUS_ACTIVE)->count();
+        $this->sessionsCount = $this->class->sessions()->count();
+        $this->sessionsCompleted = $this->class->sessions()->whereIn('status', ['closed', 'active'])->count();
+        $this->pendingLeaveRequests = LeaveRequest::whereHas('classMeeting', function ($q) {
+            $q->where('class_id', $this->class->id);
+        })->where('status', 'pending')->count();
+        $this->pendingMembersCount = $this->class->joinRequests()
+            ->whereIn('status', [\App\Models\ClassJoinRequest::STATUS_PENDING, 'pending'])
+            ->count();
+    }
+
+    /**
+     * Tên kênh socket.io mà trang chi tiết lớp lắng nghe để cập nhật realtime.
+     *
+     * StudentJoinedClass broadcast qua Redis (kèm prefix), server.cjs relay sang
+     * socket.io; client (Alpine x-init) nghe kênh này rồi gọi $wire.refreshClass().
+     */
+    public function realtimeChannel(): string
+    {
+        return (string) config('database.redis.options.prefix') . 'class.' . $this->class->id;
+    }
+
     public function checkBeforeAttendance(string $type): void
     {
         if ($this->studentsCount === 0) {
@@ -236,6 +256,10 @@ class ClassShow extends Component
 
     public function render()
     {
+        // Tính lại số liệu mỗi lần render để mọi lần làm mới (socket realtime, thao tác
+        // Livewire) đều phản ánh đúng DB — sửa lỗi số liệu chỉ tính ở mount() nên đứng yên.
+        $this->loadStats();
+
         $students = $this->class->members()
             ->with(['user', 'profile'])
             ->where('status', \App\Models\ClassMember::STATUS_ACTIVE)

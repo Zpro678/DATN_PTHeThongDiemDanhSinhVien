@@ -116,6 +116,8 @@ class JoinClass extends Component
                 ]);
 
                 Auth::user()->notify(new \App\Notifications\ClassJoinedNotification($courseClass));
+                $this->notifyClassManagers($courseClass, new \App\Notifications\ClassMemberJoined($courseClass, Auth::user()));
+                \App\Events\StudentJoinedClass::dispatch((string) $courseClass->id);
 
                 app(AuditLogService::class)->log('class_joined', [
                     'class_id'   => $courseClass->id,
@@ -151,6 +153,8 @@ class JoinClass extends Component
             ]);
 
             Auth::user()->notify(new \App\Notifications\ClassJoinedNotification($courseClass));
+            $this->notifyClassManagers($courseClass, new \App\Notifications\ClassMemberJoined($courseClass, Auth::user()));
+            \App\Events\StudentJoinedClass::dispatch((string) $courseClass->id);
 
             app(AuditLogService::class)->log('class_joined', [
                 'class_id'   => $courseClass->id,
@@ -184,9 +188,34 @@ class JoinClass extends Component
             'status' => \App\Models\ClassJoinRequest::STATUS_PENDING,
         ]);
 
+        $this->notifyClassManagers($courseClass, new \App\Notifications\ClassJoinRequestReceived($courseClass, Auth::user()));
+        \App\Events\StudentJoinedClass::dispatch((string) $courseClass->id);
+
         session()->flash('status', 'Yêu cầu tham gia đã được gửi và đang chờ giảng viên xác nhận!');
 
         $this->reset(['class_code', 'confirmingClass']);
+    }
+
+    /**
+     * Gửi thông báo tới những người quản lý lớp (chủ chính + đồng chủ đã nhận lời mời).
+     */
+    protected function notifyClassManagers(CourseClass $courseClass, \Illuminate\Notifications\Notification $notification): void
+    {
+        $managers = collect();
+
+        if ($courseClass->owner) {
+            $managers->push($courseClass->owner);
+        }
+
+        $courseClass->coOwners()
+            ->wherePivotNotNull('accepted_at')
+            ->get()
+            ->each(fn ($coOwner) => $managers->push($coOwner));
+
+        $managers
+            ->filter(fn ($user) => $user && (string) $user->id !== (string) Auth::id())
+            ->unique('id')
+            ->each(fn ($user) => $user->notify($notification));
     }
 
     public function render(): View

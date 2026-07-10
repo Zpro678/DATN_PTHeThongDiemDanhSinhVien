@@ -46,7 +46,8 @@ class LecturerQrAttendanceTest extends TestCase
 
         Livewire::actingAs($user)
             ->test(QrAttendanceCreate::class)
-            ->set('name', 'Buổi điểm danh QR')
+            ->set('meetingName', 'Buổi điểm danh QR')
+            ->set('name', 'Phiên QR')
             ->call('save')
             ->assertHasNoErrors();
 
@@ -395,6 +396,43 @@ class LecturerQrAttendanceTest extends TestCase
             ->set('statusFilter', 'same_device')
             ->assertViewHas('records', fn ($records) => $records->count() === 2)
             ->assertViewHas('sameDeviceCount', 2);
+    }
+
+    public function test_same_device_promotes_prior_fraud_flag_and_highlights_group(): void
+    {
+        $owner = User::factory()->create();
+        [$courseClass, $session] = $this->createOpenQrSessionNoGps($owner);
+        [$userA, $memberA] = $this->enrolStudentWithRecord($courseClass, $session);
+        [$userB, $memberB] = $this->enrolStudentWithRecord($courseClass, $session);
+
+        $userA->forceFill(['name' => 'Shared Device Alpha'])->save();
+        $userB->forceFill(['name' => 'Shared Device Beta'])->save();
+
+        Livewire::actingAs($userA)->test(AttendanceCheckIn::class, ['token' => $session->qr_token])
+            ->call('checkIn', null, 'DEV-SAME-FLAG')
+            ->assertSet('isSuccess', true);
+
+        AttendanceRecord::where('class_member_id', $memberA->id)->update([
+            'gps_fraud_flag' => 'impossible_travel',
+            'note' => 'Nghi ngờ di chuyển bất khả thi.',
+        ]);
+
+        Livewire::actingAs($userB)->test(AttendanceCheckIn::class, ['token' => $session->qr_token])
+            ->call('checkIn', null, 'DEV-SAME-FLAG')
+            ->assertSet('isSuccess', true);
+
+        $recordA = AttendanceRecord::where('class_member_id', $memberA->id)->firstOrFail();
+        $this->assertSame('device_duplicate', $recordA->gps_fraud_flag);
+        $this->assertStringContainsString('Cảnh báo trước đó: impossible_travel.', (string) $recordA->note);
+        $this->assertSame('device_duplicate', AttendanceRecord::where('class_member_id', $memberB->id)->value('gps_fraud_flag'));
+
+        Livewire::actingAs($owner)->test(QrAttendanceSession::class, ['session' => $session->id])
+            ->set('statusFilter', 'same_device')
+            ->assertViewHas('records', fn ($records) => $records->count() === 2)
+            ->assertViewHas('sameDeviceCount', 2)
+            ->assertViewHas('sharedDeviceIds', fn (array $deviceIds) => in_array('DEV-SAME-FLAG', $deviceIds, true))
+            ->assertSeeHtml('class="truncate text-[15.5px] font-semibold text-red-600">Shared Device Alpha</p>')
+            ->assertSeeHtml('class="truncate text-[15.5px] font-semibold text-red-600">Shared Device Beta</p>');
     }
 
     public function test_different_device_ids_do_not_trigger_false_duplicate(): void

@@ -2,34 +2,37 @@
 
 namespace App\Notifications;
 
-use App\Models\LeaveRequest;
+use App\Models\CourseClass;
+use App\Models\User;
 use App\Notifications\Traits\ChecksNotificationPreferences;
+use Illuminate\Broadcasting\PrivateChannel;
 use Illuminate\Bus\Queueable;
 use Illuminate\Contracts\Broadcasting\ShouldBroadcast;
 use Illuminate\Notifications\Messages\BroadcastMessage;
 use Illuminate\Notifications\Notification;
-use Illuminate\Broadcasting\PrivateChannel;
 
-class LeaveRequestSubmitted extends Notification implements ShouldBroadcast
+/**
+ * Gửi cho GIẢNG VIÊN (chủ lớp / đồng chủ) khi một sinh viên gửi YÊU CẦU tham gia
+ * lớp cần phê duyệt. Giúp giảng viên biết để vào trang "Duyệt học viên".
+ */
+class ClassJoinRequestReceived extends Notification implements ShouldBroadcast
 {
     use Queueable, ChecksNotificationPreferences;
 
-    public LeaveRequest $leaveRequest;
+    public CourseClass $courseClass;
+
+    public User $student;
 
     /** @var array<int, string> */
     public array $supportedChannels = ['database', 'broadcast', 'mail'];
 
-    /**
-     * Create a new notification instance.
-     */
-    public function __construct(LeaveRequest $leaveRequest)
+    public function __construct(CourseClass $courseClass, User $student)
     {
-        $this->leaveRequest = $leaveRequest;
+        $this->courseClass = $courseClass;
+        $this->student = $student;
     }
 
     /**
-     * Get the notification's delivery channels.
-     *
      * @return array<int, string>
      */
     public function via(object $notifiable): array
@@ -52,7 +55,7 @@ class LeaveRequestSubmitted extends Notification implements ShouldBroadcast
         return (new \Illuminate\Notifications\Messages\MailMessage)
             ->subject($data['title'] ?? 'SAMS Notification')
             ->line($data['message'] ?? '')
-            ->action('Xem chi tiết', $data['url'] ?? url('/'));
+            ->action('Duyệt học viên', $data['url'] ?? url('/'));
     }
 
     public function toTelegram(object $notifiable)
@@ -61,44 +64,31 @@ class LeaveRequestSubmitted extends Notification implements ShouldBroadcast
         $message = \NotificationChannels\Telegram\TelegramMessage::create()
             ->to($notifiable->telegram_chat_id)
             ->content("*" . ($data['title'] ?? 'SAMS') . "*\n\n" . ($data['message'] ?? ''));
-            
+
         if (isset($data['url'])) {
             $message->button('Xem chi tiết', $data['url']);
         }
-        
+
         return $message;
     }
 
     /**
-     * Get the array representation of the notification.
-     *
      * @return array<string, mixed>
      */
     public function toArray(object $notifiable): array
     {
-        $member = $this->leaveRequest->classMember;
-        $student = $member ? $member->user : auth()->user();
-        $studentName = $this->leaveRequest->classMember->full_name ?? 'Học viên';
-        $session = $this->leaveRequest->classMeeting;
-        $class = $session?->courseClass;
-        $className = $class?->name ?? 'Lớp học';
-        $date = $session && $session->date ? $session->date->format('d/m/Y') : 'Buổi học';
-
         return [
-            'title' => 'Đơn xin phép mới',
-            'message' => "Sinh viên {$studentName} đã gửi đơn xin phép cho lớp {$className} vào ngày {$date}.",
-            'leave_request_id' => $this->leaveRequest->id,
-            'class_id' => $class?->id,
-            'type' => 'leave_request',
-            'icon' => 'file-text',
-            'url' => route('lecturer.leave-requests.index', ['ma_user' => $notifiable->id, 'class' => $class ? $class->id : null]),
-        ];
-    }
-
-    public function broadcastOn(): array
-    {
-        return [
-            new PrivateChannel('App.Models.User.' . $this->leaveRequest->classMember->courseClass->owner_user_id),
+            'title' => 'Yêu cầu tham gia lớp',
+            'message' => 'Sinh viên ' . $this->student->name . ' đã gửi yêu cầu tham gia lớp ' . $this->courseClass->name . '. Vui lòng duyệt.',
+            'class_id' => $this->courseClass->id,
+            'type' => 'class_join_request',
+            'level' => 'info',
+            'icon' => 'log-in',
+            'iconWrapper' => 'bg-blue-100 text-blue-600',
+            'url' => route('lecturer.classes.pending-members', [
+                'ma_user' => $notifiable->id,
+                'courseClass' => $this->courseClass->id,
+            ]),
         ];
     }
 

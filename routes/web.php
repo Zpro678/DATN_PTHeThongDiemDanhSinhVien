@@ -86,6 +86,10 @@ Route::post('/payment/momo/ipn', [\App\Http\Controllers\MomoController::class, '
 Route::post('/payment/payos/webhook', [\App\Http\Controllers\PayosController::class, 'webhook'])
     ->name('payos.webhook');
 
+// Telegram Bot webhook: Telegram POST server-to-server, KHÔNG auth, loại CSRF (xem bootstrap/app.php).
+Route::post('/telegram/webhook', [\App\Http\Controllers\TelegramWebhookController::class, 'handle'])
+    ->name('telegram.webhook');
+
 Route::middleware(['auth', 'verified', 'user.route'])->group(function () {
     Route::prefix('admin/{ma_user}')->name('admin.')->middleware('admin')->group(function () {
         Route::get('/', [\App\Http\Controllers\Admin\AdminController::class, 'dashboard'])->name('dashboard');

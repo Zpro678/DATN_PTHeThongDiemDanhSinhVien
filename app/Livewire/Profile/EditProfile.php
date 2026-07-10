@@ -29,6 +29,12 @@ class EditProfile extends Component
     /** @var array<string, bool> */
     public array $notificationPreferences = [];
 
+    /** Deep-link Telegram vừa tạo (mở để người dùng bấm Start). */
+    public ?string $telegramLinkUrl = null;
+
+    /** Đang trong quá trình chờ người dùng bấm Start trên Telegram. */
+    public bool $telegramLinking = false;
+
     public function messages()
     {
         return [
@@ -103,6 +109,72 @@ class EditProfile extends Component
     public function updatedNotificationPreferences(): void
     {
         $this->saveNotificationPreferences();
+    }
+
+    /**
+     * Bắt đầu liên kết Telegram: tạo mã dùng-một-lần (cache 15 phút) và mở deep-link
+     * https://t.me/<bot>?start=<code>. Webhook sẽ nhận /start <code> và lưu Chat ID.
+     */
+    public function linkTelegram(): void
+    {
+        $bot = app(\App\Services\TelegramBot::class);
+        $username = $bot->username();
+
+        if (blank($bot->token()) || blank($username)) {
+            $this->dispatch('toast', message: 'Hệ thống chưa cấu hình bot Telegram. Vui lòng liên hệ quản trị viên.', type: 'error');
+
+            return;
+        }
+
+        $code = \Illuminate\Support\Str::random(24);
+        \Illuminate\Support\Facades\Cache::put("tg_link:{$code}", Auth::id(), now()->addMinutes(15));
+
+        $this->telegramLinkUrl = "https://t.me/{$username}?start={$code}";
+        $this->telegramLinking = true;
+
+        // Alpine sẽ mở URL trong tab mới.
+        $this->dispatch('open-telegram-link', url: $this->telegramLinkUrl);
+    }
+
+    /**
+     * Poll trong lúc chờ: đọc lại Chat ID từ DB (do webhook ghi). Có thì báo xong.
+     */
+    public function refreshTelegramStatus(): void
+    {
+        $user = Auth::user()->fresh();
+        $this->telegram_chat_id = $user->telegram_chat_id;
+        $this->notificationPreferences = $user->notificationPreferences();
+
+        if (filled($this->telegram_chat_id)) {
+            $this->telegramLinking = false;
+            $this->telegramLinkUrl = null;
+            $this->dispatch('toast', message: 'Đã liên kết Telegram thành công!', type: 'success');
+        }
+    }
+
+    public function cancelTelegramLinking(): void
+    {
+        $this->telegramLinking = false;
+        $this->telegramLinkUrl = null;
+    }
+
+    /**
+     * Hủy liên kết Telegram: xóa Chat ID và tắt kênh Telegram.
+     */
+    public function unlinkTelegram(): void
+    {
+        $user = Auth::user();
+        $user->forceFill([
+            'telegram_chat_id' => null,
+            'notification_preferences' => array_merge($user->notificationPreferences(), ['telegram' => false]),
+        ])->save();
+
+        $this->telegram_chat_id = null;
+        $this->notificationPreferences = $user->fresh()->notificationPreferences();
+        $this->telegramLinking = false;
+        $this->telegramLinkUrl = null;
+
+        $this->dispatch('toast', message: 'Đã hủy liên kết Telegram.', type: 'success');
     }
 
     public function toggleNotificationPreference(string $channel): void

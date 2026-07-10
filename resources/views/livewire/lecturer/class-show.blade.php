@@ -1,4 +1,6 @@
-<div x-data="{ showImportModal: false, showShareModal: false, showBan: false, banConfirm: { open: false, id: null, name: '' } }" wire:poll.2s class="w-full space-y-6 px-6 py-6 pb-24 sm:px-10 lg:px-16 animate-in fade-in slide-in-from-bottom-4 duration-500">
+<div x-data="{ showImportModal: false, showShareModal: false, showBan: false, banConfirm: { open: false, id: null, name: '' } }"
+    x-init="window.listenRealtime && window.listenRealtime(@js($this->realtimeChannel()), () => $wire.$refresh(), 300)"
+    class="w-full space-y-6 px-6 py-6 pb-24 sm:px-10 lg:px-16 animate-in fade-in slide-in-from-bottom-4 duration-500">
 
     {{-- Header --}}
     <div class="mb-6 flex justify-end">
@@ -90,22 +92,22 @@
 
                 {{-- Các ô chỉ số --}}
                 <div class="grid grid-cols-3 gap-3">
-                    <div class="rounded-2xl bg-white/10 p-4 shadow-sm ring-1 ring-white/10 backdrop-blur-sm transition-colors hover:bg-white/15">
-                        <div class="flex items-center gap-2 text-white/80">
+                    <div class="rounded-2xl bg-white/15 p-4 shadow-sm ring-1 ring-white/20 backdrop-blur-sm transition-colors hover:bg-white/20">
+                        <div class="flex items-center gap-2 text-white/90">
                             <x-user.icon name="users" :size="15" />
                             <span class="text-xs font-medium sm:text-sm">Sĩ số</span>
                         </div>
                         <p class="mt-2 text-2xl font-black text-white sm:text-3xl">{{ $studentsCount }}</p>
                     </div>
-                    <div class="rounded-2xl bg-white/10 p-4 shadow-sm ring-1 ring-white/10 backdrop-blur-sm transition-colors hover:bg-white/15">
-                        <div class="flex items-center gap-2 text-white/80">
+                    <div class="rounded-2xl bg-white/15 p-4 shadow-sm ring-1 ring-white/20 backdrop-blur-sm transition-colors hover:bg-white/20">
+                        <div class="flex items-center gap-2 text-white/90">
                             <x-user.icon name="calendar" :size="15" />
                             <span class="text-xs font-medium sm:text-sm">Dự kiến</span>
                         </div>
                         <p class="mt-2 text-2xl font-black text-white sm:text-3xl">{{ $class->total_sessions }}</p>
                     </div>
-                    <div class="rounded-2xl bg-white/10 p-4 shadow-sm ring-1 ring-white/10 backdrop-blur-sm transition-colors hover:bg-white/15">
-                        <div class="flex items-center gap-2 text-white/80">
+                    <div class="rounded-2xl bg-white/15 p-4 shadow-sm ring-1 ring-white/20 backdrop-blur-sm transition-colors hover:bg-white/20">
+                        <div class="flex items-center gap-2 text-white/90">
                             <x-user.icon name="clipboard-check" :size="15" />
                             <span class="text-xs font-medium sm:text-sm">Đã ĐĐ</span>
                         </div>
@@ -115,7 +117,7 @@
 
                 {{-- Thanh tiến độ --}}
                 <div class="mt-5">
-                    <div class="mb-2 flex items-center justify-between text-xs font-semibold text-white/85">
+                    <div class="mb-2 flex items-center justify-between text-xs font-semibold text-white/95">
                         <span class="inline-flex items-center gap-1.5">
                             <x-user.icon name="trending-up" :size="14" /> Tiến độ điểm danh
                         </span>

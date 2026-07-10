@@ -74,6 +74,8 @@ class ClassPendingMembers extends Component
                 $request->user->notify(new \App\Notifications\ClassJoinedNotification($this->courseClass));
             }
 
+            \App\Events\StudentJoinedClass::dispatch((string) $this->courseClass->id);
+
             $this->dispatch('toast', message: 'Đã duyệt học viên ' . ($request->user?->name ?? 'này') . ' thành công.', type: 'success');
         }
     }
@@ -127,6 +129,8 @@ class ClassPendingMembers extends Component
                     $request->user->notify(new \App\Notifications\ClassJoinedNotification($this->courseClass));
                 }
             }
+            \App\Events\StudentJoinedClass::dispatch((string) $this->courseClass->id);
+
             $this->dispatch('toast', message: 'Đã duyệt tất cả ' . $requests->count() . ' học viên thành công.', type: 'success');
             $this->dispatch('close-modal', 'confirm-approve-all');
         }
