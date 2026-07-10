@@ -146,13 +146,13 @@ class AdminController extends Controller
     {
         $this->ensureAdmin();
 
-        $totalRevenue = \App\Models\Transaction::where('status', 'PAID')->sum('amount');
+        $totalRevenue = \App\Models\Transaction::whereIn('status', ['PAID', 'SUCCESS', 'paid', 'success'])->sum('amount');
         
         $overview = [
             'users' => User::count(),
             'classes' => CourseClass::count(),
             'plans' => Plan::count(),
-            'transactions' => \App\Models\Transaction::where('status', 'PAID')->count(),
+            'transactions' => \App\Models\Transaction::whereIn('status', ['PAID', 'SUCCESS', 'paid', 'success'])->count(),
             'revenue' => $totalRevenue,
         ];
 
@@ -160,7 +160,7 @@ class AdminController extends Controller
         $monthlyRevenue = [];
         for ($i = 5; $i >= 0; $i--) {
             $month = now()->startOfMonth()->subMonths($i);
-            $amount = \App\Models\Transaction::where('status', 'PAID')
+            $amount = \App\Models\Transaction::whereIn('status', ['PAID', 'SUCCESS', 'paid', 'success'])
                 ->whereYear('created_at', $month->year)
                 ->whereMonth('created_at', $month->month)
                 ->sum('amount');

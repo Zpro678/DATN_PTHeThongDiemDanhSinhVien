@@ -44,6 +44,11 @@ class GoogleController extends Controller
             if (empty($user->avatar)) {
                 $user->avatar = $googleUser->getAvatar();
             }
+
+            // Tự động xác thực email vì đã đăng nhập bằng Google
+            if (empty($user->email_verified_at)) {
+                $user->email_verified_at = now();
+            }
             
             if ($user->isDirty()) {
                 $user->save();
@@ -59,6 +64,10 @@ class GoogleController extends Controller
                 'role' => User::ROLE_USER, // Mặc định là người dùng
                 'status' => 'active',
             ]);
+            
+            // Tự động xác thực email
+            $user->email_verified_at = now();
+            $user->save();
         }
 
         // Kiểm tra xem tài khoản có bị khóa không
