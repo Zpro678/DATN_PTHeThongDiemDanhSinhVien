@@ -11,6 +11,13 @@ class ClassStatistics extends Component
 {
     public $class_id;
 
+    /** Số cột điểm danh gần nhất hiển thị mặc định trên biểu đồ. */
+    public const CHART_RECENT_LIMIT = 8;
+
+    /** Khoảng ngày lọc biểu đồ (null = mặc định lấy các buổi gần nhất). */
+    public ?string $chartFrom = null;
+    public ?string $chartTo = null;
+
     public function mount($class_id): void
     {
         $this->class_id = (int) $class_id;
@@ -18,6 +25,13 @@ class ClassStatistics extends Component
         CourseClass::where('id', $class_id)
             ->managedBy(auth()->id())
             ->firstOrFail();
+    }
+
+    /** Xoá bộ lọc ngày, quay về hiển thị các buổi gần nhất. */
+    public function resetChartRange(): void
+    {
+        $this->chartFrom = null;
+        $this->chartTo = null;
     }
 
     public function render(LectureManageStudentService $service): \Illuminate\Contracts\View\View
@@ -64,8 +78,31 @@ class ClassStatistics extends Component
             })
             ->values();
 
+        // Khoảng ngày có thể chọn cho biểu đồ (dựa trên các buổi đã chốt).
+        $closedDates = $closedSessions->pluck('date')->filter()
+            ->map(fn ($d) => $d->toDateString())->unique()->sort()->values();
+        $chartMinDate = $closedDates->first();
+        $chartMaxDate = $closedDates->last();
+
+        // Lọc buổi đã chốt theo ngày (nếu chủ lớp chọn); mặc định lấy N buổi gần nhất.
+        $chartSessions = $closedSessions->sortBy([['date', 'asc'], ['id', 'asc']])->values();
+
+        if ($this->chartFrom) {
+            $chartSessions = $chartSessions->filter(fn ($s) => $s->date && $s->date->toDateString() >= $this->chartFrom);
+        }
+        if ($this->chartTo) {
+            $chartSessions = $chartSessions->filter(fn ($s) => $s->date && $s->date->toDateString() <= $this->chartTo);
+        }
+
+        $isChartFiltered = $this->chartFrom || $this->chartTo;
+        if (! $isChartFiltered) {
+            // Không lọc: chỉ hiển thị các buổi gần nhất cho gọn.
+            $chartSessions = $chartSessions->slice(-self::CHART_RECENT_LIMIT);
+        }
+        $chartSessions = $chartSessions->values();
+
         // Dữ liệu điểm danh theo từng buổi đã chốt (cho biểu đồ)
-        $sessionChart = $closedSessions->map(function ($session) use ($totalStudents) {
+        $sessionChart = $chartSessions->map(function ($session) use ($totalStudents) {
             $presentCount = AttendanceRecord::where('class_session_id', $session->id)
                 ->whereIn('status', ['present', 'late'])
                 ->count();
@@ -97,6 +134,9 @@ class ClassStatistics extends Component
             'alertStudents'   => $alertStudents,
             'allStudents'     => $allStudents,
             'sessionChart'    => $sessionChart,
+            'chartMinDate'    => $chartMinDate,
+            'chartMaxDate'    => $chartMaxDate,
+            'isChartFiltered' => $isChartFiltered,
         ])->layout('layouts.fullscreen', [
             'title' => 'Thống kê',
             'subtitle' => $class->code . ' - ' . $class->name,

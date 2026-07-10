@@ -78,6 +78,7 @@ class NotificationPreferencesTest extends TestCase
         $this->assertSame([
             'database' => false,
             'mail' => true,
+            'telegram' => false,
         ], $user->refresh()->notification_preferences);
     }
 
@@ -98,6 +99,7 @@ class NotificationPreferencesTest extends TestCase
         $this->assertSame([
             'database' => true,
             'mail' => true,
+            'telegram' => false,
         ], $user->refresh()->notification_preferences);
     }
 }

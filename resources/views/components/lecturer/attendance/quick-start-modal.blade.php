@@ -23,6 +23,73 @@
         gpsLongitude: @entangle('gpsLongitude').live,
         gpsRadius: @entangle('gpsRadius').live,
         hasStudents: @entangle('selectedClassHasStudents').live,
+        isRequestingGps: false,
+        init() {
+            // Khi mở modal hoặc chuyển sang QR mà đang bật GPS nhưng chưa có toạ độ -> xin quyền ngay.
+            const maybeLocate = () => {
+                if (this.showQuickStart && this.quickStartType === 'qr' && this.gpsEnabled && !this.gpsLatitude) {
+                    this.getLocation();
+                }
+            };
+            this.$watch('showQuickStart', () => maybeLocate());
+            this.$watch('quickStartType', () => maybeLocate());
+            maybeLocate();
+        },
+        // Trả về Promise: kích hoạt hộp thoại xin quyền định vị của trình duyệt.
+        requestLocation() {
+            return new Promise((resolve, reject) => {
+                if (!navigator.geolocation) {
+                    reject(new Error('unsupported'));
+                    return;
+                }
+                this.isRequestingGps = true;
+                navigator.geolocation.getCurrentPosition(
+                    (position) => {
+                        this.gpsLatitude = position.coords.latitude;
+                        this.gpsLongitude = position.coords.longitude;
+                        this.wire.set('gpsLatitude', position.coords.latitude);
+                        this.wire.set('gpsLongitude', position.coords.longitude);
+                        this.isRequestingGps = false;
+                        resolve(position);
+                    },
+                    (error) => {
+                        this.isRequestingGps = false;
+                        reject(error);
+                    },
+                    { enableHighAccuracy: true, timeout: 10000, maximumAge: 0 }
+                );
+            });
+        },
+        getLocation() {
+            if (!this.gpsEnabled) {
+                this.gpsLatitude = null;
+                this.gpsLongitude = null;
+                this.wire.set('gpsLatitude', null);
+                this.wire.set('gpsLongitude', null);
+                return;
+            }
+            this.requestLocation().catch((error) => {
+                if (error && error.message === 'unsupported') {
+                    alert('Trình duyệt không hỗ trợ GPS.');
+                } else {
+                    alert('Không thể lấy vị trí. Vui lòng cấp quyền vị trí cho trình duyệt.');
+                }
+                this.gpsEnabled = false;
+                this.wire.set('gpsEnabled', false);
+            });
+        },
+        // Bấm tạo phiên: nếu bật GPS mà chưa có toạ độ thì xin quyền trước, có quyền mới submit.
+        async submitQuick() {
+            if (this.quickStartType === 'qr' && this.gpsEnabled && !this.gpsLatitude) {
+                try {
+                    await this.requestLocation();
+                } catch (error) {
+                    alert('Vui lòng cấp quyền truy cập vị trí GPS cho trình duyệt để tạo mã điểm danh.');
+                    return;
+                }
+            }
+            this.wire.startQuick();
+        },
         updateMeeting(id, name) {
             this.quickMeetingId = id;
             this.newMeetingName = name;
@@ -323,56 +390,7 @@
                                     </select>
                                 </div>
                                 
-                                <div x-data="{
-                                    isRequestingGps: false,
-                                    init() {
-                                        this.$watch('showQuickStart', (value) => {
-                                            if (value && this.quickStartType === 'qr' && this.gpsEnabled && !this.gpsLatitude) {
-                                                this.getLocation();
-                                            }
-                                        });
-                                        this.$watch('quickStartType', (value) => {
-                                            if (this.showQuickStart && value === 'qr' && this.gpsEnabled && !this.gpsLatitude) {
-                                                this.getLocation();
-                                            }
-                                        });
-                                        if (this.showQuickStart && this.quickStartType === 'qr' && this.gpsEnabled && !this.gpsLatitude) {
-                                            this.getLocation();
-                                        }
-                                    },
-                                    getLocation() {
-                                        if (!this.gpsEnabled) {
-                                            this.gpsLatitude = null;
-                                            this.gpsLongitude = null;
-                                            this.wire.set('gpsLatitude', null);
-                                            this.wire.set('gpsLongitude', null);
-                                            return;
-                                        }
-                                        this.isRequestingGps = true;
-                                        if (navigator.geolocation) {
-                                            navigator.geolocation.getCurrentPosition(
-                                                (position) => {
-                                                    this.gpsLatitude = position.coords.latitude;
-                                                    this.gpsLongitude = position.coords.longitude;
-                                                    this.wire.set('gpsLatitude', position.coords.latitude);
-                                                    this.wire.set('gpsLongitude', position.coords.longitude);
-                                                    this.isRequestingGps = false;
-                                                },
-                                                (error) => {
-                                                    alert('Không thể lấy vị trí. Vui lòng cấp quyền vị trí cho trình duyệt.');
-                                                    this.gpsEnabled = false;
-                                                    this.wire.set('gpsEnabled', false);
-                                                    this.isRequestingGps = false;
-                                                }
-                                            );
-                                        } else {
-                                            alert('Trình duyệt không hỗ trợ GPS.');
-                                            this.gpsEnabled = false;
-                                            this.wire.set('gpsEnabled', false);
-                                            this.isRequestingGps = false;
-                                        }
-                                    }
-                                }">
+                                <div>
                                     <label class="mb-2 block text-sm font-bold text-slate-700">Bắt buộc GPS</label>
                                     <label class="flex cursor-pointer items-center gap-3">
                                         <input type="checkbox" x-model="gpsEnabled" @change="getLocation()" class="peer sr-only" />
@@ -397,7 +415,7 @@
                 <div class="px-7 py-5 bg-slate-50/50 rounded-b-3xl border-t border-slate-100 shrink-0 z-10">
                     <div class="flex gap-3">
                         <button type="button" @click="showQuickStart = false" class="flex-1 rounded-xl bg-slate-200/50 py-3 text-sm font-bold text-slate-600 transition-all duration-200 hover:bg-slate-200 hover:text-slate-700 active:scale-95">Hủy</button>
-                        <button type="button" @click="wire.startQuick()" wire:loading.attr="disabled" wire:target="startQuick" class="flex-1 rounded-xl py-3 text-sm font-bold text-white shadow-md transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:shadow-md disabled:active:scale-100" :class="quickStartType === 'manual' ? 'bg-gradient-to-r from-amber-500 to-orange-500 shadow-amber-500/25 hover:from-amber-600 hover:to-orange-600 hover:shadow-lg hover:shadow-amber-500/30' : 'bg-gradient-to-r from-blue-600 to-indigo-600 shadow-blue-600/25 hover:from-blue-700 hover:to-indigo-700 hover:shadow-lg hover:shadow-blue-600/30'" x-text="quickStartType === 'manual' ? 'Bắt đầu điểm danh' : 'Tạo mã & Trình chiếu'"></button>
+                        <button type="button" @click="submitQuick()" wire:loading.attr="disabled" wire:target="startQuick" class="flex-1 rounded-xl py-3 text-sm font-bold text-white shadow-md transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:shadow-md disabled:active:scale-100" :class="quickStartType === 'manual' ? 'bg-gradient-to-r from-amber-500 to-orange-500 shadow-amber-500/25 hover:from-amber-600 hover:to-orange-600 hover:shadow-lg hover:shadow-amber-500/30' : 'bg-gradient-to-r from-blue-600 to-indigo-600 shadow-blue-600/25 hover:from-blue-700 hover:to-indigo-700 hover:shadow-lg hover:shadow-blue-600/30'" x-text="quickStartType === 'manual' ? 'Bắt đầu điểm danh' : 'Tạo mã & Trình chiếu'"></button>
                     </div>
                 </div>
             </div>

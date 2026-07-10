@@ -55,6 +55,7 @@ class EditProfile extends Component
         $this->name = $user->name;
         $this->email = $user->email;
         $this->telegram_chat_id = $user->telegram_chat_id;
+        $this->notificationPreferences = $user->notificationPreferences();
     }
 
     public function updateProfileInformation()
@@ -127,6 +128,7 @@ class EditProfile extends Component
         $this->validate([
             'notificationPreferences.database' => ['required', 'boolean'],
             'notificationPreferences.mail' => ['required', 'boolean'],
+            'notificationPreferences.telegram' => ['required', 'boolean'],
         ]);
 
         $preferences = array_merge(

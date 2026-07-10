@@ -78,6 +78,7 @@ class User extends Authenticatable implements MustVerifyEmail
         return [
             'database' => true,
             'mail' => false,
+            'telegram' => false,
         ];
     }
 
@@ -97,6 +98,11 @@ class User extends Authenticatable implements MustVerifyEmail
         $channel = $channel === 'broadcast' ? 'database' : $channel;
 
         if ($channel === 'mail' && blank($this->email)) {
+            return false;
+        }
+
+        // Không gửi Telegram nếu chưa liên kết Chat ID, dù đã bật tùy chọn.
+        if ($channel === 'telegram' && blank($this->telegram_chat_id)) {
             return false;
         }
 

@@ -115,6 +115,146 @@
                                     <p class="mt-1.5 text-xs text-slate-500">Nhắn tin cho <a href="https://t.me/userinfobot" target="_blank" class="text-blue-600 hover:underline">@userinfobot</a> để lấy ID của bạn.</p>
                                     @error('telegram_chat_id') <span class="text-red-500 text-xs mt-1 block">{{ $message }}</span> @enderror
                                 </div>
+
+                                {{-- Tùy chọn thông báo: bật/tắt kênh nhận (trong ứng dụng / email); lưu ngay khi bấm --}}
+                                <div class="border-t border-slate-100 pt-5">
+                                    <div class="flex items-center justify-between gap-4">
+                                        <div>
+                                            <h3 class="text-sm font-black text-slate-900">Tùy chọn thông báo</h3>
+                                            <p class="mt-1 text-xs font-medium text-slate-500">Kênh nhận thông báo cho tài khoản này.</p>
+                                        </div>
+                                        <div wire:loading wire:target="toggleNotificationPreference,saveNotificationPreferences" class="text-xs font-bold text-blue-600">
+                                            Đang lưu...
+                                        </div>
+                                    </div>
+
+                                    <div class="mt-4 divide-y divide-slate-100">
+                                        @php
+                                            $databaseNotificationsEnabled = (bool) ($notificationPreferences['database'] ?? false);
+                                            $mailNotificationsEnabled = (bool) ($notificationPreferences['mail'] ?? false);
+                                            $telegramNotificationsEnabled = (bool) ($notificationPreferences['telegram'] ?? false);
+                                        @endphp
+
+                                        {{-- Trong ứng dụng --}}
+                                        <label class="flex cursor-pointer items-center justify-between gap-4 py-3">
+                                            <span class="flex min-w-0 items-center gap-3">
+                                                <span class="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-blue-50 text-blue-600">
+                                                    <x-user.icon name="bell" :size="18" />
+                                                </span>
+                                                <span class="min-w-0">
+                                                    <span class="block text-sm font-bold text-slate-900">Trong ứng dụng</span>
+                                                    <span class="block text-xs font-medium text-slate-500">Hiển thị tại chuông thông báo.</span>
+                                                </span>
+                                            </span>
+
+                                            <button
+                                                type="button"
+                                                wire:click="toggleNotificationPreference('database')"
+                                                wire:loading.attr="disabled"
+                                                wire:target="toggleNotificationPreference"
+                                                role="switch"
+                                                aria-checked="{{ $databaseNotificationsEnabled ? 'true' : 'false' }}"
+                                                @class([
+                                                    'relative inline-flex h-7 w-12 shrink-0 items-center rounded-full transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:ring-offset-2 disabled:cursor-wait disabled:opacity-70',
+                                                    'bg-blue-600' => $databaseNotificationsEnabled,
+                                                    'bg-slate-200' => ! $databaseNotificationsEnabled,
+                                                ])
+                                            >
+                                                <span
+                                                    @class([
+                                                        'absolute left-1 h-5 w-5 rounded-full bg-white shadow-sm transition-transform',
+                                                        'translate-x-5' => $databaseNotificationsEnabled,
+                                                        'translate-x-0' => ! $databaseNotificationsEnabled,
+                                                    ])
+                                                ></span>
+                                            </button>
+                                        </label>
+
+                                        {{-- Email --}}
+                                        <label class="flex cursor-pointer items-center justify-between gap-4 py-3">
+                                            <span class="flex min-w-0 items-center gap-3">
+                                                <span class="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-green-50 text-green-600">
+                                                    <x-user.icon name="mail" :size="18" />
+                                                </span>
+                                                <span class="min-w-0">
+                                                    <span class="block text-sm font-bold text-slate-900">Email</span>
+                                                    <span class="block text-xs font-medium text-slate-500">{{ $user->email }}</span>
+                                                    @if ($mailNotificationsEnabled && ! ($mailDeliveryStatus['ready'] ?? false))
+                                                        <span class="mt-1 block max-w-md text-xs font-semibold text-amber-600">
+                                                            {{ $mailDeliveryStatus['message'] ?? 'Máy chủ email chưa sẵn sàng.' }}
+                                                        </span>
+                                                    @endif
+                                                </span>
+                                            </span>
+
+                                            <button
+                                                type="button"
+                                                wire:click="toggleNotificationPreference('mail')"
+                                                wire:loading.attr="disabled"
+                                                wire:target="toggleNotificationPreference"
+                                                role="switch"
+                                                aria-checked="{{ $mailNotificationsEnabled ? 'true' : 'false' }}"
+                                                @class([
+                                                    'relative inline-flex h-7 w-12 shrink-0 items-center rounded-full transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-green-500 focus-visible:ring-offset-2 disabled:cursor-wait disabled:opacity-70',
+                                                    'bg-green-600' => $mailNotificationsEnabled,
+                                                    'bg-slate-200' => ! $mailNotificationsEnabled,
+                                                ])
+                                            >
+                                                <span
+                                                    @class([
+                                                        'absolute left-1 h-5 w-5 rounded-full bg-white shadow-sm transition-transform',
+                                                        'translate-x-5' => $mailNotificationsEnabled,
+                                                        'translate-x-0' => ! $mailNotificationsEnabled,
+                                                    ])
+                                                ></span>
+                                            </button>
+                                        </label>
+
+                                        {{-- Telegram --}}
+                                        <label class="flex cursor-pointer items-center justify-between gap-4 py-3">
+                                            <span class="flex min-w-0 items-center gap-3">
+                                                <span class="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-sky-50 text-sky-600">
+                                                    <x-user.icon name="send" :size="18" />
+                                                </span>
+                                                <span class="min-w-0">
+                                                    <span class="block text-sm font-bold text-slate-900">Telegram</span>
+                                                    @if (blank($user->telegram_chat_id))
+                                                        <span class="block text-xs font-medium text-slate-500">Nhập & lưu Telegram Chat ID ở trên để nhận thông báo.</span>
+                                                    @else
+                                                        <span class="block text-xs font-medium text-slate-500">Nhận thông báo qua Telegram (Chat ID: {{ $user->telegram_chat_id }}).</span>
+                                                    @endif
+                                                    @if ($telegramNotificationsEnabled && blank($user->telegram_chat_id))
+                                                        <span class="mt-1 block max-w-md text-xs font-semibold text-amber-600">
+                                                            Bạn đã bật Telegram nhưng chưa liên kết Chat ID nên chưa thể nhận.
+                                                        </span>
+                                                    @endif
+                                                </span>
+                                            </span>
+
+                                            <button
+                                                type="button"
+                                                wire:click="toggleNotificationPreference('telegram')"
+                                                wire:loading.attr="disabled"
+                                                wire:target="toggleNotificationPreference"
+                                                role="switch"
+                                                aria-checked="{{ $telegramNotificationsEnabled ? 'true' : 'false' }}"
+                                                @class([
+                                                    'relative inline-flex h-7 w-12 shrink-0 items-center rounded-full transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-sky-500 focus-visible:ring-offset-2 disabled:cursor-wait disabled:opacity-70',
+                                                    'bg-sky-500' => $telegramNotificationsEnabled,
+                                                    'bg-slate-200' => ! $telegramNotificationsEnabled,
+                                                ])
+                                            >
+                                                <span
+                                                    @class([
+                                                        'absolute left-1 h-5 w-5 rounded-full bg-white shadow-sm transition-transform',
+                                                        'translate-x-5' => $telegramNotificationsEnabled,
+                                                        'translate-x-0' => ! $telegramNotificationsEnabled,
+                                                    ])
+                                                ></span>
+                                            </button>
+                                        </label>
+                                    </div>
+                                </div>
                             </div>
                         </div>
 

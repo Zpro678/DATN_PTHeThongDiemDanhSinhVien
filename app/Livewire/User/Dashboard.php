@@ -109,10 +109,16 @@ class Dashboard extends Component
 
     private function defaultWorkspace(): string
     {
-        $ownedClasses = count($this->classes);
-        $joinedClasses = (int) data_get($this->studentDashboard, 'stats.joined_classes', 0);
+        // Tài khoản admin có khu vực quản trị riêng — giữ logic chọn không gian theo dữ liệu.
+        if (auth()->user()?->isAdmin()) {
+            $ownedClasses = count($this->classes);
+            $joinedClasses = (int) data_get($this->studentDashboard, 'stats.joined_classes', 0);
 
-        return $ownedClasses === 0 && $joinedClasses > 0 ? 'student' : 'admin';
+            return $ownedClasses === 0 && $joinedClasses > 0 ? 'student' : 'admin';
+        }
+
+        // Mọi tài khoản còn lại: mặc định luôn vào không gian Chủ lớp (vẫn có thể tự chuyển sang Học viên).
+        return 'admin';
     }
 
     public function setWorkspace(string $workspace): void
