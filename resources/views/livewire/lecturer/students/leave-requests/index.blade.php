@@ -6,7 +6,9 @@
     ];
 @endphp
 
-<div class="w-full space-y-6 px-6 py-6 pb-24 sm:px-10 lg:px-16">
+<div class="w-full space-y-6 px-6 py-6 pb-24 sm:px-10 lg:px-16"
+     x-data
+     x-init="window.listenRealtime && window.listenRealtime('{{ (string) config('database.redis.options.prefix') }}private-App.Models.User.{{ auth()->id() }}', () => { $wire.$refresh() })">
 
     <div class="grid gap-3 lg:grid-cols-[1fr_200px_260px]">
         <label class="relative"><x-user.icon name="search" :size="18" class="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400" /><input wire:model.live.debounce.300ms="search" type="search" placeholder="Tìm học viên, mã học viên hoặc lý do..." class="w-full rounded-xl border-slate-200 bg-white shadow-sm py-2.5 pl-11 pr-4 text-sm focus:border-primary focus:ring-primary/20"></label>

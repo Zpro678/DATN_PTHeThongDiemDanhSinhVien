@@ -6,7 +6,9 @@
     ];
 @endphp
 
-<div class="w-full space-y-6 px-6 py-6 sm:px-10 lg:px-16 animate-in fade-in slide-in-from-bottom-4 duration-500">
+<div class="w-full space-y-6 px-6 py-6 sm:px-10 lg:px-16 animate-in fade-in slide-in-from-bottom-4 duration-500"
+     x-data
+     x-init="window.listenRealtime && window.listenRealtime('{{ (string) config('database.redis.options.prefix') }}private-App.Models.User.{{ auth()->id() }}', () => { $wire.$refresh() })">
     <div class="flex justify-end mb-2">
         <a href="{{ route('student.leave-requests.create') }}" wire:navigate class="flex items-center justify-center gap-2 rounded-xl bg-primary px-6 py-3 font-bold text-white transition-all hover:shadow-lg hover:bg-primary/90 active:scale-95 shrink-0 shadow-sm">
             <x-user.icon name="plus" />

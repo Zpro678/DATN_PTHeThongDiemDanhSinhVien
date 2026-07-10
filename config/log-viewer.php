@@ -41,7 +41,7 @@ return [
     |
     */
 
-    'route_path' => 'admin/system/error-logs',
+    'route_path' => 'super-admin/system/error-logs',
 
     /*
     |--------------------------------------------------------------------------

@@ -99,14 +99,22 @@ class LeaveRequestCreate extends Component
             }
         }
 
-        $leaveRequest = LeaveRequest::create([
-            'class_member_id' => $member->id,
-            'class_meeting_id' => $this->class_meeting_id,
-            'reason' => $this->reason,
-            'proof_image' => $proofPaths,
-            'status' => 'pending',
-            'created_at' => now(),
-        ]);
+        $leaveRequest = LeaveRequest::withTrashed()->updateOrCreate(
+            [
+                'class_member_id' => $member->id,
+                'class_meeting_id' => $this->class_meeting_id,
+            ],
+            [
+                'reason' => $this->reason,
+                'proof_image' => $proofPaths,
+                'status' => 'pending',
+                'rejected_reason' => null,
+                'reviewed_by' => null,
+                'reviewed_at' => null,
+                'created_at' => now(),
+                'deleted_at' => null,
+            ]
+        );
 
         $owner = $member->courseClass->owner;
         if ($owner) {

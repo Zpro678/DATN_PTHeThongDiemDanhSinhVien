@@ -11,8 +11,9 @@ import { io } from 'socket.io-client';
 
 let socket = null;
 
-// channel -> handler đang gắn, để gỡ khi component re-mount (tránh nhân đôi).
-const handlers = new Map();
+// Map(channel -> Map(onSignal stringified -> handler)) to allow multiple different handlers,
+// while avoiding duplicates for the exact same function text during wire:navigate re-mounts.
+const channelHandlers = new Map();
 
 function getSocket() {
     if (!socket) {
@@ -51,14 +52,23 @@ export function listenRealtime(channel, onSignal, debounceMs = 0) {
 
     const sock = getSocket();
 
-    // Gỡ handler cũ của kênh này (nếu component vừa re-mount qua wire:navigate).
-    if (handlers.has(channel)) {
-        sock.off(channel, handlers.get(channel));
+    if (!channelHandlers.has(channel)) {
+        channelHandlers.set(channel, new Map());
+        
+        // Listen exactly once on the socket for this channel
+        sock.on(channel, () => {
+            const handlersMap = channelHandlers.get(channel);
+            handlersMap.forEach(handler => handler());
+        });
     }
 
-    const handler = debounce(() => onSignal(), debounceMs);
-    handlers.set(channel, handler);
-    sock.on(channel, handler);
+    const handlersMap = channelHandlers.get(channel);
+    // Use the stringified function as a signature to prevent duplicate registrations on re-mount
+    const signature = onSignal.toString(); 
+
+    if (!handlersMap.has(signature)) {
+        handlersMap.set(signature, debounce(() => onSignal(), debounceMs));
+    }
 }
 
 // Alias giữ tương thích với chuông thông báo (gọi ngay, không debounce).

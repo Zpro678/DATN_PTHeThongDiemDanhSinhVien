@@ -33,7 +33,7 @@ class NotificationBell extends Component
      */
     public function realtimeChannel(): string
     {
-        return (string) config('database.redis.options.prefix') . 'notifications.' . $this->userId;
+        return (string) config('database.redis.options.prefix') . 'private-App.Models.User.' . $this->userId;
     }
 
     /**
