@@ -9,7 +9,6 @@ use App\Models\ClassMember;
 use App\Models\ClassSession;
 use App\Models\CourseClass;
 use App\Services\NotificationService;
-use App\Services\SubscriptionService;
 use Illuminate\Contracts\View\View;
 use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Support\Str;
@@ -208,16 +207,6 @@ class QrAttendanceCreate extends Component
             'gpsLatitude.required_if' => 'Vui lòng cho phép trình duyệt truy cập vị trí hiện tại để xác minh GPS.',
             'gpsLongitude.required_if' => 'Vui lòng cho phép trình duyệt truy cập vị trí hiện tại để xác minh GPS.',
         ]);
-
-        // Kiểm tra gói: giới hạn bán kính định vị GPS theo gói dịch vụ.
-        if ($validated['gpsEnabled']) {
-            $maxRadius = app(SubscriptionService::class)->maxGpsRadius(auth()->user());
-            if ((int) $validated['gpsRadius'] > $maxRadius) {
-                $this->addError('gpsRadius', "Gói hiện tại chỉ cho phép bán kính GPS tối đa {$maxRadius}m. Vui lòng giảm bán kính hoặc nâng cấp gói.");
-
-                return;
-            }
-        }
 
         $courseClass = $this->ownedClass($validated['classId']);
 

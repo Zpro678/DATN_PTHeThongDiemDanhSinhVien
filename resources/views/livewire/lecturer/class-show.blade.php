@@ -1,4 +1,4 @@
-<div x-data="{ showImportModal: false, showShareModal: false, showBan: false }" wire:poll.2s class="w-full space-y-6 px-6 py-6 pb-24 sm:px-10 lg:px-16 animate-in fade-in slide-in-from-bottom-4 duration-500">
+<div x-data="{ showImportModal: false, showShareModal: false, showBan: false, banConfirm: { open: false, id: null, name: '' } }" wire:poll.2s class="w-full space-y-6 px-6 py-6 pb-24 sm:px-10 lg:px-16 animate-in fade-in slide-in-from-bottom-4 duration-500">
 
     {{-- Header --}}
     <div class="mb-6 flex justify-end">
@@ -318,8 +318,7 @@
                                                     @if($student->user_id)
                                                         <button
                                                             type="button"
-                                                            wire:click="sendExamBan({{ $student->id }})"
-                                                            wire:confirm="Gửi thông báo CẤM THI cho sinh viên {{ $student->full_name }}?"
+                                                            @click="banConfirm = { open: true, id: {{ $student->id }}, name: @js($student->full_name) }"
                                                             wire:loading.attr="disabled"
                                                             wire:target="sendExamBan"
                                                             class="inline-flex items-center gap-1.5 rounded-lg bg-red-600 px-3 py-1.5 text-xs font-bold text-white transition-colors hover:bg-red-700 disabled:opacity-60"
@@ -587,6 +586,57 @@
                 <div class="bg-slate-50 px-6 py-4 flex justify-end">
                     <button type="button" @click="showShareModal = false" class="rounded-full border border-slate-200 bg-white px-6 py-2 text-sm font-semibold text-slate-600 transition-colors hover:bg-slate-100">
                         Đóng
+                    </button>
+                </div>
+            </div>
+        </div>
+    </template>
+
+    {{-- Modal xác nhận CẤM THI --}}
+    <template x-teleport="body">
+        <div
+            x-show="banConfirm.open"
+            x-cloak
+            @keydown.escape.window="banConfirm.open = false"
+            class="fixed inset-0 z-[120] flex items-center justify-center p-4"
+        >
+            <div
+                x-show="banConfirm.open"
+                x-transition.opacity
+                @click="banConfirm.open = false"
+                class="absolute inset-0 bg-slate-900/50 backdrop-blur-sm"
+            ></div>
+
+            <div
+                x-show="banConfirm.open"
+                x-transition.scale.origin.center
+                class="relative w-full max-w-[420px] overflow-hidden rounded-[24px] bg-white shadow-2xl"
+            >
+                <div class="p-6 text-center">
+                    <div class="mx-auto flex h-14 w-14 items-center justify-center rounded-full bg-red-50 text-red-600">
+                        <x-user.icon name="alert-triangle" :size="28" />
+                    </div>
+                    <h3 class="mt-4 text-[19px] font-bold text-slate-800">Xác nhận cấm thi</h3>
+                    <p class="mt-2 text-[14px] leading-relaxed text-slate-500">
+                        Gửi thông báo <span class="font-bold text-red-600">CẤM THI</span> cho sinh viên
+                        <span class="font-bold text-slate-700" x-text="banConfirm.name"></span>?
+                    </p>
+                </div>
+                <div class="flex gap-3 bg-slate-50 px-6 py-4">
+                    <button
+                        type="button"
+                        @click="banConfirm.open = false"
+                        class="flex-1 rounded-full border border-slate-200 bg-white px-5 py-2.5 text-sm font-semibold text-slate-600 transition-colors hover:bg-slate-100"
+                    >
+                        Huỷ
+                    </button>
+                    <button
+                        type="button"
+                        @click="$wire.sendExamBan(banConfirm.id); banConfirm.open = false"
+                        class="flex-1 inline-flex items-center justify-center gap-1.5 rounded-full bg-red-600 px-5 py-2.5 text-sm font-bold text-white transition-colors hover:bg-red-700"
+                    >
+                        <x-user.icon name="alert-triangle" :size="16" />
+                        Cấm thi
                     </button>
                 </div>
             </div>

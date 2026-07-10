@@ -37,15 +37,6 @@ class FeedbackRepliedNotification extends Notification implements ShouldQueue
         return $channels;
     }
 
-    public function toMail(object $notifiable)
-    {
-        $data = $this->toArray($notifiable);
-        return (new \Illuminate\Notifications\Messages\MailMessage)
-            ->subject($data['title'] ?? 'SAMS Notification')
-            ->line($data['message'] ?? '')
-            ->action('Xem chi tiết', $data['url'] ?? url('/'));
-    }
-
     public function toTelegram(object $notifiable)
     {
         $data = $this->toArray($notifiable);

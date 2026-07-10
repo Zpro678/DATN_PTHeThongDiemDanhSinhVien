@@ -55,6 +55,47 @@ class EmailSettings extends Component
         'telegram_bot_token' => 'nullable|string',
     ];
 
+    /**
+     * Điền sẵn thông số SMTP chuẩn của Gmail (giữ nguyên username/password/from để người dùng tự nhập).
+     */
+    public function applyGmailPreset()
+    {
+        $this->mail_driver = 'smtp';
+        $this->mail_host = 'smtp.gmail.com';
+        $this->mail_port = '465';
+        $this->mail_encryption = 'ssl';
+
+        $this->dispatch('toast', message: 'Đã áp dụng cấu hình Gmail. Vui lòng nhập username & App Password rồi lưu.', type: 'success');
+    }
+
+    /**
+     * Bộ rule dùng chung cho save() và sendTestEmail().
+     *
+     * @return array<string, mixed>
+     */
+    protected function mailRules(): array
+    {
+        return $this->rules;
+    }
+
+    /**
+     * Thông báo lỗi tùy biến (tiếng Việt) cho các rule ở trên.
+     *
+     * @return array<string, string>
+     */
+    protected function messages(): array
+    {
+        return [
+            'mail_driver.required' => 'Vui lòng chọn driver gửi mail.',
+            'mail_host.required' => 'Vui lòng nhập máy chủ SMTP.',
+            'mail_port.required' => 'Vui lòng nhập cổng SMTP.',
+            'mail_port.numeric' => 'Cổng SMTP phải là số.',
+            'mail_from_address.required' => 'Vui lòng nhập email người gửi.',
+            'mail_from_address.email' => 'Email người gửi không đúng định dạng.',
+            'mail_from_name.required' => 'Vui lòng nhập tên người gửi.',
+        ];
+    }
+
     public function save()
     {
         if (!auth()->user()?->isSuperAdmin()) {

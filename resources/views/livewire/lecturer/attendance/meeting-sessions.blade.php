@@ -71,7 +71,7 @@
                     @forelse($sessions as $index => $session)
                         <tr class="transition-colors hover:bg-blue-50/30">
                             <td class="px-6 py-4 text-left">
-                                <span class="block text-sm font-bold text-slate-900">Lần {{ $index + 1 }}</span>
+                                <span class="block text-sm font-bold text-slate-900">Phiên {{ $sessions->count() - $index }}</span>
                                 <span class="mt-0.5 block text-xs text-slate-500">Tạo lúc {{ $session->created_at->format('H:i d/m/Y') }}</span>
                             </td>
                             <td class="px-4 py-4 text-center">

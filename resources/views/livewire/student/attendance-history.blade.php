@@ -70,11 +70,11 @@
                 <div class="grid grid-cols-1 sm:grid-cols-3 gap-4 pt-4">
                     <div class="flex items-center justify-between border-b-2 border-emerald-500 pb-2">
                         <span class="text-sm font-medium text-slate-600">QR/GPS hợp lệ</span>
-                        <span class="text-lg font-bold text-emerald-600">{{ $records->where('verified', true)->count() }}</span>
+                        <span class="text-lg font-bold text-emerald-600">{{ $flatRecords->where('verified', true)->count() }}</span>
                     </div>
                     <div class="flex items-center justify-between border-b-2 border-amber-500 pb-2">
                         <span class="text-sm font-medium text-slate-600">Cần kiểm tra</span>
-                        <span class="text-lg font-bold text-amber-600">{{ $records->where('verified', false)->count() }}</span>
+                        <span class="text-lg font-bold text-amber-600">{{ $flatRecords->where('verified', false)->count() }}</span>
                     </div>
                     <div class="flex items-center justify-between border-b-2 border-rose-500 pb-2">
                         <span class="text-sm font-medium text-slate-600">Vắng không phép</span>
@@ -111,7 +111,7 @@
                 <div class="flex items-center justify-between p-5 border-b border-outline-variant/10 bg-white">
                     <div class="flex items-center gap-3">
                         <h3 class="text-xl font-bold text-slate-800">Lịch sử điểm danh</h3>
-                        <span class="flex h-6 min-w-[24px] items-center justify-center rounded-full bg-slate-100 px-2 text-[13px] font-bold text-slate-600">{{ $records->total() }}</span>
+                        <span class="flex h-6 min-w-[24px] items-center justify-center rounded-full bg-slate-100 px-2 text-[13px] font-bold text-slate-600">{{ $meetings->total() }}</span>
                     </div>
                     <div class="flex items-center gap-4">
                         <button type="button" wire:click="$refresh" class="flex items-center gap-1.5 text-sm font-semibold text-blue-600 hover:text-blue-700 transition-colors">
@@ -144,33 +144,33 @@
 
                 <!-- Table -->
                 <div class="overflow-x-auto bg-white">
-                    <table class="w-full min-w-[800px] border-collapse text-left">
+                    <table x-data="{ open: null }" class="w-full min-w-[800px] border-collapse text-left">
                         <thead class="bg-white text-sm font-bold uppercase tracking-wider text-slate-500 border-b border-outline-variant/10">
                             <tr>
                                 <th class="whitespace-nowrap px-6 py-4">Ngày</th>
                                 <th class="whitespace-nowrap px-6 py-4">Môn học & Buổi</th>
                                 <th class="whitespace-nowrap px-6 py-4">Lớp</th>
                                 <th class="whitespace-nowrap px-6 py-4">Trạng thái</th>
-                                <th class="whitespace-nowrap px-6 py-4">Hình thức</th>
-                                <th class="whitespace-nowrap px-6 py-4">Chi tiết</th>
+                                <th class="whitespace-nowrap px-6 py-4 text-center">Số phiên</th>
                             </tr>
                         </thead>
-                        <tbody class="divide-y divide-outline-variant/10 text-sm">
-                            @forelse ($records as $record)
-                                @php($meta = $statusMeta[$record['status']] ?? $statusMeta['pending'])
-                                <tr class="transition-all duration-200 hover:bg-slate-50/80">
+                        @forelse ($meetings as $buoi)
+                            @php($meta = $statusMeta[$buoi['status']] ?? $statusMeta['pending'])
+                            <tbody wire:key="buoi-{{ $buoi['key'] }}" class="border-b border-outline-variant/10 text-sm">
+                                {{-- Dòng BUỔI: bấm để mở danh sách phiên (chỉ mở 1 buổi tại 1 thời điểm) --}}
+                                <tr @click="open = (open === @js($buoi['key']) ? null : @js($buoi['key']))" class="cursor-pointer transition-all duration-200 hover:bg-slate-50/80" :class="open === @js($buoi['key']) ? 'bg-indigo-50/40' : ''">
                                     <td class="whitespace-nowrap px-6 py-4 font-medium text-slate-700">
-                                        {{ $record['date']?->format('d/m/Y') ?? '--/--/----' }}
+                                        {{ $buoi['date']?->format('d/m/Y') ?? '--/--/----' }}
                                     </td>
                                     <td class="whitespace-nowrap px-6 py-4">
-                                        <p class="font-bold text-slate-800">{{ $record['class_name'] }}</p>
-                                        <p class="mt-1 flex items-center gap-2 text-[13px] font-medium text-slate-500">
-                                            <span class="rounded bg-slate-100 px-1.5 py-0.5">{{ $record['session'] }}</span>
+                                        <p class="font-bold text-slate-800">{{ $buoi['class_name'] }}</p>
+                                        <p class="mt-1 flex flex-wrap items-center gap-1.5 text-[13px] font-medium text-slate-500">
+                                            <span class="rounded bg-indigo-50 px-1.5 py-0.5 font-semibold text-indigo-600">{{ $buoi['meeting'] }}</span>
                                         </p>
                                     </td>
                                     <td class="whitespace-nowrap px-6 py-4">
                                         <span class="rounded-lg border border-slate-200 bg-slate-50 px-2 py-1 text-[12px] font-bold tracking-wider text-slate-600">
-                                            {{ $record['class_code'] }}
+                                            {{ $buoi['class_code'] }}
                                         </span>
                                     </td>
                                     <td class="whitespace-nowrap px-6 py-4">
@@ -180,35 +180,62 @@
                                         </span>
                                     </td>
                                     <td class="whitespace-nowrap px-6 py-4">
-                                        <span class="inline-flex items-center gap-1.5 rounded-lg bg-slate-100 px-2.5 py-1 text-[12px] font-bold text-slate-600">
-                                            <x-user.icon :name="$record['method'] === 'QR + GPS' ? 'qr-code' : 'clipboard-check'" :size="14" />
-                                            {{ $record['method'] }}
-                                        </span>
-                                    </td>
-                                    <td class="whitespace-nowrap px-6 py-4 text-slate-500">
-                                        <div class="flex flex-col gap-1">
-                                            <span class="text-[13px] font-semibold">
-                                                <x-user.icon name="clock" :size="12" class="inline mr-1" />
-                                                {{ $record['check_in_time'] ? $record['check_in_time']->format('H:i') : 'Chưa check-in' }}
-                                            </span>
-                                            @if ($record['distance'])
-                                                <span class="text-[12px] font-bold text-primary/80">
-                                                    <x-user.icon name="map-pin" :size="12" class="inline mr-1 text-primary/60" />
-                                                    {{ $record['distance'] }}m
-                                                </span>
-                                            @endif
-                                            @if($record['status'] === 'absent')
-                                                <a href="{{ route('student.leave-requests.create', ['class_id' => $record['class_id'], 'class_session_id' => $record['session_id']]) }}" wire:navigate class="mt-1 inline-flex items-center gap-1 text-[12px] font-bold text-amber-600 hover:text-amber-700 transition-colors bg-amber-50 rounded px-2 py-1 max-w-fit border border-amber-200/60">
-                                                    <x-user.icon name="file-plus" :size="12" />
-                                                    Tạo đơn
-                                                </a>
-                                            @endif
+                                        <div class="flex items-center justify-center gap-2">
+                                            <span class="inline-flex h-6 min-w-[24px] items-center justify-center rounded-full bg-indigo-100 px-2 text-[12px] font-bold text-indigo-600">{{ $buoi['session_count'] }}</span>
+                                            <x-user.icon name="chevron-down" :size="16" class="text-slate-400 transition-transform" ::class="open === @js($buoi['key']) ? 'rotate-180' : ''" />
                                         </div>
                                     </td>
                                 </tr>
-                            @empty
+
+                                {{-- Chi tiết từng PHIÊN trong buổi --}}
+                                <tr x-show="open === @js($buoi['key'])" x-cloak>
+                                    <td colspan="5" class="bg-slate-50/60 px-6 py-4">
+                                        <div class="space-y-2">
+                                            @foreach ($buoi['sessions'] as $s)
+                                                @php($sMeta = $statusMeta[$s['status']] ?? $statusMeta['pending'])
+                                                <div class="flex flex-col gap-3 rounded-xl border border-outline-variant/20 bg-white px-4 py-3 shadow-sm sm:flex-row sm:items-center sm:justify-between">
+                                                    <div class="flex items-center gap-3">
+                                                        <span class="inline-flex items-center gap-1.5 rounded-lg bg-slate-100 px-2.5 py-1 text-[13px] font-bold text-slate-700">
+                                                            <x-user.icon name="hash" :size="14" class="text-indigo-500" />
+                                                            {{ $s['session'] }}
+                                                        </span>
+                                                        <span class="inline-flex items-center gap-1.5 rounded-lg border px-2.5 py-1 text-[12px] font-bold uppercase tracking-wider {{ $sMeta['badge'] }}">
+                                                            <span class="h-1.5 w-1.5 rounded-full {{ $sMeta['dot'] }}"></span>
+                                                            {{ $sMeta['label'] }}
+                                                        </span>
+                                                        <span class="inline-flex items-center gap-1.5 rounded-lg bg-slate-100 px-2.5 py-1 text-[12px] font-semibold text-slate-600">
+                                                            <x-user.icon :name="$s['method'] === 'QR + GPS' ? 'qr-code' : 'clipboard-check'" :size="13" />
+                                                            {{ $s['method'] }}
+                                                        </span>
+                                                    </div>
+                                                    <div class="flex flex-wrap items-center gap-3 text-slate-500">
+                                                        <span class="text-[13px] font-semibold">
+                                                            <x-user.icon name="clock" :size="12" class="inline mr-1" />
+                                                            {{ $s['check_in_time'] ? $s['check_in_time']->format('H:i') : 'Chưa check-in' }}
+                                                        </span>
+                                                        @if ($s['distance'])
+                                                            <span class="text-[12px] font-bold text-primary/80">
+                                                                <x-user.icon name="map-pin" :size="12" class="inline mr-1 text-primary/60" />
+                                                                {{ $s['distance'] }}m
+                                                            </span>
+                                                        @endif
+                                                        @if($s['status'] === 'absent')
+                                                            <a href="{{ route('student.leave-requests.create', ['class_id' => $s['class_id'], 'class_session_id' => $s['session_id']]) }}" wire:navigate @click.stop class="inline-flex items-center gap-1 rounded border border-amber-200/60 bg-amber-50 px-2 py-1 text-[12px] font-bold text-amber-600 transition-colors hover:text-amber-700">
+                                                                <x-user.icon name="file-plus" :size="12" />
+                                                                Tạo đơn
+                                                            </a>
+                                                        @endif
+                                                    </div>
+                                                </div>
+                                            @endforeach
+                                        </div>
+                                    </td>
+                                </tr>
+                            </tbody>
+                        @empty
+                            <tbody>
                                 <tr>
-                                    <td colspan="6" class="px-6 py-20 text-center">
+                                    <td colspan="5" class="px-6 py-20 text-center">
                                         <div class="flex flex-col items-center justify-center text-slate-400">
                                             <div class="mb-4 rounded-2xl bg-indigo-50/50 p-4">
                                                 <div class="flex items-center justify-center h-16 w-16 bg-slate-100 rounded-2xl text-slate-400 border border-slate-200">
@@ -219,14 +246,14 @@
                                         </div>
                                     </td>
                                 </tr>
-                            @endforelse
-                        </tbody>
+                            </tbody>
+                        @endforelse
                     </table>
                 </div>
                 
-                @if ($records->hasPages())
+                @if ($meetings->hasPages())
                     <div class="border-t border-outline-variant/10 p-4">
-                        {{ $records->links() }}
+                        {{ $meetings->links() }}
                     </div>
                 @endif
 
