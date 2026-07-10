@@ -53,6 +53,17 @@ class UserEdit extends Component
             return;
         }
 
+        if ($validatedData['status'] !== $this->user->status) {
+            if ($this->user->isAdmin() && !$authUser->isSuperAdmin()) {
+                $this->dispatch('toast', message: 'Bạn không có quyền khóa/mở khóa tài khoản của Quản trị viên khác.', type: 'error');
+                return;
+            }
+            if ($this->user->isSuperAdmin()) {
+                $this->dispatch('toast', message: 'Không thể khóa/mở khóa tài khoản Super Admin.', type: 'error');
+                return;
+            }
+        }
+
         // Logic phân quyền sửa đổi role
         if ($this->user->id !== $authUser->id && $this->user->role !== $validatedData['role']) {
             if (!$authUser->isSuperAdmin()) {

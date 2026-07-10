@@ -117,6 +117,12 @@
                                     ['value' => 'blocked', 'label' => 'Đã khóa', 'sub_label' => 'Tài khoản bị vô hiệu hóa'],
                                 ];
                                 $canEditStatus = $user->id !== auth()->id();
+                                if ($user->isAdmin() && !auth()->user()->isSuperAdmin()) {
+                                    $canEditStatus = false;
+                                }
+                                if ($user->isSuperAdmin()) {
+                                    $canEditStatus = false;
+                                }
                                 @endphp
                                 @if(!$canEditStatus)
                                     <x-custom-select wire:model.live="status" :value="$status" :options="$statusOptions" placeholder="Chọn trạng thái" disabled />
