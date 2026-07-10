@@ -64,21 +64,21 @@
 
             <div class="relative">
                 {{-- Tiêu đề --}}
-                <div class="mb-7 flex items-start justify-between gap-4">
+                <div class="mb-7 flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between sm:gap-4">
                     <div class="flex min-w-0 items-start gap-4">
                         <div class="flex h-14 w-14 shrink-0 items-center justify-center rounded-2xl bg-white/15 text-white shadow-inner ring-1 ring-white/25 backdrop-blur-sm">
                             <x-user.icon name="book-open" :size="26" />
                         </div>
                         <div class="min-w-0">
-                            <h1 class="truncate text-2xl font-bold text-white sm:text-3xl">{{ $class->name }}</h1>
-                            <span class="mt-2 inline-flex items-center gap-1 rounded-full bg-white/20 px-3 py-1 text-sm font-semibold text-white shadow-sm backdrop-blur-sm">
+                            <h1 class="text-xl font-bold text-white line-clamp-2 break-words sm:text-3xl">{{ $class->name }}</h1>
+                            <span class="mt-2 inline-flex max-w-full items-center gap-1 rounded-full bg-white/20 px-3 py-1 text-sm font-semibold text-white shadow-sm backdrop-blur-sm whitespace-nowrap">
                                 <x-user.icon name="hash" :size="13" /> {{ $class->class_code ?? $class->join_key }}
                             </span>
                         </div>
                     </div>
 
                     {{-- Trạng thái --}}
-                    <span class="inline-flex shrink-0 items-center gap-1.5 rounded-full bg-white/15 px-3 py-1.5 text-xs font-semibold text-white shadow-sm ring-1 ring-white/20 backdrop-blur-sm"
+                    <span class="inline-flex shrink-0 self-start items-center gap-1.5 rounded-full bg-white/15 px-3 py-1.5 text-xs font-semibold text-white shadow-sm ring-1 ring-white/20 backdrop-blur-sm"
                         title="Trạng thái lớp">
                         <span class="relative flex h-2 w-2">
                             @if($statusMeta['ping'])

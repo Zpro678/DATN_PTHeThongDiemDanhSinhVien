@@ -425,7 +425,7 @@
                         {{-- Body Sub-Nav Tabs --}}
                         @if ($teachGroupActive || $learnGroupActive)
                             <div class="w-full bg-surface border-b border-outline-variant/50 sticky top-16 z-30">
-                                <div class="flex h-14 w-full items-center gap-8 px-6 sm:px-10 lg:px-16 overflow-x-auto [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none]">
+                                <div class="flex h-14 w-full items-center gap-5 px-4 sm:px-10 lg:px-16 overflow-x-auto [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none]">
                                     @if ($teachGroupActive)
                                         @foreach ($teachItems as $item)
                                             @php $isActive = $matchesActive($item['active'] ?? $item['route']); @endphp
