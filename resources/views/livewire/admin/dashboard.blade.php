@@ -1,4 +1,4 @@
-<x-admin-layout title="Admin Center">
+<div wire:poll.10s>
     <div class="mx-auto flex max-w-[1500px] flex-col gap-6">
         <section id="overview" class="scroll-mt-24">
             @include('admin.dashboard.dashboard-header')
@@ -20,4 +20,4 @@
             @include('admin.dashboard.faculty-chart')
         </section>
     </div>
-</x-admin-layout>
+</div>
