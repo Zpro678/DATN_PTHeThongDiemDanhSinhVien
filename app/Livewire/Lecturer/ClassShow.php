@@ -14,6 +14,7 @@ use Livewire\Component;
 use Livewire\WithFileUploads;
 use Livewire\WithPagination;
 use Maatwebsite\Excel\Facades\Excel;
+use SimpleSoftwareIO\QrCode\Facades\QrCode;
 
 class ClassShow extends Component
 {
@@ -278,6 +279,9 @@ class ClassShow extends Component
                 ->values();
         }
 
+        // Link tham gia lớp + mã QR để học viên quét (dùng chung trong modal Chia sẻ).
+        $shareUrl = url('/student/join-class?code=' . $this->class->join_key);
+
         return view('livewire.lecturer.class-show', [
             'recentSessions' => $this->recentSessions,
             'students'       => $students,
@@ -286,7 +290,29 @@ class ClassShow extends Component
             'warningTotal'   => $warningTotal,
             'bannedTotal'    => $bannedTotal,
             'canExportExcel' => app(\App\Services\SubscriptionService::class)->canExportExcel(auth()->user()),
+            'shareUrl'       => $shareUrl,
+            'shareQr'        => $this->shareQrSvg($shareUrl),
         ])->layout('layouts.user', ['title' => $this->class->name]);
+    }
+
+    /**
+     * Tạo mã QR (SVG) cho đường dẫn tham gia lớp; trả null nếu không tạo được.
+     */
+    private function shareQrSvg(string $url): ?string
+    {
+        if (! class_exists(QrCode::class)) {
+            return null;
+        }
+
+        try {
+            return (string) QrCode::format('svg')
+                ->size(220)
+                ->margin(1)
+                ->errorCorrection('M')
+                ->generate($url);
+        } catch (\Throwable) {
+            return null;
+        }
     }
 
     public function clearFilter(): void

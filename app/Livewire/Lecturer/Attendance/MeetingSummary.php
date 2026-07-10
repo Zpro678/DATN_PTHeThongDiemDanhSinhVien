@@ -90,6 +90,27 @@ class MeetingSummary extends Component
      */
     public function save(): void
     {
+        $this->persistDrafts();
+
+        // Chỉ gửi cho học viên có trạng thái tổng kết vừa thay đổi (tránh gửi trùng).
+        app(NotificationService::class)->notifyMeetingResults($this->meeting);
+
+        session()->forget([
+            'draft_summary_' . $this->meeting->id . '_statuses',
+            'draft_summary_' . $this->meeting->id . '_notes',
+            'draft_summary_' . $this->meeting->id . '_has_draft'
+        ]);
+
+        $this->isLocked = true;
+        $this->dispatch('toast', message: 'Đã lưu tổng kết và gửi thông báo cho học viên.', type: 'success');
+    }
+
+    /**
+     * Ghi các chỉnh sửa nháp (trạng thái + ghi chú) xuống bảng summaries.
+     * KHÔNG gửi thông báo — dùng cho luồng xuất Excel để không chậm và không gửi trùng.
+     */
+    private function persistDrafts(): void
+    {
         $rules = $this->meeting->courseClass->getAttendanceRules();
 
         $summaries = $this->meeting->summaries()->get()->keyBy('class_member_id');
@@ -109,18 +130,6 @@ class MeetingSummary extends Component
                 'note' => $note !== '' ? $note : null,
             ]);
         }
-
-        // Chỉ gửi cho học viên có trạng thái tổng kết vừa thay đổi (tránh gửi trùng).
-        app(NotificationService::class)->notifyMeetingResults($this->meeting);
-
-        session()->forget([
-            'draft_summary_' . $this->meeting->id . '_statuses',
-            'draft_summary_' . $this->meeting->id . '_notes',
-            'draft_summary_' . $this->meeting->id . '_has_draft'
-        ]);
-
-        $this->isLocked = true;
-        $this->dispatch('toast', message: 'Đã lưu tổng kết và gửi thông báo cho học viên.', type: 'success');
     }
 
     public function unlock(): void
@@ -159,8 +168,8 @@ class MeetingSummary extends Component
             return $this->redirectRoute('upgrade', navigate: true);
         }
 
-        // Lưu trạng thái mới nhất trước khi xuất.
-        $this->save();
+        // Lưu trạng thái mới nhất trước khi xuất (không gửi thông báo để xuất nhanh).
+        $this->persistDrafts();
 
         $className = Str::slug($this->meeting->courseClass->name);
         $date = $this->meeting->date->format('Y-m-d');

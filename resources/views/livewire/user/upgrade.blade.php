@@ -107,12 +107,12 @@
 
                 <article @class([
                     'relative flex flex-col rounded-2xl bg-white p-7 shadow-sm transition-all duration-300',
-                    'ring-2 ' . $style['ring'] . ' shadow-xl' => $isRec,
-                    'ring-1 ring-outline-variant/30 hover:ring-outline-variant/50 hover:shadow-md' => ! $isRec,
+                    'ring-2 ' . $style['ring'] . ' shadow-xl' => $isCurrent,
+                    'ring-1 ring-outline-variant/30 hover:ring-outline-variant/50 hover:shadow-md' => ! $isCurrent,
                 ])>
-                    @if ($isRec)
+                    @if ($isCurrent)
                         <span class="absolute -top-3.5 left-1/2 -translate-x-1/2 rounded-full bg-primary px-4 py-1 text-[11px] font-bold uppercase tracking-wider text-white shadow-md shadow-primary/30">
-                            Phổ biến nhất
+                            Gói hiện tại
                         </span>
                     @endif
 
@@ -121,9 +121,6 @@
                         <div class="flex h-11 w-11 items-center justify-center rounded-xl {{ $style['badge'] }}">
                             <x-user.icon :name="$style['icon']" :size="22" />
                         </div>
-                        @if ($isCurrent)
-                            <span class="rounded-full border border-outline-variant/30 bg-surface-container-low px-3 py-0.5 text-[10px] font-bold uppercase tracking-wider text-on-surface-variant">Đang dùng</span>
-                        @endif
                     </div>
 
                     {{-- Tên & mô tả --}}

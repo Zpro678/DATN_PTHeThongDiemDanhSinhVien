@@ -31,6 +31,7 @@ use App\Livewire\User\CreateClass;
 use App\Livewire\User\Dashboard as UserDashboard;
 use App\Livewire\User\JoinedClasses;
 use App\Livewire\User\ManagedClasses;
+use App\Livewire\User\SelectActiveClasses;
 use App\Livewire\User\TransactionHistory;
 use App\Livewire\User\Upgrade;
 use App\Models\AuditLog;
@@ -118,7 +119,7 @@ Route::middleware(['auth', 'verified', 'user.route'])->group(function () {
         Route::get('/feedbacks', \App\Livewire\Admin\FeedbackIndex::class)->name('feedbacks');
     });
 
-    Route::prefix('user/{ma_user}')->group(function () {
+    Route::prefix('user/{ma_user}')->middleware('class.limit')->group(function () {
         Route::get('/activity-log', UserActivityLog::class)->name('activity-log');
 
         Route::get('/transaction-history', TransactionHistory::class)->name('transaction-history');
@@ -126,6 +127,7 @@ Route::middleware(['auth', 'verified', 'user.route'])->group(function () {
         Route::get('/classes', UserClasses::class)->name('classes');
         Route::get('/managed-classes', ManagedClasses::class)->name('managed-classes');
         Route::get('/joined-classes', JoinedClasses::class)->name('joined-classes');
+        Route::get('/select-active-classes', SelectActiveClasses::class)->name('select-active-classes');
         Route::get('/managed-classes/create-class', CreateClass::class)->middleware('plan:create_class')->name('create-class');
         Route::get('/student/attendance/history', StudentAttendanceHistory::class)->name('student.attendance.history');
         Route::get('/student/attendance/stats', StudentAttendanceStats::class)->name('student.attendance.stats');
@@ -141,12 +143,14 @@ Route::middleware(['auth', 'verified', 'user.route'])->group(function () {
         Route::get('/upgrade', Upgrade::class)->name('upgrade');
 
         Route::get('/student/classes/{courseClass}', ClassShow::class)->name('student.classes.show');
-        Route::get('/lecturer/classes/{courseClass}', App\Livewire\Lecturer\ClassShow::class)->name('lecturer.classes.show');
-        Route::get('/lecturer/classes/{courseClass}/settings', ClassSettings::class)->name('lecturer.classes.settings');
-        Route::get('/lecturer/classes/{courseClass}/pending-members', \App\Livewire\Lecturer\ClassPendingMembers::class)->name('lecturer.classes.pending-members');
-        Route::get('/lecturer/classes/{courseClass}/attendance/export', \App\Http\Controllers\Lecturer\ClassAttendanceHistoryExportController::class)->name('lecturer.classes.attendance.export');
-        Route::get('/lecturer/classes/{courseClass}/attendance', \App\Livewire\Lecturer\ClassAttendanceHistory::class)->name('lecturer.classes.attendance');
-        Route::get('/lecturer/classes/{class_id}/statistics', ClassStatistics::class)->name('lecturer.class.statistics');
+        Route::middleware('class.owner')->group(function () {
+            Route::get('/lecturer/classes/{courseClass}', App\Livewire\Lecturer\ClassShow::class)->name('lecturer.classes.show');
+            Route::get('/lecturer/classes/{courseClass}/settings', ClassSettings::class)->name('lecturer.classes.settings');
+            Route::get('/lecturer/classes/{courseClass}/pending-members', \App\Livewire\Lecturer\ClassPendingMembers::class)->name('lecturer.classes.pending-members');
+            Route::get('/lecturer/classes/{courseClass}/attendance/export', \App\Http\Controllers\Lecturer\ClassAttendanceHistoryExportController::class)->name('lecturer.classes.attendance.export');
+            Route::get('/lecturer/classes/{courseClass}/attendance', \App\Livewire\Lecturer\ClassAttendanceHistory::class)->name('lecturer.classes.attendance');
+            Route::get('/lecturer/classes/{class_id}/statistics', ClassStatistics::class)->name('lecturer.class.statistics');
+        });
         Route::get('/lecturer/attendance', AttendanceIndex::class)->name('lecturer.attendance.index');
         Route::get('/lecturer/attendance/meeting/{meeting}', \App\Livewire\Lecturer\Attendance\MeetingSessions::class)
             ->whereNumber('meeting')

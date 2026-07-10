@@ -55,7 +55,7 @@ class MeetingSessions extends Component
                 'attendanceRecords as excused_count' => fn (Builder $query) => $query->where('status', 'excused'),
                 'attendanceRecords as pending_count' => fn (Builder $query) => $query->where('status', 'pending'),
             ])
-            ->orderBy('created_at', 'asc')
+            ->orderBy('created_at', 'desc')
             ->get();
 
         return view('livewire.lecturer.attendance.meeting-sessions', compact('sessions'))

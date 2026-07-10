@@ -38,7 +38,7 @@ class LeaveRequestSubmitted extends Notification implements ShouldBroadcast
         if (\App\Models\Setting::get('enable_email_notifications', '1') == '1' && $notifiable->email) {
             if (!in_array('mail', $channels)) $channels[] = 'mail';
         }
-        if (\App\Models\Setting::get('enable_telegram_notifications', '0') == '1' && $notifiable->telegram_chat_id) {
+        if (\App\Models\Setting::get('enable_telegram_notifications', '0') == '1' && $notifiable->telegram_chat_id && $notifiable->wantsNotificationChannel('telegram')) {
             if (!in_array(\App\Channels\SafeTelegramChannel::class, $channels)) {
                 $channels[] = \App\Channels\SafeTelegramChannel::class;
             }

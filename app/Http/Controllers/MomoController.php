@@ -53,6 +53,7 @@ class MomoController extends Controller
                     'status' => 'success',
                     'gateway_transaction_id' => (string) ($data['transId'] ?? ''),
                     'payment_response' => json_encode($data),
+                    'paid_at' => now(),
                 ]);
 
                 // Kích hoạt gói qua đúng service mà luồng FREE cũng dùng.
@@ -97,6 +98,7 @@ class MomoController extends Controller
                                         'status' => 'success',
                                         'gateway_transaction_id' => (string) ($momoStatus['transId'] ?? ''),
                                         'payment_response' => json_encode($momoStatus),
+                                        'paid_at' => now(),
                                     ]);
                                     if ($fresh->plan) {
                                         $subscriptions->activate($fresh->user, $fresh->plan);

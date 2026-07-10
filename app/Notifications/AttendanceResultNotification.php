@@ -22,7 +22,7 @@ class AttendanceResultNotification extends Notification
         if (\App\Models\Setting::get('enable_email_notifications', '1') == '1' && $notifiable->email) {
             $channels[] = 'mail';
         }
-        if (\App\Models\Setting::get('enable_telegram_notifications', '0') == '1' && $notifiable->telegram_chat_id) {
+        if (\App\Models\Setting::get('enable_telegram_notifications', '0') == '1' && $notifiable->telegram_chat_id && $notifiable->wantsNotificationChannel('telegram')) {
             $channels[] = \App\Channels\SafeTelegramChannel::class;
         }
         return $channels;

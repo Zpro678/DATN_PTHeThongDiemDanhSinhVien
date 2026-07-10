@@ -74,6 +74,7 @@ class PayosController extends Controller
                         'status' => 'success',
                         'gateway_transaction_id' => (string) ($webhookData['reference'] ?? ''),
                         'payment_response' => json_encode($webhookData),
+                        'paid_at' => now(),
                     ]);
 
                     if ($fresh->plan) {
@@ -130,6 +131,7 @@ class PayosController extends Controller
                                 $fresh->update([
                                     'status' => 'success',
                                     'gateway_transaction_id' => (string) ($paymentInfo['id'] ?? ''),
+                                    'paid_at' => now(),
                                 ]);
                                 if ($fresh->plan) {
                                     $subscriptions->activate($fresh->user, $fresh->plan);

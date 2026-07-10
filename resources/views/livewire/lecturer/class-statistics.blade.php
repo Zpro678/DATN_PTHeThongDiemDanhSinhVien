@@ -48,7 +48,7 @@
                     </div>
                 @else
                     <div class="space-y-3">
-                        @foreach ($alertStudents as $row)
+                        @foreach ($alertStudents->take(5) as $row)
                             @php
                                 $s       = $row['stats'];
                                 $m       = $row['member'];
@@ -87,8 +87,13 @@
                         @endforeach
                     </div>
                     <a href="{{ route('lecturer.students.index') }}" wire:navigate
-                        class="mt-3 flex items-center justify-center gap-1.5 rounded-xl border border-outline-variant/20 py-2 text-xs font-semibold text-on-surface-variant">
-                        Xem tất cả học viên <x-user.icon name="arrow-right" :size="13" />
+                        class="mt-3 flex items-center justify-center gap-1.5 rounded-xl border border-outline-variant/20 py-2 text-xs font-semibold text-on-surface-variant transition-colors hover:bg-surface-container-low hover:text-on-surface">
+                        @if ($alertStudents->count() > 5)
+                            Xem tất cả {{ $alertStudents->count() }} học viên
+                        @else
+                            Xem tất cả học viên
+                        @endif
+                        <x-user.icon name="arrow-right" :size="13" />
                     </a>
                 @endif
             </div>
@@ -96,19 +101,53 @@
 
         {{-- Biểu đồ chuyên cần theo buổi --}}
         <div class="flex flex-col lg:col-span-2">
-            <h4 class="mb-4 flex items-center gap-2 text-base font-bold text-on-surface">
-                <x-user.icon name="trending-up" class="text-tertiary" :size="20" />
-                Tỉ lệ có mặt theo buổi
-                <span class="ml-auto text-xs font-normal text-on-surface-variant">{{ $closedCount }} buổi đã chốt</span>
-            </h4>
+            <div class="mb-4 flex flex-wrap items-center gap-x-3 gap-y-2">
+                <h4 class="flex items-center gap-2 text-base font-bold text-on-surface">
+                    <x-user.icon name="trending-up" class="text-tertiary" :size="20" />
+                    Tỉ lệ có mặt theo buổi
+                </h4>
+
+                {{-- Bộ lọc ngày cho chủ lớp: mặc định hiển thị 8 buổi gần nhất --}}
+                <div class="ml-auto flex flex-wrap items-center gap-2">
+                    <div class="flex items-center gap-1.5 rounded-xl border border-outline-variant/30 bg-white px-2.5 py-1.5">
+                        <input type="date" wire:model.live="chartFrom"
+                            @if($chartMinDate) min="{{ $chartMinDate }}" @endif
+                            @if($chartMaxDate) max="{{ $chartMaxDate }}" @endif
+                            class="w-[120px] bg-transparent text-xs font-semibold text-on-surface outline-none">
+                        <span class="text-xs text-on-surface-variant/60">→</span>
+                        <input type="date" wire:model.live="chartTo"
+                            @if($chartMinDate) min="{{ $chartMinDate }}" @endif
+                            @if($chartMaxDate) max="{{ $chartMaxDate }}" @endif
+                            class="w-[120px] bg-transparent text-xs font-semibold text-on-surface outline-none">
+                    </div>
+                    @if ($isChartFiltered)
+                        <button type="button" wire:click="resetChartRange"
+                            class="inline-flex items-center gap-1 rounded-xl border border-outline-variant/30 bg-white px-2.5 py-1.5 text-xs font-semibold text-on-surface-variant transition-colors hover:bg-surface-container-low hover:text-on-surface">
+                            <x-user.icon name="x" :size="13" /> Bỏ lọc
+                        </button>
+                    @endif
+                    <span class="text-xs font-normal text-on-surface-variant">
+                        @if ($isChartFiltered)
+                            {{ count($sessionChart) }} buổi
+                        @else
+                            {{ count($sessionChart) }} buổi gần nhất · {{ $closedCount }} đã chốt
+                        @endif
+                    </span>
+                </div>
+            </div>
             <div class="flex flex-1 flex-col justify-center rounded-2xl border border-slate-100 bg-white p-6 shadow-sm">
                 @if (empty($sessionChart))
                     <div class="flex flex-1 flex-col items-center justify-center gap-2 py-10 text-center">
                         <div class="flex h-12 w-12 items-center justify-center rounded-full bg-primary/10 text-primary">
                             <x-user.icon name="bar-chart-2" :size="24" />
                         </div>
-                        <p class="text-base font-semibold text-on-surface">Chưa có buổi nào chốt sổ</p>
-                        <p class="text-sm text-on-surface-variant">Sau khi chốt buổi điểm danh, biểu đồ sẽ hiển thị tại đây.</p>
+                        @if ($isChartFiltered)
+                            <p class="text-base font-semibold text-on-surface">Không có buổi nào trong khoảng đã chọn</p>
+                            <p class="text-sm text-on-surface-variant">Hãy chọn lại khoảng ngày khác hoặc bỏ lọc.</p>
+                        @else
+                            <p class="text-base font-semibold text-on-surface">Chưa có buổi nào chốt sổ</p>
+                            <p class="text-sm text-on-surface-variant">Sau khi chốt buổi điểm danh, biểu đồ sẽ hiển thị tại đây.</p>
+                        @endif
                     </div>
                 @else
                     {{-- Vùng biểu đồ: trục % bên trái + các cột --}}

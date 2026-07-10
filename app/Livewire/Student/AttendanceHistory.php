@@ -101,12 +101,15 @@ class AttendanceHistory extends Component
 
         $allRecords = $this->attendanceRecords($members);
 
+        // Gom các phiên (record) theo BUỔI để hiển thị dạng danh sách buổi, bấm vào xem chi tiết từng phiên.
+        $meetingGroups = $this->groupByMeeting($allRecords);
+
         $page = $this->getPage();
         $perPage = $this->perPage;
 
-        $paginatedRecords = new LengthAwarePaginator(
-            $allRecords->forPage($page, $perPage),
-            $allRecords->count(),
+        $paginatedMeetings = new LengthAwarePaginator(
+            $meetingGroups->forPage($page, $perPage),
+            $meetingGroups->count(),
             $perPage,
             $page,
             [
@@ -116,12 +119,48 @@ class AttendanceHistory extends Component
         );
 
         return view('livewire.student.attendance-history', [
-            'records' => $paginatedRecords,
+            'meetings' => $paginatedMeetings,
+            'flatRecords' => $allRecords,
             'classes' => $members->pluck('courseClass')->filter()->unique('id')->values(),
             'summary' => $this->summary($allRecords, $statsMap),
             'isDemo' => false,
             'canExportExcel' => app(SubscriptionService::class)->canExportExcel(auth()->user()),
         ])->layout('layouts.user', ['title' => 'Lịch sử điểm danh']);
+    }
+
+    /**
+     * Gom các bản ghi phiên theo buổi (meeting). Mỗi nhóm = 1 buổi, kèm danh sách phiên bên trong.
+     * Trạng thái buổi lấy theo mức "tốt nhất" của các phiên (có mặt > muộn > có phép > vắng > chưa ĐD).
+     *
+     * @param  \Illuminate\Support\Collection<int, array<string, mixed>>  $records
+     * @return \Illuminate\Support\Collection<int, array<string, mixed>>
+     */
+    private function groupByMeeting(\Illuminate\Support\Collection $records): \Illuminate\Support\Collection
+    {
+        $priority = ['present' => 5, 'late' => 4, 'excused' => 3, 'absent' => 2, 'pending' => 1];
+
+        return $records
+            ->groupBy(fn (array $r) => $r['meeting_id'] ? 'm-'.$r['meeting_id'] : 's-'.$r['session_id'])
+            ->map(function ($group) use ($priority): array {
+                $first = $group->first();
+                $status = $group->sortByDesc(fn (array $r) => $priority[$r['status']] ?? 0)->first()['status'];
+                $methods = $group->pluck('method')->unique();
+
+                return [
+                    'key' => $first['meeting_id'] ? 'm-'.$first['meeting_id'] : 's-'.$first['session_id'],
+                    'date' => $first['date'],
+                    'meeting' => $first['meeting'] ?: $first['session'],
+                    'class_id' => $first['class_id'],
+                    'class_code' => $first['class_code'],
+                    'class_name' => $first['class_name'],
+                    'teacher' => $first['teacher'],
+                    'status' => $status,
+                    'method' => $methods->count() === 1 ? $methods->first() : 'Nhiều hình thức',
+                    'session_count' => $group->count(),
+                    'sessions' => $group->values()->all(),
+                ];
+            })
+            ->values();
     }
 
     /**
@@ -137,15 +176,24 @@ class AttendanceHistory extends Component
         }
 
         $records = AttendanceRecord::query()
-            ->with(['classMember.courseClass.owner', 'classSession'])
+            ->with(['classMember.courseClass.owner', 'classSession.meeting'])
             ->whereIn('class_member_id', $memberIds)
             ->whereHas('classSession', fn ($q) => $q->where('status', 'closed'))
             ->get()
-            ->sortByDesc(fn (AttendanceRecord $record) => $record->classSession?->date?->timestamp ?? 0)
+            // Ngày mới nhất trước; cùng ngày thì gom theo buổi rồi theo thứ tự phiên (id) để các phiên cùng buổi liền nhau.
+            ->sort(function (AttendanceRecord $a, AttendanceRecord $b) {
+                $dateA = $a->classSession?->date?->timestamp ?? 0;
+                $dateB = $b->classSession?->date?->timestamp ?? 0;
+                return $dateB <=> $dateA
+                    ?: ($b->classSession?->meeting_id ?? 0) <=> ($a->classSession?->meeting_id ?? 0)
+                    ?: $a->class_session_id <=> $b->class_session_id;
+            })
             ->map(fn (AttendanceRecord $record): array => [
                 'id' => $record->id,
                 'session_id' => $record->class_session_id,
+                'meeting_id' => $record->classSession?->meeting_id,
                 'date' => $record->classSession?->date,
+                'meeting' => $record->classSession?->meeting?->name,
                 'session' => $record->classSession?->name ?? 'Buổi điểm danh',
                 'class_id' => $record->classMember?->courseClass?->id,
                 'class_code' => $record->classMember?->courseClass?->join_key ?? 'N/A',

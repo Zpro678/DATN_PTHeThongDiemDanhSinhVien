@@ -76,7 +76,7 @@ class FeedbackIndex extends Component
         $feedback->user->notify(new FeedbackRepliedNotification($feedback));
 
         $this->closeReplyModal();
-        $this->dispatch('notify', message: 'Cập nhật trạng thái thành công', type: 'success');
+        $this->dispatch('toast', message: 'Cập nhật trạng thái thành công', type: 'success');
     }
 
     public function confirmDelete($id)
@@ -91,7 +91,7 @@ class FeedbackIndex extends Component
         $feedback->delete();
         
         $this->closeDeleteModal();
-        $this->dispatch('notify', message: 'Đã xóa phản hồi', type: 'success');
+        $this->dispatch('toast', message: 'Đã xóa phản hồi', type: 'success');
     }
 
     public function closeDeleteModal()
@@ -112,11 +112,15 @@ class FeedbackIndex extends Component
         $query = SystemFeedback::with(['user', 'replier'])->orderBy('created_at', 'desc');
 
         if ($this->statusFilter) {
-            $query->where('status', $this->statusFilter);
+            if ($this->statusFilter === 'pending') {
+                $query->whereIn('status', ['pending', 'in_progress']);
+            } else {
+                $query->where('status', $this->statusFilter);
+            }
         }
 
         return view('livewire.admin.feedback-index', [
-            'feedbacks' => $query->paginate(15),
+            'feedbacks' => $query->paginate(10),
         ]);
     }
 }

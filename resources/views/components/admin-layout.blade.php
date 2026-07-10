@@ -21,6 +21,7 @@
         ['label' => 'Dashboard', 'href' => route('admin.dashboard'), 'icon' => 'layout-dashboard', 'active' => ['admin.dashboard']],
         ['label' => 'Quản lý tài khoản', 'href' => route('admin.users.index'), 'icon' => 'user-square', 'active' => ['admin.users.*']],
         ['label' => 'Quản lý gói dịch vụ', 'href' => route('admin.packages.index'), 'icon' => 'star', 'active' => ['admin.packages.*']],
+        ['label' => 'Quản lý giao dịch', 'href' => route('admin.transactions.index'), 'icon' => 'receipt', 'active' => ['admin.transactions.index']],
         [
             'label' => 'Nhật ký hệ thống',
             'icon' => 'activity',
@@ -82,7 +83,7 @@
                     </a>
                 </div>
 
-                <nav class="flex-1 space-y-2 overflow-y-auto px-3 py-2" x-data x-init="$el.scrollTop = sessionStorage.getItem('sidebarScroll') || 0; $el.addEventListener('scroll', () => sessionStorage.setItem('sidebarScroll', $el.scrollTop))">
+                <nav class="flex-1 space-y-2 overflow-y-auto overflow-x-hidden scrollbar-custom px-3 py-2" x-data x-init="$el.scrollTop = sessionStorage.getItem('sidebarScroll') || 0; $el.addEventListener('scroll', () => sessionStorage.setItem('sidebarScroll', $el.scrollTop))">
                     @foreach ($menuItems as $item)
                         @php
                             $isItemActive = $isActive($item['active'] ?? []);
@@ -157,7 +158,7 @@
                         </div>
                     </div>
 
-                    <nav class="flex-1 space-y-2 overflow-y-auto px-3 py-2" x-data x-init="$el.scrollTop = sessionStorage.getItem('sidebarScrollMobile') || 0; $el.addEventListener('scroll', () => sessionStorage.setItem('sidebarScrollMobile', $el.scrollTop))">
+                    <nav class="flex-1 space-y-2 overflow-y-auto overflow-x-hidden scrollbar-custom px-3 py-2" x-data x-init="$el.scrollTop = sessionStorage.getItem('sidebarScrollMobile') || 0; $el.addEventListener('scroll', () => sessionStorage.setItem('sidebarScrollMobile', $el.scrollTop))">
                         @foreach ($menuItems as $item)
                             @php
                                 $isItemActive = $isActive($item['active'] ?? []);
@@ -223,10 +224,7 @@
                     </div>
 
                     <div class="flex items-center gap-2 sm:gap-4">
-                        <button type="button" class="admin-soft-button relative flex h-10 w-10 items-center justify-center rounded-xl border border-transparent bg-transparent text-slate-500 transition hover:bg-slate-50">
-                            <x-user.icon name="bell" :size="20" />
-                            <span class="absolute right-2 top-2 h-2 w-2 rounded-full bg-rose-500 border-2 border-white"></span>
-                        </button>
+                        <livewire:notification-bell />
 
                         <div class="relative ml-2">
                             <button type="button" class="flex items-center gap-3 transition" @click="userMenuOpen = ! userMenuOpen">

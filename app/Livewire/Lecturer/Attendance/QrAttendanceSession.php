@@ -187,7 +187,13 @@ class QrAttendanceSession extends Component
         $session->update(['status' => 'closed']);
 
         // Mặc định những ai chưa điểm danh (pending) khi khóa phiên QR sẽ thành vắng (absent)
+        $pendingIds = $session->attendanceRecords()->where('status', 'pending')->pluck('id');
         $session->attendanceRecords()->where('status', 'pending')->update(['status' => 'absent']);
+
+        // Đồng bộ draft để các nút trạng thái đổi sang "Vắng" ngay (realtime), không lệch với DB.
+        foreach ($pendingIds as $recordId) {
+            $this->draftStatuses[$recordId] = 'absent';
+        }
 
         $this->isClosed = true;
         $this->syncCurrentMeetingSummaries();
@@ -204,7 +210,13 @@ class QrAttendanceSession extends Component
             'new_values' => ['name' => $session->name, 'type' => 'qr'],
         ]);
 
-        $this->dispatch('toast', message: 'Phiên QR đã được chốt.', type: 'success');
+        session()->flash('success', 'Phiên QR đã được chốt.');
+
+        // Chốt xong quay về trang danh sách các phiên của buổi.
+        $this->redirectRoute('lecturer.attendance.meeting.sessions', [
+            'ma_user' => auth()->id(),
+            'meeting' => $session->meeting_id,
+        ], navigate: true);
     }
 
     /**

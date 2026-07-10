@@ -26,6 +26,12 @@ class ClassShow extends Component
             403,
         );
 
+        abort_if(
+            $courseClass->status === 'archived',
+            403,
+            'Lớp học này đã bị lưu trữ do giới hạn gói cước.'
+        );
+
         $this->class = $courseClass->load('owner');
         $this->fromAttendanceStats = request()->query('from') === 'attendance-stats';
         

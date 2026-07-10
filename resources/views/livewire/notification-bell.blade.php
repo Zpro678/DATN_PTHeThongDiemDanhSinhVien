@@ -125,8 +125,11 @@
                 </div>
             @endforelse
         </div>
+    </div>
 
-        {{-- Popup xác nhận xóa (dùng chung: 'all' = xóa tất cả, còn lại = id 1 thông báo) --}}
+    {{-- Popup xác nhận xóa (dùng chung: 'all' = xóa tất cả, còn lại = id 1 thông báo).
+         Đặt ngoài dropdown và dùng fixed để căn giữa màn hình, không bị kẹt trong panel. --}}
+    <template x-teleport="body">
         <div
             x-show="confirmTarget !== null"
             x-transition:enter="transition ease-out duration-150"
@@ -136,10 +139,11 @@
             x-transition:leave-start="opacity-100"
             x-transition:leave-end="opacity-0"
             @click.self="confirmTarget = null"
-            class="absolute inset-0 z-20 flex items-center justify-center bg-slate-900/40 p-4"
+            @keydown.escape.window="confirmTarget = null"
+            class="fixed inset-0 z-[100] flex items-center justify-center bg-slate-900/40 p-4"
             style="display: none;"
         >
-            <div class="w-full max-w-[260px] rounded-2xl bg-white p-4 text-center shadow-xl ring-1 ring-black/5" @click.stop>
+            <div class="w-full max-w-[280px] rounded-2xl bg-white p-4 text-center shadow-xl ring-1 ring-black/5" @click.stop>
                 <div class="mx-auto mb-3 flex h-10 w-10 items-center justify-center rounded-full bg-rose-50 text-error">
                     <x-user.icon name="trash-2" :size="20" />
                 </div>
@@ -158,5 +162,5 @@
                 </div>
             </div>
         </div>
-    </div>
+    </template>
 </div>

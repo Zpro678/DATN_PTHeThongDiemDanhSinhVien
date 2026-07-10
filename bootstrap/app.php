@@ -13,10 +13,11 @@ return Application::configure(basePath: dirname(__DIR__))
     )
     ->withMiddleware(function (Middleware $middleware) {
         $middleware->alias([
-            'user.route' => SetUserRouteDefaults::class,
-            'admin' => \App\Http\Middleware\CheckIsAdmin::class,
+            'user.route'  => SetUserRouteDefaults::class,
+            'admin'       => \App\Http\Middleware\CheckIsAdmin::class,
             'class.owner' => \App\Http\Middleware\CheckClassOwner::class,
-            'plan' => \App\Http\Middleware\CheckSubscriptionPlan::class,
+            'plan'        => \App\Http\Middleware\CheckSubscriptionPlan::class,
+            'class.limit' => \App\Http\Middleware\CheckClassLimitExceeded::class,
         ]);
         $middleware->web(append: [
             SetUserRouteDefaults::class,

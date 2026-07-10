@@ -91,10 +91,16 @@ class ClassMeeting extends Model
 
     /**
      * Còn được thêm phiên điểm danh hay không.
-     * Chỉ chặn khi đã quá giờ kết thúc; buổi chốt thủ công nhưng còn trong giờ vẫn được mở lại.
+     * Chặn khi: (1) buổi thuộc ngày trước hôm nay, hoặc (2) đã quá giờ kết thúc.
+     * Buổi trong ngày, chốt thủ công nhưng còn trong giờ thì vẫn được mở lại.
      */
     public function canAddSession(): bool
     {
+        // Buổi của ngày hôm trước coi như đã kết thúc, không mở lại/thêm phiên nữa.
+        if ($this->date && $this->date->startOfDay()->lessThan(now()->startOfDay())) {
+            return false;
+        }
+
         return ! $this->isExpired();
     }
 

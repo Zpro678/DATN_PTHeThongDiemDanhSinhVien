@@ -8,7 +8,6 @@ use App\Models\ClassMember;
 use App\Models\ClassSession;
 use App\Models\CourseClass;
 use App\Services\NotificationService;
-use App\Services\SubscriptionService;
 use Illuminate\Contracts\View\View;
 use Illuminate\Support\Collection;
 use Livewire\Attributes\Computed;
@@ -165,14 +164,6 @@ class QuickAttendanceModal extends Component
         if (! $this->classHasStudents($courseClass)) {
             $this->addError('quickClassId', 'Vui lòng import danh sách lớp trước khi điểm danh.');
             return;
-        }
-
-        if ($this->quickStartType === 'qr' && $this->gpsEnabled) {
-            $maxRadius = app(SubscriptionService::class)->maxGpsRadius(auth()->user());
-            if ($this->gpsRadius > $maxRadius) {
-                $this->addError('gpsRadius', "Gói hiện tại chỉ cho phép bán kính GPS tối đa {$maxRadius}m.");
-                return;
-            }
         }
 
         $meeting = $this->resolveMeeting($courseClass);
