@@ -105,7 +105,7 @@ class GpsFakeDetectionTest extends TestCase
         $this->travelBack();
     }
 
-    public function test_out_of_radius_does_not_record_checkin_and_allows_retry(): void
+    public function test_out_of_radius_still_records_present_but_flags_warning(): void
     {
         $base = Carbon::create(2026, 7, 5, 8, 0, 0);
         $this->travelTo($base);
@@ -130,7 +130,7 @@ class GpsFakeDetectionTest extends TestCase
             'class_session_id' => $session->id, 'class_member_id' => $member->id, 'status' => 'pending', 'check_in_time' => null,
         ]);
 
-        // Lần 1: vị trí ở Hà Nội (~1140km) -> ngoài bán kính 500m.
+        // Vị trí ở Hà Nội (~1140km) -> ngoài bán kính 500m, nhưng NAY VẪN cho điểm danh.
         GpsVerification::create([
             'session_id' => $session->id, 'member_id' => $member->id,
             'token' => 'OORT1', 'check_token' => 'OORC1',
@@ -141,35 +141,25 @@ class GpsFakeDetectionTest extends TestCase
 
         Livewire::actingAs($student)->test(AttendanceCheckIn::class, ['token' => 'OOR-CUR'])
             ->call('checkIn', 'OORC1', 'DEV-OOR-0001')
-            ->assertSet('isSuccess', false);
+            ->assertSet('isSuccess', true)
+            // Sinh viên được CẢNH BÁO ngay trên màn hình rằng đã điểm danh ngoài bán kính.
+            ->assertSet('isOutOfRadius', true)
+            ->assertSet('metersOutside', fn ($m) => $m > 0)
+            ->assertSee('NGOÀI bán kính');
 
         $record->refresh();
-        $this->assertSame('invalid', $record->status);
-        $this->assertNull($record->check_in_time, 'Quá xa thì KHÔNG được ghi giờ điểm danh.');
+        // Vẫn được ghi nhận CÓ MẶT kèm giờ điểm danh, chỉ GẮN CỜ VÀNG để chủ lớp rà soát.
+        $this->assertSame('present', $record->status);
+        $this->assertNotNull($record->check_in_time, 'Ngoài bán kính nay VẪN ghi giờ điểm danh.');
         $this->assertSame('out_of_radius', $record->gps_fraud_flag);
-
-        // Lần 2: đi vào đúng vị trí lớp -> phải cho điểm danh, không bị guard chặn.
-        GpsVerification::create([
-            'session_id' => $session->id, 'member_id' => $member->id,
-            'token' => 'OORT2', 'check_token' => 'OORC2',
-            'lat' => 10.762622, 'lng' => 106.660172, 'accuracy' => 18.0,
-            'fraud_score' => 0, 'fraud_reasons' => '',
-            'is_used' => false, 'expires_at' => $base->copy()->addMinutes(3), 'ip_address' => '127.0.0.1',
-        ]);
-
-        Livewire::actingAs($student)->test(AttendanceCheckIn::class, ['token' => 'OOR-CUR'])
-            ->call('checkIn', 'OORC2', 'DEV-OOR-0001')
-            ->assertSet('isSuccess', true);
-
-        $record->refresh();
-        $this->assertContains($record->status, ['present', 'late']);
-        $this->assertNotNull($record->check_in_time);
-        $this->assertNull($record->gps_fraud_flag, 'Điểm danh lại hợp lệ thì phải sạch cờ gian lận.');
+        $this->assertNotNull($record->distance_meters);
+        $this->assertGreaterThan($session->gps_radius, $record->distance_meters);
+        $this->assertStringContainsString('Ngoài bán kính', (string) $record->note);
 
         $this->travelBack();
     }
 
-    public function test_out_of_radius_notifies_student_only_not_lecturer(): void
+    public function test_out_of_radius_notifies_lecturer_with_meters_outside(): void
     {
         $base = Carbon::create(2026, 7, 5, 8, 0, 0);
         $this->travelTo($base);
@@ -194,27 +184,28 @@ class GpsFakeDetectionTest extends TestCase
             'class_session_id' => $session->id, 'class_member_id' => $member->id, 'status' => 'pending', 'check_in_time' => null,
         ]);
 
-        // Quét hụt 2 lần (đều ở Hà Nội, ngoài bán kính).
-        foreach (['OORNC1', 'OORNC2'] as $i => $checkToken) {
-            GpsVerification::create([
-                'session_id' => $session->id, 'member_id' => $member->id,
-                'token' => 'OORNT' . $i, 'check_token' => $checkToken,
-                'lat' => 21.028511, 'lng' => 105.804817, 'accuracy' => 20.0,
-                'fraud_score' => 0, 'fraud_reasons' => '',
-                'is_used' => false, 'expires_at' => $base->copy()->addMinutes(5), 'ip_address' => '127.0.0.1',
-            ]);
+        GpsVerification::create([
+            'session_id' => $session->id, 'member_id' => $member->id,
+            'token' => 'OORNT0', 'check_token' => 'OORNC1',
+            'lat' => 21.028511, 'lng' => 105.804817, 'accuracy' => 20.0,
+            'fraud_score' => 0, 'fraud_reasons' => '',
+            'is_used' => false, 'expires_at' => $base->copy()->addMinutes(5), 'ip_address' => '127.0.0.1',
+        ]);
 
-            Livewire::actingAs($student)->test(AttendanceCheckIn::class, ['token' => 'OORN-CUR'])
-                ->call('checkIn', $checkToken, 'DEV-OORN-0001')
-                ->assertSet('isSuccess', false);
-        }
+        Livewire::actingAs($student)->test(AttendanceCheckIn::class, ['token' => 'OORN-CUR'])
+            ->call('checkIn', 'OORNC1', 'DEV-OORN-0001')
+            ->assertSet('isSuccess', true);
 
-        // Giảng viên KHÔNG nhận thông báo nào; sinh viên chỉ nhận đúng 1 (báo lần đầu, sau đó dedup).
-        $this->assertSame(0, Notification::where('notifiable_id', $owner->id)->count(),
-            'Điểm danh thất bại thì KHÔNG được báo giảng viên.');
-        $this->assertSame(1, Notification::where('notifiable_id', $student->id)
-            ->where('type', 'App\\Notifications\\FraudWarning')->count(),
-            'Sinh viên phải nhận đúng 1 thông báo lý do (không spam khi quét hụt nhiều lần).');
+        // CHỦ LỚP nhận đúng 1 cảnh báo "ngoài bán kính" kèm số mét vượt; sinh viên KHÔNG bị làm phiền.
+        $ownerNotification = Notification::where('notifiable_id', $owner->id)
+            ->where('type', 'App\\Notifications\\GpsOutOfRadiusWarning')
+            ->first();
+        $this->assertNotNull($ownerNotification, 'Chủ lớp phải nhận cảnh báo điểm danh ngoài bán kính.');
+        $this->assertGreaterThan(0, (int) ($ownerNotification->data['meters_outside'] ?? 0));
+        $this->assertSame('warning', $ownerNotification->data['level'] ?? null);
+
+        $this->assertSame(0, Notification::where('notifiable_id', $student->id)->count(),
+            'Ngoài bán kính chỉ cảnh báo chủ lớp, không làm phiền sinh viên.');
 
         $this->travelBack();
     }

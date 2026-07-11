@@ -947,30 +947,35 @@ class NotificationService
     }
 
     /**
-     * Báo cho SINH VIÊN lý do điểm danh thất bại do sai vị trí (quá xa lớp).
+     * Báo cho CHỦ LỚP khi một sinh viên điểm danh THÀNH CÔNG nhưng ở NGOÀI bán kính GPS cho phép.
      *
-     * KHÔNG báo giảng viên: điểm danh KHÔNG thành công thì không làm phiền GV — chỉ giúp chính
-     * sinh viên biết lý do để xử lý (đến gần lớp và quét lại). Giảng viên chỉ nhận thông báo ở
-     * các sự kiện đã-điểm-danh-thành-công/đáng ngờ (vd trùng máy), không nhận với lần quét hỏng.
+     * Nghiệp vụ: ngoài bán kính vẫn cho điểm danh (không chặn) để không làm phiền sinh viên ở các
+     * tình huống định vị sai lệch nhẹ; nhưng phải CẢNH BÁO cho chủ lớp ở mức 'warning' (màu vàng)
+     * kèm khoảng cách tới lớp và SỐ MÉT VƯỢT ra ngoài bán kính để chủ lớp chủ động rà soát.
      */
-    public function notifyGpsFraud(
-        ?int $studentUserId,
+    public function notifyGpsOutOfRadius(
+        int $ownerUserId,
         ClassSession $session,
-        float $distanceMeters
+        string $studentName,
+        float $distanceMeters,
+        int $metersOutside
     ): void {
-        if (! $studentUserId) {
+        if ($ownerUserId <= 0) {
             return;
         }
 
-        $studentUrl = route('student.classes.show', ['ma_user' => $studentUserId, 'courseClass' => $session->class_id]);
+        $className = $session->courseClass?->name ?? 'lớp học';
+        $isQr = ! empty($session->qr_token);
+        $url = $this->sessionUrl($ownerUserId, $session, $isQr);
+
         $this->push(
-            $studentUserId,
-            'App\\Notifications\\FraudWarning',
-            'Điểm danh thất bại (Sai vị trí)',
-            "Hệ thống phát hiện vị trí của bạn quá xa lớp học (" . round($distanceMeters) . "m) khi điểm danh buổi \"{$session->name}\". Kết quả điểm danh không được công nhận. Vui lòng đến gần lớp học và quét lại.",
-            $studentUrl,
+            $ownerUserId,
+            'App\\Notifications\\GpsOutOfRadiusWarning',
+            'Điểm danh ngoài bán kính',
+            "Sinh viên {$studentName} đã điểm danh buổi \"{$session->name}\" lớp {$className} nhưng ở NGOÀI bán kính cho phép: cách lớp " . round($distanceMeters) . "m (vượt {$metersOutside}m). Điểm danh vẫn được ghi nhận — vui lòng kiểm tra lại.",
+            $url,
             'warning',
-            ['class_id' => $session->class_id]
+            ['class_id' => $session->class_id, 'session_id' => $session->id, 'meters_outside' => $metersOutside],
         );
     }
 

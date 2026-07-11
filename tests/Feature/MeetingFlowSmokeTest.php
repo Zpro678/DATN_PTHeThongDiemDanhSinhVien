@@ -92,7 +92,7 @@ class MeetingFlowSmokeTest extends TestCase
             ->test(MeetingSessions::class, ['meeting' => $meeting])
             ->assertOk()
             ->assertSee('Danh sách phiên')
-            ->assertSee('Lần 1');
+            ->assertSee('Phiên 1');
     }
 
     public function test_class_show_renders_with_shared_quick_modal(): void
@@ -181,7 +181,8 @@ class MeetingFlowSmokeTest extends TestCase
             ->test(QrAttendanceCreate::class)
             ->set('meetingId', $meeting->id)
             ->set('classId', (string) $meeting->class_id)
-            ->set('name', $meeting->name)
+            ->set('meetingName', $meeting->name)
+            ->set('name', 'Phiên 2')
             ->set('date', $meeting->date->toDateString())
             ->set('gpsEnabled', false)
             ->call('save')

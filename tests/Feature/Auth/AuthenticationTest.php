@@ -49,6 +49,7 @@ class AuthenticationTest extends TestCase
         $response = $this->actingAs($user)->post('/logout');
 
         $this->assertGuest();
-        $response->assertRedirect('/');
+        // Sau khi đăng xuất, ứng dụng đưa về trang đăng nhập (kèm flash thành công).
+        $response->assertRedirect('/login');
     }
 }

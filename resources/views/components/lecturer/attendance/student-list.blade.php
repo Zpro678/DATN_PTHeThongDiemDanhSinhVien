@@ -80,8 +80,14 @@
                         $statusLabel = $statusMeta[$current]['short'] ?? 'Chưa ĐD';
                         $statusColor = $statusMeta[$current]['text'] ?? 'text-slate-400';
                         if ($current == 'pending') $statusLabel = 'Chưa điểm danh';
+
+                        // Điểm danh NGOÀI bán kính GPS: vẫn được ghi nhận nhưng tô VÀNG NHẠT + hiện số mét vượt.
+                        $isOutOfRadius = $record->gps_fraud_flag === 'out_of_radius';
+                        $metersOutside = ($isOutOfRadius && $record->distance_meters !== null && ($session->gps_radius ?? null))
+                            ? max(0, (int) round($record->distance_meters - $session->gps_radius))
+                            : null;
                     @endphp
-                    <tr class="hover:bg-slate-50/50 transition-colors bg-white">
+                    <tr class="transition-colors {{ $isOutOfRadius ? 'bg-amber-50 hover:bg-amber-100/70' : 'bg-white hover:bg-slate-50/50' }}">
                         <td class="px-6 py-5 font-medium text-slate-500 text-center">
                             {{ method_exists($records, 'firstItem') ? ($records->firstItem() + $loop->index) : $loop->iteration }}
                         </td>
@@ -109,6 +115,12 @@
                                 <div class="min-w-0">
                                     <p class="truncate text-[15.5px] font-semibold {{ $nameColor }}">{{ $record->classMember?->full_name ?? 'Không xác định' }}</p>
                                     <p class="text-[12px] font-medium {{ $statusColor }} mt-0.5">{{ $statusLabel }}</p>
+                                    @if($metersOutside !== null)
+                                        <span class="mt-1 inline-flex items-center gap-1 rounded-md bg-amber-100 px-1.5 py-0.5 text-[11px] font-bold text-amber-700 ring-1 ring-amber-200" title="Điểm danh ở ngoài bán kính cho phép, vẫn được ghi nhận">
+                                            <x-user.icon name="map-pin" :size="12" />
+                                            Ngoài bán kính +{{ $metersOutside }}m
+                                        </span>
+                                    @endif
                                 </div>
                             </div>
                         </td>

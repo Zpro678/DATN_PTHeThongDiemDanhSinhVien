@@ -193,16 +193,24 @@
 
             <!-- Fraud Cards -->
             <div class="grid grid-cols-1 sm:grid-cols-2 gap-6">
-                <!-- Sai GPS -->
-                <button type="button" @if(($fraudStats['out_of_radius'] ?? 0) > 0) wire:click="setStatusFilter('invalid')" @endif class="rounded-xl border border-slate-200 bg-white shadow-sm flex overflow-hidden transition hover:bg-slate-50 text-left w-full">
+                <!-- Ngoài bán kính GPS (vẫn điểm danh, cảnh báo vàng) -->
+                <button type="button" @if(($fraudStats['out_of_radius'] ?? 0) > 0) wire:click="setStatusFilter('{{ $statusFilter === 'out_of_radius' ? 'all' : 'out_of_radius' }}')" @endif
+                    @class([
+                        'rounded-xl border bg-white shadow-sm flex overflow-hidden transition hover:bg-slate-50 text-left w-full',
+                        'border-amber-400 ring-2 ring-amber-200' => $statusFilter === 'out_of_radius',
+                        'border-slate-200' => $statusFilter !== 'out_of_radius',
+                    ])>
                     <div class="w-1.5 bg-gradient-to-b from-amber-400 to-orange-500"></div>
                     <div class="p-6 lg:py-8 flex gap-5 flex-1 items-center">
-                        <div class="h-12 w-12 shrink-0 rounded-xl bg-orange-50 flex items-center justify-center text-orange-500">
+                        <div class="h-12 w-12 shrink-0 rounded-xl bg-amber-50 flex items-center justify-center text-amber-500">
                             <x-user.icon name="map-pin" :size="24" />
                         </div>
                         <div>
-                            <p class="text-sm font-bold uppercase tracking-wider text-slate-600">Sai GPS</p>
-                            <h3 class="text-3xl font-black text-orange-500 mt-1">{{ $fraudStats['out_of_radius'] ?? 0 }}</h3>
+                            <p class="text-sm font-bold uppercase tracking-wider text-slate-600">Ngoài bán kính</p>
+                            <h3 class="text-3xl font-black text-amber-500 mt-1">{{ $fraudStats['out_of_radius'] ?? 0 }}</h3>
+                            @if(($fraudStats['out_of_radius'] ?? 0) > 0)
+                                <p class="mt-0.5 text-xs font-semibold text-amber-600">Vẫn điểm danh · bấm để lọc</p>
+                            @endif
                         </div>
                     </div>
                 </button>

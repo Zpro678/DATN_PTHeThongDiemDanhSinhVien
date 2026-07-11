@@ -31,8 +31,19 @@
                 </div>
             @endif
 
+            {{-- Điểm danh THÀNH CÔNG nhưng NGOÀI bán kính: thẻ cảnh báo VÀNG cho sinh viên. --}}
+            @if($isSuccess && $isOutOfRadius && !session('success'))
+                <div class="mb-8 rounded-2xl border border-amber-200 bg-amber-50 p-6 text-center shadow-inner">
+                    <div class="mx-auto flex h-16 w-16 items-center justify-center rounded-2xl bg-amber-100 text-amber-600 mb-4 shadow-sm">
+                        <x-user.icon name="map-pin" :size="32" />
+                    </div>
+                    <h3 class="text-lg font-black text-amber-700">Điểm danh ngoài bán kính</h3>
+                    <p class="mt-2 text-sm font-semibold text-amber-700/90">{{ $statusMessage }}</p>
+                </div>
+            @endif
+
             {{-- Quét lại khi đã điểm danh: báo "đã điểm danh cho phiên này rồi". --}}
-            @if($isSuccess && $statusMessage && !session('success'))
+            @if($isSuccess && $statusMessage && !$isOutOfRadius && !session('success'))
                 <div class="mb-8 rounded-2xl border border-emerald-100 bg-emerald-50 p-6 text-center shadow-inner">
                     <div class="mx-auto flex h-16 w-16 items-center justify-center rounded-2xl bg-emerald-100 text-emerald-600 mb-4 shadow-sm">
                         <x-user.icon name="check-circle-2" :size="32" />

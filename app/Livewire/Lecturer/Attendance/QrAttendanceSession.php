@@ -65,7 +65,7 @@ class QrAttendanceSession extends Component
 
     public function setStatusFilter(string $status): void
     {
-        abort_unless(in_array($status, ['all', 'pending', 'present', 'late', 'absent', 'excused', 'invalid', 'same_device'], true), 422);
+        abort_unless(in_array($status, ['all', 'pending', 'present', 'late', 'absent', 'excused', 'invalid', 'same_device', 'out_of_radius'], true), 422);
 
         $this->statusFilter = $status;
     }
@@ -308,10 +308,13 @@ class QrAttendanceSession extends Component
         $records = $session->attendanceRecords()
             ->whereHas('classMember')
             ->with('classMember.user')
+            // Lọc "cùng 1 máy" theo device_id; "Sai GPS" (out_of_radius) theo CỜ gps_fraud_flag vì
+            // các bản ghi này nay có status = 'present' (vẫn điểm danh) chứ không còn 'invalid'.
+            ->when($this->statusFilter === 'same_device', fn (Builder $q) => $q->whereIn('device_id', $sharedDeviceIds ?: ['__none__']))
+            ->when($this->statusFilter === 'out_of_radius', fn (Builder $q) => $q->where('gps_fraud_flag', 'out_of_radius'))
             ->when(
-                $this->statusFilter === 'same_device',
-                fn (Builder $query) => $query->whereIn('device_id', $sharedDeviceIds ?: ['__none__']),
-                fn (Builder $query) => $query->when($this->statusFilter !== 'all', fn (Builder $q) => $q->where('status', $this->statusFilter)),
+                ! in_array($this->statusFilter, ['all', 'same_device', 'out_of_radius'], true),
+                fn (Builder $q) => $q->where('status', $this->statusFilter),
             )
             ->when($this->search !== '', function (Builder $query): void {
                 $query->where(function (Builder $query): void {

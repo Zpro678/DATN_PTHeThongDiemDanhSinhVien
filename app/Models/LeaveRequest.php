@@ -46,10 +46,18 @@ class LeaveRequest extends Model
                     return [];
                 }
                 $decoded = json_decode($value, true);
+                $items = (json_last_error() === JSON_ERROR_NONE && is_array($decoded)) ? $decoded : [$value];
 
-                return (json_last_error() === JSON_ERROR_NONE && is_array($decoded)) ? $decoded : [$value];
+                // Lọc phần tử rỗng/null: tránh sinh route minh chứng thiếu tên file (và chịu được
+                // dữ liệu cũ bị lưu nhầm dạng "[null]" từ trước khi setter được vá).
+                return array_values(array_filter($items, fn ($v) => is_string($v) && $v !== ''));
             },
-            set: fn ($value) => json_encode(is_array($value) ? array_values($value) : [$value])
+            // Rỗng/null -> lưu NULL (không phải "[null]"): để get trả về [] đúng nghĩa "không có minh chứng".
+            set: function ($value) {
+                $items = is_array($value) ? array_values(array_filter($value, fn ($v) => is_string($v) && $v !== '')) : (empty($value) ? [] : [$value]);
+
+                return $items === [] ? null : json_encode($items);
+            },
         );
     }
 

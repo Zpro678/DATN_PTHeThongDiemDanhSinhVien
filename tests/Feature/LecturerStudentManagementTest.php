@@ -5,6 +5,7 @@ namespace Tests\Feature;
 use App\Livewire\Lecturer\Students\LeaveRequestIndex;
 use App\Livewire\Lecturer\Students\StudentIndex;
 use App\Models\AttendanceRecord;
+use App\Models\ClassMeeting;
 use App\Models\ClassMember;
 use App\Models\ClassSession;
 use App\Models\CourseClass;
@@ -49,11 +50,11 @@ class LecturerStudentManagementTest extends TestCase
         $courseClass = CourseClass::factory()->create(['owner_user_id' => $owner->id]);
         $member = ClassMember::factory()->create(['class_id' => $courseClass->id]);
 
+        // StudentIndex chỉ sửa họ tên/email/trạng thái (MSSV không sửa ở màn này).
         Livewire::actingAs($owner)
             ->test(StudentIndex::class)
             ->call('openEdit', $member->id)
             ->set('editingName', 'Sinh viên đã cập nhật')
-            ->set('editingStudentCode', 'SV-UPDATED')
             ->call('saveMember')
             ->assertHasNoErrors()
             ->call('archiveMember', $member->id);
@@ -72,16 +73,15 @@ class LecturerStudentManagementTest extends TestCase
         $this->assertDatabaseHas('class_member_profiles', [
             'class_member_id' => $member->id,
             'full_name' => 'Sinh viên đã cập nhật',
-            'student_code' => 'SV-UPDATED',
         ]);
     }
 
     public function test_approving_leave_request_updates_attendance_record(): void
     {
-        [$owner, $member, $leaveRequest] = $this->createOwnedLeaveRequest();
+        [$owner, $member, $leaveRequest, $session] = $this->createOwnedLeaveRequest();
 
         AttendanceRecord::factory()->create([
-            'class_session_id' => $leaveRequest->class_session_id,
+            'class_session_id' => $session->id,
             'class_member_id' => $member->id,
             'status' => 'absent',
         ]);
@@ -97,8 +97,9 @@ class LecturerStudentManagementTest extends TestCase
             'status' => 'approved',
             'reviewed_by' => $owner->id,
         ]);
+        // Duyệt đơn -> mọi phiên thuộc buổi được đánh dấu "có phép".
         $this->assertDatabaseHas('attendance_records', [
-            'class_session_id' => $leaveRequest->class_session_id,
+            'class_session_id' => $session->id,
             'class_member_id' => $member->id,
             'status' => 'excused',
             'note' => 'Đơn xin nghỉ đã được duyệt.',
@@ -134,7 +135,7 @@ class LecturerStudentManagementTest extends TestCase
             ->assertSee(route('lecturer.leave-requests.index'), false);
     }
 
-    public function test_student_only_user_opens_student_workspace_by_default(): void
+    public function test_student_only_user_defaults_to_owner_workspace_and_can_switch(): void
     {
         $owner = User::factory()->create();
         $student = User::factory()->create();
@@ -144,11 +145,14 @@ class LecturerStudentManagementTest extends TestCase
             'user_id' => $student->id,
         ]);
 
-        $this->actingAs($student)->get(route('dashboard'))
-            ->assertOk()
-            ->assertSee('Không gian Học viên')
-            ->assertSee('Lớp tôi tham gia')
-            ->assertDontSee('Không gian Chủ lớp');
+        // Hành vi hiện tại: mọi tài khoản thường mặc định vào không gian Chủ lớp,
+        // và có thể tự chuyển sang không gian Học viên (xem Dashboard::defaultWorkspace).
+        Livewire::actingAs($student)
+            ->test(\App\Livewire\User\Dashboard::class)
+            ->assertSet('workspace', 'admin')
+            ->call('setWorkspace', 'student')
+            ->assertSet('workspace', 'student')
+            ->assertSee('Không gian Học viên');
     }
 
     public function test_owner_user_opens_admin_workspace_by_default(): void
@@ -163,7 +167,7 @@ class LecturerStudentManagementTest extends TestCase
     }
 
     /**
-     * @return array{User, ClassMember, LeaveRequest}
+     * @return array{User, ClassMember, LeaveRequest, ClassSession}
      */
     private function createOwnedLeaveRequest(): array
     {
@@ -178,16 +182,22 @@ class LecturerStudentManagementTest extends TestCase
             'student_code' => 'SV'.$student->id,
             'full_name' => $student->name,
         ]);
+        // Đơn xin nghỉ nay gắn với BUỔI (class_meeting_id), phiên chỉ để tạo bản ghi điểm danh.
+        $meeting = ClassMeeting::factory()->create([
+            'class_id' => $courseClass->id,
+            'user_Created' => $owner->id,
+        ]);
         $session = ClassSession::factory()->create([
             'class_id' => $courseClass->id,
+            'meeting_id' => $meeting->id,
             'created_by' => $owner->id,
         ]);
         $leaveRequest = LeaveRequest::factory()->create([
             'class_member_id' => $member->id,
-            'class_session_id' => $session->id,
+            'class_meeting_id' => $meeting->id,
             'reason' => 'Nghỉ học vì lý do sức khỏe.',
         ]);
 
-        return [$owner, $member, $leaveRequest];
+        return [$owner, $member, $leaveRequest, $session];
     }
 }

@@ -17,7 +17,7 @@ class AttendanceDataModelTest extends TestCase
     {
         $this->seed();
 
-        $teacher = User::query()->where('email', 'teacher@example.com')->firstOrFail();
+        $teacher = User::query()->where('email', 'minhhieut947@gmail.com')->firstOrFail();
         $student = User::query()->where('email', 'student1@example.com')->firstOrFail();
         $courseClass = CourseClass::query()->where('join_key', 'WEB-2026-01')->firstOrFail();
 
@@ -45,7 +45,7 @@ class AttendanceDataModelTest extends TestCase
     {
         $this->seed();
 
-        $teacher = User::query()->where('email', 'teacher@example.com')->firstOrFail();
+        $teacher = User::query()->where('email', 'minhhieut947@gmail.com')->firstOrFail();
 
         $this->assertSame('PRO', $teacher->subscriptions()->firstOrFail()->plan->plan_tier);
         $this->assertSame('PAID', $teacher->transactions()->firstOrFail()->status);

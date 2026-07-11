@@ -86,28 +86,13 @@ class GpsValidationService
         }
 
         $distance = 0;
-        // Nếu buổi học yêu cầu định vị GPS
+        // Nếu buổi học yêu cầu định vị GPS: chỉ TÍNH khoảng cách để bước check-in quyết định.
+        // NGHIỆP VỤ MỚI: ở NGOÀI bán kính KHÔNG còn chặn điểm danh tại đây nữa — vẫn cấp check_token
+        // để sinh viên được ghi nhận CÓ MẶT. Phần "quá xa" sẽ được GẮN CỜ VÀNG + BÁO CHỦ LỚP (kèm số
+        // mét vượt) ở bước checkIn (xem App\Livewire\Student\AttendanceCheckIn::checkIn). Bước này chỉ
+        // còn xác thực toạ độ hợp lệ (token, độ chính xác) và chấm nghi vấn fake GPS.
         if ($session->gps_latitude && $session->gps_longitude) {
             $distance = $this->calculateDistance($lat, $lng, $session->gps_latitude, $session->gps_longitude);
-            $radius = $session->gps_radius ?? 100;
-
-            if ($distance > $radius) {
-                \Illuminate\Support\Facades\Log::warning('Attendance check-in failed', [
-                    'session_id' => $session->id,
-                    'member_id' => $verification->member_id,
-                    'reason' => 'out_of_range',
-                    'distance' => round($distance),
-                    'gps_radius' => $radius,
-                    'ip' => $ip,
-                ]);
-
-                return [
-                    'success' => false,
-                    'check_token' => null,
-                    'error' => 'Vị trí của bạn quá xa lớp học (' . round($distance) . 'm). Bán kính cho phép là ' . $radius . 'm.',
-                    'distance' => $distance,
-                ];
-            }
         }
 
         // Chấm điểm nghi vấn fake GPS (đa tín hiệu) và lưu để bước check-in đọc lại.

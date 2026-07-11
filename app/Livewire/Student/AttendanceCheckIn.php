@@ -26,6 +26,11 @@ class AttendanceCheckIn extends Component
     public bool $isGpsError = false;
     public ?int $memberId = null;
 
+    // Điểm danh THÀNH CÔNG nhưng Ở NGOÀI bán kính cho phép: dùng để hiện cảnh báo vàng cho sinh viên.
+    public bool $isOutOfRadius = false;
+    public ?int $outOfRadiusDistance = null; // khoảng cách tới lớp (m)
+    public ?int $metersOutside = null;       // số mét vượt ra ngoài bán kính
+
     public function mount(string $token): void
     {
         $this->token = $token;
@@ -89,7 +94,8 @@ class AttendanceCheckIn extends Component
             ]);
 
         // Chống điểm danh 2 lần trong cùng một phiên: chỉ chặn khi đã ghi nhận có mặt/muộn/có phép.
-        // KHÔNG chặn 'invalid' (quá xa GPS) để SV còn quét lại được sau khi vào vùng cho phép.
+        // Lưu ý: điểm danh ngoài bán kính GPS nay VẪN là 'present' (kèm cờ vàng) nên cũng bị chặn
+        // quét lại như một lần có mặt hợp lệ — đúng ý đồ (đã được ghi nhận rồi).
         if ($this->record && in_array($this->record->status, ['present', 'late', 'excused'], true)) {
             $this->isSuccess = true;
             $this->isAutoCheckIn = false; // Chặn blade tự động bấm điểm danh lại.
@@ -136,8 +142,8 @@ class AttendanceCheckIn extends Component
         }
 
         // Chặn điểm danh lần 2 trong cùng phiên (kể cả khi client cố gọi lại checkIn).
-        // Chỉ chặn khi đã ghi nhận có mặt/đi muộn/có phép — KHÔNG chặn 'invalid' (quá xa GPS)
-        // để SV còn quét lại được sau khi đi vào vùng cho phép.
+        // Chỉ chặn khi đã ghi nhận có mặt/đi muộn/có phép. Ngoài bán kính nay cũng là 'present'
+        // (kèm cờ vàng) nên đã điểm danh rồi thì không ghi lại.
         $this->record->refresh();
         if (in_array($this->record->status, ['present', 'late', 'excused'], true)) {
             $this->isSuccess = true;
@@ -166,6 +172,7 @@ class AttendanceCheckIn extends Component
         $status = 'present';
 
         $this->isGpsError = false;
+        $this->isOutOfRadius = false;
         $distanceMeters = null;
         $gpsAccuracy = null;
         $gpsLatRecorded = null;
@@ -253,26 +260,31 @@ class AttendanceCheckIn extends Component
             $gpsLngRecorded = $verification->lng;
 
             if ($distanceMeters > $this->session->gps_radius) {
-                $this->statusMessage = 'Vị trí của bạn quá xa lớp học (' . round($distanceMeters) . 'm). Bán kính cho phép là ' . $this->session->gps_radius . 'm.';
-                $this->isGpsError = true;
+                // NGHIỆP VỤ MỚI: ngoài bán kính VẪN cho điểm danh (không chặn). Chỉ GẮN CỜ VÀNG
+                // 'out_of_radius' và BÁO CHỦ LỚP kèm số mét vượt ra ngoài để chủ lớp rà soát.
+                $metersOutside = (int) round($distanceMeters - $this->session->gps_radius);
 
-                // Điểm danh KHÔNG thành công (quá xa) -> chỉ báo LÝ DO cho SINH VIÊN, KHÔNG báo giảng viên.
-                // Chỉ báo ở LẦN ĐẦU ra ngoài vùng: bản ghi giữ cờ 'out_of_radius' xuyên các lần thử
-                // (tới khi điểm danh thành công), nên nếu cờ đã là 'out_of_radius' nghĩa là đã báo rồi
-                // -> bỏ qua, tránh spam khi SV quét hụt nhiều lần.
-                $alreadyReportedOutOfRadius = $this->record->gps_fraud_flag === 'out_of_radius';
+                // Ghi lại để hiện CẢNH BÁO VÀNG cho chính sinh viên ở màn hình kết quả.
+                $this->isOutOfRadius = true;
+                $this->outOfRadiusDistance = (int) round($distanceMeters);
+                $this->metersOutside = $metersOutside;
 
-                // Vẫn ghi nhận nhật ký gian lận
-                $gpsFraudFlag = 'out_of_radius';
-
-                if (! $alreadyReportedOutOfRadius) {
-                    $this->record->loadMissing('classMember');
-                    app(\App\Services\NotificationService::class)->notifyGpsFraud(
-                        $this->record->classMember->user_id ?? null,
-                        $this->session,
-                        $distanceMeters
-                    );
+                // Cờ vàng: chỉ gắn khi chưa dính cờ nặng hơn (vd trùng máy = đỏ) để không che cảnh báo nặng.
+                if ($gpsFraudFlag === null) {
+                    $gpsFraudFlag = 'out_of_radius';
                 }
+
+                $fraudNote = 'Ngoài bán kính cho phép: cách lớp ' . round($distanceMeters) . 'm (vượt ' . $metersOutside . 'm).';
+
+                // Báo CHỦ LỚP (mức warning = vàng). Mỗi SV chỉ điểm danh thành công một lần nên không spam.
+                $this->record->loadMissing('classMember');
+                app(\App\Services\NotificationService::class)->notifyGpsOutOfRadius(
+                    (int) ($this->session->courseClass->owner_user_id ?? 0),
+                    $this->session,
+                    $this->record->classMember->full_name ?? 'Sinh viên',
+                    $distanceMeters,
+                    $metersOutside,
+                );
             }
 
             // Di chuyển bất khả thi (impossible travel): cùng một người vừa điểm danh ở nơi
@@ -297,11 +309,10 @@ class AttendanceCheckIn extends Component
         }
 
         $updateData = [
-            'status' => $gpsFraudFlag === 'out_of_radius' ? 'invalid' : $status,
-            // Quá xa (out_of_radius) = KHÔNG điểm danh: để check_in_time = null để (a) SV vẫn
-            // quét lại được khi đi vào vùng cho phép, (b) không bị tính là đã check-in ở khâu dò
-            // trùng máy/leo thang. Chỉ ghi giờ khi thực sự có mặt/đi muộn.
-            'check_in_time' => $gpsFraudFlag === 'out_of_radius' ? null : now('Asia/Ho_Chi_Minh'),
+            // Ngoài bán kính VẪN ghi CÓ MẶT (chỉ gắn cờ vàng để chủ lớp rà soát), nên status/giờ
+            // check-in ghi bình thường như mọi lần điểm danh hợp lệ.
+            'status' => $status,
+            'check_in_time' => now('Asia/Ho_Chi_Minh'),
             'distance_meters' => $distanceMeters,
             'gps_accuracy_meters' => $gpsAccuracy,
             'gps_latitude_recorded' => $gpsLatRecorded,
@@ -322,7 +333,9 @@ class AttendanceCheckIn extends Component
 
         // Ghi nhật ký quét (bảng check_in_scans) — phục vụ lịch sử thiết bị xuyên phiên & rà soát.
         $this->logCheckInScan(
-            isValid: $gpsFraudFlag !== 'out_of_radius',
+            // Ngoài bán kính nay VẪN là một lần điểm danh hợp lệ (đã ghi có mặt) — chỉ kèm
+            // fail_reason như một DẤU VẾT cảnh báo cho nhật ký, giống các cờ mềm khác.
+            isValid: true,
             failReason: match ($gpsFraudFlag) {
                 'out_of_radius' => 'out_of_range',
                 'device_duplicate' => 'device_duplicate',
@@ -343,7 +356,7 @@ class AttendanceCheckIn extends Component
             'ip_address' => substr($ipAddress, 0, 45),
             'user_agent' => $userAgent,
             'new_values' => json_encode([
-                'status' => $gpsFraudFlag === 'out_of_radius' ? 'invalid' : $status,
+                'status' => $status,
                 'distance_meters' => $distanceMeters,
                 'gps_accuracy_meters' => $gpsAccuracy,
                 'gps_latitude_recorded' => $gpsLatRecorded,
@@ -359,16 +372,17 @@ class AttendanceCheckIn extends Component
             $this->escalateProxyDevice($persistentDeviceId);
         }
 
-        if ($gpsFraudFlag === 'out_of_radius') {
-            $this->isSuccess = false;
-            $this->statusMessage = 'Vị trí của bạn quá xa lớp học (' . round($distanceMeters) . 'm).';
-            return;
-        }
-
         $this->isSuccess = true;
-        $this->statusMessage = 'Điểm danh thành công!';
-        
-        session()->flash('success', 'Điểm danh thành công!');
+
+        if ($this->isOutOfRadius) {
+            // Vẫn ghi nhận có mặt, nhưng CẢNH BÁO cho sinh viên rằng họ điểm danh ngoài bán kính
+            // (kèm số mét vượt). Không flash "success" xanh để màn hình hiện thẻ cảnh báo vàng.
+            $this->statusMessage = 'Đã ghi nhận điểm danh, nhưng bạn đang ở NGOÀI bán kính cho phép: cách lớp '
+                . $this->outOfRadiusDistance . 'm (vượt ' . $this->metersOutside . 'm). Chủ lớp đã được thông báo để rà soát.';
+        } else {
+            $this->statusMessage = 'Điểm danh thành công!';
+            session()->flash('success', 'Điểm danh thành công!');
+        }
 
         // Cập nhật realtime cho bảng của giảng viên — CHỈ là best-effort. StudentCheckedIn là
         // ShouldBroadcastNow (đẩy Redis ĐỒNG BỘ), nên nếu Redis/broadcast lỗi mà không bọc thì

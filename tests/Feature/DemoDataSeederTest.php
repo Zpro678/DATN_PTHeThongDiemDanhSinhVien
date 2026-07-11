@@ -19,7 +19,7 @@ class DemoDataSeederTest extends TestCase
     {
         $this->seed(DatabaseSeeder::class);
 
-        $teacher = User::query()->where('email', 'teacher@example.com')->firstOrFail();
+        $teacher = User::query()->where('email', 'minhhieut947@gmail.com')->firstOrFail();
 
         $this->assertDatabaseHas('users', ['email' => 'admin@example.com']);
         $this->assertDatabaseHas('users', ['email' => 'student1@example.com']);

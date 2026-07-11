@@ -16,6 +16,9 @@ class CreateClassTest extends TestCase
 
     public function test_verified_user_can_open_the_create_class_page(): void
     {
+        // Trang tạo lớp qua middleware plan:create_class -> cần có gói FREE để currentPlan() phân giải.
+        $this->seed(\Database\Seeders\PlanSeeder::class);
+
         $user = User::factory()->create();
         URL::defaults(['ma_user' => $user->id]);
 
