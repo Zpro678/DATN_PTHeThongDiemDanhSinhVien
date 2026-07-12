@@ -30,28 +30,6 @@ class AppServiceProvider extends ServiceProvider
 
                 \Illuminate\Support\Facades\View::share('app_logo_path', \App\Models\Setting::get('app_logo'));
 
-                $mailDriver = \App\Models\Setting::get('mail_driver');
-                if ($mailDriver) {
-                    $mailEncryption = \App\Models\Setting::get('mail_encryption');
-                    $mailScheme = match ($mailEncryption) {
-                        'ssl' => 'smtps',
-                        'tls' => 'smtp',
-                        default => config("mail.mailers.{$mailDriver}.scheme"),
-                    };
-
-                    config([
-                        'mail.default' => $mailDriver,
-                        'mail.mailers.' . $mailDriver . '.host' => \App\Models\Setting::get('mail_host', config("mail.mailers.{$mailDriver}.host")),
-                        'mail.mailers.' . $mailDriver . '.port' => \App\Models\Setting::get('mail_port', config("mail.mailers.{$mailDriver}.port")),
-                        'mail.mailers.' . $mailDriver . '.scheme' => $mailScheme ?: null,
-                        'mail.mailers.' . $mailDriver . '.encryption' => $mailEncryption ?: null,
-                        'mail.mailers.' . $mailDriver . '.username' => \App\Models\Setting::get('mail_username', config("mail.mailers.{$mailDriver}.username")),
-                        'mail.mailers.' . $mailDriver . '.password' => \App\Models\Setting::get('mail_password', config("mail.mailers.{$mailDriver}.password")),
-                        'mail.from.address' => \App\Models\Setting::get('mail_from_address', config('mail.from.address')),
-                        'mail.from.name' => \App\Models\Setting::get('mail_from_name', config('mail.from.name')),
-                    ]);
-                }
-
                 $telegramToken = \App\Models\Setting::get('telegram_bot_token');
                 if ($telegramToken) {
                     config(['services.telegram-bot-api.token' => $telegramToken]);
