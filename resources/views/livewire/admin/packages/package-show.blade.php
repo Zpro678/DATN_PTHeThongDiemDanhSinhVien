@@ -109,8 +109,8 @@
                         <div class="mb-4 flex h-12 w-12 items-center justify-center rounded-xl {{ $iconBg }}">
                             <x-user.icon name="user-check" :size="24" />
                         </div>
-                        <p class="mb-1 text-sm font-semibold uppercase tracking-wider text-slate-500">Người đăng ký</p>
-                        <p class="text-3xl font-extrabold text-slate-900">{{ $package->subscriptions_count ?? 0 }}</p>
+                        <p class="mb-1 text-sm font-semibold uppercase tracking-wider text-slate-500">Người sử dụng</p>
+                        <p class="text-3xl font-extrabold text-slate-900">{{ $usersCount }}</p>
                     </div>
                 </div>
 

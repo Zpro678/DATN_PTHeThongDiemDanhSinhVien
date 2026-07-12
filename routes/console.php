@@ -17,3 +17,7 @@ Schedule::command('db:backup')->dailyAt('00:00')->withoutOverlapping();
 
 // Dọn dẹp log điểm danh (check_in_scans) cũ hơn 90 ngày vào 1h sáng mỗi ngày.
 Schedule::command('attendance:cleanup-scans --days=90')->dailyAt('01:00')->withoutOverlapping();
+
+// Rút hàng chờ email thông báo import (Outbox) và gửi có tiết chế: tối đa 200 mail/phút.
+// Nhờ vậy dù nhiều tài khoản import cùng lúc, email không bị bắn dồn làm SMTP quá tải.
+Schedule::command('import:flush-notifications --limit=200')->everyMinute()->withoutOverlapping();

@@ -15,7 +15,8 @@
     ];
 @endphp
 
-<div class="w-full px-6 pt-6 sm:px-10 lg:px-16 sm:pt-8 min-h-screen space-y-6 pb-24">
+<div class="w-full px-6 pt-6 sm:px-10 lg:px-16 sm:pt-8 min-h-screen space-y-6 pb-24"
+    x-data x-init="window.listenRealtime && window.listenRealtime(@js($this->realtimeChannel()), () => $wire.$refresh(), 300)">
 
     <section class="flex flex-col justify-between gap-6 md:flex-row md:items-start">
         <div>

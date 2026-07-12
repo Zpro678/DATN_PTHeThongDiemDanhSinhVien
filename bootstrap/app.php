@@ -23,6 +23,7 @@ return Application::configure(basePath: dirname(__DIR__))
             SetUserRouteDefaults::class,
             \App\Http\Middleware\CheckSystemMaintenance::class,
             \Illuminate\Session\Middleware\AuthenticateSession::class,
+            \App\Http\Middleware\EnsureUserIsActive::class,
         ]);
 
         // Fix redirect for authenticated users (e.g. remember me)

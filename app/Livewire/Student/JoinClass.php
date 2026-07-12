@@ -136,17 +136,47 @@ class JoinClass extends Component
             session()->flash('status', 'Bạn đã là thành viên của lớp học này.');
             $this->reset(['class_code', 'confirmingClass']);
             $this->showModal = false;
-            
+
             return $this->redirectRoute('student.classes.show', ['ma_user' => $userId, 'courseClass' => $courseClass->id], navigate: true);
         }
 
         if (!$courseClass->require_approval) {
-            $member = ClassMember::create([
-                'class_id' => $courseClass->id,
-                'user_id' => $userId,
-                'status' => ClassMember::STATUS_ACTIVE,
-            ]);
-            
+            // Khóa nguyên tử theo lớp: đảm bảo kiểm-tra-giới-hạn và tạo thành viên diễn ra
+            // tuần tự cho cùng một lớp. Nếu không có khóa, hai học viên bấm tham gia đồng thời
+            // đều đọc được sĩ số chưa đầy rồi cùng tạo -> vượt giới hạn (vd đầy 50 vẫn lên 51).
+            $lock = \Illuminate\Support\Facades\Cache::lock('class-join:' . $courseClass->id, 10);
+
+            try {
+                // Chờ tối đa 5s để giành khóa; nếu không được thì báo bận, không tạo.
+                if (! $lock->block(5)) {
+                    $this->dispatch('toast', message: 'Hệ thống đang bận xử lý yêu cầu tham gia, vui lòng thử lại.', type: 'error');
+                    return;
+                }
+
+                // Chặn khi lớp đã đạt giới hạn số học viên của gói chủ lớp (đếm TRONG khóa).
+                if ($courseClass->owner) {
+                    $maxStudents = app(\App\Services\SubscriptionService::class)->maxStudentsPerClass($courseClass->owner);
+                    $activeCount = ClassMember::where('class_id', $courseClass->id)
+                        ->where('status', ClassMember::STATUS_ACTIVE)
+                        ->count();
+
+                    if ($maxStudents > 0 && $activeCount >= $maxStudents) {
+                        $this->confirmingClass = null;
+                        $this->addError('class_code', "Lớp đã đạt giới hạn {$maxStudents} học viên nên bạn không thể tham gia lúc này. Vui lòng liên hệ giảng viên.");
+                        $this->dispatch('toast', message: 'Lớp đã đủ số lượng học viên, bạn không thể tham gia.', type: 'error');
+                        return;
+                    }
+                }
+
+                $member = ClassMember::create([
+                    'class_id' => $courseClass->id,
+                    'user_id' => $userId,
+                    'status' => ClassMember::STATUS_ACTIVE,
+                ]);
+            } finally {
+                $lock->release();
+            }
+
             $member->syncProfile([
                 'full_name' => $this->full_name,
                 'email' => $userEmail,
@@ -166,8 +196,23 @@ class JoinClass extends Component
             session()->flash('status', 'Đã tham gia lớp học thành công!');
             $this->reset(['class_code', 'confirmingClass']);
             $this->dispatch('class-joined');
-            
+
             return $this->redirectRoute('student.classes.show', ['ma_user' => $userId, 'courseClass' => $courseClass->id], navigate: true);
+        }
+
+        // Nhánh yêu cầu duyệt: vẫn kiểm tra giới hạn trước khi tạo yêu cầu (chặn xếp hàng vô ích khi đầy).
+        if ($courseClass->owner) {
+            $maxStudents = app(\App\Services\SubscriptionService::class)->maxStudentsPerClass($courseClass->owner);
+            $activeCount = ClassMember::where('class_id', $courseClass->id)
+                ->where('status', ClassMember::STATUS_ACTIVE)
+                ->count();
+
+            if ($maxStudents > 0 && $activeCount >= $maxStudents) {
+                $this->confirmingClass = null;
+                $this->addError('class_code', "Lớp đã đạt giới hạn {$maxStudents} học viên nên bạn không thể tham gia lúc này. Vui lòng liên hệ giảng viên.");
+                $this->dispatch('toast', message: 'Lớp đã đủ số lượng học viên, bạn không thể tham gia.', type: 'error');
+                return;
+            }
         }
 
         // Nếu yêu cầu duyệt -> Bắt buộc phải qua bước duyệt

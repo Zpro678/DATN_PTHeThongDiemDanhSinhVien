@@ -44,7 +44,9 @@
     ];
     $colorIndex = hexdec(substr(md5((string) $class->id), 0, 8));
     $themeColor = $colorOptions[$colorIndex % count($colorOptions)];
-    $progressPct = $sessionsCount > 0 ? round(($sessionsCompleted / $sessionsCount) * 100) : 0;
+    // Tiến độ = số buổi đã điểm danh / tổng buổi dự kiến của lớp.
+    $plannedMeetings = (int) $class->total_sessions;
+    $progressPct = $plannedMeetings > 0 ? round(($meetingsCompleted / $plannedMeetings) * 100) : 0;
 
     $statusMeta = match ($class->status) {
         'active'   => ['label' => 'Đang hoạt động', 'dot' => 'bg-emerald-300', 'ping' => true],
@@ -91,7 +93,7 @@
                 </div>
 
                 {{-- Các ô chỉ số --}}
-                <div class="grid grid-cols-3 gap-3">
+                <div class="grid grid-cols-2 gap-3 sm:grid-cols-4">
                     <div class="rounded-2xl bg-white/15 p-4 shadow-sm ring-1 ring-white/20 backdrop-blur-sm transition-colors hover:bg-white/20">
                         <div class="flex items-center gap-2 text-white/90">
                             <x-user.icon name="users" :size="15" />
@@ -102,30 +104,29 @@
                     <div class="rounded-2xl bg-white/15 p-4 shadow-sm ring-1 ring-white/20 backdrop-blur-sm transition-colors hover:bg-white/20">
                         <div class="flex items-center gap-2 text-white/90">
                             <x-user.icon name="calendar" :size="15" />
-                            <span class="text-xs font-medium sm:text-sm">Dự kiến</span>
+                            <span class="text-xs font-medium sm:text-sm">Tổng buổi dự kiến</span>
                         </div>
                         <p class="mt-2 text-2xl font-black text-white sm:text-3xl">{{ $class->total_sessions }}</p>
                     </div>
                     <div class="rounded-2xl bg-white/15 p-4 shadow-sm ring-1 ring-white/20 backdrop-blur-sm transition-colors hover:bg-white/20">
                         <div class="flex items-center gap-2 text-white/90">
                             <x-user.icon name="clipboard-check" :size="15" />
-                            <span class="text-xs font-medium sm:text-sm">Đã ĐĐ</span>
+                            <span class="text-xs font-medium sm:text-sm">Buổi đã điểm danh</span>
                         </div>
-                        <p class="mt-2 text-2xl font-black text-white sm:text-3xl">{{ $sessionsCompleted }}</p>
+                        <p class="mt-2 text-2xl font-black text-white sm:text-3xl">{{ $meetingsCompleted }}</p>
                     </div>
-                </div>
 
-                {{-- Thanh tiến độ --}}
-                <div class="mt-5">
-                    <div class="mb-2 flex items-center justify-between text-xs font-semibold text-white/95">
-                        <span class="inline-flex items-center gap-1.5">
-                            <x-user.icon name="trending-up" :size="14" /> Tiến độ điểm danh
-                        </span>
-                        <span>{{ $progressPct }}%</span>
-                    </div>
-                    <div class="h-2.5 w-full overflow-hidden rounded-full bg-black/15">
-                        <div class="h-full rounded-full bg-white/85 shadow-sm transition-all duration-500"
-                            style="width: {{ min($progressPct, 100) }}%"></div>
+                    {{-- Thẻ tiến độ điểm danh (trước đây là thanh tiến độ) --}}
+                    <div class="rounded-2xl bg-white/15 p-4 shadow-sm ring-1 ring-white/20 backdrop-blur-sm transition-colors hover:bg-white/20">
+                        <div class="flex items-center gap-2 text-white/90">
+                            <x-user.icon name="trending-up" :size="15" />
+                            <span class="text-xs font-medium sm:text-sm">Tiến độ điểm danh</span>
+                        </div>
+                        <p class="mt-2 text-2xl font-black text-white sm:text-3xl">{{ $progressPct }}%</p>
+                        <div class="mt-2 h-1.5 w-full overflow-hidden rounded-full bg-black/15">
+                            <div class="h-full rounded-full bg-white/85 shadow-sm transition-all duration-500"
+                                style="width: {{ min($progressPct, 100) }}%"></div>
+                        </div>
                     </div>
                 </div>
             </div>

@@ -114,8 +114,11 @@ if errorlevel 1 (
 REM Laravel
 start "Laravel" cmd /k "cd /d ""%~dp0"" && php artisan serve"
 
-REM Queue Worker
-start "Queue Worker" cmd /k "cd /d ""%~dp0"" && php artisan queue:work redis"
+REM Queue Worker - nghe 3 queue theo do uu tien: imports > mails > default
+start "Queue Worker" cmd /k "cd /d ""%~dp0"" && php artisan queue:work redis --queue=imports,mails,default --tries=3"
+
+REM Scheduler (rut hang cho Outbox email import moi phut + cac lenh dinh ky khac)
+start "Scheduler" cmd /k "cd /d ""%~dp0"" && php artisan schedule:work"
 
 REM Vite
 start "Vite" cmd /k "cd /d ""%~dp0"" && npm.cmd run dev -- --host 127.0.0.1 --strictPort"

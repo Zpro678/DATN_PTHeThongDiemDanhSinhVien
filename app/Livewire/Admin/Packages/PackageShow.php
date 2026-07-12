@@ -18,7 +18,20 @@ class PackageShow extends Component
     {
         abort_unless(Auth::user()?->isAdmin(), 403);
         $this->package = $package;
-        $this->package->loadCount('subscriptions');
+    }
+
+    /**
+     * Số NGƯỜI ĐANG SỬ DỤNG gói: đếm số user riêng biệt có subscription còn hiệu lực
+     * (status = active và chưa hết hạn) trỏ tới gói này — khớp định nghĩa "đang dùng gói"
+     * ở User::activeSubscription(). Không tính các subscription đã hết hạn/hủy.
+     */
+    protected function usersCount(): int
+    {
+        return $this->package->subscriptions()
+            ->where('status', 'active')
+            ->where(fn ($q) => $q->whereNull('end_date')->orWhere('end_date', '>=', now()))
+            ->distinct('user_id')
+            ->count('user_id');
     }
 
     #[Layout('components.admin-layout')]
@@ -28,9 +41,10 @@ class PackageShow extends Component
             ->with('user')
             ->latest()
             ->paginate(10);
-            
+
         return view('livewire.admin.packages.package-show', [
             'subscriptions' => $subscriptions,
+            'usersCount'    => $this->usersCount(),
         ])->title('Chi tiết Gói dịch vụ');
     }
 }

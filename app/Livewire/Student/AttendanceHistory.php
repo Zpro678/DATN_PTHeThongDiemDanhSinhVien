@@ -77,6 +77,17 @@ class AttendanceHistory extends Component
         $this->classFilter = 'all';
     }
 
+    /**
+     * Làm mới danh sách lịch sử điểm danh: render() luôn truy vấn lại DB nên chỉ cần
+     * đưa về trang đầu và báo cho người dùng biết đã tải lại (thay cho $refresh vốn
+     * không có phản hồi trực quan khiến người dùng tưởng nút không bấm được).
+     */
+    public function refreshHistory(): void
+    {
+        $this->resetPage();
+        $this->dispatch('toast', message: 'Đã làm mới lịch sử điểm danh.', type: 'success');
+    }
+
     public function render(): View
     {
         $members = ClassMember::query()

@@ -24,6 +24,11 @@ class MeetingSessions extends Component
         $this->meeting->closeIfExpired();
     }
 
+    public function realtimeChannel(): string
+    {
+        return (string) config('database.redis.options.prefix') . 'class.' . $this->meeting->class_id;
+    }
+
     /**
      * "Thêm phiên" thủ công vào buổi này rồi chuyển sang trang điểm danh.
      */

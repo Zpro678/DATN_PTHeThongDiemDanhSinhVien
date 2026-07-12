@@ -1,0 +1,61 @@
+; ============================================================================
+;  Cấu hình Supervisor mẫu cho môi trường Production (tách worker theo queue).
+;  Copy sang /etc/supervisor/conf.d/datn-queues.conf, sửa <APP_PATH>/<user>,
+;  rồi:  supervisorctl reread && supervisorctl update && supervisorctl start all
+;
+;  Dev (Windows) KHÔNG dùng file này — start-dev.bat đã chạy 1 worker nghe cả
+;  3 queue:  php artisan queue:work redis --queue=imports,mails,default --tries=3
+; ============================================================================
+
+; ---- Import: nhiều worker để nhiều tài khoản import song song ----
+[program:datn-worker-imports]
+process_name=%(program_name)s_%(process_num)02d
+command=php <APP_PATH>/artisan queue:work redis --queue=imports --sleep=1 --tries=3 --max-time=3600
+directory=<APP_PATH>
+autostart=true
+autorestart=true
+numprocs=4
+user=<user>
+stopwaitsecs=3600
+redirect_stderr=true
+stdout_logfile=<APP_PATH>/storage/logs/worker-imports.log
+
+; ---- Mail: ít worker để tiết chế SMTP (kết hợp --limit của scheduler) ----
+[program:datn-worker-mails]
+process_name=%(program_name)s_%(process_num)02d
+command=php <APP_PATH>/artisan queue:work redis --queue=mails --sleep=2 --tries=3 --max-time=3600
+directory=<APP_PATH>
+autostart=true
+autorestart=true
+numprocs=2
+user=<user>
+stopwaitsecs=120
+redirect_stderr=true
+stdout_logfile=<APP_PATH>/storage/logs/worker-mails.log
+
+; ---- Default: thông báo realtime, audit, callback batch... ----
+[program:datn-worker-default]
+process_name=%(program_name)s_%(process_num)02d
+command=php <APP_PATH>/artisan queue:work redis --queue=default --sleep=1 --tries=3 --max-time=3600
+directory=<APP_PATH>
+autostart=true
+autorestart=true
+numprocs=2
+user=<user>
+stopwaitsecs=120
+redirect_stderr=true
+stdout_logfile=<APP_PATH>/storage/logs/worker-default.log
+
+; ---- Scheduler: chạy import:flush-notifications mỗi phút + các lệnh định kỳ ----
+[program:datn-scheduler]
+command=php <APP_PATH>/artisan schedule:work
+directory=<APP_PATH>
+autostart=true
+autorestart=true
+numprocs=1
+user=<user>
+redirect_stderr=true
+stdout_logfile=<APP_PATH>/storage/logs/scheduler.log
+
+[group:datn]
+programs=datn-worker-imports,datn-worker-mails,datn-worker-default,datn-scheduler

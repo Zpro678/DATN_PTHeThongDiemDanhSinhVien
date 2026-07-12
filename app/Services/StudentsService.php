@@ -134,6 +134,8 @@ class StudentsService
                     'date' => $date,
                     'sort_date' => $sortDate,
                     'route' => 'student.attendance.history',
+                    // Điều hướng vào lịch sử điểm danh ĐÃ LỌC theo đúng lớp bị cảnh báo.
+                    'params' => ['classFilter' => $courseClass->id],
                     'action_label' => 'Xem lịch sử',
                 ];
             } elseif ($attendancePercent < AttendanceCalculator::WARNING_PERCENT) {
@@ -145,6 +147,7 @@ class StudentsService
                     'date' => $date,
                     'sort_date' => $sortDate,
                     'route' => 'student.attendance.history',
+                    'params' => ['classFilter' => $courseClass->id],
                     'action_label' => 'Xem lịch sử',
                 ];
             }
@@ -160,6 +163,7 @@ class StudentsService
                     'date' => $date,
                     'sort_date' => $sortDate,
                     'route' => 'student.attendance.history',
+                    'params' => ['classFilter' => $courseClass->id],
                     'action_label' => 'Xem lịch sử',
                 ];
             }
@@ -195,7 +199,10 @@ class StudentsService
                     'message' => $message,
                     'date' => $warningDate->format('d/m/Y'),
                     'sort_date' => $warningDate->toDateString(),
-                    'route' => 'student.leave-requests.history',
+                    // Điều hướng thẳng vào trang sửa ĐÚNG đơn để bổ sung minh chứng ngay,
+                    // thay vì chỉ mở danh sách đơn.
+                    'route' => 'student.leave-requests.edit',
+                    'params' => ['leaveRequest' => $leaveRequest->id],
                     'action_label' => 'Bổ sung ngay',
                 ];
             })

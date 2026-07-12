@@ -17,8 +17,8 @@ class PlanSeeder extends Seeder
                 'price' => 0,
                 'duration_days' => 0,
                 'config' => [
-                    'max_classes' => 2,
-                    'max_students_per_class' => 50,
+                    'max_classes' => 10,
+                    'max_students_per_class' => 60,
                     'can_export_excel' => false,
                 ],
             ],
@@ -29,8 +29,8 @@ class PlanSeeder extends Seeder
                 'price' => 99000,
                 'duration_days' => 30,
                 'config' => [
-                    'max_classes' => 10,
-                    'max_students_per_class' => 100,
+                    'max_classes' => 20,
+                    'max_students_per_class' => 120,
                     'can_export_excel' => true,
                 ],
             ],

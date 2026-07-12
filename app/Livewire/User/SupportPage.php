@@ -59,6 +59,17 @@ class SupportPage extends Component
             'status' => 'pending',
         ]);
 
+        // Ghi nhật ký hoạt động: người dùng gửi phản hồi/góp ý.
+        $typeLabels = ['bug' => 'Báo lỗi', 'feature' => 'Đề xuất tính năng', 'other' => 'Khác'];
+        app(\App\Services\AuditLogService::class)->log('feedback_submitted', [
+            'table_name' => 'system_feedbacks',
+            'row_id'     => $feedback->id,
+            'new_values' => [
+                'title'         => $feedback->title,
+                'feedback_type' => $typeLabels[$feedback->type] ?? $feedback->type,
+            ],
+        ]);
+
         // Send notification to all admins
         $admins = User::whereIn('role', ['ADMIN', 'SUPER_ADMIN'])->get();
         Notification::send($admins, new NewFeedbackNotification($feedback));

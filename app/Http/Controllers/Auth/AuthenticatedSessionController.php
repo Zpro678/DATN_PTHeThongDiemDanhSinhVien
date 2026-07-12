@@ -48,7 +48,7 @@ class AuthenticatedSessionController extends Controller
 
         $request->session()->regenerate();
 
-        app(\App\Services\AuditLogService::class)->log('login_success', [
+        app(\App\Services\AuditLogService::class)->log('login', [
             'user_id' => $user->id,
             'new_values' => [
                 'method'     => 'email',

@@ -1017,4 +1017,21 @@ class NotificationService
             Notification::insert($chunk);
         }
     }
+
+    /**
+     * Báo cho chủ lớp khi import danh sách vượt giới hạn số SV/lớp của gói:
+     * một phần sinh viên KHÔNG được thêm vào lớp. Gửi cho người thực hiện import.
+     */
+    public function notifyImportStudentLimitReached(int $ownerUserId, CourseClass $class, int $skipped, int $limit): void
+    {
+        $this->push(
+            $ownerUserId,
+            'App\\Notifications\\ImportStudentLimitReached',
+            'Vượt giới hạn sinh viên của gói',
+            "Có {$skipped} sinh viên chưa được thêm vào lớp {$class->name} vì đã đạt giới hạn {$limit} sinh viên/lớp của gói hiện tại. Vui lòng nâng cấp gói để thêm nhiều hơn.",
+            route('upgrade', ['ma_user' => $ownerUserId]),
+            'warning',
+            ['class_id' => $class->id],
+        );
+    }
 }

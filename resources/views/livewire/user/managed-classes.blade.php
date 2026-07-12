@@ -5,6 +5,8 @@
     $mcPlan = Auth::user()?->currentPlan();
     $mcPlanName = $mcPlan->name ?? 'Miễn phí';
     $mcPlanMax = (int) ($mcPlan->max_classes ?? 2);
+    // Giới hạn số học viên/lớp do admin cấu hình (null = không giới hạn).
+    $mcMaxStudents = $mcPlan?->max_students_per_class;
     $mcOwnedCount = (int) (Auth::user()?->ownedClasses()->count() ?? 0);
     $mcUsedPercent = $mcPlanMax > 0 ? min(100, (int) round($mcOwnedCount / max(1, $mcPlanMax) * 100)) : 0;
     $mcNearLimit = $mcPlanMax > 0 && $mcOwnedCount >= $mcPlanMax;
@@ -18,9 +20,13 @@
                 <span class="grid h-10 w-10 shrink-0 place-items-center rounded-xl bg-primary/10 text-primary">
                     <x-user.icon name="zap" :size="20" />
                 </span>
-                <div class="w-32">
+                <div class="w-40">
                     <p class="truncate text-sm font-bold text-on-surface">Gói {{ $mcPlanName }}</p>
                     <p class="text-xs text-on-surface-variant">Đã dùng {{ $mcOwnedCount }}/{{ $mcPlanMax }} lớp</p>
+                    <p class="mt-0.5 flex items-center gap-1 text-[11px] text-on-surface-variant">
+                        <x-user.icon name="users" :size="12" />
+                        {{ \App\Models\Plan::limitLabel($mcMaxStudents, 'Không giới hạn học viên/lớp', 'Tối đa ', ' học viên/lớp') }}
+                    </p>
                 </div>
             </div>
             <div class="flex flex-1 items-center gap-3">

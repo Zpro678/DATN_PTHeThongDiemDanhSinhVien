@@ -51,6 +51,10 @@ class StartImportJob implements ShouldQueue
         $this->authUserId = $authUserId;
         $this->readerType = $readerType;
         $this->importToken = $importToken;
+
+        // Hàng đợi riêng cho import để cô lập tài nguyên (worker phải nghe queue này —
+        // xem start-dev.bat: --queue=imports,mails,default).
+        $this->onQueue('imports');
     }
 
     public function handle()

@@ -176,6 +176,18 @@ class ClassSettings extends Component
             return;
         }
 
+        $subscriptionService = app(\App\Services\SubscriptionService::class);
+        $maxClasses = $subscriptionService->maxClasses($user);
+
+        if ($maxClasses !== null) {
+            $managedCount = CourseClass::managedBy($user->id)->where('status', '!=', 'archived')->count();
+
+            if ($managedCount >= $maxClasses) {
+                $this->addError('coOwnerEmail', 'Người này đã quản lý tối đa ' . $maxClasses . ' lớp theo gói hiện tại, không thể thêm làm đồng chủ.');
+                return;
+            }
+        }
+
         $this->courseClass->coOwners()->attach($user->id, [
             'role' => 'co_owner',
             'invited_by' => auth()->id(),
@@ -194,7 +206,7 @@ class ClassSettings extends Component
         );
 
         $this->coOwnerEmail = '';
-        session()->flash('coowner_status', 'Đã thêm đồng chủ lớp thành công.');
+        $this->dispatch('toast', message: 'Đã thêm đồng chủ lớp thành công.', type: 'success');
     }
 
     public function removeCoOwner(int $userId): void
@@ -203,7 +215,7 @@ class ClassSettings extends Component
 
         $this->courseClass->coOwners()->detach($userId);
 
-        session()->flash('coowner_status', 'Đã gỡ đồng chủ khỏi lớp.');
+        $this->dispatch('toast', message: 'Đã gỡ đồng chủ khỏi lớp.', type: 'success');
     }
 
     public function render(): View

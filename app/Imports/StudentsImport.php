@@ -154,6 +154,8 @@ class StudentsImport implements ToCollection, WithChunkReading, WithStartRow
 
     public function chunkSize(): int
     {
-        return 50; // Mỗi chunk 50 dòng
+        // 500 dòng/chunk: cân bằng giữa số job phải điều phối và bộ nhớ đọc file.
+        // Với 10.000 SV => ~20 chunk job thay vì 200, giảm mạnh overhead hàng đợi.
+        return 500;
     }
 }

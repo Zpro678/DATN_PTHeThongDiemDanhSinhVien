@@ -114,9 +114,16 @@
                         <span class="flex h-6 min-w-[24px] items-center justify-center rounded-full bg-slate-100 px-2 text-[13px] font-bold text-slate-600">{{ $meetings->total() }}</span>
                     </div>
                     <div class="flex items-center gap-4">
-                        <button type="button" wire:click="$refresh" class="flex items-center gap-1.5 text-sm font-semibold text-blue-600 hover:text-blue-700 transition-colors">
-                            <x-user.icon name="refresh-cw" :size="16" />
-                            Làm mới
+                        <button type="button" wire:click="refreshHistory" wire:loading.attr="disabled" wire:target="refreshHistory"
+                            class="flex items-center gap-1.5 text-sm font-semibold text-blue-600 hover:text-blue-700 transition-colors disabled:opacity-60">
+                            <span wire:loading.remove wire:target="refreshHistory" class="flex items-center gap-1.5">
+                                <x-user.icon name="refresh-cw" :size="16" />
+                                Làm mới
+                            </span>
+                            <span wire:loading wire:target="refreshHistory" class="flex items-center gap-1.5">
+                                <x-user.icon name="loader" :size="16" class="animate-spin" />
+                                Đang tải...
+                            </span>
                         </button>
                         <x-user.export-button action="exportExcel" label="Xuất báo cáo" :can="$canExportExcel" />
                     </div>

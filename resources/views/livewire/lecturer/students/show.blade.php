@@ -33,7 +33,8 @@
     $isWarning = (bool) ($stats['is_warning'] ?? false);
 @endphp
 
-<div class="w-full space-y-6 px-6 py-6 pb-24 sm:px-10 lg:px-16">
+<div class="w-full space-y-6 px-6 py-6 pb-24 sm:px-10 lg:px-16"
+    x-data x-init="window.listenRealtime && window.listenRealtime(@js($this->realtimeChannel()), () => $wire.$refresh(), 300)">
     <section class="relative overflow-hidden rounded-2xl bg-gradient-to-br from-blue-600 via-blue-700 to-indigo-700 p-7 text-white shadow-lg shadow-blue-600/25">
         {{-- Decorative circles --}}
         <div class="pointer-events-none absolute -right-10 -top-10 h-40 w-40 rounded-full bg-white/10"></div>

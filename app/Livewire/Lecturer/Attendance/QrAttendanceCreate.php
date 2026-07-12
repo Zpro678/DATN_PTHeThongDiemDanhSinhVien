@@ -152,7 +152,10 @@ class QrAttendanceCreate extends Component
             $this->gpsLongitude = (float) $selectedClass->gps_longitude;
             $this->gpsRadius = (int) ($selectedClass->gps_radius ?? 100);
         } elseif (! $config) {
-            $this->gpsEnabled = false;
+            // Mặc định BẬT xác minh GPS cho phiên QR — toạ độ sẽ được trình duyệt
+            // giảng viên tự lấy khi bật (blade $watch('gpsEnabled') → getCurrentPosition);
+            // nếu bị từ chối quyền vị trí thì tự tắt lại.
+            $this->gpsEnabled = true;
             $this->gpsRadius = 100;
             $this->gpsLatitude = null;
             $this->gpsLongitude = null;

@@ -13,9 +13,18 @@ class StudentShow extends Component
 {
     public int $memberId;
 
+    public string $classId = '';
+
     public function mount(int $member): void
     {
-        $this->memberId = $this->memberQuery()->findOrFail($member)->id;
+        $memberModel = $this->memberQuery()->findOrFail($member);
+        $this->memberId = $memberModel->id;
+        $this->classId = (string) $memberModel->class_id;
+    }
+
+    public function realtimeChannel(): string
+    {
+        return (string) config('database.redis.options.prefix') . 'class.' . $this->classId;
     }
 
     private function memberQuery(): Builder

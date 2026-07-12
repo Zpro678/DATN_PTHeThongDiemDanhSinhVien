@@ -76,32 +76,11 @@ class AppServiceProvider extends ServiceProvider
                         ->update(['user_id' => $event->user->id]);
                 }
             }
-            
-            // Ghi log đăng nhập
-            \App\Models\AuditLog::create([
-                'user_id' => $event->user->id,
-                'action' => 'Đã đăng nhập vào hệ thống',
-                'table_name' => 'users',
-                'row_id' => $event->user->id,
-                'ip_address' => request()->ip(),
-                'user_agent' => request()->userAgent(),
-                'created_at' => now(),
-            ]);
-        });
 
-        \Illuminate\Support\Facades\Event::listen(function (\Illuminate\Auth\Events\Logout $event) {
-            if ($event->user) {
-                // Ghi log đăng xuất
-                \App\Models\AuditLog::create([
-                    'user_id' => $event->user->id,
-                    'action' => 'Đã đăng xuất khỏi hệ thống',
-                    'table_name' => 'users',
-                    'row_id' => $event->user->id,
-                    'ip_address' => request()->ip(),
-                    'user_agent' => request()->userAgent(),
-                    'created_at' => now(),
-                ]);
-            }
+            // Lưu ý: KHÔNG ghi audit log đăng nhập tại đây.
+            // Việc ghi log đăng nhập do AuditLogService xử lý một nguồn duy nhất
+            // (AuthenticatedSessionController + GoogleController) với action 'login',
+            // tránh trùng lặp mỗi lần đăng nhập tạo 2 bản ghi.
         });
 
         // Thông báo gửi qua $user->notify() (kênh 'database') cũng phát tín hiệu realtime,

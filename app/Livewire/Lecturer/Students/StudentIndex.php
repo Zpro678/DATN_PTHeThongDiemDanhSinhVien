@@ -131,13 +131,34 @@ class StudentIndex extends Component
             })->toArray();
         }
 
+        // Số SV bị bỏ qua do vượt giới hạn SV/lớp của gói (chunk job đếm vào cache theo token).
+        $skipped   = (int) cache()->pull('import_skipped_' . $this->importToken, 0);
+        $skipLimit = (int) cache()->pull('import_skipped_limit_' . $this->importToken, 0);
+        if ($skipped > 0) {
+            array_unshift(
+                $this->importErrors,
+                "{$skipped} sinh viên KHÔNG được thêm vào lớp vì đã đạt giới hạn {$skipLimit} sinh viên/lớp của gói hiện tại. Vui lòng nâng cấp gói để thêm nhiều hơn."
+            );
+            $importedClass = \App\Models\CourseClass::find($this->importClassId);
+            if ($importedClass) {
+                app(\App\Services\NotificationService::class)
+                    ->notifyImportStudentLimitReached((int) auth()->id(), $importedClass, $skipped, $skipLimit);
+            }
+        }
+
         $message = "Đã xử lý xong file dữ liệu. " . ($dbErrors->count() > 0 ? "Tuy nhiên có một số dòng bị lỗi." : "");
-        if ($dbErrors->count() === 0) {
+        if ($dbErrors->count() === 0 && $skipped === 0) {
             $this->closeImport();
             $this->isImportingStatus = false;
             $this->dispatch('toast', message: $message, type: 'success');
         } else {
+            // Có lỗi hoặc bị cắt bớt do giới hạn: giữ modal mở để chủ lớp đọc chi tiết.
+            $this->isImporting = true;
             $this->isImportingStatus = false;
+            if ($skipped > 0) {
+                $message = "Import xong nhưng {$skipped} sinh viên bị bỏ qua do vượt giới hạn sinh viên/lớp của gói.";
+                $this->dispatch('toast', message: $message, type: 'warning');
+            }
         }
 
         session()->flash('success', $message);
@@ -375,14 +396,33 @@ class StudentIndex extends Component
             default => \Maatwebsite\Excel\Excel::XLSX,
         };
 
+        // Khoá: mỗi tài khoản chỉ 1 lượt import chạy tại một thời điểm.
+        $importUserId = (int) auth()->id();
+        if (! \App\Support\ImportLock::acquire($importUserId)) {
+            $this->isImportingStatus = false;
+            $this->addError('importFile', 'Bạn đang có một lượt import đang chạy. Vui lòng đợi hoàn tất rồi thử lại.');
+            return;
+        }
+
         try {
+            // Lưu file vào ổ đĩa cố định trước khi đẩy vào hàng đợi (worker async chạy sau,
+            // file tạm Livewire sẽ không còn) — xem thêm CreateClass::save.
+            $storedRelativePath = $this->importFile->storeAs(
+                'imports',
+                \Illuminate\Support\Str::uuid()->toString().'.'.strtolower($extension),
+                'local'
+            );
+            $importAbsolutePath = \Illuminate\Support\Facades\Storage::disk('local')->path($storedRelativePath);
+
             // Bước 1: Phân tích header trước (đọc 10 dòng đầu)
             $headingImport = new \App\Imports\HeadingRowImport($courseClass->id);
-            Excel::import($headingImport, $this->importFile->getRealPath(), null, $readerType);
+            Excel::import($headingImport, $importAbsolutePath, null, $readerType);
 
             if (!empty($headingImport->errors)) {
                 $this->importErrors = $headingImport->errors;
                 $this->isImportingStatus = false;
+                \Illuminate\Support\Facades\Storage::disk('local')->delete($storedRelativePath);
+                \App\Support\ImportLock::release($importUserId);
                 return;
             }
 
@@ -391,7 +431,7 @@ class StudentIndex extends Component
             // Bước 2: Tạo Bus::batch và StartImportJob
             $batch = \Illuminate\Support\Facades\Bus::batch([
                 new \App\Jobs\StartImportJob(
-                    $this->importFile->getRealPath(),
+                    $importAbsolutePath,
                     $courseClass->id,
                     $headingImport->dateHeaders,
                     $headingImport->meetingHeaders,
@@ -413,15 +453,19 @@ class StudentIndex extends Component
                     }
                 }
             })
+            ->finally(function () use ($storedRelativePath, $importUserId) {
+                \Illuminate\Support\Facades\Storage::disk('local')->delete($storedRelativePath);
+                \App\Support\ImportLock::release($importUserId);
+            })
             ->name('Import Students')
             ->dispatch();
 
             $this->importToken = $batch->id;
-            
-            // Cập nhật import_token vào StartImportJob vừa dispatch (Lưu ý: StartImportJob đã tạo không lấy được Token vì nó đang chạy)
-            // Khắc phục bằng cách truyền ID vào db, nhưng an toàn nhất là truyền thẳng batchId thông qua constructor của class đã nhận.
-            // Wait, StartImportJob lấy importToken từ đâu? Nó có thể dùng $this->batch()->id !
         } catch (\Exception $e) {
+            if (isset($storedRelativePath)) {
+                \Illuminate\Support\Facades\Storage::disk('local')->delete($storedRelativePath);
+            }
+            \App\Support\ImportLock::release($importUserId);
             $this->isImportingStatus = false;
             $this->importToken = null;
             $this->addError('importFile', 'Có lỗi khi đọc file: '.$e->getMessage());
@@ -506,7 +550,8 @@ class StudentIndex extends Component
         $member->delete();
 
         $this->closeArchiveConfirm();
-        session()->flash('success', 'Sinh viên đã được chuyển vào lưu trữ.');
+        event(new \App\Events\ClassDataUpdated((string) $member->class_id));
+        $this->dispatch('toast', message: 'Sinh viên đã được chuyển vào lưu trữ.', type: 'success');
     }
 
     public function restoreMember(int $memberId): void
@@ -515,7 +560,8 @@ class StudentIndex extends Component
         $member->restore();
         $member->update(['status' => ClassMember::STATUS_ACTIVE, 'status_changed_at' => null]);
 
-        session()->flash('success', 'Sinh viên đã được khôi phục vào lớp.');
+        event(new \App\Events\ClassDataUpdated((string) $member->class_id));
+        $this->dispatch('toast', message: 'Sinh viên đã được khôi phục vào lớp.', type: 'success');
     }
 
     public function openExport()
@@ -563,6 +609,18 @@ class StudentIndex extends Component
             $this->dispatch('toast', message: 'Đã xảy ra lỗi trong quá trình tạo file. Vui lòng thử lại sau hoặc liên hệ Admin.', type: 'error');
             return null;
         }
+    }
+
+    /** @return array<int, string> Kênh realtime "class.{id}" của mọi lớp giảng viên đang quản lý. */
+    public function realtimeChannels(): array
+    {
+        $prefix = (string) config('database.redis.options.prefix');
+
+        return CourseClass::query()
+            ->managedBy(auth()->id())
+            ->pluck('id')
+            ->map(fn ($id) => $prefix . 'class.' . $id)
+            ->all();
     }
 
     private function ownedMember(int $memberId, bool $withTrashed = false): ClassMember

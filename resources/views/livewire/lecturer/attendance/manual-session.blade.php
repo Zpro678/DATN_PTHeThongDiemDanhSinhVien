@@ -13,7 +13,8 @@
     $classColor = 'bg-gradient-to-br from-orange-50/80 via-white to-white border-orange-100';
 @endphp
 
-<div class="w-full px-6 pt-6 sm:px-10 lg:px-16 sm:pt-8 min-h-screen" style="background-color: #f8fafc;" x-data="{ modalOpen: false, confirmChecked: false, deleteModalOpen: false, createSessionModalOpen: false }">
+<div class="w-full px-6 pt-6 sm:px-10 lg:px-16 sm:pt-8 min-h-screen" style="background-color: #f8fafc;" x-data="{ modalOpen: false, confirmChecked: false, deleteModalOpen: false, createSessionModalOpen: false }"
+    x-init="window.listenRealtime && window.listenRealtime(@js($this->realtimeChannel()), () => $wire.$refresh(), 300)">
     
     {{-- SESSION INFO CARD --}}
     <div class="mb-8 flex flex-col gap-6 rounded-2xl border {{ $classColor }} p-7 shadow-sm xl:flex-row xl:justify-between">
@@ -89,8 +90,6 @@
             </div>
         </div>
     </div>
-
-    <x-notification.notification />
 
     {{-- TABLE SECTION --}}
     @include('components.lecturer.attendance.student-list')

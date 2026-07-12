@@ -48,7 +48,7 @@
                 <p class="mb-5 flex-1 text-sm leading-relaxed text-slate-500">{{ $warning['message'] }}</p>
                 <div class="flex items-center justify-between border-t border-slate-100 pt-4">
                     <span class="text-xs font-bold text-slate-400">{{ $warning['date'] }}</span>
-                    <a href="{{ route($warning['route']) }}" wire:navigate class="inline-flex items-center gap-1.5 text-sm font-bold {{ $style['link'] }} hover:underline">
+                    <a href="{{ route($warning['route'], $warning['params'] ?? []) }}" wire:navigate class="inline-flex items-center gap-1.5 text-sm font-bold {{ $style['link'] }} hover:underline">
                         {{ $warning['action_label'] }} <x-user.icon name="arrow-right" :size="16" />
                     </a>
                 </div>

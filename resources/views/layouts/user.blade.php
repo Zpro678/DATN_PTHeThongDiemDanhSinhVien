@@ -390,7 +390,9 @@
                                                 ])>
                                                 <x-user.icon :name="$item['icon']" :size="24" class="shrink-0" />
                                                 <span class="min-w-0 flex-1 truncate">{{ $item['label'] }}</span>
-                                                @if (($item['badge'] ?? 0) > 0)
+                                                @if (($item['route'] ?? null) === 'lecturer.leave-requests.index')
+                                                    <livewire:lecturer.pending-leave-badge :key="'drawer-pending-leave-'.auth()->id()" />
+                                                @elseif (($item['badge'] ?? 0) > 0)
                                                     <span class="inline-flex h-5 min-w-5 shrink-0 items-center justify-center rounded-full bg-error px-1.5 text-[11px] font-bold leading-none text-white">
                                                         {{ ($item['badge'] ?? 0) > 99 ? '99+' : $item['badge'] }}
                                                     </span>
@@ -431,11 +433,18 @@
                                             @php $isActive = $matchesActive($item['active'] ?? $item['route']); @endphp
                                             <a href="{{ $getRouteUrl($item) }}" wire:navigate
                                                 @class([
-                                                    'relative inline-flex h-14 shrink-0 items-center px-2 text-[15px] font-medium transition-colors',
+                                                    'relative inline-flex h-14 shrink-0 items-center gap-1.5 px-2 text-[15px] font-medium transition-colors',
                                                     'text-[#1a73e8] after:absolute after:left-2 after:right-2 after:bottom-0 after:h-1 after:rounded-t-[4px] after:bg-[#1a73e8]' => $isActive,
                                                     'text-[#3c4043] hover:text-[#1a73e8] after:absolute after:left-2 after:right-2 after:bottom-0 after:h-1 after:rounded-t-[4px] after:bg-[#1a73e8] after:scale-x-0 hover:after:scale-x-100 after:transition-transform after:duration-300 after:origin-center' => ! $isActive,
                                                 ])>
                                                 {{ $item['label'] }}
+                                                @if (($item['route'] ?? null) === 'lecturer.leave-requests.index')
+                                                    <livewire:lecturer.pending-leave-badge :key="'tab-pending-leave-'.auth()->id()" />
+                                                @elseif (($item['badge'] ?? 0) > 0)
+                                                    <span class="inline-flex h-5 min-w-5 shrink-0 items-center justify-center rounded-full bg-error px-1.5 text-[11px] font-bold leading-none text-white">
+                                                        {{ ($item['badge'] ?? 0) > 99 ? '99+' : $item['badge'] }}
+                                                    </span>
+                                                @endif
                                             </a>
                                         @endforeach
                                     @elseif ($learnGroupActive)

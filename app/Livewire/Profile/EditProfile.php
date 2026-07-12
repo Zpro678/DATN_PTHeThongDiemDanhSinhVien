@@ -274,7 +274,15 @@ class EditProfile extends Component
             $rules['password'][] = 'different:current_password';
         }
 
-        $this->validate($rules);
+        $messages = [
+            'current_password.required'         => 'Vui lòng nhập mật khẩu hiện tại.',
+            'current_password.current_password' => 'Mật khẩu hiện tại không đúng.',
+            'password.required'                 => 'Vui lòng nhập mật khẩu mới.',
+            'password.confirmed'                => 'Xác nhận mật khẩu mới không khớp.',
+            'password.different'                => 'Mật khẩu mới phải khác mật khẩu hiện tại.',
+        ];
+
+        $this->validate($rules, $messages);
 
         $user->update([
             'password' => Hash::make($this->password),
@@ -282,7 +290,7 @@ class EditProfile extends Component
 
         \App\Models\AuditLog::create([
             'user_id' => $user->id,
-            'action' => 'Đã thay đổi mật khẩu cá nhân',
+            'action' => 'password_changed',
             'table_name' => 'users',
             'row_id' => $user->id,
             'ip_address' => request()->ip(),

@@ -71,7 +71,7 @@
                 'FREE'       => [
                     'icon'    => 'shield',
                     'badge'   => 'bg-surface-container text-on-surface-variant',
-                    'ring'    => 'ring-outline-variant/30',
+                    'ring'    => 'ring-outline',
                     'btnClass'=> 'border border-outline-variant/50 bg-white text-on-surface hover:bg-surface-container shadow-sm',
                     'accent'  => 'text-on-surface-variant',
                     'dot'     => 'bg-outline',
@@ -87,7 +87,7 @@
                 'PREMIUM' => [
                     'icon'    => 'zap',
                     'badge'   => 'bg-tertiary/10 text-tertiary',
-                    'ring'    => 'ring-tertiary/60',
+                    'ring'    => 'ring-tertiary',
                     'btnClass'=> 'bg-tertiary text-white hover:bg-tertiary/90 shadow-lg shadow-tertiary/25',
                     'accent'  => 'text-tertiary',
                     'dot'     => 'bg-tertiary',
@@ -106,9 +106,10 @@
                 @endphp
 
                 <article @class([
-                    'relative flex flex-col rounded-2xl bg-white p-7 shadow-sm transition-all duration-300',
-                    'ring-2 ' . $style['ring'] . ' shadow-xl' => $isCurrent,
-                    'ring-1 ring-outline-variant/30 hover:ring-outline-variant/50 hover:shadow-md' => ! $isCurrent,
+                    'relative flex flex-col bg-white p-7 shadow-sm transition-all duration-300',
+                    // Gói hiện tại: bo góc lớn hơn + khung viền đậm theo màu gói để nổi bật rõ ràng.
+                    'rounded-3xl ring-2 ' . $style['ring'] . ' shadow-xl' => $isCurrent,
+                    'rounded-2xl ring-1 ring-outline-variant/30 hover:ring-outline-variant/50 hover:shadow-md' => ! $isCurrent,
                 ])>
                     @if ($isCurrent)
                         <span class="absolute -top-3.5 left-1/2 -translate-x-1/2 rounded-full bg-primary px-4 py-1 text-[11px] font-bold uppercase tracking-wider text-white shadow-md shadow-primary/30">

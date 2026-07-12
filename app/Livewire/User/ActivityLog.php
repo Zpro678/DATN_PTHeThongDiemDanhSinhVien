@@ -17,6 +17,29 @@ class ActivityLog extends Component
     public string $dateTo = '';
 
     /**
+     * Whitelist các action nghiệp vụ được phép hiển thị trong Lịch sử hoạt động.
+     *
+     * Chỉ những action có ý nghĩa với người dùng mới xuất hiện — loại bỏ các bản ghi
+     * kỹ thuật/nhiễu (created/updated/deleted tự sinh, hoặc action cũ không hợp lệ).
+     */
+    public const ALLOWED_ACTIONS = [
+        'login',
+        'class_created',
+        'class_joined',
+        'session_created',
+        'session_closed',
+        'attendance_check_in',
+        'manual_attendance',
+        'leave_request_submitted',
+        'leave_request_edited',
+        'leave_request_approved',
+        'leave_request_rejected',
+        'profile_updated',
+        'password_changed',
+        'feedback_submitted',
+    ];
+
+    /**
      * Danh sách action có thể lọc — tên thân thiện để hiển thị trong dropdown.
      */
     public function getActionLabels(): array
@@ -35,6 +58,8 @@ class ActivityLog extends Component
             'leave_request_approved'   => 'Duyệt đơn xin nghỉ',
             'leave_request_rejected'   => 'Từ chối đơn xin nghỉ',
             'profile_updated'          => 'Cập nhật hồ sơ',
+            'password_changed'         => 'Đổi mật khẩu',
+            'feedback_submitted'       => 'Gửi phản hồi',
         ];
     }
 
@@ -68,6 +93,7 @@ class ActivityLog extends Component
     {
         $query = AuditLog::query()
             ->where('user_id', auth()->id())
+            ->whereIn('action', self::ALLOWED_ACTIONS)
             ->with('courseClass:id,name,join_key')
             ->latest('created_at');
 

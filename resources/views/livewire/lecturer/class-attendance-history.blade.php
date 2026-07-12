@@ -57,6 +57,7 @@
 
     init() {
         this.$watch('viewMode', val => this.$dispatch('view-mode-changed', val));
+        window.listenRealtime && window.listenRealtime(@js($this->realtimeChannel()), () => $wire.$refresh(), 300);
     }
 }" @go-back-matrix.window="viewMode = 'matrix'; scrollToTop()" class="flex flex-col flex-1 min-h-0 font-sans text-slate-800 animate-in fade-in slide-in-from-bottom-4 duration-500">
 

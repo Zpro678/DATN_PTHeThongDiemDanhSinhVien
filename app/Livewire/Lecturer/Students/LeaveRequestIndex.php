@@ -117,6 +117,18 @@ class LeaveRequestIndex extends Component
             ->findOrFail($requestId);
     }
 
+    /** @return array<int, string> Kênh realtime "class.{id}" của mọi lớp giảng viên đang quản lý. */
+    public function realtimeChannels(): array
+    {
+        $prefix = (string) config('database.redis.options.prefix');
+
+        return CourseClass::query()
+            ->managedBy(auth()->id())
+            ->pluck('id')
+            ->map(fn ($id) => $prefix . 'class.' . $id)
+            ->all();
+    }
+
     public function render(): View
     {
         $classes = CourseClass::query()

@@ -63,6 +63,11 @@ class ClassShow extends Component
     // Tổng số buổi học đã hoàn thành hoặc đang diễn ra
     public int $sessionsCompleted = 0;
 
+    // Số BUỔI (ClassMeeting) đã điểm danh — mỗi buổi được tạo khi bắt đầu điểm danh
+    // (status active) rồi chốt lại (status closed). Đây là con số hiển thị cho người dùng,
+    // KHÔNG đếm theo phiên (ClassSession) vì một buổi có thể gồm nhiều phiên.
+    public int $meetingsCompleted = 0;
+
     // Số lượng đơn xin phép nghỉ đang chờ duyệt của lớp này
     public int $pendingLeaveRequests = 0;
 
@@ -124,7 +129,8 @@ class ClassShow extends Component
         $this->studentsCount = $this->class->members()->where('status', \App\Models\ClassMember::STATUS_ACTIVE)->count();
         $this->sessionsCount = $this->class->sessions()->count();
         $this->sessionsCompleted = $this->class->sessions()->whereIn('status', ['closed', 'active'])->count();
-        
+        $this->meetingsCompleted = $this->class->meetings()->whereIn('status', ['closed', 'active'])->count();
+
         $dbErrors = \App\Models\ImportError::where('import_token', $this->importToken)->orderBy('row_index')->get();
         if ($dbErrors->count() > 0) {
             $this->importErrors = $dbErrors->map(function ($error) {
@@ -132,15 +138,29 @@ class ClassShow extends Component
             })->toArray();
         }
 
-        if ($dbErrors->count() === 0) {
+        // Số SV bị bỏ qua do vượt giới hạn SV/lớp của gói (chunk job đếm vào cache theo token).
+        $skipped   = (int) cache()->pull('import_skipped_' . $this->importToken, 0);
+        $skipLimit = (int) cache()->pull('import_skipped_limit_' . $this->importToken, 0);
+        if ($skipped > 0) {
+            array_unshift(
+                $this->importErrors,
+                "{$skipped} sinh viên KHÔNG được thêm vào lớp vì đã đạt giới hạn {$skipLimit} sinh viên/lớp của gói hiện tại. Vui lòng nâng cấp gói để thêm nhiều hơn."
+            );
+            app(\App\Services\NotificationService::class)
+                ->notifyImportStudentLimitReached((int) auth()->id(), $this->class, $skipped, $skipLimit);
+        }
+
+        if ($dbErrors->count() === 0 && $skipped === 0) {
             $this->isImportingStatus = false;
             $message = "Đã xử lý xong file dữ liệu sinh viên thành công.";
             $this->dispatch('toast', message: $message, type: 'success');
         } else {
-            // Có cảnh báo/lỗi thì mở lại modal để người dùng đọc
+            // Có cảnh báo/lỗi (hoặc bị cắt bớt do giới hạn) thì mở lại modal để người dùng đọc.
             $this->isImporting = true;
             $this->isImportingStatus = false;
-            $message = "Đã xử lý xong dữ liệu, nhưng có một số dòng bị lỗi. Vui lòng xem chi tiết.";
+            $message = $skipped > 0
+                ? "Import xong nhưng {$skipped} sinh viên bị bỏ qua do vượt giới hạn của gói. Vui lòng xem chi tiết."
+                : "Đã xử lý xong dữ liệu, nhưng có một số dòng bị lỗi. Vui lòng xem chi tiết.";
             $this->dispatch('toast', message: $message, type: 'warning');
         }
 
@@ -188,6 +208,7 @@ class ClassShow extends Component
         $this->studentsCount = $this->class->members()->where('status', \App\Models\ClassMember::STATUS_ACTIVE)->count();
         $this->sessionsCount = $this->class->sessions()->count();
         $this->sessionsCompleted = $this->class->sessions()->whereIn('status', ['closed', 'active'])->count();
+        $this->meetingsCompleted = $this->class->meetings()->whereIn('status', ['closed', 'active'])->count();
         $this->pendingLeaveRequests = LeaveRequest::whereHas('classMeeting', function ($q) {
             $q->where('class_id', $this->class->id);
         })->where('status', 'pending')->count();
@@ -509,14 +530,33 @@ class ClassShow extends Component
             default => \Maatwebsite\Excel\Excel::XLSX,
         };
 
+        // Khoá: mỗi tài khoản chỉ 1 lượt import chạy tại một thời điểm.
+        $importUserId = (int) auth()->id();
+        if (! \App\Support\ImportLock::acquire($importUserId)) {
+            $this->isImportingStatus = false;
+            $this->addError('importFile', 'Bạn đang có một lượt import đang chạy. Vui lòng đợi hoàn tất rồi thử lại.');
+            return;
+        }
+
         try {
+            // Lưu file vào ổ đĩa cố định trước khi đẩy vào hàng đợi (worker async chạy sau,
+            // file tạm Livewire sẽ không còn) — xem thêm CreateClass::save.
+            $storedRelativePath = $this->importFile->storeAs(
+                'imports',
+                \Illuminate\Support\Str::uuid()->toString().'.'.strtolower($extension),
+                'local'
+            );
+            $importAbsolutePath = \Illuminate\Support\Facades\Storage::disk('local')->path($storedRelativePath);
+
             // Bước 1: Phân tích header trước (đọc 10 dòng đầu)
             $headingImport = new \App\Imports\HeadingRowImport($this->class->id);
-            Excel::import($headingImport, $this->importFile->getRealPath(), null, $readerType);
+            Excel::import($headingImport, $importAbsolutePath, null, $readerType);
 
             if (!empty($headingImport->errors)) {
                 $this->importErrors = $headingImport->errors;
                 $this->isImportingStatus = false;
+                \Illuminate\Support\Facades\Storage::disk('local')->delete($storedRelativePath);
+                \App\Support\ImportLock::release($importUserId);
                 return;
             }
 
@@ -525,7 +565,7 @@ class ClassShow extends Component
             // Bước 2: Tạo Bus::batch và StartImportJob
             $batch = \Illuminate\Support\Facades\Bus::batch([
                 new \App\Jobs\StartImportJob(
-                    $this->importFile->getRealPath(),
+                    $importAbsolutePath,
                     $this->class->id,
                     $headingImport->dateHeaders,
                     $headingImport->meetingHeaders,
@@ -547,14 +587,22 @@ class ClassShow extends Component
                     }
                 }
             })
+            ->finally(function () use ($storedRelativePath, $importUserId) {
+                \Illuminate\Support\Facades\Storage::disk('local')->delete($storedRelativePath);
+                \App\Support\ImportLock::release($importUserId);
+            })
             ->name('Import Students')
             ->dispatch();
 
             $this->importToken = $batch->id;
-            
+
             // Đóng popup để người dùng rảnh tay, hiện thanh tiến trình chạy ngầm
             $this->isImporting = false;
         } catch (\Exception $e) {
+            if (isset($storedRelativePath)) {
+                \Illuminate\Support\Facades\Storage::disk('local')->delete($storedRelativePath);
+            }
+            \App\Support\ImportLock::release($importUserId);
             $this->isImportingStatus = false;
             $this->importToken = null;
             $this->addError('importFile', 'Có lỗi khi đọc file: '.$e->getMessage());

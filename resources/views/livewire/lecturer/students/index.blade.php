@@ -1,12 +1,6 @@
-<div x-data="{ showBan: false }" class="w-full space-y-6 px-6 py-6 pb-24 sm:px-10 lg:px-16">
+<div x-data="{ showBan: false }" class="w-full space-y-6 px-6 py-6 pb-24 sm:px-10 lg:px-16"
+    x-init="(@js($this->realtimeChannels())).forEach(ch => window.listenRealtime && window.listenRealtime(ch, () => $wire.$refresh(), 300))">
 
-
-    @if (session('status'))
-        <div class="rounded-2xl border border-emerald-200 bg-emerald-50 px-5 py-3 text-sm font-semibold text-emerald-700">{{ session('status') }}</div>
-    @endif
-    @if (session('success'))
-        <div class="rounded-2xl border border-emerald-200 bg-emerald-50 px-5 py-3 text-sm font-semibold text-emerald-700">{{ session('success') }}</div>
-    @endif
 
     <section class="grid grid-cols-2 gap-4 sm:grid-cols-3 lg:grid-cols-5">
         @foreach ([

@@ -465,5 +465,7 @@ class AttendanceCalculator
 
             $summary->save();
         }
+
+        event(new \App\Events\ClassDataUpdated((string) $meeting->class_id));
     }
 }

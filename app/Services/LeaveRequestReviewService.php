@@ -56,6 +56,8 @@ class LeaveRequestReviewService
             ]);
         });
 
+        event(new \App\Events\ClassDataUpdated((string) $leaveRequest->classMember->class_id));
+
         // Gửi thông báo cho học viên sau khi transaction hoàn thành.
         $studentUser = $leaveRequest->classMember?->user;
         if ($studentUser) {
@@ -83,6 +85,8 @@ class LeaveRequestReviewService
             'ip_address' => request()->ip(),
             'user_agent' => request()->userAgent(),
         ]);
+
+        event(new \App\Events\ClassDataUpdated((string) $leaveRequest->classMember->class_id));
 
         // Gửi thông báo cho học viên.
         $studentUser = $leaveRequest->classMember?->user;

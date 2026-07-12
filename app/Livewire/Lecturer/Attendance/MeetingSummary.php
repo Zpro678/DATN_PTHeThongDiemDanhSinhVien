@@ -39,6 +39,11 @@ class MeetingSummary extends Component
         $this->loadDrafts();
     }
 
+    public function realtimeChannel(): string
+    {
+        return (string) config('database.redis.options.prefix') . 'class.' . $this->meeting->class_id;
+    }
+
     private function loadDrafts(): void
     {
         $summaries = $this->meeting->summaries()->get();

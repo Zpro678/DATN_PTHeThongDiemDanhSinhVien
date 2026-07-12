@@ -1,4 +1,5 @@
-<div class="w-full px-6 pt-6 sm:px-10 lg:px-16 sm:pt-8 min-h-screen space-y-6 pb-24">
+<div class="w-full px-6 pt-6 sm:px-10 lg:px-16 sm:pt-8 min-h-screen space-y-6 pb-24"
+    x-data x-init="window.listenRealtime && window.listenRealtime(@js($this->realtimeChannel()), () => $wire.$refresh(), 300)">
 
     <section class="relative flex flex-col justify-between gap-6 overflow-hidden rounded-3xl border border-indigo-100 bg-gradient-to-br from-indigo-50/80 via-white to-white p-6 shadow-sm md:flex-row md:items-center sm:p-8">
         <div class="absolute -right-12 -top-12 h-48 w-48 rounded-full bg-indigo-200/40 blur-3xl"></div>
@@ -45,8 +46,6 @@
             </a>
         </div>
     </section>
-
-    <x-notification.notification />
 
     <section class="overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm">
         <div class="border-b border-slate-100 px-6 py-5">

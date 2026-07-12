@@ -35,6 +35,11 @@ class ClassAttendanceHistory extends Component
         }
     }
 
+    public function realtimeChannel(): string
+    {
+        return (string) config('database.redis.options.prefix') . 'class.' . $this->courseClass->id;
+    }
+
     public function updatedPerPage()
     {
         $this->resetPage();

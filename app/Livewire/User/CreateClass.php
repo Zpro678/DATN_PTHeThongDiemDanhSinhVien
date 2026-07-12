@@ -158,14 +158,35 @@ class CreateClass extends Component
                 default => \Maatwebsite\Excel\Excel::XLSX,
             };
 
+            // Khoá: mỗi tài khoản chỉ 1 lượt import chạy tại một thời điểm. Lớp đã tạo
+            // xong nên chỉ bỏ qua phần import (người dùng có thể import lại sau).
+            $importUserId = (int) auth()->id();
+            if (! \App\Support\ImportLock::acquire($importUserId)) {
+                session()->flash('status', 'Lớp đã được tạo. Bạn đang có một lượt import khác đang chạy — vui lòng import danh sách khi lượt đó hoàn tất.');
+                $this->redirectRoute('lecturer.classes.show', ['courseClass' => $courseClass->id], navigate: true);
+                return;
+            }
+
             try {
+                // Lưu file vào ổ đĩa cố định (storage/app/imports) trước khi đẩy vào hàng đợi.
+                // BẮT BUỘC cho xử lý bất đồng bộ: worker redis chạy ở tiến trình/thời điểm khác,
+                // lúc đó file tạm của Livewire đã bị dọn -> phải có bản lưu bền vững.
+                $storedRelativePath = $this->importFile->storeAs(
+                    'imports',
+                    \Illuminate\Support\Str::uuid()->toString().'.'.strtolower($extension),
+                    'local'
+                );
+                $importAbsolutePath = \Illuminate\Support\Facades\Storage::disk('local')->path($storedRelativePath);
+
                 // Bước 1: Phân tích header trước (đọc 10 dòng đầu)
                 $headingImport = new \App\Imports\HeadingRowImport($courseClass->id);
-                Excel::import($headingImport, $this->importFile->getRealPath(), null, $readerType);
+                Excel::import($headingImport, $importAbsolutePath, null, $readerType);
 
                 if (!empty($headingImport->errors)) {
                     session()->flash('import_errors', $headingImport->errors);
                     session()->flash('status', "Tạo lớp học thành công, nhưng đọc file có lỗi.");
+                    \Illuminate\Support\Facades\Storage::disk('local')->delete($storedRelativePath);
+                    \App\Support\ImportLock::release($importUserId);
                     $this->redirectRoute('lecturer.classes.show', ['courseClass' => $courseClass->id], navigate: true);
                     return;
                 }
@@ -175,7 +196,7 @@ class CreateClass extends Component
                 // Bước 2: Tạo Bus::batch và StartImportJob
                 $batch = \Illuminate\Support\Facades\Bus::batch([
                     new \App\Jobs\StartImportJob(
-                        $this->importFile->getRealPath(),
+                        $importAbsolutePath,
                         $courseClass->id,
                         $headingImport->dateHeaders,
                         $headingImport->meetingHeaders,
@@ -196,6 +217,11 @@ class CreateClass extends Component
                         }
                     }
                 })
+                ->finally(function () use ($storedRelativePath, $importUserId) {
+                    // Dọn file import + nhả khoá import sau khi xử lý xong (kể cả khi có job thất bại).
+                    \Illuminate\Support\Facades\Storage::disk('local')->delete($storedRelativePath);
+                    \App\Support\ImportLock::release($importUserId);
+                })
                 ->name('Import Students')
                 ->dispatch();
 
@@ -203,6 +229,11 @@ class CreateClass extends Component
                 $this->redirectRoute('lecturer.classes.show', ['courseClass' => $courseClass->id, 'importToken' => $batch->id], navigate: true);
                 return;
             } catch (\Exception $e) {
+                // Dọn file đã lưu + nhả khoá nếu lỗi trước khi batch được điều phối.
+                if (isset($storedRelativePath)) {
+                    \Illuminate\Support\Facades\Storage::disk('local')->delete($storedRelativePath);
+                }
+                \App\Support\ImportLock::release($importUserId);
                 session()->flash('status', 'Tạo lớp thành công nhưng lỗi khi đọc file import: ' . $e->getMessage());
                 $this->redirectRoute('lecturer.classes.show', ['courseClass' => $courseClass->id], navigate: true);
                 return;

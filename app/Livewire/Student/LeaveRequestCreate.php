@@ -121,6 +121,8 @@ class LeaveRequestCreate extends Component
             $owner->notify(new \App\Notifications\LeaveRequestSubmitted($leaveRequest));
         }
 
+        event(new \App\Events\ClassDataUpdated((string) $this->class_id));
+
         session()->flash('success', 'Bạn đã gửi đơn xin nghỉ thành công.');
 
         app(AuditLogService::class)->log('leave_request_submitted', [

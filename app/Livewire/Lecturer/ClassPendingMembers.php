@@ -43,6 +43,29 @@ class ClassPendingMembers extends Component
         $this->dispatch('open-modal', 'confirm-reject');
     }
 
+    /**
+     * Số chỗ còn trống của lớp theo giới hạn SV/lớp của gói chủ lớp.
+     * Trả PHP_INT_MAX khi không có chủ lớp hoặc gói không cấu hình giới hạn (coi như không giới hạn).
+     */
+    private function remainingSlots(): int
+    {
+        $owner = $this->courseClass->owner;
+        if (! $owner) {
+            return PHP_INT_MAX;
+        }
+
+        $max = app(\App\Services\SubscriptionService::class)->maxStudentsPerClass($owner);
+        if ($max <= 0) {
+            return PHP_INT_MAX; // Không cấu hình -> không chặn nhầm.
+        }
+
+        $active = ClassMember::where('class_id', $this->courseClass->id)
+            ->where('status', ClassMember::STATUS_ACTIVE)
+            ->count();
+
+        return max(0, $max - $active);
+    }
+
     public function approve(int $requestId)
     {
         $request = ClassJoinRequest::where('class_id', $this->courseClass->id)
@@ -51,6 +74,12 @@ class ClassPendingMembers extends Component
             ->first();
 
         if ($request) {
+            // Chặn duyệt khi lớp đã đạt giới hạn số học viên của gói.
+            if ($this->remainingSlots() <= 0) {
+                $this->dispatch('toast', message: 'Lớp đã đạt giới hạn số học viên của gói nên không thể duyệt thêm. Vui lòng nâng cấp gói hoặc xóa bớt học viên.', type: 'error');
+                return;
+            }
+
             $request->update(['status' => ClassJoinRequest::STATUS_APPROVED]);
             
             $member = ClassMember::withTrashed()->firstOrCreate([
@@ -106,7 +135,21 @@ class ClassPendingMembers extends Component
             ->get();
 
         if ($requests->isNotEmpty()) {
+            // Chỉ duyệt trong phạm vi chỗ còn trống; phần vượt giới hạn bị bỏ qua và báo rõ.
+            $remaining = $this->remainingSlots();
+
+            if ($remaining <= 0) {
+                $this->dispatch('toast', message: 'Lớp đã đạt giới hạn số học viên của gói nên không thể duyệt thêm. Vui lòng nâng cấp gói hoặc xóa bớt học viên.', type: 'error');
+                $this->dispatch('close-modal', 'confirm-approve-all');
+                return;
+            }
+
+            $approved = 0;
             foreach ($requests as $request) {
+                if ($approved >= $remaining) {
+                    break; // Hết chỗ theo giới hạn của gói.
+                }
+
                 $request->update(['status' => ClassJoinRequest::STATUS_APPROVED]);
                 $member = ClassMember::withTrashed()->firstOrCreate([
                     'class_id' => $this->courseClass->id,
@@ -128,10 +171,20 @@ class ClassPendingMembers extends Component
                 if ($request->user) {
                     $request->user->notify(new \App\Notifications\ClassJoinedNotification($this->courseClass));
                 }
-            }
-            \App\Events\StudentJoinedClass::dispatch((string) $this->courseClass->id);
 
-            $this->dispatch('toast', message: 'Đã duyệt tất cả ' . $requests->count() . ' học viên thành công.', type: 'success');
+                $approved++;
+            }
+
+            if ($approved > 0) {
+                \App\Events\StudentJoinedClass::dispatch((string) $this->courseClass->id);
+            }
+
+            $skipped = $requests->count() - $approved;
+            if ($skipped > 0) {
+                $this->dispatch('toast', message: "Đã duyệt {$approved} học viên. {$skipped} học viên còn lại không được duyệt vì lớp đã đạt giới hạn của gói.", type: 'warning');
+            } else {
+                $this->dispatch('toast', message: 'Đã duyệt tất cả ' . $approved . ' học viên thành công.', type: 'success');
+            }
             $this->dispatch('close-modal', 'confirm-approve-all');
         }
     }

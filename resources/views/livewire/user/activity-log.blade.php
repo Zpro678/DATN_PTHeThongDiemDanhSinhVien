@@ -49,6 +49,8 @@
         'leave_request_approved'  => ['icon' => 'file-check',       'bg' => 'bg-green-100',   'text' => 'text-green-700',  'dot' => 'bg-green-500',  'label' => 'Duyệt đơn xin nghỉ'],
         'leave_request_rejected'  => ['icon' => 'file-x',           'bg' => 'bg-rose-100',    'text' => 'text-rose-700',   'dot' => 'bg-rose-500',   'label' => 'Từ chối đơn xin nghỉ'],
         'profile_updated'         => ['icon' => 'user-check',       'bg' => 'bg-purple-100',  'text' => 'text-purple-700', 'dot' => 'bg-purple-500', 'label' => 'Cập nhật hồ sơ'],
+        'password_changed'        => ['icon' => 'lock',             'bg' => 'bg-fuchsia-100', 'text' => 'text-fuchsia-700','dot' => 'bg-fuchsia-500','label' => 'Đổi mật khẩu'],
+        'feedback_submitted'      => ['icon' => 'message-circle',    'bg' => 'bg-sky-100',     'text' => 'text-sky-700',    'dot' => 'bg-sky-500',    'label' => 'Gửi phản hồi'],
     ];
 
     $defaultMeta = ['icon' => 'activity', 'bg' => 'bg-gray-100', 'text' => 'text-gray-700', 'dot' => 'bg-gray-400', 'label' => 'Hoạt động'];
@@ -78,6 +80,10 @@
         'class_session_id' => 'Mã buổi học',
         'student_code'     => 'Mã sinh viên',
         'rejected_reason'  => 'Lý do từ chối',
+
+        // Phản hồi / góp ý
+        'title'            => 'Tiêu đề',
+        'feedback_type'    => 'Loại phản hồi',
     ];
 @endphp
 

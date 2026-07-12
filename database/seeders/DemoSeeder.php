@@ -45,6 +45,7 @@ class DemoSeeder extends Seeder
         Subscription::create([
             'user_id' => $teacher->id,
             'plan_id' => $pro->id,
+            'paid_plan_id' => $pro->id, // Gói đã trả tiền — cho phép hạ về Free rồi quay lại PRO miễn phí khi còn hạn.
             'start_date' => now()->subDays(5),
             'end_date' => now()->addDays(25),
             'status' => 'active',
@@ -72,7 +73,8 @@ class DemoSeeder extends Seeder
         ]);
         AuditLog::create([
             'user_id' => $teacher->id,
-            'action' => 'LOGIN_SUCCESS',
+            'action' => 'login',
+            'new_values' => ['method' => 'email', 'ip' => '127.0.0.1'],
             'ip_address' => '127.0.0.1',
             'created_at' => now(),
         ]);

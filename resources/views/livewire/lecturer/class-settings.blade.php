@@ -17,13 +17,6 @@
         </div>
     </div>
 
-    @if (session('status'))
-        <div class="mb-6 flex items-center rounded-2xl border border-green-200 bg-green-50 p-4 font-bold text-green-700">
-            <x-user.icon name="check-circle" :size="20" class="mr-3 text-green-500" />
-            {{ session('status') }}
-        </div>
-    @endif
-
     <form wire:submit="save" id="class-settings-form">
         <div class="flex flex-col lg:flex-row gap-6 items-start">
 
@@ -277,13 +270,6 @@
         </div>
 
         <div class="p-6 space-y-5">
-            @if (session('coowner_status'))
-                <div class="flex items-center rounded-xl border border-green-200 bg-green-50 p-3 text-sm font-bold text-green-700">
-                    <x-user.icon name="check-circle" :size="18" class="mr-2 text-green-500" />
-                    {{ session('coowner_status') }}
-                </div>
-            @endif
-
             {{-- Thêm đồng chủ theo email --}}
             <div>
                 <label class="mb-2 block text-sm font-bold text-on-surface">Thêm đồng chủ theo email</label>

@@ -23,6 +23,19 @@ class GoogleController extends Controller
      */
     public function callback()
     {
+        // Google chuyển hướng ngược về đây. Nếu người dùng bấm "Huỷ"/từ chối quyền,
+        // hoặc OAuth gặp sự cố, Google trả về ?error=... và KHÔNG có ?code=...
+        // Phải chặn trước khi gọi ->user(), nếu không Socialite vẫn POST lên token
+        // endpoint với code rỗng và nhận lỗi khó hiểu "Missing required parameter: code".
+        if (request()->has('error')) {
+            \Log::warning('Google Login Cancelled/Error: ' . request('error'));
+            return redirect()->route('login')->withErrors(['email' => 'Bạn đã huỷ đăng nhập bằng Google hoặc chưa cấp quyền truy cập.']);
+        }
+
+        if (! request()->filled('code')) {
+            return redirect()->route('login')->withErrors(['email' => 'Không nhận được phản hồi hợp lệ từ Google. Vui lòng thử đăng nhập lại.']);
+        }
+
         try {
             $googleUser = Socialite::driver('google')->user();
         } catch (\Exception $e) {

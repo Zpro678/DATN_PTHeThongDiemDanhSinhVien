@@ -22,6 +22,8 @@ class ManualAttendanceSession extends Component
 
     public int $sessionId;
 
+    public string $classId = '';
+
     public string $search = '';
 
     public string $statusFilter = 'all';
@@ -39,7 +41,13 @@ class ManualAttendanceSession extends Component
         $ownedSession->meeting?->closeIfExpired();
 
         $this->sessionId = $ownedSession->id;
+        $this->classId = (string) $ownedSession->class_id;
         $this->initDrafts();
+    }
+
+    public function realtimeChannel(): string
+    {
+        return (string) config('database.redis.options.prefix') . 'class.' . $this->classId;
     }
 
     /**

@@ -253,6 +253,7 @@ class Upgrade extends Component
     public function render(): View
     {
         $plans = Plan::where('is_active', true)
+            ->with('config') // Kèm giới hạn admin cấu hình (số lớp, số SV/lớp) để hiển thị.
             ->orderBy('price')
             ->get();
 

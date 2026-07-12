@@ -20,6 +20,22 @@ class Plan extends Model
     public const TIER_PRO = 'PRO';
     public const TIER_PREMIUM = 'PREMIUM';
 
+    // Ngưỡng coi như "không giới hạn": admin nhập >= giá trị này (vd 9999) sẽ
+    // hiển thị "Không giới hạn" thay vì con số thô cho người dùng.
+    public const UNLIMITED_THRESHOLD = 9999;
+
+    /**
+     * Nhãn hiển thị cho một giới hạn số (null hoặc >= ngưỡng => "Không giới hạn").
+     */
+    public static function limitLabel(?int $value, string $unlimited, string $prefix, string $suffix): string
+    {
+        if ($value === null || $value >= self::UNLIMITED_THRESHOLD) {
+            return $unlimited;
+        }
+
+        return $prefix . $value . $suffix;
+    }
+
     protected $table = 'plans';
 
     protected $fillable = [
@@ -79,16 +95,20 @@ class Plan extends Model
     protected function features(): Attribute
     {
         return Attribute::get(function () {
+            // Giới hạn do admin cấu hình ở plan_configs — hiển thị đầu danh sách
+            // để người dùng thấy ngay số lớp & số học viên/lớp mỗi gói cho phép.
             $list = [
+                self::limitLabel($this->config?->max_classes, 'Không giới hạn số lớp học', 'Tối đa ', ' lớp học'),
+                self::limitLabel($this->config?->max_students_per_class, 'Không giới hạn học viên / lớp', 'Tối đa ', ' học viên / lớp'),
                 'Điểm danh bằng QR Code / Link',
                 'Quản lý chuyên cần & cảnh báo',
                 'Xác thực vị trí GPS',
             ];
-            
+
             if ($this->config?->can_export_excel) {
                 $list[] = 'Xuất báo cáo ra Excel';
             }
-            
+
             return $list;
         });
     }
