@@ -1,4 +1,4 @@
-<div x-data="{ showImportModal: false, showShareModal: false, showBan: false, banConfirm: { open: false, id: null, name: '' } }"
+<div x-data="{ showImportModal: false, showShareModal: false, showJoinQrZoom: false, showBan: false, banConfirm: { open: false, id: null, name: '' } }"
     x-init="window.listenRealtime && window.listenRealtime(@js($this->realtimeChannel()), () => $wire.$refresh(), 300)"
     class="w-full space-y-6 px-6 py-6 pb-24 sm:px-10 lg:px-16 animate-in fade-in slide-in-from-bottom-4 duration-500">
 
@@ -570,13 +570,25 @@
                     {{-- Mã QR tham gia: học viên quét để vào lớp; chưa đăng nhập sẽ được yêu cầu đăng nhập trước. --}}
                     @if($shareQr)
                         <div class="flex flex-col items-center gap-3">
-                            <div class="rounded-2xl border border-slate-200 bg-white p-3 shadow-sm [&>svg]:h-44 [&>svg]:w-44">
+                            <button type="button" @click="showJoinQrZoom = true"
+                                class="group relative rounded-2xl border border-slate-200 bg-white p-3 shadow-sm transition hover:border-blue-300 hover:shadow-md [&>svg]:h-44 [&>svg]:w-44"
+                                title="Phóng to mã QR">
                                 {!! $shareQr !!}
-                            </div>
+                                <span class="absolute bottom-2 right-2 flex h-8 w-8 items-center justify-center rounded-lg bg-slate-900/80 text-white opacity-0 transition group-hover:opacity-100">
+                                    <x-user.icon name="maximize" :size="16" />
+                                </span>
+                            </button>
+                            <button type="button" @click="showJoinQrZoom = true"
+                                class="inline-flex items-center gap-1.5 text-xs font-bold text-blue-600 transition hover:text-blue-700">
+                                <x-user.icon name="maximize" :size="14" />
+                                Phóng to để trình chiếu
+                            </button>
                             <p class="max-w-[260px] text-center text-xs text-slate-500">
                                 Học viên quét mã QR bằng camera để tham gia lớp. Nếu chưa đăng nhập, hệ thống sẽ yêu cầu đăng nhập trước.
                             </p>
-                        </div>
+                        </div>@endif
+
+                    @if($shareQr)
 
                         <div class="flex items-center gap-3">
                             <div class="h-px flex-1 bg-slate-100"></div>
@@ -696,6 +708,69 @@
                         <x-user.icon name="alert-triangle" :size="16" />
                         Cấm thi
                     </button>
+                </div>
+            </div>
+        </div>
+    </template>
+
+    {{-- Màn hình lớn: QR tham gia lớp (trình chiếu cho học viên quét) --}}
+    <template x-teleport="body">
+        <div
+            x-show="showJoinQrZoom"
+            x-cloak
+            @keydown.escape.window="showJoinQrZoom = false"
+            x-transition.opacity
+            class="fixed inset-0 z-[130] flex items-center justify-center overflow-y-auto bg-gradient-to-br from-slate-900 via-slate-900 to-blue-950 p-4 sm:p-8"
+        >
+            {{-- Khối trang trí nền --}}
+            <div class="pointer-events-none absolute -left-40 -top-40 h-96 w-96 rounded-full bg-blue-600/20 blur-[120px]"></div>
+            <div class="pointer-events-none absolute -bottom-40 -right-40 h-96 w-96 rounded-full bg-indigo-500/20 blur-[120px]"></div>
+
+            <button type="button" @click="showJoinQrZoom = false"
+                class="absolute right-5 top-5 z-10 flex h-12 w-12 items-center justify-center rounded-full bg-white/10 text-white ring-1 ring-white/20 backdrop-blur transition hover:bg-white/20">
+                <x-user.icon name="x" :size="26" />
+            </button>
+
+            <div x-show="showJoinQrZoom" x-transition.scale.origin.center
+                class="relative w-full max-w-md overflow-hidden rounded-[32px] bg-white shadow-2xl">
+                {{-- Header thương hiệu + tên lớp --}}
+                <div class="relative overflow-hidden bg-gradient-to-br from-blue-600 to-indigo-600 px-8 pb-10 pt-8 text-center text-white">
+                    <div class="absolute inset-0 opacity-10 bg-[url('data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMjAiIGhlaWdodD0iMjAiIHhtbG5zPSJodHRwOi8vd3d3LnczLm9yZy8yMDAwL3N2ZyI+PGNpcmNsZSBjeD0iMSIgY3k9IjEiIHI9IjEiIGZpbGw9IiNmZmYiLz48L3N2Zz4=')]"></div>
+                    <div class="relative z-10">
+                        <div class="mx-auto mb-4 inline-flex items-center gap-2 rounded-full bg-white/15 px-4 py-1.5 text-xs font-bold uppercase tracking-widest ring-1 ring-white/25 backdrop-blur">
+                            <x-user.icon name="log-in" :size="14" />
+                            Tham gia lớp học
+                        </div>
+                        <h2 class="text-2xl font-black leading-tight drop-shadow-sm">{{ $class->name }}</h2>
+                        @if($class->owner?->name)
+                            <p class="mt-2 inline-flex items-center gap-1.5 text-sm font-semibold text-blue-100">
+                                <x-user.icon name="user" :size="15" />
+                                {{ $class->owner->name }}
+                            </p>
+                        @endif
+                    </div>
+                </div>
+
+                {{-- Mã QR lớn --}}
+                <div class="-mt-6 px-8">
+                    <div class="mx-auto w-fit rounded-3xl border border-slate-100 bg-white p-5 shadow-xl shadow-slate-900/10 [&>svg]:h-64 [&>svg]:w-64 sm:[&>svg]:h-72 sm:[&>svg]:w-72">
+                        {!! $shareQr !!}
+                    </div>
+                </div>
+
+                {{-- Mã lớp + hướng dẫn --}}
+                <div class="px-8 pb-8 pt-6 text-center">
+                    <p class="text-[11px] font-black uppercase tracking-widest text-slate-400">Mã tham gia lớp</p>
+                    <p class="mt-1 font-mono text-3xl font-black tracking-[0.2em] text-blue-600">{{ $class->join_key }}</p>
+
+                    <div class="mt-6 flex items-start gap-3 rounded-2xl bg-slate-50 p-4 text-left ring-1 ring-slate-100">
+                        <span class="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-blue-100 text-blue-600">
+                            <x-user.icon name="qr-code" :size="18" />
+                        </span>
+                        <p class="text-xs font-medium leading-relaxed text-slate-600">
+                            Mở ứng dụng, chọn <span class="font-bold text-slate-800">Quét QR</span> rồi đưa camera vào mã này — hoặc nhập tay mã lớp ở mục <span class="font-bold text-slate-800">Tham gia lớp</span>.
+                        </p>
+                    </div>
                 </div>
             </div>
         </div>

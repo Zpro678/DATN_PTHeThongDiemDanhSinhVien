@@ -550,6 +550,21 @@
             <circle cx="12" cy="9" r="3" />
             @break
 
+        @case('maximize')
+            <path d="M8 3H5a2 2 0 0 0-2 2v3" />
+            <path d="M21 8V5a2 2 0 0 0-2-2h-3" />
+            <path d="M3 16v3a2 2 0 0 0 2 2h3" />
+            <path d="M16 21h3a2 2 0 0 0 2-2v-3" />
+            @break
+
+        @case('scan-line')
+            <path d="M3 7V5a2 2 0 0 1 2-2h2" />
+            <path d="M17 3h2a2 2 0 0 1 2 2v2" />
+            <path d="M21 17v2a2 2 0 0 1-2 2h-2" />
+            <path d="M7 21H5a2 2 0 0 1-2-2v-2" />
+            <path d="M7 12h10" />
+            @break
+
         @case('crown')
             <path d="M2 4l3 12h14l3-12-6 7-4-7-4 7-6-7z" />
             <path d="M5 20h14" />

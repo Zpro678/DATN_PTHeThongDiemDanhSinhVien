@@ -170,7 +170,7 @@
                     </div>
                     <div class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-slate-50 border border-slate-100 text-sm text-slate-600">
                         <x-user.icon name="clock" :size="16" class="text-amber-500" />
-                        Còn <span class="font-bold text-slate-800">{{ max(0, $summary['total'] - $summary['checked_in']) }}</span> sinh viên chưa điểm danh
+                        Còn <span class="font-bold text-slate-800">{{ max(0, $summary['total'] - $summary['checked_in']) }}</span> sinh viên chưa có mặt
                     </div>
                 </div>
                 
@@ -364,21 +364,66 @@
     </template>
 
     <template x-teleport="body">
-        <div x-cloak x-show="showQrModal" x-transition.opacity class="fixed inset-0 z-[9999] flex flex-col items-center justify-center bg-white p-6">
-            <button type="button" @click="showQrModal = false" class="absolute right-6 top-6 flex h-16 w-16 items-center justify-center rounded-full bg-slate-100 text-slate-500 transition hover:bg-slate-200 hover:text-slate-900" title="Đóng">
-                <x-user.icon name="x" :size="32" />
+        <div x-cloak x-show="showQrModal" x-transition.opacity class="fixed inset-0 z-[9999] flex flex-col items-center justify-center overflow-y-auto bg-gradient-to-br from-slate-900 via-slate-900 to-blue-950 p-4 sm:p-8">
+            {{-- Trang trí nền --}}
+            <div class="pointer-events-none absolute -left-40 -top-40 h-96 w-96 rounded-full bg-blue-600/20 blur-[120px]"></div>
+            <div class="pointer-events-none absolute -bottom-40 -right-40 h-96 w-96 rounded-full bg-indigo-500/20 blur-[120px]"></div>
+
+            <button type="button" @click="showQrModal = false" class="absolute right-5 top-5 z-10 flex h-12 w-12 items-center justify-center rounded-full bg-white/10 text-white ring-1 ring-white/20 backdrop-blur transition hover:bg-white/20" title="Đóng">
+                <x-user.icon name="x" :size="26" />
             </button>
 
-            <div class="flex w-[min(90vw,600px)] items-center justify-center rounded-[36px] bg-white p-8 shadow-2xl shadow-slate-900/10 ring-1 ring-slate-200 [&>svg]:h-full [&>svg]:w-full">
-                @if ($qrSvg)
-                    {!! $qrSvg !!}
-                @else
-                    <div class="grid w-full gap-[6px]" style="grid-template-columns: repeat(29, minmax(0, 1fr));">
-                        @foreach ($qrCells as $isDark)
-                            <span class="{{ $isDark ? 'bg-slate-900' : 'bg-white' }} aspect-square rounded-[3px]"></span>
-                        @endforeach
+            <div class="relative w-full max-w-md overflow-hidden rounded-[32px] bg-white shadow-2xl">
+                {{-- Header: lớp + phiên --}}
+                <div class="relative overflow-hidden bg-gradient-to-br from-blue-600 to-indigo-600 px-8 pb-10 pt-8 text-center text-white">
+                    <div class="absolute inset-0 opacity-10 bg-[url('data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMjAiIGhlaWdodD0iMjAiIHhtbG5zPSJodHRwOi8vd3d3LnczLm9yZy8yMDAwL3N2ZyI+PGNpcmNsZSBjeD0iMSIgY3k9IjEiIHI9IjEiIGZpbGw9IiNmZmYiLz48L3N2Zz4=')]"></div>
+                    <div class="relative z-10">
+                        <div class="mx-auto mb-4 inline-flex items-center gap-2 rounded-full bg-white/15 px-4 py-1.5 text-xs font-bold uppercase tracking-widest ring-1 ring-white/25 backdrop-blur">
+                            <x-user.icon name="qr-code" :size="14" />
+                            Điểm danh
+                        </div>
+                        <h2 class="text-2xl font-black leading-tight drop-shadow-sm">{{ $session->courseClass->name }}</h2>
+                        <p class="mt-2 text-sm font-semibold text-blue-100">
+                            {{ Str::limit($session->name, 40) }} • {{ $sessionDateLabel }}
+                        </p>
                     </div>
-                @endif
+                </div>
+
+                {{-- Mã QR lớn --}}
+                <div class="-mt-6 px-8">
+                    <div class="mx-auto w-fit rounded-3xl border border-slate-100 bg-white p-5 shadow-xl shadow-slate-900/10 [&>svg]:h-64 [&>svg]:w-64 sm:[&>svg]:h-72 sm:[&>svg]:w-72">
+                        @if ($qrSvg)
+                            {!! $qrSvg !!}
+                        @else
+                            <div class="flex h-64 w-64 flex-col items-center justify-center text-slate-400 sm:h-72 sm:w-72">
+                                <x-user.icon name="lock" :size="56" />
+                                <span class="mt-3 text-sm font-bold">Phiên đã chốt</span>
+                            </div>
+                        @endif
+                    </div>
+                </div>
+
+                {{-- Đếm ngược làm mới + hướng dẫn --}}
+                <div class="px-8 pb-8 pt-6 text-center">
+                    @if(!$isClosed)
+                        <div class="inline-flex items-center gap-2 rounded-full bg-blue-50 px-4 py-2 text-sm font-bold text-blue-600 ring-1 ring-blue-100">
+                            <span class="relative flex h-2.5 w-2.5">
+                                <span class="absolute inline-flex h-full w-full animate-ping rounded-full bg-blue-400 opacity-75"></span>
+                                <span class="relative inline-flex h-2.5 w-2.5 rounded-full bg-blue-500"></span>
+                            </span>
+                            Mã tự làm mới sau <span x-text="String(timeLeft).padStart(2, '0')"></span>s
+                        </div>
+                    @endif
+
+                    <div class="mt-6 flex items-start gap-3 rounded-2xl bg-slate-50 p-4 text-left ring-1 ring-slate-100">
+                        <span class="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-blue-100 text-blue-600">
+                            <x-user.icon name="scan-line" :size="18" />
+                        </span>
+                        <p class="text-xs font-medium leading-relaxed text-slate-600">
+                            Học viên mở ứng dụng, chọn <span class="font-bold text-slate-800">Quét QR</span> rồi đưa camera vào mã này để được ghi nhận có mặt.
+                        </p>
+                    </div>
+                </div>
             </div>
         </div>
     </template>

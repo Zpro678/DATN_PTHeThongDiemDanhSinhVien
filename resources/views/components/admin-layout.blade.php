@@ -61,7 +61,6 @@
         @livewireStyles
         
         <!-- Icons -->
-        <script src="https://unpkg.com/lucide@latest"></script>
     </head>
     <body class="bg-slate-50 text-slate-900 font-sans antialiased">
         <div

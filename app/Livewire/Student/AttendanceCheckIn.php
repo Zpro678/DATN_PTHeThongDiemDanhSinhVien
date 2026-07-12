@@ -184,7 +184,9 @@ class AttendanceCheckIn extends Component
         $gpsLatRecorded = null;
         $gpsLngRecorded = null;
         $gpsFraudFlag = null;
-        $fraudNote = null;
+        // Gom NHIỀU lý do nghi vấn (trùng máy + ngoài bán kính + sai GPS...) để không đè lên nhau;
+        // nối lại bằng ' | ' khi ghi vào note của bản ghi.
+        $fraudNotes = [];
 
         $ipAddress = request()->ip();
         $userAgent = request()->userAgent();
@@ -215,26 +217,41 @@ class AttendanceCheckIn extends Component
             if ($duplicateRecord) {
                 $gpsFraudFlag = 'device_duplicate';
 
-                // Gắn cờ cho CẢ bản ghi trùng trước đó để giảng viên thấy đủ 2 SV cùng một máy.
+                $this->record->loadMissing('classMember');
+                $currentName = $this->record->classMember->full_name ?? 'Sinh viên';
+                $duplicateName = $duplicateRecord->classMember->full_name ?? 'Sinh viên';
+
+                // Ghi rõ AI trùng với AI vào ghi chú của bản ghi HIỆN TẠI để giảng viên đối chiếu nhanh.
+                $fraudNotes[] = "Trùng thiết bị với {$duplicateName}.";
+
+                // Gắn cờ + ghi chú cho CẢ bản ghi trùng TRƯỚC ĐÓ (để thấy đủ 2 SV cùng một máy, và
+                // biết nó trùng với chính SV vừa quét). Không đè note cũ, chỉ nối thêm phần chưa có.
                 $previousFraudFlag = $duplicateRecord->gps_fraud_flag;
                 $duplicateUpdate = ['gps_fraud_flag' => 'device_duplicate'];
+                $duplicateNoteAdditions = [];
+
+                $duplicateWithNote = "Trùng thiết bị với {$currentName}.";
+                if (! str_contains($duplicateRecord->note ?? '', $duplicateWithNote)) {
+                    $duplicateNoteAdditions[] = $duplicateWithNote;
+                }
                 if ($previousFraudFlag !== null && $previousFraudFlag !== 'device_duplicate') {
                     $previousFlagNote = "Cảnh báo trước đó: {$previousFraudFlag}.";
                     if (! str_contains($duplicateRecord->note ?? '', $previousFlagNote)) {
-                        $duplicateUpdate['note'] = trim(($duplicateRecord->note ? $duplicateRecord->note . ' | ' : '') . $previousFlagNote);
+                        $duplicateNoteAdditions[] = $previousFlagNote;
                     }
                 }
+                if ($duplicateNoteAdditions !== []) {
+                    $duplicateUpdate['note'] = trim(($duplicateRecord->note ? $duplicateRecord->note . ' | ' : '') . implode(' | ', $duplicateNoteAdditions));
+                }
                 $duplicateRecord->forceFill($duplicateUpdate)->save();
-
-                $this->record->loadMissing('classMember');
 
                 app(\App\Services\NotificationService::class)->notifyDeviceDuplicate(
                     $this->session->courseClass->owner_user_id,
                     $this->record->classMember->user_id ?? null,
                     $duplicateRecord->classMember->user_id ?? null,
                     $this->session,
-                    $this->record->classMember->full_name ?? 'Sinh viên',
-                    $duplicateRecord->classMember->full_name ?? 'Sinh viên'
+                    $currentName,
+                    $duplicateName
                 );
             }
         }
@@ -286,7 +303,7 @@ class AttendanceCheckIn extends Component
                     $gpsFraudFlag = 'out_of_radius';
                 }
 
-                $fraudNote = 'Ngoài bán kính cho phép: cách lớp ' . round($distanceMeters) . 'm (vượt '
+                $fraudNotes[] = 'Ngoài bán kính cho phép: cách lớp ' . round($distanceMeters) . 'm (vượt '
                     . $metersOutside . 'm, đã trừ sai số ±' . round($accuracyMargin) . 'm).';
 
                 // Báo CHỦ LỚP (mức warning = vàng). Mỗi SV chỉ điểm danh thành công một lần nên không spam.
@@ -307,7 +324,7 @@ class AttendanceCheckIn extends Component
                 $impossibleReason = $this->detectImpossibleTravel($gpsLatRecorded, $gpsLngRecorded);
                 if ($impossibleReason !== null) {
                     $gpsFraudFlag = 'impossible_travel';
-                    $fraudNote = $impossibleReason;
+                    $fraudNotes[] = $impossibleReason;
                 }
             }
 
@@ -320,7 +337,12 @@ class AttendanceCheckIn extends Component
                 $reason = $verification->fraud_reasons ?: 'nhiều dấu hiệu bất thường';
                 // Tiền tố "Sai GPS" để bảng của giảng viên tô màu cảnh báo và lọc nhanh (xem
                 // student-list.blade.php). Kèm lý do chi tiết (vd: kết nối qua VPN/proxy) để GV biết vì sao.
-                $fraudNote = 'Sai GPS (nghi giả lập vị trí / VPN): ' . $reason . '.';
+                $mockNote = 'Sai GPS (nghi giả lập vị trí / VPN): ' . $reason . '.';
+                // Kèm KHOẢNG CÁCH tới lớp (nếu buổi có định vị) để GV có thêm ngữ cảnh khi rà soát.
+                if ($distanceMeters !== null) {
+                    $mockNote .= ' Cách lớp ~' . round($distanceMeters) . 'm.';
+                }
+                $fraudNotes[] = $mockNote;
 
                 // Bật cảnh báo hiển thị cho chính sinh viên ở màn hình kết quả.
                 $this->isSuspectedFake = true;
@@ -344,9 +366,10 @@ class AttendanceCheckIn extends Component
             'is_account' => auth()->check(),
         ];
 
-        // Nối lý do nghi ngờ vào note hiện có (không ghi đè) để giảng viên xem được.
-        if ($fraudNote !== null) {
-            $updateData['note'] = trim(($this->record->note ? $this->record->note . ' | ' : '') . $fraudNote);
+        // Nối các lý do nghi ngờ (trùng máy / ngoài bán kính / sai GPS...) vào note hiện có
+        // (không ghi đè) để giảng viên xem được.
+        if ($fraudNotes !== []) {
+            $updateData['note'] = trim(($this->record->note ? $this->record->note . ' | ' : '') . implode(' | ', $fraudNotes));
         }
 
         $this->record->update($updateData);

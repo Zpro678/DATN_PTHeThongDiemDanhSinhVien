@@ -84,16 +84,29 @@
         onDecoded(text) {
             if (this.handled) return;
             this.handled = true;
+
+            // Dạng 1: QR ĐIỂM DANH (/attendance/check-in/{token}) -> mở trang check-in.
+            // Server tự xử lý: đã đăng nhập -> auto điểm danh; khách -> form nhập MSSV/email.
             const url = this.resolveCheckInUrl(text);
             if (url) {
-                // Quét QR = ĐIỂM DANH: mở trang check-in (dừng camera trước để nhả thiết bị).
-                // Server tự xử lý 2 dạng: đã đăng nhập -> auto điểm danh; khách -> form nhập MSSV/email.
                 this.stopCamera();
                 window.location.href = url;
                 return;
             }
-            // Không phải mã QR điểm danh -> báo lỗi và tiếp tục quét.
-            this.error = 'Đây không phải mã QR điểm danh. Vui lòng quét mã QR do giảng viên cung cấp.';
+
+            // Dạng 2: QR THAM GIA LỚP (/student/join-class?code=... hoặc /join/{code}).
+            // Mở luôn modal "Tham gia lớp" ngay tại chỗ (không tải lại trang) với mã đã điền sẵn.
+            const joinCode = this.resolveJoinCode(text);
+            if (joinCode) {
+                this.stopCamera();
+                this.open = false;
+                document.body.style.overflow = '';
+                this.$dispatch('open-join-class-modal', { code: joinCode });
+                return;
+            }
+
+            // Không nhận diện được -> báo lỗi và tiếp tục quét.
+            this.error = 'Mã QR không hợp lệ. Vui lòng quét mã QR điểm danh hoặc mã tham gia lớp do giảng viên cung cấp.';
             this.handled = false;
         },
         resolveCheckInUrl(raw) {
@@ -106,6 +119,22 @@
                     // Cùng hệ thống -> điều hướng nội bộ; khác host -> mở nguyên link điểm danh.
                     return (u.origin === window.location.origin) ? (u.pathname + u.search) : text;
                 }
+            } catch (e) { /* không phải URL */ }
+            return null;
+        },
+        resolveJoinCode(raw) {
+            const text = (raw || '').trim();
+            if (!text) return null;
+            try {
+                const u = new URL(text, window.location.origin);
+                // /student/join-class?code=XXX
+                if (/\/student\/join-class\/?$/.test(u.pathname)) {
+                    const code = u.searchParams.get('code');
+                    if (code && code.trim() !== '') return code.trim();
+                }
+                // /join/XXX
+                const m = u.pathname.match(/\/join\/([^\/?#]+)/);
+                if (m) return decodeURIComponent(m[1]).trim();
             } catch (e) { /* không phải URL */ }
             return null;
         }
@@ -127,8 +156,8 @@
                     <x-user.icon name="qr-code" :size="20" class="text-white" />
                 </span>
                 <div>
-                    <p class="text-base font-black leading-tight">Quét mã QR điểm danh</p>
-                    <p class="text-[11px] font-medium text-white/60">Quét mã do giảng viên chiếu để điểm danh</p>
+                    <p class="text-base font-black leading-tight">Quét mã QR</p>
+                    <p class="text-[11px] font-medium text-white/60">Điểm danh hoặc tham gia lớp bằng mã QR</p>
                 </div>
             </div>
             <button type="button" @click="closeScanner()" class="flex h-10 w-10 items-center justify-center rounded-full bg-white/10 text-white transition hover:bg-white/20">
@@ -169,7 +198,7 @@
 
         {{-- Footer --}}
         <div class="space-y-3 px-5 pb-8 pt-4">
-            <p class="text-center text-xs font-medium text-white/60">Đưa mã QR điểm danh vào giữa khung để quét tự động</p>
+            <p class="text-center text-xs font-medium text-white/60">Đưa mã QR điểm danh hoặc mã tham gia lớp vào giữa khung để quét tự động</p>
             <button type="button" x-show="error" x-cloak @click="handled = false; startCamera()" class="w-full rounded-2xl bg-white py-3.5 text-sm font-black text-slate-900 transition active:scale-[0.98]">
                 Thử lại
             </button>

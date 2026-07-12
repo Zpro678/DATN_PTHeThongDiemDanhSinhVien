@@ -6,7 +6,6 @@
     <title>Hệ thống đang bảo trì - Attendia Tech</title>
     @vite(['resources/css/app.css', 'resources/js/app.js'])
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
-    <script src="https://unpkg.com/lucide@latest"></script>
 </head>
 <body class="bg-[#f8fafc] text-slate-900 font-sans antialiased min-h-screen flex items-center justify-center p-4">
 

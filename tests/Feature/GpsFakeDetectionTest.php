@@ -34,11 +34,31 @@ class GpsFakeDetectionTest extends TestCase
         $this->assertGreaterThanOrEqual(GpsValidationService::FAKE_GPS_SUSPICION_THRESHOLD, $r['score']);
     }
 
-    public function test_static_samples_are_suspicious(): void
+    public function test_static_samples_alone_are_not_flagged(): void
     {
+        // Điện thoại THẬT đứng yên (định vị WiFi/cell, phổ biến với iPhone trong nhà) cho toạ độ
+        // TRÙNG nhau nhưng accuracy hợp lý + có độ cao. Chỉ mình tín hiệu "toạ độ tĩnh" KHÔNG được
+        // vượt ngưỡng -> tránh dán nhãn "Sai GPS" oan cho sinh viên có mặt thật.
         $samples = [['lat' => 10.0, 'lng' => 106.0], ['lat' => 10.0, 'lng' => 106.0], ['lat' => 10.0, 'lng' => 106.0]];
         $r = $this->service()->computeFakeGpsScore(10.0, 106.0, 20.0, ['samples' => $samples, 'altitude' => 5.0], '127.0.0.1');
-        $this->assertGreaterThanOrEqual(2, $r['score']);
+        $this->assertLessThan(GpsValidationService::FAKE_GPS_SUSPICION_THRESHOLD, $r['score']);
+    }
+
+    public function test_static_samples_with_missing_altitude_stay_below_threshold(): void
+    {
+        // Cả hai tín hiệu YẾU cùng lúc (toạ độ tĩnh + thiếu độ cao) — đều do máy thật đứng yên trên
+        // WiFi sinh ra — gộp lại vẫn chỉ 1 điểm, KHÔNG tự vượt ngưỡng.
+        $samples = [['lat' => 10.0, 'lng' => 106.0], ['lat' => 10.0, 'lng' => 106.0], ['lat' => 10.0, 'lng' => 106.0]];
+        $r = $this->service()->computeFakeGpsScore(10.0, 106.0, 20.0, ['samples' => $samples, 'altitude' => null], '127.0.0.1');
+        $this->assertLessThan(GpsValidationService::FAKE_GPS_SUSPICION_THRESHOLD, $r['score']);
+    }
+
+    public function test_static_samples_corroborate_a_strong_signal(): void
+    {
+        // Khi ĐÃ có tín hiệu MẠNH (độ chính xác bất thường ≤1m), toạ độ tĩnh cộng thêm điểm -> nghi ngờ.
+        $samples = [['lat' => 10.0, 'lng' => 106.0], ['lat' => 10.0, 'lng' => 106.0], ['lat' => 10.0, 'lng' => 106.0]];
+        $r = $this->service()->computeFakeGpsScore(10.0, 106.0, 0.5, ['samples' => $samples, 'altitude' => 5.0], '127.0.0.1');
+        $this->assertGreaterThanOrEqual(GpsValidationService::FAKE_GPS_SUSPICION_THRESHOLD, $r['score']);
     }
 
     public function test_ip_far_from_gps_scores_high(): void
@@ -231,6 +251,58 @@ class GpsFakeDetectionTest extends TestCase
         // Ghi chú cho giảng viên: có tiền tố "Sai GPS" + lý do chi tiết (VPN/proxy).
         $this->assertStringContainsString('Sai GPS', (string) $record->note);
         $this->assertStringContainsString('VPN', (string) $record->note);
+
+        $this->travelBack();
+    }
+
+    public function test_device_duplicate_note_names_both_students(): void
+    {
+        $base = Carbon::create(2026, 7, 5, 8, 0, 0);
+        $this->travelTo($base);
+
+        $owner = User::factory()->create();
+        $courseClass = CourseClass::factory()->create(['owner_user_id' => $owner->id]);
+        $meeting = ClassMeeting::factory()->create([
+            'class_id' => $courseClass->id, 'user_Created' => $owner->id,
+            'date' => $base->toDateString(), 'start_time' => '00:00:00', 'end_time' => '23:59:00', 'status' => 'active',
+        ]);
+        // Buổi KHÔNG yêu cầu GPS -> bỏ qua khối GPS, chỉ còn kiểm tra trùng thiết bị (device_check mặc định bật).
+        $session = ClassSession::factory()->create([
+            'class_id' => $courseClass->id, 'meeting_id' => $meeting->id, 'created_by' => $owner->id,
+            'date' => $base->toDateString(), 'status' => 'active', 'qr_token' => 'DUP-CUR',
+            'token_expires_at' => $base->copy()->addDay(),
+            'gps_latitude' => null, 'gps_longitude' => null, 'gps_radius' => null,
+        ]);
+
+        $studentA = User::factory()->create(['name' => 'Nguyễn Văn A']);
+        $studentB = User::factory()->create(['name' => 'Trần Thị B']);
+        $memberA = ClassMember::create(['class_id' => $courseClass->id, 'user_id' => $studentA->id, 'status' => ClassMember::STATUS_ACTIVE]);
+        $memberB = ClassMember::create(['class_id' => $courseClass->id, 'user_id' => $studentB->id, 'status' => ClassMember::STATUS_ACTIVE]);
+        $recordA = AttendanceRecord::factory()->create([
+            'class_session_id' => $session->id, 'class_member_id' => $memberA->id, 'status' => 'pending', 'check_in_time' => null,
+        ]);
+        $recordB = AttendanceRecord::factory()->create([
+            'class_session_id' => $session->id, 'class_member_id' => $memberB->id, 'status' => 'pending', 'check_in_time' => null,
+        ]);
+
+        // A điểm danh trước bằng thiết bị DEV-SAME.
+        Livewire::actingAs($studentA)->test(AttendanceCheckIn::class, ['token' => 'DUP-CUR'])
+            ->call('checkIn', null, 'DEV-SAME-0001')
+            ->assertSet('isSuccess', true);
+
+        // B điểm danh sau CŨNG bằng DEV-SAME -> bị phát hiện trùng thiết bị với A.
+        Livewire::actingAs($studentB)->test(AttendanceCheckIn::class, ['token' => 'DUP-CUR'])
+            ->call('checkIn', null, 'DEV-SAME-0001')
+            ->assertSet('isSuccess', true);
+
+        $recordA->refresh();
+        $recordB->refresh();
+
+        // Ghi chú của CẢ HAI bản ghi nêu rõ trùng với AI, và đều bị gắn cờ device_duplicate.
+        $this->assertSame('device_duplicate', $recordB->gps_fraud_flag);
+        $this->assertStringContainsString('Trùng thiết bị với Nguyễn Văn A', (string) $recordB->note);
+        $this->assertSame('device_duplicate', $recordA->gps_fraud_flag);
+        $this->assertStringContainsString('Trùng thiết bị với Trần Thị B', (string) $recordA->note);
 
         $this->travelBack();
     }

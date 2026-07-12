@@ -190,21 +190,28 @@ class GpsValidationService
         $reasons = [];
         $isVpn = false;
 
-        // (1) Độ chính xác quá đẹp — app fake thường gán cứng ~0/1m.
+        // (1) Độ chính xác quá đẹp — app fake thường gán cứng ~0/1m. Tín hiệu MẠNH: một mình đủ nghi.
         if ($accuracy <= self::IMPLAUSIBLE_ACCURACY_METERS) {
             $score += 2;
             $reasons[] = 'độ chính xác bất thường (' . round($accuracy, 2) . 'm)';
         }
 
-        // (2) Toạ độ đứng yên tuyệt đối qua nhiều mẫu — GPS thật luôn "rung".
+        // Tín hiệu YẾU (#2, #3): điện thoại THẬT đứng yên và định vị bằng WiFi/cell — rất phổ biến
+        // với iPhone trong nhà — CŨNG cho toạ độ trùng khít qua các lần đọc và thường THIẾU độ cao.
+        // Đây KHÔNG phải bằng chứng giả lập. Vì vậy hai tín hiệu này gộp lại chỉ tính TỐI ĐA 1 điểm
+        // và KHÔNG tự vượt ngưỡng (=2); chúng chỉ CỘNG THÊM khi đã có tín hiệu mạnh (độ chính xác
+        // bất thường / VPN / lệch IP↔GPS) để tránh dán nhãn "Sai GPS" oan cho sinh viên có mặt thật.
+        $weakScore = 0;
+
+        // (2) Toạ độ đứng yên tuyệt đối qua nhiều mẫu.
         if ($this->samplesLookStatic($signals['samples'] ?? [])) {
-            $score += 2;
+            $weakScore = 1;
             $reasons[] = 'toạ độ không đổi qua nhiều lần đọc';
         }
 
-        // (3) Thiếu độ cao — nhiều app fake để altitude null.
+        // (3) Thiếu độ cao — nhiều app fake để altitude null (nhưng iPhone dùng WiFi cũng vậy).
         if (array_key_exists('altitude', $signals) && $signals['altitude'] === null) {
-            $score += 1;
+            $weakScore = 1;
             $reasons[] = 'thiết bị không cung cấp độ cao';
         }
 
@@ -229,6 +236,11 @@ class GpsValidationService
                 }
             }
         }
+
+        // Cộng phần tín hiệu yếu SAU CÙNG (tối đa 1). Riêng chúng không đủ vượt ngưỡng, chỉ nâng
+        // điểm khi đã có tín hiệu mạnh ở trên — nên máy thật đứng yên (toạ độ tĩnh + thiếu độ cao)
+        // chỉ đạt 1 điểm và KHÔNG bị gắn cờ "Sai GPS".
+        $score += $weakScore;
 
         return ['score' => $score, 'reasons' => $reasons, 'vpn' => $isVpn];
     }
