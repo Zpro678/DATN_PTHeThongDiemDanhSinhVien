@@ -1,5 +1,5 @@
 @php
-    $statuses = ['Tất cả', 'Đang hoạt động', 'Đã kết thúc'];
+    $statuses = ['Đang hoạt động', 'Đã kết thúc'];
 
     // Thông tin gói cước để nhắc giới hạn lớp ngay tại nơi tạo lớp (Concept 1).
     $mcPlan = Auth::user()?->currentPlan();

@@ -108,7 +108,7 @@
 
                                     if ($isSameDeviceGroup || $record->gps_fraud_flag === 'device_duplicate' || str_contains($record->note ?? '', 'điểm danh hộ')) {
                                         $nameColor = 'text-red-600';
-                                    } elseif ($record->gps_fraud_flag === 'out_of_radius' || str_contains($record->note ?? '', 'Sai GPS') || str_contains($record->note ?? '', 'Fake GPS')) {
+                                    } elseif ($record->gps_fraud_flag === 'out_of_radius' || $record->gps_fraud_flag === 'suspected_mock' || str_contains($record->note ?? '', 'Sai GPS') || str_contains($record->note ?? '', 'Fake GPS')) {
                                         $nameColor = 'text-amber-500';
                                     }
                                 @endphp

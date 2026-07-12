@@ -148,7 +148,7 @@ class QuickAttendanceModal extends Component
         if ($this->quickStartType === 'qr') {
             $rules['durationMinutes'] = ['required', 'integer', 'min:1'];
             $rules['qrRefreshRate'] = ['required', 'integer', 'in:5,10,15,30'];
-            $rules['gpsRadius'] = ['required', 'integer', 'min:5'];
+            $rules['gpsRadius'] = ['required', 'integer', 'min:20'];
 
             if ($this->gpsEnabled) {
                 $rules['gpsLatitude'] = ['required', 'numeric'];

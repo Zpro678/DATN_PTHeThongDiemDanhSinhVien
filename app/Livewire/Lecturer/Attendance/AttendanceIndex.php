@@ -174,7 +174,7 @@ class AttendanceIndex extends Component
         if ($this->quickStartType === 'qr') {
             $rules['durationMinutes'] = 'required|integer|min:1';
             $rules['qrRefreshRate'] = 'required|integer|min:5';
-            $rules['gpsRadius'] = 'required|integer|min:5';
+            $rules['gpsRadius'] = 'required|integer|min:20';
             
             if ($this->gpsEnabled) {
                 $rules['gpsLatitude'] = 'required|numeric';

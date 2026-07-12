@@ -43,6 +43,7 @@ class GpsFakeDetectionTest extends TestCase
 
     public function test_ip_far_from_gps_scores_high(): void
     {
+        config(['attendance.gps_ip_check' => true]); // chấm IP chỉ chạy khi đã tin proxy.
         // IP nói Hà Nội, GPS nói TP.HCM (~1140km) -> lệch lớn.
         Http::fake(['ip-api.com/*' => Http::response(['status' => 'success', 'lat' => 21.028511, 'lon' => 105.804817], 200)]);
 
@@ -101,6 +102,135 @@ class GpsFakeDetectionTest extends TestCase
         $record->refresh();
         $this->assertSame('suspected_mock', $record->gps_fraud_flag);
         $this->assertStringContainsString('giả lập vị trí', (string) $record->note);
+
+        $this->travelBack();
+    }
+
+    public function test_vpn_proxy_is_flagged_and_skips_ip_distance(): void
+    {
+        config(['attendance.gps_ip_check' => true]); // chấm IP chỉ chạy khi đã tin proxy.
+        // IP báo proxy=true dù toạ độ IP TRÙNG GPS: vẫn phải gắn cờ VPN (không so khoảng cách IP nữa).
+        Http::fake(['ip-api.com/*' => Http::response([
+            'status' => 'success', 'lat' => 10.762622, 'lon' => 106.660172,
+            'proxy' => true, 'hosting' => false, 'mobile' => false,
+        ], 200)]);
+
+        $r = $this->service()->computeFakeGpsScore(10.762622, 106.660172, 20.0, ['altitude' => 5.0], '8.8.8.8');
+
+        $this->assertTrue($r['vpn']);
+        $this->assertGreaterThanOrEqual(GpsValidationService::FAKE_GPS_SUSPICION_THRESHOLD, $r['score']);
+        $this->assertStringContainsString('VPN', implode('; ', $r['reasons']));
+    }
+
+    public function test_ip_check_disabled_by_default_never_flags_vpn(): void
+    {
+        // Mặc định (chưa khai báo TRUSTED_PROXIES) cổng chấm IP TẮT: dù IP báo proxy hay lệch xa,
+        // KHÔNG được gắn cờ -> an toàn tuyệt đối, không báo nhầm khi chạy sau proxy chưa cấu hình.
+        config(['attendance.gps_ip_check' => false]);
+        Http::fake(['ip-api.com/*' => Http::response([
+            'status' => 'success', 'lat' => 21.028511, 'lon' => 105.804817,
+            'proxy' => true, 'hosting' => true, 'mobile' => false,
+        ], 200)]);
+
+        $r = $this->service()->computeFakeGpsScore(10.762622, 106.660172, 20.0, ['altitude' => 5.0], '8.8.8.8');
+
+        $this->assertFalse($r['vpn']);
+        $this->assertLessThan(GpsValidationService::FAKE_GPS_SUSPICION_THRESHOLD, $r['score']);
+    }
+
+    public function test_within_accuracy_margin_is_not_out_of_radius(): void
+    {
+        $base = Carbon::create(2026, 7, 5, 8, 0, 0);
+        $this->travelTo($base);
+
+        $owner = User::factory()->create();
+        $courseClass = CourseClass::factory()->create(['owner_user_id' => $owner->id]);
+        $meeting = ClassMeeting::factory()->create([
+            'class_id' => $courseClass->id, 'user_Created' => $owner->id,
+            'date' => $base->toDateString(), 'start_time' => '00:00:00', 'end_time' => '23:59:00', 'status' => 'active',
+        ]);
+        $session = ClassSession::factory()->create([
+            'class_id' => $courseClass->id, 'meeting_id' => $meeting->id, 'created_by' => $owner->id,
+            'date' => $base->toDateString(), 'status' => 'active', 'qr_token' => 'ACC-CUR',
+            'token_expires_at' => $base->copy()->addDay(),
+            'gps_latitude' => 10.762622, 'gps_longitude' => 106.660172, 'gps_radius' => 50,
+        ]);
+        $student = User::factory()->create();
+        $member = ClassMember::create([
+            'class_id' => $courseClass->id, 'user_id' => $student->id, 'status' => ClassMember::STATUS_ACTIVE,
+        ]);
+        $record = AttendanceRecord::factory()->create([
+            'class_session_id' => $session->id, 'class_member_id' => $member->id, 'status' => 'pending', 'check_in_time' => null,
+        ]);
+
+        // Cách lớp ~78m (lat +0.0007) nhưng accuracy 40m -> khoảng cách hiệu dụng ~38m < bán kính 50m
+        // => KHÔNG bị coi là ngoài bán kính (sửa lỗi "ở gần mà báo xa").
+        GpsVerification::create([
+            'session_id' => $session->id, 'member_id' => $member->id,
+            'token' => 'ACCT1', 'check_token' => 'ACCC1',
+            'lat' => 10.763322, 'lng' => 106.660172, 'accuracy' => 40.0,
+            'fraud_score' => 0, 'fraud_reasons' => '',
+            'is_used' => false, 'expires_at' => $base->copy()->addMinutes(2), 'ip_address' => '127.0.0.1',
+        ]);
+
+        Livewire::actingAs($student)->test(AttendanceCheckIn::class, ['token' => 'ACC-CUR'])
+            ->call('checkIn', 'ACCC1', 'DEV-ACC-0001')
+            ->assertSet('isSuccess', true)
+            ->assertSet('isOutOfRadius', false);
+
+        $record->refresh();
+        $this->assertSame('present', $record->status);
+        $this->assertNull($record->gps_fraud_flag, 'Trong biên độ sai số thì không gắn cờ ngoài bán kính.');
+
+        $this->travelBack();
+    }
+
+    public function test_forcing_checkin_with_vpn_marks_sai_gps_note(): void
+    {
+        $base = Carbon::create(2026, 7, 5, 8, 0, 0);
+        $this->travelTo($base);
+
+        $owner = User::factory()->create();
+        $courseClass = CourseClass::factory()->create(['owner_user_id' => $owner->id]);
+        $meeting = ClassMeeting::factory()->create([
+            'class_id' => $courseClass->id, 'user_Created' => $owner->id,
+            'date' => $base->toDateString(), 'start_time' => '00:00:00', 'end_time' => '23:59:00', 'status' => 'active',
+        ]);
+        $session = ClassSession::factory()->create([
+            'class_id' => $courseClass->id, 'meeting_id' => $meeting->id, 'created_by' => $owner->id,
+            'date' => $base->toDateString(), 'status' => 'active', 'qr_token' => 'VPN-CUR',
+            'token_expires_at' => $base->copy()->addDay(),
+            'gps_latitude' => 10.762622, 'gps_longitude' => 106.660172, 'gps_radius' => 500,
+        ]);
+        $student = User::factory()->create();
+        $member = ClassMember::create([
+            'class_id' => $courseClass->id, 'user_id' => $student->id, 'status' => ClassMember::STATUS_ACTIVE,
+        ]);
+        $record = AttendanceRecord::factory()->create([
+            'class_session_id' => $session->id, 'class_member_id' => $member->id, 'status' => 'pending', 'check_in_time' => null,
+        ]);
+
+        // Ở TRONG bán kính (toạ độ trùng lớp) nhưng bước /gps/verify đã chấm nghi vấn do VPN/proxy.
+        GpsVerification::create([
+            'session_id' => $session->id, 'member_id' => $member->id,
+            'token' => 'VPNT1', 'check_token' => 'VPNC1',
+            'lat' => 10.762622, 'lng' => 106.660172, 'accuracy' => 20.0,
+            'fraud_score' => 3, 'fraud_reasons' => 'kết nối qua VPN/proxy (vị trí mạng bị che giấu)',
+            'is_used' => false, 'expires_at' => $base->copy()->addMinutes(2), 'ip_address' => '127.0.0.1',
+        ]);
+
+        Livewire::actingAs($student)->test(AttendanceCheckIn::class, ['token' => 'VPN-CUR'])
+            ->call('checkIn', 'VPNC1', 'DEV-VPN-0001')
+            ->assertSet('isSuccess', true)
+            ->assertSet('isSuspectedFake', true)
+            ->assertSee('sai GPS');
+
+        $record->refresh();
+        $this->assertSame('present', $record->status);
+        $this->assertSame('suspected_mock', $record->gps_fraud_flag);
+        // Ghi chú cho giảng viên: có tiền tố "Sai GPS" + lý do chi tiết (VPN/proxy).
+        $this->assertStringContainsString('Sai GPS', (string) $record->note);
+        $this->assertStringContainsString('VPN', (string) $record->note);
 
         $this->travelBack();
     }

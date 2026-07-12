@@ -31,6 +31,11 @@ class AttendanceCheckIn extends Component
     public ?int $outOfRadiusDistance = null; // khoảng cách tới lớp (m)
     public ?int $metersOutside = null;       // số mét vượt ra ngoài bán kính
 
+    // Điểm danh THÀNH CÔNG nhưng tín hiệu GPS BẤT THƯỜNG (VPN/proxy hoặc nghi giả lập vị trí):
+    // vẫn ghi có mặt nhưng đánh dấu "Sai GPS" và hiện cảnh báo đỏ cho sinh viên + ghi chú cho GV.
+    public bool $isSuspectedFake = false;
+    public ?string $fakeReason = null;       // lý do nghi ngờ (hiện cho SV & ghi vào note)
+
     public function mount(string $token): void
     {
         $this->token = $token;
@@ -173,6 +178,7 @@ class AttendanceCheckIn extends Component
 
         $this->isGpsError = false;
         $this->isOutOfRadius = false;
+        $this->isSuspectedFake = false;
         $distanceMeters = null;
         $gpsAccuracy = null;
         $gpsLatRecorded = null;
@@ -259,10 +265,16 @@ class AttendanceCheckIn extends Component
             $gpsLatRecorded = $verification->lat;
             $gpsLngRecorded = $verification->lng;
 
-            if ($distanceMeters > $this->session->gps_radius) {
+            // Trừ BIÊN ĐỘ SAI SỐ GPS trước khi phán "ngoài bán kính": trình duyệt báo accuracy tới
+            // 150m nên đứng ĐÚNG chỗ vẫn có thể đo lệch vài chục mét (đây là nguyên nhân "ở gần mà
+            // báo xa"). Chỉ gắn cờ khi CHẮC CHẮN ở ngoài kể cả đã cho hưởng trọn sai số đo được.
+            $accuracyMargin = (float) ($gpsAccuracy ?? 0);
+            $effectiveDistance = max(0.0, $distanceMeters - $accuracyMargin);
+
+            if ($effectiveDistance > $this->session->gps_radius) {
                 // NGHIỆP VỤ MỚI: ngoài bán kính VẪN cho điểm danh (không chặn). Chỉ GẮN CỜ VÀNG
                 // 'out_of_radius' và BÁO CHỦ LỚP kèm số mét vượt ra ngoài để chủ lớp rà soát.
-                $metersOutside = (int) round($distanceMeters - $this->session->gps_radius);
+                $metersOutside = (int) round($effectiveDistance - $this->session->gps_radius);
 
                 // Ghi lại để hiện CẢNH BÁO VÀNG cho chính sinh viên ở màn hình kết quả.
                 $this->isOutOfRadius = true;
@@ -274,7 +286,8 @@ class AttendanceCheckIn extends Component
                     $gpsFraudFlag = 'out_of_radius';
                 }
 
-                $fraudNote = 'Ngoài bán kính cho phép: cách lớp ' . round($distanceMeters) . 'm (vượt ' . $metersOutside . 'm).';
+                $fraudNote = 'Ngoài bán kính cho phép: cách lớp ' . round($distanceMeters) . 'm (vượt '
+                    . $metersOutside . 'm, đã trừ sai số ±' . round($accuracyMargin) . 'm).';
 
                 // Báo CHỦ LỚP (mức warning = vàng). Mỗi SV chỉ điểm danh thành công một lần nên không spam.
                 $this->record->loadMissing('classMember');
@@ -304,7 +317,14 @@ class AttendanceCheckIn extends Component
             if ($gpsFraudFlag === null
                 && (int) ($verification->fraud_score ?? 0) >= \App\Services\GpsValidationService::FAKE_GPS_SUSPICION_THRESHOLD) {
                 $gpsFraudFlag = 'suspected_mock';
-                $fraudNote = 'Nghi ngờ giả lập vị trí: ' . ($verification->fraud_reasons ?: 'nhiều dấu hiệu bất thường') . '.';
+                $reason = $verification->fraud_reasons ?: 'nhiều dấu hiệu bất thường';
+                // Tiền tố "Sai GPS" để bảng của giảng viên tô màu cảnh báo và lọc nhanh (xem
+                // student-list.blade.php). Kèm lý do chi tiết (vd: kết nối qua VPN/proxy) để GV biết vì sao.
+                $fraudNote = 'Sai GPS (nghi giả lập vị trí / VPN): ' . $reason . '.';
+
+                // Bật cảnh báo hiển thị cho chính sinh viên ở màn hình kết quả.
+                $this->isSuspectedFake = true;
+                $this->fakeReason = $reason;
             }
         }
 
@@ -379,6 +399,12 @@ class AttendanceCheckIn extends Component
             // (kèm số mét vượt). Không flash "success" xanh để màn hình hiện thẻ cảnh báo vàng.
             $this->statusMessage = 'Đã ghi nhận điểm danh, nhưng bạn đang ở NGOÀI bán kính cho phép: cách lớp '
                 . $this->outOfRadiusDistance . 'm (vượt ' . $this->metersOutside . 'm). Chủ lớp đã được thông báo để rà soát.';
+        } elseif ($this->isSuspectedFake) {
+            // Vẫn ghi nhận có mặt, nhưng hệ thống thấy tín hiệu GPS bất thường (VPN/proxy hoặc nghi
+            // giả lập vị trí). Bản ghi đã bị đánh dấu "Sai GPS" -> hiện thẻ cảnh báo đỏ, yêu cầu tắt.
+            $this->statusMessage = 'Đã ghi nhận điểm danh, nhưng hệ thống phát hiện TÍN HIỆU GPS BẤT THƯỜNG ('
+                . $this->fakeReason . '). Bản ghi đã bị đánh dấu SAI GPS để giảng viên rà soát. '
+                . 'Nếu bạn đang bật VPN/proxy hoặc ứng dụng định vị giả, vui lòng TẮT rồi điểm danh lại.';
         } else {
             $this->statusMessage = 'Điểm danh thành công!';
             session()->flash('success', 'Điểm danh thành công!');

@@ -42,8 +42,19 @@
                 </div>
             @endif
 
+            {{-- Điểm danh THÀNH CÔNG nhưng TÍN HIỆU GPS BẤT THƯỜNG (VPN/proxy hoặc nghi giả lập): thẻ ĐỎ. --}}
+            @if($isSuccess && $isSuspectedFake && !session('success'))
+                <div class="mb-8 rounded-2xl border border-rose-200 bg-rose-50 p-6 text-center shadow-inner">
+                    <div class="mx-auto flex h-16 w-16 items-center justify-center rounded-2xl bg-rose-100 text-rose-600 mb-4 shadow-sm">
+                        <x-user.icon name="alert-triangle" :size="32" />
+                    </div>
+                    <h3 class="text-lg font-black text-rose-700">Phát hiện sai GPS</h3>
+                    <p class="mt-2 text-sm font-semibold text-rose-700/90">{{ $statusMessage }}</p>
+                </div>
+            @endif
+
             {{-- Quét lại khi đã điểm danh: báo "đã điểm danh cho phiên này rồi". --}}
-            @if($isSuccess && $statusMessage && !$isOutOfRadius && !session('success'))
+            @if($isSuccess && $statusMessage && !$isOutOfRadius && !$isSuspectedFake && !session('success'))
                 <div class="mb-8 rounded-2xl border border-emerald-100 bg-emerald-50 p-6 text-center shadow-inner">
                     <div class="mx-auto flex h-16 w-16 items-center justify-center rounded-2xl bg-emerald-100 text-emerald-600 mb-4 shadow-sm">
                         <x-user.icon name="check-circle-2" :size="32" />
@@ -258,6 +269,23 @@
                                                 this.isCheckingIn = false;
                                                 return;
                                             }
+
+                                            // Phát hiện VPN/proxy: YÊU CẦU sinh viên tắt trước. Cho họ CƠ HỘI huỷ để tắt VPN
+                                            // rồi thử lại (tránh phạt oan người có mặt thật). Nếu vẫn cố tiếp tục, bản ghi sẽ
+                                            // bị đánh dấu "Sai GPS" kèm lý do ở phía server để giảng viên rà soát.
+                                            if (Array.isArray(verifyData.warnings) && verifyData.warnings.includes('vpn')) {
+                                                const proceed = confirm(
+                                                    '⚠️ Hệ thống phát hiện bạn đang dùng VPN/proxy khiến vị trí mạng bị che giấu.\n\n' +
+                                                    'Vui lòng TẮT VPN/proxy rồi bấm điểm danh lại.\n\n' +
+                                                    'Nếu bạn vẫn tiếp tục, điểm danh sẽ bị ĐÁNH DẤU "Sai GPS" để giảng viên rà soát.\n\n' +
+                                                    'Bấm Cancel để tắt VPN và thử lại, hoặc OK để vẫn điểm danh.'
+                                                );
+                                                if (!proceed) {
+                                                    this.isCheckingIn = false;
+                                                    return;
+                                                }
+                                            }
+
                                             $wire.checkIn(verifyData.check_token, this.getDeviceId())
                                                 .catch(() => alert('Có lỗi khi ghi nhận điểm danh. Điểm danh có thể đã được lưu — hãy tải lại trang để kiểm tra.'))
                                                 .finally(() => { this.isCheckingIn = false; });

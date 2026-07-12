@@ -110,12 +110,21 @@ class GpsValidationService
             'expires_at' => now()->addMinutes(2), // Check token chỉ có hiệu lực trong 2 phút
         ]);
 
+        // Cảnh báo mềm gửi về client để YÊU CẦU sinh viên tắt VPN/proxy trước khi điểm danh
+        // (vị trí mạng bị che khiến hệ thống không xác thực được). Nếu sinh viên vẫn cố điểm danh,
+        // bước check-in sẽ ĐÁNH DẤU bản ghi + ghi lý do vào ghi chú cho giảng viên rà soát.
+        $warnings = [];
+        if (! empty($fraud['vpn'])) {
+            $warnings[] = 'vpn';
+        }
+
         return [
             'success' => true,
             'check_token' => $checkToken,
             'error' => null,
             'distance' => $distance,
             'fraud_score' => $fraud['score'],
+            'warnings' => $warnings,
         ];
     }
 
@@ -173,12 +182,13 @@ class GpsValidationService
      * Chấm điểm nghi vấn fake GPS từ nhiều tín hiệu độc lập.
      *
      * @param  array  $signals  altitude/altitude_accuracy/speed/heading (float|null) + samples (mảng {lat,lng}).
-     * @return array{score:int, reasons:array<int,string>}
+     * @return array{score:int, reasons:array<int,string>, vpn:bool}
      */
     public function computeFakeGpsScore(float $lat, float $lng, float $accuracy, array $signals, ?string $ip): array
     {
         $score = 0;
         $reasons = [];
+        $isVpn = false;
 
         // (1) Độ chính xác quá đẹp — app fake thường gán cứng ~0/1m.
         if ($accuracy <= self::IMPLAUSIBLE_ACCURACY_METERS) {
@@ -198,17 +208,29 @@ class GpsValidationService
             $reasons[] = 'thiết bị không cung cấp độ cao';
         }
 
-        // (4) Lệch IP↔GPS — fake chỉ giả toạ độ trình duyệt, không đổi IP (tín hiệu mạnh nhất).
-        $ipLoc = $this->lookupIpLocation($ip);
+        // (4) VPN/proxy hoặc lệch IP↔GPS. CHỈ chấm khi request()->ip() đáng tin (đã khai báo
+        // TRUSTED_PROXIES / bật GPS_IP_CHECK). Chưa cấu hình -> bỏ qua, tránh báo nhầm hàng loạt
+        // khi web chạy sau proxy mà mọi request đều mang IP của proxy.
+        $ipLoc = $this->ipCheckEnabled() ? $this->lookupIpLocation($ip) : null;
         if ($ipLoc !== null) {
-            $ipDistanceKm = $this->calculateDistance($ipLoc['lat'], $ipLoc['lng'], $lat, $lng) / 1000;
-            if ($ipDistanceKm > self::IP_GPS_MAX_DISTANCE_KM) {
+            if (! empty($ipLoc['proxy']) || ! empty($ipLoc['hosting'])) {
+                // Đang qua VPN/proxy: IP là exit-node nên khoảng cách IP↔GPS VÔ NGHĨA (không so nữa,
+                // tránh phạt oan sinh viên có mặt thật mà bật VPN). Thay bằng một CỜ VPN riêng: bước
+                // check-in sẽ yêu cầu tắt VPN, và đánh dấu nếu vẫn cố điểm danh.
+                $isVpn = true;
                 $score += 3;
-                $reasons[] = 'vị trí mạng (IP) cách GPS ~' . round($ipDistanceKm) . 'km';
+                $reasons[] = 'kết nối qua VPN/proxy (vị trí mạng bị che giấu)';
+            } else {
+                // Không VPN: lệch IP↔GPS là dấu hiệu fake toạ độ trình duyệt (không đổi IP thật).
+                $ipDistanceKm = $this->calculateDistance($ipLoc['lat'], $ipLoc['lng'], $lat, $lng) / 1000;
+                if ($ipDistanceKm > self::IP_GPS_MAX_DISTANCE_KM) {
+                    $score += 3;
+                    $reasons[] = 'vị trí mạng (IP) cách GPS ~' . round($ipDistanceKm) . 'km';
+                }
             }
         }
 
-        return ['score' => $score, 'reasons' => $reasons];
+        return ['score' => $score, 'reasons' => $reasons, 'vpn' => $isVpn];
     }
 
     /**
@@ -236,9 +258,19 @@ class GpsValidationService
     }
 
     /**
-     * Tra vị trí thô theo IP (ip-api.com), cache 24h, fail-open (trả null khi lỗi hoặc IP nội bộ).
+     * Có bật chấm nghi vấn theo IP không (chỉ đáng tin khi request()->ip() là IP thật của SV).
+     * Mặc định bật khi đã khai báo TRUSTED_PROXIES — xem config/attendance.php.
+     */
+    public function ipCheckEnabled(): bool
+    {
+        return (bool) config('attendance.gps_ip_check', false);
+    }
+
+    /**
+     * Tra vị trí thô + cờ VPN/proxy/hosting theo IP (ip-api.com), cache 24h, fail-open
+     * (trả null khi lỗi hoặc IP nội bộ). Các field proxy/hosting/mobile có sẵn ở endpoint free.
      *
-     * @return array{lat:float, lng:float}|null
+     * @return array{lat:float, lng:float, proxy:bool, hosting:bool, mobile:bool}|null
      */
     public function lookupIpLocation(?string $ip): ?array
     {
@@ -248,10 +280,16 @@ class GpsValidationService
 
         return Cache::remember('ipgeo:' . $ip, now()->addHours(24), function () use ($ip): ?array {
             try {
-                $response = Http::timeout(3)->get("http://ip-api.com/json/{$ip}", ['fields' => 'status,lat,lon']);
+                $response = Http::timeout(3)->get("http://ip-api.com/json/{$ip}", ['fields' => 'status,lat,lon,proxy,hosting,mobile']);
                 $data = $response->json();
                 if (($data['status'] ?? null) === 'success' && isset($data['lat'], $data['lon'])) {
-                    return ['lat' => (float) $data['lat'], 'lng' => (float) $data['lon']];
+                    return [
+                        'lat' => (float) $data['lat'],
+                        'lng' => (float) $data['lon'],
+                        'proxy' => (bool) ($data['proxy'] ?? false),
+                        'hosting' => (bool) ($data['hosting'] ?? false),
+                        'mobile' => (bool) ($data['mobile'] ?? false),
+                    ];
                 }
             } catch (\Throwable $e) {
                 // fail-open: không có tín hiệu IP -> không gắn cờ nhầm.
