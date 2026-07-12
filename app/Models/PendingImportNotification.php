@@ -25,6 +25,7 @@ class PendingImportNotification extends Model
         'full_name',
         'class_name',
         'join_key',
+        'has_account',
         'status',
         'attempts',
         'sent_at',
@@ -34,6 +35,7 @@ class PendingImportNotification extends Model
     {
         return [
             'attempts' => 'integer',
+            'has_account' => 'boolean',
             'sent_at' => 'datetime',
         ];
     }

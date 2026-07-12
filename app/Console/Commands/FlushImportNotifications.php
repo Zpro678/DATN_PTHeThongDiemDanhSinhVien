@@ -48,6 +48,7 @@ class FlushImportNotifications extends Command
                         $row->join_key,
                         $row->full_name,
                         $row->email,
+                        $row->has_account,
                     ))->onQueue('mails')
                 );
 

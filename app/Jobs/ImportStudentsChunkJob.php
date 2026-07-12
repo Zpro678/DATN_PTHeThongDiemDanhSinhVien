@@ -283,15 +283,23 @@ class ImportStudentsChunkJob implements ShouldQueue
                 ];
 
                 // Gom thông báo theo kết quả cuối cùng (đã dedup).
-                if (!empty($pendingNew[$pos]['user'])) {
-                    $newAccountUserIds[] = (int) $pendingNew[$pos]['user']->id;
-                } elseif (!empty($p['email'])) {
+                // - SV đã có tài khoản: thông báo in-app + email "đã được thêm vào lớp" (hướng dẫn đăng nhập).
+                // - SV chưa có tài khoản: email hướng dẫn đăng ký.
+                // Cả hai loại email đều đi qua Outbox để được tiết chế tốc độ (không bắn dồn SMTP).
+                $accountUser = $pendingNew[$pos]['user'] ?? null;
+                if (!empty($accountUser)) {
+                    $newAccountUserIds[] = (int) $accountUser->id;
+                }
+
+                $notifyEmail = $p['email'] ?: ($accountUser->email ?? null);
+                if (!empty($notifyEmail)) {
                     $outboxRows[] = [
                         'class_id' => $this->classId,
-                        'email' => $p['email'],
+                        'email' => $notifyEmail,
                         'full_name' => $p['full_name'],
                         'class_name' => $courseClass->name,
                         'join_key' => $courseClass->join_key,
+                        'has_account' => !empty($accountUser),
                         'status' => PendingImportNotification::STATUS_PENDING,
                         'attempts' => 0,
                         'created_at' => $now,

@@ -17,16 +17,18 @@ class StudentImportNotificationMail extends Mailable implements ShouldQueue
     public $classCode;
     public $studentName;
     public $email;
+    public $hasAccount;
 
     /**
      * Create a new message instance.
      */
-    public function __construct($className, $classCode, $studentName, $email)
+    public function __construct($className, $classCode, $studentName, $email, $hasAccount = false)
     {
         $this->className = $className;
         $this->classCode = $classCode;
         $this->studentName = $studentName;
         $this->email = $email;
+        $this->hasAccount = (bool) $hasAccount;
     }
 
     /**
@@ -41,11 +43,17 @@ class StudentImportNotificationMail extends Mailable implements ShouldQueue
 
     /**
      * Get the message content definition.
+     *
+     * Chọn template theo việc SV đã có tài khoản hay chưa:
+     *  - Đã có tài khoản  -> hướng dẫn ĐĂNG NHẬP để theo dõi lớp.
+     *  - Chưa có tài khoản -> hướng dẫn ĐĂNG KÝ bằng chính email này.
      */
     public function content(): Content
     {
         return new Content(
-            markdown: 'emails.student_import_notification',
+            markdown: $this->hasAccount
+                ? 'emails.student_import_welcome'
+                : 'emails.student_import_notification',
         );
     }
 
