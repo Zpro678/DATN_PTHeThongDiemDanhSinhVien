@@ -701,5 +701,57 @@
         </div>
     </template>
 
+    {{-- Modal cảnh báo: còn buổi chưa chốt khi xuất Excel --}}
+    <template x-teleport="body">
+        <div
+            x-show="$wire.showExportWarning"
+            x-cloak
+            @keydown.escape.window="$wire.cancelExport()"
+            class="fixed inset-0 z-[120] flex items-center justify-center p-4"
+        >
+            <div
+                x-show="$wire.showExportWarning"
+                x-transition.opacity
+                @click="$wire.cancelExport()"
+                class="absolute inset-0 bg-slate-900/50 backdrop-blur-sm"
+            ></div>
+
+            <div
+                x-show="$wire.showExportWarning"
+                x-transition.scale.origin.center
+                class="relative w-full max-w-[440px] overflow-hidden rounded-[24px] bg-white shadow-2xl"
+            >
+                <div class="p-6 text-center">
+                    <div class="mx-auto flex h-14 w-14 items-center justify-center rounded-full bg-amber-50 text-amber-600">
+                        <x-user.icon name="alert-triangle" :size="28" />
+                    </div>
+                    <h3 class="mt-4 text-[19px] font-bold text-slate-800">Có buổi điểm danh chưa kết thúc</h3>
+                    <p class="mt-2 text-[14px] leading-relaxed text-slate-500">
+                        Lớp đang có <span class="font-bold text-amber-600" x-text="$wire.exportPendingMeetings"></span> buổi chưa kết thúc.
+                        Các buổi đang diễn ra <span class="font-semibold text-slate-700">chưa được tổng kết</span> nên sẽ
+                        <span class="font-semibold text-slate-700">không xuất hiện</span> trong file Excel. Bạn có thể chờ các buổi kết thúc rồi xuất lại để có số liệu đầy đủ.
+                    </p>
+                </div>
+                <div class="flex gap-3 bg-slate-50 px-6 py-4">
+                    <button
+                        type="button"
+                        @click="$wire.cancelExport()"
+                        class="flex-1 rounded-full border border-slate-200 bg-white px-5 py-2.5 text-sm font-semibold text-slate-600 transition-colors hover:bg-slate-100"
+                    >
+                        Để sau
+                    </button>
+                    <button
+                        type="button"
+                        @click="$wire.confirmExport()"
+                        class="flex-1 inline-flex items-center justify-center gap-1.5 rounded-full bg-amber-600 px-5 py-2.5 text-sm font-bold text-white transition-colors hover:bg-amber-700"
+                    >
+                        <x-user.icon name="download" :size="16" />
+                        Vẫn xuất
+                    </button>
+                </div>
+            </div>
+        </div>
+    </template>
+
     <livewire:lecturer.attendance.quick-attendance-modal />
 </div>

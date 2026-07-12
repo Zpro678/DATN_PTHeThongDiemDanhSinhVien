@@ -31,6 +31,12 @@ class ClassShow extends Component
     // Từ khóa tìm kiếm học viên theo tên / MSSV / email.
     public string $search = '';
 
+    // Hiển thị modal cảnh báo "có buổi chưa kết thúc" trước khi xuất Excel.
+    public bool $showExportWarning = false;
+
+    // Số buổi chưa chốt tại thời điểm bấm xuất (để hiển thị trong cảnh báo).
+    public int $exportPendingMeetings = 0;
+
     public function getRecentSessionsProperty()
     {
         return $this->class->sessions()
@@ -373,6 +379,25 @@ class ClassShow extends Component
      * Tải trực tiếp file Excel danh sách học viên của CHÍNH lớp đang xem
      * (theo từ khóa tìm kiếm hiện tại). Không điều hướng sang trang khác.
      */
+    /**
+     * Số buổi điểm danh của lớp CHƯA được chốt (status != closed).
+     *
+     * Buổi chưa chốt thì tổng kết chuyên cần (MeetingSummary) chưa được dựng
+     * (chỉ dựng trong ClassMeeting::closeIfExpired) nên KHÔNG có mặt trong file Excel.
+     * Dùng để cảnh báo chủ lớp trước khi xuất.
+     */
+    private function pendingMeetingsCount(): int
+    {
+        return $this->class->meetings()
+            ->where('status', '!=', 'closed')
+            ->count();
+    }
+
+    /**
+     * Bấm "Xuất Excel". Nếu còn buổi chưa chốt thì hiện cảnh báo trước
+     * (buổi đang diễn ra sẽ không có trong tổng kết); người dùng xác nhận
+     * mới tải qua confirmExport().
+     */
     public function exportExcel()
     {
         // Gate theo gói: chỉ gói bật tính năng xuất Excel mới tải được.
@@ -382,6 +407,37 @@ class ClassShow extends Component
             return $this->redirect(route('upgrade'), navigate: true);
         }
 
+        $pending = $this->pendingMeetingsCount();
+        if ($pending > 0) {
+            $this->exportPendingMeetings = $pending;
+            $this->showExportWarning = true;
+
+            return null;
+        }
+
+        return $this->downloadExcel();
+    }
+
+    /**
+     * Người dùng đã đọc cảnh báo và vẫn muốn xuất: đóng modal rồi tải file
+     * (chỉ gồm các buổi đã chốt).
+     */
+    public function confirmExport()
+    {
+        $this->showExportWarning = false;
+
+        return $this->downloadExcel();
+    }
+
+    /** Đóng modal cảnh báo, không xuất. */
+    public function cancelExport(): void
+    {
+        $this->showExportWarning = false;
+    }
+
+    /** Thực thi tải file Excel danh sách học viên của lớp hiện tại. */
+    private function downloadExcel()
+    {
         $fileName = 'danh_sach_sinh_vien_' . Str::slug($this->class->name) . '_' . date('Ymd_His') . '.xlsx';
 
         return Excel::download(
