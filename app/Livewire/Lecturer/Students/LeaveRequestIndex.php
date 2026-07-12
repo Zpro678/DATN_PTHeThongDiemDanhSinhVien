@@ -67,7 +67,7 @@ class LeaveRequestIndex extends Component
         $reviewService->approve($leaveRequest, $this->reviewer());
 
         $this->closeApprove();
-        $this->dispatch('toast', message: 'Bạn đã duyệt đơn xin nghỉ phép của sinh viên ' . $leaveRequest->classMember->student_code . ' thành công.', type: 'success');
+        $this->dispatch('toast', message: 'Bạn đã duyệt đơn xin nghỉ phép của sinh viên ' . $leaveRequest->classMember->full_name . ' thành công.', type: 'success');
     }
 
     public function openReject(int $requestId): void
@@ -98,7 +98,7 @@ class LeaveRequestIndex extends Component
         $reviewService->reject($leaveRequest, $this->reviewer(), $validated['rejectedReason']);
 
         $this->closeReject();
-        $this->dispatch('toast', message: 'Bạn đã từ chối đơn xin nghỉ phép của sinh viên ' . $leaveRequest->classMember->student_code . ' thành công.', type: 'success');
+        $this->dispatch('toast', message: 'Bạn đã từ chối đơn xin nghỉ phép của sinh viên ' . $leaveRequest->classMember->full_name . ' thành công.', type: 'success');
     }
 
     private function reviewer(): User
@@ -139,7 +139,7 @@ class LeaveRequestIndex extends Component
         $leaveRequests = LeaveRequest::query()
             ->with([
                 'classMember:id,class_id,user_id',
-                'classMember.profile:id,class_member_id,student_code,full_name,email',
+                'classMember.profile:id,class_member_id,full_name,email',
                 'classMember.courseClass:id,name,join_key,owner_user_id',
                 'classMember.user:id,name,email,avatar',
                 'classMeeting:id,class_id,name,date,start_time,end_time',
@@ -151,7 +151,7 @@ class LeaveRequestIndex extends Component
             ->when($this->search !== '', function (Builder $query): void {
                 $query->where(function (Builder $query): void {
                     $query->where('reason', 'like', '%'.$this->search.'%')
-                        ->orWhereHas('classMember.profile', fn (Builder $p) => $p->where('full_name', 'like', '%'.$this->search.'%')->orWhere('student_code', 'like', '%'.$this->search.'%'))
+                        ->orWhereHas('classMember.profile', fn (Builder $p) => $p->where('full_name', 'like', '%'.$this->search.'%')->orWhere('email', 'like', '%'.$this->search.'%'))
                         ->orWhereHas('classMember.user', fn (Builder $u) => $u->where('name', 'like', '%'.$this->search.'%'));
                 });
             })

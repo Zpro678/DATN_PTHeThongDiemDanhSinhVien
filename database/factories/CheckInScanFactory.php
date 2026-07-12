@@ -14,7 +14,6 @@ class CheckInScanFactory extends Factory
         return [
             'class_session_id' => ClassSession::factory(),
             'user_id' => User::factory(),
-            'student_code_attempt' => 'SV'.fake()->numerify('########'),
             'scan_type' => fake()->randomElement(['qr', 'gps', 'link']),
             'payload_signature' => hash_hmac('sha256', Str::random(32), 'factory-secret'),
             'is_valid' => true,

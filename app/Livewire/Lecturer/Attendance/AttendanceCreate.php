@@ -249,14 +249,14 @@ class AttendanceCreate extends Component
         ]);
 
         collect([
-            ['DEMO001', 'Nguyễn Văn An'],
-            ['DEMO002', 'Trần Thị Bình'],
-            ['DEMO003', 'Lê Minh Cường'],
-            ['DEMO004', 'Phạm Thanh Duy'],
-        ])->each(function (array $student) use ($courseClass): void {
+            'Nguyễn Văn An',
+            'Trần Thị Bình',
+            'Lê Minh Cường',
+            'Phạm Thanh Duy',
+        ])->each(function (string $fullName) use ($courseClass): void {
             $member = ClassMember::withTrashed()
                 ->where('class_id', $courseClass->id)
-                ->whereHas('profile', fn ($p) => $p->where('student_code', $student[0]))
+                ->whereHas('profile', fn ($p) => $p->where('full_name', $fullName))
                 ->first();
 
             if (! $member) {
@@ -270,7 +270,7 @@ class AttendanceCreate extends Component
                 $member->update(['status' => ClassMember::STATUS_ACTIVE]);
             }
 
-            $member->syncProfile(['student_code' => $student[0], 'full_name' => $student[1]]);
+            $member->syncProfile(['full_name' => $fullName]);
         });
     }
 }

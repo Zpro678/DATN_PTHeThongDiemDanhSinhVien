@@ -46,7 +46,6 @@ class FlushImportNotifications extends Command
                     (new StudentImportNotificationMail(
                         $row->class_name,
                         $row->join_key,
-                        $row->student_code ?: '—',
                         $row->full_name,
                         $row->email,
                     ))->onQueue('mails')

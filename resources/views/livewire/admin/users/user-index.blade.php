@@ -27,7 +27,7 @@
                     type="text"
                     wire:model.live.debounce.300ms="search"
                     class="relative z-10 block w-full rounded-xl border border-slate-200 bg-white py-2.5 pl-10 pr-3 text-sm leading-5 text-slate-900 placeholder-slate-400 transition-colors focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-500"
-                    placeholder="Tìm kiếm theo tên, email, MSSV..."
+                    placeholder="Tìm kiếm theo tên, email..."
                 >
             </div>
 

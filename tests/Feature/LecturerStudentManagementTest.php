@@ -29,7 +29,7 @@ class LecturerStudentManagementTest extends TestCase
 
         $this->actingAs($owner)->get(route('lecturer.students.show', $member))
             ->assertOk()
-            ->assertSee($member->student_code);
+            ->assertSee($member->full_name);
 
         $this->actingAs($owner)->get(route('lecturer.leave-requests.index'))
             ->assertOk()
@@ -179,8 +179,8 @@ class LecturerStudentManagementTest extends TestCase
             'user_id' => $student->id,
         ]);
         $member->syncProfile([
-            'student_code' => 'SV'.$student->id,
             'full_name' => $student->name,
+            'email' => $student->email,
         ]);
         // Đơn xin nghỉ nay gắn với BUỔI (class_meeting_id), phiên chỉ để tạo bản ghi điểm danh.
         $meeting = ClassMeeting::factory()->create([

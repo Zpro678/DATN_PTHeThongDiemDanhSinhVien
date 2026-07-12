@@ -44,17 +44,17 @@ class ClassSessionExport implements FromArray, ShouldAutoSize, WithStyles
             ['NGÀY:', $date],
             ['CA:', $ca],
             [''],
-            ['MSSV', 'Tên sinh viên', 'Trạng thái', 'Lý do (Ghi chú)']
+            ['Tên sinh viên', 'Trạng thái', 'Lý do (Ghi chú)']
         ];
 
-        // Load attendance records ordered by student code.
+        // Load attendance records ordered by student name.
         // Nạp kèm classMember đã withTrashed để sinh viên đã bị xoá mềm vẫn hiển thị
         // trong báo cáo của buổi (tránh lỗi đọc thuộc tính trên null).
         $records = $this->session->attendanceRecords()
             ->with(['classMember' => fn ($query) => $query->withTrashed()->with(['profile', 'user'])])
             ->join('class_members', 'attendance_records.class_member_id', '=', 'class_members.id')
             ->leftJoin('class_member_profiles', 'class_member_profiles.class_member_id', '=', 'class_members.id')
-            ->orderBy('class_member_profiles.student_code')
+            ->orderBy('class_member_profiles.full_name')
             ->select('attendance_records.*')
             ->get();
 
@@ -75,7 +75,6 @@ class ClassSessionExport implements FromArray, ShouldAutoSize, WithStyles
             }
 
             $rows[] = [
-                $member->student_code,
                 $member->full_name,
                 $statusMap[$record->status] ?? 'Chưa điểm danh',
                 $record->note ?? ''
@@ -112,8 +111,8 @@ class ClassSessionExport implements FromArray, ShouldAutoSize, WithStyles
         $sheet->getStyle('B1:B4')->getFont()->setBold(true);
         $sheet->getStyle('D4')->getFont()->setBold(true);
 
-        // Styling for the table header (Row 6)
-        $sheet->getStyle('A6:D6')->applyFromArray([
+        // Styling for the table header (Row 6) — bảng còn 3 cột (Tên/Trạng thái/Ghi chú) sau khi bỏ MSSV.
+        $sheet->getStyle('A6:C6')->applyFromArray([
             'font' => [
                 'bold' => true, 
                 'color' => ['argb' => 'FFFFFFFF'],

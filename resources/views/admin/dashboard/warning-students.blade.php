@@ -20,8 +20,7 @@
             <table class="w-full border-collapse text-left text-xs">
                 <thead>
                     <tr class="border-b border-slate-100 text-[10px] font-extrabold uppercase tracking-wider text-slate-400">
-                        <th class="whitespace-nowrap px-4 py-3 w-[15%]">MSSV</th>
-                        <th class="whitespace-nowrap px-4 py-3 w-[25%]">Họ và tên</th>
+                        <th class="whitespace-nowrap px-4 py-3 w-[30%]">Họ và tên</th>
                         <th class="whitespace-nowrap px-4 py-3 text-center">Mã lớp</th>
                         <th class="whitespace-nowrap px-4 py-3 w-[30%]">Môn học</th>
                         <th class="whitespace-nowrap px-4 py-3 text-center">Tỷ lệ đi học</th>
@@ -31,7 +30,6 @@
                 <tbody class="divide-y divide-slate-50">
                     @forelse ($warningStudents as $item)
                         <tr class="transition-colors hover:bg-blue-50/40">
-                            <td class="whitespace-nowrap px-4 py-3.5 font-mono font-black text-slate-500">{{ $item['mssv'] }}</td>
                             <td class="px-4 py-3.5 font-extrabold text-slate-800">{{ $item['name'] }}</td>
                             <td class="whitespace-nowrap px-4 py-3.5 text-center font-bold text-slate-500">{{ $item['class'] }}</td>
                             <td class="max-w-[250px] truncate px-4 py-3.5 font-medium text-slate-600">{{ $item['subject'] }}</td>
@@ -51,7 +49,7 @@
                         </tr>
                     @empty
                         <tr>
-                            <td colspan="6" class="px-4 py-8 text-center text-slate-500">Không có học viên nào bị cảnh báo.</td>
+                            <td colspan="5" class="px-4 py-8 text-center text-slate-500">Không có học viên nào bị cảnh báo.</td>
                         </tr>
                     @endforelse
                 </tbody>

@@ -21,7 +21,6 @@ class StudentsImport implements ToCollection, WithChunkReading, WithStartRow
     public $meetingHeaders;
     public $emailColIndex;
     public $nameColIndex;
-    public $codeColIndex;
     public $headerRowNumber;
     public $authUserId;
     public $importToken;
@@ -34,7 +33,6 @@ class StudentsImport implements ToCollection, WithChunkReading, WithStartRow
         $meetingHeaders,
         $emailColIndex,
         $nameColIndex,
-        $codeColIndex,
         $headerRowNumber,
         $authUserId,
         $importToken,
@@ -46,7 +44,6 @@ class StudentsImport implements ToCollection, WithChunkReading, WithStartRow
         $this->meetingHeaders = $meetingHeaders;
         $this->emailColIndex = $emailColIndex;
         $this->nameColIndex = $nameColIndex;
-        $this->codeColIndex = $codeColIndex;
         $this->headerRowNumber = $headerRowNumber;
         $this->authUserId = $authUserId;
         $this->importToken = $importToken;
@@ -144,7 +141,6 @@ class StudentsImport implements ToCollection, WithChunkReading, WithStartRow
                 $this->meetingHeaders,
                 $this->emailColIndex,
                 $this->nameColIndex,
-                $this->codeColIndex,
                 $this->authUserId,
                 $this->importToken,
                 $this->syncAttendance

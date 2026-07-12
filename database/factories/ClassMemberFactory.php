@@ -22,7 +22,7 @@ class ClassMemberFactory extends Factory
 
     public function configure(): static
     {
-        // Mặc định kèm hồ sơ danh tính để roster/export có MSSV + tên.
+        // Mặc định kèm hồ sơ danh tính để roster/export có tên SV.
         return $this->afterCreating(function (ClassMember $member) {
             if (! $member->profile()->exists()) {
                 ClassMemberProfile::factory()->for($member)->create();

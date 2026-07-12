@@ -73,12 +73,12 @@ class LecturerQrAttendanceTest extends TestCase
 
         $record = AttendanceRecord::query()
             ->where('class_session_id', $session->id)
-            ->whereHas('classMember.profile', fn ($query) => $query->where('student_code', 'QR002'))
+            ->whereHas('classMember.profile', fn ($query) => $query->where('email', 'qr-beta@demo.test'))
             ->firstOrFail();
 
         Livewire::actingAs($owner)
             ->test(QrAttendanceSession::class, ['session' => $session->id])
-            ->set('search', 'QR002')
+            ->set('search', 'qr-beta@demo.test')
             ->assertSee('Qr Beta Target')
             ->assertDontSee('Qr Alpha Hidden')
             ->call('setStatus', $record->id, 'present')
@@ -114,14 +114,14 @@ class LecturerQrAttendanceTest extends TestCase
         ]);
 
         collect([
-            ['QR001', 'Qr Alpha Hidden'],
-            ['QR002', 'Qr Beta Target'],
-            ['QR003', 'Qr Gamma Extra'],
+            ['qr-alpha@demo.test', 'Qr Alpha Hidden'],
+            ['qr-beta@demo.test', 'Qr Beta Target'],
+            ['qr-gamma@demo.test', 'Qr Gamma Extra'],
         ])->each(function (array $student) use ($courseClass, $session): void {
             $member = ClassMember::factory()->withoutProfile()->create([
                 'class_id' => $courseClass->id,
             ]);
-            $member->syncProfile(['student_code' => $student[0], 'full_name' => $student[1]]);
+            $member->syncProfile(['email' => $student[0], 'full_name' => $student[1]]);
 
             AttendanceRecord::factory()->create([
                 'class_session_id' => $session->id,

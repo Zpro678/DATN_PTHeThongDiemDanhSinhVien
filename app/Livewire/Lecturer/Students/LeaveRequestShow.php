@@ -36,10 +36,10 @@ class LeaveRequestShow extends Component
             'class_id'   => $leaveRequest->classMember->class_id ?? null,
             'table_name' => 'leave_requests',
             'row_id'     => $leaveRequest->id,
-            'new_values' => ['student_code' => $leaveRequest->classMember->student_code],
+            'new_values' => ['full_name' => $leaveRequest->classMember->full_name],
         ]);
 
-        $this->dispatch('toast', message: 'Bạn đã duyệt đơn xin nghỉ phép của sinh viên ' . $leaveRequest->classMember->student_code . ' thành công.', type: 'success');
+        $this->dispatch('toast', message: 'Bạn đã duyệt đơn xin nghỉ phép của sinh viên ' . $leaveRequest->classMember->full_name . ' thành công.', type: 'success');
     }
 
     public function reject(LeaveRequestReviewService $reviewService): void
@@ -60,12 +60,12 @@ class LeaveRequestShow extends Component
             'table_name' => 'leave_requests',
             'row_id'     => $leaveRequest->id,
             'new_values' => [
-                'student_code'    => $leaveRequest->classMember->student_code,
+                'full_name'       => $leaveRequest->classMember->full_name,
                 'rejected_reason' => $validated['rejectedReason'],
             ],
         ]);
 
-        $this->dispatch('toast', message: 'Bạn đã từ chối đơn xin nghỉ phép của sinh viên ' . $leaveRequest->classMember->student_code . ' thành công.', type: 'success');
+        $this->dispatch('toast', message: 'Bạn đã từ chối đơn xin nghỉ phép của sinh viên ' . $leaveRequest->classMember->full_name . ' thành công.', type: 'success');
     }
 
     private function ownedRequest(int $requestId): LeaveRequest

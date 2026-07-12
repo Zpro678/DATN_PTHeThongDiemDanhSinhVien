@@ -159,7 +159,7 @@
                         <tr class="transition-colors hover:bg-blue-50/30">
                             <td class="pl-10 pr-6 py-4 text-left">
                                 <span class="block text-sm font-bold text-slate-900">{{ $row['member']->full_name }}</span>
-                                <span class="mt-0.5 block text-xs text-slate-500">{{ $row['member']->student_code }}</span>
+                                <span class="mt-0.5 block text-xs text-slate-500">{{ $row['member']->user?->email ?? $row['member']->email }}</span>
                             </td>
                             @foreach($row['session_statuses'] as $st)
                                 @php($badge = $sessionBadge[$st] ?? $sessionBadge['pending'])

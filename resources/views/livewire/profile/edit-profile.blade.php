@@ -111,7 +111,7 @@
                                     <input type="email" wire:model="email" readonly class="w-full rounded-xl border border-slate-200 bg-slate-50 px-4 py-3 text-sm font-bold text-slate-500 cursor-not-allowed focus:outline-none">
                                 </div>
 
-                                <div x-data="{ manual: false }">
+                                <div>
                                     <label class="mb-2 block text-[10px] font-bold uppercase tracking-widest text-slate-400">Liên kết Telegram</label>
 
                                     @if (filled($user->telegram_chat_id))
@@ -126,42 +126,14 @@
                                                 Hủy liên kết
                                             </button>
                                         </div>
-                                    @elseif ($telegramLinking)
-                                        {{-- Đang chờ người dùng bấm Start trên Telegram: tự poll trạng thái --}}
-                                        <div class="rounded-xl border border-sky-100 bg-sky-50 px-4 py-3" wire:poll.3s="refreshTelegramStatus">
-                                            <p class="flex items-center gap-2 text-sm font-bold text-sky-700">
-                                                <x-user.icon name="loader" class="animate-spin" :size="16" />
-                                                Đang chờ xác nhận trên Telegram...
-                                            </p>
-                                            <p class="mt-1 text-xs text-slate-500">
-                                                Một tab Telegram vừa mở — hãy bấm <b>START</b> (hoặc gửi <b>/start</b>) cho bot.
-                                                @if ($telegramLinkUrl)
-                                                    Nếu chưa mở, <a href="{{ $telegramLinkUrl }}" target="_blank" class="font-bold text-sky-700 hover:underline">bấm vào đây</a>.
-                                                @endif
-                                            </p>
-                                            <button type="button" wire:click="cancelTelegramLinking" class="mt-2 text-xs font-bold text-slate-500 hover:text-slate-700">Hủy</button>
-                                        </div>
                                     @else
-                                        {{-- Chưa liên kết: nút liên kết tự động qua bot --}}
-                                        <button type="button" wire:click="linkTelegram" wire:loading.attr="disabled" wire:target="linkTelegram"
-                                            class="inline-flex w-full items-center justify-center gap-2 rounded-xl bg-sky-600 px-4 py-3 text-sm font-bold text-white transition-colors hover:bg-sky-700 disabled:opacity-60 sm:w-auto">
-                                            <x-user.icon name="send" :size="16" />
-                                            Liên kết Telegram
-                                        </button>
-                                        <p class="mt-1.5 text-xs text-slate-500">
-                                            Bấm nút trên, cửa sổ Telegram sẽ mở — bấm <b>START</b> để nhận thông báo.
-                                            <button type="button" @click="manual = !manual" class="ml-1 font-bold text-blue-600 hover:underline">Nhập Chat ID thủ công</button>
-                                        </p>
-
-                                        {{-- Phương án dự phòng: nhập tay (khi webhook chưa cấu hình) --}}
-                                        <div x-show="manual" x-cloak class="mt-3">
-                                            <div class="flex items-center gap-2">
-                                                <input type="text" wire:model="telegram_chat_id" placeholder="VD: 123456789" class="w-full rounded-xl border border-slate-200 bg-white px-4 py-3 text-sm font-bold text-slate-900 focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-500">
-                                                <button type="button" wire:click="updateProfileInformation" class="shrink-0 rounded-xl bg-slate-700 px-4 py-3 text-sm font-bold text-white transition-colors hover:bg-slate-800">Lưu</button>
-                                            </div>
-                                            <p class="mt-1.5 text-xs text-slate-500">Nhắn tin cho <a href="https://t.me/userinfobot" target="_blank" class="text-blue-600 hover:underline">@userinfobot</a> để lấy ID của bạn.</p>
-                                            @error('telegram_chat_id') <span class="text-red-500 text-xs mt-1 block">{{ $message }}</span> @enderror
+                                        {{-- Nhập Chat ID thủ công — luôn hiển thị --}}
+                                        <div class="flex items-center gap-2">
+                                            <input type="text" wire:model="telegram_chat_id" placeholder="VD: 123456789" class="w-full rounded-xl border border-slate-200 bg-white px-4 py-3 text-sm font-bold text-slate-900 focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-500">
+                                            <button type="button" wire:click="updateProfileInformation" class="shrink-0 rounded-xl bg-slate-700 px-4 py-3 text-sm font-bold text-white transition-colors hover:bg-slate-800">Lưu</button>
                                         </div>
+                                        <p class="mt-1.5 text-xs text-slate-500">Nhắn tin cho <a href="https://t.me/userinfobot" target="_blank" class="text-blue-600 hover:underline">@userinfobot</a> để lấy Chat ID của bạn, rồi dán vào ô trên và bấm <b>Lưu</b>.</p>
+                                        @error('telegram_chat_id') <span class="text-red-500 text-xs mt-1 block">{{ $message }}</span> @enderror
                                     @endif
                                 </div>
 

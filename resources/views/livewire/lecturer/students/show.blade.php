@@ -45,7 +45,7 @@
             @else
                 <div class="flex h-20 w-20 shrink-0 items-center justify-center rounded-2xl bg-white/20 text-3xl font-extrabold backdrop-blur-sm ring-2 ring-white/25">{{ mb_strtoupper(mb_substr($member->full_name, 0, 1)) }}</div>
             @endif
-            <div class="flex-1"><h2 class="text-2xl font-extrabold">{{ $member->full_name }}</h2><p class="mt-2 text-sm text-blue-100">{{ $member->student_code }} · {{ $member->user?->email ?? 'Chưa liên kết tài khoản' }}</p><p class="mt-1 text-sm font-semibold text-white/90">{{ $member->courseClass->join_key }} - {{ $member->courseClass->name }}</p></div>
+            <div class="flex-1"><h2 class="text-2xl font-extrabold">{{ $member->full_name }}</h2><p class="mt-2 text-sm text-blue-100">{{ $member->user?->email ?? $member->email ?? 'Chưa liên kết tài khoản' }}</p><p class="mt-1 text-sm font-semibold text-white/90">{{ $member->courseClass->join_key }} - {{ $member->courseClass->name }}</p></div>
             <span class="self-start rounded-full bg-white/20 px-4 py-2 text-xs font-bold uppercase ring-1 ring-white/25">{{ $member->trashed() ? 'Lưu trữ' : 'Đang học' }}</span>
         </div>
     </section>

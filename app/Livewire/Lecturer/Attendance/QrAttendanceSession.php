@@ -318,7 +318,7 @@ class QrAttendanceSession extends Component
             )
             ->when($this->search !== '', function (Builder $query): void {
                 $query->where(function (Builder $query): void {
-                    $query->whereHas('classMember.profile', fn (Builder $p) => $p->where('student_code', 'like', '%'.$this->search.'%')->orWhere('full_name', 'like', '%'.$this->search.'%'))
+                    $query->whereHas('classMember.profile', fn (Builder $p) => $p->where('email', 'like', '%'.$this->search.'%')->orWhere('full_name', 'like', '%'.$this->search.'%'))
                         ->orWhereHas('classMember.user', fn (Builder $u) => $u->where('name', 'like', '%'.$this->search.'%'));
                 });
             })

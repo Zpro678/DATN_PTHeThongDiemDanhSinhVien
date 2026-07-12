@@ -25,7 +25,7 @@
                     @else
                         <span class="flex h-16 w-16 shrink-0 items-center justify-center rounded-2xl bg-primary/10 text-2xl font-extrabold text-primary">{{ mb_strtoupper(mb_substr($leaveRequest->classMember->full_name, 0, 1)) }}</span>
                     @endif
-                    <div><a href="{{ route('lecturer.students.show', $leaveRequest->classMember) }}" class="text-xl font-extrabold text-slate-900 hover:text-primary">{{ $leaveRequest->classMember->full_name }}</a><p class="mt-1 text-base text-slate-500">{{ $leaveRequest->classMember->student_code }} · {{ $leaveRequest->classMember->user?->email }}</p></div></div>
+                    <div><a href="{{ route('lecturer.students.show', $leaveRequest->classMember) }}" class="text-xl font-extrabold text-slate-900 hover:text-primary">{{ $leaveRequest->classMember->full_name }}</a><p class="mt-1 text-base text-slate-500">{{ $leaveRequest->classMember->user?->email ?? $leaveRequest->classMember->email }}</p></div></div>
                 <dl class="mt-5 grid gap-3 border-t border-slate-100 pt-5 text-base"><div><dt class="text-sm font-bold uppercase text-slate-400">Lớp học</dt><dd class="mt-1 font-semibold text-slate-700">{{ $leaveRequest->classMember->courseClass->join_key }} - {{ $leaveRequest->classMember->courseClass->name }}</dd></div><div><dt class="text-sm font-bold uppercase text-slate-400">Buổi học</dt><dd class="mt-1 font-semibold text-slate-700">{{ $leaveRequest->classMeeting->name }} · {{ $leaveRequest->classMeeting->date->format('d/m/Y') }}</dd></div></dl>
             </div>
 

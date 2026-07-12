@@ -26,7 +26,7 @@ class LectureManageStudentService
         // Cài đặt lớp: tổng buổi dự kiến + cấu hình điểm trừ.
         $classes = CourseClass::query()
             ->whereIn('id', $members->pluck('class_id')->unique()->filter())
-            ->get(['id', 'total_sessions', 'deduct_excused_absence'])
+            ->get(['id', 'total_sessions', 'deduct_excused_absence', 'deduct_late', 'deduct_absent', 'deduct_excused'])
             ->keyBy('id');
 
         // Bản ghi điểm danh ở phiên đã chốt, kèm meeting_id để gộp theo buổi.

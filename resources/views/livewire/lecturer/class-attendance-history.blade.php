@@ -112,7 +112,7 @@
                                             @endif
                                             <div class="flex min-w-0 flex-col">
                                                 <span class="truncate font-black text-slate-900" title="{{ $member->full_name }}">{{ $member->full_name }}</span>
-                                                <span class="text-xs font-medium text-slate-400">{{ $member->student_code }}</span>
+                                                <span class="text-xs font-medium text-slate-400">{{ $member->email }}</span>
                                             </div>
                                         </div>
                                         @php
@@ -253,7 +253,7 @@
                                         </template>
                                         <div class="flex flex-col">
                                             <span class="font-bold text-slate-900" x-text="student.full_name"></span>
-                                            <span class="text-xs font-medium text-slate-400" x-text="student.student_code"></span>
+                                            <span class="text-xs font-medium text-slate-400" x-text="student.email"></span>
                                         </div>
                                     </div>
                                 </td>
@@ -329,7 +329,7 @@
                                     </template>
                                     <div>
                                         <p class="font-bold text-slate-900" x-text="modalData.student.full_name"></p>
-                                        <p class="text-sm font-medium text-slate-500" x-text="modalData.student.student_code"></p>
+                                        <p class="text-sm font-medium text-slate-500" x-text="modalData.student.email"></p>
                                     </div>
                                 </div>
 

@@ -11,7 +11,6 @@ class ClassMemberProfileFactory extends Factory
     {
         return [
             'class_member_id' => ClassMember::factory(),
-            'student_code' => 'SV'.fake()->unique()->numerify('########'),
             'full_name' => fake()->name(),
             'email' => fake()->unique()->safeEmail(),
         ];

@@ -22,7 +22,7 @@ class ClassAttendanceHistoryExport implements FromArray, ShouldAutoSize, WithSty
 
     private int $dataEndRow = 6;
 
-    private int $columnCount = 5;
+    private int $columnCount = 4;
 
     public function __construct(private CourseClass $courseClass)
     {
@@ -52,7 +52,7 @@ class ClassAttendanceHistoryExport implements FromArray, ShouldAutoSize, WithSty
             ->values()
             ->all();
 
-        $headers = array_merge(['STT', 'MSSV', 'Họ và tên', 'Email', 'Chuyên cần (%)'], $sessionHeaders);
+        $headers = array_merge(['STT', 'Họ và tên', 'Email', 'Chuyên cần (%)'], $sessionHeaders);
         $this->columnCount = count($headers);
 
         $classCode = $courseClass->class_code ?: $courseClass->join_key;
@@ -73,7 +73,6 @@ class ClassAttendanceHistoryExport implements FromArray, ShouldAutoSize, WithSty
 
             $row = [
                 $index + 1,
-                $member->student_code,
                 $member->full_name,
                 $member->email,
                 (int) ($memberInfo['attendance_percent'] ?? 100).'%',
@@ -128,27 +127,28 @@ class ClassAttendanceHistoryExport implements FromArray, ShouldAutoSize, WithSty
                 $sheet->getStyle("A{$row}:{$lastCol}{$row}")->getAlignment()
                     ->setVertical(Alignment::VERTICAL_CENTER);
 
-                for ($column = 6; $column <= $this->columnCount; $column++) {
+                // Cột buổi bắt đầu từ cột 5 (sau STT/Họ tên/Email/Chuyên cần) — trước đây là 6 khi còn MSSV.
+                for ($column = 5; $column <= $this->columnCount; $column++) {
                     $cell = Coordinate::stringFromColumnIndex($column).$row;
                     $this->styleStatusCell($sheet, $cell, (string) $sheet->getCell($cell)->getValue());
                 }
             }
 
             $sheet->getStyle("A{$this->dataStartRow}:A{$this->dataEndRow}")->getAlignment()->setHorizontal(Alignment::HORIZONTAL_CENTER);
-            $sheet->getStyle("E{$this->dataStartRow}:{$lastCol}{$this->dataEndRow}")->getAlignment()->setHorizontal(Alignment::HORIZONTAL_CENTER);
+            // Canh giữa từ cột Chuyên cần (D) tới hết các cột buổi.
+            $sheet->getStyle("D{$this->dataStartRow}:{$lastCol}{$this->dataEndRow}")->getAlignment()->setHorizontal(Alignment::HORIZONTAL_CENTER);
         }
 
-        $sheet->getColumnDimension('A')->setWidth(6);
-        $sheet->getColumnDimension('B')->setWidth(14);
-        $sheet->getColumnDimension('C')->setWidth(26);
-        $sheet->getColumnDimension('D')->setWidth(30);
-        $sheet->getColumnDimension('E')->setWidth(16);
+        $sheet->getColumnDimension('A')->setWidth(6);   // STT
+        $sheet->getColumnDimension('B')->setWidth(26);  // Họ và tên
+        $sheet->getColumnDimension('C')->setWidth(30);  // Email
+        $sheet->getColumnDimension('D')->setWidth(16);  // Chuyên cần
 
-        for ($column = 6; $column <= $this->columnCount; $column++) {
+        for ($column = 5; $column <= $this->columnCount; $column++) {
             $sheet->getColumnDimension(Coordinate::stringFromColumnIndex($column))->setWidth(16);
         }
 
-        $sheet->freezePane('F7');
+        $sheet->freezePane('E7');
 
         return [];
     }

@@ -424,62 +424,14 @@
                             </div>
                         </div>
 
-                        {{-- Formula Selection --}}
+                        {{-- Công thức chuyên cần: CỐ ĐỊNH theo cấu hình điểm trừ của lớp --}}
                         <div>
-                            <label class="mb-2 flex items-center gap-1.5 text-sm font-semibold text-slate-700">
-                                <span>Công thức tính Chuyên cần (%)</span>
-                                <button type="button" @click="showHelpModal = !showHelpModal" class="flex h-5 w-5 items-center justify-center rounded-full bg-slate-100 text-slate-500 transition-colors hover:bg-slate-200" title="Hướng dẫn các ký hiệu">
-                                    <x-user.icon name="help-circle" :size="14" />
-                                </button>
-                            </label>
-                            
-                            @if (!$isCustomFormula)
-                                <!-- Dropdown Chọn tên công thức (Custom Alpine.js) -->
-                                <div class="mb-3" x-data="{
-                                    open: false,
-                                    value: @entangle('selectedTemplate'),
-                                    position: 'bottom',
-                                    options: [
-                                        { value: '(c + m + p) / t * 100', label: 'Mặc định' },
-                                        { value: 'v / t * 100', label: 'Tính tỷ lệ vắng' },
-                                        { value: '(c + m + v + p) / t * 100', label: 'Điểm danh đầy đủ' },
-                                        { value: '(c + m + p - floor(m / 3)) / t * 100', label: 'Phạt đi muộn (3 lần muộn = 1 lần vắng)' },
-                                    ],
-                                    get label() { return this.options.find(o => o.value == this.value)?.label ?? 'Chọn...' },
-                                    checkPosition() {
-                                        this.$nextTick(() => {
-                                            let rect = this.$refs.btn.getBoundingClientRect();
-                                            let menuRect = this.$refs.menu.getBoundingClientRect();
-                                            let spaceBelow = window.innerHeight - rect.bottom;
-                                            let spaceAbove = rect.top;
-                                            this.position = (spaceBelow < menuRect.height && spaceAbove > spaceBelow) ? 'top' : 'bottom';
-                                        });
-                                    }
-                                }" @click.outside="open = false" @keydown.escape.window="open = false">
-                                    <div class="relative">
-                                        <button type="button" @click="open = !open; if(open) checkPosition();" x-ref="btn"
-                                            class="flex w-full items-center justify-between gap-3 rounded-xl border border-slate-200 bg-white px-4 py-3 text-left text-sm font-bold text-slate-700 outline-none transition-all hover:border-primary focus:border-primary focus:ring-2 focus:ring-primary/20"
-                                            :class="open ? 'border-primary ring-2 ring-primary/20' : ''">
-                                            <span x-text="label"></span>
-                                            <x-user.icon name="chevron-down" :size="16" class="shrink-0 text-slate-400 transition-transform duration-200" x-bind:class="open ? 'rotate-180 text-primary' : ''" />
-                                        </button>
-                                        <div x-show="open" x-cloak x-ref="menu" x-transition:enter="transition ease-out duration-150" x-transition:enter-start="opacity-0 -translate-y-2" x-transition:enter-end="opacity-100 translate-y-0" x-transition:leave="transition ease-in duration-100" x-transition:leave-start="opacity-100 translate-y-0" x-transition:leave-end="opacity-0 -translate-y-2"
-                                            class="absolute left-0 right-0 z-50 overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-xl shadow-slate-900/10"
-                                            :class="position === 'top' ? 'bottom-full mb-1.5' : 'top-full mt-1.5'">
-                                            <template x-for="option in options" :key="option.value">
-                                                <button type="button"
-                                                    @click="value = option.value; open = false"
-                                                    class="flex w-full items-center justify-between px-4 py-3 text-sm font-bold transition-colors hover:bg-slate-50"
-                                                    :class="value == option.value ? 'text-primary bg-primary/5' : 'text-slate-700'">
-                                                    <span x-text="option.label"></span>
-                                                    <span x-show="value == option.value" class="flex h-4 w-4 items-center justify-center rounded-full bg-primary">
-                                                        <x-user.icon name="check" :size="10" class="text-white" />
-                                                    </span>
-                                                </button>
-                                            </template>
-                                    </div>
-                                </div>
-                            @endif
+                            <label class="mb-2 block text-sm font-semibold text-slate-700">Cách tính chuyên cần trong file</label>
+                            <div class="rounded-xl border border-slate-200 bg-slate-50 px-4 py-3 text-sm text-slate-600 space-y-1.5">
+                                <p><span class="font-bold text-slate-800">Điểm chuyên cần (/10)</span> = 10 − (Đi muộn × điểm trừ muộn + Vắng × điểm trừ vắng + Có phép × điểm trừ có phép).</p>
+                                <p><span class="font-bold text-slate-800">Phần trăm có mặt trong lớp</span> = 100% − (số buổi vắng không phép ÷ tổng buổi dự kiến × 100%).</p>
+                                <p class="text-xs text-slate-500">Điểm trừ lấy theo <b>Bảng cấu hình điểm trừ</b> trong Cài đặt lớp.</p>
+                            </div>
                         </div>
                     </div>
                 </div>

@@ -14,7 +14,6 @@ class ClassMemberProfile extends Model
 
     protected $fillable = [
         'class_member_id', // ID thành viên lớp (1-1).
-        'student_code', // MSSV khai báo/import.
         'full_name', // Họ tên SV.
         'email', // Email SV.
     ];

@@ -149,11 +149,7 @@
                                 </div>
                             </div>
 
-                            <div class="grid grid-cols-2 md:grid-cols-4 gap-4">
-                                <div>
-                                    <label class="block text-[13px] font-semibold text-on-surface mb-1.5">Có mặt</label>
-                                    <input wire:model="attendanceRules.present" type="number" step="0.5" max="0" class="w-full rounded-lg border border-outline-variant/40 bg-white px-3 py-2 text-sm text-on-surface outline-none transition-all focus:border-primary focus:ring-2 focus:ring-primary/20">
-                                </div>
+                            <div class="grid grid-cols-3 gap-4">
                                 <div>
                                     <label class="block text-[13px] font-semibold text-on-surface mb-1.5">Đi muộn</label>
                                     <input wire:model="attendanceRules.late" type="number" step="0.5" class="w-full rounded-lg border border-outline-variant/40 bg-white px-3 py-2 text-sm text-on-surface outline-none transition-all focus:border-primary focus:ring-2 focus:ring-primary/20">

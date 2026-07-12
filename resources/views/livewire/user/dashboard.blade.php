@@ -36,7 +36,7 @@
             'title'  => $isExceeded
                 ? "{$student['full_name']} vắng {$absenceRatio}% tổng buổi"
                 : "{$student['full_name']} sắp vượt ngưỡng nghỉ",
-            'meta'   => "{$student['student_code']} - {$student['class_name']} · Có mặt {$present}/{$planned} buổi",
+            'meta'   => "{$student['class_name']} · Có mặt {$present}/{$planned} buổi",
             'icon'   => $isExceeded ? 'alert-triangle' : 'alert-circle',
             'color'  => $isExceeded ? 'text-error' : 'text-secondary',
             'bg'     => $isExceeded ? 'bg-error/10' : 'bg-secondary/10',
@@ -72,7 +72,7 @@
             : ($req['session_name'] ?? '');
         $alerts->push([
             'title'  => "Đơn xin nghỉ: {$req['full_name']}",
-            'meta'   => "{$req['student_code']} - {$req['class_name']}" . ($sessionLabel ? " · {$sessionLabel}" : ''),
+            'meta'   => "{$req['class_name']}" . ($sessionLabel ? " · {$sessionLabel}" : ''),
             'icon'   => 'file-text',
             'color'  => 'text-primary',
             'bg'     => 'bg-primary/10',

@@ -46,7 +46,7 @@ class ClassMember extends Model
     }
 
     /**
-     * Hồ sơ danh tính (MSSV/tên/email) — đặc biệt cho SV nhập form/import.
+     * Hồ sơ danh tính (tên/email) — đặc biệt cho SV nhập form/import.
      */
     public function profile(): HasOne
     {
@@ -56,7 +56,7 @@ class ClassMember extends Model
     /**
      * Tạo/cập nhật hồ sơ danh tính của thành viên.
      *
-     * @param  array<string, mixed>  $data  student_code|full_name|email.
+     * @param  array<string, mixed>  $data  full_name|email.
      */
     public function syncProfile(array $data): ClassMemberProfile
     {
@@ -64,11 +64,6 @@ class ClassMember extends Model
     }
 
     // --- Accessor danh tính: đọc từ profile, fallback sang tài khoản liên kết ---
-
-    protected function studentCode(): Attribute
-    {
-        return Attribute::get(fn () => $this->profile?->student_code);
-    }
 
     protected function fullName(): Attribute
     {

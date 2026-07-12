@@ -36,7 +36,7 @@ class StudentsService
         // Mỗi ClassMember là quan hệ của học viên với một lớp học cụ thể.
         $members = ClassMember::query()
             ->with([
-                'courseClass:id,join_key,name,total_sessions,deduct_excused_absence',
+                'courseClass:id,join_key,name,total_sessions,deduct_excused_absence,deduct_late,deduct_absent,deduct_excused',
                 'profile',
                 'attendanceRecords' => fn ($query) => $query
                     // Chỉ tính các bản ghi thuộc buổi điểm danh đã chốt.
@@ -351,7 +351,7 @@ class StudentsService
 
         $members = ClassMember::query()
             ->with([
-                'courseClass:id,owner_user_id,join_key,name,status,total_sessions,deduct_excused_absence',
+                'courseClass:id,owner_user_id,join_key,name,status,total_sessions,deduct_excused_absence,deduct_late,deduct_absent,deduct_excused',
                 'courseClass.owner:id,name',
                 'profile',
             ])

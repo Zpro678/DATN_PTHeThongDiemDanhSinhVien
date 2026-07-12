@@ -272,12 +272,12 @@
 
                                             // Phát hiện VPN/proxy: YÊU CẦU sinh viên tắt trước. Cho họ CƠ HỘI huỷ để tắt VPN
                                             // rồi thử lại (tránh phạt oan người có mặt thật). Nếu vẫn cố tiếp tục, bản ghi sẽ
-                                            // bị đánh dấu "Sai GPS" kèm lý do ở phía server để giảng viên rà soát.
+                                            // bị đánh dấu 'Sai GPS' kèm lý do ở phía server để giảng viên rà soát.
                                             if (Array.isArray(verifyData.warnings) && verifyData.warnings.includes('vpn')) {
                                                 const proceed = confirm(
                                                     '⚠️ Hệ thống phát hiện bạn đang dùng VPN/proxy khiến vị trí mạng bị che giấu.\n\n' +
                                                     'Vui lòng TẮT VPN/proxy rồi bấm điểm danh lại.\n\n' +
-                                                    'Nếu bạn vẫn tiếp tục, điểm danh sẽ bị ĐÁNH DẤU "Sai GPS" để giảng viên rà soát.\n\n' +
+                                                    'Nếu bạn vẫn tiếp tục, điểm danh sẽ bị ĐÁNH DẤU \'Sai GPS\' để giảng viên rà soát.\n\n' +
                                                     'Bấm Cancel để tắt VPN và thử lại, hoặc OK để vẫn điểm danh.'
                                                 );
                                                 if (!proceed) {

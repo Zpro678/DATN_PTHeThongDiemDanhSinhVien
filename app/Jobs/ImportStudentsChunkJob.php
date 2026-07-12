@@ -30,7 +30,6 @@ class ImportStudentsChunkJob implements ShouldQueue
     protected array $meetingHeaders;
     protected int $emailColIndex;
     protected int $nameColIndex;
-    protected int $codeColIndex;
     protected int $authUserId;
     protected ?string $importToken;
     protected bool $syncAttendance;
@@ -38,7 +37,7 @@ class ImportStudentsChunkJob implements ShouldQueue
     /**
      * Create a new job instance.
      */
-    public function __construct(string $classId, array $rows, array $dateHeaders, array $meetingHeaders, int $emailColIndex, int $nameColIndex, int $codeColIndex, int $authUserId, ?string $importToken = null, bool $syncAttendance = false)
+    public function __construct(string $classId, array $rows, array $dateHeaders, array $meetingHeaders, int $emailColIndex, int $nameColIndex, int $authUserId, ?string $importToken = null, bool $syncAttendance = false)
     {
         $this->classId = $classId;
         $this->rows = $rows;
@@ -46,7 +45,6 @@ class ImportStudentsChunkJob implements ShouldQueue
         $this->meetingHeaders = $meetingHeaders;
         $this->emailColIndex = $emailColIndex;
         $this->nameColIndex = $nameColIndex;
-        $this->codeColIndex = $codeColIndex;
         $this->authUserId = $authUserId;
         $this->importToken = $importToken;
         $this->syncAttendance = $syncAttendance;
@@ -153,6 +151,7 @@ class ImportStudentsChunkJob implements ShouldQueue
 
         $newAccountUserIds = []; // user_id SV mới đã có tài khoản (điền sau khi materialize)
         $outboxRows = [];        // email chờ gửi cho SV mới chưa có tài khoản (điền sau)
+        $importedCount = 0;      // Số SV được thêm/cập nhật thành công (để báo "Đã nhập N học viên").
         $now = now();
 
         // Chỉ cần ghi điểm danh khi file có cột buổi hoặc yêu cầu đồng bộ (thường import
@@ -160,7 +159,6 @@ class ImportStudentsChunkJob implements ShouldQueue
         $hasAttendanceWork = !empty($this->dateHeaders) || $this->syncAttendance;
 
         foreach ($this->rows as $row) {
-            $studentCode = $this->codeColIndex !== -1 ? trim((string) ($row[$this->codeColIndex] ?? '')) : null;
             $fullName = $this->nameColIndex !== -1 ? trim((string) ($row[$this->nameColIndex] ?? '')) : null;
             $email = $this->emailColIndex !== -1 ? trim((string) ($row[$this->emailColIndex] ?? '')) : null;
             $emailKey = ($email !== null && $email !== '') ? strtolower($email) : null;
@@ -180,7 +178,6 @@ class ImportStudentsChunkJob implements ShouldQueue
             $profileData = [
                 'full_name' => $fullName,
                 'email' => $email ?: null,
-                'student_code' => $studentCode ? strtoupper($studentCode) : null,
             ];
 
             if ($member) {
@@ -200,6 +197,7 @@ class ImportStudentsChunkJob implements ShouldQueue
                 }
 
                 $member->syncProfile($profileData);
+                $importedCount++;
 
                 if ($hasAttendanceWork) {
                     $attendancePlan[] = ['member' => $member, 'row' => $row];
@@ -278,7 +276,6 @@ class ImportStudentsChunkJob implements ShouldQueue
                 $p = $pendingNew[$pos]['profile'];
                 $profilesInsert[] = [
                     'class_member_id' => $m->id,
-                    'student_code' => $p['student_code'],
                     'full_name' => $p['full_name'],
                     'email' => $p['email'],
                     'created_at' => $now,
@@ -293,7 +290,6 @@ class ImportStudentsChunkJob implements ShouldQueue
                         'class_id' => $this->classId,
                         'email' => $p['email'],
                         'full_name' => $p['full_name'],
-                        'student_code' => $p['student_code'],
                         'class_name' => $courseClass->name,
                         'join_key' => $courseClass->join_key,
                         'status' => PendingImportNotification::STATUS_PENDING,
@@ -307,6 +303,15 @@ class ImportStudentsChunkJob implements ShouldQueue
             foreach (array_chunk($profilesInsert, 500) as $pc) {
                 ClassMemberProfile::insert($pc);
             }
+
+            $importedCount += count($profilesInsert);
+        }
+
+        // Đếm dồn số SV nhập thành công theo import token (các chunk cùng lớp chạy nối tiếp nhờ
+        // WithoutOverlapping nên đọc-ghi cache an toàn). Bước finalize đọc lại để báo "Đã nhập N học viên".
+        if ($this->importToken && $importedCount > 0) {
+            $key = 'import_success_' . $this->importToken;
+            cache()->put($key, (int) cache()->get($key, 0) + $importedCount, now()->addHours(6));
         }
 
         // ===== Ghi điểm danh (chỉ khi có cột buổi / cần đồng bộ) =====

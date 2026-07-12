@@ -17,7 +17,6 @@ class CheckInScan extends Model
     protected $fillable = [
         'class_session_id', // ID phiên điểm danh được quét.
         'user_id', // ID tài khoản nếu người quét đã đăng nhập.
-        'student_code_attempt', // MSSV nhập tay nếu là khách.
         'scan_type', // Loại quét qr/gps/link.
         'payload_signature', // Chữ ký HMAC chống replay attack.
         'is_valid', // Cờ kết quả quét hợp lệ hay thất bại.

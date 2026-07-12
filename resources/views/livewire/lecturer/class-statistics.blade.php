@@ -69,7 +69,7 @@
                                 @endif
                                 <div class="min-w-0 flex-1">
                                     <p class="truncate text-sm font-bold text-on-surface">{{ $m->full_name }}</p>
-                                    <p class="text-[11px] text-on-surface-variant">{{ $m->student_code }} · CC: <span class="{{ $banned ? 'text-error font-bold' : 'text-amber-600 font-semibold' }}">{{ $pct }}%</span></p>
+                                    <p class="text-[11px] text-on-surface-variant">CC: <span class="{{ $banned ? 'text-error font-bold' : 'text-amber-600 font-semibold' }}">{{ $pct }}%</span></p>
                                 </div>
                                 <div class="shrink-0 text-right">
                                     @if ($banned)
@@ -268,7 +268,7 @@
                                             @endif
                                             <div class="min-w-0">
                                                 <p class="truncate text-base font-semibold text-on-surface">{{ $m->full_name }}</p>
-                                                <p class="text-sm text-on-surface-variant">{{ $m->student_code }}</p>
+                                                <p class="text-sm text-on-surface-variant">{{ $m->user?->email ?? $m->email }}</p>
                                             </div>
                                         </a>
                                     </td>

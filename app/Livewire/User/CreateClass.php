@@ -104,10 +104,9 @@ class CreateClass extends Component
             'lateThreshold' => ['required', 'integer', 'min:0', 'max:300'],
             'totalSessions' => ['required', 'integer', 'min:1', 'max:200'],
             'attendanceRules' => ['required', 'array'],
-            'attendanceRules.present' => ['required', 'numeric', 'max:0'],
-            'attendanceRules.late' => ['required', 'numeric'],
-            'attendanceRules.absent' => ['required', 'numeric'],
-            'attendanceRules.excused' => ['required', 'numeric'],
+            'attendanceRules.late' => ['required', 'numeric', 'min:0', 'max:10'],
+            'attendanceRules.absent' => ['required', 'numeric', 'min:0', 'max:10'],
+            'attendanceRules.excused' => ['required', 'numeric', 'min:0', 'max:10'],
             'requireApproval' => ['boolean'],
             // Import danh sách là TÙY CHỌN khi tạo lớp; nếu chưa import, giảng viên sẽ được
             // nhắc import khi tạo điểm danh (lớp phải có sinh viên mới tạo được buổi điểm danh).
@@ -130,7 +129,10 @@ class CreateClass extends Component
             'class_code' => $this->classCode ?: $code, // fallback sang join_key nếu không nhập
             'description' => $this->description ?: null,
             'late_threshold' => $this->lateThreshold,
-            'deduct_excused_absence' => ($this->attendanceRules['excused'] ?? 0) > 0,
+            'deduct_late' => (float) ($this->attendanceRules['late'] ?? 0.5),
+            'deduct_absent' => (float) ($this->attendanceRules['absent'] ?? 1.0),
+            'deduct_excused' => (float) ($this->attendanceRules['excused'] ?? 0.0),
+            'deduct_excused_absence' => ((float) ($this->attendanceRules['excused'] ?? 0)) > 0,
             'total_sessions' => $this->totalSessions,
             'require_approval' => $this->requireApproval,
             'status' => 'active',
@@ -202,7 +204,6 @@ class CreateClass extends Component
                         $headingImport->meetingHeaders,
                         $headingImport->emailColIndex,
                         $headingImport->nameColIndex,
-                        $headingImport->codeColIndex,
                         $headingImport->headerRowNumber,
                         auth()->id(),
                         $readerType,

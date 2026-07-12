@@ -453,7 +453,6 @@ class AttendanceCheckIn extends Component
         \App\Models\CheckInScan::query()->create([
             'class_session_id' => $this->session->id,
             'user_id' => auth()->id(),
-            'student_code_attempt' => null,
             'scan_type' => 'qr',
             'payload_signature' => $this->scanSignature((int) $this->record->class_member_id, $deviceId),
             'is_valid' => $isValid,

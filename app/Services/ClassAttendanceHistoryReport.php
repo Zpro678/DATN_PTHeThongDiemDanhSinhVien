@@ -19,7 +19,7 @@ class ClassAttendanceHistoryReport
         return $courseClass->members()
             ->where('class_members.status', ClassMember::STATUS_ACTIVE)
             ->leftJoin('class_member_profiles', 'class_member_profiles.class_member_id', '=', 'class_members.id')
-            ->orderBy('class_member_profiles.student_code')
+            ->orderBy('class_member_profiles.full_name')
             ->select('class_members.*')
             ->with(['profile', 'user']);
     }
@@ -183,7 +183,6 @@ class ClassAttendanceHistoryReport
             return [
                 'id' => $member->id,
                 'full_name' => $member->full_name,
-                'student_code' => $member->student_code,
                 'email' => $member->email,
                 'avatar_bg' => $color['bg'],
                 'avatar_text' => $color['text'],

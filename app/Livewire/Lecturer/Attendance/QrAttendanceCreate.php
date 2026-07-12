@@ -368,18 +368,18 @@ class QrAttendanceCreate extends Component
         ]);
 
         collect([
-            ['QR001', 'Nguyễn Minh Anh'],
-            ['QR002', 'Trần Gia Bảo'],
-            ['QR003', 'Lê Hoàng Nam'],
-            ['QR004', 'Phạm Thùy Linh'],
-            ['QR005', 'Võ Quốc Việt'],
-            ['QR006', 'Đặng Phương Thảo'],
-            ['QR007', 'Hoàng Đức Huy'],
-            ['QR008', 'Bùi Khánh Vy'],
-        ])->each(function (array $student) use ($courseClass): void {
+            'Nguyễn Minh Anh',
+            'Trần Gia Bảo',
+            'Lê Hoàng Nam',
+            'Phạm Thùy Linh',
+            'Võ Quốc Việt',
+            'Đặng Phương Thảo',
+            'Hoàng Đức Huy',
+            'Bùi Khánh Vy',
+        ])->each(function (string $fullName) use ($courseClass): void {
             $member = ClassMember::withTrashed()
                 ->where('class_id', $courseClass->id)
-                ->whereHas('profile', fn ($p) => $p->where('student_code', $student[0]))
+                ->whereHas('profile', fn ($p) => $p->where('full_name', $fullName))
                 ->first();
 
             if (! $member) {
@@ -393,7 +393,7 @@ class QrAttendanceCreate extends Component
                 $member->update(['status' => ClassMember::STATUS_ACTIVE]);
             }
 
-            $member->syncProfile(['student_code' => $student[0], 'full_name' => $student[1]]);
+            $member->syncProfile(['full_name' => $fullName]);
         });
     }
 }

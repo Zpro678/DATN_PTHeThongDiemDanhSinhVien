@@ -12,7 +12,6 @@ return new class extends Migration
             $table->id();
             $table->foreignId('class_session_id')->constrained('class_sessions')->cascadeOnDelete();
             $table->foreignId('user_id')->nullable()->constrained('users')->nullOnDelete();
-            $table->string('student_code_attempt', 50)->nullable(); // Mã SV nhập tay nếu là guest.
             $table->string('scan_type', 50); // qr | gps | link.
             $table->string('payload_signature'); // HMAC chống Replay.
             $table->boolean('is_valid')->default(true);

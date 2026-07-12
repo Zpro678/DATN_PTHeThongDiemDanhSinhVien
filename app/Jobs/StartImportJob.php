@@ -21,7 +21,6 @@ class StartImportJob implements ShouldQueue
     public $meetingHeaders;
     public $emailColIndex;
     public $nameColIndex;
-    public $codeColIndex;
     public $headerRowNumber;
     public $authUserId;
     public $readerType;
@@ -34,7 +33,6 @@ class StartImportJob implements ShouldQueue
         $meetingHeaders,
         $emailColIndex,
         $nameColIndex,
-        $codeColIndex,
         $headerRowNumber,
         $authUserId,
         $readerType,
@@ -46,7 +44,6 @@ class StartImportJob implements ShouldQueue
         $this->meetingHeaders = $meetingHeaders;
         $this->emailColIndex = $emailColIndex;
         $this->nameColIndex = $nameColIndex;
-        $this->codeColIndex = $codeColIndex;
         $this->headerRowNumber = $headerRowNumber;
         $this->authUserId = $authUserId;
         $this->readerType = $readerType;
@@ -70,7 +67,6 @@ class StartImportJob implements ShouldQueue
             $this->meetingHeaders,
             $this->emailColIndex,
             $this->nameColIndex,
-            $this->codeColIndex,
             $this->headerRowNumber,
             $this->authUserId,
             $this->batch()->id

@@ -56,6 +56,12 @@
     ::-webkit-scrollbar-corner {
         background: transparent;
     }
+
+    /* Ẩn con mắt hiện mật khẩu mặc định của Edge/IE để tránh trùng với icon custom */
+    input[type="password"]::-ms-reveal,
+    input[type="password"]::-ms-clear {
+        display: none;
+    }
 }
 
 @layer components {

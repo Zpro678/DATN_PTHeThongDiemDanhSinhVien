@@ -23,7 +23,6 @@ class PendingImportNotification extends Model
         'class_id',
         'email',
         'full_name',
-        'student_code',
         'class_name',
         'join_key',
         'status',

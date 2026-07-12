@@ -1,5 +1,5 @@
 @php
-    $statuses = ['Tất cả', 'Đang học', 'Đã kết thúc', 'Cảnh báo chuyên cần'];
+    $statuses = ['Đang học', 'Đã kết thúc', 'Cảnh báo chuyên cần'];
 @endphp
 
 <div class="w-full space-y-6 px-6 py-6 pb-24 sm:px-10 lg:px-16">

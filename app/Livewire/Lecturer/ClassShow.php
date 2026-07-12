@@ -131,6 +131,9 @@ class ClassShow extends Component
         $this->sessionsCompleted = $this->class->sessions()->whereIn('status', ['closed', 'active'])->count();
         $this->meetingsCompleted = $this->class->meetings()->whereIn('status', ['closed', 'active'])->count();
 
+        // Số SV nhập thành công (các chunk job đếm dồn vào cache theo token).
+        $this->importSuccess = (int) cache()->pull('import_success_' . $this->importToken, 0);
+
         $dbErrors = \App\Models\ImportError::where('import_token', $this->importToken)->orderBy('row_index')->get();
         if ($dbErrors->count() > 0) {
             $this->importErrors = $dbErrors->map(function ($error) {
@@ -152,15 +155,15 @@ class ClassShow extends Component
 
         if ($dbErrors->count() === 0 && $skipped === 0) {
             $this->isImportingStatus = false;
-            $message = "Đã xử lý xong file dữ liệu sinh viên thành công.";
+            $message = "Đã nhập {$this->importSuccess} học viên thành công.";
             $this->dispatch('toast', message: $message, type: 'success');
         } else {
             // Có cảnh báo/lỗi (hoặc bị cắt bớt do giới hạn) thì mở lại modal để người dùng đọc.
             $this->isImporting = true;
             $this->isImportingStatus = false;
             $message = $skipped > 0
-                ? "Import xong nhưng {$skipped} sinh viên bị bỏ qua do vượt giới hạn của gói. Vui lòng xem chi tiết."
-                : "Đã xử lý xong dữ liệu, nhưng có một số dòng bị lỗi. Vui lòng xem chi tiết.";
+                ? "Đã nhập {$this->importSuccess} học viên; {$skipped} SV bị bỏ qua do vượt giới hạn của gói. Vui lòng xem chi tiết."
+                : "Đã nhập {$this->importSuccess} học viên, nhưng có một số dòng bị lỗi. Vui lòng xem chi tiết.";
             $this->dispatch('toast', message: $message, type: 'warning');
         }
 
@@ -301,13 +304,13 @@ class ClassShow extends Component
         $warningTotal = $students->filter(fn ($m) => (bool) ($statsMap[$m->id]['is_warning'] ?? false))->count();
         $bannedTotal  = $students->filter(fn ($m) => (bool) ($statsMap[$m->id]['is_banned'] ?? false))->count();
 
-        // Tìm kiếm theo tên / MSSV / email.
+        // Tìm kiếm theo tên / email.
         $search = trim(mb_strtolower($this->search));
         if ($search !== '') {
             $students = $students->filter(function ($m) use ($search) {
                 $email = $m->email ?? ($m->user->email ?? '');
                 $haystack = mb_strtolower(trim(
-                    ($m->full_name ?? '').' '.($m->student_code ?? '').' '.$email
+                    ($m->full_name ?? '').' '.$email
                 ));
 
                 return str_contains($haystack, $search);
@@ -571,7 +574,6 @@ class ClassShow extends Component
                     $headingImport->meetingHeaders,
                     $headingImport->emailColIndex,
                     $headingImport->nameColIndex,
-                    $headingImport->codeColIndex,
                     $headingImport->headerRowNumber,
                     auth()->id(),
                     $readerType,

@@ -11,7 +11,6 @@
 
     $studentRows = $students
         ->map(fn ($student) => [
-            'code' => $student->student_code,
             'name' => $student->full_name,
         ])
         ->values();

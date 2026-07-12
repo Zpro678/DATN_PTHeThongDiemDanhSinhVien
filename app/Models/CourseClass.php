@@ -27,7 +27,10 @@ class CourseClass extends Model
         'name', // Tên lớp học.
         'description', // Mô tả môn học.
         'late_threshold', // Ngưỡng phút trễ tối đa để tính đi muộn.
-        'deduct_excused_absence', // Có trừ chuyên cần khi vắng có phép.
+        'deduct_excused_absence', // Có trừ chuyên cần khi vắng có phép (mirror của deduct_excused > 0).
+        'deduct_late', // Điểm trừ khi đi muộn (mặc định 0.5).
+        'deduct_absent', // Điểm trừ khi vắng (mặc định 1.0).
+        'deduct_excused', // Điểm trừ khi vắng có phép (mặc định 0.0).
         'require_approval', // Bật/tắt yêu cầu duyệt khi xin vào lớp.
         'status', // Trạng thái lớp active/archived.
         'total_sessions', // Tổng số buổi dự kiến của môn học.
@@ -38,6 +41,9 @@ class CourseClass extends Model
         return [
             'require_approval' => 'boolean', // Ép kiểu cờ yêu cầu duyệt.
             'deduct_excused_absence' => 'boolean', // Ép kiểu cờ trừ chuyên cần khi vắng có phép.
+            'deduct_late' => 'float', // Điểm trừ đi muộn.
+            'deduct_absent' => 'float', // Điểm trừ vắng.
+            'deduct_excused' => 'float', // Điểm trừ vắng có phép.
             'late_threshold' => 'integer', // Ép kiểu ngưỡng phút trễ.
             'total_sessions' => 'integer', // Ép kiểu tổng số buổi dự kiến.
         ];
@@ -158,9 +164,10 @@ class CourseClass extends Model
     /**
      * Bảng điểm trừ chuyên cần của lớp.
      *
-     * Cấu hình chi tiết theo từng trạng thái đã được lược bỏ khỏi bảng classes;
-     * lớp chỉ còn cờ deduct_excused_absence. Hàm này trả về bảng điểm trừ mặc định
-     * (đã điều chỉnh theo cờ vắng có phép) để các phần tính chuyên cần dùng chung.
+     * Điểm trừ do GIẢNG VIÊN cấu hình theo lớp (cột deduct_late/absent/excused).
+     * Nếu cột chưa có giá trị (lớp cũ / chưa cấu hình) thì dùng mặc định hợp lý.
+     * "Có mặt" luôn = 0 (không lưu). Hàm này là NGUỒN DUY NHẤT cho mọi tính toán,
+     * hiển thị % chuyên cần và file xuất — sửa ở đây là toàn bộ đồng bộ theo.
      *
      * @return array<string, float>
      */
@@ -168,9 +175,9 @@ class CourseClass extends Model
     {
         return [
             'present' => 0.0,
-            'late' => 0.5,
-            'absent' => 1.0,
-            'excused' => $this->deduct_excused_absence ? 1.0 : 0.0,
+            'late' => $this->deduct_late ?? 0.5,
+            'absent' => $this->deduct_absent ?? 1.0,
+            'excused' => $this->deduct_excused ?? 0.0,
         ];
     }
 }

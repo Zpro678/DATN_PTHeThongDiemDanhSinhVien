@@ -21,7 +21,7 @@ class MeetingSummaryExport implements FromArray, ShouldAutoSize, WithStyles
 
     private int $headerRowIndex = 6;
 
-    private int $columnCount = 5;
+    private int $columnCount = 4;
 
     public function __construct(int $meetingId)
     {
@@ -51,7 +51,7 @@ class MeetingSummaryExport implements FromArray, ShouldAutoSize, WithStyles
             $sessionHeaders[] = 'Lần '.$i;
         }
 
-        $this->columnCount = 3 + $sessionCount + 2; // MSSV, Tên, [phiên...], Tổng kết, Điểm trừ, Ghi chú
+        $this->columnCount = 1 + $sessionCount + 3; // Tên, [phiên...], Tổng kết, Điểm trừ, Ghi chú
 
         $rows = [
             ['TÊN LỚP:', $this->meeting->courseClass->name],
@@ -59,12 +59,12 @@ class MeetingSummaryExport implements FromArray, ShouldAutoSize, WithStyles
             ['NGÀY:', $this->meeting->date->format('d/m/Y')],
             ['GIỜ KẾT THÚC:', $this->meeting->end_time ? \Carbon\Carbon::parse($this->meeting->end_time)->format('H:i') : ''],
             [''],
-            array_merge(['MSSV', 'Tên sinh viên'], $sessionHeaders, ['Tổng kết', 'Điểm trừ', 'Ghi chú']),
+            array_merge(['Tên sinh viên'], $sessionHeaders, ['Tổng kết', 'Điểm trừ', 'Ghi chú']),
         ];
 
-        // Sắp theo MSSV.
+        // Sắp theo tên sinh viên.
         $summaries = $summaries->filter(fn ($s) => $s->classMember !== null)
-            ->sortBy(fn ($s) => $s->classMember->student_code)
+            ->sortBy(fn ($s) => $s->classMember->full_name)
             ->values();
 
         foreach ($summaries as $summary) {
@@ -79,7 +79,7 @@ class MeetingSummaryExport implements FromArray, ShouldAutoSize, WithStyles
             $deduction = (float) $summary->deduction;
 
             $rows[] = array_merge(
-                [$member->student_code, $member->full_name],
+                [$member->full_name],
                 $sessionCells,
                 [
                     AttendanceCalculator::statusLabel($summary->status),

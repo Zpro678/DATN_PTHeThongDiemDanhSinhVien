@@ -15,18 +15,16 @@ class StudentImportNotificationMail extends Mailable implements ShouldQueue
 
     public $className;
     public $classCode;
-    public $studentCode;
     public $studentName;
     public $email;
 
     /**
      * Create a new message instance.
      */
-    public function __construct($className, $classCode, $studentCode, $studentName, $email)
+    public function __construct($className, $classCode, $studentName, $email)
     {
         $this->className = $className;
         $this->classCode = $classCode;
-        $this->studentCode = $studentCode;
         $this->studentName = $studentName;
         $this->email = $email;
     }

@@ -11,7 +11,7 @@ use Livewire\Component;
 
 class JoinedClasses extends Component
 {
-    public string $statusFilter = 'Tất cả';
+    public string $statusFilter = 'Đang học';
 
     public string $search = '';
 

@@ -55,7 +55,7 @@ class LecturerManualAttendanceCreateTest extends TestCase
         $this->assertSame(4, AttendanceRecord::query()->where('class_session_id', $session->id)->count());
     }
 
-    public function test_manual_attendance_session_can_search_by_name_or_student_code(): void
+    public function test_manual_attendance_session_can_search_by_name_or_email(): void
     {
         [$owner, $session] = $this->createManualSession();
 
@@ -67,7 +67,7 @@ class LecturerManualAttendanceCreateTest extends TestCase
 
         Livewire::actingAs($owner)
             ->test(ManualAttendanceSession::class, ['session' => $session->id])
-            ->set('search', 'DEMO002')
+            ->set('search', 'beta@demo.test')
             ->call('searchStudents')
             ->assertSee('Manual Beta Hidden')
             ->assertDontSee('Manual Alpha Target')
@@ -120,14 +120,14 @@ class LecturerManualAttendanceCreateTest extends TestCase
         ]);
 
         collect([
-            ['DEMO001', 'Manual Alpha Target'],
-            ['DEMO002', 'Manual Beta Hidden'],
-            ['DEMO003', 'Manual Gamma Extra'],
+            ['alpha@demo.test', 'Manual Alpha Target'],
+            ['beta@demo.test', 'Manual Beta Hidden'],
+            ['gamma@demo.test', 'Manual Gamma Extra'],
         ])->each(function (array $student) use ($courseClass, $session): void {
             $member = ClassMember::factory()->withoutProfile()->create([
                 'class_id' => $courseClass->id,
             ]);
-            $member->syncProfile(['student_code' => $student[0], 'full_name' => $student[1]]);
+            $member->syncProfile(['email' => $student[0], 'full_name' => $student[1]]);
 
             AttendanceRecord::factory()->create([
                 'class_session_id' => $session->id,

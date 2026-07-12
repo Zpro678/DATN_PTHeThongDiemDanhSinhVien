@@ -123,6 +123,9 @@ class StudentIndex extends Component
 
     protected function finalizeImport(): void
     {
+        // Số SV nhập thành công (các chunk job đếm dồn vào cache theo token).
+        $this->importSuccess = (int) cache()->pull('import_success_' . $this->importToken, 0);
+
         // Lấy tất cả lỗi nếu có
         $dbErrors = \App\Models\ImportError::where('import_token', $this->importToken)->orderBy('row_index')->get();
         if ($dbErrors->count() > 0) {
@@ -146,7 +149,7 @@ class StudentIndex extends Component
             }
         }
 
-        $message = "Đã xử lý xong file dữ liệu. " . ($dbErrors->count() > 0 ? "Tuy nhiên có một số dòng bị lỗi." : "");
+        $message = "Đã nhập {$this->importSuccess} học viên thành công." . ($dbErrors->count() > 0 ? " Tuy nhiên có một số dòng bị lỗi." : "");
         if ($dbErrors->count() === 0 && $skipped === 0) {
             $this->closeImport();
             $this->isImportingStatus = false;
@@ -155,10 +158,10 @@ class StudentIndex extends Component
             // Có lỗi hoặc bị cắt bớt do giới hạn: giữ modal mở để chủ lớp đọc chi tiết.
             $this->isImporting = true;
             $this->isImportingStatus = false;
-            if ($skipped > 0) {
-                $message = "Import xong nhưng {$skipped} sinh viên bị bỏ qua do vượt giới hạn sinh viên/lớp của gói.";
-                $this->dispatch('toast', message: $message, type: 'warning');
-            }
+            $message = $skipped > 0
+                ? "Đã nhập {$this->importSuccess} học viên; {$skipped} SV bị bỏ qua do vượt giới hạn của gói."
+                : "Đã nhập {$this->importSuccess} học viên, nhưng có một số dòng bị lỗi. Vui lòng xem chi tiết.";
+            $this->dispatch('toast', message: $message, type: 'warning');
         }
 
         session()->flash('success', $message);
@@ -437,7 +440,6 @@ class StudentIndex extends Component
                     $headingImport->meetingHeaders,
                     $headingImport->emailColIndex,
                     $headingImport->nameColIndex,
-                    $headingImport->codeColIndex,
                     $headingImport->headerRowNumber,
                     auth()->id(),
                     $readerType,
@@ -670,7 +672,7 @@ class StudentIndex extends Component
                 ->when($this->search !== '', function (Builder $query): void {
                     $query->where(function (Builder $query): void {
                         $query->where('class_member_profiles.full_name', 'like', '%'.$this->search.'%')
-                            ->orWhere('class_member_profiles.student_code', 'like', '%'.$this->search.'%')
+                            ->orWhere('class_member_profiles.email', 'like', '%'.$this->search.'%')
                             ->orWhereHas('user', fn (Builder $query) => $query->where('email', 'like', '%'.$this->search.'%')->orWhere('name', 'like', '%'.$this->search.'%'));
                     });
                 })

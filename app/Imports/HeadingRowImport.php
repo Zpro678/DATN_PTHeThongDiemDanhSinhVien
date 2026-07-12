@@ -16,7 +16,6 @@ class HeadingRowImport implements ToCollection, WithLimit
     public array $meetingHeaders = [];
     public int $emailColIndex = -1;
     public int $nameColIndex = -1;
-    public int $codeColIndex = -1;
     public int $headerRowNumber = -1;
     public array $errors = [];
 
@@ -78,12 +77,13 @@ class HeadingRowImport implements ToCollection, WithLimit
                 $this->nameColIndex = $colIndex;
                 continue;
             }
+            // Bỏ qua các cột định danh cũ (MSSV/mã học viên/STT): hệ thống không còn lưu MSSV,
+            // nhưng vẫn cần nhận diện để KHÔNG nhầm chúng thành cột ngày/buổi.
             if (str_contains($colValueLower, 'mã') || str_contains($colValueLower, 'mssv') || str_contains($colValueLower, 'ms') || str_contains($colValueLower, 'stt')) {
-                $this->codeColIndex = $colIndex;
                 continue;
             }
 
-            if ($colIndex < max(1, $this->nameColIndex, $this->codeColIndex, $this->emailColIndex) && !preg_match('/^\d{1,2}[\/\-\.]\d{1,2}/', trim((string) $colValue))) {
+            if ($colIndex < max(1, $this->nameColIndex, $this->emailColIndex) && !preg_match('/^\d{1,2}[\/\-\.]\d{1,2}/', trim((string) $colValue))) {
                 continue;
             }
 

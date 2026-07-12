@@ -68,7 +68,7 @@ class StudentsSheet implements FromArray, ShouldAutoSize, WithStyles, WithTitle
 
         // ── Truy vấn học viên ──
         $members = ClassMember::query()
-            ->with(['courseClass:id,name,join_key', 'user:id,name,email', 'profile'])
+            ->with(['courseClass:id,name,join_key,total_sessions,deduct_late,deduct_absent,deduct_excused', 'user:id,name,email', 'profile'])
             ->leftJoin('class_member_profiles', 'class_member_profiles.class_member_id', '=', 'class_members.id')
             ->select('class_members.*')
             ->whereHas('courseClass', fn (Builder $q) => $q->managedBy($this->ownerUserId))
@@ -81,7 +81,7 @@ class StudentsSheet implements FromArray, ShouldAutoSize, WithStyles, WithTitle
             ->when($this->search !== '', function (Builder $q) {
                 $q->where(function (Builder $q) {
                     $q->where('class_member_profiles.full_name', 'like', '%' . $this->search . '%')
-                      ->orWhere('class_member_profiles.student_code', 'like', '%' . $this->search . '%')
+                      ->orWhere('class_member_profiles.email', 'like', '%' . $this->search . '%')
                       ->orWhereHas('user', fn (Builder $q) => $q->where('email', 'like', '%' . $this->search . '%'));
                 });
             })
@@ -112,17 +112,15 @@ class StudentsSheet implements FromArray, ShouldAutoSize, WithStyles, WithTitle
             $headers[] = $meeting->date->format('d/m');
         }
 
-        $formulaName = 'Kết quả công thức (%)';
-
         $headers = array_merge($headers, [
             'Tổng số buổi',
-            'Có mặt', 
+            'Có mặt',
             'Đi muộn',
-            'Vắng', 
+            'Vắng',
             'Có phép',
             'Tổng điểm trừ',
-            'Chuyên cần (% cài đặt lớp)',
-            $formulaName
+            'Phần trăm có mặt trong lớp',
+            'Điểm chuyên cần (/10)'
         ]);
 
         $rows[] = ['BÁO CÁO CHUYÊN CẦN SINH VIÊN'];
@@ -151,39 +149,25 @@ class StudentsSheet implements FromArray, ShouldAutoSize, WithStyles, WithTitle
             $absent       = (int) ($stats['absent_sessions'] ?? 0);
             $excused      = (int) ($stats['excused_sessions'] ?? 0);
             $studied      = (int) ($stats['studied_sessions'] ?? 0);           // số buổi đã học
-            $baseSessions = (int) ($stats['planned_sessions'] ?? 0);           // mẫu số = max(dự kiến, đã học)
-            $deduction    = round((float) ($stats['effective_absent_sessions'] ?? 0), 2); // tổng điểm trừ (vắng quy đổi)
-            $classPercent = (int) ($stats['attendance_percent'] ?? 0);         // == % trên web
+            $baseSessions = (int) ($stats['planned_sessions'] ?? 0);           // tổng buổi dự kiến = max(dự kiến, đã học)
 
-            // Công thức tự nhập tính trên chính các đếm này (t = số buổi đã học).
-            $percent = 0;
-            if ($studied > 0) {
-                $formulaStr = strtolower($this->formula);
+            // Điểm trừ theo CẤU HÌNH LỚP (đi muộn/vắng/vắng có phép). "Có mặt" luôn = 0.
+            $rules = $member->courseClass
+                ? $member->courseClass->getAttendanceRules()
+                : (new \App\Models\CourseClass())->getAttendanceRules();
 
-                $formulaStr = preg_replace_callback('/[a-z]+/', function ($matches) {
-                    $allowed = ['c', 'm', 'v', 'p', 't', 'floor', 'ceil', 'round', 'max', 'min', 'abs'];
-                    return in_array($matches[0], $allowed, true) ? $matches[0] : '';
-                }, $formulaStr);
+            $totalDeduction = round(
+                $late * (float) $rules['late']
+                + $absent * (float) $rules['absent']
+                + $excused * (float) $rules['excused'],
+                2
+            );
 
-                $formulaStr = preg_replace('/[^a-z0-9\+\-\*\/\(\)\.\s,]/', '', $formulaStr);
+            // Cột: % VẮNG KHÔNG PHÉP trên tổng buổi dự kiến.
+            $absentPercent = $baseSessions > 0 ? (int) round($absent / $baseSessions * 100) : 0;
 
-                $formulaStr = preg_replace('/\bc\b/', (string) $present, $formulaStr);
-                $formulaStr = preg_replace('/\bm\b/', (string) $late, $formulaStr);
-                $formulaStr = preg_replace('/\bv\b/', (string) $absent, $formulaStr);
-                $formulaStr = preg_replace('/\bp\b/', (string) $excused, $formulaStr);
-                $formulaStr = preg_replace('/\bt\b/', (string) $studied, $formulaStr);
-
-                if (!empty($formulaStr)) {
-                    try {
-                        $result = @eval("return $formulaStr;");
-                        if (is_numeric($result)) {
-                            $percent = round((float) $result, 2);
-                        }
-                    } catch (\Throwable $e) {
-                        $percent = 0;
-                    }
-                }
-            }
+            // Cột: ĐIỂM CHUYÊN CẦN trên thang 10 = 10 − tổng điểm trừ (không âm).
+            $attendanceScore = max(round(10 - $totalDeduction, 2), 0);
 
             $row = [
                 $currentRow - 6, // STT
@@ -209,9 +193,9 @@ class StudentsSheet implements FromArray, ShouldAutoSize, WithStyles, WithTitle
                 $late,
                 $absent,
                 $excused,
-                $deduction,
-                $classPercent . '%',
-                $percent . '%',
+                $totalDeduction,
+                (100 - $absentPercent) . '%',
+                $attendanceScore,
             ]);
 
             $rows[] = $row;
@@ -234,8 +218,9 @@ class StudentsSheet implements FromArray, ShouldAutoSize, WithStyles, WithTitle
             $mCol      = Coordinate::stringFromColumnIndex($colIdx + 1);
             $vCol      = Coordinate::stringFromColumnIndex($colIdx + 2);
             $pCol      = Coordinate::stringFromColumnIndex($colIdx + 3);
-            $deductCol = Coordinate::stringFromColumnIndex($colIdx + 4);
-            $ccCol     = Coordinate::stringFromColumnIndex($colIdx + 5);
+            $deductCol   = Coordinate::stringFromColumnIndex($colIdx + 4);
+            $presPctCol  = Coordinate::stringFromColumnIndex($colIdx + 5); // % có mặt trong lớp
+            $scoreCol    = Coordinate::stringFromColumnIndex($colIdx + 6); // Điểm chuyên cần (/10)
 
             $rows[] = [
                 'TỔNG KẾT LỚP', '', '', '',
@@ -244,7 +229,8 @@ class StudentsSheet implements FromArray, ShouldAutoSize, WithStyles, WithTitle
                 'TB vắng', "=AVERAGE({$vCol}{$start}:{$vCol}{$end})",
                 'TB có phép', "=AVERAGE({$pCol}{$start}:{$pCol}{$end})",
                 'TB điểm trừ', "=AVERAGE({$deductCol}{$start}:{$deductCol}{$end})",
-                'TB chuyên cần', "=AVERAGE({$ccCol}{$start}:{$ccCol}{$end})",
+                'TB % có mặt', "=AVERAGE({$presPctCol}{$start}:{$presPctCol}{$end})",
+                'TB điểm chuyên cần', "=AVERAGE({$scoreCol}{$start}:{$scoreCol}{$end})",
             ];
         }
 

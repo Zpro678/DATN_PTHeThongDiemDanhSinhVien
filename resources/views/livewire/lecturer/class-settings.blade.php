@@ -114,36 +114,24 @@
                                 <span class="text-sm text-on-surface-variant block mt-1">Thiết lập mức điểm trừ cho từng trạng thái (ví dụ: 0.5 điểm trừ = 2 lần vi phạm thành 1 buổi vắng).</span>
                             </div>
 
-                            {{-- Toggle: Trừ chuyên cần khi vắng có phép --}}
-                            <div class="flex items-center justify-between rounded-xl border border-outline-variant/20 bg-surface-container-lowest/60 p-4 mb-5">
-                                <div class="pr-4">
-                                    <span class="block text-base font-bold text-on-surface">Trừ chuyên cần khi vắng có phép</span>
-                                    <span class="text-sm text-on-surface-variant">Bật để vắng có phép vẫn bị tính làm giảm % chuyên cần (chỉ không bị cảnh báo cấm thi).</span>
-                                </div>
-                                <button type="button" wire:click="$toggle('deductExcusedAbsence')"
-                                    class="relative shrink-0 h-6 w-12 rounded-full transition-colors {{ $deductExcusedAbsence ? 'bg-primary' : 'bg-outline-variant/50' }}">
-                                    <span class="absolute top-1 h-4 w-4 rounded-full bg-white shadow transition-all {{ $deductExcusedAbsence ? 'right-1' : 'left-1' }}"></span>
-                                </button>
-                            </div>
-                            
-                            <div class="grid grid-cols-2 md:grid-cols-4 gap-4">
-                                <div>
-                                    <label class="block text-sm font-bold text-on-surface mb-1">Có mặt</label>
-                                    <input wire:model="attendanceRules.present" type="number" step="0.5" max="0" class="w-full rounded-xl border-2 border-outline-variant/80 hover:border-primary px-3 py-2 text-base outline-none transition-all focus:border-primary focus:ring-2 focus:ring-primary/20">
-                                </div>
+                            <div class="grid grid-cols-3 gap-4">
                                 <div>
                                     <label class="block text-sm font-bold text-on-surface mb-1">Đi muộn</label>
-                                    <input wire:model="attendanceRules.late" type="number" step="0.5" class="w-full rounded-xl border-2 border-outline-variant/80 hover:border-primary px-3 py-2 text-base outline-none transition-all focus:border-primary focus:ring-2 focus:ring-primary/20">
+                                    <input wire:model="attendanceRules.late" type="number" step="0.5" min="0" class="w-full rounded-xl border-2 border-outline-variant/80 hover:border-primary px-3 py-2 text-base outline-none transition-all focus:border-primary focus:ring-2 focus:ring-primary/20">
+                                    @error('attendanceRules.late') <span class="text-error text-xs mt-1 block">{{ $message }}</span> @enderror
                                 </div>
                                 <div>
                                     <label class="block text-sm font-bold text-on-surface mb-1">Vắng</label>
-                                    <input wire:model="attendanceRules.absent" type="number" step="0.5" class="w-full rounded-xl border-2 border-outline-variant/80 hover:border-primary px-3 py-2 text-base outline-none transition-all focus:border-primary focus:ring-2 focus:ring-primary/20">
+                                    <input wire:model="attendanceRules.absent" type="number" step="0.5" min="0" class="w-full rounded-xl border-2 border-outline-variant/80 hover:border-primary px-3 py-2 text-base outline-none transition-all focus:border-primary focus:ring-2 focus:ring-primary/20">
+                                    @error('attendanceRules.absent') <span class="text-error text-xs mt-1 block">{{ $message }}</span> @enderror
                                 </div>
                                 <div>
                                     <label class="block text-sm font-bold text-on-surface mb-1">Có phép</label>
-                                    <input wire:model="attendanceRules.excused" type="number" step="0.5" class="w-full rounded-xl border-2 border-outline-variant/80 hover:border-primary px-3 py-2 text-base outline-none transition-all focus:border-primary focus:ring-2 focus:ring-primary/20">
+                                    <input wire:model="attendanceRules.excused" type="number" step="0.5" min="0" class="w-full rounded-xl border-2 border-outline-variant/80 hover:border-primary px-3 py-2 text-base outline-none transition-all focus:border-primary focus:ring-2 focus:ring-primary/20">
+                                    @error('attendanceRules.excused') <span class="text-error text-xs mt-1 block">{{ $message }}</span> @enderror
                                 </div>
                             </div>
+                            <p class="mt-2 text-xs text-on-surface-variant">Để "Có phép" = 0 nếu vắng có phép <b>không</b> bị trừ chuyên cần. Đặt > 0 để tính làm giảm %.</p>
                         </div>
                     </div>
                 </div>

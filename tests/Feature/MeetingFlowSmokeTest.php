@@ -38,12 +38,12 @@ class MeetingFlowSmokeTest extends TestCase
         URL::defaults(['ma_user' => $owner->id]);
         $courseClass = CourseClass::factory()->create(['owner_user_id' => $owner->id, 'total_sessions' => 15]);
 
-        $members = collect([['SV01', 'An'], ['SV02', 'Binh']])->map(function ($s) use ($courseClass) {
+        $members = collect([['sv01@t.test', 'An'], ['sv02@t.test', 'Binh']])->map(function ($s) use ($courseClass) {
             $member = ClassMember::factory()->withoutProfile()->create([
                 'class_id' => $courseClass->id,
                 'status' => ClassMember::STATUS_ACTIVE,
             ]);
-            $member->syncProfile(['student_code' => $s[0], 'full_name' => $s[1]]);
+            $member->syncProfile(['email' => $s[0], 'full_name' => $s[1]]);
 
             return $member;
         });
@@ -116,7 +116,7 @@ class MeetingFlowSmokeTest extends TestCase
         [$owner, , $meeting] = $this->makeMeetingWithClosedSession();
 
         $record = AttendanceRecord::query()
-            ->whereHas('classMember.profile', fn ($query) => $query->where('student_code', 'SV01'))
+            ->whereHas('classMember.profile', fn ($query) => $query->where('full_name', 'An'))
             ->whereHas('classSession', fn ($query) => $query->where('meeting_id', $meeting->id))
             ->firstOrFail();
         $record->update(['status' => 'late']);
@@ -335,7 +335,7 @@ class MeetingFlowSmokeTest extends TestCase
             ->test(ClassAttendanceHistory::class, ['courseClass' => $courseClass])
             ->assertOk()
             ->assertSee('An')
-            ->assertSee('SV01');
+            ->assertSee('sv01@t.test');
     }
 
     public function test_class_attendance_history_export_route_downloads_file(): void
@@ -381,7 +381,7 @@ class MeetingFlowSmokeTest extends TestCase
             ->where('class_id', $courseClass->id)
             ->with('profile')
             ->get()
-            ->keyBy('student_code');
+            ->keyBy('full_name');
 
         $secondMeeting = ClassMeeting::query()->create([
             'class_id' => $courseClass->id,
@@ -406,25 +406,26 @@ class MeetingFlowSmokeTest extends TestCase
 
         AttendanceRecord::factory()->create([
             'class_session_id' => $secondSession->id,
-            'class_member_id' => $members['SV01']->id,
+            'class_member_id' => $members['An']->id,
             'status' => 'late',
         ]);
         AttendanceRecord::factory()->create([
             'class_session_id' => $secondSession->id,
-            'class_member_id' => $members['SV02']->id,
+            'class_member_id' => $members['Binh']->id,
             'status' => 'absent',
         ]);
 
         $rows = (new ClassAttendanceHistoryExport($courseClass->fresh()))->array();
 
-        $this->assertSame(['STT', 'MSSV', 'Họ và tên', 'Email', 'Chuyên cần (%)', 'Buổi 1'."\n".$firstMeeting->date->format('d/m/Y'), 'Buổi 2'."\n".$secondMeeting->date->format('d/m/Y')], $rows[5]);
-        $this->assertSame('SV01', $rows[6][1]);
-        $this->assertSame('75%', $rows[6][4]);
-        $this->assertSame('Có mặt', $rows[6][5]);
-        $this->assertSame('Đi muộn', $rows[6][6]);
-        $this->assertSame('SV02', $rows[7][1]);
-        $this->assertSame('0%', $rows[7][4]);
+        // Cột MSSV đã được gỡ: STT, Họ và tên, Email, Chuyên cần, [các buổi...].
+        $this->assertSame(['STT', 'Họ và tên', 'Email', 'Chuyên cần (%)', 'Buổi 1'."\n".$firstMeeting->date->format('d/m/Y'), 'Buổi 2'."\n".$secondMeeting->date->format('d/m/Y')], $rows[5]);
+        $this->assertSame('An', $rows[6][1]);
+        $this->assertSame('75%', $rows[6][3]);
+        $this->assertSame('Có mặt', $rows[6][4]);
+        $this->assertSame('Đi muộn', $rows[6][5]);
+        $this->assertSame('Binh', $rows[7][1]);
+        $this->assertSame('0%', $rows[7][3]);
+        $this->assertSame('Vắng', $rows[7][4]);
         $this->assertSame('Vắng', $rows[7][5]);
-        $this->assertSame('Vắng', $rows[7][6]);
     }
 }

@@ -21,7 +21,6 @@ return new class extends Migration
             $table->uuid('class_id')->nullable();
             $table->string('email');
             $table->string('full_name');
-            $table->string('student_code')->nullable();
             $table->string('class_name');
             $table->string('join_key');
             $table->string('status', 20)->default('pending'); // pending | sent | failed

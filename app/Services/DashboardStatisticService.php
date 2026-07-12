@@ -81,11 +81,13 @@ class DashboardStatisticService
             ->get([
                 'class_members.id',
                 'class_members.class_id',
-                'class_member_profiles.student_code',
                 'class_member_profiles.full_name',
                 'classes.name as class_name',
                 'classes.total_sessions as planned_sessions',
                 'classes.deduct_excused_absence as deduct_excused_absence',
+                'classes.deduct_late as deduct_late',
+                'classes.deduct_absent as deduct_absent',
+                'classes.deduct_excused as deduct_excused',
             ]);
 
         if ($members->isEmpty()) {
@@ -112,7 +114,12 @@ class DashboardStatisticService
                 $absentSessions   = $counts['absent'];
                 $lateSessions     = $counts['late'];
                 $excusedSessions  = $counts['excused'];
-                $rules            = (new \App\Models\CourseClass(['deduct_excused_absence' => (bool) $student->deduct_excused_absence]))->getAttendanceRules();
+                $rules            = (new \App\Models\CourseClass([
+                    'deduct_late' => $student->deduct_late,
+                    'deduct_absent' => $student->deduct_absent,
+                    'deduct_excused' => $student->deduct_excused,
+                    'deduct_excused_absence' => (bool) $student->deduct_excused_absence,
+                ]))->getAttendanceRules();
 
                 $counted         = AttendanceCalculator::countedSessions($plannedSessions, $excusedSessions, $rules);
                 $effectiveAbsent = AttendanceCalculator::effectiveAbsence($counts, $rules); // Vắng quy đổi theo quy tắc tổng kết.
@@ -132,7 +139,6 @@ class DashboardStatisticService
                     'id'                       => $student->id,
                     'class_id'                 => $student->class_id,
                     'class_name'               => $student->class_name,
-                    'student_code'             => $student->student_code,
                     'full_name'                => $student->full_name,
                     'planned_sessions'          => $plannedSessions,
                     'absent_sessions'           => $absentSessions,
@@ -213,7 +219,6 @@ class DashboardStatisticService
             ->select([
                 'leave_requests.id',
                 'leave_requests.class_member_id',
-                'class_member_profiles.student_code',
                 'class_member_profiles.full_name',
                 'class_members.class_id',
                 'classes.name as class_name',
@@ -226,7 +231,6 @@ class DashboardStatisticService
             ->map(fn ($r) => [
                 'id'           => $r->id,
                 'member_id'    => $r->class_member_id,
-                'student_code' => $r->student_code,
                 'full_name'    => $r->full_name,
                 'class_id'     => $r->class_id,
                 'class_name'   => $r->class_name,
@@ -279,7 +283,6 @@ class DashboardStatisticService
             ->get([
                 'attendance_records.status as record_status',
                 'attendance_records.check_in_time',
-                'class_member_profiles.student_code',
                 'class_member_profiles.full_name',
                 'classes.name as class_name',
             ])
@@ -287,7 +290,7 @@ class DashboardStatisticService
                 $statusLabel = $record->record_status === 'late' ? 'đi muộn' : 'thành công';
 
                 $activities->push([
-                    'text' => "{$record->student_code} {$record->full_name} điểm danh {$statusLabel} lớp {$record->class_name}",
+                    'text' => "{$record->full_name} điểm danh {$statusLabel} lớp {$record->class_name}",
                     'time' => $this->formatActivityTime($record->check_in_time),
                     'icon' => 'user',
                     'bg' => $record->record_status === 'late' ? 'bg-secondary' : 'bg-tertiary',
@@ -336,7 +339,6 @@ class DashboardStatisticService
                 'leave_requests.status',
                 'leave_requests.created_at',
                 'leave_requests.reviewed_at',
-                'class_member_profiles.student_code',
                 'class_member_profiles.full_name',
                 'classes.name as class_name',
             ])
@@ -346,9 +348,9 @@ class DashboardStatisticService
             ->get()
             ->each(function ($request) use ($activities): void {
                 $text = match ($request->status) {
-                    'approved' => "Đơn nghỉ của {$request->student_code} {$request->full_name} đã được duyệt",
-                    'rejected' => "Đơn nghỉ của {$request->student_code} {$request->full_name} đã bị từ chối",
-                    default => "{$request->student_code} {$request->full_name} gửi đơn xin nghỉ lớp {$request->class_name}",
+                    'approved' => "Đơn nghỉ của {$request->full_name} đã được duyệt",
+                    'rejected' => "Đơn nghỉ của {$request->full_name} đã bị từ chối",
+                    default => "{$request->full_name} gửi đơn xin nghỉ lớp {$request->class_name}",
                 };
 
                 $activities->push([

@@ -32,7 +32,6 @@ class Dashboard extends Component
             $total = $summary->total_present + $summary->total_late + $summary->total_absent;
             $rate = $total > 0 ? round((($summary->total_present + $summary->total_late) / $total) * 100, 1) : 100;
             return [
-                'mssv' => $summary->classMember?->student_code ?? 'N/A',
                 'name' => $summary->classMember?->full_name ?? 'N/A',
                 'class' => $summary->courseClass?->join_key ?? 'N/A',
                 'subject' => $summary->courseClass?->name ?? 'N/A',

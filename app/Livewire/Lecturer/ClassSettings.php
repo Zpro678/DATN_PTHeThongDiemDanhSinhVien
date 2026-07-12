@@ -89,7 +89,10 @@ class ClassSettings extends Component
             'description' => ['nullable', 'string', 'max:5000'],
             'lateThreshold' => ['required', 'integer', 'min:0', 'max:300'],
             'totalSessions' => ['required', 'integer', 'min:1', 'max:200'],
-            'deductExcusedAbsence' => ['boolean'],
+            'attendanceRules' => ['required', 'array'],
+            'attendanceRules.late' => ['required', 'numeric', 'min:0', 'max:10'],
+            'attendanceRules.absent' => ['required', 'numeric', 'min:0', 'max:10'],
+            'attendanceRules.excused' => ['required', 'numeric', 'min:0', 'max:10'],
             'requireApproval' => ['boolean'],
             'status' => ['required', 'string', Rule::in(['active', 'archived', 'ended'])],
         ], [
@@ -99,7 +102,14 @@ class ClassSettings extends Component
             'totalSessions.required' => 'Vui lòng nhập tổng số buổi dự kiến.',
             'totalSessions.min' => 'Tổng số buổi dự kiến phải từ 1 trở lên.',
             'totalSessions.max' => 'Tổng số buổi dự kiến tối đa là 200.',
+            'attendanceRules.late.required' => 'Vui lòng nhập điểm trừ khi đi muộn.',
+            'attendanceRules.absent.required' => 'Vui lòng nhập điểm trừ khi vắng.',
+            'attendanceRules.excused.required' => 'Vui lòng nhập điểm trừ khi vắng có phép.',
         ]);
+
+        // Điểm trừ có phép > 0 nghĩa là "trừ chuyên cần khi vắng có phép" (giữ đồng bộ cờ cũ
+        // để các truy vấn/thống kê đọc deduct_excused_absence vẫn đúng).
+        $deductExcused = (float) $validated['attendanceRules']['excused'];
 
         $this->courseClass->update([
             'name' => $validated['name'],
@@ -108,7 +118,10 @@ class ClassSettings extends Component
             'description' => $validated['description'] ?: null,
             'late_threshold' => $validated['lateThreshold'],
             'total_sessions' => $validated['totalSessions'],
-            'deduct_excused_absence' => $validated['deductExcusedAbsence'] ?? false,
+            'deduct_late' => (float) $validated['attendanceRules']['late'],
+            'deduct_absent' => (float) $validated['attendanceRules']['absent'],
+            'deduct_excused' => $deductExcused,
+            'deduct_excused_absence' => $deductExcused > 0,
             'require_approval' => $validated['requireApproval'],
             'status' => $validated['status'],
         ]);
