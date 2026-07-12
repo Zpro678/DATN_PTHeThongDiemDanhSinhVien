@@ -23,7 +23,7 @@ use Illuminate\Support\Str;
  * DemoSeeder — dựng dữ liệu demo khớp với 10 tài khoản thật của nhóm để thuyết trình.
  *
  * Vai trò:
- *  - ADMIN : nguyenkhoi020705@gmail.com (Nguyễn Quang Lê Khôi).
+ *  - SUPER ADMIN : nguyenkhoi020705@gmail.com (Nguyễn Quang Lê Khôi).
  *  - USER  : 9 tài khoản còn lại. Trong đó minhhieut947 là CHỦ LỚP (owner),
  *            thaobee2407 là ĐỒNG CHỦ (co-owner), 7 tài khoản còn lại là SINH VIÊN.
  *
@@ -49,7 +49,7 @@ class DemoSeeder extends Seeder
         // ---------------------------------------------------------------
         // 1) TÀI KHOẢN
         // ---------------------------------------------------------------
-        $admin = $this->user('nguyenkhoi020705@gmail.com', 'Nguyễn Quang Lê Khôi', User::ROLE_ADMIN);
+        $admin = $this->user('nguyenkhoi020705@gmail.com', 'Nguyễn Quang Lê Khôi', User::ROLE_SUPER_ADMIN);
 
         $owner   = $this->user('minhhieut947@gmail.com', 'Trần Minh Hiếu', User::ROLE_USER);   // Chủ lớp
         $coOwner = $this->user('thaobee2407@gmail.com', 'Trần Thị Thu Thảo', User::ROLE_USER);  // Đồng chủ
@@ -305,7 +305,7 @@ class DemoSeeder extends Seeder
         // ---------------------------------------------------------------
         $this->command->info('====== DỮ LIỆU DEMO ĐÃ SẴN SÀNG ======');
         $this->command->info('Mật khẩu mọi tài khoản: '.self::DEMO_PASSWORD);
-        $this->command->info('ADMIN     : '.$admin->email);
+        $this->command->info('SUPER ADMIN: '.$admin->email);
         $this->command->info('CHỦ LỚP   : '.$owner->email.' (lớp Lập trình Web / '.self::MAIN_JOIN_KEY.')');
         $this->command->info('ĐỒNG CHỦ  : '.$coOwner->email);
         $this->command->info('SV CẤM THI: '.$studentUsers[0]->email.' (~73%)');
