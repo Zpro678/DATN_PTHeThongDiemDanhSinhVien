@@ -66,6 +66,9 @@
                                     <span class="mt-1 flex items-center gap-1 text-xs font-medium text-slate-500">
                                         <x-user.icon name="clock" :size="13" />
                                         {{ \Carbon\Carbon::parse($meeting->start_time)->format('H:i') }} - {{ \Carbon\Carbon::parse($meeting->end_time)->format('H:i') }}
+                                        @if($meeting->endsNextDay())
+                                            <span class="rounded bg-slate-100 px-1.5 py-0.5 text-[10px] font-semibold text-slate-500" title="Buổi kết thúc vào ngày hôm sau{{ optional($meeting->endsAt())->format(' (d/m H:i)') }}">hôm sau</span>
+                                        @endif
                                     </span>
                                 @endif
                                 <div class="mt-2 flex items-center gap-2">

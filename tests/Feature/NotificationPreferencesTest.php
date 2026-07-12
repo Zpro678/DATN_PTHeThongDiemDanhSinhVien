@@ -64,6 +64,34 @@ class NotificationPreferencesTest extends TestCase
         );
     }
 
+    public function test_forced_mail_channel_sends_mail_even_when_preference_off(): void
+    {
+        Notification::fake();
+
+        // SV tắt tùy chọn mail, nhưng cảnh báo chuyên cần ép kênh 'mail' -> vẫn phải gửi mail.
+        $user = User::factory()->create([
+            'notification_preferences' => ['database' => true, 'mail' => false],
+        ]);
+
+        app(NotificationService::class)->push(
+            $user->id,
+            'App\\Notifications\\AbsenceWarning',
+            'Cảnh báo',
+            'Nội dung',
+            '#',
+            'warning',
+            [],
+            ['mail'], // ép mail
+        );
+
+        Notification::assertSentTo(
+            $user,
+            GenericNotification::class,
+            fn (GenericNotification $notification, array $channels): bool =>
+                in_array('mail', $channels, true) && in_array('database', $channels, true),
+        );
+    }
+
     public function test_profile_page_can_save_notification_preferences(): void
     {
         $user = User::factory()->create();

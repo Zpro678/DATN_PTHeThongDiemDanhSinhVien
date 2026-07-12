@@ -489,6 +489,7 @@ class NotificationService
         string $url = '#',
         string $level = 'info',
         array $extra = [],
+        array $forceChannels = [],
     ): void {
         if ($userId <= 0) {
             return;
@@ -508,6 +509,7 @@ class NotificationService
                 'url' => $url,
                 'level' => $level,
             ], $extra),
+            $forceChannels,
         ));
     }
 
@@ -680,7 +682,7 @@ class NotificationService
             ->whereNotNull('cs.meeting_id')
             ->whereNull('ar.deleted_at')
             ->whereNull('cs.deleted_at')
-            ->where('cm.status', 'active')
+            ->where('cm.status', \App\Models\ClassMember::STATUS_ACTIVE)
             ->whereNotNull('cm.user_id')
             ->get(['cm.user_id', 'cs.meeting_id', 'ar.class_session_id', 'cs.qr_token', 'ar.status'])
             ->groupBy('user_id');
@@ -703,17 +705,33 @@ class NotificationService
             $remaining = $allowed - $effectiveAbsent;
             $url = route('student.classes.show', ['ma_user' => $userId, 'courseClass' => $class->id]);
 
-            // Vắng sắp chạm quỹ buổi cho phép nhưng chưa vượt.
-            if ($remaining >= 0 && $remaining <= self::NEAR_ABSENCE_LESSONS
+            // Cảnh báo vắng: bắn khi SẮP chạm quỹ (còn ≤ NEAR_ABSENCE_LESSONS buổi) HOẶC khi ĐÃ VƯỢT
+            // quỹ (remaining < 0 — nguy cơ cấm thi). Trước đây chỉ xét remaining >= 0 nên SV đã vượt
+            // ngưỡng (vd vắng 4/3 buổi) không nhận được cảnh báo nào -> nay đã bao phủ.
+            if ($remaining <= self::NEAR_ABSENCE_LESSONS
                 && ! $this->hasUnreadLike($userId, 'App\\Notifications\\AbsenceWarning', $class->id)) {
+                if ($remaining >= 0) {
+                    $title = 'Sắp vượt ngưỡng vắng';
+                    $message = "Lớp {$class->name}: bạn đã vắng {$effectiveAbsent}/{$allowed} buổi được phép. Chỉ còn {$remaining} buổi trước khi có nguy cơ cấm thi.";
+                    $level = 'warning';
+                } else {
+                    // Đã vượt quỹ: cảnh báo NGUY CƠ cấm thi (không phải lệnh cấm chính thức — việc cấm
+                    // thi do giảng viên quyết định qua nút thủ công ở trang lớp).
+                    $exceededBy = -$remaining;
+                    $title = 'Vượt ngưỡng vắng — nguy cơ cấm thi';
+                    $message = "Lớp {$class->name}: bạn đã vắng {$effectiveAbsent}/{$allowed} buổi cho phép, ĐÃ VƯỢT {$exceededBy} buổi. Bạn có nguy cơ bị cấm thi — vui lòng liên hệ giảng viên ngay.";
+                    $level = 'danger';
+                }
+
                 $this->push(
                     $userId,
                     'App\\Notifications\\AbsenceWarning',
-                    'Sắp vượt ngưỡng vắng',
-                    "Lớp {$class->name}: bạn đã vắng {$effectiveAbsent}/{$allowed} buổi được phép. Chỉ còn {$remaining} buổi trước khi có nguy cơ cấm thi.",
+                    $title,
+                    $message,
                     $url,
-                    'warning',
+                    $level,
                     ['class_id' => $class->id],
+                    ['mail'], // Cảnh báo chuyên cần: buộc gửi mail dù SV chưa bật tùy chọn.
                 );
             }
 
@@ -728,6 +746,7 @@ class NotificationService
                     $url,
                     'warning',
                     ['class_id' => $class->id],
+                    ['mail'],
                 );
             }
         }
@@ -813,6 +832,7 @@ class NotificationService
             $url,
             'warning',
             ['class_id' => $class->id],
+            ['mail'],
         );
 
         return true;
@@ -840,6 +860,7 @@ class NotificationService
             $url,
             'danger',
             ['class_id' => $class->id],
+            ['mail'],
         );
 
         return true;

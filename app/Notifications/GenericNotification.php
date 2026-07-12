@@ -23,10 +23,14 @@ class GenericNotification extends Notification implements ShouldBroadcast
 
     /**
      * @param array<string, mixed> $data
+     * @param array<int, string> $forceChannels Kênh buộc gửi dù người dùng chưa bật tùy chọn
+     *        (vd cảnh báo chuyên cần buộc gửi 'mail'). Vẫn tôn trọng điều kiện bắt buộc
+     *        (phải có email/chat id) — xem ChecksNotificationPreferences::via().
      */
     public function __construct(
         private readonly string $databaseType,
         private readonly array $data,
+        public array $forceChannels = [],
     ) {}
 
     public function databaseType(object $notifiable): string

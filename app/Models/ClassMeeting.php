@@ -80,6 +80,22 @@ class ClassMeeting extends Model
     }
 
     /**
+     * Giờ kết thúc có rơi sang NGÀY HÔM SAU không (buổi qua đêm).
+     * end_time chỉ lưu giờ:phút; khi ≤ start_time nghĩa là buổi kết thúc hôm sau
+     * (khớp với logic +1 ngày trong endsAt()). Dùng để hiển thị nhãn "hôm sau",
+     * tránh người dùng tưởng nhầm buổi đã "hết giờ".
+     */
+    public function endsNextDay(): bool
+    {
+        if (! $this->start_time || ! $this->end_time) {
+            return false;
+        }
+
+        return Carbon::parse($this->end_time)->format('H:i:s')
+            <= Carbon::parse($this->start_time)->format('H:i:s');
+    }
+
+    /**
      * Buổi đã quá giờ kết thúc hay chưa.
      */
     public function isExpired(): bool
