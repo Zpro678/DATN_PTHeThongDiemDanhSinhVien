@@ -152,6 +152,10 @@ class ClassMeeting extends Model
         AttendanceCalculator::syncSummaries($this);
         $notifier->notifyMeetingResults($this);
 
+        if ($this->sessions->isNotEmpty()) {
+            $notifier->notifyStudentAbsenceWarnings($this->sessions->first());
+        }
+
         return true;
     }
 

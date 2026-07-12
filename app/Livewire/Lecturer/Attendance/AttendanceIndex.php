@@ -253,6 +253,17 @@ class AttendanceIndex extends Component
 
         $meeting->sessions()->update(['status' => 'closed']);
         $meeting->update(['status' => 'closed']);
+        
+        $meeting->refresh();
+        \App\Services\AttendanceCalculator::syncSummaries($meeting);
+        $notifier = app(\App\Services\NotificationService::class);
+        $notifier->notifyMeetingResults($meeting);
+        
+        if ($meeting->sessions->isNotEmpty()) {
+            $firstSession = $meeting->sessions->first();
+            $notifier->attendanceSessionClosed((int) auth()->id(), $firstSession, false);
+        }
+
         session()->flash('status', 'Buổi điểm danh đã được chốt.');
     }
 

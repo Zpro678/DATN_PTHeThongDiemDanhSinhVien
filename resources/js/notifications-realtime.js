@@ -17,7 +17,8 @@ const channelHandlers = new Map();
 
 function getSocket() {
     if (!socket) {
-        socket = io(`${window.location.hostname}:3000`, {
+        socket = io(window.location.origin, {
+            path: '/socket.io',
             transports: ['websocket', 'polling'],
         });
     }
@@ -54,7 +55,7 @@ export function listenRealtime(channel, onSignal, debounceMs = 0) {
 
     if (!channelHandlers.has(channel)) {
         channelHandlers.set(channel, new Map());
-        
+
         // Listen exactly once on the socket for this channel
         sock.on(channel, () => {
             const handlersMap = channelHandlers.get(channel);
@@ -64,7 +65,7 @@ export function listenRealtime(channel, onSignal, debounceMs = 0) {
 
     const handlersMap = channelHandlers.get(channel);
     // Use the stringified function as a signature to prevent duplicate registrations on re-mount
-    const signature = onSignal.toString(); 
+    const signature = onSignal.toString();
 
     if (!handlersMap.has(signature)) {
         handlersMap.set(signature, debounce(() => onSignal(), debounceMs));

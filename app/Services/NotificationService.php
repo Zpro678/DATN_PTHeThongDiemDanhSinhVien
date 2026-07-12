@@ -695,25 +695,27 @@ class NotificationService
 
             // Quỹ vắng 20% tính trên số buổi cơ sở của từng SV = max(dự kiến, đã diễn ra).
             $baseSessions = AttendanceCalculator::baseSessions($plannedSessions, (int) $counts['total']);
-            $allowed = AttendanceCalculator::allowedAbsentSessions($baseSessions);
-            if ($allowed <= 0) {
+            if ($baseSessions <= 0) {
                 continue;
             }
 
-            // Vắng quy đổi (đủ 6 trạng thái) để xét quỹ vắng — làm tròn xuống cho thông báo.
+            $allowed = AttendanceCalculator::allowedAbsentSessions($baseSessions);
             $effectiveAbsent = (int) AttendanceCalculator::effectiveAbsence($counts, $rules);
             $remaining = $allowed - $effectiveAbsent;
             $url = route('student.classes.show', ['ma_user' => $userId, 'courseClass' => $class->id]);
 
             // Cảnh báo vắng: bắn khi SẮP chạm quỹ (còn ≤ NEAR_ABSENCE_LESSONS buổi) HOẶC khi ĐÃ VƯỢT
-            // quỹ (remaining < 0 — nguy cơ cấm thi). Trước đây chỉ xét remaining >= 0 nên SV đã vượt
-            // ngưỡng (vd vắng 4/3 buổi) không nhận được cảnh báo nào -> nay đã bao phủ.
-            if ($remaining <= self::NEAR_ABSENCE_LESSONS
+            // quỹ (remaining < 0). Chỉ gửi cảnh báo nếu sinh viên THỰC SỰ đã bị trừ chuyên cần (effectiveAbsent > 0).
+            if ($effectiveAbsent > 0 && $remaining <= self::NEAR_ABSENCE_LESSONS
                 && ! $this->hasUnreadLike($userId, 'App\\Notifications\\AbsenceWarning', $class->id)) {
-                if ($remaining >= 0) {
+                if ($remaining > 0) {
                     $title = 'Sắp vượt ngưỡng vắng';
                     $message = "Lớp {$class->name}: bạn đã vắng {$effectiveAbsent}/{$allowed} buổi được phép. Chỉ còn {$remaining} buổi trước khi có nguy cơ cấm thi.";
                     $level = 'warning';
+                } elseif ($remaining === 0) {
+                    $title = 'Đã chạm ngưỡng vắng';
+                    $message = "Lớp {$class->name}: bạn đã vắng {$effectiveAbsent}/{$allowed} buổi (đã hết quỹ vắng). Nếu vắng thêm, bạn sẽ có nguy cơ bị cấm thi.";
+                    $level = 'danger';
                 } else {
                     // Đã vượt quỹ: cảnh báo NGUY CƠ cấm thi (không phải lệnh cấm chính thức — việc cấm
                     // thi do giảng viên quyết định qua nút thủ công ở trang lớp).
@@ -807,6 +809,7 @@ class NotificationService
             $url,
             'warning',
             ['class_id' => $class->id, 'warning_count' => $warningCount],
+            ['mail'],
         );
     }
 
@@ -828,10 +831,10 @@ class NotificationService
             $studentUserId,
             'App\\Notifications\\AbsenceWarning',
             'Cảnh báo chuyên cần',
-            "Lớp {$class->name}: chuyên cần của bạn còn {$attendancePercent}%, sắp chạm ngưỡng cấm thi 20%. Hãy tham gia học đầy đủ hơn.",
+            "Lớp {$class->name}: Giảng viên nhắc nhở bạn vì tỷ lệ có mặt hiện tại của bạn là {$attendancePercent}%. Hãy chú ý đi học đầy đủ để không bị cấm thi.",
             $url,
             'warning',
-            ['class_id' => $class->id],
+            ['class_id' => $class->id, 'manual' => true],
             ['mail'],
         );
 

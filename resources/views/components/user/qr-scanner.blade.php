@@ -95,7 +95,7 @@
             }
 
             // Dạng 2: QR THAM GIA LỚP (/student/join-class?code=... hoặc /join/{code}).
-            // Mở luôn modal "Tham gia lớp" ngay tại chỗ (không tải lại trang) với mã đã điền sẵn.
+            // Mở luôn modal Tham gia lớp ngay tại chỗ (không tải lại trang) với mã đã điền sẵn.
             const joinCode = this.resolveJoinCode(text);
             if (joinCode) {
                 this.stopCamera();
