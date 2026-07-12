@@ -23,11 +23,17 @@ class CouponEdit extends Component
 
     protected function rules()
     {
+        // Giảm theo % thì trần là 100%. Giảm theo số tiền (FIXED) là VND nên không chặn trần ở đây.
+        $valueRules = ['required', 'numeric', 'min:0'];
+        if ($this->type === 'PERCENT') {
+            $valueRules[] = 'max:100';
+        }
+
         return [
             'code' => 'required|string|max:50|unique:coupons,code,' . $this->coupon->id,
             'applicable_plan_id' => 'nullable|exists:plans,id',
             'type' => 'required|in:PERCENT,FIXED',
-            'value' => 'required|numeric|min:0',
+            'value' => $valueRules,
             'usage_limit' => 'nullable|integer|min:1',
             'valid_from' => 'nullable|date',
             'valid_until' => 'nullable|date|after_or_equal:valid_from',
@@ -44,6 +50,7 @@ class CouponEdit extends Component
             'value.required' => 'Vui lòng nhập giá trị giảm.',
             'value.numeric' => 'Giá trị giảm phải là một số.',
             'value.min' => 'Giá trị giảm không được nhỏ hơn 0.',
+            'value.max' => 'Giảm theo phần trăm (%) không được vượt quá 100%.',
             'valid_until.after_or_equal' => 'Ngày kết thúc (Đến ngày) phải sau hoặc bằng ngày bắt đầu (Từ ngày).',
             'usage_limit.integer' => 'Giới hạn lượt dùng phải là một số nguyên.',
             'usage_limit.min' => 'Giới hạn lượt dùng tối thiểu là 1.',

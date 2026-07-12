@@ -27,13 +27,15 @@
                     @php
                         $action = strtolower($log->action ?? '');
                         $icon = match (true) {
-                            str_contains($action, 'create') || str_contains($action, 'add') || str_contains($action, 'tạo') => 'plus-circle',
-                            str_contains($action, 'attendance') || str_contains($action, 'check') || str_contains($action, 'điểm danh') => 'calendar-check',
-                            str_contains($action, 'update') || str_contains($action, 'setting') || str_contains($action, 'sửa') || str_contains($action, 'cập nhật') => 'settings',
-                            str_contains($action, 'delete') || str_contains($action, 'blocked') || str_contains($action, 'xóa') => 'alert-triangle',
+                            str_contains($action, 'login') => 'log-in',
+                            str_contains($action, 'create') || str_contains($action, 'add') || str_contains($action, 'tạo') || str_contains($action, 'join') || str_contains($action, 'submitted') => 'plus-circle',
+                            str_contains($action, 'attendance') || str_contains($action, 'check') || str_contains($action, 'session') || str_contains($action, 'điểm danh') => 'calendar-check',
+                            str_contains($action, 'update') || str_contains($action, 'edit') || str_contains($action, 'setting') || str_contains($action, 'changed') || str_contains($action, 'approved') || str_contains($action, 'duyệt') || str_contains($action, 'sửa') || str_contains($action, 'cập nhật') => 'settings',
+                            str_contains($action, 'delete') || str_contains($action, 'blocked') || str_contains($action, 'failed') || str_contains($action, 'rejected') || str_contains($action, 'từ chối') || str_contains($action, 'xóa') => 'alert-triangle',
                             default => 'activity',
                         };
                         $tone = match ($icon) {
+                            'log-in' => 'text-sky-600 bg-sky-50 border-sky-100',
                             'plus-circle' => 'text-blue-600 bg-blue-50 border-blue-100',
                             'calendar-check' => 'text-emerald-600 bg-emerald-50 border-emerald-100',
                             'settings' => 'text-amber-500 bg-amber-50 border-amber-100',
@@ -41,18 +43,9 @@
                             default => 'text-indigo-600 bg-indigo-50 border-indigo-100',
                         };
 
-                        // Dịch các action từ tiếng Anh sang tiếng Việt nếu hệ thống đang lưu raw key
-                        $actionMap = [
-                            'login_success' => 'vừa đăng nhập thành công vào hệ thống',
-                            'logout' => 'đã đăng xuất khỏi hệ thống',
-                            'user_created' => 'đã tạo mới người dùng',
-                            'user_edited' => 'đã cập nhật thông tin người dùng',
-                            'user_deleted' => 'đã xóa người dùng',
-                            'created' => 'đã tạo mới bản ghi',
-                            'updated' => 'đã cập nhật bản ghi',
-                            'deleted' => 'đã xóa bản ghi',
-                        ];
-                        $displayAction = $actionMap[$log->action] ?? $log->action;
+                        // Câu mô tả rõ ràng "đã làm gì" (ánh xạ tập trung ở App\Models\AuditLog::actionLabel).
+                        $displayAction = $log->actionLabel();
+                        $tableLabel = $log->tableLabel() ?: $log->table_name;
                     @endphp
 
                     <div class="group relative flex items-start gap-4 md:gap-6">
@@ -62,7 +55,7 @@
                         <div class="flex-1 rounded-2xl border border-slate-100 bg-white/75 p-4 transition-all hover:-translate-y-0.5 hover:border-blue-200 hover:bg-blue-50/40 hover:shadow-sm">
                             <div class="mb-3 flex flex-wrap items-center justify-between gap-2">
                                 <span class="rounded-md border px-2.5 py-1 text-[10px] font-extrabold tracking-wider {{ $tone }}">
-                                    {{ strtoupper($log->table_name ?: 'HỆ THỐNG') }}
+                                    {{ mb_strtoupper($tableLabel ?: 'Hệ thống') }}
                                 </span>
                                 <span class="flex items-center gap-1.5 text-xs font-medium text-slate-400">
                                     <x-user.icon name="calendar" :size="14" />
@@ -234,7 +227,13 @@
                             </div>
                         </div>
 
-                        <h4 class="mb-3 mt-8 text-base font-bold text-slate-900">Chi tiết thay đổi dữ liệu (Bảng: {{ $selectedLog->table_name }})</h4>
+                        <h4 class="mb-3 mt-8 text-base font-bold text-slate-900">
+                            <span class="font-bold text-blue-600">{{ $selectedLog->user?->name ?? 'Hệ thống' }}</span>
+                            {{ $selectedLog->actionLabel() }}
+                            @if($selectedLog->tableLabel() || $selectedLog->table_name)
+                                <span class="text-slate-400 text-sm font-medium">(Bảng: {{ $selectedLog->tableLabel() ?: $selectedLog->table_name }})</span>
+                            @endif
+                        </h4>
                         <div class="overflow-hidden rounded-xl border border-slate-200 shadow-sm max-h-[400px] overflow-y-auto scrollbar-custom">
                             <div class="sticky top-0 grid grid-cols-3 divide-x divide-slate-200 bg-slate-100 border-b border-slate-200">
                                 <div class="px-4 py-3 text-sm font-extrabold text-slate-500 uppercase tracking-wider">Trường dữ liệu</div>

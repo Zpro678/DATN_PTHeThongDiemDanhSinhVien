@@ -41,6 +41,13 @@
                 </div>
             </div>
 
+            @unless($maintenanceActive)
+                <div class="mb-5 flex items-start gap-3 rounded-xl border border-amber-200 bg-amber-50 p-4 text-sm font-semibold text-amber-800">
+                    <svg class="mt-0.5 h-5 w-5 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01M10.29 3.86L1.82 18a2 2 0 001.71 3h16.94a2 2 0 001.71-3L13.71 3.86a2 2 0 00-3.42 0z" /></svg>
+                    <span>Phục hồi dữ liệu chỉ khả dụng khi hệ thống <strong>đang bật bảo trì</strong> (trong khung giờ bảo trì). Hãy bật bảo trì ở mục 1 trước để đảm bảo không ai thao tác trong lúc ghi đè dữ liệu.</span>
+                </div>
+            @endunless
+
             <div class="overflow-hidden rounded-xl border border-slate-200">
                 <table class="min-w-full divide-y divide-slate-200">
                     <thead class="bg-slate-50">
@@ -58,7 +65,7 @@
                                 <td class="whitespace-nowrap px-4 py-3 text-sm text-slate-500">{{ $backup['created_at']->format('d/m/Y H:i:s') }}</td>
                                 <td class="whitespace-nowrap px-4 py-3 text-sm text-slate-500">{{ number_format($backup['size'] / 1024, 2) }} KB</td>
                                 <td class="whitespace-nowrap px-4 py-3 text-right text-sm font-medium">
-                                    <button wire:click="openRestoreModal('{{ $backup['name'] }}')" class="text-emerald-600 hover:text-emerald-900 mr-3 font-bold">Phục hồi</button>
+                                    <button wire:click="openRestoreModal('{{ $backup['name'] }}')" @disabled(!$maintenanceActive) class="mr-3 font-bold text-emerald-600 hover:text-emerald-900 disabled:cursor-not-allowed disabled:text-slate-300 disabled:hover:text-slate-300" title="{{ $maintenanceActive ? 'Phục hồi từ bản sao lưu này' : 'Cần bật bảo trì hệ thống trước khi phục hồi' }}">Phục hồi</button>
                                     <button type="button" @click="$dispatch('open-delete-backup-modal', '{{ $backup['name'] }}')" class="text-rose-600 hover:text-rose-900 font-bold">Xóa</button>
                                 </td>
                             </tr>

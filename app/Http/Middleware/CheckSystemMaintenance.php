@@ -7,7 +7,6 @@ use Illuminate\Http\Request;
 use Symfony\Component\HttpFoundation\Response;
 use App\Models\Setting;
 use App\Models\User;
-use Carbon\Carbon;
 use Illuminate\Support\Facades\Auth;
 
 class CheckSystemMaintenance
@@ -19,17 +18,10 @@ class CheckSystemMaintenance
      */
     public function handle(Request $request, Closure $next): Response
     {
-        $isMaintenance = Setting::get('maintenance_mode', false);
-        $start = Setting::get('maintenance_start');
-        $end = Setting::get('maintenance_end');
-
-        if ($isMaintenance && $start && $end) {
-            $now = now();
-            $startTime = Carbon::parse($start);
-            $endTime = Carbon::parse($end);
-
-            if ($now->between($startTime, $endTime)) {
-                
+        // Dùng chung định nghĩa "đang bảo trì" với các thao tác nhạy cảm (vd phục hồi dữ liệu)
+        // để khóa user và mở khóa restore luôn khớp nhau tuyệt đối.
+        if (Setting::isMaintenanceActive()) {
+            {
                 // 1. Cho phép truy cập chính trang maintenance để tránh redirect loop
                 if ($request->routeIs('maintenance')) {
                     return $next($request);

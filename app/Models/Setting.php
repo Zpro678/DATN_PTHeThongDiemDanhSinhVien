@@ -40,4 +40,28 @@ class Setting extends Model
             ['value' => $value]
         );
     }
+
+    /**
+     * Hệ thống có ĐANG trong thời gian bảo trì hay không (cờ bật + thời điểm hiện tại nằm
+     * trong khung [start, end]). Đây là nguồn chân lý duy nhất cho cả middleware chặn user
+     * lẫn các thao tác nguy hiểm chỉ được phép khi đang bảo trì (vd phục hồi dữ liệu).
+     */
+    public static function isMaintenanceActive(): bool
+    {
+        if (! (bool) self::get('maintenance_mode', false)) {
+            return false;
+        }
+
+        $start = self::get('maintenance_start');
+        $end = self::get('maintenance_end');
+        if (! $start || ! $end) {
+            return false;
+        }
+
+        try {
+            return now()->between(\Carbon\Carbon::parse($start), \Carbon\Carbon::parse($end));
+        } catch (\Throwable $e) {
+            return false;
+        }
+    }
 }

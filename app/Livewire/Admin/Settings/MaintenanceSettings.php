@@ -121,6 +121,13 @@ class MaintenanceSettings extends Component
 
     public function openRestoreModal($fileName)
     {
+        // Chỉ cho phục hồi khi hệ thống ĐANG bảo trì (user đã bị khóa) — tránh ghi đè toàn bộ
+        // DB trong lúc mọi người đang thao tác, gây mất dữ liệu đang phát sinh.
+        if (!Setting::isMaintenanceActive()) {
+            $this->dispatch('toast', message: 'Bạn phải BẬT bảo trì hệ thống (đang trong thời gian bảo trì) trước khi phục hồi dữ liệu.', type: 'error');
+            return;
+        }
+
         $this->selectedBackup = $fileName;
         $this->super_admin_password = '';
         $this->showRestoreModal = true;
@@ -131,6 +138,14 @@ class MaintenanceSettings extends Component
         $user = \Illuminate\Support\Facades\Auth::user();
         if (!$user->isSuperAdmin()) {
             $this->dispatch('toast', message: 'Chỉ Super Admin mới có quyền phục hồi dữ liệu.', type: 'error');
+            $this->showRestoreModal = false;
+            return;
+        }
+
+        // Chốt chặn lần 2 ở bước thực thi: kể cả client cố gọi thẳng restoreBackup vẫn phải
+        // đang trong thời gian bảo trì mới được ghi đè dữ liệu.
+        if (!Setting::isMaintenanceActive()) {
+            $this->dispatch('toast', message: 'Chỉ được phục hồi dữ liệu khi hệ thống đang bật bảo trì.', type: 'error');
             $this->showRestoreModal = false;
             return;
         }
@@ -154,6 +169,9 @@ class MaintenanceSettings extends Component
 
     public function render()
     {
-        return view('livewire.admin.settings.maintenance-settings')->title('Quản lý Bảo trì & Sao lưu');
+        return view('livewire.admin.settings.maintenance-settings', [
+            // Phục hồi dữ liệu chỉ mở khi hệ thống ĐANG bảo trì — dùng để khóa nút & hiện chú thích.
+            'maintenanceActive' => Setting::isMaintenanceActive(),
+        ])->title('Quản lý Bảo trì & Sao lưu');
     }
 }
