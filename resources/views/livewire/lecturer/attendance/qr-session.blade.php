@@ -364,77 +364,73 @@
     </template>
 
     <template x-teleport="body">
-        <div x-cloak x-show="showQrModal" x-transition.opacity class="fixed inset-0 z-[9999] flex flex-col items-center justify-center overflow-y-auto bg-gradient-to-br from-slate-900 via-slate-900 to-blue-950 p-4 sm:p-8">
-            {{-- Trang trí nền --}}
-            <div class="pointer-events-none absolute -left-40 -top-40 h-96 w-96 rounded-full bg-blue-600/20 blur-[120px]"></div>
-            <div class="pointer-events-none absolute -bottom-40 -right-40 h-96 w-96 rounded-full bg-indigo-500/20 blur-[120px]"></div>
-
-            <button type="button" @click="showQrModal = false" class="absolute right-5 top-5 z-10 flex h-12 w-12 items-center justify-center rounded-full bg-white/10 text-white ring-1 ring-white/20 backdrop-blur transition hover:bg-white/20" title="Đóng">
+        <div x-cloak x-show="showQrModal" x-transition.opacity class="fixed inset-0 z-[9999] overflow-y-auto bg-white">
+            <button type="button" @click="showQrModal = false" class="absolute right-5 top-5 z-10 flex h-12 w-12 items-center justify-center rounded-full bg-slate-100 text-slate-500 ring-1 ring-slate-200 transition hover:bg-slate-200 hover:text-slate-900" title="Đóng">
                 <x-user.icon name="x" :size="26" />
             </button>
 
-            <div class="relative grid w-full max-w-4xl overflow-hidden rounded-[32px] bg-white shadow-2xl md:grid-cols-2">
+            <div class="grid min-h-screen w-full grid-cols-1 md:grid-cols-2">
                 {{-- Bên trái: thông tin lớp + phiên buổi điểm danh --}}
-                <div class="flex flex-col justify-center gap-6 border-b border-slate-100 p-8 sm:p-10 md:border-b-0 md:border-r">
-                    <div class="inline-flex w-fit items-center gap-2 rounded-full bg-blue-50 px-4 py-1.5 text-xs font-bold uppercase tracking-widest text-blue-600 ring-1 ring-blue-100">
-                        <x-user.icon name="qr-code" :size="14" />
+                <div class="flex flex-col justify-center gap-8 border-b border-slate-100 p-10 sm:p-14 lg:p-20 md:border-b-0 md:border-r">
+                    <div class="inline-flex w-fit items-center gap-2 rounded-full bg-blue-50 px-5 py-2 text-sm font-bold uppercase tracking-widest text-blue-600 ring-1 ring-blue-100">
+                        <x-user.icon name="qr-code" :size="16" />
                         Điểm danh
                     </div>
 
                     <div>
-                        <p class="text-[11px] font-black uppercase tracking-widest text-slate-400">Lớp học</p>
-                        <h2 class="mt-1 text-2xl font-black leading-tight text-slate-900 sm:text-3xl">{{ $session->courseClass->name }}</h2>
+                        <p class="text-xs font-black uppercase tracking-widest text-slate-400">Lớp học</p>
+                        <h2 class="mt-2 text-4xl font-black leading-tight text-slate-900 lg:text-6xl">{{ $session->courseClass->name }}</h2>
                     </div>
 
-                    <div class="space-y-3">
-                        <div class="flex items-start gap-3">
-                            <span class="mt-0.5 flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-slate-100 text-slate-500">
-                                <x-user.icon name="calendar-check" :size="18" />
+                    <div class="space-y-4">
+                        <div class="flex items-start gap-4">
+                            <span class="mt-0.5 flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-slate-100 text-slate-500">
+                                <x-user.icon name="calendar-check" :size="22" />
                             </span>
                             <div>
-                                <p class="text-[11px] font-black uppercase tracking-wider text-slate-400">Buổi điểm danh</p>
-                                <p class="text-sm font-bold text-slate-800">{{ Str::limit($session->name, 40) }}</p>
+                                <p class="text-xs font-black uppercase tracking-wider text-slate-400">Buổi điểm danh</p>
+                                <p class="text-lg font-bold text-slate-800">{{ Str::limit($session->name, 40) }}</p>
                             </div>
                         </div>
-                        <div class="flex items-start gap-3">
-                            <span class="mt-0.5 flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-slate-100 text-slate-500">
-                                <x-user.icon name="clock" :size="18" />
+                        <div class="flex items-start gap-4">
+                            <span class="mt-0.5 flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-slate-100 text-slate-500">
+                                <x-user.icon name="clock" :size="22" />
                             </span>
                             <div>
-                                <p class="text-[11px] font-black uppercase tracking-wider text-slate-400">Thời gian</p>
-                                <p class="text-sm font-bold text-slate-800">{{ $sessionDateLabel }} @if($session->start_time) • {{ \Carbon\Carbon::parse($session->start_time)->format('H:i') }} @endif</p>
+                                <p class="text-xs font-black uppercase tracking-wider text-slate-400">Thời gian</p>
+                                <p class="text-lg font-bold text-slate-800">{{ $sessionDateLabel }} @if($session->start_time) • {{ \Carbon\Carbon::parse($session->start_time)->format('H:i') }} @endif</p>
                             </div>
                         </div>
                     </div>
 
-                    <div class="flex items-start gap-3 rounded-2xl bg-slate-50 p-4 ring-1 ring-slate-100">
-                        <span class="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-blue-100 text-blue-600">
-                            <x-user.icon name="scan-line" :size="18" />
+                    <div class="flex items-start gap-4 rounded-2xl bg-slate-50 p-5 ring-1 ring-slate-100">
+                        <span class="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-blue-100 text-blue-600">
+                            <x-user.icon name="scan-line" :size="22" />
                         </span>
-                        <p class="text-xs font-medium leading-relaxed text-slate-600">
+                        <p class="text-base font-medium leading-relaxed text-slate-600">
                             Học viên mở ứng dụng, chọn <span class="font-bold text-slate-800">Quét QR</span> rồi đưa camera vào mã bên cạnh để được ghi nhận có mặt.
                         </p>
                     </div>
                 </div>
 
                 {{-- Bên phải: mã QR --}}
-                <div class="flex flex-col items-center justify-center gap-6 p-8 sm:p-10">
-                    <div class="w-fit rounded-3xl border border-slate-100 bg-white p-5 shadow-xl shadow-slate-900/10 [&>svg]:h-56 [&>svg]:w-56 sm:[&>svg]:h-64 sm:[&>svg]:w-64">
+                <div class="flex flex-col items-center justify-center gap-8 bg-slate-50/50 p-10 sm:p-14 lg:p-20">
+                    <div class="w-fit rounded-[32px] border border-slate-100 bg-white p-6 shadow-2xl shadow-slate-900/10 [&>svg]:h-64 [&>svg]:w-64 sm:[&>svg]:h-80 sm:[&>svg]:w-80 lg:[&>svg]:h-[28rem] lg:[&>svg]:w-[28rem]">
                         @if ($qrSvg)
                             {!! $qrSvg !!}
                         @else
-                            <div class="flex h-56 w-56 flex-col items-center justify-center text-slate-400 sm:h-64 sm:w-64">
-                                <x-user.icon name="lock" :size="56" />
-                                <span class="mt-3 text-sm font-bold">Phiên đã chốt</span>
+                            <div class="flex h-64 w-64 flex-col items-center justify-center text-slate-400 sm:h-80 sm:w-80 lg:h-[28rem] lg:w-[28rem]">
+                                <x-user.icon name="lock" :size="72" />
+                                <span class="mt-3 text-base font-bold">Phiên đã chốt</span>
                             </div>
                         @endif
                     </div>
 
                     @if(!$isClosed)
-                        <div class="inline-flex items-center gap-2 rounded-full bg-blue-50 px-4 py-2 text-sm font-bold text-blue-600 ring-1 ring-blue-100">
-                            <span class="relative flex h-2.5 w-2.5">
+                        <div class="inline-flex items-center gap-2 rounded-full bg-blue-50 px-5 py-2.5 text-base font-bold text-blue-600 ring-1 ring-blue-100">
+                            <span class="relative flex h-3 w-3">
                                 <span class="absolute inline-flex h-full w-full animate-ping rounded-full bg-blue-400 opacity-75"></span>
-                                <span class="relative inline-flex h-2.5 w-2.5 rounded-full bg-blue-500"></span>
+                                <span class="relative inline-flex h-3 w-3 rounded-full bg-blue-500"></span>
                             </span>
                             Mã tự làm mới sau <span x-text="String(timeLeft).padStart(2, '0')"></span>s
                         </div>

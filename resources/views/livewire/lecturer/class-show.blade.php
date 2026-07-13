@@ -720,55 +720,50 @@
             x-cloak
             @keydown.escape.window="showJoinQrZoom = false"
             x-transition.opacity
-            class="fixed inset-0 z-[130] flex items-center justify-center overflow-y-auto bg-gradient-to-br from-slate-900 via-slate-900 to-blue-950 p-4 sm:p-8"
+            class="fixed inset-0 z-[130] overflow-y-auto bg-white"
         >
-            {{-- Khối trang trí nền --}}
-            <div class="pointer-events-none absolute -left-40 -top-40 h-96 w-96 rounded-full bg-blue-600/20 blur-[120px]"></div>
-            <div class="pointer-events-none absolute -bottom-40 -right-40 h-96 w-96 rounded-full bg-indigo-500/20 blur-[120px]"></div>
-
             <button type="button" @click="showJoinQrZoom = false"
-                class="absolute right-5 top-5 z-10 flex h-12 w-12 items-center justify-center rounded-full bg-white/10 text-white ring-1 ring-white/20 backdrop-blur transition hover:bg-white/20">
+                class="absolute right-5 top-5 z-10 flex h-12 w-12 items-center justify-center rounded-full bg-slate-100 text-slate-500 ring-1 ring-slate-200 transition hover:bg-slate-200 hover:text-slate-900">
                 <x-user.icon name="x" :size="26" />
             </button>
 
-            <div x-show="showJoinQrZoom" x-transition.scale.origin.center
-                class="relative grid w-full max-w-4xl overflow-hidden rounded-[32px] bg-white shadow-2xl md:grid-cols-2">
+            <div class="grid min-h-screen w-full grid-cols-1 md:grid-cols-2">
                 {{-- Bên trái: thông tin lớp --}}
-                <div class="flex flex-col justify-center gap-6 border-b border-slate-100 p-8 sm:p-10 md:border-b-0 md:border-r">
-                    <div class="inline-flex w-fit items-center gap-2 rounded-full bg-blue-50 px-4 py-1.5 text-xs font-bold uppercase tracking-widest text-blue-600 ring-1 ring-blue-100">
-                        <x-user.icon name="log-in" :size="14" />
+                <div class="flex flex-col justify-center gap-8 border-b border-slate-100 p-10 sm:p-14 lg:p-20 md:border-b-0 md:border-r">
+                    <div class="inline-flex w-fit items-center gap-2 rounded-full bg-blue-50 px-5 py-2 text-sm font-bold uppercase tracking-widest text-blue-600 ring-1 ring-blue-100">
+                        <x-user.icon name="log-in" :size="16" />
                         Tham gia lớp học
                     </div>
 
                     <div>
-                        <p class="text-[11px] font-black uppercase tracking-widest text-slate-400">Lớp học</p>
-                        <h2 class="mt-1 text-2xl font-black leading-tight text-slate-900 sm:text-3xl">{{ $class->name }}</h2>
+                        <p class="text-xs font-black uppercase tracking-widest text-slate-400">Lớp học</p>
+                        <h2 class="mt-2 text-4xl font-black leading-tight text-slate-900 lg:text-6xl">{{ $class->name }}</h2>
                         @if($class->owner?->name)
-                            <p class="mt-2 inline-flex items-center gap-1.5 text-sm font-semibold text-slate-500">
-                                <x-user.icon name="user" :size="15" />
+                            <p class="mt-4 inline-flex items-center gap-2 text-lg font-semibold text-slate-500">
+                                <x-user.icon name="user" :size="20" />
                                 {{ $class->owner->name }}
                             </p>
                         @endif
                     </div>
 
-                    <div class="rounded-2xl border border-slate-200 bg-slate-50 p-4">
-                        <p class="text-[11px] font-black uppercase tracking-widest text-slate-400">Mã tham gia lớp</p>
-                        <p class="mt-1 font-mono text-3xl font-black tracking-[0.2em] text-blue-600">{{ $class->join_key }}</p>
+                    <div class="rounded-2xl border border-slate-200 bg-slate-50 p-6">
+                        <p class="text-xs font-black uppercase tracking-widest text-slate-400">Mã tham gia lớp</p>
+                        <p class="mt-2 font-mono text-5xl font-black tracking-[0.2em] text-blue-600 lg:text-6xl">{{ $class->join_key }}</p>
                     </div>
 
-                    <div class="flex items-start gap-3 rounded-2xl bg-slate-50 p-4 ring-1 ring-slate-100">
-                        <span class="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-blue-100 text-blue-600">
-                            <x-user.icon name="qr-code" :size="18" />
+                    <div class="flex items-start gap-4 rounded-2xl bg-slate-50 p-5 ring-1 ring-slate-100">
+                        <span class="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-blue-100 text-blue-600">
+                            <x-user.icon name="qr-code" :size="22" />
                         </span>
-                        <p class="text-xs font-medium leading-relaxed text-slate-600">
+                        <p class="text-base font-medium leading-relaxed text-slate-600">
                             Mở ứng dụng, chọn <span class="font-bold text-slate-800">Quét QR</span> rồi đưa camera vào mã bên cạnh — hoặc nhập tay mã lớp ở mục <span class="font-bold text-slate-800">Tham gia lớp</span>.
                         </p>
                     </div>
                 </div>
 
                 {{-- Bên phải: mã QR --}}
-                <div class="flex items-center justify-center p-8 sm:p-10">
-                    <div class="w-fit rounded-3xl border border-slate-100 bg-white p-5 shadow-xl shadow-slate-900/10 [&>svg]:h-56 [&>svg]:w-56 sm:[&>svg]:h-64 sm:[&>svg]:w-64">
+                <div class="flex items-center justify-center bg-slate-50/50 p-10 sm:p-14 lg:p-20">
+                    <div class="w-fit rounded-[32px] border border-slate-100 bg-white p-6 shadow-2xl shadow-slate-900/10 [&>svg]:h-64 [&>svg]:w-64 sm:[&>svg]:h-80 sm:[&>svg]:w-80 lg:[&>svg]:h-[28rem] lg:[&>svg]:w-[28rem]">
                         {!! $shareQr !!}
                     </div>
                 </div>
