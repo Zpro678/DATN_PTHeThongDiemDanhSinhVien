@@ -45,7 +45,7 @@ class AttendanceIndex extends Component
 
     public string $sessionName = '';
     public int $durationMinutes = 15;
-    public int $gpsRadius = 100;
+    public int $gpsRadius = 10;
     public int $qrRefreshRate = 10;
     public bool $gpsEnabled = true;
     public ?float $gpsLatitude = null;
@@ -141,7 +141,7 @@ class AttendanceIndex extends Component
         
         $this->sessionName = 'Phiên 1';
         $this->durationMinutes = 15;
-        $this->gpsRadius = 100;
+        $this->gpsRadius = 10;
         $this->qrRefreshRate = 10;
         $this->gpsEnabled = true;
         $this->gpsLatitude = null;
@@ -174,8 +174,11 @@ class AttendanceIndex extends Component
         if ($this->quickStartType === 'qr') {
             $rules['durationMinutes'] = 'required|integer|min:1';
             $rules['qrRefreshRate'] = 'required|integer|min:5';
-            $rules['gpsRadius'] = 'required|integer|min:20';
-            
+            $rules['gpsRadius'] = 'required|integer|min:10|max:2500';
+            $messages['gpsRadius.required'] = 'Vui lòng nhập bán kính GPS.';
+            $messages['gpsRadius.min'] = 'Bán kính cho phép tối thiểu là 10m.';
+            $messages['gpsRadius.max'] = 'Bán kính cho phép tối đa là 2500m.';
+
             if ($this->gpsEnabled) {
                 $rules['gpsLatitude'] = 'required|numeric';
                 $rules['gpsLongitude'] = 'required|numeric';
