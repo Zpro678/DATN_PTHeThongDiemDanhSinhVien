@@ -208,7 +208,7 @@
 
                                     @foreach($this->activeClasses as $cClass)
                                         @php($displayClassCode = $cClass->class_code ?: $cClass->join_key)
-                                        <button type="button" x-show="search === '' || '{{ mb_strtolower($displayClassCode . ' ' . $cClass->name, 'UTF-8') }}'.includes(search.toLowerCase())" 
+                                        <button wire:key="q-class-{{ $cClass->id }}" type="button" x-show="search === '' || '{{ mb_strtolower($displayClassCode . ' ' . $cClass->name, 'UTF-8') }}'.includes(search.toLowerCase())" 
                                             @click="updateClass('{{ $cClass->id }}'); search = '{{ addslashes($cClass->name) }}'; selectedId = '{{ $cClass->id }}'; open = false;" 
                                             class="flex w-full items-center justify-between gap-3 border-b border-slate-50 px-4 py-3 text-left transition-all duration-150 last:border-0 hover:bg-blue-50/50 focus:bg-blue-50/50 outline-none"
                                             :class="'{{ $quickClassId }}' == '{{ $cClass->id }}' ? 'bg-blue-50/60' : ''">
@@ -328,7 +328,7 @@
                                 <div class="max-h-56 overflow-y-auto overscroll-contain scrollbar-custom">
 
                                     @foreach($this->classMeetings as $cMeeting)
-                                        <button type="button" x-show="search === '' || '{{ mb_strtolower($cMeeting->name . ' ' . $cMeeting->date->format('d/m/Y'), 'UTF-8') }}'.includes(search.toLowerCase())" 
+                                        <button wire:key="q-meeting-{{ $cMeeting->id }}" type="button" x-show="search === '' || '{{ mb_strtolower($cMeeting->name . ' ' . $cMeeting->date->format('d/m/Y'), 'UTF-8') }}'.includes(search.toLowerCase())" 
                                             @click="selectMeeting({{ $cMeeting->id }}, '{{ addslashes($cMeeting->name) }}', '{{ $cMeeting->end_time ? \Carbon\Carbon::parse($cMeeting->end_time)->format('H:i') : '' }}')" 
                                             class="flex w-full items-center justify-between gap-3 border-b border-slate-50 px-4 py-3 text-left transition-all duration-150 last:border-0 hover:bg-blue-50/50 focus:bg-blue-50/50 outline-none"
                                             :class="'{{ $quickMeetingId }}' == '{{ $cMeeting->id }}' ? 'bg-blue-50/60' : ''">
