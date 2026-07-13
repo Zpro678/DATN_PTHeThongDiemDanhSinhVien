@@ -5,13 +5,10 @@ namespace App\Livewire\Lecturer\Attendance;
 use App\Livewire\Lecturer\Attendance\Concerns\OwnsAttendanceSessions;
 use App\Models\AttendanceRecord;
 use App\Models\ClassMeeting;
-use App\Models\ClassMember;
 use App\Models\ClassSession;
-use App\Models\CourseClass;
 use App\Services\NotificationService;
 use Illuminate\Contracts\View\View;
 use Illuminate\Database\Eloquent\Collection;
-use Illuminate\Support\Str;
 use Livewire\Component;
 
 class QrAttendanceCreate extends Component
@@ -333,67 +330,6 @@ class QrAttendanceCreate extends Component
 
     private function availableClasses(): Collection
     {
-        $classes = $this->ownedClasses();
-
-        if ($classes->isNotEmpty()) {
-            return $classes;
-        }
-
-        $this->createDemoClassForCurrentUser();
-
         return $this->ownedClasses();
-    }
-
-    private function createDemoClassForCurrentUser(): void
-    {
-        $userId = auth()->id();
-        $code = 'DEMO-'.$userId.'-QR';
-
-        $courseClass = CourseClass::withTrashed()->firstOrCreate(
-            ['join_key' => $code],
-            [
-                'owner_user_id' => $userId,
-                'name' => 'Lớp demo điểm danh QR',
-                'description' => 'Dữ liệu giả để kiểm thử trang điểm danh bằng QR.',
-                'require_approval' => false,
-                'status' => 'active',
-                'total_sessions' => 15,
-            ],
-        );
-
-        $courseClass->restore();
-        $courseClass->update([
-            'owner_user_id' => $userId,
-            'status' => 'active',
-        ]);
-
-        collect([
-            'Nguyễn Minh Anh',
-            'Trần Gia Bảo',
-            'Lê Hoàng Nam',
-            'Phạm Thùy Linh',
-            'Võ Quốc Việt',
-            'Đặng Phương Thảo',
-            'Hoàng Đức Huy',
-            'Bùi Khánh Vy',
-        ])->each(function (string $fullName) use ($courseClass): void {
-            $member = ClassMember::withTrashed()
-                ->where('class_id', $courseClass->id)
-                ->whereHas('profile', fn ($p) => $p->where('full_name', $fullName))
-                ->first();
-
-            if (! $member) {
-                $member = ClassMember::create([
-                    'class_id' => $courseClass->id,
-                    'user_id' => null,
-                    'status' => ClassMember::STATUS_ACTIVE,
-                ]);
-            } else {
-                $member->restore();
-                $member->update(['status' => ClassMember::STATUS_ACTIVE]);
-            }
-
-            $member->syncProfile(['full_name' => $fullName]);
-        });
     }
 }

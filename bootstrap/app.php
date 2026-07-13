@@ -36,6 +36,7 @@ return Application::configure(basePath: dirname(__DIR__))
             'class.owner' => \App\Http\Middleware\CheckClassOwner::class,
             'plan'        => \App\Http\Middleware\CheckSubscriptionPlan::class,
             'class.limit' => \App\Http\Middleware\CheckClassLimitExceeded::class,
+            'not.admin'   => \App\Http\Middleware\RedirectAdminFromUserArea::class,
         ]);
         $middleware->web(append: [
             SetUserRouteDefaults::class,

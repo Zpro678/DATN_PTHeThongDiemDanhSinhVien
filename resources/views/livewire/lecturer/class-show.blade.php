@@ -732,44 +732,44 @@
             </button>
 
             <div x-show="showJoinQrZoom" x-transition.scale.origin.center
-                class="relative w-full max-w-md overflow-hidden rounded-[32px] bg-white shadow-2xl">
-                {{-- Header thương hiệu + tên lớp --}}
-                <div class="relative overflow-hidden bg-gradient-to-br from-blue-600 to-indigo-600 px-8 pb-10 pt-8 text-center text-white">
-                    <div class="absolute inset-0 opacity-10 bg-[url('data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMjAiIGhlaWdodD0iMjAiIHhtbG5zPSJodHRwOi8vd3d3LnczLm9yZy8yMDAwL3N2ZyI+PGNpcmNsZSBjeD0iMSIgY3k9IjEiIHI9IjEiIGZpbGw9IiNmZmYiLz48L3N2Zz4=')]"></div>
-                    <div class="relative z-10">
-                        <div class="mx-auto mb-4 inline-flex items-center gap-2 rounded-full bg-white/15 px-4 py-1.5 text-xs font-bold uppercase tracking-widest ring-1 ring-white/25 backdrop-blur">
-                            <x-user.icon name="log-in" :size="14" />
-                            Tham gia lớp học
-                        </div>
-                        <h2 class="text-2xl font-black leading-tight drop-shadow-sm">{{ $class->name }}</h2>
+                class="relative grid w-full max-w-4xl overflow-hidden rounded-[32px] bg-white shadow-2xl md:grid-cols-2">
+                {{-- Bên trái: thông tin lớp --}}
+                <div class="flex flex-col justify-center gap-6 border-b border-slate-100 p-8 sm:p-10 md:border-b-0 md:border-r">
+                    <div class="inline-flex w-fit items-center gap-2 rounded-full bg-blue-50 px-4 py-1.5 text-xs font-bold uppercase tracking-widest text-blue-600 ring-1 ring-blue-100">
+                        <x-user.icon name="log-in" :size="14" />
+                        Tham gia lớp học
+                    </div>
+
+                    <div>
+                        <p class="text-[11px] font-black uppercase tracking-widest text-slate-400">Lớp học</p>
+                        <h2 class="mt-1 text-2xl font-black leading-tight text-slate-900 sm:text-3xl">{{ $class->name }}</h2>
                         @if($class->owner?->name)
-                            <p class="mt-2 inline-flex items-center gap-1.5 text-sm font-semibold text-blue-100">
+                            <p class="mt-2 inline-flex items-center gap-1.5 text-sm font-semibold text-slate-500">
                                 <x-user.icon name="user" :size="15" />
                                 {{ $class->owner->name }}
                             </p>
                         @endif
                     </div>
-                </div>
 
-                {{-- Mã QR lớn --}}
-                <div class="-mt-6 px-8">
-                    <div class="mx-auto w-fit rounded-3xl border border-slate-100 bg-white p-5 shadow-xl shadow-slate-900/10 [&>svg]:h-64 [&>svg]:w-64 sm:[&>svg]:h-72 sm:[&>svg]:w-72">
-                        {!! $shareQr !!}
+                    <div class="rounded-2xl border border-slate-200 bg-slate-50 p-4">
+                        <p class="text-[11px] font-black uppercase tracking-widest text-slate-400">Mã tham gia lớp</p>
+                        <p class="mt-1 font-mono text-3xl font-black tracking-[0.2em] text-blue-600">{{ $class->join_key }}</p>
                     </div>
-                </div>
 
-                {{-- Mã lớp + hướng dẫn --}}
-                <div class="px-8 pb-8 pt-6 text-center">
-                    <p class="text-[11px] font-black uppercase tracking-widest text-slate-400">Mã tham gia lớp</p>
-                    <p class="mt-1 font-mono text-3xl font-black tracking-[0.2em] text-blue-600">{{ $class->join_key }}</p>
-
-                    <div class="mt-6 flex items-start gap-3 rounded-2xl bg-slate-50 p-4 text-left ring-1 ring-slate-100">
+                    <div class="flex items-start gap-3 rounded-2xl bg-slate-50 p-4 ring-1 ring-slate-100">
                         <span class="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-blue-100 text-blue-600">
                             <x-user.icon name="qr-code" :size="18" />
                         </span>
                         <p class="text-xs font-medium leading-relaxed text-slate-600">
-                            Mở ứng dụng, chọn <span class="font-bold text-slate-800">Quét QR</span> rồi đưa camera vào mã này — hoặc nhập tay mã lớp ở mục <span class="font-bold text-slate-800">Tham gia lớp</span>.
+                            Mở ứng dụng, chọn <span class="font-bold text-slate-800">Quét QR</span> rồi đưa camera vào mã bên cạnh — hoặc nhập tay mã lớp ở mục <span class="font-bold text-slate-800">Tham gia lớp</span>.
                         </p>
+                    </div>
+                </div>
+
+                {{-- Bên phải: mã QR --}}
+                <div class="flex items-center justify-center p-8 sm:p-10">
+                    <div class="w-fit rounded-3xl border border-slate-100 bg-white p-5 shadow-xl shadow-slate-900/10 [&>svg]:h-56 [&>svg]:w-56 sm:[&>svg]:h-64 sm:[&>svg]:w-64">
+                        {!! $shareQr !!}
                     </div>
                 </div>
             </div>

@@ -123,7 +123,7 @@ Route::middleware(['auth', 'verified', 'user.route'])->group(function () {
         Route::get('/feedbacks', \App\Livewire\Admin\FeedbackIndex::class)->name('feedbacks');
     });
 
-    Route::prefix('user/{ma_user}')->middleware('class.limit')->group(function () {
+    Route::prefix('user/{ma_user}')->middleware(['not.admin', 'class.limit'])->group(function () {
         Route::get('/activity-log', UserActivityLog::class)->name('activity-log');
 
         Route::get('/transaction-history', TransactionHistory::class)->name('transaction-history');

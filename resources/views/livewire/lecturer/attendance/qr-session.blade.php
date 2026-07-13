@@ -373,38 +373,63 @@
                 <x-user.icon name="x" :size="26" />
             </button>
 
-            <div class="relative w-full max-w-md overflow-hidden rounded-[32px] bg-white shadow-2xl">
-                {{-- Header: lớp + phiên --}}
-                <div class="relative overflow-hidden bg-gradient-to-br from-blue-600 to-indigo-600 px-8 pb-10 pt-8 text-center text-white">
-                    <div class="absolute inset-0 opacity-10 bg-[url('data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMjAiIGhlaWdodD0iMjAiIHhtbG5zPSJodHRwOi8vd3d3LnczLm9yZy8yMDAwL3N2ZyI+PGNpcmNsZSBjeD0iMSIgY3k9IjEiIHI9IjEiIGZpbGw9IiNmZmYiLz48L3N2Zz4=')]"></div>
-                    <div class="relative z-10">
-                        <div class="mx-auto mb-4 inline-flex items-center gap-2 rounded-full bg-white/15 px-4 py-1.5 text-xs font-bold uppercase tracking-widest ring-1 ring-white/25 backdrop-blur">
-                            <x-user.icon name="qr-code" :size="14" />
-                            Điểm danh
+            <div class="relative grid w-full max-w-4xl overflow-hidden rounded-[32px] bg-white shadow-2xl md:grid-cols-2">
+                {{-- Bên trái: thông tin lớp + phiên buổi điểm danh --}}
+                <div class="flex flex-col justify-center gap-6 border-b border-slate-100 p-8 sm:p-10 md:border-b-0 md:border-r">
+                    <div class="inline-flex w-fit items-center gap-2 rounded-full bg-blue-50 px-4 py-1.5 text-xs font-bold uppercase tracking-widest text-blue-600 ring-1 ring-blue-100">
+                        <x-user.icon name="qr-code" :size="14" />
+                        Điểm danh
+                    </div>
+
+                    <div>
+                        <p class="text-[11px] font-black uppercase tracking-widest text-slate-400">Lớp học</p>
+                        <h2 class="mt-1 text-2xl font-black leading-tight text-slate-900 sm:text-3xl">{{ $session->courseClass->name }}</h2>
+                    </div>
+
+                    <div class="space-y-3">
+                        <div class="flex items-start gap-3">
+                            <span class="mt-0.5 flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-slate-100 text-slate-500">
+                                <x-user.icon name="calendar-check" :size="18" />
+                            </span>
+                            <div>
+                                <p class="text-[11px] font-black uppercase tracking-wider text-slate-400">Buổi điểm danh</p>
+                                <p class="text-sm font-bold text-slate-800">{{ Str::limit($session->name, 40) }}</p>
+                            </div>
                         </div>
-                        <h2 class="text-2xl font-black leading-tight drop-shadow-sm">{{ $session->courseClass->name }}</h2>
-                        <p class="mt-2 text-sm font-semibold text-blue-100">
-                            {{ Str::limit($session->name, 40) }} • {{ $sessionDateLabel }}
+                        <div class="flex items-start gap-3">
+                            <span class="mt-0.5 flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-slate-100 text-slate-500">
+                                <x-user.icon name="clock" :size="18" />
+                            </span>
+                            <div>
+                                <p class="text-[11px] font-black uppercase tracking-wider text-slate-400">Thời gian</p>
+                                <p class="text-sm font-bold text-slate-800">{{ $sessionDateLabel }} @if($session->start_time) • {{ \Carbon\Carbon::parse($session->start_time)->format('H:i') }} @endif</p>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="flex items-start gap-3 rounded-2xl bg-slate-50 p-4 ring-1 ring-slate-100">
+                        <span class="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-blue-100 text-blue-600">
+                            <x-user.icon name="scan-line" :size="18" />
+                        </span>
+                        <p class="text-xs font-medium leading-relaxed text-slate-600">
+                            Học viên mở ứng dụng, chọn <span class="font-bold text-slate-800">Quét QR</span> rồi đưa camera vào mã bên cạnh để được ghi nhận có mặt.
                         </p>
                     </div>
                 </div>
 
-                {{-- Mã QR lớn --}}
-                <div class="-mt-6 px-8">
-                    <div class="mx-auto w-fit rounded-3xl border border-slate-100 bg-white p-5 shadow-xl shadow-slate-900/10 [&>svg]:h-64 [&>svg]:w-64 sm:[&>svg]:h-72 sm:[&>svg]:w-72">
+                {{-- Bên phải: mã QR --}}
+                <div class="flex flex-col items-center justify-center gap-6 p-8 sm:p-10">
+                    <div class="w-fit rounded-3xl border border-slate-100 bg-white p-5 shadow-xl shadow-slate-900/10 [&>svg]:h-56 [&>svg]:w-56 sm:[&>svg]:h-64 sm:[&>svg]:w-64">
                         @if ($qrSvg)
                             {!! $qrSvg !!}
                         @else
-                            <div class="flex h-64 w-64 flex-col items-center justify-center text-slate-400 sm:h-72 sm:w-72">
+                            <div class="flex h-56 w-56 flex-col items-center justify-center text-slate-400 sm:h-64 sm:w-64">
                                 <x-user.icon name="lock" :size="56" />
                                 <span class="mt-3 text-sm font-bold">Phiên đã chốt</span>
                             </div>
                         @endif
                     </div>
-                </div>
 
-                {{-- Đếm ngược làm mới + hướng dẫn --}}
-                <div class="px-8 pb-8 pt-6 text-center">
                     @if(!$isClosed)
                         <div class="inline-flex items-center gap-2 rounded-full bg-blue-50 px-4 py-2 text-sm font-bold text-blue-600 ring-1 ring-blue-100">
                             <span class="relative flex h-2.5 w-2.5">
@@ -414,15 +439,6 @@
                             Mã tự làm mới sau <span x-text="String(timeLeft).padStart(2, '0')"></span>s
                         </div>
                     @endif
-
-                    <div class="mt-6 flex items-start gap-3 rounded-2xl bg-slate-50 p-4 text-left ring-1 ring-slate-100">
-                        <span class="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-blue-100 text-blue-600">
-                            <x-user.icon name="scan-line" :size="18" />
-                        </span>
-                        <p class="text-xs font-medium leading-relaxed text-slate-600">
-                            Học viên mở ứng dụng, chọn <span class="font-bold text-slate-800">Quét QR</span> rồi đưa camera vào mã này để được ghi nhận có mặt.
-                        </p>
-                    </div>
                 </div>
             </div>
         </div>

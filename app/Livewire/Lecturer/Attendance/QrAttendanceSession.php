@@ -328,6 +328,16 @@ class QrAttendanceSession extends Component
             ->orderBy('id')
             ->get();
 
+        // Đồng bộ trạng thái nút chọn (radio) với DB mỗi lần render. Khi SV tự quét QR điểm danh,
+        // status trong DB đổi nhưng $draftStatuses (state Livewire) vẫn giữ giá trị lúc mount ->
+        // sau $wire.$refresh() realtime, wire:model morph lại radio về giá trị cũ (nhãn chữ thì
+        // đã đúng vì đọc thẳng $record->status). Resync ở đây để radio khớp ngay, khỏi phải F5.
+        // Chỉ đồng bộ status (luôn được ghi ngay), KHÔNG đụng draftNotes vì ghi chú lưu trễ (saveSession),
+        // resync sẽ xóa ghi chú giảng viên đang gõ dở.
+        foreach ($records as $record) {
+            $this->draftStatuses[$record->id] = $record->status;
+        }
+
         // Số SV thuộc nhóm dùng chung máy (cho chip bộ lọc).
         $sameDeviceCount = $sharedDeviceIds === []
             ? 0

@@ -179,6 +179,13 @@ class ClassSettings extends Component
             return;
         }
 
+        // Tài khoản quản trị (ADMIN / SUPER_ADMIN) chỉ hoạt động ở khu vực admin,
+        // không được mời làm đồng chủ lớp (đồng chủ là vai trò của khu vực user).
+        if ($user->isAdmin()) {
+            $this->addError('coOwnerEmail', 'Không thể thêm tài khoản quản trị làm đồng chủ lớp.');
+            return;
+        }
+
         if ($this->courseClass->isPrimaryOwner($user->id)) {
             $this->addError('coOwnerEmail', 'Người này đã là chủ chính của lớp.');
             return;

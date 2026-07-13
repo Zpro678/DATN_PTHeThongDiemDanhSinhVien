@@ -88,11 +88,14 @@ class JoinClass extends Component
         $userId = Auth::id();
         $userEmail = Auth::user()->email;
 
-        if ($courseClass->teacher_id === $userId) {
+        // Chủ lớp (chủ chính hoặc đồng chủ) không thể tự tham gia lớp mình quản lý với vai trò học viên.
+        // Trước đây so sánh $courseClass->teacher_id — cột không tồn tại (owner là owner_user_id) nên
+        // điều kiện luôn false, chủ lớp vẫn vào được lớp của chính mình.
+        if ($courseClass->isManagedBy($userId)) {
             session()->flash('status', 'Bạn đang là giảng viên của lớp học này.');
             $this->reset(['class_code', 'confirmingClass']);
             $this->showModal = false;
-            
+
             return $this->redirectRoute('lecturer.classes.show', ['ma_user' => $userId, 'courseClass' => $courseClass->id], navigate: true);
         }
 
