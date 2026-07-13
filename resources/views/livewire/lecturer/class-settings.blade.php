@@ -282,7 +282,7 @@
             </div>
 
             {{-- Danh sách đồng chủ hiện tại --}}
-            <div class="space-y-2">
+            <div class="space-y-2" x-data="{ removing: null }">
                 @forelse ($coOwners as $coOwner)
                     <div class="flex items-center justify-between gap-3 rounded-xl border border-outline-variant/20 bg-surface-container-lowest/40 px-4 py-3">
                         <div class="flex min-w-0 items-center gap-3">
@@ -294,8 +294,8 @@
                                 <p class="truncate text-xs text-on-surface-variant">{{ $coOwner->email }}</p>
                             </div>
                         </div>
-                        <button type="button" wire:click="removeCoOwner({{ $coOwner->id }})"
-                            wire:confirm="Gỡ {{ $coOwner->name }} khỏi vai trò đồng chủ lớp?"
+                        <button type="button"
+                            @click="removing = { id: {{ $coOwner->id }}, name: @js($coOwner->name) }"
                             class="inline-flex shrink-0 items-center gap-1.5 rounded-lg border border-error/30 px-3 py-1.5 text-xs font-bold text-error transition-colors hover:bg-error/10">
                             <x-user.icon name="x" :size="14" /> Gỡ
                         </button>
@@ -305,6 +305,37 @@
                         Lớp chưa có đồng chủ nào. Thêm email ở trên để mời người cùng quản lý.
                     </p>
                 @endforelse
+
+                {{-- Modal xác nhận GỠ đồng chủ (thay confirm() mặc định của trình duyệt) --}}
+                <template x-teleport="body">
+                    <div x-show="removing" x-cloak x-transition.opacity
+                        @keydown.escape.window="removing = null"
+                        class="fixed inset-0 z-[110] flex items-center justify-center bg-slate-900/50 p-4 backdrop-blur-sm">
+                        <div x-show="removing" x-transition.scale.origin.center
+                            @click.outside="removing = null"
+                            class="w-full max-w-md rounded-2xl bg-white p-6 shadow-2xl">
+                            <div class="mb-4 flex items-center gap-3">
+                                <div class="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-error/10">
+                                    <x-user.icon name="alert-triangle" :size="20" class="text-error" />
+                                </div>
+                                <h3 class="text-lg font-bold text-on-surface">Gỡ đồng chủ lớp</h3>
+                            </div>
+                            <p class="text-sm text-on-surface-variant">
+                                Gỡ <span class="font-bold text-on-surface" x-text="removing?.name"></span> khỏi vai trò đồng chủ lớp?
+                                Người này sẽ không còn quyền quản lý điểm danh, học viên và đơn nghỉ của lớp.
+                            </p>
+                            <div class="mt-6 flex justify-end gap-3">
+                                <button type="button" @click="removing = null"
+                                    class="rounded-xl border border-outline-variant/30 px-5 py-2.5 text-sm font-bold text-on-surface-variant hover:bg-surface-container-low transition-colors">Hủy</button>
+                                <button type="button"
+                                    @click="$wire.removeCoOwner(removing.id); removing = null"
+                                    class="inline-flex items-center gap-2 rounded-xl bg-error px-5 py-2.5 text-sm font-bold text-white hover:bg-error/90 transition-colors">
+                                    <x-user.icon name="x" :size="16" /> Gỡ đồng chủ
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </template>
             </div>
         </div>
     </div>
