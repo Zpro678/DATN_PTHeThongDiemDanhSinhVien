@@ -208,7 +208,7 @@
 
                                     @foreach($this->activeClasses as $cClass)
                                         @php($displayClassCode = $cClass->class_code ?: $cClass->join_key)
-                                        <button type="button" x-show="search === '' || '{{ mb_strtolower($displayClassCode . ' ' . $cClass->name, 'UTF-8') }}'.includes(search.toLowerCase())" 
+                                        <button wire:key="q-class-{{ $cClass->id }}" type="button" x-show="search === '' || '{{ mb_strtolower($displayClassCode . ' ' . $cClass->name, 'UTF-8') }}'.includes(search.toLowerCase())" 
                                             @click="updateClass('{{ $cClass->id }}'); search = '{{ addslashes($cClass->name) }}'; selectedId = '{{ $cClass->id }}'; open = false;" 
                                             class="flex w-full items-center justify-between gap-3 border-b border-slate-50 px-4 py-3 text-left transition-all duration-150 last:border-0 hover:bg-blue-50/50 focus:bg-blue-50/50 outline-none"
                                             :class="'{{ $quickClassId }}' == '{{ $cClass->id }}' ? 'bg-blue-50/60' : ''">
@@ -241,7 +241,11 @@
                             open: false,
                             search: '{{ $quickMeetingId && $this->classMeetings->firstWhere('id', (int)$quickMeetingId) ? addslashes($this->classMeetings->firstWhere('id', (int)$quickMeetingId)->name) : ($newMeetingName ?? '') }}',
                             selectedId: '{{ $quickMeetingId }}',
+                            updateMeetingFn: null,
+                            setMeetingEndTimeFn: null,
                             init() {
+                                this.updateMeetingFn = (id, name) => updateMeeting(id, name);
+                                this.setMeetingEndTimeFn = (time) => { meetingEndTime = time; };
                                 this.$watch('search', () => {
                                     this.syncSelection();
                                 });
@@ -258,24 +262,32 @@
                                 this.search = name;
                                 this.selectedId = String(id);
                                 this.open = false;
-                                this.updateMeeting(String(id), '');
-                                if (endTime) {
-                                    this.meetingEndTime = endTime;
+                                if (this.updateMeetingFn) {
+                                    this.updateMeetingFn(String(id), '');
+                                }
+                                if (endTime && this.setMeetingEndTimeFn) {
+                                    this.setMeetingEndTimeFn(endTime);
                                 }
                             },
                             syncSelection() {
                                 let s = this.search.trim().toLowerCase();
                                 if (s === '') {
-                                    this.updateMeeting('', '');
+                                    if (this.updateMeetingFn) {
+                                        this.updateMeetingFn('', '');
+                                    }
                                     this.selectedId = '';
                                     return;
                                 }
                                 let exact = this.meetingsList.find(m => m.name.toLowerCase() === s);
                                 if (exact) {
-                                    this.updateMeeting(String(exact.id), '');
+                                    if (this.updateMeetingFn) {
+                                        this.updateMeetingFn(String(exact.id), '');
+                                    }
                                     this.selectedId = String(exact.id);
                                 } else {
-                                    this.updateMeeting('NEW', this.search.trim());
+                                    if (this.updateMeetingFn) {
+                                        this.updateMeetingFn('NEW', this.search.trim());
+                                    }
                                     this.selectedId = 'NEW';
                                 }
                             }
@@ -328,7 +340,7 @@
                                 <div class="max-h-56 overflow-y-auto overscroll-contain scrollbar-custom">
 
                                     @foreach($this->classMeetings as $cMeeting)
-                                        <button type="button" x-show="search === '' || '{{ mb_strtolower($cMeeting->name . ' ' . $cMeeting->date->format('d/m/Y'), 'UTF-8') }}'.includes(search.toLowerCase())" 
+                                        <button wire:key="q-meeting-{{ $cMeeting->id }}" type="button" x-show="search === '' || '{{ mb_strtolower($cMeeting->name . ' ' . $cMeeting->date->format('d/m/Y'), 'UTF-8') }}'.includes(search.toLowerCase())" 
                                             @click="selectMeeting({{ $cMeeting->id }}, '{{ addslashes($cMeeting->name) }}', '{{ $cMeeting->end_time ? \Carbon\Carbon::parse($cMeeting->end_time)->format('H:i') : '' }}')" 
                                             class="flex w-full items-center justify-between gap-3 border-b border-slate-50 px-4 py-3 text-left transition-all duration-150 last:border-0 hover:bg-blue-50/50 focus:bg-blue-50/50 outline-none"
                                             :class="'{{ $quickMeetingId }}' == '{{ $cMeeting->id }}' ? 'bg-blue-50/60' : ''">
@@ -349,6 +361,7 @@
                                 </div>
                             </div>
                             @error('quickMeetingId') <span class="mt-1.5 block text-xs font-bold text-red-500"><x-user.icon name="alert-circle" :size="12" class="inline pb-0.5" /> {{ $message }}</span> @enderror
+                            @error('newMeetingName') <span class="mt-1.5 block text-xs font-bold text-red-500"><x-user.icon name="alert-circle" :size="12" class="inline pb-0.5" /> {{ $message }}</span> @enderror
                             
 
                         </div>

@@ -57,7 +57,7 @@
                 <tbody class="divide-y divide-slate-100">
                     @forelse($meetings as $meeting)
                         @php($activeSession = $meeting->activeSession())
-                        <tr class="transition-colors hover:bg-blue-50/30 group">
+                        <tr wire:key="meeting-{{ $meeting->id }}" class="transition-colors hover:bg-blue-50/30 group">
                             <td class="px-6 py-4 text-left">
                                 <span class="block text-sm font-bold text-slate-900 group-hover:text-blue-700 transition-colors">
                                     {{ $meeting->name }}
