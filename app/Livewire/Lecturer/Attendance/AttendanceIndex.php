@@ -51,8 +51,6 @@ class AttendanceIndex extends Component
     public ?float $gpsLatitude = null;
     public ?float $gpsLongitude = null;
 
-    public bool $selectedClassHasStudents = true;
-
     public function mount()
     {
         if (request()->has('action') && request()->has('class_id')) {

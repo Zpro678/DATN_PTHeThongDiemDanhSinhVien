@@ -154,7 +154,7 @@
                         {{-- ═══ Class Selector ═══ --}}
                         <div x-data="{
                             open: false,
-                            search: @js($quickClassId && $this->activeClasses->firstWhere('id', $quickClassId) ? $this->activeClasses->firstWhere('id', $quickClassId)->name : ''),
+                            search: '{{ $quickClassId && $this->activeClasses->firstWhere('id', $quickClassId) ? addslashes($this->activeClasses->firstWhere('id', $quickClassId)->name) : '' }}',
                             selectedId: '{{ $quickClassId }}',
                             get hasResults() {
                                 if (this.search === '') return true;
@@ -209,7 +209,7 @@
                                     @foreach($this->activeClasses as $cClass)
                                         @php($displayClassCode = $cClass->class_code ?: $cClass->join_key)
                                         <button wire:key="q-class-{{ $cClass->id }}" type="button" x-show="search === '' || '{{ mb_strtolower($displayClassCode . ' ' . $cClass->name, 'UTF-8') }}'.includes(search.toLowerCase())" 
-                                            @click="updateClass('{{ $cClass->id }}'); search = @js($cClass->name); selectedId = '{{ $cClass->id }}'; open = false;" 
+                                            @click="updateClass('{{ $cClass->id }}'); search = '{{ addslashes($cClass->name) }}'; selectedId = '{{ $cClass->id }}'; open = false;" 
                                             class="flex w-full items-center justify-between gap-3 border-b border-slate-50 px-4 py-3 text-left transition-all duration-150 last:border-0 hover:bg-blue-50/50 focus:bg-blue-50/50 outline-none"
                                             :class="'{{ $quickClassId }}' == '{{ $cClass->id }}' ? 'bg-blue-50/60' : ''">
                                             
@@ -239,7 +239,7 @@
                         {{-- ═══ Meeting Selector ═══ --}}
                         <div x-data="{
                             open: false,
-                            search: @js($quickMeetingId && $this->classMeetings->firstWhere('id', (int)$quickMeetingId) ? $this->classMeetings->firstWhere('id', (int)$quickMeetingId)->name : ($newMeetingName ?? '')),
+                            search: '{{ $quickMeetingId && $this->classMeetings->firstWhere('id', (int)$quickMeetingId) ? addslashes($this->classMeetings->firstWhere('id', (int)$quickMeetingId)->name) : ($newMeetingName ?? '') }}',
                             selectedId: '{{ $quickMeetingId }}',
                             updateMeetingFn: null,
                             setMeetingEndTimeFn: null,
@@ -251,7 +251,7 @@
                                 });
                             },
                             get meetingsList() {
-                                return @js($this->classMeetings->map(fn($m) => ['id' => $m->id, 'name' => $m->name]));
+                                return JSON.parse(this.$refs.meetingsData.textContent || '[]');
                             },
                             get hasResults() {
                                 if (this.search === '') return true;
@@ -341,7 +341,7 @@
 
                                     @foreach($this->classMeetings as $cMeeting)
                                         <button wire:key="q-meeting-{{ $cMeeting->id }}" type="button" x-show="search === '' || '{{ mb_strtolower($cMeeting->name . ' ' . $cMeeting->date->format('d/m/Y'), 'UTF-8') }}'.includes(search.toLowerCase())" 
-                                            @click="selectMeeting({{ $cMeeting->id }}, @js($cMeeting->name), '{{ $cMeeting->end_time ? \Carbon\Carbon::parse($cMeeting->end_time)->format('H:i') : '' }}')" 
+                                            @click="selectMeeting({{ $cMeeting->id }}, '{{ addslashes($cMeeting->name) }}', '{{ $cMeeting->end_time ? \Carbon\Carbon::parse($cMeeting->end_time)->format('H:i') : '' }}')" 
                                             class="flex w-full items-center justify-between gap-3 border-b border-slate-50 px-4 py-3 text-left transition-all duration-150 last:border-0 hover:bg-blue-50/50 focus:bg-blue-50/50 outline-none"
                                             :class="'{{ $quickMeetingId }}' == '{{ $cMeeting->id }}' ? 'bg-blue-50/60' : ''">
                                             
