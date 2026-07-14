@@ -251,7 +251,7 @@
                                 });
                             },
                             get meetingsList() {
-                                return JSON.parse(this.$refs.meetingsData.textContent || '[]');
+                                return @js($this->classMeetings->map(fn($m) => ['id' => $m->id, 'name' => $m->name]));
                             },
                             get hasResults() {
                                 if (this.search === '') return true;
