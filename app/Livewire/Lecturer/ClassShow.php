@@ -13,15 +13,19 @@ use Livewire\Attributes\Url;
 use Livewire\Component;
 use Livewire\WithFileUploads;
 use Livewire\WithPagination;
+use Livewire\WithoutUrlPagination;
 use Maatwebsite\Excel\Facades\Excel;
 use SimpleSoftwareIO\QrCode\Facades\QrCode;
 
 class ClassShow extends Component
 {
-    use WithFileUploads, WithPagination;
+    use WithFileUploads, WithPagination, WithoutUrlPagination;
 
     // Đối tượng chứa thông tin chi tiết của lớp học hiện tại
     public CourseClass $class;
+
+    // Số lượng sinh viên hiển thị trên một trang
+    public int $perPage = 20;
 
     // Bộ lọc danh sách học viên qua URL (?filter=warning|banned). Rỗng = xem tất cả.
     // Dùng để thông báo "sắp vượt ngưỡng vắng" dẫn thẳng tới nhóm SV liên quan.
@@ -30,6 +34,21 @@ class ClassShow extends Component
 
     // Từ khóa tìm kiếm học viên theo tên / MSSV / email.
     public string $search = '';
+
+    public function updatingSearch()
+    {
+        $this->resetPage();
+    }
+
+    public function updatingFilter()
+    {
+        $this->resetPage();
+    }
+
+    public function updatingPerPage()
+    {
+        $this->resetPage();
+    }
 
     // Hiển thị modal cảnh báo "có buổi chưa kết thúc" trước khi xuất Excel.
     public bool $showExportWarning = false;
@@ -336,12 +355,21 @@ class ClassShow extends Component
                 ->values();
         }
 
+        $page = $this->getPage();
+        $paginatedStudents = new \Illuminate\Pagination\LengthAwarePaginator(
+            $students->forPage($page, $this->perPage),
+            $students->count(),
+            $this->perPage,
+            $page,
+            ['path' => \Illuminate\Pagination\Paginator::resolveCurrentPath(), 'pageName' => 'page']
+        );
+
         // Link tham gia lớp + mã QR để học viên quét (dùng chung trong modal Chia sẻ).
         $shareUrl = url('/student/join-class?code=' . $this->class->join_key);
 
         return view('livewire.lecturer.class-show', [
             'recentSessions' => $this->recentSessions,
-            'students'       => $students,
+            'students'       => $paginatedStudents,
             'statsMap'       => $statsMap,
             'activeFilter'   => $activeFilter,
             'warningTotal'   => $warningTotal,
@@ -436,6 +464,16 @@ class ClassShow extends Component
     public function cancelExport(): void
     {
         $this->showExportWarning = false;
+    }
+
+    public function updatedPerPage(): void
+    {
+        $this->resetPage();
+    }
+
+    public function changeTab($tab): void
+    {
+        $this->activeTab = $tab;
     }
 
     /** Thực thi tải file Excel danh sách học viên của lớp hiện tại. */

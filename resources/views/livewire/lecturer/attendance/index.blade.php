@@ -54,7 +54,7 @@
                         <th class="w-[12%] px-6 py-4 text-center">Thao tác</th>
                     </tr>
                 </thead>
-                <tbody class="divide-y divide-slate-100">
+                <tbody class="divide-y divide-slate-100 transition-all duration-200" wire:loading.class="opacity-40 pointer-events-none blur-[1px]">
                     @forelse($meetings as $meeting)
                         @php($activeSession = $meeting->activeSession())
                         <tr wire:key="meeting-{{ $meeting->id }}" class="transition-colors hover:bg-blue-50/30 group">

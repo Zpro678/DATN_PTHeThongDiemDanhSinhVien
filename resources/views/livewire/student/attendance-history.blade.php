@@ -151,7 +151,7 @@
 
                 <!-- Table -->
                 <div class="overflow-x-auto bg-white">
-                    <table x-data="{ open: null }" class="w-full min-w-[800px] border-collapse text-left">
+                    <table x-data="{ open: null }" class="w-full min-w-[800px] border-collapse text-left transition-all duration-200" wire:loading.class="opacity-40 pointer-events-none blur-[1px]">
                         <thead class="bg-white text-sm font-bold uppercase tracking-wider text-slate-500 border-b border-outline-variant/10">
                             <tr>
                                 <th class="whitespace-nowrap px-6 py-4">Ngày</th>
@@ -258,8 +258,8 @@
                     </table>
                 </div>
                 
-                @if ($meetings->hasPages())
-                    <div class="border-t border-outline-variant/10 p-4">
+                @if ($meetings instanceof \Illuminate\Pagination\LengthAwarePaginator && $meetings->hasPages())
+                    <div class="border-t border-slate-200 px-4 py-3 sm:px-6 bg-white">
                         {{ $meetings->links() }}
                     </div>
                 @endif

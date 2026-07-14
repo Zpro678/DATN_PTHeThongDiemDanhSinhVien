@@ -21,6 +21,9 @@ class StudentIndex extends Component
 {
     use WithFileUploads, WithPagination;
 
+    // Số phần tử trên mỗi trang
+    public int $perPage = 20;
+
     // Từ khóa tìm kiếm sinh viên
     public string $search = '';
 
@@ -188,12 +191,17 @@ class StudentIndex extends Component
 
     public function updatedSearch(): void
     {
-        // Khi search không cần resetPage nữa vì không còn dùng phân trang
+        $this->resetPage();
+    }
+
+    public function updatedPerPage(): void
+    {
+        $this->resetPage();
     }
 
     public function updatedClassFilter(): void
     {
-        // Khi đổi class filter không cần resetPage
+        $this->resetPage();
     }
 
     public function updatedSelectedTemplate($value): void
@@ -658,7 +666,7 @@ class StudentIndex extends Component
                     });
                 })
                 ->orderByDesc('created_at')
-                ->get();
+                ->paginate($this->perPage);
         } else {
             $members = ClassMember::query()
                 ->with(['courseClass:id,name,join_key,class_code', 'user:id,name,email,avatar', 'profile', 'attendanceSummary'])
@@ -679,7 +687,7 @@ class StudentIndex extends Component
                     });
                 })
                 ->orderBy('class_member_profiles.full_name')
-                ->get();
+                ->paginate($this->perPage);
         }
 
         $attendanceStats = [];

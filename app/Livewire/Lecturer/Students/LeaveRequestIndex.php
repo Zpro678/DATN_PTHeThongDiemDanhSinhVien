@@ -21,7 +21,7 @@ class LeaveRequestIndex extends Component
 
     public string $classFilter = 'all';
 
-    public int $perPage = 10;
+    public int $perPage = 20;
 
     public ?int $rejectingRequestId = null;
     public ?int $approvingRequestId = null;

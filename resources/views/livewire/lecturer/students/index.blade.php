@@ -55,10 +55,10 @@
         </div>
     @endif
 
-    <section class="overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm flex flex-col" style="min-height: 500px;">
-        <div class="overflow-x-auto flex-1 bg-white {{ $members->count() > 30 ? 'max-h-[700px] overflow-y-auto relative' : '' }}">
+    <section class="overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm flex flex-col">
+        <div class="overflow-x-auto bg-white">
             <table class="w-full min-w-[900px] text-left whitespace-nowrap">
-                <thead class="text-sm font-bold uppercase tracking-wider text-slate-500 {{ $members->count() > 30 ? 'bg-slate-100 sticky top-0 z-10 shadow-sm' : 'bg-slate-50' }}">
+                <thead class="text-sm font-bold uppercase tracking-wider text-slate-500 bg-slate-50">
                     <tr>
                         <th class="px-6 py-4">Học viên</th>
                         <th class="px-4 py-4">Lớp học</th>
@@ -70,7 +70,7 @@
                         <th class="px-6 py-4 text-right">Thao tác</th>
                     </tr>
                 </thead>
-                <tbody class="divide-y divide-slate-100">
+                <tbody class="divide-y divide-slate-100 transition-all duration-200" wire:loading.class="opacity-40 pointer-events-none blur-[1px]">
                     @forelse ($members as $member)
                         @php
                             $stats = $attendanceStats[$member->id] ?? [
@@ -155,6 +155,12 @@
                 </tbody>
             </table>
         </div>
+        
+        @if($members instanceof \Illuminate\Pagination\LengthAwarePaginator && $members->hasPages())
+            <div class="border-t border-slate-200 px-4 py-3 sm:px-6 bg-white">
+                {{ $members->links() }}
+            </div>
+        @endif
     </section>
 
     @if ($editingMemberId)

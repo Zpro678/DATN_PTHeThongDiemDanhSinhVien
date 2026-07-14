@@ -19,7 +19,6 @@ class ClassAttendanceHistoryReport
         return $courseClass->members()
             ->where('class_members.status', ClassMember::STATUS_ACTIVE)
             ->leftJoin('class_member_profiles', 'class_member_profiles.class_member_id', '=', 'class_members.id')
-            ->orderBy('class_member_profiles.full_name')
             ->select('class_members.*')
             ->with(['profile', 'user']);
     }
@@ -104,9 +103,7 @@ class ClassAttendanceHistoryReport
                     $finalText = $result['label'];
                 }
 
-                if ($hasRecord) {
-                    $counts[$finalStatus] = ($counts[$finalStatus] ?? 0) + 1;
-                }
+                $counts[$finalStatus] = ($counts[$finalStatus] ?? 0) + 1;
 
                 $tooltipStr = collect($dayDetailsArr)
                     ->map(fn ($d) => "Lần {$d['iteration']} ({$d['time']}): {$d['statusText']}")

@@ -274,10 +274,10 @@
                 @endif
             </div>
         @else
-            <div class="overflow-x-auto {{ $students->count() > 30 ? 'max-h-[800px] overflow-y-auto relative' : '' }}">
+            <div class="overflow-x-auto">
                 <table class="w-full min-w-[760px] table-fixed text-left text-sm whitespace-nowrap">
                     <thead class="border-b border-slate-200 bg-slate-50 text-xs font-bold uppercase tracking-wider text-slate-500">
-                        <tr class="{{ $students->count() > 30 ? 'sticky top-0 z-10 bg-slate-50' : '' }}">
+                        <tr>
                             <th scope="col" class="w-[6%] px-4 py-4 text-center">STT</th>
                             <th scope="col" class="w-[32%] pl-6 pr-4 py-4">Họ & Tên</th>
                             <th scope="col" class="w-[26%] pl-6 pr-4 py-4">Email</th>
@@ -286,7 +286,7 @@
                             <th scope="col" class="w-[13%] px-4 py-4 text-center">Hành động</th>
                         </tr>
                     </thead>
-                    <tbody class="divide-y divide-slate-100">
+                    <tbody class="divide-y divide-slate-100 transition-all duration-200" wire:loading.class="opacity-40 pointer-events-none blur-[1px]">
                         @foreach($students as $student)
                             @php
                                 // $statsMap từ LectureManageStudentService — tính theo TIẾT, chỉ buổi đã chốt.
@@ -394,6 +394,12 @@
                         @endforeach
                     </tbody>
                 </table>
+            </div>
+        @endif
+        
+        @if($students instanceof \Illuminate\Pagination\LengthAwarePaginator && $students->hasPages())
+            <div class="border-t border-slate-200 px-4 py-3 sm:px-6">
+                {{ $students->links() }}
             </div>
         @endif
     </div>

@@ -109,16 +109,16 @@
 
                 {{-- Bộ lọc ngày cho chủ lớp: mặc định hiển thị 8 buổi gần nhất --}}
                 <div class="ml-auto flex flex-wrap items-center gap-2">
-                    <div class="flex items-center gap-1.5 rounded-xl border border-outline-variant/30 bg-white px-2.5 py-1.5">
+                    <div class="flex items-center gap-2 rounded-full border border-slate-200 bg-slate-50 px-3 py-1.5 transition-all focus-within:border-blue-500 focus-within:bg-white focus-within:ring-4 focus-within:ring-blue-500/10">
                         <input type="date" wire:model.live="chartFrom"
                             @if($chartMinDate) min="{{ $chartMinDate }}" @endif
                             @if($chartMaxDate) max="{{ $chartMaxDate }}" @endif
-                            class="w-[120px] bg-transparent text-xs font-semibold text-on-surface outline-none">
-                        <span class="text-xs text-on-surface-variant/60">→</span>
+                            class="w-[115px] cursor-pointer border-none bg-transparent p-0 text-[13px] font-bold text-slate-700 outline-none focus:ring-0">
+                        <span class="text-xs font-bold text-slate-400">→</span>
                         <input type="date" wire:model.live="chartTo"
                             @if($chartMinDate) min="{{ $chartMinDate }}" @endif
                             @if($chartMaxDate) max="{{ $chartMaxDate }}" @endif
-                            class="w-[120px] bg-transparent text-xs font-semibold text-on-surface outline-none">
+                            class="w-[115px] cursor-pointer border-none bg-transparent p-0 text-[13px] font-bold text-slate-700 outline-none focus:ring-0">
                     </div>
                     @if ($isChartFiltered)
                         <button type="button" wire:click="resetChartRange"
@@ -224,10 +224,10 @@
             @if ($allStudents->isEmpty())
                 <div class="py-12 text-center text-base text-on-surface-variant">Chưa có học viên nào trong lớp.</div>
             @else
-                <div class="overflow-x-auto {{ $allStudents->count() > 30 ? 'max-h-[800px] overflow-y-auto relative' : '' }}">
+                <div class="overflow-x-auto">
                     <table class="w-full text-base">
                         <thead>
-                            <tr class="border-b border-outline-variant/10 bg-surface-container-low/50 text-left text-sm font-bold uppercase tracking-wider text-on-surface {{ $allStudents->count() > 30 ? 'sticky top-0 z-10' : '' }}">
+                            <tr class="border-b border-outline-variant/10 bg-surface-container-low/50 text-left text-sm font-bold uppercase tracking-wider text-on-surface">
                                 <th class="px-4 py-3 text-center w-16">STT</th>
                                 <th class="px-4 py-3">Học viên</th>
                                 <th class="px-4 py-3 text-center">CC (%)</th>
@@ -238,7 +238,7 @@
                                 <th class="px-4 py-3 text-center">Trạng thái</th>
                             </tr>
                         </thead>
-                        <tbody class="divide-y divide-outline-variant/8">
+                        <tbody class="divide-y divide-outline-variant/8 transition-all duration-200" wire:loading.class="opacity-40 pointer-events-none blur-[1px]">
                             @foreach ($allStudents as $row)
                                 @php
                                     $s      = $row['stats'];
@@ -254,7 +254,7 @@
                                     'bg-amber-50/40' => $warn,
                                 ])>
                                     <td class="px-4 py-3 text-center text-sm font-bold text-on-surface-variant">
-                                        {{ $loop->iteration }}
+                                        {{ $loop->iteration + ($allStudents->currentPage() - 1) * $allStudents->perPage() }}
                                     </td>
                                     <td class="px-4 py-3">
                                         <a href="{{ route('lecturer.students.show', $m->id) }}" wire:navigate
@@ -321,6 +321,9 @@
                             @endforeach
                         </tbody>
                     </table>
+                </div>
+                <div class="border-t border-outline-variant/10 px-4 py-3">
+                    {{ $allStudents->links() }}
                 </div>
             @endif
         </div>

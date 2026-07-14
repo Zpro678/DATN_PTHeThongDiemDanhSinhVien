@@ -56,6 +56,28 @@ class ManualAttendanceSession extends Component
     private function initDrafts(): void
     {
         $isManual = $this->ownedSession($this->sessionId)->qr_token === null;
+        $session = $this->ownedSession($this->sessionId);
+
+        // Đảm bảo tất cả sinh viên đang hoạt động đều có bản ghi điểm danh trong phiên này
+        // (để khắc phục trường hợp sinh viên được import vào lớp sau khi phiên đã tạo)
+        $activeMembers = $session->courseClass->members()->where('status', \App\Models\ClassMember::STATUS_ACTIVE)->pluck('id');
+        $existingRecordMemberIds = AttendanceRecord::query()
+            ->where('class_session_id', $this->sessionId)
+            ->pluck('class_member_id');
+            
+        $missingMemberIds = $activeMembers->diff($existingRecordMemberIds);
+        if ($missingMemberIds->isNotEmpty()) {
+            $newRecords = $missingMemberIds->map(fn ($memberId) => [
+                'class_session_id' => $this->sessionId,
+                'class_member_id' => $memberId,
+                'status' => $isManual ? 'absent' : 'pending',
+                'is_account' => \App\Models\ClassMember::find($memberId)->user_id !== null,
+                'created_at' => now(),
+                'updated_at' => now(),
+            ])->toArray();
+            
+            AttendanceRecord::insert($newRecords);
+        }
 
         $records = AttendanceRecord::query()
             ->where('class_session_id', $this->sessionId)

@@ -10,6 +10,13 @@ class LeaveRequestHistory extends Component
 {
     use WithPagination;
 
+    public int $perPage = 20;
+
+    public function updatedPerPage(): void
+    {
+        $this->resetPage();
+    }
+
     public function render()
     {
         $requests = LeaveRequest::with(['classMeeting.courseClass', 'reviewer'])
@@ -17,7 +24,7 @@ class LeaveRequestHistory extends Component
                 $query->where('user_id', auth()->id());
             })
             ->orderByDesc('created_at')
-            ->paginate(10);
+            ->paginate($this->perPage);
 
         return view('livewire.student.leave-request-history', [
             'requests' => $requests,
