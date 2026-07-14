@@ -90,7 +90,7 @@ class CourseClass extends Model
         return $this->coOwners()->where('users.id', $userId)->exists();
     }
 
-    /** True nếu $userId là CHỦ CHÍNH (người tạo) — người duy nhất được làm thao tác hủy diệt. */
+    /** True nếu $userId là CHỦ CHÍNH (người tạo) — người duy nhất được làm thao tác xóa. */
     public function isPrimaryOwner(int|string|null $userId): bool
     {
         return $userId !== null && (string) $this->owner_user_id === (string) $userId;

@@ -20,9 +20,11 @@ class ClassStatistics extends Component
 
     public function mount($class_id): void
     {
-        $this->class_id = (int) $class_id;
+        // classes.id là UUID (string) — KHÔNG ép (int), nếu không UUID bắt đầu bằng
+        // chữ cái sẽ thành 0 và MySQL so lỏng khiến mọi lớp trỏ về cùng 1 bản ghi.
+        $this->class_id = (string) $class_id;
 
-        CourseClass::where('id', $class_id)
+        CourseClass::where('id', $this->class_id)
             ->managedBy(auth()->id())
             ->firstOrFail();
     }

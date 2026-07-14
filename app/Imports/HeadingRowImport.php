@@ -8,8 +8,9 @@ use Illuminate\Support\Carbon;
 use Illuminate\Support\Collection;
 use Maatwebsite\Excel\Concerns\ToCollection;
 use Maatwebsite\Excel\Concerns\WithLimit;
+use Maatwebsite\Excel\Concerns\WithMultipleSheets;
 
-class HeadingRowImport implements ToCollection, WithLimit
+class HeadingRowImport implements ToCollection, WithLimit, WithMultipleSheets
 {
     public string $classId;
     public array $dateHeaders = [];
@@ -22,6 +23,16 @@ class HeadingRowImport implements ToCollection, WithLimit
     public function __construct(string $classId)
     {
         $this->classId = $classId;
+    }
+
+    /**
+     * Chỉ đọc sheet ĐẦU TIÊN — file mẫu có thể chứa nhiều sheet (Cơ bản/Đầy đủ).
+     * Nếu đọc mọi sheet, cấu hình cột của sheet sau sẽ ghi đè sheet trước, khiến
+     * emailColIndex/nameColIndex bị lệch và mọi dòng của sheet còn lại báo thiếu Email.
+     */
+    public function sheets(): array
+    {
+        return [0 => $this];
     }
 
     public function limit(): int

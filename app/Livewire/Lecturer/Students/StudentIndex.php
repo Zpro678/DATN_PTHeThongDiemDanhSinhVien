@@ -366,12 +366,14 @@ class StudentIndex extends Component
 
     public function downloadFullTemplate()
     {
-        return Excel::download(new \App\Exports\ImportTemplateExport(), 'Danh_sach_sinh_vien_mau_day_du.xlsx');
+        // Chỉ 1 sheet: import chỉ đọc sheet đầu tiên, nên template cũng phải đơn sheet
+        // để tránh lệch cột giữa các sheet.
+        return Excel::download(new \App\Exports\ImportTemplateFullSheet(), 'Danh_sach_sinh_vien_mau_day_du.xlsx');
     }
 
     public function downloadBasicTemplate()
     {
-        return Excel::download(new \App\Exports\ImportTemplateExport(), 'Danh_sach_sinh_vien_mau_co_ban.xlsx');
+        return Excel::download(new \App\Exports\ImportTemplateBasicSheet(), 'Danh_sach_sinh_vien_mau_co_ban.xlsx');
     }
 
     public function processImport(): void

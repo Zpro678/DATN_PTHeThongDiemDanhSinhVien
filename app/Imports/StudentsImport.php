@@ -12,8 +12,9 @@ use Illuminate\Support\Collection;
 use Maatwebsite\Excel\Concerns\ToCollection;
 use Maatwebsite\Excel\Concerns\WithChunkReading;
 use Maatwebsite\Excel\Concerns\WithStartRow;
+use Maatwebsite\Excel\Concerns\WithMultipleSheets;
 
-class StudentsImport implements ToCollection, WithChunkReading, WithStartRow
+class StudentsImport implements ToCollection, WithChunkReading, WithStartRow, WithMultipleSheets
 {
     public $batch;
     public $classId;
@@ -48,6 +49,16 @@ class StudentsImport implements ToCollection, WithChunkReading, WithStartRow
         $this->authUserId = $authUserId;
         $this->importToken = $importToken;
         $this->syncAttendance = $syncAttendance;
+    }
+
+    /**
+     * Chỉ đọc sheet ĐẦU TIÊN — khớp với HeadingRowImport (cấu hình cột được suy ra từ
+     * sheet 0). Nếu đọc mọi sheet, dữ liệu sheet khác sẽ được đối chiếu với cột của
+     * sheet 0 và báo lỗi thiếu Email hàng loạt.
+     */
+    public function sheets(): array
+    {
+        return [0 => $this];
     }
 
     public function startRow(): int
