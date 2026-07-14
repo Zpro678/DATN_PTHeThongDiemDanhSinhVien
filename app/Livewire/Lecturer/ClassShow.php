@@ -707,4 +707,40 @@ class ClassShow extends Component
             $this->addError('importFile', 'Có lỗi khi đọc file: '.$e->getMessage());
         }
     }
+
+    /**
+     * Xóa một sinh viên khỏi lớp (Soft delete)
+     */
+    public function removeStudent(int $studentId): void
+    {
+        $member = $this->class->members()->where('id', $studentId)->first();
+        
+        if ($member) {
+            $member->update([
+                'status' => \App\Models\ClassMember::STATUS_REMOVED,
+                'status_changed_at' => now(),
+            ]);
+            $member->delete();
+            $this->dispatch('toast', message: 'Đã xóa sinh viên khỏi lớp học.', type: 'success');
+        } else {
+            $this->dispatch('toast', message: 'Không tìm thấy sinh viên.', type: 'error');
+        }
+    }
+
+    /**
+     * Xóa toàn bộ sinh viên khỏi lớp (Soft delete)
+     */
+    public function removeAllStudents(): void
+    {
+        $members = $this->class->members()->get();
+        foreach ($members as $member) {
+            $member->update([
+                'status' => \App\Models\ClassMember::STATUS_REMOVED,
+                'status_changed_at' => now(),
+            ]);
+            $member->delete();
+        }
+
+        $this->dispatch('toast', message: 'Đã xóa toàn bộ sinh viên.', type: 'success');
+    }
 }
