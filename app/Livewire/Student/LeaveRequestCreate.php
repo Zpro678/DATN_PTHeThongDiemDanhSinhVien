@@ -116,9 +116,9 @@ class LeaveRequestCreate extends Component
             ]
         );
 
-        $owner = $member->courseClass->owner;
-        if ($owner) {
-            $owner->notify(new \App\Notifications\LeaveRequestSubmitted($leaveRequest));
+        $managers = $member->courseClass->all_managers;
+        if ($managers->isNotEmpty()) {
+            \Illuminate\Support\Facades\Notification::send($managers, new \App\Notifications\LeaveRequestSubmitted($leaveRequest));
         }
 
         event(new \App\Events\ClassDataUpdated((string) $this->class_id));

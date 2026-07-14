@@ -248,7 +248,7 @@
                     <p class="text-sm text-on-surface-variant">Bắt đầu nhanh</p>
                     <p class="mt-0.5 text-base font-semibold leading-snug text-on-surface md:text-lg">
                         @if ($isAdminWs)
-                            Tổ chức một buổi điểm danh hoặc mở lớp mới
+                            Mở lớp mới hoặc quản lý lớp hiện có
                         @else
                             Tham gia lớp bằng mã hoặc theo dõi chuyên cần của bạn
                         @endif
@@ -258,10 +258,6 @@
 
             <div class="mt-5 flex flex-wrap items-center gap-3">
                 @if ($isAdminWs)
-                    <a href="{{ route('lecturer.attendance.create') }}" class="inline-flex items-center gap-2 rounded-xl bg-[#0b57d0] px-5 py-2.5 text-sm font-semibold text-white shadow-sm transition-colors hover:bg-blue-700">
-                        <x-user.icon name="calendar-plus" :size="18" />
-                        Tạo buổi điểm danh
-                    </a>
                     <a href="{{ route('create-class') }}" class="inline-flex items-center gap-2 rounded-xl bg-[#f0f4f8] px-5 py-2.5 text-sm font-semibold text-[#3c4043] transition-colors hover:bg-gray-200">
                         <x-user.icon name="plus" :size="18" />
                         Tạo lớp mới

@@ -32,7 +32,7 @@ class ClassShow extends Component
             'Lớp học này đã bị lưu trữ do giới hạn gói cước.'
         );
 
-        $this->class = $courseClass->load('owner');
+        $this->class = $courseClass->load(['owner','coOwners']);
         $this->fromAttendanceStats = request()->query('from') === 'attendance-stats';
         
         // Remember the last viewed class for the attendance history filter

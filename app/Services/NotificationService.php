@@ -766,9 +766,9 @@ class NotificationService
      */
     public function notifyClassAbsenceSummary(CourseClass $class): void
     {
-        $ownerUserId = (int) ($class->owner_user_id ?? 0);
+        $managers = $class->all_managers;
 
-        if ($ownerUserId <= 0) {
+        if ($managers->isEmpty()) {
             return;
         }
 
@@ -790,27 +790,32 @@ class NotificationService
             }
         }
 
-        if ($warningCount <= 0
-            || $this->hasUnreadLike($ownerUserId, 'App\\Notifications\\ClassAbsenceWarning', $class->id)) {
+        if ($warningCount <= 0) {
             return;
         }
 
-        $url = route('lecturer.classes.show', [
-            'ma_user' => $ownerUserId,
-            'courseClass' => $class->id,
-            'filter' => 'warning',
-        ]);
+        foreach ($managers as $manager) {
+            if ($this->hasUnreadLike($manager->id, 'App\\Notifications\\ClassAbsenceWarning', $class->id)) {
+                continue;
+            }
 
-        $this->push(
-            $ownerUserId,
-            'App\\Notifications\\ClassAbsenceWarning',
-            'Cảnh báo chuyên cần lớp',
-            "Lớp {$class->name}: có {$warningCount} sinh viên sắp vượt ngưỡng vắng 20%. Bấm để xem danh sách.",
-            $url,
-            'warning',
-            ['class_id' => $class->id, 'warning_count' => $warningCount],
-            ['mail'],
-        );
+            $url = route('lecturer.classes.show', [
+                'ma_user' => $manager->id,
+                'courseClass' => $class->id,
+                'filter' => 'warning',
+            ]);
+
+            $this->push(
+                $manager->id,
+                'App\\Notifications\\ClassAbsenceWarning',
+                'Cảnh báo chuyên cần lớp',
+                "Lớp {$class->name}: có {$warningCount} sinh viên sắp vượt ngưỡng vắng 20%. Bấm để xem danh sách.",
+                $url,
+                'warning',
+                ['class_id' => $class->id, 'warning_count' => $warningCount],
+                ['mail'],
+            );
+        }
     }
 
     /**

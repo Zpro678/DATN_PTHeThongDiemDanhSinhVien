@@ -180,4 +180,23 @@ class CourseClass extends Model
             'excused' => $this->deduct_excused ?? 0.0,
         ];
     }
+
+    /**
+     * Lấy danh sách tất cả những người quản lý lớp (bao gồm Chủ chính và Đồng chủ lớp đã chấp nhận lời mời).
+     * Dùng chung cho việc gửi Notification.
+     */
+    public function getAllManagersAttribute()
+    {
+        $managers = collect();
+        
+        if ($this->owner) {
+            $managers->push($this->owner);
+        }
+
+        $this->coOwners()->wherePivotNotNull('accepted_at')->get()->each(function ($coOwner) use ($managers) {
+            $managers->push($coOwner);
+        });
+
+        return $managers->unique('id')->filter();
+    }
 }

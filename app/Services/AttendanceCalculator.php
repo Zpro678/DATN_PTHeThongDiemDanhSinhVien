@@ -137,20 +137,14 @@ class AttendanceCalculator
         return self::buildResult($state, $rules);
     }
 
-    /**
-     * classifyPattern(): xét phiên đầu, phiên cuối và trạng thái "late" đã được đánh dấu.
-     *   - Vắng phiên cuối -> absent.
-     *   - Có mặt phiên cuối nhưng vắng phiên đầu -> late.
-     *   - Có mặt phiên cuối và có phiên bị đánh dấu đi muộn -> late.
-     *   - Có mặt phiên cuối, phiên đầu có mặt và không có phiên đi muộn -> present.
-     *
-     * @param  array<int, string>  $statuses
-     * @return string  Một trong: present|late|absent.
-     */
     private static function classifyPattern(array $statuses): string
     {
         if ($statuses === []) {
             return 'absent';
+        }
+
+        if (in_array('excused', $statuses, true)) {
+            return 'excused';
         }
 
         $firstStatus = (string) $statuses[array_key_first($statuses)];

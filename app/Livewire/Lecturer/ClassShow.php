@@ -191,7 +191,10 @@ class ClassShow extends Component
             'Bạn không có quyền xem lớp học này.'
         );
 
-        $this->class = $courseClass->load(['sessions' => function ($q) {
+        $this->class = $courseClass->load([
+            'owner',
+            'coOwners',
+            'sessions' => function ($q) {
             $q->orderByDesc('date')->orderByDesc('created_at');
         }]);
 

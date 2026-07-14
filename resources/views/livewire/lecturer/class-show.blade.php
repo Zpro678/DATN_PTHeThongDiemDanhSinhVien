@@ -738,12 +738,27 @@
                     <div>
                         <p class="text-xs font-black uppercase tracking-widest text-slate-400">Lớp học</p>
                         <h2 class="mt-2 text-4xl font-black leading-tight text-slate-900 lg:text-6xl">{{ $class->name }}</h2>
-                        @if($class->owner?->name)
-                            <p class="mt-4 inline-flex items-center gap-2 text-lg font-semibold text-slate-500">
-                                <x-user.icon name="user" :size="20" />
-                                {{ $class->owner->name }}
-                            </p>
+                    
+                                                @if($class->owner?->name)
+                            <div class="mt-4 flex flex-col gap-2">
+                                <!-- Chủ lớp -->
+                                <p class="inline-flex items-center gap-2 text-lg font-semibold text-slate-500">
+                                    <x-user.icon name="user" :size="20" />
+                                    {{ $class->owner->name }}
+                                </p>
+                                
+                                <!-- Danh sách Đồng chủ lớp (nếu có) -->
+                                @if($class->coOwners && $class->coOwners->count() > 0)
+                                    @foreach($class->coOwners as $coOwner)
+                                        <p class="inline-flex items-center gap-2 text-base font-medium text-slate-400 ml-1">
+                                            <x-user.icon name="users" :size="18" />
+                                            {{ $coOwner->name }} (Trợ giảng)
+                                        </p>
+                                    @endforeach
+                                @endif
+                            </div>
                         @endif
+
                     </div>
 
                     <div class="rounded-2xl border border-slate-200 bg-slate-50 p-6">
