@@ -1,187 +1,175 @@
 // ======================================================
 // HỆ THỐNG QUẢN LÝ ĐIỂM DANH SINH VIÊN
-// DIAGRAM (DBML) - ĐỒNG BỘ THEO MIGRATION THỰC TẾ TRONG SOURCE
-// Cập nhật: 2026-06-29
-// ------------------------------------------------------
-// LƯU Ý KHÁC BIỆT SO VỚI DIAGRAM CŨ:
-//  - ĐÃ BỎ multi-tenant: không còn bảng tenants, tenant_settings
-//    và không còn cột tenant_id ở bất kỳ bảng nào.
-//  - ĐÃ BỎ: attendance_methods, attendance_rules, system_settings.
-//  - THÊM MỚI: class_meetings (buổi), meeting_summaries (tổng kết buổi),
-//    gps_verifications (chống gian lận GPS).
-//  - classes.owner_user_id (thay cho owner_id), classes.code unique toàn cục.
+// DIAGRAM (DBML) - ĐỒNG BỘ 100% THEO MIGRATION & MODEL THỰC TẾ
+// Cập nhật mới nhất: 2026-07-13
 // ======================================================
 
 // ======================================================
-// 1. USERS & AUTHENTICATION
+// 1. NGƯỜI DÙNG & XÁC THỰC
 // ======================================================
+
+Enum user_role {
+  USER          [note: 'Người dùng bình thường (Giảng viên/Sinh viên)']
+  ADMIN         [note: 'Quản trị viên quản lý hệ thống']
+  SUPER_ADMIN   [note: 'Quản trị viên tối cao có toàn quyền']
+}
 
 Table users {
-  id bigint [pk, increment]
-  is_admin boolean [not null, default: false]
-  google_id varchar [null, unique, note: 'Đăng nhập Google OAuth']
-  member_id varchar(50) [null, note: 'Mã số cá nhân/MSSV (tuỳ chọn)']
-  name varchar [not null]
-  email varchar [unique, not null]
-  email_verified_at timestamp [null]
-  password varchar [null]
-  avatar varchar [null]
-  status varchar(50) [not null, default: 'active']
-  remember_token varchar [null]
-  created_at timestamp
-  updated_at timestamp
-  deleted_at timestamp [null]
+  id bigint [pk, increment, note: 'Khóa chính tự tăng của người dùng']
+  role varchar(50) [not null, default: 'USER', note: 'Vai trò phân quyền: USER, ADMIN, SUPER_ADMIN']
+  google_id varchar [null, unique, note: 'ID tài khoản liên kết Google OAuth']
+  name varchar [not null, note: 'Họ và tên người dùng']
+  email varchar [unique, not null, note: 'Email đăng nhập duy nhất']
+  email_verified_at timestamp [null, note: 'Mốc thời gian xác minh email']
+  password varchar [null, note: 'Mật khẩu đã mã hóa (null nếu đăng nhập qua Google)']
+  avatar varchar [null, note: 'Đường dẫn hoặc URL ảnh đại diện']
+  status varchar(50) [not null, default: 'active', note: 'Trạng thái tài khoản: active | blocked']
+  telegram_chat_id varchar [null, note: 'Chat ID kết nối nhận thông báo qua Telegram']
+  notification_preferences json [null, note: 'Cấu hình nhận thông báo (mail, database, telegram)']
+  remember_token varchar [null, note: 'Token ghi nhớ đăng nhập']
+  created_at timestamp [note: 'Thời điểm tạo tài khoản']
+  updated_at timestamp [note: 'Thời điểm cập nhật thông tin']
+  deleted_at timestamp [null, note: 'Thời điểm xóa mềm tài khoản']
 }
 
 Table password_reset_tokens {
-  email varchar [pk]
-  token varchar [not null]
-  created_at timestamp [null]
+  email varchar [pk, note: 'Email yêu cầu đặt lại mật khẩu']
+  token varchar [not null, note: 'Token xác thực đặt lại mật khẩu']
+  created_at timestamp [null, note: 'Thời điểm tạo token']
 }
+
 
 Table sessions {
-  id varchar [pk]
-  user_id bigint [null]
-  ip_address varchar(45) [null]
-  user_agent text [null]
-  payload longtext [not null]
-  last_activity int [not null]
-}
-
-// ----- Spatie Permission -----
-Table roles {
-  id bigint [pk, increment]
-  name varchar [not null]
-  guard_name varchar [not null]
-  created_at timestamp
-  updated_at timestamp
-  indexes { (name, guard_name) [unique] }
-}
-
-Table permissions {
-  id bigint [pk, increment]
-  name varchar [not null]
-  guard_name varchar [not null]
-  created_at timestamp
-  updated_at timestamp
-  indexes { (name, guard_name) [unique] }
-}
-
-Table model_has_roles {
-  role_id bigint [not null, ref: > roles.id]
-  model_type varchar [not null]
-  model_id bigint [not null]
-  indexes { (role_id, model_id, model_type) [pk] }
-}
-
-Table model_has_permissions {
-  permission_id bigint [not null, ref: > permissions.id]
-  model_type varchar [not null]
-  model_id bigint [not null]
-  indexes { (permission_id, model_id, model_type) [pk] }
-}
-
-Table role_has_permissions {
-  permission_id bigint [not null, ref: > permissions.id]
-  role_id bigint [not null, ref: > roles.id]
-  indexes { (permission_id, role_id) [pk] }
+  id varchar [pk, note: 'ID phiên truy cập']
+  user_id bigint [null, ref: > users.id, note: 'ID người dùng sở hữu phiên (nếu đã đăng nhập)']
+  ip_address varchar(45) [null, note: 'Địa chỉ IP của thiết bị']
+  user_agent text [null, note: 'Thông tin trình duyệt/thiết bị truy cập']
+  payload longtext [not null, note: 'Dữ liệu phiên được mã hóa']
+  last_activity int [not null, note: 'Thời điểm hoạt động cuối cùng (timestamp)']
 }
 
 // ======================================================
-// 2. CLASSES & ENROLLMENT
+// 2. CLASSES & ENROLLMENT (LỚP HỌC & THÀNH VIÊN)
 // ======================================================
 
 Table classes {
-  id bigint [pk, increment]
-  owner_user_id bigint [not null, ref: > users.id, note: 'restrictOnDelete']
-  join_key varchar(50) [unique, not null, note: 'Mã lớp SV nhập để vào lớp']
-  name varchar [not null]
-  description text [null]
-  late_threshold int [not null, default: 15, note: 'Số phút trễ tối đa để tính đi muộn']
-  deduct_excused_absence boolean [not null, default: false, note: 'Có trừ chuyên cần khi vắng có phép']
-  subject_code varchar(50) [null]
-  semester varchar(50) [null]
-  require_approval boolean [not null, default: false]
-  status varchar(50) [not null, default: 'active']
-  total_sessions int [not null, default: 15, note: 'Tổng số buổi dự kiến']
-  gps_latitude decimal(10,8) [null]
-  gps_longitude decimal(11,8) [null]
-  gps_radius int [null, default: 100]
-  created_at timestamp
-  updated_at timestamp
-  deleted_at timestamp [null]
+  id uuid [pk, note: 'Khóa chính UUID của lớp học']
+  owner_user_id bigint [not null, ref: > users.id, note: 'ID của giảng viên sở hữu lớp chính (restrictOnDelete)']
+  join_key varchar(50) [unique, not null, note: 'Mã tham gia lớp ngẫu nhiên cho học viên']
+  class_code varchar(50) [null, note: 'Mã lớp do giảng viên tự đặt theo khoa/trường (VD: CS101)']
+  name varchar [not null, note: 'Tên lớp học/môn học']
+  description text [null, note: 'Mô tả chi tiết lớp học']
+  late_threshold int [not null, default: 15, note: 'Số phút trễ tối đa cho phép để tính đi muộn']
+  deduct_excused_absence boolean [not null, default: false, note: 'Có trừ chuyên cần khi vắng có phép hay không']
+  require_approval boolean [not null, default: false, note: 'Bật/tắt yêu cầu duyệt khi xin vào lớp']
+  status varchar(50) [not null, default: 'active', note: 'Trạng thái lớp học: active | archived']
+  total_sessions int [not null, default: 15, note: 'Tổng số buổi học dự kiến của môn học']
+  deduct_late decimal(4,2) [not null, default: 0.5, note: 'Điểm trừ khi đi muộn']
+  deduct_absent decimal(4,2) [not null, default: 1.0, note: 'Điểm trừ khi vắng mặt']
+  deduct_excused decimal(4,2) [not null, default: 0.0, note: 'Điểm trừ khi vắng có phép']
+  created_at timestamp [note: 'Thời điểm tạo lớp']
+  updated_at timestamp [note: 'Thời điểm sửa thông tin lớp']
+  deleted_at timestamp [null, note: 'Thời điểm xóa mềm lớp học']
+}
+
+Table class_owners {
+  id bigint [pk, increment, note: 'Khóa chính tự tăng']
+  class_id uuid [not null, ref: > classes.id, note: 'ID lớp học liên kết (cascadeOnDelete)']
+  user_id bigint [not null, ref: > users.id, note: 'ID giảng viên đồng quản lý (cascadeOnDelete)']
+  role varchar(50) [not null, default: 'co_owner', note: 'Vai trò đồng chủ quản lý lớp']
+  invited_by bigint [null, ref: > users.id, note: 'ID giảng viên gửi lời mời (nullOnDelete)']
+  accepted_at timestamp [null, note: 'Thời điểm chấp nhận lời mời làm đồng chủ lớp']
+  created_at timestamp [note: 'Thời điểm gửi lời mời']
+  updated_at timestamp [note: 'Thời điểm cập nhật trạng thái']
+}
+
+Enum member_status {
+  ACTIVE     [note: 'Thành viên đang học bình thường']
+  LEFT       [note: 'Thành viên tự rời khỏi lớp']
+  REMOVED    [note: 'Thành viên bị giảng viên xóa khỏi lớp']
 }
 
 Table class_members {
-  id bigint [pk, increment]
-  class_id bigint [not null, ref: > classes.id, note: 'cascadeOnDelete']
-  student_code varchar(50) [not null]
-  full_name varchar [not null]
-  email varchar [null]
-  user_id bigint [null, ref: > users.id, note: 'Late binding khi SV đăng nhập; nullOnDelete']
-  status varchar(50) [not null, default: 'active']
-  created_at timestamp
-  updated_at timestamp
-  deleted_at timestamp [null]
+  id bigint [pk, increment, note: 'Khóa chính tự tăng']
+  class_id uuid [not null, ref: > classes.id, note: 'ID lớp học (cascadeOnDelete)']
+  user_id bigint [null, ref: > users.id, note: 'ID tài khoản liên kết sau khi sinh viên đăng ký (nullOnDelete)']
+  status varchar(50) [not null, default: 'ACTIVE', note: 'Trạng thái: ACTIVE | LEFT | REMOVED']
+  status_changed_at timestamp [null, note: 'Thời điểm thay đổi trạng thái thành viên']
+  created_at timestamp [note: 'Thời điểm tham gia lớp']
+  updated_at timestamp [note: 'Thời điểm cập nhật thông tin']
+  deleted_at timestamp [null, note: 'Thời điểm xóa mềm thành viên']
 
   indexes {
-    (class_id, student_code) [unique]
     (class_id, user_id) [unique]
     user_id
   }
 }
 
+Table class_member_profiles {
+  id bigint [pk, increment, note: 'Khóa chính tự tăng']
+  class_member_id bigint [unique, not null, ref: - class_members.id, note: 'ID thành viên liên kết 1-1 (cascadeOnDelete)']
+  full_name varchar [null, note: 'Họ và tên hiển thị trong danh sách lớp']
+  email varchar [null, note: 'Email liên hệ của sinh viên']
+  created_at timestamp [note: 'Thời điểm tạo hồ sơ']
+  updated_at timestamp [note: 'Thời điểm cập nhật hồ sơ']
+}
+
+Enum request_status {
+  PENDING    [note: 'Đang chờ giảng viên duyệt vào lớp']
+  APPROVED   [note: 'Đã duyệt yêu cầu tham gia']
+  REJECTED   [note: 'Đã từ chối yêu cầu tham gia']
+}
+
 Table class_join_requests {
-  id bigint [pk, increment]
-  class_id bigint [not null, ref: > classes.id]
-  user_id bigint [null, ref: > users.id]
-  student_code varchar(50) [not null]
-  full_name varchar [not null]
-  status varchar(50) [not null, default: 'pending']
-  created_at timestamp
-  updated_at timestamp
+  id bigint [pk, increment, note: 'Khóa chính tự tăng']
+  class_id uuid [not null, ref: > classes.id, note: 'ID lớp học muốn tham gia']
+  user_id bigint [not null, ref: > users.id, note: 'ID tài khoản sinh viên gửi yêu cầu'] 
+  status varchar(50) [not null, default: 'PENDING', note: 'Trạng thái yêu cầu: PENDING | APPROVED | REJECTED']
+  created_at timestamp [note: 'Thời điểm gửi yêu cầu']
+  updated_at timestamp [note: 'Thời điểm duyệt/từ chối']
   indexes { (class_id, status) }
 }
 
 // ======================================================
-// 3. ATTENDANCE CORE (BUỔI -> PHIÊN -> RECORD)
+// 3. ATTENDANCE CORE (BUỔI HỌC -> PHIÊN ĐIỂM DANH -> BẢN GHI DIỄN RA)
 // ======================================================
 
-// [MỚI] Buổi học - là cha của class_sessions (phiên điểm danh)
 Table class_meetings {
-  id bigint [pk, increment]
-  class_id bigint [not null, ref: > classes.id]
-  created_by bigint [not null, ref: > users.id, note: 'restrictOnDelete']
-  name varchar [not null]
-  date date [not null]
-  start_time time [null]
-  end_time time [null]
-  status varchar(50) [not null, default: 'active', note: 'active | closed']
-  created_at timestamp
-  updated_at timestamp
-  deleted_at timestamp [null]
+  id bigint [pk, increment, note: 'Khóa chính tự tăng']
+  class_id uuid [not null, ref: > classes.id, note: 'ID lớp học sở hữu buổi học (cascadeOnDelete)'] 
+  user_Created bigint [not null, ref: > users.id, note: 'ID giảng viên tạo buổi học (restrictOnDelete)']
+  name varchar [not null, note: 'Tên buổi học (VD: Buổi 1, Chương 2...)']
+  date date [not null, note: 'Ngày diễn ra buổi học']
+  start_time time [null, note: 'Giờ bắt đầu buổi học']
+  end_time time [null, note: 'Giờ kết thúc buổi học']
+  status varchar(50) [not null, default: 'active', note: 'Trạng thái buổi học: active | closed']
+  created_at timestamp [note: 'Thời điểm tạo buổi học']
+  updated_at timestamp [note: 'Thời điểm cập nhật buổi học']
+  deleted_at timestamp [null, note: 'Thời điểm xóa mềm buổi học']
   indexes { (class_id, date) }
 }
 
 Table class_sessions {
-  id bigint [pk, increment]
-  meeting_id bigint [null, ref: > class_meetings.id, note: 'Phiên thuộc buổi nào; cascadeOnDelete']
-  class_id bigint [not null, ref: > classes.id]
-  created_by bigint [not null, ref: > users.id, note: 'restrictOnDelete']
-  name varchar [not null]
-  date date [not null]
-  start_time time [null]
-  end_time time [null]
-  qr_token varchar [unique, null]
-  token_expires_at timestamp [null]
-  qr_refresh_rate int [not null, default: 10, note: 'Số giây làm mới QR']
-  gps_latitude decimal(10,8) [null]
-  gps_longitude decimal(11,8) [null]
-  gps_radius int [null]
-  status varchar(50) [not null, default: 'pending']
-  created_at timestamp
-  updated_at timestamp
-  deleted_at timestamp [null]
+  id bigint [pk, increment, note: 'Khóa chính tự tăng']
+  meeting_id bigint [null, ref: > class_meetings.id, note: 'ID buổi học cha chứa phiên (cascadeOnDelete)']
+  class_id uuid [not null, ref: > classes.id, note: 'ID lớp học chứa phiên (cascadeOnDelete)']
+  created_by bigint [not null, ref: > users.id, note: 'ID người tạo phiên điểm danh (restrictOnDelete)']
+  name varchar [not null, note: 'Tên phiên điểm danh (VD: Phiên 1, Điểm danh đầu giờ)']
+  date date [not null, note: 'Ngày diễn ra điểm danh']
+  start_time time [null, note: 'Giờ bắt đầu cho phép điểm danh']
+  end_time time [null, note: 'Giờ kết thúc chốt điểm danh']
+  qr_token varchar [unique, null, note: 'Token mã hóa của QR chống gian lận']
+  token_expires_at timestamp [null, note: 'Thời điểm mã QR hiện tại hết hạn']
+  qr_refresh_rate int [not null, default: 10, note: 'Thời gian tự động làm mới mã QR (tính bằng giây)']
+  gps_latitude decimal(10,8) [null, note: 'Kinh độ GPS mốc của giảng viên']
+  gps_longitude decimal(11,8) [null, note: 'Vĩ độ GPS mốc của giảng viên']
+  gps_radius int [null, note: 'Bán kính sai số GPS cho phép (mét)']
+  device_check boolean [not null, default: false, note: 'Bật/tắt kiểm tra trùng thiết bị điểm danh']
+  status varchar(50) [not null, default: 'pending', note: 'Trạng thái phiên: pending | active | closed']
+  share_token varchar(64) [unique, null, note: 'Token dùng để sinh link điểm danh nhanh']
+  created_at timestamp [note: 'Thời điểm tạo phiên']
+  updated_at timestamp [note: 'Thời điểm cập nhật phiên']
+  deleted_at timestamp [null, note: 'Thời điểm xóa mềm phiên']
 
   indexes {
     (class_id, date)
@@ -191,23 +179,24 @@ Table class_sessions {
 }
 
 Table attendance_records {
-  id bigint [pk, increment]
-  class_session_id bigint [not null, ref: > class_sessions.id]
-  class_member_id bigint [not null, ref: > class_members.id]
-  status varchar(50) [not null, default: 'pending', note: 'pending | present | late | absent | excused | invalid']
-  is_verified boolean [not null, default: false, note: 'True: SV có tài khoản; False: điền form']
-  check_in_time timestamp [null]
-  ip_address varchar(45) [null]
-  device_fingerprint varchar [null]
-  distance_meters decimal(8,2) [null]
-  gps_accuracy_meters decimal(8,2) [null]
-  gps_latitude_recorded decimal(10,8) [null]
-  gps_longitude_recorded decimal(11,8) [null]
-  gps_fraud_flag varchar [null, note: 'Cờ nghi ngờ gian lận GPS']
-  note text [null]
-  created_at timestamp
-  updated_at timestamp
-  deleted_at timestamp [null]
+  id bigint [pk, increment, note: 'Khóa chính tự tăng']
+  class_session_id bigint [not null, ref: > class_sessions.id, note: 'ID phiên điểm danh liên kết (cascadeOnDelete)']
+  class_member_id bigint [not null, ref: > class_members.id, note: 'ID thành viên lớp điểm danh (cascadeOnDelete)']
+  status varchar(50) [not null, default: 'pending', note: 'Trạng thái điểm danh: pending | present | late | absent | excused | invalid']
+  is_account boolean [not null, default: false, note: 'Xác định sinh viên tự điểm danh qua tài khoản (true) hay điền form/giảng viên đánh dấu (false)']
+  check_in_time timestamp [null, note: 'Thời điểm quét điểm danh thành công']
+  ip_address varchar(45) [null, note: 'Địa chỉ IP thiết bị của sinh viên khi check-in']
+  device_id varchar [null, note: 'ID định danh thiết bị vật lý']
+  device_fingerprint varchar [null, note: 'Dấu vân tay trình duyệt của thiết bị']
+  distance_meters decimal(8,2) [null, note: 'Khoảng cách thực tế giữa sinh viên và giảng viên (mét)']
+  gps_accuracy_meters decimal(8,2) [null, note: 'Độ chính xác đo đạc thiết bị sinh viên báo về']
+  gps_latitude_recorded decimal(10,8) [null, note: 'Kinh độ GPS thực tế của sinh viên khi quét']
+  gps_longitude_recorded decimal(11,8) [null, note: 'Vĩ độ GPS thực tế của sinh viên khi quét']
+  gps_fraud_flag varchar [null, note: 'Cờ cảnh báo nếu phát hiện nghi ngờ giả lập/fake tọa độ GPS']
+  note text [null, note: 'Ghi chú thêm về bản ghi']
+  created_at timestamp [note: 'Thời điểm tạo bản ghi']
+  updated_at timestamp [note: 'Thời điểm sửa bản ghi']
+  deleted_at timestamp [null, note: 'Thời điểm xóa mềm bản ghi']
 
   indexes {
     (class_session_id, class_member_id) [unique]
@@ -215,68 +204,67 @@ Table attendance_records {
   }
 }
 
-// Vé GPS một lần - chống gian lận vị trí
 Table gps_verifications {
-  id bigint [pk, increment]
-  session_id bigint [not null, ref: > class_sessions.id]
-  member_id bigint [not null, ref: > class_members.id]
-  token varchar(64) [unique, not null]
-  check_token varchar(64) [unique, null]
-  ip_address varchar(45) [not null]
-  lat decimal(10,8) [null]
-  lng decimal(11,8) [null]
-  accuracy decimal(8,2) [null]
-  is_used boolean [not null, default: false]
-  expires_at timestamp [not null]
-  created_at timestamp
-  updated_at timestamp
+  id bigint [pk, increment, note: 'Khóa chính tự tăng']
+  session_id bigint [not null, ref: > class_sessions.id, note: 'ID phiên điểm danh (cascadeOnDelete)']
+  member_id bigint [not null, ref: > class_members.id, note: 'ID thành viên điểm danh (cascadeOnDelete)']
+  token varchar(64) [unique, not null, note: 'Mã token định danh vé GPS một lần']
+  check_token varchar(64) [unique, null, note: 'Mã token đối chiếu kiểm tra chu kỳ']
+  ip_address varchar(45) [not null, note: 'Địa chỉ IP ghi nhận khi gửi định vị']
+  lat decimal(10,8) [null, note: 'Kinh độ GPS gửi lên']
+  lng decimal(11,8) [null, note: 'Vĩ độ GPS gửi lên']
+  accuracy decimal(8,2) [null, note: 'Độ chính xác GPS của thiết bị sinh viên']
+  fraud_score decimal(5,2) [not null, default: 0, note: 'Điểm số đánh giá độ nghi ngờ fake GPS']
+  is_used boolean [not null, default: false, note: 'Trạng thái vé đã sử dụng để check-in chưa']
+  expires_at timestamp [not null, note: 'Thời điểm vé GPS hết hạn sử dụng']
+  created_at timestamp [note: 'Thời điểm tạo vé']
+  updated_at timestamp [note: 'Thời điểm cập nhật trạng thái']
 }
 
-// Tổng hợp theo buổi (MATERIALIZED): present/late/absent/excused + điểm trừ
 Table meeting_summaries {
-  id bigint [pk, increment]
-  meeting_id bigint [not null, ref: > class_meetings.id]
-  class_member_id bigint [not null, ref: > class_members.id]
-  status varchar(50) [not null, default: 'absent', note: 'present | late | absent | excused']
-  deduction decimal(3,1) [not null, default: 0, note: 'Điểm trừ chuyên cần: 0 / 0.5 / 1']
-  auto_status varchar(50) [null, note: 'Trạng thái hệ thống tự tính để đối chiếu']
-  is_overridden boolean [not null, default: false, note: 'GV đã chỉnh tay hay chưa']
-  note text [null]
-  created_at timestamp
-  updated_at timestamp
+  id bigint [pk, increment, note: 'Khóa chính tự tăng']
+  meeting_id bigint [not null, ref: > class_meetings.id, note: 'ID buổi học tổng hợp (cascadeOnDelete)']
+  class_member_id bigint [not null, ref: > class_members.id, note: 'ID thành viên lớp (cascadeOnDelete)']
+  status varchar(50) [not null, default: 'absent', note: 'Trạng thái chốt cuối cùng của buổi: present | late | absent | excused']
+  deduction decimal(3,1) [not null, default: 0, note: 'Số điểm chuyên cần bị trừ trong buổi học này']
+  auto_status varchar(50) [null, note: 'Trạng thái hệ thống tự động tính toán ban đầu']
+  is_overridden boolean [not null, default: false, note: 'Đánh dấu giảng viên đã điều chỉnh thủ công trạng thái buổi này']
+  notified_status varchar(50) [null, note: 'Trạng thái đã thông báo cho sinh viên qua các kênh']
+  note text [null, note: 'Ghi chú của giảng viên đối với sinh viên này trong buổi học']
+  created_at timestamp [note: 'Thời điểm tạo tổng kết']
+  updated_at timestamp [note: 'Thời điểm chỉnh sửa tổng kết']
   indexes { (meeting_id, class_member_id) [unique] }
 }
 
-// Tổng hợp theo lớp (MATERIALIZED)
 Table attendance_summaries {
-  id bigint [pk, increment]
-  class_id bigint [not null, ref: > classes.id]
-  class_member_id bigint [not null, ref: > class_members.id]
-  total_present int [not null, default: 0]
-  total_late int [not null, default: 0]
-  total_absent int [not null, default: 0]
-  total_excused int [not null, default: 0]
-  is_banned_from_exam boolean [not null, default: false]
-  updated_at timestamp [null]
+  id bigint [pk, increment, note: 'Khóa chính tự tăng']
+  class_id uuid [not null, ref: > classes.id, note: 'ID lớp học liên kết (cascadeOnDelete)'] 
+  class_member_id bigint [not null, ref: > class_members.id, note: 'ID thành viên lớp (cascadeOnDelete)']
+  total_present int [not null, default: 0, note: 'Tổng số buổi đi học đầy đủ']
+  total_late int [not null, default: 0, note: 'Tổng số buổi đi học muộn']
+  total_absent int [not null, default: 0, note: 'Tổng số buổi vắng mặt không phép']
+  total_excused int [not null, default: 0, note: 'Tổng số buổi vắng mặt có phép']
+  is_banned_from_exam boolean [not null, default: false, note: 'Trạng thái bị cấm thi (nếu vượt quá giới hạn vắng)']
+  updated_at timestamp [null, note: 'Thời điểm cập nhật thống kê gần nhất']
   indexes { (class_id, class_member_id) [unique] }
 }
 
 // ======================================================
-// 4. AUDIT & SCAN (IMMUTABLE)
+// 4. AUDIT & SCAN (LOG HỆ THỐNG - KHÔNG ĐƯỢC CHỈNH SỬA / IMMUTABLE)
 // ======================================================
 
 Table audit_logs {
-  id bigint [pk, increment]
-  user_id bigint [null, ref: > users.id, note: 'Người thực hiện; nullOnDelete']
-  class_id bigint [null, ref: > classes.id, note: 'nullOnDelete']
-  action varchar [not null]
-  table_name varchar [null]
-  row_id bigint [null]
-  old_values json [null]
-  new_values json [null]
-  ip_address varchar(45) [null]
-  user_agent text [null]
-  created_at timestamp [not null] // IMMUTABLE (useCurrent)
+  id bigint [pk, increment, note: 'Khóa chính tự tăng']
+  user_id bigint [null, ref: > users.id, note: 'ID người dùng thực hiện thao tác (nullOnDelete)']
+  class_id uuid [null, ref: > classes.id, note: 'ID lớp học chịu tác động (nullOnDelete)'] 
+  action varchar [not null, note: 'Hành động thực hiện (VD: create_class, edit_attendance...)']
+  table_name varchar [null, note: 'Tên bảng dữ liệu chịu tác động']
+  row_id varchar(36) [null, note: 'ID của dòng dữ liệu chịu tác động (UUID hoặc Integer chuyển string)']
+  old_values json [null, note: 'Giá trị cũ trước khi thay đổi']
+  new_values json [null, note: 'Giá trị mới sau khi thay đổi']
+  ip_address varchar(45) [null, note: 'Địa chỉ IP thực hiện thao tác']
+  user_agent text [null, note: 'Thông tin trình duyệt/thiết bị thực hiện']
+  created_at timestamp [not null, note: 'Thời điểm thực hiện (không thể chỉnh sửa)']
 
   indexes {
     (user_id, created_at)
@@ -286,17 +274,17 @@ Table audit_logs {
 }
 
 Table check_in_scans {
-  id bigint [pk, increment]
-  class_session_id bigint [not null, ref: > class_sessions.id]
-  user_id bigint [null, ref: > users.id, note: 'Nếu đã login']
-  student_code_attempt varchar(50) [null, note: 'Mã SV nhập tay nếu là guest']
-  scan_type varchar(50) [not null, note: 'qr | gps | link']
-  payload_signature varchar [not null, note: 'HMAC chống Replay']
-  is_valid boolean [not null, default: true]
-  fail_reason varchar(100) [null, note: 'timeout | invalid_signature | out_of_range | not_enrolled']
-  ip_address varchar(45) [null]
-  device_fingerprint varchar [null]
-  scanned_at timestamp [not null] // IMMUTABLE
+  id bigint [pk, increment, note: 'Khóa chính tự tăng']
+  class_session_id bigint [not null, ref: > class_sessions.id, note: 'ID phiên điểm danh quét quét (cascadeOnDelete)']
+  user_id bigint [null, ref: > users.id, note: 'ID người thực hiện check-in (nếu có tài khoản)']
+  scan_type varchar(50) [not null, note: 'Hình thức thực hiện quét: qr | gps | link']
+  payload_signature varchar [not null, note: 'Chữ ký mã hóa HMAC bảo mật chống Replay Attack']
+  is_valid boolean [not null, default: true, note: 'Kết quả quét có hợp lệ theo các quy tắc bảo mật không']
+  fail_reason varchar(100) [null, note: 'Lý do quét thất bại: timeout | invalid_signature | out_of_range | not_enrolled']
+  ip_address varchar(45) [null, note: 'Địa chỉ IP của thiết bị check-in']
+  device_id varchar [null, note: 'ID phần cứng thiết bị check-in']
+  device_fingerprint varchar [null, note: 'Dấu vân tay trình duyệt check-in']
+  scanned_at timestamp [not null, note: 'Thời điểm hệ thống nhận tín hiệu quét']
 
   indexes {
     (class_session_id, scanned_at)
@@ -305,144 +293,227 @@ Table check_in_scans {
   }
 }
 
+Table import_errors {
+  id bigint [pk, increment, note: 'Khóa chính tự tăng']
+  import_token varchar(100) [not null, note: 'Token của đợt thực hiện import Excel']
+  row_index int [not null, note: 'Số dòng bị lỗi trong file Excel (1-indexed)']
+  error_message text [not null, note: 'Chi tiết thông báo lỗi import dữ liệu']
+  created_at timestamp [note: 'Thời điểm ghi nhận lỗi']
+  updated_at timestamp [note: 'Thời điểm cập nhật lỗi']
+  indexes { (import_token) }
+}
+
 // ======================================================
-// 5. MONETIZATION (SAAS) & THANH TOÁN
+// 5. MONETIZATION & THANH TOÁN (SAAS)
 // ======================================================
 
+Enum discount_type {
+  PERCENT       [note: 'Giảm giá theo tỷ lệ phần trăm (VD: 10%)']
+  FIXED         [note: 'Giảm giá theo số tiền cố định (VD: 50.000đ)']
+}
+
+Table coupons {
+  id bigint [pk, increment, note: 'Khóa chính tự tăng']
+  code varchar(50) [unique, not null, note: 'Mã coupon giảm giá']
+  applicable_plan_id bigint [null, ref: > plans.id, note: 'ID gói dịch vụ được áp dụng coupon này']
+  type discount_type [not null, default: 'PERCENT', note: 'Loại giảm giá: PERCENT | FIXED']
+  value decimal(10,2) [not null, note: 'Giá trị giảm giá']
+  usage_limit int [null, note: 'Số lượt sử dụng tối đa của coupon này']
+  used_count int [not null, default: 0, note: 'Số lượt thực tế đã dùng']
+  valid_from timestamp [null, note: 'Ngày bắt đầu có hiệu lực']
+  valid_until timestamp [null, note: 'Ngày hết hạn hiệu lực']
+  is_active boolean [not null, default: true, note: 'Trạng thái hoạt động của coupon']
+  created_at timestamp [note: 'Thời điểm tạo mã giảm giá']
+}
+
+Enum plan_tier_enum {
+  FREE          [note: 'Gói miễn phí cơ bản']
+  PRO           [note: 'Gói chuyên nghiệp cho Giảng viên cá nhân']
+  PREMIUM       [note: 'Gói nâng cấp cao cấp mở rộng giới hạn']
+}
+
 Table plans {
-  id bigint [pk, increment]
-  plan_tier varchar(50) [unique, not null, note: 'Hạng gói: FREE/PRO/ENTERPRISE']
-  name varchar [not null]
-  description text [null]
-  price decimal(10,2) [not null]
-  duration_days int [not null, default: 30, note: '0 = vĩnh viễn']
-  max_classes int [not null]
-  max_students_per_class int [not null, default: 50]
-  max_gps_radius int [not null, default: 100]
-  api_access boolean [not null, default: false]
-  support_level varchar [not null, default: 'Cơ bản']
-  is_active boolean [not null, default: true]
-  can_export_excel boolean [not null, default: false]
-  features json [null]
-  created_at timestamp [null]
-  updated_at timestamp [null]
-  deleted_at timestamp [null]
+  id bigint [pk, increment, note: 'Khóa chính tự tăng của gói']
+  plan_tier varchar(50) [unique, not null, note: 'Hạng gói dịch vụ: FREE | PRO | PREMIUM']
+  name varchar [not null, note: 'Tên gói hiển thị']
+  description text [null, note: 'Mô tả tính năng gói']
+  price decimal(10,2) [not null, note: 'Giá trị đăng ký gói']
+  duration_days int [not null, default: 30, note: 'Số ngày hiệu lực của gói đăng ký (0 = vĩnh viễn)']
+  is_active boolean [not null, default: true, note: 'Trạng thái kinh doanh gói']
+  created_at timestamp [null, note: 'Thời điểm tạo gói']
+  updated_at timestamp [null, note: 'Thời điểm sửa gói']
+  deleted_at timestamp [null, note: 'Thời điểm xóa mềm gói']
+}
+
+Table plan_configs {
+  id bigint [pk, increment, note: 'Khóa chính tự tăng']
+  plan_id bigint [unique, not null, ref: - plans.id, note: 'ID gói liên kết cấu hình 1-1 (cascadeOnDelete)']
+  max_classes int [not null, note: 'Số lớp học tối đa được phép tạo']
+  max_students_per_class int [not null, default: 50, note: 'Sĩ số học viên tối đa cho mỗi lớp']
+  max_gps_radius int [not null, default: 100, note: 'Bán kính GPS tối đa cho phép cấu hình khi quét']
+  can_export_excel boolean [not null, default: false, note: 'Quyền hạn xuất báo cáo thống kê Excel']
 }
 
 Table subscriptions {
-  id bigint [pk, increment]
-  user_id bigint [not null, ref: > users.id, note: 'cascadeOnDelete']
-  plan_id bigint [not null, ref: > plans.id, note: 'restrictOnDelete']
-  start_date timestamp [not null]
-  end_date timestamp [null]
-  status varchar(50) [not null, default: 'active']
-  created_at timestamp
-  updated_at timestamp
-  indexes { (user_id, status) }
+  id bigint [pk, increment, note: 'Khóa chính tự tăng']
+  user_id bigint [not null, ref: > users.id, note: 'ID người dùng đăng ký thuê bao (cascadeOnDelete)']
+  plan_id bigint [not null, ref: > plans.id, note: 'ID gói dịch vụ đang kích hoạt (restrictOnDelete)']
+  paid_plan_id bigint [null, ref: > plans.id, note: 'ID gói gốc mà người dùng đã trả tiền (để đối chiếu khi hạ cấp/nâng cấp) (restrictOnDelete)']
+  start_date timestamp [not null, note: 'Thời điểm bắt đầu chu kỳ thuê bao']
+  end_date timestamp [null, note: 'Thời điểm kết thúc chu kỳ thuê bao']
+  status varchar(50) [not null, default: 'active', note: 'Trạng thái thuê bao: active | expired | cancelled']
+  class_limit_grace_ends_at timestamp [null, note: 'Mốc gia hạn tạm thời trước khi khóa lớp vượt quá giới hạn gói']
+  created_at timestamp [note: 'Thời điểm đăng ký']
+  updated_at timestamp [note: 'Thời điểm cập nhật']
 }
 
 Table transactions {
-  id bigint [pk, increment]
-  user_id bigint [not null, ref: > users.id, note: 'restrictOnDelete']
-  plan_id bigint [null, ref: > plans.id, note: 'Gói được thanh toán; nullOnDelete']
-  amount decimal(10,2) [not null]
-  payment_method varchar(50) [not null, note: 'VD: PayOS, VNPay...']
-  transaction_code varchar(100) [unique, not null]
-  partner_reference_id varchar [null]
-  status varchar(50) [not null, default: 'pending']
-  created_at timestamp [null]
-  indexes { (user_id, created_at) }
-}
-
-// ======================================================
-// 6. CÁC BẢNG HỆ THỐNG KHÁC
-// ======================================================
-
-Table user_devices {
-  id bigint [pk, increment]
-  user_id bigint [not null, ref: > users.id, note: 'cascadeOnDelete']
-  fcm_token varchar [unique, not null]
-  device_name varchar [null]
-  last_active_at timestamp [null]
-  created_at timestamp [null]
-  indexes { (user_id, last_active_at) }
-}
-
-Table notifications {
-  id uuid [pk]
-  type varchar [not null]
-  notifiable_type varchar [not null]
-  notifiable_id bigint [not null]
-  data json [not null]
-  read_at timestamp [null]
-  created_at timestamp
-  updated_at timestamp
-}
-
-Table leave_requests {
-  id bigint [pk, increment]
-  class_member_id bigint [not null, ref: > class_members.id]
-  class_session_id bigint [not null, ref: > class_sessions.id]
-  reason text [not null]
-  proof_image text [null]
-  status varchar(50) [not null, default: 'pending']
-  rejected_reason text [null]
-  reviewed_by bigint [null, ref: > users.id, note: 'nullOnDelete']
-  reviewed_at timestamp [null]
-  created_at timestamp [not null] // useCurrent
-  deleted_at timestamp [null]
-
+  id bigint [pk, increment, note: 'Khóa chính tự tăng']
+  user_id bigint [not null, ref: > users.id, note: 'ID người thực hiện thanh toán giao dịch (restrictOnDelete)']
+  plan_id bigint [null, ref: > plans.id, note: 'ID gói đăng ký được thanh toán (nullOnDelete)']
+  coupon_id bigint [null, ref: > coupons.id, note: 'ID mã giảm giá áp dụng (nếu có)']
+  coupon_code varchar(50) [null, note: 'Lưu text mã giảm giá phòng khi coupon bị xóa khỏi hệ thống']
+  amount decimal(10,2) [not null, note: 'Số tiền thực tế thanh toán sau giảm giá']
+  currency varchar(10) [not null, default: 'VND', note: 'Đơn vị tiền tệ thanh toán']
+  payment_method varchar(50) [not null, note: 'Phương thức thanh toán: PayOS, VNPay, MoMo...']
+  transaction_code varchar(100) [unique, not null, note: 'Mã giao dịch nội bộ duy nhất']
+  reference_code varchar(100) [unique, null, note: 'Mã đối chiếu từ hệ thống thanh toán bên thứ ba']
+  gateway_transaction_id varchar(100) [null, note: 'Mã định danh giao dịch của ngân hàng/cổng thanh toán']
+  status varchar(50) [not null, default: 'PENDING', note: 'Trạng thái giao dịch: PENDING | SUCCESS | FAILED | EXPIRED']
+  payment_url text [null, note: 'Đường dẫn liên kết thanh toán bên đối tác']
+  payment_response json [null, note: 'Dữ liệu thô phản hồi từ Cổng thanh toán (Webhook/IPN)']
+  failure_reason text [null, note: 'Lý do giao dịch bị thất bại nếu có']
+  paid_at timestamp [null, note: 'Mốc thời gian giao dịch được xác nhận thanh toán thành công']
+  expired_at timestamp [null, note: 'Mốc thời gian giao dịch bị hết hạn thanh toán']
+  created_at timestamp [null, note: 'Thời điểm bắt đầu tạo giao dịch']
+  updated_at timestamp [null, note: 'Thời điểm cập nhật trạng thái']
+  
   indexes {
-    (class_member_id, class_session_id) [unique]
-    (class_session_id, status)
+    (user_id, created_at)
+    (transaction_code)
+    (reference_code)
+    (gateway_transaction_id)
+    (status)
   }
 }
 
 // ======================================================
-// 7. INFRASTRUCTURE (Laravel mặc định)
+// 6. CÁC BẢNG HỆ THỐNG PHỤ TRỢ (THÔNG BÁO & ĐƠN XIN PHÉP)
+// ======================================================
+
+Table notifications {
+  id uuid [pk, note: 'Khóa chính UUID của thông báo']
+  type varchar [not null, note: 'Lớp thông báo xử lý (Laravel Notification Class)']
+  notifiable_type varchar [not null, note: 'Tên Model nhận thông báo (thường là App\\Models\\User)']
+  notifiable_id bigint [not null, note: 'ID người nhận thông báo']
+  data json [not null, note: 'Dữ liệu nội dung thông báo dạng JSON']
+  read_at timestamp [null, note: 'Thời điểm người dùng nhấp xem đọc thông báo']
+  created_at timestamp [note: 'Thời điểm tạo thông báo']
+  updated_at timestamp [note: 'Thời điểm sửa thông báo']
+}
+
+Table leave_requests {
+  id bigint [pk, increment, note: 'Khóa chính tự tăng của đơn xin phép']
+  class_member_id bigint [not null, ref: > class_members.id, note: 'ID thành viên lớp gửi đơn (cascadeOnDelete)']
+  class_meeting_id bigint [not null, ref: > class_meetings.id, note: 'ID buổi học muốn xin phép nghỉ (cascadeOnDelete)']
+  reason text [not null, note: 'Lý do xin nghỉ học']
+  proof_image text [null, note: 'Đường dẫn ảnh minh chứng kèm theo đơn (giấy khám bệnh, minh chứng...)']
+  status varchar(50) [not null, default: 'pending', note: 'Trạng thái đơn: pending | approved | rejected']
+  rejected_reason text [null, note: 'Lý do giảng viên từ chối duyệt đơn']
+  reviewed_by bigint [null, ref: > users.id, note: 'ID giảng viên thực hiện duyệt đơn (nullOnDelete)']
+  reviewed_at timestamp [null, note: 'Mốc thời gian thực hiện duyệt/từ chối đơn']
+  created_at timestamp [not null, note: 'Thời điểm gửi đơn xin nghỉ']
+  deleted_at timestamp [null, note: 'Thời điểm xóa mềm đơn']
+
+  indexes {
+    (class_member_id, class_meeting_id) [unique]
+    (class_meeting_id, status)
+  }
+}
+
+Table pending_import_notifications {
+  id bigint [pk, increment, note: 'Khóa chính tự tăng']
+  class_id uuid [null, note: 'ID lớp học (Không ràng buộc khoá ngoại để dọn dẹp linh hoạt)']
+  email varchar [not null, note: 'Email sinh viên nhận thông báo']
+  full_name varchar [not null, note: 'Họ tên sinh viên']
+  class_name varchar [not null, note: 'Tên lớp học']
+  join_key varchar [not null, note: 'Mã tham gia lớp']
+  status varchar(20) [not null, default: 'pending', note: 'Trạng thái hàng chờ gửi mail: pending | sent | failed']
+  attempts int [not null, default: 0, note: 'Số lần đã cố gắng gửi thử']
+  sent_at timestamp [null, note: 'Thời điểm gửi thư thành công']
+  created_at timestamp [note: 'Thời điểm đưa vào hàng chờ']
+  updated_at timestamp [note: 'Thời điểm cập nhật tiến trình']
+  indexes { (status, created_at) }
+}
+
+// ======================================================
+// 7. INFRASTRUCTURE (Laravel mặc định & Hệ thống cấu hình)
 // ======================================================
 
 Table cache {
-  key varchar [pk]
-  value mediumtext [not null]
-  expiration int [not null]
+  key varchar [pk, note: 'Khóa lưu trữ bộ nhớ cache']
+  value mediumtext [not null, note: 'Giá trị dữ liệu được cache']
+  expiration int [not null, note: 'Mốc thời gian hết hạn cache (timestamp)']
 }
 
 Table cache_locks {
-  key varchar [pk]
-  owner varchar [not null]
-  expiration int [not null]
+  key varchar [pk, note: 'Khóa phân tán kiểm soát đồng bộ']
+  owner varchar [not null, note: 'Mã định danh bên sở hữu khóa']
+  expiration int [not null, note: 'Thời điểm khóa tự động giải phóng']
 }
 
 Table jobs {
-  id bigint [pk, increment]
-  queue varchar [not null]
-  payload longtext [not null]
-  attempts tinyint [not null]
-  reserved_at int [null]
-  available_at int [not null]
-  created_at int [not null]
+  id bigint [pk, increment, note: 'ID tiến trình chạy ngầm']
+  queue varchar [not null, note: 'Tên hàng đợi chứa công việc']
+  payload longtext [not null, note: 'Nội dung dữ liệu thực thi đã serialized']
+  attempts tinyint [not null, note: 'Số lần đã thực hiện chạy thử lại công việc']
+  reserved_at int [null, note: 'Thời điểm tiến trình được worker giữ chạy']
+  available_at int [not null, note: 'Thời điểm công việc khả dụng để thực thi']
+  created_at int [not null, note: 'Thời điểm đẩy công việc vào hàng đợi']
 }
 
 Table job_batches {
-  id varchar [pk]
-  name varchar [not null]
-  total_jobs int [not null]
-  pending_jobs int [not null]
-  failed_jobs int [not null]
-  failed_job_ids longtext [not null]
-  options mediumtext [null]
-  cancelled_at int [null]
-  created_at int [not null]
-  finished_at int [null]
+  id varchar [pk, note: 'ID lô công việc đồng loạt']
+  name varchar [not null, note: 'Tên định danh lô']
+  total_jobs int [not null, note: 'Tổng số công việc trong lô']
+  pending_jobs int [not null, note: 'Số công việc đang chờ chạy']
+  failed_jobs int [not null, note: 'Số công việc đã bị lỗi']
+  failed_job_ids longtext [not null, note: 'Mã danh sách ID các công việc bị lỗi']
+  options mediumtext [null, note: 'Các thiết lập mở rộng cho lô']
+  cancelled_at int [null, note: 'Mốc thời gian lô bị hủy bỏ']
+  created_at int [not null, note: 'Thời điểm tạo lô']
+  finished_at int [null, note: 'Thời điểm hoàn thành toàn bộ lô']
 }
 
 Table failed_jobs {
-  id bigint [pk, increment]
-  uuid varchar [unique, not null]
-  connection text [not null]
-  queue text [not null]
-  payload longtext [not null]
-  exception longtext [not null]
-  failed_at timestamp [not null]
+  id bigint [pk, increment, note: 'ID lỗi tiến trình']
+  uuid varchar [unique, not null, note: 'Mã UUID định danh lỗi duy nhất']
+  connection text [not null, note: 'Kết nối hàng đợi bị lỗi']
+  queue text [not null, note: 'Hàng đợi chứa công việc bị lỗi']
+  payload longtext [not null, note: 'Nội dung dữ liệu của công việc bị lỗi']
+  exception longtext [not null, note: 'Chi tiết mã lỗi/lớp ngoại lệ hệ thống']
+  failed_at timestamp [not null, note: 'Thời điểm công việc bị đánh dấu thất bại']
+}
+
+Table settings {
+  id bigint [pk, increment, note: 'Khóa chính tự tăng']
+  key varchar(255) [unique, not null, note: 'Khóa cấu hình hệ thống']
+  value text [null, note: 'Giá trị cấu hình lưu trữ']
+  created_at timestamp [note: 'Thời điểm tạo cấu hình']
+  updated_at timestamp [note: 'Thời điểm cập nhật cấu hình']
+}
+
+Table system_feedbacks {
+  id bigint [pk, increment, note: 'Khóa chính tự tăng']
+  user_id bigint [not null, ref: > users.id, note: 'ID người dùng gửi phản hồi (cascadeOnDelete)']
+  type varchar(50) [not null, default: 'other', note: 'Loại phản hồi: bug | feature | question | other']
+  title varchar [not null, note: 'Tiêu đề phản hồi']
+  content text [not null, note: 'Nội dung chi tiết góp ý/phản hồi']
+  attachment_path text [null, note: 'Đường dẫn tệp đính kèm đi kèm đơn (nếu có)']
+  status varchar(50) [not null, default: 'pending', note: 'Trạng thái xử lý: pending | processing | resolved | closed']
+  admin_reply text [null, note: 'Phản hồi từ quản trị viên']
+  replied_by bigint [null, ref: > users.id, note: 'ID admin thực hiện phản hồi (nullOnDelete)']
+  replied_at timestamp [null, note: 'Thời điểm admin phản hồi']
+  created_at timestamp [note: 'Thời điểm gửi phản hồi']
+  updated_at timestamp [note: 'Thời điểm cập nhật phản hồi']
 }

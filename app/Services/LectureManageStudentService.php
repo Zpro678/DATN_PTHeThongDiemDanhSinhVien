@@ -41,6 +41,7 @@ class LectureManageStudentService
             ->groupBy('class_member_id');
 
         return $members->mapWithKeys(function (ClassMember $member) use ($rowsByMember, $classes): array {
+            // Lịch sử chuyên cần
             $counts = AttendanceCalculator::consolidateByMeeting($rowsByMember->get($member->id, collect()));
 
             $studiedSessions = $counts['total']; // Số buổi đã diễn ra của sinh viên.
