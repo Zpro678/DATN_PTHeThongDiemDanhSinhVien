@@ -28,7 +28,7 @@ class TelegramSetWebhook extends Command
             return self::FAILURE;
         }
 
-        $url = $this->argument('url') ?: rtrim((string) config('app.url'), '/').'/telegram/webhook';
+        $url = $this->argument('url') ?: rtrim((string) env('TELEGRAM_WEBHOOK_URL', config('app.url')), '/').'/telegram/webhook';
 
         if (! str_starts_with($url, 'https://')) {
             $this->error("Telegram chỉ chấp nhận webhook HTTPS công khai. URL hiện tại: {$url}");
