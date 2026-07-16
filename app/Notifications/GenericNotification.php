@@ -10,7 +10,10 @@ use Illuminate\Notifications\Notification;
 
 class GenericNotification extends Notification implements ShouldBroadcast
 {
-    use Queueable, ChecksNotificationPreferences;
+    use Queueable;
+    use ChecksNotificationPreferences {
+        via as protected traitVia;
+    }
 
     /**
      * Kênh 'broadcast' được thêm để mọi thông báo đi qua push()/GenericNotification
@@ -20,6 +23,45 @@ class GenericNotification extends Notification implements ShouldBroadcast
      * @var array<int, string>
      */
     public array $supportedChannels = ['database', 'broadcast', 'mail'];
+
+    public function via(object $notifiable): array
+    {
+        // Gọi trait để lọc database/mail theo cấu hình user
+        $channels = $this->traitVia($notifiable);
+        
+        // Bổ sung kênh Telegram nếu admin bật và user có cấu hình
+        if (\App\Models\Setting::get('enable_telegram_notifications', '0') == '1' && !empty($notifiable->telegram_chat_id)) {
+            // Kiểm tra user có muốn nhận qua Telegram không, hoặc nếu là kênh bị ép buộc
+            $wants = method_exists($notifiable, 'wantsNotificationChannel') ? $notifiable->wantsNotificationChannel('telegram') : true;
+            $isForced = in_array('telegram', $this->forceChannels ?? [], true);
+            
+            if ($wants || $isForced) {
+                if (!in_array(\App\Channels\SafeTelegramChannel::class, $channels)) {
+                    $channels[] = \App\Channels\SafeTelegramChannel::class;
+                }
+            }
+        }
+        
+        return $channels;
+    }
+
+    public function toTelegram(object $notifiable)
+    {
+        $title = $this->data['title'] ?? config('app.name', 'Attendia Tech');
+        $message = $this->data['message'] ?? 'Bạn có thông báo mới.';
+        $url = $this->data['url'] ?? null;
+
+        $telegramMessage = \NotificationChannels\Telegram\TelegramMessage::create()
+            ->to($notifiable->telegram_chat_id)
+            ->content("*" . $title . "*\n\n" . $message);
+            
+        if (is_string($url) && $url !== '#') {
+            $isAbsoluteUrl = str_starts_with($url, 'http://') || str_starts_with($url, 'https://');
+            $telegramMessage->button('Xem chi tiết', $isAbsoluteUrl ? $url : url($url));
+        }
+        
+        return $telegramMessage;
+    }
 
     /**
      * @param array<string, mixed> $data
