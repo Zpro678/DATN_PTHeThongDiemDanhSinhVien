@@ -204,35 +204,7 @@ class StudentsSheet implements FromArray, ShouldAutoSize, WithStyles, WithTitle
 
         $this->dataEndRow = $currentRow - 1;
 
-        // ── Dòng trắng ──
-        $rows[] = [''];
 
-        // ── Dòng tổng kết lớp ──
-        if ($members->count() > 0) {
-            $start = $this->dataStartRow;
-            $end   = $this->dataEndRow;
-            
-            $colIdx = 4 + $this->sessionCount + 2; // 4 columns before sessions, +1 is "Tổng số buổi", +2 is "Có mặt"
-            
-            $cCol      = Coordinate::stringFromColumnIndex($colIdx);
-            $mCol      = Coordinate::stringFromColumnIndex($colIdx + 1);
-            $vCol      = Coordinate::stringFromColumnIndex($colIdx + 2);
-            $pCol      = Coordinate::stringFromColumnIndex($colIdx + 3);
-            $deductCol   = Coordinate::stringFromColumnIndex($colIdx + 4);
-            $presPctCol  = Coordinate::stringFromColumnIndex($colIdx + 5); // % có mặt trong lớp
-            $scoreCol    = Coordinate::stringFromColumnIndex($colIdx + 6); // Điểm chuyên cần (/10)
-
-            $rows[] = [
-                'TỔNG KẾT LỚP', '', '', '',
-                'TB có mặt',  "=AVERAGE({$cCol}{$start}:{$cCol}{$end})",
-                'TB muộn',    "=AVERAGE({$mCol}{$start}:{$mCol}{$end})",
-                'TB vắng', "=AVERAGE({$vCol}{$start}:{$vCol}{$end})",
-                'TB có phép', "=AVERAGE({$pCol}{$start}:{$pCol}{$end})",
-                'TB điểm trừ', "=AVERAGE({$deductCol}{$start}:{$deductCol}{$end})",
-                'TB % có mặt', "=AVERAGE({$presPctCol}{$start}:{$presPctCol}{$end})",
-                'TB điểm chuyên cần', "=AVERAGE({$scoreCol}{$start}:{$scoreCol}{$end})",
-            ];
-        }
 
         return $rows;
     }
@@ -308,15 +280,7 @@ class StudentsSheet implements FromArray, ShouldAutoSize, WithStyles, WithTitle
                   ->getStartColor()->setARGB('FF1e40af');
         }
 
-        // ── Dòng tổng kết lớp (row sau dataEndRow + 1 trắng) ──
-        $summaryRow = $this->dataEndRow + 2;
-        $sheet->getStyle("A{$summaryRow}:{$lastCol}{$summaryRow}")->applyFromArray([
-            'font'      => ['bold' => true, 'color' => ['argb' => 'FF1a56db'], 'size' => 11],
-            'fill'      => ['fillType' => Fill::FILL_SOLID, 'startColor' => ['argb' => 'FFdbeafe']],
-            'borders'   => ['allBorders' => ['borderStyle' => Border::BORDER_MEDIUM, 'color' => ['argb' => 'FF1a56db']]],
-            'alignment' => ['vertical' => Alignment::VERTICAL_CENTER],
-        ]);
-        $sheet->getRowDimension($summaryRow)->setRowHeight(24);
+
 
         // ── Cột A-D: cố định độ rộng ──
         $sheet->getColumnDimension('A')->setWidth(6);
