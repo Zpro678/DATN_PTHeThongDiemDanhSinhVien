@@ -37,6 +37,70 @@
                     <p class="text-xs text-slate-500 mt-1">Tạo bot qua <a href="https://t.me/BotFather" target="_blank" class="text-blue-600 hover:underline">@BotFather</a> để lấy token.</p>
                     @error('telegram_bot_token') <span class="text-xs text-red-500">{{ $message }}</span> @enderror
                 </div>
+
+                <div class="pt-4 border-t border-slate-200 space-y-3">
+                    <p class="text-xs font-bold uppercase tracking-wider text-slate-400">Bật / tắt kênh thông báo</p>
+
+                    {{-- Toggle Email --}}
+                    <label class="flex cursor-pointer items-center justify-between gap-4 py-2">
+                        <span class="flex items-center gap-3">
+                            <span class="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-green-50 text-green-600">
+                                <x-user.icon name="mail" :size="16" />
+                            </span>
+                            <span>
+                                <span class="block text-sm font-bold text-slate-900">Gửi thông báo qua Email</span>
+                                <span class="block text-xs text-slate-500">Bật để hệ thống gửi email khi có sự kiện.</span>
+                            </span>
+                        </span>
+                        <button
+                            type="button"
+                            wire:click="$toggle('enable_email_notifications')"
+                            role="switch"
+                            aria-checked="{{ $enable_email_notifications ? 'true' : 'false' }}"
+                            @class([
+                                'relative inline-flex h-7 w-12 shrink-0 items-center rounded-full transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-green-500',
+                                'bg-green-600' => $enable_email_notifications,
+                                'bg-slate-200' => ! $enable_email_notifications,
+                            ])
+                        >
+                            <span @class([
+                                'absolute left-1 h-5 w-5 rounded-full bg-white shadow-sm transition-transform',
+                                'translate-x-5' => $enable_email_notifications,
+                                'translate-x-0' => ! $enable_email_notifications,
+                            ])></span>
+                        </button>
+                    </label>
+
+                    {{-- Toggle Telegram --}}
+                    <label class="flex cursor-pointer items-center justify-between gap-4 py-2">
+                        <span class="flex items-center gap-3">
+                            <span class="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-sky-50 text-sky-600">
+                                <x-user.icon name="send" :size="16" />
+                            </span>
+                            <span>
+                                <span class="block text-sm font-bold text-slate-900">Gửi thông báo qua Telegram</span>
+                                <span class="block text-xs text-slate-500">Bật để hệ thống gửi thông báo qua Bot Telegram.</span>
+                            </span>
+                        </span>
+                        <button
+                            type="button"
+                            wire:click="$toggle('enable_telegram_notifications')"
+                            role="switch"
+                            aria-checked="{{ $enable_telegram_notifications ? 'true' : 'false' }}"
+                            @class([
+                                'relative inline-flex h-7 w-12 shrink-0 items-center rounded-full transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-sky-500',
+                                'bg-sky-500' => $enable_telegram_notifications,
+                                'bg-slate-200' => ! $enable_telegram_notifications,
+                            ])
+                        >
+                            <span @class([
+                                'absolute left-1 h-5 w-5 rounded-full bg-white shadow-sm transition-transform',
+                                'translate-x-5' => $enable_telegram_notifications,
+                                'translate-x-0' => ! $enable_telegram_notifications,
+                            ])></span>
+                        </button>
+                    </label>
+                </div>
             </div>
 
             <div class="grid grid-cols-1 gap-6 md:grid-cols-2">
