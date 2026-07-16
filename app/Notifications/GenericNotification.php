@@ -30,7 +30,7 @@ class GenericNotification extends Notification implements ShouldBroadcast
         $channels = $this->traitVia($notifiable);
         
         // Bổ sung kênh Telegram nếu admin bật và user có cấu hình
-        if (\App\Models\Setting::get('enable_telegram_notifications', '0') == '1' && !empty($notifiable->telegram_chat_id)) {
+        if (!empty($notifiable->telegram_chat_id)) {
             // Kiểm tra user có muốn nhận qua Telegram không, hoặc nếu là kênh bị ép buộc
             $wants = method_exists($notifiable, 'wantsNotificationChannel') ? $notifiable->wantsNotificationChannel('telegram') : true;
             $isForced = in_array('telegram', $this->forceChannels ?? [], true);

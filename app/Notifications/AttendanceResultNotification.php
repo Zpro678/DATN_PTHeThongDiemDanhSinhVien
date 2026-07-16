@@ -26,7 +26,7 @@ class AttendanceResultNotification extends Notification
         }
 
          // Lưu ý: Đảm bảo Telegram Channel đã được cấu hình trong hệ thống
-        if (\App\Models\Setting::get('enable_telegram_notifications', '0') == '1' && $notifiable->telegram_chat_id && $notifiable->wantsNotificationChannel('telegram')) {
+        if ($notifiable->telegram_chat_id && $notifiable->wantsNotificationChannel('telegram')) {
             $channels[] = \App\Channels\SafeTelegramChannel::class;
         }
         return $channels;
