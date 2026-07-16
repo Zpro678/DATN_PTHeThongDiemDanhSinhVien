@@ -127,28 +127,24 @@
                                             </button>
                                         </div>
                                     @else
-                                        @if($telegramLinking)
-                                            <div class="rounded-xl border border-blue-100 bg-blue-50 p-4" wire:poll.3s="refreshTelegramStatus">
-                                                <div class="flex items-center gap-3">
-                                                    <div class="flex h-8 w-8 items-center justify-center rounded-full bg-blue-600 text-white">
-                                                        <x-user.icon name="loader" class="h-4 w-4 animate-spin" />
-                                                    </div>
-                                                    <div class="flex-1">
-                                                        <p class="text-sm font-bold text-blue-900">Đang chờ bạn ấn Bắt đầu / Start...</p>
-                                                        <p class="mt-0.5 text-xs text-blue-700">Nếu Telegram chưa mở, hãy <a href="{{ $telegramLinkUrl }}" target="_blank" class="font-bold underline">bấm vào đây</a>.</p>
-                                                    </div>
-                                                    <button type="button" wire:click="cancelTelegramLinking" class="rounded-lg bg-white px-3 py-1.5 text-xs font-bold text-slate-600 border border-slate-200 hover:bg-slate-100">Hủy</button>
-                                                </div>
-                                            </div>
-                                        @else
-                                            <div class="flex items-center gap-3">
-                                                <button type="button" wire:click="linkTelegram" class="inline-flex items-center gap-2 rounded-xl bg-[#0088cc] px-5 py-3 text-sm font-bold text-white shadow-sm transition-all hover:-translate-y-0.5 hover:bg-[#007ab8]">
-                                                    <x-user.icon name="send" class="h-4 w-4" />
-                                                    Mở Telegram để liên kết
-                                                </button>
-                                                <p class="text-xs text-slate-500">Hệ thống sẽ tự động chuyển hướng bạn tới đúng con Bot.</p>
-                                            </div>
-                                        @endif
+                                        {{-- Nhập Chat ID thủ công --}}
+                                        <div class="flex items-center gap-2">
+                                            <input type="text" wire:model="telegram_chat_id" placeholder="VD: 123456789" class="w-full rounded-xl border border-slate-200 bg-white px-4 py-3 text-sm font-bold text-slate-900 focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-500">
+                                            <button type="button" wire:click="updateProfileInformation" class="shrink-0 rounded-xl bg-slate-700 px-4 py-3 text-sm font-bold text-white transition-colors hover:bg-slate-800">Lưu</button>
+                                        </div>
+                                        @php
+                                            $botUsername = app(\App\Services\TelegramBot::class)->username();
+                                        @endphp
+                                        <p class="mt-2 text-xs text-slate-500 leading-relaxed">
+                                            <b>Bước 1:</b> Nhắn tin <span class="font-mono bg-slate-100 px-1 rounded text-slate-700">/start</span> cho Bot hệ thống 
+                                            @if($botUsername)
+                                                <a href="https://t.me/{{ $botUsername }}" target="_blank" class="text-blue-600 font-bold hover:underline">{{ '@' . $botUsername }}</a>
+                                            @else
+                                                (chưa cấu hình Bot)
+                                            @endif
+                                            để cấp quyền nhận tin.<br>
+                                            <b>Bước 2:</b> Nhắn tin cho <a href="https://t.me/userinfobot" target="_blank" class="text-blue-600 hover:underline">@userinfobot</a> để lấy Chat ID của bạn, rồi dán vào ô trên và bấm <b>Lưu</b>.
+                                        </p>
                                         @error('telegram_chat_id') <span class="text-red-500 text-xs mt-1 block">{{ $message }}</span> @enderror
                                     @endif
                                 </div>
