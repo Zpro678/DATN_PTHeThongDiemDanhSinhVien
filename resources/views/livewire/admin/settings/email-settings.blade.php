@@ -215,7 +215,7 @@
                                     @endif
 
                                     @if (session()->has('test_telegram_error'))
-                                        <div class="mb-4 rounded-xl border border-rose-200 bg-rose-50 p-3 text-sm font-medium text-rose-700 max-h-40 overflow-y-auto">
+                                        <div class="mb-4 rounded-xl border border-rose-200 bg-rose-50 p-3 text-sm font-medium text-rose-700 max-h-40 overflow-y-auto whitespace-pre-wrap">
                                             {{ session('test_telegram_error') }}
                                         </div>
                                     @endif

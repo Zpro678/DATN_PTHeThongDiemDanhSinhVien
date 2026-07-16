@@ -196,7 +196,16 @@ class EmailSettings extends Component
                 session()->flash('test_telegram_success', 'Gửi tin nhắn Telegram thử nghiệm thành công!');
             } else {
                 $errorMsg = $res->json('description') ?? 'Lỗi không xác định từ Telegram.';
-                session()->flash('test_telegram_error', 'Gửi thất bại: ' . $errorMsg);
+                $rawResponse = json_encode($res->json(), JSON_UNESCAPED_UNICODE | JSON_PRETTY_PRINT);
+                
+                $suggestion = '';
+                if (str_contains(strtolower($errorMsg), 'chat not found')) {
+                    $suggestion = ' (Gợi ý: Chat ID sai hoặc tài khoản này chưa nhắn tin /start cho Bot).';
+                } elseif (str_contains(strtolower($errorMsg), 'unauthorized')) {
+                    $suggestion = ' (Gợi ý: Bot Token không hợp lệ).';
+                }
+
+                session()->flash('test_telegram_error', 'Gửi thất bại: ' . $errorMsg . $suggestion . "\n\nChi tiết API:\n" . $rawResponse);
             }
         } catch (\Exception $e) {
             session()->flash('test_telegram_error', 'Lỗi kết nối: ' . $e->getMessage());
