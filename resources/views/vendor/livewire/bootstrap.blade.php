@@ -1,6 +1,6 @@
 @php
 if (! isset($scrollTo)) {
-    $scrollTo = 'body';
+    $scrollTo = false;
 }
 
 $scrollIntoViewJsSnippet = ($scrollTo !== false)
@@ -40,8 +40,16 @@ $scrollIntoViewJsSnippet = ($scrollTo !== false)
             </div>
 
             <div class="d-none flex-sm-fill d-sm-flex align-items-sm-center justify-content-sm-between">
-                <div>
-                    <p class="small text-muted">
+                <div class="d-flex align-items-center">
+                    <div class="me-3">
+                        <select wire:model.live="perPage" class="form-select form-select-sm">
+                            <option value="10">10</option>
+                            <option value="20">20</option>
+                            <option value="50">50</option>
+                            <option value="100">100</option>
+                        </select>
+                    </div>
+                    <p class="small text-muted mb-0">
                         {!! __('Showing') !!}
                         <span class="fw-semibold">{{ $paginator->firstItem() }}</span>
                         {!! __('to') !!}

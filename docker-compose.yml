@@ -4,9 +4,6 @@ services:
     container_name: attendance_mysql
     restart: unless-stopped
 
-    ports:
-      - "3306:3306"
-
     environment:
       MYSQL_ROOT_PASSWORD: ${DB_PASSWORD:-root}
       MYSQL_DATABASE: ${DB_DATABASE:-db_quan_ly_diem_danh_v2}
@@ -63,9 +60,6 @@ services:
       PMA_USER: ${DB_USERNAME:-root}
       PMA_PASSWORD: ${DB_PASSWORD:-root}
       UPLOAD_LIMIT: 128M
-
-  # Lưu ý: Socket.IO KHÔNG chạy trong Docker. Nó chạy local bằng `node server.cjs`
-  # (xem start-dev.bat) và kết nối Redis qua localhost:6379 do container redis expose.
 
 volumes:
   mysql_model_data:

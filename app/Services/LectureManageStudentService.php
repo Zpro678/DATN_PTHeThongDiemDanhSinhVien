@@ -40,10 +40,21 @@ class LectureManageStudentService
             ->get(['ar.class_member_id', 'cs.meeting_id', 'ar.class_session_id', 'cs.qr_token', 'ar.status'])
             ->groupBy('class_member_id');
 
-        return $members->mapWithKeys(function (ClassMember $member) use ($rowsByMember, $classes): array {
+        // Số buổi điểm danh đã đóng của từng lớp
+        $closedMeetingsCountByClass = DB::table('class_meetings')
+            ->whereIn('class_id', $classes->keys())
+            ->where('status', 'closed')
+            ->whereNull('deleted_at')
+            ->select('class_id', DB::raw('count(*) as count'))
+            ->groupBy('class_id')
+            ->pluck('count', 'class_id');
+
+        return $members->mapWithKeys(function (ClassMember $member) use ($rowsByMember, $classes, $closedMeetingsCountByClass): array {
             $counts = AttendanceCalculator::consolidateByMeeting($rowsByMember->get($member->id, collect()));
 
-            $studiedSessions = $counts['total']; // Số buổi đã diễn ra của sinh viên.
+            $classClosedMeetings = (int) $closedMeetingsCountByClass->get($member->class_id, 0);
+
+            $studiedSessions = $counts['total']; // Số buổi đã diễn ra có bản ghi của sinh viên.
             $presentSessions = $counts['present'];
             $lateSessions = $counts['late'];
             $absentSessions = $counts['absent'];
@@ -51,11 +62,23 @@ class LectureManageStudentService
 
             $class = $classes->get($member->class_id);
             $rules = $class ? $class->getAttendanceRules() : (new CourseClass())->getAttendanceRules();
+
+            // Nếu sinh viên bỏ lỡ buổi học hoàn toàn (không có bản ghi, VD: vào lớp sau khi buổi học đã đóng)
+            if ($studiedSessions < $classClosedMeetings) {
+                $missingMeetings = $classClosedMeetings - $studiedSessions;
+                $absentSessions += $missingMeetings;
+                $studiedSessions += $missingMeetings;
+                $counts['total'] += $missingMeetings;
+                $counts['absent'] += $missingMeetings;
+                // Add deduction for the completely missed meetings
+                $counts['deduction'] += $missingMeetings * AttendanceCalculator::deductionForStatus('absent', $rules);
+            }
+
             $plannedSessions = (int) ($class?->total_sessions ?? 0);
 
             // Mẫu số = số buổi cơ sở: lớn nhất giữa dự kiến và số buổi đã diễn ra.
             // Nếu số buổi thực tế vượt dự kiến, quỹ vắng 20% được tính lại trên số lớn hơn.
-            $effectivePlanned = AttendanceCalculator::baseSessions($plannedSessions, $studiedSessions);
+            $effectivePlanned = AttendanceCalculator::baseSessions($plannedSessions, $classClosedMeetings);
 
             $countedSessions = $effectivePlanned; // Trong hệ thống mới, luôn là tổng số buổi dự kiến, trừ điểm qua $rules
             $attendedSessions = $presentSessions + $lateSessions; // Số buổi có đến lớp (gồm cả muộn).

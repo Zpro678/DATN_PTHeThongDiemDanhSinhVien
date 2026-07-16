@@ -16,7 +16,7 @@
         </a>
     </div>
 
-    <section class="flex flex-col rounded-2xl border border-outline-variant/10 bg-white shadow-sm w-full min-h-[calc(100vh-170px)]">
+    <section class="flex flex-col rounded-2xl border border-outline-variant/10 bg-white shadow-sm w-full">
         <div class="flex-1 overflow-x-auto rounded-2xl">
             <table class="w-full min-w-[900px] border-collapse text-left">
                 <thead class="bg-surface-container-lowest text-sm font-bold uppercase tracking-wider text-on-surface-variant">
@@ -29,7 +29,7 @@
                         <th class="pr-6 pl-4 py-4 text-center whitespace-nowrap w-24">Thao tác</th>
                     </tr>
                 </thead>
-                <tbody class="divide-y divide-outline-variant/10">
+                <tbody class="divide-y divide-outline-variant/10 transition-all duration-200" wire:loading.class="opacity-40 pointer-events-none blur-[1px]">
                     @forelse ($requests as $request)
                         @php($meta = $statusMeta[$request->status] ?? $statusMeta['pending'])
                         <tr class="transition-all duration-200 hover:bg-surface-container-lowest/80 hover:shadow-sm group">
@@ -125,8 +125,8 @@
                 </tbody>
             </table>
         </div>
-        @if($requests->hasPages())
-            <div class="border-t border-outline-variant/10 px-6 py-4">
+        @if($requests instanceof \Illuminate\Pagination\LengthAwarePaginator && $requests->hasPages())
+            <div class="border-t border-slate-200 px-4 py-3 sm:px-6 bg-white">
                 {{ $requests->links() }}
             </div>
         @endif

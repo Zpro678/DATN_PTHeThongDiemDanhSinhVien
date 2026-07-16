@@ -9,7 +9,10 @@ use Livewire\Component;
 
 class ClassStatistics extends Component
 {
+    use \Livewire\WithPagination;
+
     public $class_id;
+    public int $perPage = 20;
 
     /** Số cột điểm danh gần nhất hiển thị mặc định trên biểu đồ. */
     public const CHART_RECENT_LIMIT = 8;
@@ -17,6 +20,11 @@ class ClassStatistics extends Component
     /** Khoảng ngày lọc biểu đồ (null = mặc định lấy các buổi gần nhất). */
     public ?string $chartFrom = null;
     public ?string $chartTo = null;
+
+    public function updatingPerPage(): void
+    {
+        $this->resetPage();
+    }
 
     public function mount($class_id): void
     {
@@ -72,13 +80,22 @@ class ClassStatistics extends Component
             ->values();
 
         // Tất cả học viên (sắp xếp theo tên A-Z)
-        $allStudents = $members
+        $allStudentsCollection = $members
             ->map(fn ($m) => ['member' => $m, 'stats' => $statsMap[$m->id] ?? null])
             ->sortBy(function ($row) {
                 $parts = explode(' ', trim($row['member']->full_name));
-                return end($parts);
+                return end($parts) . ' ' . $row['member']->full_name;
             })
             ->values();
+
+        $page = $this->getPage();
+        $allStudents = new \Illuminate\Pagination\LengthAwarePaginator(
+            $allStudentsCollection->forPage($page, $this->perPage),
+            $allStudentsCollection->count(),
+            $this->perPage,
+            $page,
+            ['path' => \Illuminate\Pagination\Paginator::resolveCurrentPath(), 'pageName' => 'page']
+        );
 
         // Khoảng ngày có thể chọn cho biểu đồ (dựa trên các buổi đã chốt).
         $closedDates = $closedSessions->pluck('date')->filter()

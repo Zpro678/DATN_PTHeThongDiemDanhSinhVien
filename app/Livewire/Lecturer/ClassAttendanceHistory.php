@@ -10,7 +10,6 @@ use App\Services\SubscriptionService;
 use Illuminate\Contracts\View\View;
 use Illuminate\Support\Str;
 use Livewire\Component;
-use Livewire\WithPagination;
 use Livewire\Attributes\Url;
 use Livewire\Attributes\On;
 use Maatwebsite\Excel\Facades\Excel;
@@ -18,13 +17,10 @@ use Throwable;
 
 class ClassAttendanceHistory extends Component
 {
-    use WithPagination;
-
     #[Url(as: 'group')]
     public ?string $initialGroupKey = null;
 
     public CourseClass $courseClass;
-    public int $perPage = 20;
 
     public function mount(CourseClass $courseClass)
     {
@@ -40,10 +36,7 @@ class ClassAttendanceHistory extends Component
         return (string) config('database.redis.options.prefix') . 'class.' . $this->courseClass->id;
     }
 
-    public function updatedPerPage()
-    {
-        $this->resetPage();
-    }
+
 
     public function closeSession(int $sessionId): void
     {
@@ -82,9 +75,14 @@ class ClassAttendanceHistory extends Component
     {
         $report = app(ClassAttendanceHistoryReport::class);
 
-        $members = $report->activeMembersQuery($this->courseClass)
-            ->paginate($this->perPage);
-        $history = $report->build($this->courseClass, $members->getCollection());
+        $allMembers = $report->activeMembersQuery($this->courseClass)->get();
+        
+        $members = $allMembers->sortBy(function ($m) {
+            $parts = explode(' ', trim((string) $m->full_name));
+            return end($parts) . ' ' . $m->full_name;
+        })->values();
+
+        $history = $report->build($this->courseClass, $members);
         $sessions = $history['sessions'];
         $groupedSessions = $history['groupedSessions'];
         $matrix = $history['matrix'];

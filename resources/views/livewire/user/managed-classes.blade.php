@@ -12,7 +12,7 @@
     $mcNearLimit = $mcPlanMax > 0 && $mcOwnedCount >= $mcPlanMax;
 @endphp
 
-<div class="w-full space-y-6 px-6 py-6 sm:px-10 lg:px-16 animate-in fade-in slide-in-from-bottom-4 duration-500">
+<div class="w-full space-y-6 px-6 py-6 sm:px-10 lg:px-16 animate-in fade-in slide-in-from-bottom-4 duration-500" @if($isImportingStatus) wire:poll.2s="checkImportProgress" @endif>
     <header class="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
         {{-- Nhắc gói cước trong ngữ cảnh (Concept 1) --}}
         <div class="flex flex-col gap-3 rounded-2xl border border-outline-variant bg-white p-3 shadow-sm sm:flex-row sm:items-center sm:w-[500px]">
@@ -43,10 +43,17 @@
             </div>
         </div>
 
-        <a href="{{ route('create-class') }}" class="inline-flex shrink-0 items-center justify-center gap-2 rounded-lg bg-primary px-4 py-2.5 text-sm font-semibold text-white shadow-sm transition-colors hover:bg-primary-container">
-            <x-user.icon name="plus" :size="18" />
-            Tạo lớp mới
-        </a>
+        <div class="flex flex-wrap gap-2">
+            <button type="button" wire:click="openImport" class="inline-flex shrink-0 items-center justify-center gap-2 rounded-lg border border-outline-variant bg-white px-4 py-2.5 text-sm font-semibold text-on-surface shadow-sm transition-colors hover:bg-surface-container">
+                <x-user.icon name="upload" :size="18" />
+                Import Lớp & Học Viên
+            </button>
+            
+            <a href="{{ route('create-class') }}" class="inline-flex shrink-0 items-center justify-center gap-2 rounded-lg bg-primary px-4 py-2.5 text-sm font-semibold text-white shadow-sm transition-colors hover:bg-primary-container">
+                <x-user.icon name="plus" :size="18" />
+                Tạo lớp mới
+            </a>
+        </div>
     </header>
 
     <div class="flex flex-col gap-3 sm:flex-row sm:items-center">
@@ -78,6 +85,33 @@
             @endforeach
         </div>
     </div>
+
+    {{-- Tiến độ import chạy ngầm hiển thị dưới bộ lọc và trên danh sách lớp --}}
+    @if ($isImportingStatus)
+        <div class="w-full rounded-xl border border-primary/20 bg-primary/5 p-4 shadow-sm animate-in slide-in-from-top-4 duration-300">
+            <div class="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
+                <div class="flex items-center gap-3">
+                    <span class="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-primary/10 text-primary">
+                        <x-user.icon name="loader" class="animate-spin" :size="16" />
+                    </span>
+                    <div>
+                        <p class="text-sm font-bold text-slate-800">Đang tiến hành import lớp học & học viên chạy ngầm...</p>
+                        <p class="text-xs text-on-surface-variant">Hệ thống đang xử lý file Excel nhiều sheet dưới nền. Bạn có thể tiếp tục xem hoặc chỉnh sửa các lớp học bình thường.</p>
+                    </div>
+                </div>
+                <div class="flex items-center gap-2 mt-2 sm:mt-0">
+                    <span class="text-sm font-bold text-primary">{{ $importProgress }}%</span>
+                    <span class="text-xs text-on-surface-variant">({{ $importProgress }}% hoàn thành)</span>
+                </div>
+            </div>
+            
+            <div class="mt-3">
+                <div class="h-2 w-full overflow-hidden rounded-full bg-surface-container-highest">
+                    <div class="h-full rounded-full bg-primary transition-all duration-500" style="width: {{ $importProgress }}%"></div>
+                </div>
+            </div>
+        </div>
+    @endif
 
     <section class="grid grid-cols-1 gap-4 md:grid-cols-2 xl:grid-cols-3">
         @forelse ($classes as $class)
@@ -296,4 +330,100 @@
             </div>
         </template>
     @endif
+
+    {{-- Modal Import Lớp và Học viên --}}
+    @if ($isImporting)
+        <template x-teleport="body">
+            <div class="fixed inset-0 z-[110] flex items-center justify-center bg-on-background/40 p-4 backdrop-blur-sm"
+                 x-data
+                 x-transition:enter="transition ease-out duration-200" x-transition:enter-start="opacity-0" x-transition:enter-end="opacity-100"
+                 x-transition:leave="transition ease-in duration-150" x-transition:leave-start="opacity-100" x-transition:leave-end="opacity-0">
+                <div class="w-full max-w-2xl rounded-xl border border-outline-variant bg-white p-6 shadow-2xl"
+                     x-transition:enter="transition ease-out duration-200" x-transition:enter-start="opacity-0 scale-95 translate-y-4" x-transition:enter-end="opacity-100 scale-100 translate-y-0"
+                     x-transition:leave="transition ease-in duration-150" x-transition:leave-start="opacity-100 scale-100 translate-y-0" x-transition:leave-end="opacity-0 scale-95 translate-y-4">
+                    
+                    <div class="mb-4 flex items-center justify-between border-b border-outline-variant pb-3">
+                        <h3 class="text-lg font-bold text-on-surface flex items-center gap-2">
+                            <x-user.icon name="upload" :size="20" class="text-primary" />
+                            Import Lớp Học & Học Viên (Nhiều Sheet)
+                        </h3>
+                        <button type="button" wire:click="closeImport" class="rounded-lg p-1.5 hover:bg-surface-container text-on-surface-variant">
+                            <x-user.icon name="x" :size="20" />
+                        </button>
+                    </div>
+
+                    <div class="space-y-4 py-2">
+                        @if (session()->has('status'))
+                            <div class="rounded-lg bg-emerald-50 border border-emerald-200 p-4 text-emerald-800 text-sm font-semibold flex items-center gap-2">
+                                <x-user.icon name="check-circle" class="text-emerald-600" :size="18" />
+                                <span>{{ session('status') }}</span>
+                            </div>
+                        @endif
+
+                        @if (session()->has('error'))
+                            <div class="rounded-lg bg-red-50 border border-red-200 p-4 text-red-800 text-sm font-semibold flex items-center gap-2">
+                                <x-user.icon name="alert-triangle" class="text-red-600" :size="18" />
+                                <span>{{ session('error') }}</span>
+                            </div>
+                        @endif
+
+                        <div class="rounded-xl border-2 border-dashed border-outline-variant/60 bg-surface-container-low p-6 text-center relative group hover:border-primary hover:bg-primary/5 transition-colors">
+                            <input type="file" wire:model="importFile" accept=".xlsx,.xls,.csv" class="absolute inset-0 h-full w-full opacity-0 cursor-pointer">
+                            <div class="flex flex-col items-center justify-center gap-2">
+                                <div class="flex h-12 w-12 items-center justify-center rounded-full bg-primary/10 text-primary">
+                                    <div wire:loading.remove wire:target="importFile">
+                                        <x-user.icon name="upload" :size="24" />
+                                    </div>
+                                    <div wire:loading wire:target="importFile">
+                                        <x-user.icon name="loader" class="animate-spin" :size="24" />
+                                    </div>
+                                </div>
+                                <div>
+                                    <p class="text-sm font-bold text-slate-700">
+                                        @if ($importFile)
+                                            {{ $importFile->getClientOriginalName() }}
+                                        @else
+                                            Kéo thả hoặc nhấn để chọn file Excel (.xlsx, .xls, .csv)
+                                        @endif
+                                    </p>
+                                    <p class="text-xs text-on-surface-variant mt-1">Dung lượng file tối đa 5MB</p>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="text-xs text-on-surface-variant flex items-center justify-between">
+                            <span>Hãy dùng đúng định dạng file mẫu nhiều sheet (Phương án 1)</span>
+                            <button type="button" wire:click="downloadTemplate" class="font-bold text-primary hover:underline flex items-center gap-1">
+                                <x-user.icon name="download" :size="12" /> Tải file mẫu tại đây
+                            </button>
+                        </div>
+
+                        {{-- Danh sách lỗi chi tiết nếu có --}}
+                        @if (!empty($importErrors))
+                            <div class="max-h-60 overflow-y-auto rounded-lg border border-red-200 bg-red-50/50 p-4">
+                                <span class="text-xs font-bold text-red-800 block mb-2">Chi tiết các cảnh báo/lỗi trong quá trình đọc file:</span>
+                                <ul class="list-disc pl-5 text-xs text-red-700 space-y-1">
+                                    @foreach ($importErrors as $error)
+                                        <li>{{ $error }}</li>
+                                    @endforeach
+                                </ul>
+                            </div>
+                        @endif
+                    </div>
+
+                    <div class="mt-6 flex justify-end gap-3 border-t border-outline-variant pt-3">
+                        <button type="button" wire:click="closeImport" class="rounded-lg border border-outline-variant px-5 py-2.5 text-sm font-semibold text-on-surface-variant transition-colors hover:bg-surface-container">Đóng</button>
+                        <button type="button" wire:click="processImport" wire:loading.attr="disabled" wire:target="importFile, processImport" class="rounded-lg bg-primary px-5 py-2.5 text-sm font-semibold text-white transition-colors hover:bg-primary-container disabled:opacity-55 disabled:cursor-wait">
+                            <span wire:loading.remove wire:target="processImport">Bắt đầu Import</span>
+                            <span wire:loading wire:target="processImport" class="flex items-center gap-2">
+                                <x-user.icon name="loader" class="animate-spin" :size="16" /> Đang xử lý...
+                            </span>
+                        </button>
+                    </div>
+
+                </div>
+            </div>
+        </template>
+    @endif
+
 </div>

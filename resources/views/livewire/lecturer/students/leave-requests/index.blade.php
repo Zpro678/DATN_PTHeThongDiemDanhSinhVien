@@ -107,11 +107,11 @@
             </div>
         </div>
 
-    <section class="overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm flex flex-col" style="min-height: 500px;">
+    <section class="overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm flex flex-col">
         <div class="overflow-x-auto flex-1">
             <table class="w-full min-w-[1050px] text-left">
                 <thead class="bg-slate-50 text-sm font-bold uppercase tracking-wider text-slate-500"><tr><th class="px-6 py-4">Học viên</th><th class="px-4 py-4">Lớp học</th><th class="px-4 py-4">Buổi xin nghỉ</th><th class="px-4 py-4">Lý do</th><th class="px-4 py-4">Trạng thái</th><th class="px-6 py-4 text-right whitespace-nowrap">Thao tác</th></tr></thead>
-                <tbody class="divide-y divide-slate-100">
+                <tbody class="divide-y divide-slate-100 transition-all duration-200" wire:loading.class="opacity-40 pointer-events-none blur-[1px]">
                     @forelse ($leaveRequests as $request)
                         <tr class="transition-colors hover:bg-slate-50/70 cursor-pointer" onclick="if(!event.target.closest('a, button')) window.location.href='{{ route('lecturer.leave-requests.show', $request) }}'">
                             <td class="px-6 py-4"><div class="flex items-center gap-3">
@@ -144,7 +144,11 @@
                 </tbody>
             </table>
         </div>
-        @if($leaveRequests->hasPages())<div class="border-t border-slate-100 px-6 py-4">{{ $leaveRequests->links() }}</div>@endif
+        @if($leaveRequests instanceof \Illuminate\Pagination\LengthAwarePaginator && $leaveRequests->hasPages())
+            <div class="border-t border-slate-200 px-4 py-3 sm:px-6 bg-white">
+                {{ $leaveRequests->links() }}
+            </div>
+        @endif
     </section>
 
     @if ($rejectingRequestId)

@@ -21,3 +21,7 @@ Schedule::command('attendance:cleanup-scans --days=90')->dailyAt('01:00')->witho
 // Rút hàng chờ email thông báo import (Outbox) và gửi có tiết chế: tối đa 200 mail/phút.
 // Nhờ vậy dù nhiều tài khoản import cùng lúc, email không bị bắn dồn làm SMTP quá tải.
 Schedule::command('import:flush-notifications --limit=200')->everyMinute()->withoutOverlapping();
+
+
+// Tự động dọn dẹp các phiên điểm danh của buổi học đã kết thúc qua 48 tiếng (chạy mỗi giờ 1 lần)
+Schedule::command('attendance:cleanup-expired-sessions')->hourly()->withoutOverlapping();

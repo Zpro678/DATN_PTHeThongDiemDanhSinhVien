@@ -203,6 +203,15 @@
                     </span>
                 @endif
             </a>
+            @if($studentsCount > 0)
+            <button type="button" 
+                wire:confirm="Bạn có chắc chắn muốn xóa TOÀN BỘ sinh viên khỏi lớp học này? Hành động này sẽ chuyển trạng thái của tất cả thành 'đã xóa'." 
+                wire:click="removeAllStudents" 
+                class="inline-flex items-center gap-1.5 rounded-lg border border-rose-200 bg-rose-50 px-3 py-1.5 text-sm font-bold text-rose-600 transition-colors hover:bg-rose-100">
+                <x-user.icon name="trash-2" :size="16" />
+                Xóa tất cả
+            </button>
+            @endif
         </div>
     </div>
     {{-- Thanh tìm kiếm + bộ lọc trạng thái chuyên cần --}}
@@ -274,10 +283,10 @@
                 @endif
             </div>
         @else
-            <div class="overflow-x-auto {{ $students->count() > 30 ? 'max-h-[800px] overflow-y-auto relative' : '' }}">
+            <div class="overflow-x-auto">
                 <table class="w-full min-w-[760px] table-fixed text-left text-sm whitespace-nowrap">
                     <thead class="border-b border-slate-200 bg-slate-50 text-xs font-bold uppercase tracking-wider text-slate-500">
-                        <tr class="{{ $students->count() > 30 ? 'sticky top-0 z-10 bg-slate-50' : '' }}">
+                        <tr>
                             <th scope="col" class="w-[6%] px-4 py-4 text-center">STT</th>
                             <th scope="col" class="w-[32%] pl-6 pr-4 py-4">Họ & Tên</th>
                             <th scope="col" class="w-[26%] pl-6 pr-4 py-4">Email</th>
@@ -286,7 +295,7 @@
                             <th scope="col" class="w-[13%] px-4 py-4 text-center">Hành động</th>
                         </tr>
                     </thead>
-                    <tbody class="divide-y divide-slate-100">
+                    <tbody class="divide-y divide-slate-100 transition-all duration-200" wire:loading.class="opacity-40 pointer-events-none blur-[1px]">
                         @foreach($students as $student)
                             @php
                                 // $statsMap từ LectureManageStudentService — tính theo TIẾT, chỉ buổi đã chốt.
@@ -350,50 +359,66 @@
                                     ])>{{ $rate }}%</span>
                                 </td>
                                 <td class="px-4 py-4 text-center">
-                                    @if($isBanned || $isWarning)
-                                        {{-- Ẩn/hiện theo công tắc chung "Hiển thị sinh viên cấm thi" ở đầu bảng (mặc định ẩn). --}}
-                                        <span x-show="!showBan" class="text-slate-300">—</span>
-                                        <span x-show="showBan" x-cloak>
-                                                @if($isBanned)
-                                                    @if($student->user_id)
-                                                        <button
-                                                            type="button"
-                                                            @click="banConfirm = { open: true, id: {{ $student->id }}, name: @js($student->full_name) }"
-                                                            wire:loading.attr="disabled"
-                                                            wire:target="sendExamBan"
-                                                            class="inline-flex items-center gap-1.5 rounded-lg bg-red-600 px-3 py-1.5 text-xs font-bold text-white transition-colors hover:bg-red-700 disabled:opacity-60"
-                                                        >
-                                                            <x-user.icon name="alert-triangle" :size="14" />
-                                                            Cấm thi
-                                                        </button>
-                                                    @else
-                                                        <span class="text-xs font-medium text-slate-400" title="Chưa liên kết tài khoản">Chưa liên kết</span>
+                                    <div class="flex items-center justify-center gap-2">
+                                        @if($isBanned || $isWarning)
+                                            {{-- Ẩn/hiện theo công tắc chung "Hiển thị sinh viên cấm thi" ở đầu bảng (mặc định ẩn). --}}
+                                            <span x-show="!showBan" class="text-slate-300">—</span>
+                                            <span x-show="showBan" x-cloak>
+                                                    @if($isBanned)
+                                                        @if($student->user_id)
+                                                            <button
+                                                                type="button"
+                                                                @click="banConfirm = { open: true, id: {{ $student->id }}, name: @js($student->full_name) }"
+                                                                wire:loading.attr="disabled"
+                                                                wire:target="sendExamBan"
+                                                                class="inline-flex items-center gap-1.5 rounded-lg bg-red-600 px-3 py-1.5 text-xs font-bold text-white transition-colors hover:bg-red-700 disabled:opacity-60"
+                                                            >
+                                                                <x-user.icon name="alert-triangle" :size="14" />
+                                                                Cấm thi
+                                                            </button>
+                                                        @else
+                                                            <span class="text-xs font-medium text-slate-400" title="Chưa liên kết tài khoản">Chưa liên kết</span>
+                                                        @endif
+                                                    @elseif($isWarning)
+                                                        @if($student->user_id)
+                                                            <button
+                                                                type="button"
+                                                                wire:click="sendAttendanceWarning({{ $student->id }})"
+                                                                wire:loading.attr="disabled"
+                                                                wire:target="sendAttendanceWarning"
+                                                                class="inline-flex items-center gap-1.5 rounded-lg border border-amber-300 bg-amber-50 px-3 py-1.5 text-xs font-bold text-amber-700 transition-colors hover:bg-amber-100 disabled:opacity-60"
+                                                            >
+                                                                <x-user.icon name="bell" :size="14" />
+                                                                Gửi cảnh báo
+                                                            </button>
+                                                        @else
+                                                            <span class="text-xs font-medium text-slate-400" title="Chưa liên kết tài khoản">Chưa liên kết</span>
+                                                        @endif
                                                     @endif
-                                                @elseif($isWarning)
-                                                    @if($student->user_id)
-                                                        <button
-                                                            type="button"
-                                                            wire:click="sendAttendanceWarning({{ $student->id }})"
-                                                            wire:loading.attr="disabled"
-                                                            wire:target="sendAttendanceWarning"
-                                                            class="inline-flex items-center gap-1.5 rounded-lg border border-amber-300 bg-amber-50 px-3 py-1.5 text-xs font-bold text-amber-700 transition-colors hover:bg-amber-100 disabled:opacity-60"
-                                                        >
-                                                            <x-user.icon name="bell" :size="14" />
-                                                            Gửi cảnh báo
-                                                        </button>
-                                                    @else
-                                                        <span class="text-xs font-medium text-slate-400" title="Chưa liên kết tài khoản">Chưa liên kết</span>
-                                                    @endif
-                                                @endif
-                                        </span>
-                                    @else
-                                        <span class="text-slate-300">—</span>
-                                    @endif
+                                            </span>
+                                        @endif
+
+                                        <button
+                                            type="button"
+                                            wire:confirm="Bạn có chắc chắn muốn xóa sinh viên {{ $student->displayName }} khỏi lớp?"
+                                            wire:click="removeStudent({{ $student->id }})"
+                                            title="Xóa sinh viên"
+                                            class="inline-flex h-7 w-7 items-center justify-center rounded-lg hover:bg-rose-100 text-slate-400 hover:text-rose-600 transition-colors"
+                                        >
+                                            <x-user.icon name="trash-2" :size="16" />
+                                        </button>
+                                    </div>
                                 </td>
                             </tr>
                         @endforeach
                     </tbody>
                 </table>
+            </div>
+        @endif
+        
+        @if($students instanceof \Illuminate\Pagination\LengthAwarePaginator && $students->hasPages())
+            <div class="border-t border-slate-200 px-4 py-3 sm:px-6">
+                {{ $students->links() }}
             </div>
         @endif
     </div>
