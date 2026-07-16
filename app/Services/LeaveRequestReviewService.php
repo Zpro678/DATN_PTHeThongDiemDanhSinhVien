@@ -58,11 +58,19 @@ class LeaveRequestReviewService
 
         event(new \App\Events\ClassDataUpdated((string) $leaveRequest->classMember->class_id));
 
-        // Gửi thông báo cho học viên sau khi transaction hoàn thành.
+        // Đồng bộ lại kết quả tổng kết (vì có thể làm thay đổi trạng thái của buổi học thành 'excused')
+        if ($leaveRequest->classMeeting) {
+            \App\Services\AttendanceCalculator::syncSummaries($leaveRequest->classMeeting);
+        }
+
+        // Gửi thông báo duyệt đơn cho học viên
         $studentUser = $leaveRequest->classMember?->user;
         if ($studentUser) {
             $studentUser->notify(new LeaveRequestApproved($leaveRequest->fresh(['classMember.courseClass', 'classMeeting'])));
         }
+
+        // Kiểm tra và gửi thông báo nếu sinh viên đã vượt ngưỡng vắng có phép
+        app(\App\Services\NotificationService::class)->notifyExcusedAbsenceWarningIfExceeded($leaveRequest);
     }
 
     public function reject(LeaveRequest $leaveRequest, User $reviewer, string $reason): void

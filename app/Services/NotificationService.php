@@ -1063,4 +1063,74 @@ class NotificationService
             ['class_id' => $class->id],
         );
     }
+    /**
+     * Báo cho học viên và giảng viên khi duyệt đơn xin nghỉ làm sinh viên vượt quá ngưỡng vắng có phép.
+     */
+    public function notifyExcusedAbsenceWarningIfExceeded(\App\Models\LeaveRequest $leaveRequest): void
+    {
+        $class = $leaveRequest->classMember->courseClass;
+        if (! $class) {
+            return;
+        }
+
+        $plannedSessions = max((int) ($class->total_sessions ?? 0), 0);
+
+        $userRows = DB::table('attendance_records as ar')
+            ->join('class_sessions as cs', 'cs.id', '=', 'ar.class_session_id')
+            ->where('cs.class_id', $class->id)
+            ->where('cs.status', 'closed')
+            ->whereNotNull('cs.meeting_id')
+            ->whereNull('ar.deleted_at')
+            ->whereNull('cs.deleted_at')
+            ->where('ar.class_member_id', $leaveRequest->class_member_id)
+            ->get(['cs.meeting_id', 'ar.class_session_id', 'cs.qr_token', 'ar.status']);
+
+        $rules = $class->getAttendanceRules();
+        $counts = AttendanceCalculator::consolidateByMeeting($userRows, $rules);
+        $excused = $counts['excused'];
+
+        $baseSessions = AttendanceCalculator::baseSessions($plannedSessions, (int) $counts['total']);
+        if ($baseSessions <= 0) {
+            return;
+        }
+
+        $allowed = AttendanceCalculator::allowedAbsentSessions($baseSessions);
+        $userId = (int) $leaveRequest->classMember->user_id;
+
+        if ($excused > $allowed) {
+            // Gửi cho sinh viên
+            if ($userId > 0 && ! $this->hasUnreadLike($userId, 'App\\Notifications\\ExcusedAbsenceWarning', $class->id)) {
+                $url = route('student.classes.show', ['ma_user' => $userId, 'courseClass' => $class->id]);
+                $this->push(
+                    $userId,
+                    'App\\Notifications\\ExcusedAbsenceWarning',
+                    'Vắng có phép quá nhiều',
+                    "Lớp {$class->name}: bạn đã vắng có phép {$excused} buổi, vượt mức {$allowed} buổi khuyến nghị. Hãy sắp xếp tham gia học đầy đủ hơn.",
+                    $url,
+                    'warning',
+                    ['class_id' => $class->id],
+                    ['mail'],
+                );
+            }
+
+            // Gửi cho giảng viên (chủ lớp và đồng quản lý)
+            $studentName = $leaveRequest->classMember->full_name ?? 'Sinh viên';
+            $managers = $class->all_managers;
+            foreach ($managers as $manager) {
+                if (! $this->hasUnreadLike($manager->id, 'App\\Notifications\\StudentExcusedAbsenceWarning', $class->id)) {
+                    $lecturerUrl = route('lecturer.classes.show', ['ma_user' => $manager->id, 'courseClass' => $class->id]);
+                    $this->push(
+                        $manager->id,
+                        'App\\Notifications\\StudentExcusedAbsenceWarning',
+                        'Sinh viên vắng có phép quá nhiều',
+                        "Lớp {$class->name}: Sinh viên {$studentName} đã vắng có phép {$excused}/{$allowed} buổi. Vui lòng theo dõi.",
+                        $lecturerUrl,
+                        'warning',
+                        ['class_id' => $class->id],
+                        ['mail'],
+                    );
+                }
+            }
+        }
+    }
 }
