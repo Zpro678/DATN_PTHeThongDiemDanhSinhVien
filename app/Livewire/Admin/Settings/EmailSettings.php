@@ -22,6 +22,7 @@ class EmailSettings extends Component
     public $telegram_bot_token = '';
 
     public $test_email = '';
+    public $test_telegram_chat_id = '';
 
     public function mount()
     {
@@ -165,6 +166,40 @@ class EmailSettings extends Component
             session()->flash('test_success', 'Gửi email thử nghiệm thành công! Vui lòng kiểm tra hộp thư.');
         } catch (\Exception $e) {
             session()->flash('test_error', 'Lỗi: ' . $e->getMessage());
+        }
+    }
+
+    public function sendTestTelegram()
+    {
+        if (!auth()->user()?->isSuperAdmin()) {
+            $this->dispatch('toast', message: 'Chỉ Super Admin mới có quyền thử nghiệm.', type: 'error');
+            return;
+        }
+
+        $this->validate([
+            'telegram_bot_token' => 'required|string',
+            'test_telegram_chat_id' => 'required|string',
+        ], [
+            'telegram_bot_token.required' => 'Vui lòng nhập Bot Token trước khi test.',
+            'test_telegram_chat_id.required' => 'Vui lòng nhập Chat ID.',
+        ]);
+
+        try {
+            $res = \Illuminate\Support\Facades\Http::asForm()->post("https://api.telegram.org/bot{$this->telegram_bot_token}/sendMessage", [
+                'chat_id' => $this->test_telegram_chat_id,
+                'text' => '🔔 Đây là tin nhắn thử nghiệm từ cấu hình hệ thống SAMS!',
+                'parse_mode' => 'HTML',
+                'disable_web_page_preview' => true,
+            ]);
+
+            if ($res->ok() && $res->json('ok') === true) {
+                session()->flash('test_telegram_success', 'Gửi tin nhắn Telegram thử nghiệm thành công!');
+            } else {
+                $errorMsg = $res->json('description') ?? 'Lỗi không xác định từ Telegram.';
+                session()->flash('test_telegram_error', 'Gửi thất bại: ' . $errorMsg);
+            }
+        } catch (\Exception $e) {
+            session()->flash('test_telegram_error', 'Lỗi kết nối: ' . $e->getMessage());
         }
     }
 
