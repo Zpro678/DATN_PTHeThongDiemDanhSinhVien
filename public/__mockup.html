@@ -1,0 +1,1209 @@
+<!doctype html><html lang="vi"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"><title>Bảng điểm danh — hiện trạng</title><link rel="stylesheet" href="/build/assets/app-DYS9D9E5.css"><style>body{background:#f1f5f9;padding:24px}</style></head><body><div class="mx-auto max-w-[1280px]"><h1 class="mb-1 text-xl font-black text-slate-800">Bảng học viên trong phiên QR — hiện trạng</h1><p class="mb-4 text-[13px] text-slate-500">HTML thật do component render. Bán kính lớp = 30m.</p><div class="overflow-x-auto rounded-2xl border border-slate-200 bg-white shadow-sm"><table class="w-full min-w-[1024px] border-collapse text-left relative">
+            <thead class="sticky top-0 z-10 border-b border-slate-200 bg-slate-50 text-sm font-bold uppercase tracking-wider text-black shadow-sm">
+                <tr>
+                    <th class="w-16 px-6 py-4 text-center">STT</th>
+                    <th class="px-6 py-4 w-72">HỌ TÊN</th>
+                    <th class="px-6 py-4">TRẠNG THÁI ĐIỂM DANH</th>
+                    <th class="px-6 py-4 min-w-[350px]">GHI CHÚ</th>
+                </tr>
+            </thead>
+            <tbody class="divide-y divide-slate-50 text-[15px]">
+                <!--[if BLOCK]><![endif]-->                                        <tr class="bg-white transition-colors hover:bg-slate-50/50">
+                        <td class="px-6 py-5 font-medium text-slate-500 text-center">
+                            1
+                        </td>
+                        <td class="px-6 py-5">
+                            <div class="flex items-center gap-3.5">
+                                
+                                <div class="relative shrink-0">
+                                    <!--[if BLOCK]><![endif]-->                                        <img src="https://ui-avatars.com/api/?name=B%C3%A1+Sa&amp;color=FFFFFF&amp;background=4285F4" alt="Đặng Thu Hà" class="h-10 w-10 rounded-full object-cover shadow-sm">
+                                    <!--[if ENDBLOCK]><![endif]-->                                    <!--[if BLOCK]><![endif]-->                                        <span class="absolute -right-0.5 -top-0.5 h-3 w-3 rounded-full ring-2 ring-white bg-amber-400"
+                                            title="Ngoài bán kính cho phép"></span>
+                                    <!--[if ENDBLOCK]><![endif]-->                                </div>
+                                <div class="min-w-0">
+                                    <p class="truncate text-[15.5px] font-semibold text-slate-800">Đặng Thu Hà</p>
+                                    <p class="text-[12px] font-medium text-emerald-500 mt-0.5">Có mặt</p>
+                                </div>
+                            </div>
+                        </td>
+                        <td class="px-6 py-5">
+                            <div class="inline-flex items-center gap-1 rounded-xl border border-slate-200 bg-slate-100/80 p-1" role="radiogroup" aria-label="Trạng thái điểm danh của Đặng Thu Hà">
+                                <!--[if BLOCK]><![endif]-->                                                                        <div class="relative">
+                                        <input
+                                            id="attendance-status-1-2-present"
+                                            type="radio"
+                                            name="attendance_status_2"
+                                            value="present"
+                                            wire:model="draftStatuses.2"
+                                            wire:change="setStatus(2, 'present')"
+                                            checked                                            disabled                                            class="peer sr-only"
+                                        >
+                                        <label
+                                            for="attendance-status-1-2-present"
+                                            class="flex w-[84px] cursor-pointer select-none items-center justify-center rounded-lg border border-transparent bg-white px-2.5 py-2 text-center text-[13px] font-semibold text-slate-700 transition hover:border-slate-300 hover:bg-slate-50 hover:text-black peer-focus-visible:outline peer-focus-visible:outline-2 peer-focus-visible:outline-offset-2 peer-focus-visible:outline-blue-500 peer-disabled:cursor-not-allowed peer-disabled:opacity-60 peer-checked:border-emerald-700 peer-checked:bg-emerald-600 peer-checked:text-white peer-checked:shadow-md peer-checked:ring-2 peer-checked:ring-emerald-600/20"
+                                        >
+                                            Có mặt
+                                        </label>
+                                    </div>
+                                                                                                        <div class="relative">
+                                        <input
+                                            id="attendance-status-1-2-absent"
+                                            type="radio"
+                                            name="attendance_status_2"
+                                            value="absent"
+                                            wire:model="draftStatuses.2"
+                                            wire:change="setStatus(2, 'absent')"
+                                                                                        disabled                                            class="peer sr-only"
+                                        >
+                                        <label
+                                            for="attendance-status-1-2-absent"
+                                            class="flex w-[84px] cursor-pointer select-none items-center justify-center rounded-lg border border-transparent bg-white px-2.5 py-2 text-center text-[13px] font-semibold text-slate-700 transition hover:border-slate-300 hover:bg-slate-50 hover:text-black peer-focus-visible:outline peer-focus-visible:outline-2 peer-focus-visible:outline-offset-2 peer-focus-visible:outline-blue-500 peer-disabled:cursor-not-allowed peer-disabled:opacity-60 peer-checked:border-rose-700 peer-checked:bg-rose-600 peer-checked:text-white peer-checked:shadow-md peer-checked:ring-2 peer-checked:ring-rose-600/20"
+                                        >
+                                            Vắng
+                                        </label>
+                                    </div>
+                                                                                                        <div class="relative">
+                                        <input
+                                            id="attendance-status-1-2-late"
+                                            type="radio"
+                                            name="attendance_status_2"
+                                            value="late"
+                                            wire:model="draftStatuses.2"
+                                            wire:change="setStatus(2, 'late')"
+                                                                                        disabled                                            class="peer sr-only"
+                                        >
+                                        <label
+                                            for="attendance-status-1-2-late"
+                                            class="flex w-[84px] cursor-pointer select-none items-center justify-center rounded-lg border border-transparent bg-white px-2.5 py-2 text-center text-[13px] font-semibold text-slate-700 transition hover:border-slate-300 hover:bg-slate-50 hover:text-black peer-focus-visible:outline peer-focus-visible:outline-2 peer-focus-visible:outline-offset-2 peer-focus-visible:outline-blue-500 peer-disabled:cursor-not-allowed peer-disabled:opacity-60 peer-checked:border-amber-600 peer-checked:bg-amber-500 peer-checked:text-white peer-checked:shadow-md peer-checked:ring-2 peer-checked:ring-amber-500/20"
+                                        >
+                                            Đi muộn
+                                        </label>
+                                    </div>
+                                                                                                        <div class="relative">
+                                        <input
+                                            id="attendance-status-1-2-excused"
+                                            type="radio"
+                                            name="attendance_status_2"
+                                            value="excused"
+                                            wire:model="draftStatuses.2"
+                                            wire:change="setStatus(2, 'excused')"
+                                                                                        disabled                                            class="peer sr-only"
+                                        >
+                                        <label
+                                            for="attendance-status-1-2-excused"
+                                            class="flex w-[84px] cursor-pointer select-none items-center justify-center rounded-lg border border-transparent bg-white px-2.5 py-2 text-center text-[13px] font-semibold text-slate-700 transition hover:border-slate-300 hover:bg-slate-50 hover:text-black peer-focus-visible:outline peer-focus-visible:outline-2 peer-focus-visible:outline-offset-2 peer-focus-visible:outline-blue-500 peer-disabled:cursor-not-allowed peer-disabled:opacity-60 peer-checked:border-blue-700 peer-checked:bg-blue-600 peer-checked:text-white peer-checked:shadow-md peer-checked:ring-2 peer-checked:ring-blue-600/20"
+                                        >
+                                            Có phép
+                                        </label>
+                                    </div>
+                                <!--[if ENDBLOCK]><![endif]-->                            </div>
+                        </td>
+                        <td class="px-6 py-5">
+                            
+                            <!--[if BLOCK]><![endif]-->                                <div class="mb-2 space-y-1 rounded-lg border-l-[3px] px-3 py-2 border-amber-400 bg-amber-50/60">
+                                    <!--[if BLOCK]><![endif]--><!--[if ENDBLOCK]><![endif]-->                                    <!--[if BLOCK]><![endif]-->                                        <p class="flex items-center gap-1.5 whitespace-nowrap text-[12px] font-bold text-amber-600"
+                                            title="Điểm danh ở ngoài bán kính cho phép, vẫn được ghi nhận">
+                                            <svg
+    xmlns="http://www.w3.org/2000/svg"
+    width="12"
+    height="12"
+    viewBox="0 0 24 24"
+    fill="none"
+    stroke="currentColor"
+    stroke-width="2"
+    stroke-linecap="round"
+    stroke-linejoin="round"
+    class="shrink-0"
+>
+    <!--[if BLOCK]><![endif]-->            <path d="M20 10c0 6-8 12-8 12S4 16 4 10a8 8 0 1 1 16 0Z" />
+            <circle cx="12" cy="10" r="3" />
+            <!--[if ENDBLOCK]><![endif]--></svg>
+                                            Ngoài bán kính +11m
+                                        </p>
+                                    <!--[if ENDBLOCK]><![endif]-->                                </div>
+                            <!--[if ENDBLOCK]><![endif]-->                            <input
+                                type="text"
+                                wire:model="draftNotes.2"
+                                placeholder="Nhập ghi chú..."
+                                disabled                                class="w-full rounded-lg border border-transparent bg-transparent px-3.5 py-2.5 text-[14px] text-slate-700 placeholder-slate-400 outline-none transition hover:bg-slate-50 focus:bg-white focus:border-blue-300 focus:ring-2 focus:ring-blue-100 disabled:opacity-60"
+                            >
+                        </td>
+                    </tr>
+                                                        <tr class="bg-white transition-colors hover:bg-slate-50/50">
+                        <td class="px-6 py-5 font-medium text-slate-500 text-center">
+                            2
+                        </td>
+                        <td class="px-6 py-5">
+                            <div class="flex items-center gap-3.5">
+                                
+                                <div class="relative shrink-0">
+                                    <!--[if BLOCK]><![endif]-->                                        <img src="https://ui-avatars.com/api/?name=L%C3%A2m+Ch%C3%AD+Th%E1%BB%8D&amp;color=FFFFFF&amp;background=4285F4" alt="Phạm Thị Mai" class="h-10 w-10 rounded-full object-cover shadow-sm">
+                                    <!--[if ENDBLOCK]><![endif]-->                                    <!--[if BLOCK]><![endif]-->                                        <span class="absolute -right-0.5 -top-0.5 h-3 w-3 rounded-full ring-2 ring-white bg-red-500"
+                                            title="Trùng thiết bị"></span>
+                                    <!--[if ENDBLOCK]><![endif]-->                                </div>
+                                <div class="min-w-0">
+                                    <p class="truncate text-[15.5px] font-semibold text-slate-800">Phạm Thị Mai</p>
+                                    <p class="text-[12px] font-medium text-emerald-500 mt-0.5">Có mặt</p>
+                                </div>
+                            </div>
+                        </td>
+                        <td class="px-6 py-5">
+                            <div class="inline-flex items-center gap-1 rounded-xl border border-slate-200 bg-slate-100/80 p-1" role="radiogroup" aria-label="Trạng thái điểm danh của Phạm Thị Mai">
+                                <!--[if BLOCK]><![endif]-->                                                                        <div class="relative">
+                                        <input
+                                            id="attendance-status-1-4-present"
+                                            type="radio"
+                                            name="attendance_status_4"
+                                            value="present"
+                                            wire:model="draftStatuses.4"
+                                            wire:change="setStatus(4, 'present')"
+                                            checked                                            disabled                                            class="peer sr-only"
+                                        >
+                                        <label
+                                            for="attendance-status-1-4-present"
+                                            class="flex w-[84px] cursor-pointer select-none items-center justify-center rounded-lg border border-transparent bg-white px-2.5 py-2 text-center text-[13px] font-semibold text-slate-700 transition hover:border-slate-300 hover:bg-slate-50 hover:text-black peer-focus-visible:outline peer-focus-visible:outline-2 peer-focus-visible:outline-offset-2 peer-focus-visible:outline-blue-500 peer-disabled:cursor-not-allowed peer-disabled:opacity-60 peer-checked:border-emerald-700 peer-checked:bg-emerald-600 peer-checked:text-white peer-checked:shadow-md peer-checked:ring-2 peer-checked:ring-emerald-600/20"
+                                        >
+                                            Có mặt
+                                        </label>
+                                    </div>
+                                                                                                        <div class="relative">
+                                        <input
+                                            id="attendance-status-1-4-absent"
+                                            type="radio"
+                                            name="attendance_status_4"
+                                            value="absent"
+                                            wire:model="draftStatuses.4"
+                                            wire:change="setStatus(4, 'absent')"
+                                                                                        disabled                                            class="peer sr-only"
+                                        >
+                                        <label
+                                            for="attendance-status-1-4-absent"
+                                            class="flex w-[84px] cursor-pointer select-none items-center justify-center rounded-lg border border-transparent bg-white px-2.5 py-2 text-center text-[13px] font-semibold text-slate-700 transition hover:border-slate-300 hover:bg-slate-50 hover:text-black peer-focus-visible:outline peer-focus-visible:outline-2 peer-focus-visible:outline-offset-2 peer-focus-visible:outline-blue-500 peer-disabled:cursor-not-allowed peer-disabled:opacity-60 peer-checked:border-rose-700 peer-checked:bg-rose-600 peer-checked:text-white peer-checked:shadow-md peer-checked:ring-2 peer-checked:ring-rose-600/20"
+                                        >
+                                            Vắng
+                                        </label>
+                                    </div>
+                                                                                                        <div class="relative">
+                                        <input
+                                            id="attendance-status-1-4-late"
+                                            type="radio"
+                                            name="attendance_status_4"
+                                            value="late"
+                                            wire:model="draftStatuses.4"
+                                            wire:change="setStatus(4, 'late')"
+                                                                                        disabled                                            class="peer sr-only"
+                                        >
+                                        <label
+                                            for="attendance-status-1-4-late"
+                                            class="flex w-[84px] cursor-pointer select-none items-center justify-center rounded-lg border border-transparent bg-white px-2.5 py-2 text-center text-[13px] font-semibold text-slate-700 transition hover:border-slate-300 hover:bg-slate-50 hover:text-black peer-focus-visible:outline peer-focus-visible:outline-2 peer-focus-visible:outline-offset-2 peer-focus-visible:outline-blue-500 peer-disabled:cursor-not-allowed peer-disabled:opacity-60 peer-checked:border-amber-600 peer-checked:bg-amber-500 peer-checked:text-white peer-checked:shadow-md peer-checked:ring-2 peer-checked:ring-amber-500/20"
+                                        >
+                                            Đi muộn
+                                        </label>
+                                    </div>
+                                                                                                        <div class="relative">
+                                        <input
+                                            id="attendance-status-1-4-excused"
+                                            type="radio"
+                                            name="attendance_status_4"
+                                            value="excused"
+                                            wire:model="draftStatuses.4"
+                                            wire:change="setStatus(4, 'excused')"
+                                                                                        disabled                                            class="peer sr-only"
+                                        >
+                                        <label
+                                            for="attendance-status-1-4-excused"
+                                            class="flex w-[84px] cursor-pointer select-none items-center justify-center rounded-lg border border-transparent bg-white px-2.5 py-2 text-center text-[13px] font-semibold text-slate-700 transition hover:border-slate-300 hover:bg-slate-50 hover:text-black peer-focus-visible:outline peer-focus-visible:outline-2 peer-focus-visible:outline-offset-2 peer-focus-visible:outline-blue-500 peer-disabled:cursor-not-allowed peer-disabled:opacity-60 peer-checked:border-blue-700 peer-checked:bg-blue-600 peer-checked:text-white peer-checked:shadow-md peer-checked:ring-2 peer-checked:ring-blue-600/20"
+                                        >
+                                            Có phép
+                                        </label>
+                                    </div>
+                                <!--[if ENDBLOCK]><![endif]-->                            </div>
+                        </td>
+                        <td class="px-6 py-5">
+                            
+                            <!--[if BLOCK]><![endif]-->                                <div class="mb-2 space-y-1 rounded-lg border-l-[3px] px-3 py-2 border-red-400 bg-red-50/60">
+                                    <!--[if BLOCK]><![endif]-->                                        <p class="flex items-start gap-1.5 text-[12px] font-bold leading-snug text-red-600">
+                                            <svg
+    xmlns="http://www.w3.org/2000/svg"
+    width="12"
+    height="12"
+    viewBox="0 0 24 24"
+    fill="none"
+    stroke="currentColor"
+    stroke-width="2"
+    stroke-linecap="round"
+    stroke-linejoin="round"
+    class="shrink-0 mt-[3px]"
+>
+    <!--[if BLOCK]><![endif]-->            <rect width="20" height="14" x="2" y="3" rx="2"/>
+            <line x1="8" x2="16" y1="21" y2="21"/>
+            <line x1="12" x2="12" y1="17" y2="21"/>
+            <!--[if ENDBLOCK]><![endif]--></svg>
+                                            <span>
+                                                <!--[if BLOCK]><![endif]-->                                                    Trùng thiết bị với Lê Hoàng Nam
+                                                <!--[if ENDBLOCK]><![endif]-->                                            </span>
+                                        </p>
+                                    <!--[if ENDBLOCK]><![endif]-->                                    <!--[if BLOCK]><![endif]-->                                        <p class="flex items-center gap-1.5 whitespace-nowrap text-[12px] font-bold text-amber-600"
+                                            title="Điểm danh ở ngoài bán kính cho phép, vẫn được ghi nhận">
+                                            <svg
+    xmlns="http://www.w3.org/2000/svg"
+    width="12"
+    height="12"
+    viewBox="0 0 24 24"
+    fill="none"
+    stroke="currentColor"
+    stroke-width="2"
+    stroke-linecap="round"
+    stroke-linejoin="round"
+    class="shrink-0"
+>
+    <!--[if BLOCK]><![endif]-->            <path d="M20 10c0 6-8 12-8 12S4 16 4 10a8 8 0 1 1 16 0Z" />
+            <circle cx="12" cy="10" r="3" />
+            <!--[if ENDBLOCK]><![endif]--></svg>
+                                            Ngoài bán kính +65m
+                                        </p>
+                                    <!--[if ENDBLOCK]><![endif]-->                                </div>
+                            <!--[if ENDBLOCK]><![endif]-->                            <input
+                                type="text"
+                                wire:model="draftNotes.4"
+                                placeholder="Nhập ghi chú..."
+                                disabled                                class="w-full rounded-lg border border-transparent bg-transparent px-3.5 py-2.5 text-[14px] text-slate-700 placeholder-slate-400 outline-none transition hover:bg-slate-50 focus:bg-white focus:border-blue-300 focus:ring-2 focus:ring-blue-100 disabled:opacity-60"
+                            >
+                        </td>
+                    </tr>
+                                                        <tr class="bg-white transition-colors hover:bg-slate-50/50">
+                        <td class="px-6 py-5 font-medium text-slate-500 text-center">
+                            3
+                        </td>
+                        <td class="px-6 py-5">
+                            <div class="flex items-center gap-3.5">
+                                
+                                <div class="relative shrink-0">
+                                    <!--[if BLOCK]><![endif]-->                                        <img src="https://ui-avatars.com/api/?name=B%C3%A1c.+B%E1%BB%ADu+Gia+%C3%81nh&amp;color=FFFFFF&amp;background=4285F4" alt="Nguyễn Tuấn Khanh" class="h-10 w-10 rounded-full object-cover shadow-sm">
+                                    <!--[if ENDBLOCK]><![endif]-->                                    <!--[if BLOCK]><![endif]--><!--[if ENDBLOCK]><![endif]-->                                </div>
+                                <div class="min-w-0">
+                                    <p class="truncate text-[15.5px] font-semibold text-slate-800">Nguyễn Tuấn Khanh</p>
+                                    <p class="text-[12px] font-medium text-emerald-500 mt-0.5">Có mặt</p>
+                                </div>
+                            </div>
+                        </td>
+                        <td class="px-6 py-5">
+                            <div class="inline-flex items-center gap-1 rounded-xl border border-slate-200 bg-slate-100/80 p-1" role="radiogroup" aria-label="Trạng thái điểm danh của Nguyễn Tuấn Khanh">
+                                <!--[if BLOCK]><![endif]-->                                                                        <div class="relative">
+                                        <input
+                                            id="attendance-status-1-1-present"
+                                            type="radio"
+                                            name="attendance_status_1"
+                                            value="present"
+                                            wire:model="draftStatuses.1"
+                                            wire:change="setStatus(1, 'present')"
+                                            checked                                            disabled                                            class="peer sr-only"
+                                        >
+                                        <label
+                                            for="attendance-status-1-1-present"
+                                            class="flex w-[84px] cursor-pointer select-none items-center justify-center rounded-lg border border-transparent bg-white px-2.5 py-2 text-center text-[13px] font-semibold text-slate-700 transition hover:border-slate-300 hover:bg-slate-50 hover:text-black peer-focus-visible:outline peer-focus-visible:outline-2 peer-focus-visible:outline-offset-2 peer-focus-visible:outline-blue-500 peer-disabled:cursor-not-allowed peer-disabled:opacity-60 peer-checked:border-emerald-700 peer-checked:bg-emerald-600 peer-checked:text-white peer-checked:shadow-md peer-checked:ring-2 peer-checked:ring-emerald-600/20"
+                                        >
+                                            Có mặt
+                                        </label>
+                                    </div>
+                                                                                                        <div class="relative">
+                                        <input
+                                            id="attendance-status-1-1-absent"
+                                            type="radio"
+                                            name="attendance_status_1"
+                                            value="absent"
+                                            wire:model="draftStatuses.1"
+                                            wire:change="setStatus(1, 'absent')"
+                                                                                        disabled                                            class="peer sr-only"
+                                        >
+                                        <label
+                                            for="attendance-status-1-1-absent"
+                                            class="flex w-[84px] cursor-pointer select-none items-center justify-center rounded-lg border border-transparent bg-white px-2.5 py-2 text-center text-[13px] font-semibold text-slate-700 transition hover:border-slate-300 hover:bg-slate-50 hover:text-black peer-focus-visible:outline peer-focus-visible:outline-2 peer-focus-visible:outline-offset-2 peer-focus-visible:outline-blue-500 peer-disabled:cursor-not-allowed peer-disabled:opacity-60 peer-checked:border-rose-700 peer-checked:bg-rose-600 peer-checked:text-white peer-checked:shadow-md peer-checked:ring-2 peer-checked:ring-rose-600/20"
+                                        >
+                                            Vắng
+                                        </label>
+                                    </div>
+                                                                                                        <div class="relative">
+                                        <input
+                                            id="attendance-status-1-1-late"
+                                            type="radio"
+                                            name="attendance_status_1"
+                                            value="late"
+                                            wire:model="draftStatuses.1"
+                                            wire:change="setStatus(1, 'late')"
+                                                                                        disabled                                            class="peer sr-only"
+                                        >
+                                        <label
+                                            for="attendance-status-1-1-late"
+                                            class="flex w-[84px] cursor-pointer select-none items-center justify-center rounded-lg border border-transparent bg-white px-2.5 py-2 text-center text-[13px] font-semibold text-slate-700 transition hover:border-slate-300 hover:bg-slate-50 hover:text-black peer-focus-visible:outline peer-focus-visible:outline-2 peer-focus-visible:outline-offset-2 peer-focus-visible:outline-blue-500 peer-disabled:cursor-not-allowed peer-disabled:opacity-60 peer-checked:border-amber-600 peer-checked:bg-amber-500 peer-checked:text-white peer-checked:shadow-md peer-checked:ring-2 peer-checked:ring-amber-500/20"
+                                        >
+                                            Đi muộn
+                                        </label>
+                                    </div>
+                                                                                                        <div class="relative">
+                                        <input
+                                            id="attendance-status-1-1-excused"
+                                            type="radio"
+                                            name="attendance_status_1"
+                                            value="excused"
+                                            wire:model="draftStatuses.1"
+                                            wire:change="setStatus(1, 'excused')"
+                                                                                        disabled                                            class="peer sr-only"
+                                        >
+                                        <label
+                                            for="attendance-status-1-1-excused"
+                                            class="flex w-[84px] cursor-pointer select-none items-center justify-center rounded-lg border border-transparent bg-white px-2.5 py-2 text-center text-[13px] font-semibold text-slate-700 transition hover:border-slate-300 hover:bg-slate-50 hover:text-black peer-focus-visible:outline peer-focus-visible:outline-2 peer-focus-visible:outline-offset-2 peer-focus-visible:outline-blue-500 peer-disabled:cursor-not-allowed peer-disabled:opacity-60 peer-checked:border-blue-700 peer-checked:bg-blue-600 peer-checked:text-white peer-checked:shadow-md peer-checked:ring-2 peer-checked:ring-blue-600/20"
+                                        >
+                                            Có phép
+                                        </label>
+                                    </div>
+                                <!--[if ENDBLOCK]><![endif]-->                            </div>
+                        </td>
+                        <td class="px-6 py-5">
+                            
+                            <!--[if BLOCK]><![endif]--><!--[if ENDBLOCK]><![endif]-->                            <input
+                                type="text"
+                                wire:model="draftNotes.1"
+                                placeholder="Nhập ghi chú..."
+                                disabled                                class="w-full rounded-lg border border-transparent bg-transparent px-3.5 py-2.5 text-[14px] text-slate-700 placeholder-slate-400 outline-none transition hover:bg-slate-50 focus:bg-white focus:border-blue-300 focus:ring-2 focus:ring-blue-100 disabled:opacity-60"
+                            >
+                        </td>
+                    </tr>
+                                                        <tr class="bg-white transition-colors hover:bg-slate-50/50">
+                        <td class="px-6 py-5 font-medium text-slate-500 text-center">
+                            4
+                        </td>
+                        <td class="px-6 py-5">
+                            <div class="flex items-center gap-3.5">
+                                
+                                <div class="relative shrink-0">
+                                    <!--[if BLOCK]><![endif]-->                                        <img src="https://ui-avatars.com/api/?name=Anh.+Kim+Tr%C3%ACnh&amp;color=FFFFFF&amp;background=4285F4" alt="Lê Hoàng Nam" class="h-10 w-10 rounded-full object-cover shadow-sm">
+                                    <!--[if ENDBLOCK]><![endif]-->                                    <!--[if BLOCK]><![endif]-->                                        <span class="absolute -right-0.5 -top-0.5 h-3 w-3 rounded-full ring-2 ring-white bg-red-500"
+                                            title="Trùng thiết bị"></span>
+                                    <!--[if ENDBLOCK]><![endif]-->                                </div>
+                                <div class="min-w-0">
+                                    <p class="truncate text-[15.5px] font-semibold text-slate-800">Lê Hoàng Nam</p>
+                                    <p class="text-[12px] font-medium text-emerald-500 mt-0.5">Có mặt</p>
+                                </div>
+                            </div>
+                        </td>
+                        <td class="px-6 py-5">
+                            <div class="inline-flex items-center gap-1 rounded-xl border border-slate-200 bg-slate-100/80 p-1" role="radiogroup" aria-label="Trạng thái điểm danh của Lê Hoàng Nam">
+                                <!--[if BLOCK]><![endif]-->                                                                        <div class="relative">
+                                        <input
+                                            id="attendance-status-1-3-present"
+                                            type="radio"
+                                            name="attendance_status_3"
+                                            value="present"
+                                            wire:model="draftStatuses.3"
+                                            wire:change="setStatus(3, 'present')"
+                                            checked                                            disabled                                            class="peer sr-only"
+                                        >
+                                        <label
+                                            for="attendance-status-1-3-present"
+                                            class="flex w-[84px] cursor-pointer select-none items-center justify-center rounded-lg border border-transparent bg-white px-2.5 py-2 text-center text-[13px] font-semibold text-slate-700 transition hover:border-slate-300 hover:bg-slate-50 hover:text-black peer-focus-visible:outline peer-focus-visible:outline-2 peer-focus-visible:outline-offset-2 peer-focus-visible:outline-blue-500 peer-disabled:cursor-not-allowed peer-disabled:opacity-60 peer-checked:border-emerald-700 peer-checked:bg-emerald-600 peer-checked:text-white peer-checked:shadow-md peer-checked:ring-2 peer-checked:ring-emerald-600/20"
+                                        >
+                                            Có mặt
+                                        </label>
+                                    </div>
+                                                                                                        <div class="relative">
+                                        <input
+                                            id="attendance-status-1-3-absent"
+                                            type="radio"
+                                            name="attendance_status_3"
+                                            value="absent"
+                                            wire:model="draftStatuses.3"
+                                            wire:change="setStatus(3, 'absent')"
+                                                                                        disabled                                            class="peer sr-only"
+                                        >
+                                        <label
+                                            for="attendance-status-1-3-absent"
+                                            class="flex w-[84px] cursor-pointer select-none items-center justify-center rounded-lg border border-transparent bg-white px-2.5 py-2 text-center text-[13px] font-semibold text-slate-700 transition hover:border-slate-300 hover:bg-slate-50 hover:text-black peer-focus-visible:outline peer-focus-visible:outline-2 peer-focus-visible:outline-offset-2 peer-focus-visible:outline-blue-500 peer-disabled:cursor-not-allowed peer-disabled:opacity-60 peer-checked:border-rose-700 peer-checked:bg-rose-600 peer-checked:text-white peer-checked:shadow-md peer-checked:ring-2 peer-checked:ring-rose-600/20"
+                                        >
+                                            Vắng
+                                        </label>
+                                    </div>
+                                                                                                        <div class="relative">
+                                        <input
+                                            id="attendance-status-1-3-late"
+                                            type="radio"
+                                            name="attendance_status_3"
+                                            value="late"
+                                            wire:model="draftStatuses.3"
+                                            wire:change="setStatus(3, 'late')"
+                                                                                        disabled                                            class="peer sr-only"
+                                        >
+                                        <label
+                                            for="attendance-status-1-3-late"
+                                            class="flex w-[84px] cursor-pointer select-none items-center justify-center rounded-lg border border-transparent bg-white px-2.5 py-2 text-center text-[13px] font-semibold text-slate-700 transition hover:border-slate-300 hover:bg-slate-50 hover:text-black peer-focus-visible:outline peer-focus-visible:outline-2 peer-focus-visible:outline-offset-2 peer-focus-visible:outline-blue-500 peer-disabled:cursor-not-allowed peer-disabled:opacity-60 peer-checked:border-amber-600 peer-checked:bg-amber-500 peer-checked:text-white peer-checked:shadow-md peer-checked:ring-2 peer-checked:ring-amber-500/20"
+                                        >
+                                            Đi muộn
+                                        </label>
+                                    </div>
+                                                                                                        <div class="relative">
+                                        <input
+                                            id="attendance-status-1-3-excused"
+                                            type="radio"
+                                            name="attendance_status_3"
+                                            value="excused"
+                                            wire:model="draftStatuses.3"
+                                            wire:change="setStatus(3, 'excused')"
+                                                                                        disabled                                            class="peer sr-only"
+                                        >
+                                        <label
+                                            for="attendance-status-1-3-excused"
+                                            class="flex w-[84px] cursor-pointer select-none items-center justify-center rounded-lg border border-transparent bg-white px-2.5 py-2 text-center text-[13px] font-semibold text-slate-700 transition hover:border-slate-300 hover:bg-slate-50 hover:text-black peer-focus-visible:outline peer-focus-visible:outline-2 peer-focus-visible:outline-offset-2 peer-focus-visible:outline-blue-500 peer-disabled:cursor-not-allowed peer-disabled:opacity-60 peer-checked:border-blue-700 peer-checked:bg-blue-600 peer-checked:text-white peer-checked:shadow-md peer-checked:ring-2 peer-checked:ring-blue-600/20"
+                                        >
+                                            Có phép
+                                        </label>
+                                    </div>
+                                <!--[if ENDBLOCK]><![endif]-->                            </div>
+                        </td>
+                        <td class="px-6 py-5">
+                            
+                            <!--[if BLOCK]><![endif]-->                                <div class="mb-2 space-y-1 rounded-lg border-l-[3px] px-3 py-2 border-red-400 bg-red-50/60">
+                                    <!--[if BLOCK]><![endif]-->                                        <p class="flex items-start gap-1.5 text-[12px] font-bold leading-snug text-red-600">
+                                            <svg
+    xmlns="http://www.w3.org/2000/svg"
+    width="12"
+    height="12"
+    viewBox="0 0 24 24"
+    fill="none"
+    stroke="currentColor"
+    stroke-width="2"
+    stroke-linecap="round"
+    stroke-linejoin="round"
+    class="shrink-0 mt-[3px]"
+>
+    <!--[if BLOCK]><![endif]-->            <rect width="20" height="14" x="2" y="3" rx="2"/>
+            <line x1="8" x2="16" y1="21" y2="21"/>
+            <line x1="12" x2="12" y1="17" y2="21"/>
+            <!--[if ENDBLOCK]><![endif]--></svg>
+                                            <span>
+                                                <!--[if BLOCK]><![endif]-->                                                    Trùng thiết bị với Phạm Thị Mai
+                                                <!--[if ENDBLOCK]><![endif]-->                                            </span>
+                                        </p>
+                                    <!--[if ENDBLOCK]><![endif]-->                                    <!--[if BLOCK]><![endif]--><!--[if ENDBLOCK]><![endif]-->                                </div>
+                            <!--[if ENDBLOCK]><![endif]-->                            <input
+                                type="text"
+                                wire:model="draftNotes.3"
+                                placeholder="Nhập ghi chú..."
+                                disabled                                class="w-full rounded-lg border border-transparent bg-transparent px-3.5 py-2.5 text-[14px] text-slate-700 placeholder-slate-400 outline-none transition hover:bg-slate-50 focus:bg-white focus:border-blue-300 focus:ring-2 focus:ring-blue-100 disabled:opacity-60"
+                            >
+                        </td>
+                    </tr>
+                                                        <tr class="bg-white transition-colors hover:bg-slate-50/50">
+                        <td class="px-6 py-5 font-medium text-slate-500 text-center">
+                            5
+                        </td>
+                        <td class="px-6 py-5">
+                            <div class="flex items-center gap-3.5">
+                                
+                                <div class="relative shrink-0">
+                                    <!--[if BLOCK]><![endif]-->                                        <img src="https://ui-avatars.com/api/?name=H%E1%BA%A1+Mai&amp;color=FFFFFF&amp;background=4285F4" alt="Trần Quốc Bảo" class="h-10 w-10 rounded-full object-cover shadow-sm">
+                                    <!--[if ENDBLOCK]><![endif]-->                                    <!--[if BLOCK]><![endif]--><!--[if ENDBLOCK]><![endif]-->                                </div>
+                                <div class="min-w-0">
+                                    <p class="truncate text-[15.5px] font-semibold text-slate-800">Trần Quốc Bảo</p>
+                                    <p class="text-[12px] font-medium text-rose-500 mt-0.5">Vắng</p>
+                                </div>
+                            </div>
+                        </td>
+                        <td class="px-6 py-5">
+                            <div class="inline-flex items-center gap-1 rounded-xl border border-slate-200 bg-slate-100/80 p-1" role="radiogroup" aria-label="Trạng thái điểm danh của Trần Quốc Bảo">
+                                <!--[if BLOCK]><![endif]-->                                                                        <div class="relative">
+                                        <input
+                                            id="attendance-status-1-5-present"
+                                            type="radio"
+                                            name="attendance_status_5"
+                                            value="present"
+                                            wire:model="draftStatuses.5"
+                                            wire:change="setStatus(5, 'present')"
+                                                                                        disabled                                            class="peer sr-only"
+                                        >
+                                        <label
+                                            for="attendance-status-1-5-present"
+                                            class="flex w-[84px] cursor-pointer select-none items-center justify-center rounded-lg border border-transparent bg-white px-2.5 py-2 text-center text-[13px] font-semibold text-slate-700 transition hover:border-slate-300 hover:bg-slate-50 hover:text-black peer-focus-visible:outline peer-focus-visible:outline-2 peer-focus-visible:outline-offset-2 peer-focus-visible:outline-blue-500 peer-disabled:cursor-not-allowed peer-disabled:opacity-60 peer-checked:border-emerald-700 peer-checked:bg-emerald-600 peer-checked:text-white peer-checked:shadow-md peer-checked:ring-2 peer-checked:ring-emerald-600/20"
+                                        >
+                                            Có mặt
+                                        </label>
+                                    </div>
+                                                                                                        <div class="relative">
+                                        <input
+                                            id="attendance-status-1-5-absent"
+                                            type="radio"
+                                            name="attendance_status_5"
+                                            value="absent"
+                                            wire:model="draftStatuses.5"
+                                            wire:change="setStatus(5, 'absent')"
+                                            checked                                            disabled                                            class="peer sr-only"
+                                        >
+                                        <label
+                                            for="attendance-status-1-5-absent"
+                                            class="flex w-[84px] cursor-pointer select-none items-center justify-center rounded-lg border border-transparent bg-white px-2.5 py-2 text-center text-[13px] font-semibold text-slate-700 transition hover:border-slate-300 hover:bg-slate-50 hover:text-black peer-focus-visible:outline peer-focus-visible:outline-2 peer-focus-visible:outline-offset-2 peer-focus-visible:outline-blue-500 peer-disabled:cursor-not-allowed peer-disabled:opacity-60 peer-checked:border-rose-700 peer-checked:bg-rose-600 peer-checked:text-white peer-checked:shadow-md peer-checked:ring-2 peer-checked:ring-rose-600/20"
+                                        >
+                                            Vắng
+                                        </label>
+                                    </div>
+                                                                                                        <div class="relative">
+                                        <input
+                                            id="attendance-status-1-5-late"
+                                            type="radio"
+                                            name="attendance_status_5"
+                                            value="late"
+                                            wire:model="draftStatuses.5"
+                                            wire:change="setStatus(5, 'late')"
+                                                                                        disabled                                            class="peer sr-only"
+                                        >
+                                        <label
+                                            for="attendance-status-1-5-late"
+                                            class="flex w-[84px] cursor-pointer select-none items-center justify-center rounded-lg border border-transparent bg-white px-2.5 py-2 text-center text-[13px] font-semibold text-slate-700 transition hover:border-slate-300 hover:bg-slate-50 hover:text-black peer-focus-visible:outline peer-focus-visible:outline-2 peer-focus-visible:outline-offset-2 peer-focus-visible:outline-blue-500 peer-disabled:cursor-not-allowed peer-disabled:opacity-60 peer-checked:border-amber-600 peer-checked:bg-amber-500 peer-checked:text-white peer-checked:shadow-md peer-checked:ring-2 peer-checked:ring-amber-500/20"
+                                        >
+                                            Đi muộn
+                                        </label>
+                                    </div>
+                                                                                                        <div class="relative">
+                                        <input
+                                            id="attendance-status-1-5-excused"
+                                            type="radio"
+                                            name="attendance_status_5"
+                                            value="excused"
+                                            wire:model="draftStatuses.5"
+                                            wire:change="setStatus(5, 'excused')"
+                                                                                        disabled                                            class="peer sr-only"
+                                        >
+                                        <label
+                                            for="attendance-status-1-5-excused"
+                                            class="flex w-[84px] cursor-pointer select-none items-center justify-center rounded-lg border border-transparent bg-white px-2.5 py-2 text-center text-[13px] font-semibold text-slate-700 transition hover:border-slate-300 hover:bg-slate-50 hover:text-black peer-focus-visible:outline peer-focus-visible:outline-2 peer-focus-visible:outline-offset-2 peer-focus-visible:outline-blue-500 peer-disabled:cursor-not-allowed peer-disabled:opacity-60 peer-checked:border-blue-700 peer-checked:bg-blue-600 peer-checked:text-white peer-checked:shadow-md peer-checked:ring-2 peer-checked:ring-blue-600/20"
+                                        >
+                                            Có phép
+                                        </label>
+                                    </div>
+                                <!--[if ENDBLOCK]><![endif]-->                            </div>
+                        </td>
+                        <td class="px-6 py-5">
+                            
+                            <!--[if BLOCK]><![endif]--><!--[if ENDBLOCK]><![endif]-->                            <input
+                                type="text"
+                                wire:model="draftNotes.5"
+                                placeholder="Nhập ghi chú..."
+                                disabled                                class="w-full rounded-lg border border-transparent bg-transparent px-3.5 py-2.5 text-[14px] text-slate-700 placeholder-slate-400 outline-none transition hover:bg-slate-50 focus:bg-white focus:border-blue-300 focus:ring-2 focus:ring-blue-100 disabled:opacity-60"
+                            >
+                        </td>
+                    </tr>
+                                                        <tr class="bg-white transition-colors hover:bg-slate-50/50">
+                        <td class="px-6 py-5 font-medium text-slate-500 text-center">
+                            6
+                        </td>
+                        <td class="px-6 py-5">
+                            <div class="flex items-center gap-3.5">
+                                
+                                <div class="relative shrink-0">
+                                    <!--[if BLOCK]><![endif]-->                                        <img src="https://ui-avatars.com/api/?name=Ch%E1%BB%8B.+L%E1%BB%A5c+N%E1%BB%AF&amp;color=FFFFFF&amp;background=4285F4" alt="An Nguyễn" class="h-10 w-10 rounded-full object-cover shadow-sm">
+                                    <!--[if ENDBLOCK]><![endif]-->                                    <!--[if BLOCK]><![endif]-->                                        <span class="absolute -right-0.5 -top-0.5 h-3 w-3 rounded-full ring-2 ring-white bg-red-500"
+                                            title="Trùng thiết bị"></span>
+                                    <!--[if ENDBLOCK]><![endif]-->                                </div>
+                                <div class="min-w-0">
+                                    <p class="truncate text-[15.5px] font-semibold text-slate-800">An Nguyễn</p>
+                                    <p class="text-[12px] font-medium text-emerald-500 mt-0.5">Có mặt</p>
+                                </div>
+                            </div>
+                        </td>
+                        <td class="px-6 py-5">
+                            <div class="inline-flex items-center gap-1 rounded-xl border border-slate-200 bg-slate-100/80 p-1" role="radiogroup" aria-label="Trạng thái điểm danh của An Nguyễn">
+                                <!--[if BLOCK]><![endif]-->                                                                        <div class="relative">
+                                        <input
+                                            id="attendance-status-1-6-present"
+                                            type="radio"
+                                            name="attendance_status_6"
+                                            value="present"
+                                            wire:model="draftStatuses.6"
+                                            wire:change="setStatus(6, 'present')"
+                                            checked                                            disabled                                            class="peer sr-only"
+                                        >
+                                        <label
+                                            for="attendance-status-1-6-present"
+                                            class="flex w-[84px] cursor-pointer select-none items-center justify-center rounded-lg border border-transparent bg-white px-2.5 py-2 text-center text-[13px] font-semibold text-slate-700 transition hover:border-slate-300 hover:bg-slate-50 hover:text-black peer-focus-visible:outline peer-focus-visible:outline-2 peer-focus-visible:outline-offset-2 peer-focus-visible:outline-blue-500 peer-disabled:cursor-not-allowed peer-disabled:opacity-60 peer-checked:border-emerald-700 peer-checked:bg-emerald-600 peer-checked:text-white peer-checked:shadow-md peer-checked:ring-2 peer-checked:ring-emerald-600/20"
+                                        >
+                                            Có mặt
+                                        </label>
+                                    </div>
+                                                                                                        <div class="relative">
+                                        <input
+                                            id="attendance-status-1-6-absent"
+                                            type="radio"
+                                            name="attendance_status_6"
+                                            value="absent"
+                                            wire:model="draftStatuses.6"
+                                            wire:change="setStatus(6, 'absent')"
+                                                                                        disabled                                            class="peer sr-only"
+                                        >
+                                        <label
+                                            for="attendance-status-1-6-absent"
+                                            class="flex w-[84px] cursor-pointer select-none items-center justify-center rounded-lg border border-transparent bg-white px-2.5 py-2 text-center text-[13px] font-semibold text-slate-700 transition hover:border-slate-300 hover:bg-slate-50 hover:text-black peer-focus-visible:outline peer-focus-visible:outline-2 peer-focus-visible:outline-offset-2 peer-focus-visible:outline-blue-500 peer-disabled:cursor-not-allowed peer-disabled:opacity-60 peer-checked:border-rose-700 peer-checked:bg-rose-600 peer-checked:text-white peer-checked:shadow-md peer-checked:ring-2 peer-checked:ring-rose-600/20"
+                                        >
+                                            Vắng
+                                        </label>
+                                    </div>
+                                                                                                        <div class="relative">
+                                        <input
+                                            id="attendance-status-1-6-late"
+                                            type="radio"
+                                            name="attendance_status_6"
+                                            value="late"
+                                            wire:model="draftStatuses.6"
+                                            wire:change="setStatus(6, 'late')"
+                                                                                        disabled                                            class="peer sr-only"
+                                        >
+                                        <label
+                                            for="attendance-status-1-6-late"
+                                            class="flex w-[84px] cursor-pointer select-none items-center justify-center rounded-lg border border-transparent bg-white px-2.5 py-2 text-center text-[13px] font-semibold text-slate-700 transition hover:border-slate-300 hover:bg-slate-50 hover:text-black peer-focus-visible:outline peer-focus-visible:outline-2 peer-focus-visible:outline-offset-2 peer-focus-visible:outline-blue-500 peer-disabled:cursor-not-allowed peer-disabled:opacity-60 peer-checked:border-amber-600 peer-checked:bg-amber-500 peer-checked:text-white peer-checked:shadow-md peer-checked:ring-2 peer-checked:ring-amber-500/20"
+                                        >
+                                            Đi muộn
+                                        </label>
+                                    </div>
+                                                                                                        <div class="relative">
+                                        <input
+                                            id="attendance-status-1-6-excused"
+                                            type="radio"
+                                            name="attendance_status_6"
+                                            value="excused"
+                                            wire:model="draftStatuses.6"
+                                            wire:change="setStatus(6, 'excused')"
+                                                                                        disabled                                            class="peer sr-only"
+                                        >
+                                        <label
+                                            for="attendance-status-1-6-excused"
+                                            class="flex w-[84px] cursor-pointer select-none items-center justify-center rounded-lg border border-transparent bg-white px-2.5 py-2 text-center text-[13px] font-semibold text-slate-700 transition hover:border-slate-300 hover:bg-slate-50 hover:text-black peer-focus-visible:outline peer-focus-visible:outline-2 peer-focus-visible:outline-offset-2 peer-focus-visible:outline-blue-500 peer-disabled:cursor-not-allowed peer-disabled:opacity-60 peer-checked:border-blue-700 peer-checked:bg-blue-600 peer-checked:text-white peer-checked:shadow-md peer-checked:ring-2 peer-checked:ring-blue-600/20"
+                                        >
+                                            Có phép
+                                        </label>
+                                    </div>
+                                <!--[if ENDBLOCK]><![endif]-->                            </div>
+                        </td>
+                        <td class="px-6 py-5">
+                            
+                            <!--[if BLOCK]><![endif]-->                                <div class="mb-2 space-y-1 rounded-lg border-l-[3px] px-3 py-2 border-red-400 bg-red-50/60">
+                                    <!--[if BLOCK]><![endif]-->                                        <p class="flex items-start gap-1.5 text-[12px] font-bold leading-snug text-red-600">
+                                            <svg
+    xmlns="http://www.w3.org/2000/svg"
+    width="12"
+    height="12"
+    viewBox="0 0 24 24"
+    fill="none"
+    stroke="currentColor"
+    stroke-width="2"
+    stroke-linecap="round"
+    stroke-linejoin="round"
+    class="shrink-0 mt-[3px]"
+>
+    <!--[if BLOCK]><![endif]-->            <rect width="20" height="14" x="2" y="3" rx="2"/>
+            <line x1="8" x2="16" y1="21" y2="21"/>
+            <line x1="12" x2="12" y1="17" y2="21"/>
+            <!--[if ENDBLOCK]><![endif]--></svg>
+                                            <span>
+                                                <!--[if BLOCK]><![endif]-->                                                    Trùng thiết bị với Bình Trần, Cường Lê và 2 người nữa
+                                                <!--[if ENDBLOCK]><![endif]-->                                            </span>
+                                        </p>
+                                    <!--[if ENDBLOCK]><![endif]-->                                    <!--[if BLOCK]><![endif]--><!--[if ENDBLOCK]><![endif]-->                                </div>
+                            <!--[if ENDBLOCK]><![endif]-->                            <input
+                                type="text"
+                                wire:model="draftNotes.6"
+                                placeholder="Nhập ghi chú..."
+                                disabled                                class="w-full rounded-lg border border-transparent bg-transparent px-3.5 py-2.5 text-[14px] text-slate-700 placeholder-slate-400 outline-none transition hover:bg-slate-50 focus:bg-white focus:border-blue-300 focus:ring-2 focus:ring-blue-100 disabled:opacity-60"
+                            >
+                        </td>
+                    </tr>
+                                                        <tr class="bg-white transition-colors hover:bg-slate-50/50">
+                        <td class="px-6 py-5 font-medium text-slate-500 text-center">
+                            7
+                        </td>
+                        <td class="px-6 py-5">
+                            <div class="flex items-center gap-3.5">
+                                
+                                <div class="relative shrink-0">
+                                    <!--[if BLOCK]><![endif]-->                                        <img src="https://ui-avatars.com/api/?name=Ty+T%C3%A0i+Ph%C6%B0%E1%BB%9Bc&amp;color=FFFFFF&amp;background=4285F4" alt="Bình Trần" class="h-10 w-10 rounded-full object-cover shadow-sm">
+                                    <!--[if ENDBLOCK]><![endif]-->                                    <!--[if BLOCK]><![endif]-->                                        <span class="absolute -right-0.5 -top-0.5 h-3 w-3 rounded-full ring-2 ring-white bg-red-500"
+                                            title="Trùng thiết bị"></span>
+                                    <!--[if ENDBLOCK]><![endif]-->                                </div>
+                                <div class="min-w-0">
+                                    <p class="truncate text-[15.5px] font-semibold text-slate-800">Bình Trần</p>
+                                    <p class="text-[12px] font-medium text-emerald-500 mt-0.5">Có mặt</p>
+                                </div>
+                            </div>
+                        </td>
+                        <td class="px-6 py-5">
+                            <div class="inline-flex items-center gap-1 rounded-xl border border-slate-200 bg-slate-100/80 p-1" role="radiogroup" aria-label="Trạng thái điểm danh của Bình Trần">
+                                <!--[if BLOCK]><![endif]-->                                                                        <div class="relative">
+                                        <input
+                                            id="attendance-status-1-7-present"
+                                            type="radio"
+                                            name="attendance_status_7"
+                                            value="present"
+                                            wire:model="draftStatuses.7"
+                                            wire:change="setStatus(7, 'present')"
+                                            checked                                            disabled                                            class="peer sr-only"
+                                        >
+                                        <label
+                                            for="attendance-status-1-7-present"
+                                            class="flex w-[84px] cursor-pointer select-none items-center justify-center rounded-lg border border-transparent bg-white px-2.5 py-2 text-center text-[13px] font-semibold text-slate-700 transition hover:border-slate-300 hover:bg-slate-50 hover:text-black peer-focus-visible:outline peer-focus-visible:outline-2 peer-focus-visible:outline-offset-2 peer-focus-visible:outline-blue-500 peer-disabled:cursor-not-allowed peer-disabled:opacity-60 peer-checked:border-emerald-700 peer-checked:bg-emerald-600 peer-checked:text-white peer-checked:shadow-md peer-checked:ring-2 peer-checked:ring-emerald-600/20"
+                                        >
+                                            Có mặt
+                                        </label>
+                                    </div>
+                                                                                                        <div class="relative">
+                                        <input
+                                            id="attendance-status-1-7-absent"
+                                            type="radio"
+                                            name="attendance_status_7"
+                                            value="absent"
+                                            wire:model="draftStatuses.7"
+                                            wire:change="setStatus(7, 'absent')"
+                                                                                        disabled                                            class="peer sr-only"
+                                        >
+                                        <label
+                                            for="attendance-status-1-7-absent"
+                                            class="flex w-[84px] cursor-pointer select-none items-center justify-center rounded-lg border border-transparent bg-white px-2.5 py-2 text-center text-[13px] font-semibold text-slate-700 transition hover:border-slate-300 hover:bg-slate-50 hover:text-black peer-focus-visible:outline peer-focus-visible:outline-2 peer-focus-visible:outline-offset-2 peer-focus-visible:outline-blue-500 peer-disabled:cursor-not-allowed peer-disabled:opacity-60 peer-checked:border-rose-700 peer-checked:bg-rose-600 peer-checked:text-white peer-checked:shadow-md peer-checked:ring-2 peer-checked:ring-rose-600/20"
+                                        >
+                                            Vắng
+                                        </label>
+                                    </div>
+                                                                                                        <div class="relative">
+                                        <input
+                                            id="attendance-status-1-7-late"
+                                            type="radio"
+                                            name="attendance_status_7"
+                                            value="late"
+                                            wire:model="draftStatuses.7"
+                                            wire:change="setStatus(7, 'late')"
+                                                                                        disabled                                            class="peer sr-only"
+                                        >
+                                        <label
+                                            for="attendance-status-1-7-late"
+                                            class="flex w-[84px] cursor-pointer select-none items-center justify-center rounded-lg border border-transparent bg-white px-2.5 py-2 text-center text-[13px] font-semibold text-slate-700 transition hover:border-slate-300 hover:bg-slate-50 hover:text-black peer-focus-visible:outline peer-focus-visible:outline-2 peer-focus-visible:outline-offset-2 peer-focus-visible:outline-blue-500 peer-disabled:cursor-not-allowed peer-disabled:opacity-60 peer-checked:border-amber-600 peer-checked:bg-amber-500 peer-checked:text-white peer-checked:shadow-md peer-checked:ring-2 peer-checked:ring-amber-500/20"
+                                        >
+                                            Đi muộn
+                                        </label>
+                                    </div>
+                                                                                                        <div class="relative">
+                                        <input
+                                            id="attendance-status-1-7-excused"
+                                            type="radio"
+                                            name="attendance_status_7"
+                                            value="excused"
+                                            wire:model="draftStatuses.7"
+                                            wire:change="setStatus(7, 'excused')"
+                                                                                        disabled                                            class="peer sr-only"
+                                        >
+                                        <label
+                                            for="attendance-status-1-7-excused"
+                                            class="flex w-[84px] cursor-pointer select-none items-center justify-center rounded-lg border border-transparent bg-white px-2.5 py-2 text-center text-[13px] font-semibold text-slate-700 transition hover:border-slate-300 hover:bg-slate-50 hover:text-black peer-focus-visible:outline peer-focus-visible:outline-2 peer-focus-visible:outline-offset-2 peer-focus-visible:outline-blue-500 peer-disabled:cursor-not-allowed peer-disabled:opacity-60 peer-checked:border-blue-700 peer-checked:bg-blue-600 peer-checked:text-white peer-checked:shadow-md peer-checked:ring-2 peer-checked:ring-blue-600/20"
+                                        >
+                                            Có phép
+                                        </label>
+                                    </div>
+                                <!--[if ENDBLOCK]><![endif]-->                            </div>
+                        </td>
+                        <td class="px-6 py-5">
+                            
+                            <!--[if BLOCK]><![endif]-->                                <div class="mb-2 space-y-1 rounded-lg border-l-[3px] px-3 py-2 border-red-400 bg-red-50/60">
+                                    <!--[if BLOCK]><![endif]-->                                        <p class="flex items-start gap-1.5 text-[12px] font-bold leading-snug text-red-600">
+                                            <svg
+    xmlns="http://www.w3.org/2000/svg"
+    width="12"
+    height="12"
+    viewBox="0 0 24 24"
+    fill="none"
+    stroke="currentColor"
+    stroke-width="2"
+    stroke-linecap="round"
+    stroke-linejoin="round"
+    class="shrink-0 mt-[3px]"
+>
+    <!--[if BLOCK]><![endif]-->            <rect width="20" height="14" x="2" y="3" rx="2"/>
+            <line x1="8" x2="16" y1="21" y2="21"/>
+            <line x1="12" x2="12" y1="17" y2="21"/>
+            <!--[if ENDBLOCK]><![endif]--></svg>
+                                            <span>
+                                                <!--[if BLOCK]><![endif]-->                                                    Trùng thiết bị với An Nguyễn, Cường Lê và 2 người nữa
+                                                <!--[if ENDBLOCK]><![endif]-->                                            </span>
+                                        </p>
+                                    <!--[if ENDBLOCK]><![endif]-->                                    <!--[if BLOCK]><![endif]--><!--[if ENDBLOCK]><![endif]-->                                </div>
+                            <!--[if ENDBLOCK]><![endif]-->                            <input
+                                type="text"
+                                wire:model="draftNotes.7"
+                                placeholder="Nhập ghi chú..."
+                                disabled                                class="w-full rounded-lg border border-transparent bg-transparent px-3.5 py-2.5 text-[14px] text-slate-700 placeholder-slate-400 outline-none transition hover:bg-slate-50 focus:bg-white focus:border-blue-300 focus:ring-2 focus:ring-blue-100 disabled:opacity-60"
+                            >
+                        </td>
+                    </tr>
+                                                        <tr class="bg-white transition-colors hover:bg-slate-50/50">
+                        <td class="px-6 py-5 font-medium text-slate-500 text-center">
+                            8
+                        </td>
+                        <td class="px-6 py-5">
+                            <div class="flex items-center gap-3.5">
+                                
+                                <div class="relative shrink-0">
+                                    <!--[if BLOCK]><![endif]-->                                        <img src="https://ui-avatars.com/api/?name=Nh%C3%A2m+L%C6%B0%C6%A1ng+%C4%90%E1%BB%8Bnh&amp;color=FFFFFF&amp;background=4285F4" alt="Cường Lê" class="h-10 w-10 rounded-full object-cover shadow-sm">
+                                    <!--[if ENDBLOCK]><![endif]-->                                    <!--[if BLOCK]><![endif]-->                                        <span class="absolute -right-0.5 -top-0.5 h-3 w-3 rounded-full ring-2 ring-white bg-red-500"
+                                            title="Trùng thiết bị"></span>
+                                    <!--[if ENDBLOCK]><![endif]-->                                </div>
+                                <div class="min-w-0">
+                                    <p class="truncate text-[15.5px] font-semibold text-slate-800">Cường Lê</p>
+                                    <p class="text-[12px] font-medium text-emerald-500 mt-0.5">Có mặt</p>
+                                </div>
+                            </div>
+                        </td>
+                        <td class="px-6 py-5">
+                            <div class="inline-flex items-center gap-1 rounded-xl border border-slate-200 bg-slate-100/80 p-1" role="radiogroup" aria-label="Trạng thái điểm danh của Cường Lê">
+                                <!--[if BLOCK]><![endif]-->                                                                        <div class="relative">
+                                        <input
+                                            id="attendance-status-1-8-present"
+                                            type="radio"
+                                            name="attendance_status_8"
+                                            value="present"
+                                            wire:model="draftStatuses.8"
+                                            wire:change="setStatus(8, 'present')"
+                                            checked                                            disabled                                            class="peer sr-only"
+                                        >
+                                        <label
+                                            for="attendance-status-1-8-present"
+                                            class="flex w-[84px] cursor-pointer select-none items-center justify-center rounded-lg border border-transparent bg-white px-2.5 py-2 text-center text-[13px] font-semibold text-slate-700 transition hover:border-slate-300 hover:bg-slate-50 hover:text-black peer-focus-visible:outline peer-focus-visible:outline-2 peer-focus-visible:outline-offset-2 peer-focus-visible:outline-blue-500 peer-disabled:cursor-not-allowed peer-disabled:opacity-60 peer-checked:border-emerald-700 peer-checked:bg-emerald-600 peer-checked:text-white peer-checked:shadow-md peer-checked:ring-2 peer-checked:ring-emerald-600/20"
+                                        >
+                                            Có mặt
+                                        </label>
+                                    </div>
+                                                                                                        <div class="relative">
+                                        <input
+                                            id="attendance-status-1-8-absent"
+                                            type="radio"
+                                            name="attendance_status_8"
+                                            value="absent"
+                                            wire:model="draftStatuses.8"
+                                            wire:change="setStatus(8, 'absent')"
+                                                                                        disabled                                            class="peer sr-only"
+                                        >
+                                        <label
+                                            for="attendance-status-1-8-absent"
+                                            class="flex w-[84px] cursor-pointer select-none items-center justify-center rounded-lg border border-transparent bg-white px-2.5 py-2 text-center text-[13px] font-semibold text-slate-700 transition hover:border-slate-300 hover:bg-slate-50 hover:text-black peer-focus-visible:outline peer-focus-visible:outline-2 peer-focus-visible:outline-offset-2 peer-focus-visible:outline-blue-500 peer-disabled:cursor-not-allowed peer-disabled:opacity-60 peer-checked:border-rose-700 peer-checked:bg-rose-600 peer-checked:text-white peer-checked:shadow-md peer-checked:ring-2 peer-checked:ring-rose-600/20"
+                                        >
+                                            Vắng
+                                        </label>
+                                    </div>
+                                                                                                        <div class="relative">
+                                        <input
+                                            id="attendance-status-1-8-late"
+                                            type="radio"
+                                            name="attendance_status_8"
+                                            value="late"
+                                            wire:model="draftStatuses.8"
+                                            wire:change="setStatus(8, 'late')"
+                                                                                        disabled                                            class="peer sr-only"
+                                        >
+                                        <label
+                                            for="attendance-status-1-8-late"
+                                            class="flex w-[84px] cursor-pointer select-none items-center justify-center rounded-lg border border-transparent bg-white px-2.5 py-2 text-center text-[13px] font-semibold text-slate-700 transition hover:border-slate-300 hover:bg-slate-50 hover:text-black peer-focus-visible:outline peer-focus-visible:outline-2 peer-focus-visible:outline-offset-2 peer-focus-visible:outline-blue-500 peer-disabled:cursor-not-allowed peer-disabled:opacity-60 peer-checked:border-amber-600 peer-checked:bg-amber-500 peer-checked:text-white peer-checked:shadow-md peer-checked:ring-2 peer-checked:ring-amber-500/20"
+                                        >
+                                            Đi muộn
+                                        </label>
+                                    </div>
+                                                                                                        <div class="relative">
+                                        <input
+                                            id="attendance-status-1-8-excused"
+                                            type="radio"
+                                            name="attendance_status_8"
+                                            value="excused"
+                                            wire:model="draftStatuses.8"
+                                            wire:change="setStatus(8, 'excused')"
+                                                                                        disabled                                            class="peer sr-only"
+                                        >
+                                        <label
+                                            for="attendance-status-1-8-excused"
+                                            class="flex w-[84px] cursor-pointer select-none items-center justify-center rounded-lg border border-transparent bg-white px-2.5 py-2 text-center text-[13px] font-semibold text-slate-700 transition hover:border-slate-300 hover:bg-slate-50 hover:text-black peer-focus-visible:outline peer-focus-visible:outline-2 peer-focus-visible:outline-offset-2 peer-focus-visible:outline-blue-500 peer-disabled:cursor-not-allowed peer-disabled:opacity-60 peer-checked:border-blue-700 peer-checked:bg-blue-600 peer-checked:text-white peer-checked:shadow-md peer-checked:ring-2 peer-checked:ring-blue-600/20"
+                                        >
+                                            Có phép
+                                        </label>
+                                    </div>
+                                <!--[if ENDBLOCK]><![endif]-->                            </div>
+                        </td>
+                        <td class="px-6 py-5">
+                            
+                            <!--[if BLOCK]><![endif]-->                                <div class="mb-2 space-y-1 rounded-lg border-l-[3px] px-3 py-2 border-red-400 bg-red-50/60">
+                                    <!--[if BLOCK]><![endif]-->                                        <p class="flex items-start gap-1.5 text-[12px] font-bold leading-snug text-red-600">
+                                            <svg
+    xmlns="http://www.w3.org/2000/svg"
+    width="12"
+    height="12"
+    viewBox="0 0 24 24"
+    fill="none"
+    stroke="currentColor"
+    stroke-width="2"
+    stroke-linecap="round"
+    stroke-linejoin="round"
+    class="shrink-0 mt-[3px]"
+>
+    <!--[if BLOCK]><![endif]-->            <rect width="20" height="14" x="2" y="3" rx="2"/>
+            <line x1="8" x2="16" y1="21" y2="21"/>
+            <line x1="12" x2="12" y1="17" y2="21"/>
+            <!--[if ENDBLOCK]><![endif]--></svg>
+                                            <span>
+                                                <!--[if BLOCK]><![endif]-->                                                    Trùng thiết bị với An Nguyễn, Bình Trần và 2 người nữa
+                                                <!--[if ENDBLOCK]><![endif]-->                                            </span>
+                                        </p>
+                                    <!--[if ENDBLOCK]><![endif]-->                                    <!--[if BLOCK]><![endif]--><!--[if ENDBLOCK]><![endif]-->                                </div>
+                            <!--[if ENDBLOCK]><![endif]-->                            <input
+                                type="text"
+                                wire:model="draftNotes.8"
+                                placeholder="Nhập ghi chú..."
+                                disabled                                class="w-full rounded-lg border border-transparent bg-transparent px-3.5 py-2.5 text-[14px] text-slate-700 placeholder-slate-400 outline-none transition hover:bg-slate-50 focus:bg-white focus:border-blue-300 focus:ring-2 focus:ring-blue-100 disabled:opacity-60"
+                            >
+                        </td>
+                    </tr>
+                                                        <tr class="bg-white transition-colors hover:bg-slate-50/50">
+                        <td class="px-6 py-5 font-medium text-slate-500 text-center">
+                            9
+                        </td>
+                        <td class="px-6 py-5">
+                            <div class="flex items-center gap-3.5">
+                                
+                                <div class="relative shrink-0">
+                                    <!--[if BLOCK]><![endif]-->                                        <img src="https://ui-avatars.com/api/?name=T%C4%83ng+B%C4%83ng+Minh&amp;color=FFFFFF&amp;background=4285F4" alt="Dũng Phạm" class="h-10 w-10 rounded-full object-cover shadow-sm">
+                                    <!--[if ENDBLOCK]><![endif]-->                                    <!--[if BLOCK]><![endif]-->                                        <span class="absolute -right-0.5 -top-0.5 h-3 w-3 rounded-full ring-2 ring-white bg-red-500"
+                                            title="Trùng thiết bị"></span>
+                                    <!--[if ENDBLOCK]><![endif]-->                                </div>
+                                <div class="min-w-0">
+                                    <p class="truncate text-[15.5px] font-semibold text-slate-800">Dũng Phạm</p>
+                                    <p class="text-[12px] font-medium text-emerald-500 mt-0.5">Có mặt</p>
+                                </div>
+                            </div>
+                        </td>
+                        <td class="px-6 py-5">
+                            <div class="inline-flex items-center gap-1 rounded-xl border border-slate-200 bg-slate-100/80 p-1" role="radiogroup" aria-label="Trạng thái điểm danh của Dũng Phạm">
+                                <!--[if BLOCK]><![endif]-->                                                                        <div class="relative">
+                                        <input
+                                            id="attendance-status-1-9-present"
+                                            type="radio"
+                                            name="attendance_status_9"
+                                            value="present"
+                                            wire:model="draftStatuses.9"
+                                            wire:change="setStatus(9, 'present')"
+                                            checked                                            disabled                                            class="peer sr-only"
+                                        >
+                                        <label
+                                            for="attendance-status-1-9-present"
+                                            class="flex w-[84px] cursor-pointer select-none items-center justify-center rounded-lg border border-transparent bg-white px-2.5 py-2 text-center text-[13px] font-semibold text-slate-700 transition hover:border-slate-300 hover:bg-slate-50 hover:text-black peer-focus-visible:outline peer-focus-visible:outline-2 peer-focus-visible:outline-offset-2 peer-focus-visible:outline-blue-500 peer-disabled:cursor-not-allowed peer-disabled:opacity-60 peer-checked:border-emerald-700 peer-checked:bg-emerald-600 peer-checked:text-white peer-checked:shadow-md peer-checked:ring-2 peer-checked:ring-emerald-600/20"
+                                        >
+                                            Có mặt
+                                        </label>
+                                    </div>
+                                                                                                        <div class="relative">
+                                        <input
+                                            id="attendance-status-1-9-absent"
+                                            type="radio"
+                                            name="attendance_status_9"
+                                            value="absent"
+                                            wire:model="draftStatuses.9"
+                                            wire:change="setStatus(9, 'absent')"
+                                                                                        disabled                                            class="peer sr-only"
+                                        >
+                                        <label
+                                            for="attendance-status-1-9-absent"
+                                            class="flex w-[84px] cursor-pointer select-none items-center justify-center rounded-lg border border-transparent bg-white px-2.5 py-2 text-center text-[13px] font-semibold text-slate-700 transition hover:border-slate-300 hover:bg-slate-50 hover:text-black peer-focus-visible:outline peer-focus-visible:outline-2 peer-focus-visible:outline-offset-2 peer-focus-visible:outline-blue-500 peer-disabled:cursor-not-allowed peer-disabled:opacity-60 peer-checked:border-rose-700 peer-checked:bg-rose-600 peer-checked:text-white peer-checked:shadow-md peer-checked:ring-2 peer-checked:ring-rose-600/20"
+                                        >
+                                            Vắng
+                                        </label>
+                                    </div>
+                                                                                                        <div class="relative">
+                                        <input
+                                            id="attendance-status-1-9-late"
+                                            type="radio"
+                                            name="attendance_status_9"
+                                            value="late"
+                                            wire:model="draftStatuses.9"
+                                            wire:change="setStatus(9, 'late')"
+                                                                                        disabled                                            class="peer sr-only"
+                                        >
+                                        <label
+                                            for="attendance-status-1-9-late"
+                                            class="flex w-[84px] cursor-pointer select-none items-center justify-center rounded-lg border border-transparent bg-white px-2.5 py-2 text-center text-[13px] font-semibold text-slate-700 transition hover:border-slate-300 hover:bg-slate-50 hover:text-black peer-focus-visible:outline peer-focus-visible:outline-2 peer-focus-visible:outline-offset-2 peer-focus-visible:outline-blue-500 peer-disabled:cursor-not-allowed peer-disabled:opacity-60 peer-checked:border-amber-600 peer-checked:bg-amber-500 peer-checked:text-white peer-checked:shadow-md peer-checked:ring-2 peer-checked:ring-amber-500/20"
+                                        >
+                                            Đi muộn
+                                        </label>
+                                    </div>
+                                                                                                        <div class="relative">
+                                        <input
+                                            id="attendance-status-1-9-excused"
+                                            type="radio"
+                                            name="attendance_status_9"
+                                            value="excused"
+                                            wire:model="draftStatuses.9"
+                                            wire:change="setStatus(9, 'excused')"
+                                                                                        disabled                                            class="peer sr-only"
+                                        >
+                                        <label
+                                            for="attendance-status-1-9-excused"
+                                            class="flex w-[84px] cursor-pointer select-none items-center justify-center rounded-lg border border-transparent bg-white px-2.5 py-2 text-center text-[13px] font-semibold text-slate-700 transition hover:border-slate-300 hover:bg-slate-50 hover:text-black peer-focus-visible:outline peer-focus-visible:outline-2 peer-focus-visible:outline-offset-2 peer-focus-visible:outline-blue-500 peer-disabled:cursor-not-allowed peer-disabled:opacity-60 peer-checked:border-blue-700 peer-checked:bg-blue-600 peer-checked:text-white peer-checked:shadow-md peer-checked:ring-2 peer-checked:ring-blue-600/20"
+                                        >
+                                            Có phép
+                                        </label>
+                                    </div>
+                                <!--[if ENDBLOCK]><![endif]-->                            </div>
+                        </td>
+                        <td class="px-6 py-5">
+                            
+                            <!--[if BLOCK]><![endif]-->                                <div class="mb-2 space-y-1 rounded-lg border-l-[3px] px-3 py-2 border-red-400 bg-red-50/60">
+                                    <!--[if BLOCK]><![endif]-->                                        <p class="flex items-start gap-1.5 text-[12px] font-bold leading-snug text-red-600">
+                                            <svg
+    xmlns="http://www.w3.org/2000/svg"
+    width="12"
+    height="12"
+    viewBox="0 0 24 24"
+    fill="none"
+    stroke="currentColor"
+    stroke-width="2"
+    stroke-linecap="round"
+    stroke-linejoin="round"
+    class="shrink-0 mt-[3px]"
+>
+    <!--[if BLOCK]><![endif]-->            <rect width="20" height="14" x="2" y="3" rx="2"/>
+            <line x1="8" x2="16" y1="21" y2="21"/>
+            <line x1="12" x2="12" y1="17" y2="21"/>
+            <!--[if ENDBLOCK]><![endif]--></svg>
+                                            <span>
+                                                <!--[if BLOCK]><![endif]-->                                                    Trùng thiết bị với An Nguyễn, Bình Trần và 2 người nữa
+                                                <!--[if ENDBLOCK]><![endif]-->                                            </span>
+                                        </p>
+                                    <!--[if ENDBLOCK]><![endif]-->                                    <!--[if BLOCK]><![endif]--><!--[if ENDBLOCK]><![endif]-->                                </div>
+                            <!--[if ENDBLOCK]><![endif]-->                            <input
+                                type="text"
+                                wire:model="draftNotes.9"
+                                placeholder="Nhập ghi chú..."
+                                disabled                                class="w-full rounded-lg border border-transparent bg-transparent px-3.5 py-2.5 text-[14px] text-slate-700 placeholder-slate-400 outline-none transition hover:bg-slate-50 focus:bg-white focus:border-blue-300 focus:ring-2 focus:ring-blue-100 disabled:opacity-60"
+                            >
+                        </td>
+                    </tr>
+                                                        <tr class="bg-white transition-colors hover:bg-slate-50/50">
+                        <td class="px-6 py-5 font-medium text-slate-500 text-center">
+                            10
+                        </td>
+                        <td class="px-6 py-5">
+                            <div class="flex items-center gap-3.5">
+                                
+                                <div class="relative shrink-0">
+                                    <!--[if BLOCK]><![endif]-->                                        <img src="https://ui-avatars.com/api/?name=Ch%E1%BB%8B.+Th%C3%A0o+B%C4%83ng&amp;color=FFFFFF&amp;background=4285F4" alt="Giang Vũ" class="h-10 w-10 rounded-full object-cover shadow-sm">
+                                    <!--[if ENDBLOCK]><![endif]-->                                    <!--[if BLOCK]><![endif]-->                                        <span class="absolute -right-0.5 -top-0.5 h-3 w-3 rounded-full ring-2 ring-white bg-red-500"
+                                            title="Trùng thiết bị"></span>
+                                    <!--[if ENDBLOCK]><![endif]-->                                </div>
+                                <div class="min-w-0">
+                                    <p class="truncate text-[15.5px] font-semibold text-slate-800">Giang Vũ</p>
+                                    <p class="text-[12px] font-medium text-emerald-500 mt-0.5">Có mặt</p>
+                                </div>
+                            </div>
+                        </td>
+                        <td class="px-6 py-5">
+                            <div class="inline-flex items-center gap-1 rounded-xl border border-slate-200 bg-slate-100/80 p-1" role="radiogroup" aria-label="Trạng thái điểm danh của Giang Vũ">
+                                <!--[if BLOCK]><![endif]-->                                                                        <div class="relative">
+                                        <input
+                                            id="attendance-status-1-10-present"
+                                            type="radio"
+                                            name="attendance_status_10"
+                                            value="present"
+                                            wire:model="draftStatuses.10"
+                                            wire:change="setStatus(10, 'present')"
+                                            checked                                            disabled                                            class="peer sr-only"
+                                        >
+                                        <label
+                                            for="attendance-status-1-10-present"
+                                            class="flex w-[84px] cursor-pointer select-none items-center justify-center rounded-lg border border-transparent bg-white px-2.5 py-2 text-center text-[13px] font-semibold text-slate-700 transition hover:border-slate-300 hover:bg-slate-50 hover:text-black peer-focus-visible:outline peer-focus-visible:outline-2 peer-focus-visible:outline-offset-2 peer-focus-visible:outline-blue-500 peer-disabled:cursor-not-allowed peer-disabled:opacity-60 peer-checked:border-emerald-700 peer-checked:bg-emerald-600 peer-checked:text-white peer-checked:shadow-md peer-checked:ring-2 peer-checked:ring-emerald-600/20"
+                                        >
+                                            Có mặt
+                                        </label>
+                                    </div>
+                                                                                                        <div class="relative">
+                                        <input
+                                            id="attendance-status-1-10-absent"
+                                            type="radio"
+                                            name="attendance_status_10"
+                                            value="absent"
+                                            wire:model="draftStatuses.10"
+                                            wire:change="setStatus(10, 'absent')"
+                                                                                        disabled                                            class="peer sr-only"
+                                        >
+                                        <label
+                                            for="attendance-status-1-10-absent"
+                                            class="flex w-[84px] cursor-pointer select-none items-center justify-center rounded-lg border border-transparent bg-white px-2.5 py-2 text-center text-[13px] font-semibold text-slate-700 transition hover:border-slate-300 hover:bg-slate-50 hover:text-black peer-focus-visible:outline peer-focus-visible:outline-2 peer-focus-visible:outline-offset-2 peer-focus-visible:outline-blue-500 peer-disabled:cursor-not-allowed peer-disabled:opacity-60 peer-checked:border-rose-700 peer-checked:bg-rose-600 peer-checked:text-white peer-checked:shadow-md peer-checked:ring-2 peer-checked:ring-rose-600/20"
+                                        >
+                                            Vắng
+                                        </label>
+                                    </div>
+                                                                                                        <div class="relative">
+                                        <input
+                                            id="attendance-status-1-10-late"
+                                            type="radio"
+                                            name="attendance_status_10"
+                                            value="late"
+                                            wire:model="draftStatuses.10"
+                                            wire:change="setStatus(10, 'late')"
+                                                                                        disabled                                            class="peer sr-only"
+                                        >
+                                        <label
+                                            for="attendance-status-1-10-late"
+                                            class="flex w-[84px] cursor-pointer select-none items-center justify-center rounded-lg border border-transparent bg-white px-2.5 py-2 text-center text-[13px] font-semibold text-slate-700 transition hover:border-slate-300 hover:bg-slate-50 hover:text-black peer-focus-visible:outline peer-focus-visible:outline-2 peer-focus-visible:outline-offset-2 peer-focus-visible:outline-blue-500 peer-disabled:cursor-not-allowed peer-disabled:opacity-60 peer-checked:border-amber-600 peer-checked:bg-amber-500 peer-checked:text-white peer-checked:shadow-md peer-checked:ring-2 peer-checked:ring-amber-500/20"
+                                        >
+                                            Đi muộn
+                                        </label>
+                                    </div>
+                                                                                                        <div class="relative">
+                                        <input
+                                            id="attendance-status-1-10-excused"
+                                            type="radio"
+                                            name="attendance_status_10"
+                                            value="excused"
+                                            wire:model="draftStatuses.10"
+                                            wire:change="setStatus(10, 'excused')"
+                                                                                        disabled                                            class="peer sr-only"
+                                        >
+                                        <label
+                                            for="attendance-status-1-10-excused"
+                                            class="flex w-[84px] cursor-pointer select-none items-center justify-center rounded-lg border border-transparent bg-white px-2.5 py-2 text-center text-[13px] font-semibold text-slate-700 transition hover:border-slate-300 hover:bg-slate-50 hover:text-black peer-focus-visible:outline peer-focus-visible:outline-2 peer-focus-visible:outline-offset-2 peer-focus-visible:outline-blue-500 peer-disabled:cursor-not-allowed peer-disabled:opacity-60 peer-checked:border-blue-700 peer-checked:bg-blue-600 peer-checked:text-white peer-checked:shadow-md peer-checked:ring-2 peer-checked:ring-blue-600/20"
+                                        >
+                                            Có phép
+                                        </label>
+                                    </div>
+                                <!--[if ENDBLOCK]><![endif]-->                            </div>
+                        </td>
+                        <td class="px-6 py-5">
+                            
+                            <!--[if BLOCK]><![endif]-->                                <div class="mb-2 space-y-1 rounded-lg border-l-[3px] px-3 py-2 border-red-400 bg-red-50/60">
+                                    <!--[if BLOCK]><![endif]-->                                        <p class="flex items-start gap-1.5 text-[12px] font-bold leading-snug text-red-600">
+                                            <svg
+    xmlns="http://www.w3.org/2000/svg"
+    width="12"
+    height="12"
+    viewBox="0 0 24 24"
+    fill="none"
+    stroke="currentColor"
+    stroke-width="2"
+    stroke-linecap="round"
+    stroke-linejoin="round"
+    class="shrink-0 mt-[3px]"
+>
+    <!--[if BLOCK]><![endif]-->            <rect width="20" height="14" x="2" y="3" rx="2"/>
+            <line x1="8" x2="16" y1="21" y2="21"/>
+            <line x1="12" x2="12" y1="17" y2="21"/>
+            <!--[if ENDBLOCK]><![endif]--></svg>
+                                            <span>
+                                                <!--[if BLOCK]><![endif]-->                                                    Trùng thiết bị với An Nguyễn, Bình Trần và 2 người nữa
+                                                <!--[if ENDBLOCK]><![endif]-->                                            </span>
+                                        </p>
+                                    <!--[if ENDBLOCK]><![endif]-->                                    <!--[if BLOCK]><![endif]--><!--[if ENDBLOCK]><![endif]-->                                </div>
+                            <!--[if ENDBLOCK]><![endif]-->                            <input
+                                type="text"
+                                wire:model="draftNotes.10"
+                                placeholder="Nhập ghi chú..."
+                                disabled                                class="w-full rounded-lg border border-transparent bg-transparent px-3.5 py-2.5 text-[14px] text-slate-700 placeholder-slate-400 outline-none transition hover:bg-slate-50 focus:bg-white focus:border-blue-300 focus:ring-2 focus:ring-blue-100 disabled:opacity-60"
+                            >
+                        </td>
+                    </tr>
+                <!--[if ENDBLOCK]><![endif]-->            </tbody>
+        </table></div></div></body></html>

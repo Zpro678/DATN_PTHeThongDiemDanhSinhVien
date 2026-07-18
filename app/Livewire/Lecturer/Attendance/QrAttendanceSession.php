@@ -110,6 +110,38 @@ class QrAttendanceSession extends Component
             ->all();
     }
 
+    /**
+     * Tên các học viên đã điểm danh trên CÙNG một thiết bị, gom theo device_id.
+     *
+     * Dùng để chỉ đích danh "trùng với ai" ở cột Ghi chú — biết số lượng thôi thì giảng viên
+     * vẫn phải tự dò lại cả danh sách.
+     *
+     * @param  array<int, string>  $sharedDeviceIds
+     * @return array<string, array<int, string>>  device_id => [tên học viên]
+     */
+    private function sharedDeviceMemberNames(array $sharedDeviceIds): array
+    {
+        if ($sharedDeviceIds === []) {
+            return [];
+        }
+
+        return AttendanceRecord::query()
+            ->where('class_session_id', $this->sessionId)
+            ->whereIn('device_id', $sharedDeviceIds)
+            ->whereNotNull('check_in_time')
+            ->whereHas('classMember')
+            ->with('classMember.profile')
+            ->get(['id', 'device_id', 'class_member_id'])
+            ->groupBy('device_id')
+            ->map(fn ($rows) => $rows
+                ->map(fn ($row) => $row->classMember?->full_name)
+                ->filter()
+                ->unique()
+                ->values()
+                ->all())
+            ->all();
+    }
+
     public function clearSearch(): void
     {
         $this->search = '';
@@ -326,6 +358,7 @@ class QrAttendanceSession extends Component
 
         // Các device_id được từ 2 sinh viên trở lên dùng chung trong phiên (điểm danh hộ nghi vấn).
         $sharedDeviceIds = $this->sharedDeviceIds();
+        $sharedDeviceNames = $this->sharedDeviceMemberNames($sharedDeviceIds);
 
         $records = $session->attendanceRecords()
             ->whereHas('classMember')
@@ -397,7 +430,7 @@ class QrAttendanceSession extends Component
 
         $canExportExcel = app(SubscriptionService::class)->canExportExcel(auth()->user()); // Quyền xuất Excel theo gói (Pro trở lên).
 
-        return view('livewire.lecturer.attendance.qr-session', compact('session', 'records', 'attendanceLink', 'summary', 'fraudStats', 'qrSvg', 'qrCells', 'canExportExcel', 'sameDeviceCount', 'sharedDeviceIds'))
+        return view('livewire.lecturer.attendance.qr-session', compact('session', 'records', 'attendanceLink', 'summary', 'fraudStats', 'qrSvg', 'qrCells', 'canExportExcel', 'sameDeviceCount', 'sharedDeviceIds', 'sharedDeviceNames'))
             ->layout('layouts.user', ['title' => 'Điểm danh QR']);
     }
 

@@ -429,8 +429,12 @@ class LecturerQrAttendanceTest extends TestCase
             ->assertViewHas('records', fn ($records) => $records->count() === 2)
             ->assertViewHas('sameDeviceCount', 2)
             ->assertViewHas('sharedDeviceIds', fn (array $deviceIds) => in_array('DEV-SAME-FLAG', $deviceIds, true))
-            ->assertSeeHtml('class="truncate text-[15.5px] font-semibold text-red-600">Shared Device Alpha</p>')
-            ->assertSeeHtml('class="truncate text-[15.5px] font-semibold text-red-600">Shared Device Beta</p>');
+            // Tên KHÔNG còn bị tô đỏ (thiết kế mới: tên giữ màu trung tính cho dễ đọc).
+            // Dấu hiệu bất thường nay nằm ở chấm màu trên avatar + khối cảnh báo cột Ghi chú.
+            ->assertSeeHtml('class="truncate text-[15.5px] font-semibold text-slate-800">Shared Device Alpha</p>')
+            ->assertSeeHtml('class="truncate text-[15.5px] font-semibold text-slate-800">Shared Device Beta</p>')
+            ->assertSee('Trùng thiết bị với Shared Device Beta')
+            ->assertSee('Trùng thiết bị với Shared Device Alpha');
     }
 
     public function test_different_device_ids_do_not_trigger_false_duplicate(): void

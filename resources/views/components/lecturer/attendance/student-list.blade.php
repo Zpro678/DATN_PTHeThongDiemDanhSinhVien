@@ -81,46 +81,72 @@
                         $statusColor = $statusMeta[$current]['text'] ?? 'text-slate-400';
                         if ($current == 'pending') $statusLabel = 'Chưa điểm danh';
 
-                        // Điểm danh NGOÀI bán kính GPS: vẫn được ghi nhận nhưng tô VÀNG NHẠT + hiện số mét vượt.
+                        // Điểm danh NGOÀI bán kính GPS: vẫn được ghi nhận, chỉ nêu ở khối cảnh báo
+                        // bên cột Ghi chú (trước đây tô nền vàng cả dòng — chói và che các cột khác).
                         $isOutOfRadius = $record->gps_fraud_flag === 'out_of_radius';
                         $metersOutside = ($isOutOfRadius && $record->distance_meters !== null && ($session->gps_radius ?? null))
                             ? max(0, (int) round($record->distance_meters - $session->gps_radius))
                             : null;
+
+                        // TRÙNG THIẾT BỊ: nhiều học viên cùng điểm danh trên một máy (nghi điểm danh hộ).
+                        $sharedIds = $sharedDeviceIds ?? [];
+                        $isSameDevice = $record->device_id !== null && in_array($record->device_id, $sharedIds, true);
+
+                        // Tên những người còn lại dùng chung máy đó (bỏ chính học viên này ra).
+                        $sameDevicePeers = [];
+                        if ($isSameDevice) {
+                            $ownName = $record->classMember?->full_name;
+                            $sameDevicePeers = collect(($sharedDeviceNames ?? [])[$record->device_id] ?? [])
+                                ->reject(fn ($name) => $name === $ownName)
+                                ->values()
+                                ->all();
+                        }
+
+                        // Rút gọn danh sách người trùng: quá 2 tên thì gom phần dư lại để cột
+                        // không bị giãn khi cả nhóm 5-6 em dùng chung một máy.
+                        $peerLabel = null;
+                        if ($sameDevicePeers !== []) {
+                            $shown = array_slice($sameDevicePeers, 0, 2);
+                            $extra = count($sameDevicePeers) - count($shown);
+                            $peerLabel = implode(', ', $shown).($extra > 0 ? " và {$extra} người nữa" : '');
+                        }
+
+                        $isDeviceFlagged = $isSameDevice
+                            || $record->gps_fraud_flag === 'device_duplicate'
+                            || str_contains($record->note ?? '', 'điểm danh hộ');
+                        $isGpsFlagged = $isOutOfRadius
+                            || $record->gps_fraud_flag === 'suspected_mock'
+                            || str_contains($record->note ?? '', 'Sai GPS')
+                            || str_contains($record->note ?? '', 'Fake GPS');
+
+                        // Trùng thiết bị nghiêm trọng hơn lệch GPS -> quyết định màu viền khối cảnh báo
+                        // và màu chấm trên avatar.
+                        $alertAccent = $isDeviceFlagged ? 'red' : 'amber';
                     @endphp
-                    <tr class="transition-colors {{ $isOutOfRadius ? 'bg-amber-50 hover:bg-amber-100/70' : 'bg-white hover:bg-slate-50/50' }}">
+                    <tr class="bg-white transition-colors hover:bg-slate-50/50">
                         <td class="px-6 py-5 font-medium text-slate-500 text-center">
                             {{ method_exists($records, 'firstItem') ? ($records->firstItem() + $loop->index) : $loop->iteration }}
                         </td>
                         <td class="px-6 py-5">
                             <div class="flex items-center gap-3.5">
-                                @if($record->classMember && $record->classMember->user_id && $record->classMember->user)
-                                    <img src="{{ $record->classMember->user->avatar_url }}" alt="{{ $record->classMember->full_name }}" class="h-10 w-10 shrink-0 rounded-full object-cover shadow-sm">
-                                @else
-                                    <div class="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-blue-50 text-[15px] font-bold text-blue-600">
-                                        {{ \Illuminate\Support\Str::substr($record->classMember?->full_name ?? '?', 0, 1) }}
-                                    </div>
-                                @endif
-                                @php
-                                    $nameColor = 'text-slate-800';
-                                    $isSameDeviceGroup = isset($sharedDeviceIds)
-                                        && $record->device_id !== null
-                                        && in_array($record->device_id, $sharedDeviceIds, true);
-
-                                    if ($isSameDeviceGroup || $record->gps_fraud_flag === 'device_duplicate' || str_contains($record->note ?? '', 'điểm danh hộ')) {
-                                        $nameColor = 'text-red-600';
-                                    } elseif ($record->gps_fraud_flag === 'out_of_radius' || $record->gps_fraud_flag === 'suspected_mock' || str_contains($record->note ?? '', 'Sai GPS') || str_contains($record->note ?? '', 'Fake GPS')) {
-                                        $nameColor = 'text-amber-500';
-                                    }
-                                @endphp
-                                <div class="min-w-0">
-                                    <p class="truncate text-[15.5px] font-semibold {{ $nameColor }}">{{ $record->classMember?->full_name ?? 'Không xác định' }}</p>
-                                    <p class="text-[12px] font-medium {{ $statusColor }} mt-0.5">{{ $statusLabel }}</p>
-                                    @if($metersOutside !== null)
-                                        <span class="mt-1 inline-flex items-center gap-1 rounded-md bg-amber-100 px-1.5 py-0.5 text-[11px] font-bold text-amber-700 ring-1 ring-amber-200" title="Điểm danh ở ngoài bán kính cho phép, vẫn được ghi nhận">
-                                            <x-user.icon name="map-pin" :size="12" />
-                                            Ngoài bán kính +{{ $metersOutside }}m
-                                        </span>
+                                {{-- Chấm màu góc avatar: liếc mắt là thấy ai bất thường mà không phải
+                                nhồi thêm chữ vào cột tên. --}}
+                                <div class="relative shrink-0">
+                                    @if($record->classMember && $record->classMember->user_id && $record->classMember->user)
+                                        <img src="{{ $record->classMember->user->avatar_url }}" alt="{{ $record->classMember->full_name }}" class="h-10 w-10 rounded-full object-cover shadow-sm">
+                                    @else
+                                        <div class="flex h-10 w-10 items-center justify-center rounded-full bg-blue-50 text-[15px] font-bold text-blue-600">
+                                            {{ \Illuminate\Support\Str::substr($record->classMember?->full_name ?? '?', 0, 1) }}
+                                        </div>
                                     @endif
+                                    @if($isDeviceFlagged || $isGpsFlagged)
+                                        <span class="absolute -right-0.5 -top-0.5 h-3 w-3 rounded-full ring-2 ring-white {{ $isDeviceFlagged ? 'bg-red-500' : 'bg-amber-400' }}"
+                                            title="{{ $isDeviceFlagged ? 'Trùng thiết bị' : 'Ngoài bán kính cho phép' }}"></span>
+                                    @endif
+                                </div>
+                                <div class="min-w-0">
+                                    <p class="truncate text-[15.5px] font-semibold text-slate-800">{{ $record->classMember?->full_name ?? 'Không xác định' }}</p>
+                                    <p class="text-[12px] font-medium {{ $statusColor }} mt-0.5">{{ $statusLabel }}</p>
                                 </div>
                             </div>
                         </td>
@@ -151,6 +177,31 @@
                             </div>
                         </td>
                         <td class="px-6 py-5">
+                            {{-- Cảnh báo hệ thống gom thành MỘT khối viền màu, đặt TÁCH RIÊNG phía trên
+                            ô nhập: chèn thẳng vào ô nhập sẽ đè mất ghi chú giảng viên tự gõ. --}}
+                            @if($isDeviceFlagged || $metersOutside !== null)
+                                <div class="mb-2 space-y-1 rounded-lg border-l-[3px] px-3 py-2 {{ $alertAccent === 'red' ? 'border-red-400 bg-red-50/60' : 'border-amber-400 bg-amber-50/60' }}">
+                                    @if($isDeviceFlagged)
+                                        <p class="flex items-start gap-1.5 text-[12px] font-bold leading-snug text-red-600">
+                                            <x-user.icon name="monitor" :size="12" class="mt-[3px]" />
+                                            <span>
+                                                @if($peerLabel)
+                                                    Trùng thiết bị với {{ $peerLabel }}
+                                                @else
+                                                    Trùng thiết bị
+                                                @endif
+                                            </span>
+                                        </p>
+                                    @endif
+                                    @if($metersOutside !== null)
+                                        <p class="flex items-center gap-1.5 whitespace-nowrap text-[12px] font-bold text-amber-600"
+                                            title="Điểm danh ở ngoài bán kính cho phép, vẫn được ghi nhận">
+                                            <x-user.icon name="map-pin" :size="12" />
+                                            Ngoài bán kính +{{ $metersOutside }}m
+                                        </p>
+                                    @endif
+                                </div>
+                            @endif
                             <input
                                 type="text"
                                 wire:model="draftNotes.{{ $record->id }}"
