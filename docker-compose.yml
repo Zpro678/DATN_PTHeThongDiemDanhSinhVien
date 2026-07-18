@@ -1,16 +1,40 @@
 services:
+  app:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: attendia_app
+    restart: unless-stopped
+    working_dir: /var/www/html
+
+    env_file:
+      - .env
+
+    volumes:
+      - ./:/var/www/html
+
+    depends_on:
+      mysql:
+        condition: service_healthy
+      redis:
+        condition: service_started
+
+    networks:
+      - attendia
+
   mysql:
     image: mysql:8.4
     container_name: attendance_mysql
     restart: unless-stopped
 
-    ports:
-      - "${FORWARD_DB_PORT:-3306}:3306"
-
     environment:
-      MYSQL_ROOT_PASSWORD: ${DB_PASSWORD:-root}
-      MYSQL_DATABASE: ${DB_DATABASE:-db_quan_ly_diem_danh_v2}
-      MYSQL_ROOT_HOST: "%"
+      MYSQL_ROOT_PASSWORD: ${MYSQL_ROOT_PASSWORD}
+      MYSQL_DATABASE: ${DB_DATABASE}
+      MYSQL_USER: ${DB_USERNAME}
+      MYSQL_PASSWORD: ${DB_PASSWORD}
+
+    expose:
+      - "3306"
 
     volumes:
       - mysql_model_data:/var/lib/mysql
@@ -24,27 +48,33 @@ services:
           "-h",
           "localhost",
           "-uroot",
-          "-p${DB_PASSWORD:-root}"
+          "-p${MYSQL_ROOT_PASSWORD}"
         ]
-      interval: 5s
-      timeout: 5s
-      retries: 20
+      interval: 10s
+      timeout: 10s
+      retries: 10
+
+    networks:
+      - attendia
 
   redis:
     image: redis:7-alpine
     container_name: attendance_redis
     restart: unless-stopped
 
-    ports:
-      - "${FORWARD_REDIS_PORT:-6379}:6379"
-
     command:
       - redis-server
       - --appendonly
       - "yes"
 
+    expose:
+      - "6379"
+
     volumes:
       - redis_data:/data
+
+    networks:
+      - attendia
 
   phpmyadmin:
     image: phpmyadmin:5-apache
@@ -55,16 +85,76 @@ services:
       mysql:
         condition: service_healthy
 
-    ports:
-      - "${FORWARD_PMA_PORT:-8080}:80"
-
     environment:
       PMA_HOST: mysql
       PMA_PORT: 3306
-      PMA_USER: ${DB_USERNAME:-root}
-      PMA_PASSWORD: ${DB_PASSWORD:-root}
+      PMA_USER: root
+      PMA_PASSWORD: ${MYSQL_ROOT_PASSWORD}
       UPLOAD_LIMIT: 128M
+
+    # Chỉ cho phép truy cập từ chính VPS
+    ports:
+      - "127.0.0.1:8080:80"
+
+    networks:
+      - attendia
+
+  socketio:
+    image: node:20-alpine
+    container_name: attendia_socketio
+    restart: unless-stopped
+
+    working_dir: /app
+
+    volumes:
+      - ./:/app
+      - socketio_node_modules:/app/node_modules
+
+    command: >
+      sh -c "
+      if [ ! -d node_modules ]; then npm install; fi &&
+      node server.cjs
+      "
+
+    expose:
+      - "3000"
+
+    depends_on:
+      redis:
+        condition: service_started
+
+    networks:
+      - attendia
+
+  caddy:
+    image: caddy:2
+    container_name: attendia_caddy
+    restart: unless-stopped
+
+    ports:
+      - "80:80"
+      - "443:443"
+
+    volumes:
+      - ./docker/caddy/Caddyfile:/etc/caddy/Caddyfile
+      - ./:/var/www/html
+      - caddy_data:/data
+      - caddy_config:/config
+
+    depends_on:
+      - app
+      - socketio
+
+    networks:
+      - attendia
+
+networks:
+  attendia:
+    driver: bridge
 
 volumes:
   mysql_model_data:
   redis_data:
+  socketio_node_modules:
+  caddy_data:
+  caddy_config:
