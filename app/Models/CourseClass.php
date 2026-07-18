@@ -2,6 +2,7 @@
 
 namespace App\Models;
 
+use App\Services\AttendanceCalculator;
 use App\Traits\Auditable;
 
 use Illuminate\Database\Eloquent\Builder;
@@ -26,7 +27,6 @@ class CourseClass extends Model
         'class_code', // Mã lớp — do giảng viên tự đặt theo trường/khoa (VD: CS101).
         'name', // Tên lớp học.
         'description', // Mô tả môn học.
-        'late_threshold', // Ngưỡng phút trễ tối đa để tính đi muộn.
         'deduct_excused_absence', // Có trừ chuyên cần khi vắng có phép (mirror của deduct_excused > 0).
         'deduct_late', // Điểm trừ khi đi muộn (mặc định 0.5).
         'deduct_absent', // Điểm trừ khi vắng (mặc định 1.0).
@@ -34,6 +34,9 @@ class CourseClass extends Model
         'require_approval', // Bật/tắt yêu cầu duyệt khi xin vào lớp.
         'status', // Trạng thái lớp active/archived.
         'total_sessions', // Tổng số buổi dự kiến của môn học.
+        'absence_limit_percent', // Quỹ vắng cho phép, tính theo % tổng số buổi (mặc định 20).
+        'warning_margin_percent', // Biên cảnh báo trước ngưỡng cấm thi, theo % (mặc định 5).
+        'near_absence_sessions', // Còn bao nhiêu buổi trong quỹ vắng thì cảnh báo (mặc định 2).
     ];
 
     protected function casts(): array
@@ -44,8 +47,10 @@ class CourseClass extends Model
             'deduct_late' => 'float', // Điểm trừ đi muộn.
             'deduct_absent' => 'float', // Điểm trừ vắng.
             'deduct_excused' => 'float', // Điểm trừ vắng có phép.
-            'late_threshold' => 'integer', // Ép kiểu ngưỡng phút trễ.
             'total_sessions' => 'integer', // Ép kiểu tổng số buổi dự kiến.
+            'absence_limit_percent' => 'float', // % quỹ vắng cho phép.
+            'warning_margin_percent' => 'float', // % biên cảnh báo.
+            'near_absence_sessions' => 'integer', // Số buổi còn lại để cảnh báo.
         ];
     }
 
@@ -179,6 +184,44 @@ class CourseClass extends Model
             'absent' => $this->deduct_absent ?? 1.0,
             'excused' => $this->deduct_excused ?? 0.0,
         ];
+    }
+
+    /**
+     * Các NGƯỠNG CHUYÊN CẦN của lớp — nguồn duy nhất cho mọi tính toán/cảnh báo.
+     *
+     * Giảng viên cấu hình quỹ vắng (%); ngưỡng CẤM THI luôn suy ra = 100 - quỹ vắng
+     * nên hai con số không bao giờ mâu thuẫn. Ngưỡng CẢNH BÁO = cấm thi + biên cảnh báo.
+     * Lớp cũ chưa có giá trị thì rơi về mặc định cũ (20% / 5% / 2 buổi).
+     *
+     * @return array{absence_limit_percent: float, min_attendance_percent: float, warning_percent: float, near_absence_sessions: int}
+     */
+    public function getAttendanceThresholds(): array
+    {
+        $absenceLimit = (float) ($this->absence_limit_percent ?? AttendanceCalculator::DEFAULT_ABSENCE_LIMIT_PERCENT);
+        $absenceLimit = max(0.0, min(100.0, $absenceLimit));
+
+        $minAttendance = 100.0 - $absenceLimit;
+        $margin = (float) ($this->warning_margin_percent ?? AttendanceCalculator::DEFAULT_WARNING_MARGIN_PERCENT);
+
+        return [
+            'absence_limit_percent' => $absenceLimit,
+            'min_attendance_percent' => $minAttendance,
+            // Cảnh báo sớm hơn ngưỡng cấm thi đúng bằng biên, nhưng không vượt quá 100%.
+            'warning_percent' => min(100.0, $minAttendance + max(0.0, $margin)),
+            'near_absence_sessions' => max(0, (int) ($this->near_absence_sessions ?? AttendanceCalculator::DEFAULT_NEAR_ABSENCE_SESSIONS)),
+        ];
+    }
+
+    /** Quỹ vắng cho phép dưới dạng tỉ lệ (0.2 = 20%) — dùng cho các phép nhân trực tiếp. */
+    public function getAbsenceLimitRatio(): float
+    {
+        return $this->getAttendanceThresholds()['absence_limit_percent'] / 100;
+    }
+
+    /** Ngưỡng % chuyên cần tối thiểu để không bị cấm thi. */
+    public function getMinAttendancePercent(): float
+    {
+        return $this->getAttendanceThresholds()['min_attendance_percent'];
     }
 
     /**

@@ -26,7 +26,8 @@ class LectureManageStudentService
         // Cài đặt lớp: tổng buổi dự kiến + cấu hình điểm trừ.
         $classes = CourseClass::query()
             ->whereIn('id', $members->pluck('class_id')->unique()->filter())
-            ->get(['id', 'total_sessions', 'deduct_excused_absence', 'deduct_late', 'deduct_absent', 'deduct_excused'])
+            ->get(['id', 'total_sessions', 'deduct_excused_absence', 'deduct_late', 'deduct_absent', 'deduct_excused',
+                'absence_limit_percent', 'warning_margin_percent', 'near_absence_sessions'])
             ->keyBy('id');
 
         // Bản ghi điểm danh ở phiên đã chốt, kèm meeting_id để gộp theo buổi.
@@ -60,8 +61,9 @@ class LectureManageStudentService
             $absentSessions = $counts['absent'];
             $excusedSessions = $counts['excused'];
 
-            $class = $classes->get($member->class_id);
-            $rules = $class ? $class->getAttendanceRules() : (new CourseClass())->getAttendanceRules();
+            $class = $classes->get($member->class_id) ?? new CourseClass();
+            $rules = $class->getAttendanceRules();
+            $thresholds = $class->getAttendanceThresholds();
 
             // Nếu sinh viên bỏ lỡ buổi học hoàn toàn (không có bản ghi, VD: vào lớp sau khi buổi học đã đóng)
             if ($studiedSessions < $classClosedMeetings) {
@@ -77,7 +79,7 @@ class LectureManageStudentService
             $plannedSessions = (int) ($class?->total_sessions ?? 0);
 
             // Mẫu số = số buổi cơ sở: lớn nhất giữa dự kiến và số buổi đã diễn ra.
-            // Nếu số buổi thực tế vượt dự kiến, quỹ vắng 20% được tính lại trên số lớn hơn.
+            // Nếu số buổi thực tế vượt dự kiến, quỹ vắng được tính lại trên số lớn hơn.
             $effectivePlanned = AttendanceCalculator::baseSessions($plannedSessions, $classClosedMeetings);
 
             $countedSessions = $effectivePlanned; // Trong hệ thống mới, luôn là tổng số buổi dự kiến, trừ điểm qua $rules
@@ -90,11 +92,11 @@ class LectureManageStudentService
                 $rules
             );
 
-            $allowedAbsent = AttendanceCalculator::allowedAbsentSessions($effectivePlanned);
-            // Cấm thi: vắng quy đổi vượt 20% tổng buổi hoặc chuyên cần < 80%.
-            $isBanned = $effectivePlanned > 0 && ($effectiveAbsent > $allowedAbsent || $attendancePercent < AttendanceCalculator::MIN_ATTENDANCE_PERCENT);
-            // Cảnh báo: chuyên cần dưới 85% nhưng chưa bị cấm.
-            $isWarning = ! $isBanned && $attendancePercent < AttendanceCalculator::WARNING_PERCENT;
+            $allowedAbsent = AttendanceCalculator::allowedAbsentSessions($effectivePlanned, $thresholds['absence_limit_percent']);
+            // Cấm thi: vắng quy đổi vượt quỹ vắng của lớp hoặc chuyên cần dưới ngưỡng tối thiểu.
+            $isBanned = $effectivePlanned > 0 && ($effectiveAbsent > $allowedAbsent || $attendancePercent < $thresholds['min_attendance_percent']);
+            // Cảnh báo: chuyên cần dưới ngưỡng cảnh báo của lớp nhưng chưa bị cấm.
+            $isWarning = ! $isBanned && $attendancePercent < $thresholds['warning_percent'];
 
             return [
                 $member->id => [
@@ -108,7 +110,7 @@ class LectureManageStudentService
                     'excused_sessions' => $excusedSessions, // Số buổi vắng có phép.
                     'effective_absent_sessions' => $effectiveAbsent, // Số buổi vắng quy đổi dùng xét cấm thi.
                     'attended_sessions' => $attendedSessions, // Số buổi có chuyên cần.
-                    'allowed_absent_sessions' => $allowedAbsent, // Số buổi được phép vắng (20%).
+                    'allowed_absent_sessions' => $allowedAbsent, // Số buổi được phép vắng (theo quỹ vắng của lớp).
                     'attendance_percent' => $attendancePercent, // % chuyên cần trên tổng buổi dự kiến.
                     'is_warning' => $isWarning,
                     'is_banned' => $isBanned,

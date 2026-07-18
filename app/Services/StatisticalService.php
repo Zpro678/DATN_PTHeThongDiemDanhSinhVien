@@ -9,10 +9,6 @@ use Illuminate\Support\Facades\DB;
 
 class StatisticalService
 {
-    private const MIN_ATTENDANCE_PERCENT = 80;
-
-    private const ABSENCE_LIMIT_RATIO = 0.2;
-
     /**
      * Lấy toàn bộ dữ liệu thống kê chuyên cần cho một học viên.
      *
@@ -58,7 +54,10 @@ class StatisticalService
     public function emptyStudentClassAttendanceDetail(CourseClass $courseClass): array
     {
         $plannedSessions = max((int) ($courseClass->total_sessions ?? 0), 0);
-        $allowedAbsentSessions = AttendanceCalculator::allowedAbsentSessions($plannedSessions);
+        $allowedAbsentSessions = AttendanceCalculator::allowedAbsentSessions(
+            $plannedSessions,
+            $courseClass->getAttendanceThresholds()['absence_limit_percent']
+        );
 
         return [
             'id' => null,
@@ -198,7 +197,9 @@ class StatisticalService
                 $excused = (int) ($row->excused_sessions ?? 0);
                 $absent = (int) ($row->absent_sessions ?? 0);
 
-                $rules = $courseClass ? $courseClass->getAttendanceRules() : (new \App\Models\CourseClass())->getAttendanceRules();
+                $courseClass ??= new \App\Models\CourseClass();
+                $rules = $courseClass->getAttendanceRules();
+                $thresholds = $courseClass->getAttendanceThresholds();
 
                 // Đơn vị là buổi; số buổi cơ sở = max(dự kiến, đã diễn ra).
                 $plannedSessions = AttendanceCalculator::baseSessions((int) ($courseClass?->total_sessions ?? 0), $total);
@@ -209,7 +210,7 @@ class StatisticalService
                 // % chuyên cần tính trên tổng số buổi dự kiến (cả khóa) để nhất quán với quỹ vắng.
                 $percent = AttendanceCalculator::percentOfPlanned($plannedSessions, $row->counts ?? [], $rules);
 
-                $allowedAbsentSessions = AttendanceCalculator::allowedAbsentSessions($plannedSessions);
+                $allowedAbsentSessions = AttendanceCalculator::allowedAbsentSessions($plannedSessions, $thresholds['absence_limit_percent']);
                 $safeAbsenceSessions = max($allowedAbsentSessions - $effectiveAbsent, 0);
                 $exceededAbsentSessions = max($effectiveAbsent - $allowedAbsentSessions, 0);
                 $absenceBudgetState = $this->absenceBudgetState($allowedAbsentSessions, $effectiveAbsent);
@@ -240,7 +241,7 @@ class StatisticalService
                     'absence_budget_label' => $this->absenceBudgetLabel($allowedAbsentSessions, $effectiveAbsent),
                     'absence_budget_state' => $absenceBudgetState,
                     'percent' => $percent,
-                    'warning' => $total > 0 && $percent < self::MIN_ATTENDANCE_PERCENT,
+                    'warning' => $total > 0 && $percent < $thresholds['min_attendance_percent'],
                     'demo' => false,
                 ];
             })

@@ -51,11 +51,13 @@ Lưu trữ thông tin chi tiết về các Lớp học/Môn học.
 *   `subject_code`: `varchar(50) [null]` - Mã số môn học của nhà trường.
 *   `semester`: `varchar(50) [null]` - Tên hoặc mã của Học kỳ (VD: HK1 2024-2025).
 *   `description`: `text [null]` - Thông tin mô tả chi tiết, nội quy, ghi chú về lớp học.
-*   `late_threshold`: `int [not null, default: 15]` - Ngưỡng thời gian (tính bằng phút). Vượt qua số phút này sau giờ vào lớp sẽ bị tính là Đi muộn (Late). Mặc định 15 phút.
 *   `deduct_excused_absence`: `boolean [not null, default: false]` - Cờ cấu hình: Nếu sinh viên vắng mặt có phép, có bị trừ điểm chuyên cần hay không (true/false).
 *   `require_approval`: `boolean [not null, default: false]` - Cờ cấu hình: Khi sinh viên nhập `join_key` để vào lớp, giảng viên có cần phải duyệt tay hay không (true = phải duyệt, false = tự động vào).
 *   `status`: `varchar(50) [not null, default: 'active']` - Trạng thái của lớp học (VD: 'active' - Đang diễn ra, 'archived' - Đã lưu trữ/Kết thúc).
 *   `total_sessions`: `int [not null, default: 15]` - Tổng số buổi học hoặc phiên điểm danh dự kiến của môn này, dùng để tính toán % chuyên cần. Mặc định 15 buổi.
+*   `absence_limit_percent`: `decimal(5,2) [not null, default: 20]` - Quỹ vắng cho phép, tính theo % tổng số buổi. Ngưỡng cấm thi KHÔNG có cột riêng mà luôn suy ra = `100 - absence_limit_percent`, nên hai con số không thể mâu thuẫn.
+*   `warning_margin_percent`: `decimal(5,2) [not null, default: 5]` - Cảnh báo chuyên cần sớm hơn ngưỡng cấm thi bao nhiêu %. Mặc định 5 (cấm thi 80% → cảnh báo dưới 85%).
+*   `near_absence_sessions`: `smallint [not null, default: 2]` - Khi quỹ vắng chỉ còn từng này buổi trở xuống thì gửi thông báo "sắp vượt ngưỡng vắng".
 *   `created_at`: `timestamp` - Thời gian tạo lớp.
 *   `updated_at`: `timestamp` - Thời gian cập nhật thông tin lớp lần cuối.
 *   `deleted_at`: `timestamp [null]` - Thời gian xóa mềm lớp học.

@@ -14,7 +14,6 @@ class CourseClassFactory extends Factory
             'join_key' => 'CLS'.fake()->unique()->numerify('####'),
             'name' => fake()->randomElement(['Lập trình Web', 'Cơ sở dữ liệu', 'Công nghệ phần mềm', 'Mạng máy tính']),
             'description' => fake()->sentence(),
-            'late_threshold' => 15,
             'deduct_excused_absence' => false,
             'require_approval' => fake()->boolean(),
             'status' => 'active',

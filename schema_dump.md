@@ -166,11 +166,13 @@
 | `class_code` | `varchar` | [Mô tả] | [Mô tả] |
 | `name` | `varchar` | [Mô tả] | [Mô tả] |
 | `description` | `text` | [Mô tả] | [Mô tả] |
-| `late_threshold` | `int` | [Mô tả] | [Mô tả] |
 | `deduct_excused_absence` | `tinyint` | [Mô tả] | [Mô tả] |
 | `require_approval` | `tinyint` | [Mô tả] | [Mô tả] |
 | `status` | `varchar` | [Mô tả] | [Mô tả] |
 | `total_sessions` | `int` | [Mô tả] | [Mô tả] |
+| `absence_limit_percent` | `decimal(5,2)` | Quỹ vắng cho phép (%) | Mặc định 20 |
+| `warning_margin_percent` | `decimal(5,2)` | Biên cảnh báo sớm (%) | Mặc định 5 |
+| `near_absence_sessions` | `smallint` | Còn bao nhiêu buổi thì cảnh báo | Mặc định 2 |
 | `created_at` | `timestamp` | [Mô tả] | [Mô tả] |
 | `updated_at` | `timestamp` | [Mô tả] | [Mô tả] |
 | `deleted_at` | `timestamp` | [Mô tả] | [Mô tả] |

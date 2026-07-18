@@ -293,7 +293,10 @@
                             }
                         }" class="relative z-40" @click.outside="open = false; syncSelection()">
                             <script type="application/json" x-ref="meetingsData">
-                                {!! $this->classMeetings->map(fn($m) => ['id' => $m->id, 'name' => $m->name])->toJson() !!}
+                                {{-- values() trước toJson(): modal này dùng chung cho AttendanceIndex và
+                                     QuickAttendanceModal; chỉ cần một bên trả collection còn key rời rạc
+                                     là JSON thành object và Alpine .find()/.some() dưới kia sẽ nổ. --}}
+                                {!! $this->classMeetings->values()->map(fn($m) => ['id' => $m->id, 'name' => $m->name])->toJson() !!}
                             </script>
                             <div class="mb-2 flex items-center justify-between">
                                 <label class="block text-sm font-bold text-slate-700">Chọn buổi điểm danh</label>

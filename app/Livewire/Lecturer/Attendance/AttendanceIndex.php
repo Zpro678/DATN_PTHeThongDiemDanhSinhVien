@@ -45,7 +45,7 @@ class AttendanceIndex extends Component
 
     public string $sessionName = '';
     public int $durationMinutes = 15;
-    public int $gpsRadius = 10;
+    public int $gpsRadius = 30;
     public int $qrRefreshRate = 10;
     public bool $gpsEnabled = true;
     public ?float $gpsLatitude = null;
@@ -96,7 +96,10 @@ class AttendanceIndex extends Component
             ->whereDate('date', now()->toDateString())
             ->orderBy('created_at', 'desc')
             ->get()
-            ->filter(fn ($meeting) => !$meeting->isExpired());
+            ->filter(fn ($meeting) => !$meeting->isExpired())
+            // values() bắt buộc: filter() giữ nguyên key, mất key 0 thì toJson()
+            // ra object {"1":...} thay vì array, và Alpine gọi .find() sẽ nổ.
+            ->values();
     }
 
     public function createTodayMeeting()
@@ -141,7 +144,7 @@ class AttendanceIndex extends Component
         
         $this->sessionName = 'Phiên 1';
         $this->durationMinutes = 15;
-        $this->gpsRadius = 10;
+        $this->gpsRadius = 30;
         $this->qrRefreshRate = 10;
         $this->gpsEnabled = true;
         $this->gpsLatitude = null;

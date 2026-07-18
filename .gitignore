@@ -25,3 +25,4 @@ yarn-error.log
 *.tmp
 ~WRL*.tmp
 ~$*
+.docker-compose.yml

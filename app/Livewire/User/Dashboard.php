@@ -81,7 +81,8 @@ class Dashboard extends Component
             ->withCount(['meetings as studied_sessions' => fn ($query) => $query->whereHas('sessions', fn ($s) => $s->where('status', 'closed'))])
             ->orderByDesc('updated_at') // Lớp nào vừa có tương tác mới nhất (tạo phiên, sửa thông tin, thêm học viên...) sẽ lên đầu
             ->take(3)
-            ->get(['id', 'join_key', 'name', 'status', 'total_sessions'])
+            ->get(['id', 'join_key', 'name', 'status', 'total_sessions',
+                'absence_limit_percent', 'warning_margin_percent', 'near_absence_sessions'])
             ->values()
             ->map(function (CourseClass $courseClass, int $index) use ($studentService, $cardStyles, $userId) {
                 $style = $cardStyles[$index % count($cardStyles)];
@@ -101,6 +102,9 @@ class Dashboard extends Component
                     'attendance_label' => $hasAttendanceData ? $attendancePercent.'%' : 'Chưa có dữ liệu',
                     'attendance_bar_width' => $hasAttendanceData ? $attendancePercent : 0,
                     'status_label' => in_array($courseClass->status, ['ended', 'archived'], true) ? 'Đã kết thúc' : 'Đang học',
+                    // Ngưỡng cấu hình của lớp để thẻ tô màu đúng mức cảnh báo/cấm thi.
+                    'min_attendance_percent' => $courseClass->getAttendanceThresholds()['min_attendance_percent'],
+                    'warning_percent' => $courseClass->getAttendanceThresholds()['warning_percent'],
                     ...$style,
                 ];
             })

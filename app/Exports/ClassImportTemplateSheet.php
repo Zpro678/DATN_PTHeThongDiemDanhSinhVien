@@ -29,8 +29,8 @@ class ClassImportTemplateSheet implements FromArray, WithTitle, WithStyles
             ['Tên lớp', $this->title],
             ['Mã lớp', 'WEB-2026-N01'],
             ['Mô tả', 'Lớp học phần mẫu.'],
-            ['Ngưỡng đi muộn (phút)', 15],
             ['Tổng số buổi học dự kiến', 15],
+            ['Ngưỡng vắng cho phép (%)', 20],
             ['Cấu hình điểm trừ', 'Đi muộn', 'Vắng không phép', 'Vắng có phép'],
             ['Điểm trừ tương ứng', 0.5, 1.0, 0.0],
             ['Yêu cầu duyệt tham gia (1=Có, 0=Không)', 0],
@@ -63,7 +63,7 @@ class ClassImportTemplateSheet implements FromArray, WithTitle, WithStyles
         // Set Bold cho Cột nhãn
         $sheet->getStyle('A1:A8')->getFont()->setBold(true);
         $sheet->getStyle('A6:D6')->getFont()->setBold(true);
-        
+
         // Khung viền cho phần cấu hình lớp
         $sheet->getStyle('A1:B5')->applyFromArray($borderThin);
         $sheet->getStyle('A6:D7')->applyFromArray($borderThin);
@@ -106,7 +106,7 @@ class ClassImportTemplateSheet implements FromArray, WithTitle, WithStyles
 
         // Khung viền và căn chỉnh dữ liệu học viên
         $sheet->getStyle('A11:D13')->applyFromArray($borderThin);
-        
+
         // Căn giữa cột email và trạng thái điểm danh
         $sheet->getStyle('B11:D13')->getAlignment()->setHorizontal(\PhpOffice\PhpSpreadsheet\Style\Alignment::HORIZONTAL_CENTER);
 

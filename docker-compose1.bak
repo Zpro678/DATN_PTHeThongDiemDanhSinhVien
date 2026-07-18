@@ -5,11 +5,12 @@ services:
     restart: unless-stopped
 
     ports:
-      - "3306:3306"
+      - "${FORWARD_DB_PORT:-3306}:3306"
 
     environment:
       MYSQL_ROOT_PASSWORD: ${DB_PASSWORD:-root}
       MYSQL_DATABASE: ${DB_DATABASE:-db_quan_ly_diem_danh_v2}
+      MYSQL_ROOT_HOST: "%"
 
     volumes:
       - mysql_model_data:/var/lib/mysql
@@ -35,7 +36,7 @@ services:
     restart: unless-stopped
 
     ports:
-      - "6379:6379"
+      - "${FORWARD_REDIS_PORT:-6379}:6379"
 
     command:
       - redis-server
@@ -55,7 +56,7 @@ services:
         condition: service_healthy
 
     ports:
-      - "8080:80"
+      - "${FORWARD_PMA_PORT:-8080}:80"
 
     environment:
       PMA_HOST: mysql
@@ -64,37 +65,6 @@ services:
       PMA_PASSWORD: ${DB_PASSWORD:-root}
       UPLOAD_LIMIT: 128M
 
-  socketio:
-    build:
-      context: ./socket-server
-      dockerfile: Dockerfile
-
-    container_name: attendance_socketio
-    restart: unless-stopped
-
-    depends_on:
-      - redis
-
-    ports:
-      - "3000:3000"
-
-    environment:
-      NODE_ENV: development
-      HOST: 0.0.0.0
-      PORT: 3000
-
-      # Socket.IO nằm trong Docker nên kết nối Redis bằng tên service
-      REDIS_HOST: redis
-      REDIS_PORT: 6379
-      REDIS_PASSWORD: ""
-
-      CORS_ORIGIN: ${APP_URL:-http://127.0.0.1:8000}
-
-    volumes:
-      - ./socket-server:/app
-      - socket_node_modules:/app/node_modules
-
 volumes:
   mysql_model_data:
   redis_data:
-  socket_node_modules:

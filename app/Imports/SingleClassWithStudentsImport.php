@@ -65,8 +65,8 @@ class SingleClassWithStudentsImport implements ToCollection
         $className = null;
         $classCode = null;
         $description = null;
-        $lateThreshold = 15;
         $totalSessions = 15;
+        $absenceLimitPercent = 20.0;
         $deductLate = 0.5;
         $deductAbsent = 1.0;
         $deductExcused = 0.0;
@@ -86,10 +86,10 @@ class SingleClassWithStudentsImport implements ToCollection
                 $classCode = $colB;
             } elseif (str_contains($colA, 'mô tả')) {
                 $description = $colB;
-            } elseif (str_contains($colA, 'ngưỡng đi muộn')) {
-                $lateThreshold = is_numeric($colB) ? (int)$colB : 15;
             } elseif (str_contains($colA, 'tổng số buổi')) {
                 $totalSessions = is_numeric($colB) ? (int)$colB : 15;
+            } elseif (str_contains($colA, 'ngưỡng vắng')) {
+                $absenceLimitPercent = is_numeric($colB) ? (float)$colB : 20.0;
             } elseif (str_contains($colA, 'điểm trừ tương ứng') || str_contains($colA, 'điểm trừ')) {
                 $deductLate = is_numeric($row[1] ?? null) ? (float)$row[1] : 0.5;
                 $deductAbsent = is_numeric($row[2] ?? null) ? (float)$row[2] : 1.0;
@@ -104,11 +104,11 @@ class SingleClassWithStudentsImport implements ToCollection
         if (empty($className)) {
             $errors[] = "Tên lớp không được để trống.";
         }
-        if ($lateThreshold < 0 || $lateThreshold > 300) {
-            $errors[] = "Ngưỡng đi muộn phải từ 0 đến 300 phút.";
-        }
         if ($totalSessions < 1 || $totalSessions > 200) {
             $errors[] = "Tổng số buổi học dự kiến phải từ 1 đến 200.";
+        }
+        if ($absenceLimitPercent < 0 || $absenceLimitPercent > 100) {
+            $errors[] = "Ngưỡng vắng cho phép phải từ 0 đến 100%.";
         }
         if ($deductLate < 0 || $deductLate > 10 || $deductAbsent < 0 || $deductAbsent > 10 || $deductExcused < 0 || $deductExcused > 10) {
             $errors[] = "Điểm trừ chuyên cần phải nằm trong khoảng từ 0 đến 10.";
@@ -144,12 +144,12 @@ class SingleClassWithStudentsImport implements ToCollection
             'join_key' => $code,
             'class_code' => $classCode ?: $code,
             'description' => $description ?: null,
-            'late_threshold' => $lateThreshold,
             'deduct_late' => $deductLate,
             'deduct_absent' => $deductAbsent,
             'deduct_excused' => $deductExcused,
             'deduct_excused_absence' => $deductExcused > 0,
             'total_sessions' => $totalSessions,
+            'absence_limit_percent' => $absenceLimitPercent,
             'require_approval' => $requireApproval,
             'status' => 'active',
         ]);

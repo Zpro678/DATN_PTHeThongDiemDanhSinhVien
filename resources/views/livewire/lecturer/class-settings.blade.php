@@ -9,12 +9,31 @@
                 </h1>
                 <p class="mt-1 text-sm text-on-surface-variant">Chỉnh sửa thông tin và thiết lập cho lớp <span class="font-bold text-primary">{{ $courseClass->class_code ?? $courseClass->join_key }}</span></p>
             </div>
-            <button type="button" wire:click="confirmDelete"
-               class="inline-flex shrink-0 whitespace-nowrap items-center gap-2 rounded-xl border border-error/30 bg-white px-4 py-2 text-sm font-bold text-error transition-colors hover:bg-error/10">
-                <x-user.icon name="trash-2" :size="16" />
-                Xóa lớp học
-            </button>
+            @can('delete', $courseClass)
+                <button type="button" wire:click="confirmDelete"
+                   class="inline-flex shrink-0 whitespace-nowrap items-center gap-2 rounded-xl border border-error/30 bg-white px-4 py-2 text-sm font-bold text-error transition-colors hover:bg-error/10">
+                    <x-user.icon name="trash-2" :size="16" />
+                    Xóa lớp học
+                </button>
+            @endcan
         </div>
+
+        {{-- Đồng chủ: nói rõ ngay từ đầu những gì không làm được, tránh bấm rồi mới báo lỗi. --}}
+        @cannot('manageCoOwners', $courseClass)
+            <div class="mt-4 flex items-start gap-3 rounded-xl border border-blue-200 bg-blue-50 px-4 py-3">
+                <span class="mt-0.5 flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-blue-100 text-blue-600">
+                    <x-user.icon name="info" :size="14" />
+                </span>
+                <p class="text-sm text-blue-900">
+                    Bạn đang xem với vai trò <span class="font-bold">đồng chủ lớp</span>. Bạn sửa được cấu hình lớp,
+                    nhưng việc thêm/gỡ đồng chủ và xóa lớp chỉ chủ chính
+                    @if ($primaryOwner)
+                        (<span class="font-bold">{{ $primaryOwner->name }}</span>)
+                    @endif
+                    mới thực hiện được.
+                </p>
+            </div>
+        @endcannot
     </div>
 
     <form wire:submit="save" id="class-settings-form">
@@ -90,19 +109,50 @@
                     <div class="p-6 space-y-5">
                         <div class="grid grid-cols-1 sm:grid-cols-2 gap-5">
 
-                            {{-- Ngưỡng đi muộn --}}
-                            <label class="block">
-                                <span class="mb-2 block text-base font-bold text-on-surface">Ngưỡng đi muộn (phút) <span class="text-error">*</span></span>
-                                <input type="number" wire:model.live.debounce.300ms="lateThreshold" min="0" max="300" class="w-full rounded-xl border-2 border-outline-variant/80 hover:border-primary bg-surface-container-lowest px-4 py-3 text-base outline-none transition-all focus:border-primary focus:ring-2 focus:ring-primary/20">
-                                @error('lateThreshold') <span class="text-error text-sm mt-1 block">{{ $message }}</span> @enderror
-                            </label>
-
                             {{-- Tổng số buổi dự kiến --}}
                             <label class="block">
                                 <span class="mb-2 block text-base font-bold text-on-surface">Tổng số buổi dự kiến <span class="text-error">*</span></span>
                                 <input type="number" wire:model.live.debounce.300ms="totalSessions" min="1" max="200" class="w-full rounded-xl border border-outline-variant/30 bg-surface-container-lowest px-4 py-3 text-base outline-none transition-all focus:border-primary focus:ring-2 focus:ring-primary/20">
-                                <span class="mt-1 block text-sm text-on-surface-variant">Dùng để tính quỹ vắng cho phép (20%) và tiến độ lớp.</span>
+                                <span class="mt-1 block text-sm text-on-surface-variant">Dùng để tính quỹ vắng cho phép và tiến độ lớp.</span>
                                 @error('totalSessions') <span class="text-error text-sm mt-1 block">{{ $message }}</span> @enderror
+                            </label>
+
+                            {{-- Ngưỡng vắng cho phép --}}
+                            <label class="block">
+                                <span class="mb-2 block text-base font-bold text-on-surface">Ngưỡng vắng cho phép (%) <span class="text-error">*</span></span>
+                                <input type="number" wire:model.live.debounce.300ms="absenceLimitPercent" min="0" max="100" step="0.5" class="w-full rounded-xl border-2 border-outline-variant/80 hover:border-primary bg-surface-container-lowest px-4 py-3 text-base outline-none transition-all focus:border-primary focus:ring-2 focus:ring-primary/20">
+                                @php
+                                    // Xem trước ngay số buổi tương ứng để giảng viên không phải tự nhẩm.
+                                    $previewAllowed = \App\Services\AttendanceCalculator::allowedAbsentSessions(
+                                        (int) $totalSessions,
+                                        (float) $absenceLimitPercent
+                                    );
+                                    $previewMinAttendance = \App\Services\AttendanceCalculator::formatPercent(
+                                        max(0, 100 - (float) $absenceLimitPercent)
+                                    );
+                                @endphp
+                                <span class="mt-1 block text-sm text-on-surface-variant">
+                                    = <strong>{{ $previewAllowed }} buổi</strong> trên {{ (int) $totalSessions }} buổi. Dưới {{ $previewMinAttendance }}% chuyên cần sẽ bị đánh dấu nguy cơ cấm thi.
+                                </span>
+                                @error('absenceLimitPercent') <span class="text-error text-sm mt-1 block">{{ $message }}</span> @enderror
+                            </label>
+
+                            {{-- Biên cảnh báo sớm --}}
+                            <label class="block">
+                                <span class="mb-2 block text-base font-bold text-on-surface">Biên cảnh báo sớm (%) <span class="text-error">*</span></span>
+                                <input type="number" wire:model.live.debounce.300ms="warningMarginPercent" min="0" max="100" step="0.5" class="w-full rounded-xl border-2 border-outline-variant/80 hover:border-primary bg-surface-container-lowest px-4 py-3 text-base outline-none transition-all focus:border-primary focus:ring-2 focus:ring-primary/20">
+                                <span class="mt-1 block text-sm text-on-surface-variant">
+                                    Chuyên cần dưới {{ \App\Services\AttendanceCalculator::formatPercent(min(100, max(0, 100 - (float) $absenceLimitPercent) + max(0, (float) $warningMarginPercent))) }}% nhưng chưa bị cấm thi thì hiện cảnh báo.
+                                </span>
+                                @error('warningMarginPercent') <span class="text-error text-sm mt-1 block">{{ $message }}</span> @enderror
+                            </label>
+
+                            {{-- Số buổi còn lại thì cảnh báo --}}
+                            <label class="block">
+                                <span class="mb-2 block text-base font-bold text-on-surface">Cảnh báo khi quỹ vắng còn (buổi) <span class="text-error">*</span></span>
+                                <input type="number" wire:model.live.debounce.300ms="nearAbsenceSessions" min="0" max="50" class="w-full rounded-xl border-2 border-outline-variant/80 hover:border-primary bg-surface-container-lowest px-4 py-3 text-base outline-none transition-all focus:border-primary focus:ring-2 focus:ring-primary/20">
+                                <span class="mt-1 block text-sm text-on-surface-variant">Gửi thông báo cho học viên khi quỹ vắng chỉ còn từng này buổi trở xuống.</span>
+                                @error('nearAbsenceSessions') <span class="text-error text-sm mt-1 block">{{ $message }}</span> @enderror
                             </label>
 
                         </div>
@@ -245,7 +295,7 @@
         </div>
     </form>
 
-    {{-- ===== Đồng chủ lớp (chỉ chủ chính thấy trang này) ===== --}}
+    {{-- ===== Đồng chủ lớp (chủ chính: toàn quyền · đồng chủ: chỉ xem) ===== --}}
     <div class="mt-6 rounded-2xl border border-outline-variant/20 bg-white shadow-sm overflow-hidden">
         <div class="flex items-center gap-3 border-b border-outline-variant/10 bg-surface-container-lowest/50 px-6 py-4">
             <span class="flex h-8 w-8 items-center justify-center rounded-lg bg-tertiary/10 text-tertiary">
@@ -253,12 +303,13 @@
             </span>
             <div>
                 <h2 class="text-lg font-bold text-on-surface">Đồng chủ lớp</h2>
-                <p class="text-sm text-on-surface-variant">Người được thêm sẽ cùng quản lý điểm danh, học viên và đơn nghỉ. Không được đổi cài đặt hay xóa lớp.</p>
+                <p class="text-sm text-on-surface-variant">Người được thêm sẽ cùng quản lý điểm danh, học viên, đơn nghỉ và cấu hình lớp. Không được thêm/gỡ đồng chủ hay xóa lớp.</p>
             </div>
         </div>
 
         <div class="p-6 space-y-5">
             {{-- Thêm đồng chủ theo email --}}
+            @can('manageCoOwners', $courseClass)
             <div>
                 <label class="mb-2 block text-sm font-bold text-on-surface">Thêm đồng chủ theo email</label>
                 <div class="flex flex-col gap-2 sm:flex-row">
@@ -280,6 +331,23 @@
                     </span>
                 @enderror
             </div>
+            @endcan
+
+            {{-- Chủ chính — hiện cho đồng chủ biết ai đang giữ quyền cao nhất của lớp. --}}
+            @cannot('manageCoOwners', $courseClass)
+                @if ($primaryOwner)
+                    <div class="flex items-center gap-3 rounded-xl border border-outline-variant/20 bg-surface-container-lowest/40 px-4 py-3">
+                        <span class="grid h-9 w-9 shrink-0 place-items-center rounded-full bg-primary/10 text-sm font-bold text-primary">
+                            {{ mb_strtoupper(mb_substr($primaryOwner->name, 0, 1)) }}
+                        </span>
+                        <div class="min-w-0 flex-1">
+                            <p class="truncate text-sm font-bold text-on-surface">{{ $primaryOwner->name }}</p>
+                            <p class="truncate text-xs text-on-surface-variant">{{ $primaryOwner->email }}</p>
+                        </div>
+                        <span class="shrink-0 rounded-full bg-primary/10 px-2.5 py-1 text-xs font-bold text-primary">Chủ chính</span>
+                    </div>
+                @endif
+            @endcannot
 
             {{-- Danh sách đồng chủ hiện tại --}}
             <div class="space-y-2" x-data="{ removing: null }">
@@ -294,19 +362,30 @@
                                 <p class="truncate text-xs text-on-surface-variant">{{ $coOwner->email }}</p>
                             </div>
                         </div>
-                        <button type="button"
-                            @click="removing = { id: {{ $coOwner->id }}, name: @js($coOwner->name) }"
-                            class="inline-flex shrink-0 items-center gap-1.5 rounded-lg border border-error/30 px-3 py-1.5 text-xs font-bold text-error transition-colors hover:bg-error/10">
-                            <x-user.icon name="x" :size="14" /> Gỡ
-                        </button>
+                        @can('manageCoOwners', $courseClass)
+                            <button type="button"
+                                @click="removing = { id: {{ $coOwner->id }}, name: @js($coOwner->name) }"
+                                class="inline-flex shrink-0 items-center gap-1.5 rounded-lg border border-error/30 px-3 py-1.5 text-xs font-bold text-error transition-colors hover:bg-error/10">
+                                <x-user.icon name="x" :size="14" /> Gỡ
+                            </button>
+                        @else
+                            <span class="shrink-0 rounded-full bg-tertiary/10 px-2.5 py-1 text-xs font-bold text-tertiary">
+                                {{ $coOwner->id === auth()->id() ? 'Bạn' : 'Đồng chủ' }}
+                            </span>
+                        @endcan
                     </div>
                 @empty
                     <p class="rounded-xl border border-dashed border-outline-variant/30 px-4 py-6 text-center text-sm text-on-surface-variant">
-                        Lớp chưa có đồng chủ nào. Thêm email ở trên để mời người cùng quản lý.
+                        @can('manageCoOwners', $courseClass)
+                            Lớp chưa có đồng chủ nào. Thêm email ở trên để mời người cùng quản lý.
+                        @else
+                            Lớp chưa có đồng chủ nào.
+                        @endcan
                     </p>
                 @endforelse
 
                 {{-- Modal xác nhận GỠ đồng chủ (thay confirm() mặc định của trình duyệt) --}}
+                @can('manageCoOwners', $courseClass)
                 <template x-teleport="body">
                     <div x-show="removing" x-cloak x-transition.opacity
                         @keydown.escape.window="removing = null"
@@ -336,6 +415,7 @@
                         </div>
                     </div>
                 </template>
+                @endcan
             </div>
         </div>
     </div>

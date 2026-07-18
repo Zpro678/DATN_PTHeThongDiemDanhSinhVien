@@ -26,7 +26,7 @@ class QuickAttendanceModal extends Component
     public string $meetingEndTime = '';
     public string $sessionName = '';
     public int $durationMinutes = 15;
-    public int $gpsRadius = 10;
+    public int $gpsRadius = 30;
     public int $qrRefreshRate = 10;
     public bool $gpsEnabled = true;
     public ?float $gpsLatitude = null;
@@ -260,7 +260,7 @@ class QuickAttendanceModal extends Component
         $this->meetingEndTime = $this->defaultMeetingEndTime();
         $this->sessionName = 'Phiên 1';
         $this->durationMinutes = 15;
-        $this->gpsRadius = 10;
+        $this->gpsRadius = 30;
         $this->qrRefreshRate = 10;
         $this->gpsEnabled = true;
         $this->gpsLatitude = null;

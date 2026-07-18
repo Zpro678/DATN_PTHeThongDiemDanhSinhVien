@@ -69,7 +69,8 @@ class ClassStatistics extends Component
         $warningCount  = $statsCollection->where('is_warning', true)->where('is_banned', false)->count();
         // Quỹ vắng cấp lớp dựa trên số buổi cơ sở = max(dự kiến, số buổi đã học).
         $allowedAbsent = \App\Services\AttendanceCalculator::allowedAbsentSessions(
-            \App\Services\AttendanceCalculator::baseSessions($plannedSessions, $studiedSessions)
+            \App\Services\AttendanceCalculator::baseSessions($plannedSessions, $studiedSessions),
+            $class->getAttendanceThresholds()['absence_limit_percent']
         );
 
         // Danh sách học viên cần chú ý (banned trước, warning sau)

@@ -27,7 +27,7 @@
                             Cảnh báo nguy hiểm: {{ $totals['warning_count'] }} môn học có nguy cơ cấm thi
                         </h3>
                         <p class="mt-1.5 max-w-3xl text-[14px] font-medium leading-relaxed text-rose-800/80">
-                            Bạn đã vượt quá ngưỡng an toàn (vắng &gt; 20%). Vui lòng kiểm tra lại và nộp đơn minh chứng vắng mặt ngay lập tức nếu bạn có lý do chính đáng để tránh bị cấm thi.
+                            Bạn đã vượt quá quỹ vắng cho phép của môn. Vui lòng kiểm tra lại và nộp đơn minh chứng vắng mặt ngay lập tức nếu bạn có lý do chính đáng để tránh bị cấm thi.
                         </p>
                     </div>
                 </div>
@@ -101,7 +101,7 @@
             <div class="mb-6 flex flex-col gap-2 sm:flex-row sm:items-end sm:justify-between px-2">
                 <div>
                     <h2 class="text-2xl font-black text-slate-800">Quỹ vắng an toàn theo môn</h2>
-                    <p class="mt-1 text-[14px] font-medium text-slate-500">Theo dõi số buổi bạn được phép vắng để không bị cấm thi (ngưỡng &gt; 20%).</p>
+                    <p class="mt-1 text-[14px] font-medium text-slate-500">Theo dõi số buổi bạn được phép vắng để không bị cấm thi (mỗi môn có ngưỡng riêng).</p>
                 </div>
                 <span class="inline-flex w-fit items-center gap-1.5 rounded-full bg-slate-100 px-3 py-1.5 text-[11px] font-bold uppercase tracking-wider text-slate-600">
                     <x-user.icon name="shield-alert" :size="14" />

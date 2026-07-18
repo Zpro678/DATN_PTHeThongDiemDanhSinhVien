@@ -123,16 +123,26 @@
 
                     <div class="grid grid-cols-1 sm:grid-cols-2 gap-4 sm:gap-6">
                         <label class="space-y-2 sm:col-span-2 md:col-span-1">
-                            <span class="block text-sm font-semibold text-on-surface">Ngưỡng đi muộn (phút) <span class="text-error">*</span></span>
-                            <input wire:model.live.debounce.300ms="lateThreshold" type="number" min="0" max="300" class="h-12 w-full rounded-xl border border-outline-variant/40 bg-white px-4 text-sm font-semibold text-on-surface outline-none transition-all hover:border-outline-variant focus:border-primary focus:ring-2 focus:ring-primary/20">
-                            @error('lateThreshold') <span class="block text-xs font-medium text-error">{{ $message }}</span> @enderror
+                            <span class="block text-sm font-semibold text-on-surface">Tổng số buổi dự kiến <span class="text-error">*</span></span>
+                            <input wire:model.live.debounce.300ms="totalSessions" type="number" min="1" max="200" class="h-12 w-full rounded-xl border border-outline-variant/40 bg-white px-4 text-sm font-semibold text-on-surface outline-none transition-all hover:border-outline-variant focus:border-primary focus:ring-2 focus:ring-primary/20">
+                            <span class="block text-xs text-on-surface-variant/70">Dùng để tính quỹ vắng cho phép và tiến độ lớp.</span>
+                            @error('totalSessions') <span class="block text-xs font-medium text-error">{{ $message }}</span> @enderror
                         </label>
 
                         <label class="space-y-2 sm:col-span-2 md:col-span-1">
-                            <span class="block text-sm font-semibold text-on-surface">Tổng số buổi dự kiến <span class="text-error">*</span></span>
-                            <input wire:model.live.debounce.300ms="totalSessions" type="number" min="1" max="200" class="h-12 w-full rounded-xl border border-outline-variant/40 bg-white px-4 text-sm font-semibold text-on-surface outline-none transition-all hover:border-outline-variant focus:border-primary focus:ring-2 focus:ring-primary/20">
-                            <span class="block text-xs text-on-surface-variant/70">Dùng để tính quỹ vắng cho phép (20%) và tiến độ lớp.</span>
-                            @error('totalSessions') <span class="block text-xs font-medium text-error">{{ $message }}</span> @enderror
+                            <span class="block text-sm font-semibold text-on-surface">Ngưỡng vắng cho phép (%) <span class="text-error">*</span></span>
+                            <input wire:model.live.debounce.300ms="absenceLimitPercent" type="number" min="0" max="100" step="0.5" class="h-12 w-full rounded-xl border border-outline-variant/40 bg-white px-4 text-sm font-semibold text-on-surface outline-none transition-all hover:border-outline-variant focus:border-primary focus:ring-2 focus:ring-primary/20">
+                            @php
+                                $previewAllowed = \App\Services\AttendanceCalculator::allowedAbsentSessions(
+                                    (int) $totalSessions,
+                                    (float) $absenceLimitPercent
+                                );
+                                $previewMinAttendance = \App\Services\AttendanceCalculator::formatPercent(
+                                    max(0, 100 - (float) $absenceLimitPercent)
+                                );
+                            @endphp
+                            <span class="block text-xs text-on-surface-variant/70">= <strong>{{ $previewAllowed }} buổi</strong> trên {{ (int) $totalSessions }} buổi; chuyên cần tối thiểu {{ $previewMinAttendance }}%.</span>
+                            @error('absenceLimitPercent') <span class="block text-xs font-medium text-error">{{ $message }}</span> @enderror
                         </label>
                     </div>
 

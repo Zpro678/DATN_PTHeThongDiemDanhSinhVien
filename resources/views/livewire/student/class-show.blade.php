@@ -16,6 +16,10 @@
     $absenceBudgetLabel = $attendanceDetail['absence_budget_label'] ?? 'Chưa có dữ liệu';
     $absenceBudgetValue = $absenceBudgetState === 'danger' ? 'Vượt '.$exceededAbsentSessions.' buổi' :
     $safeAbsenceSessions.' buổi';
+
+    // Ngưỡng chuyên cần tối thiểu theo cấu hình của lớp (không còn cố định 80%).
+    $minAttendancePercent = $class->getMinAttendancePercent();
+    $minAttendanceLabel = \App\Services\AttendanceCalculator::formatPercent($minAttendancePercent);
     $backRoute = $fromAttendanceStats
     ? route('student.attendance.stats', ['ma_user' => auth()->id()])
     : route('joined-classes', ['ma_user' => auth()->id()]);
@@ -216,24 +220,33 @@
                 'rose' => 'bg-rose-100 text-rose-600', 'indigo' => 'bg-indigo-100 text-indigo-600'
                 ][$c];
                 @endphp
+                @php
+                // Thẻ có badge trạng thái cần nhiều bề ngang hơn (nhãn + giá trị dạng chữ + badge).
+                // Ở mobile 2 cột mỗi thẻ chỉ ~160px nên cho nó chiếm trọn hàng, từ sm trở lên về lại 1 ô.
+                $tileSpan = isset($tile['status_text']) ? 'col-span-2 sm:col-span-1' : '';
+                @endphp
                 <div
-                    class="relative flex items-center gap-3.5 rounded-2xl border {{ $tile['border'] }} {{ $tile['bg'] }} p-3.5 sm:p-4 {{ $tile['extra'] }}">
-                    <div class="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl {{ $bgIconClass }}">
-                        <x-user.icon name="{{ $tile['icon'] }}" :size="18" />
-                    </div>
-                    <div>
-                        <p class="text-[10px] sm:text-[11px] font-bold uppercase tracking-wider text-slate-500 mb-0.5">
-                            {{ $tile['label'] }}</p>
-                        <strong class="text-xl sm:text-2xl font-black leading-none {{ $textClass }}">
-                            {{ $tile['value'] }}
-                        </strong>
-                    </div>
+                    class="{{ $tileSpan }} flex flex-col justify-center gap-2 rounded-2xl border {{ $tile['border'] }} {{ $tile['bg'] }} p-3.5 sm:p-4 {{ $tile['extra'] }}">
                     @if(isset($tile['status_text']))
-                    <div class="absolute top-3.5 right-4">
-                        <span
-                            class="text-[9px] font-bold uppercase tracking-widest {{ $textClass }} opacity-90">{{ $tile['status_text'] }}</span>
-                    </div>
+                    {{-- Badge chiếm hẳn một dòng riêng: trước đây nó absolute (đè lên nhãn ở mobile),
+                    còn nếu để cùng hàng với chữ thì bóp phần giá trị khiến "Vượt N buổi" xuống dòng. --}}
+                    <span
+                        class="self-end text-[9px] font-bold uppercase tracking-widest {{ $textClass }} opacity-90">{{ $tile['status_text'] }}</span>
                     @endif
+                    <div class="flex items-center gap-3 sm:gap-3.5">
+                        <div class="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl {{ $bgIconClass }}">
+                            <x-user.icon name="{{ $tile['icon'] }}" :size="18" />
+                        </div>
+                        {{-- min-w-0: cho phép khối chữ co lại trên màn hẹp thay vì tràn ra ngoài thẻ. --}}
+                        <div class="min-w-0">
+                            <p
+                                class="text-[10px] sm:text-[11px] font-bold uppercase tracking-wider text-slate-500 mb-0.5">
+                                {{ $tile['label'] }}</p>
+                            <strong class="block text-xl sm:text-2xl font-black leading-none {{ $textClass }}">
+                                {{ $tile['value'] }}
+                            </strong>
+                        </div>
+                    </div>
                 </div>
                 @endforeach
             </div>
@@ -257,13 +270,19 @@
                     <div class="relative h-3.5 w-full overflow-hidden rounded-full bg-slate-100">
                         <div class="h-full rounded-full {{ $themeBgClass }} transition-all duration-700"
                             style="width: {{ min(100, $percent) }}%"></div>
-                        <div class="absolute top-0 bottom-0 w-[3px] bg-red-500" style="left: 80%"></div>
+                        <div class="absolute top-0 bottom-0 w-[3px] bg-red-500"
+                            style="left: {{ $minAttendancePercent }}%"></div>
                     </div>
-                    <div class="relative mt-2 flex justify-between text-[11px] sm:text-xs font-semibold text-slate-500">
+                    <div class="mt-2 flex justify-between text-[11px] sm:text-xs font-semibold text-slate-500">
                         <span>0%</span>
-                        <span class="absolute whitespace-nowrap"
-                            style="left: 80%; transform: translateX(-50%); color: #ef4444;">80% (Yêu cầu)</span>
                         <span>100%</span>
+                    </div>
+                    {{-- Nhãn ngưỡng để riêng một dòng: ở mobile nó luôn đè lên mốc "100%" khi nằm cùng dòng. --}}
+                    <div class="relative mt-1 h-4 text-[11px] sm:text-xs font-semibold">
+                        <span class="absolute max-w-full whitespace-nowrap text-red-500"
+                            style="left: {{ $minAttendancePercent }}%; transform: translateX(-50%);">
+                            {{ $minAttendanceLabel }}% (Yêu cầu)
+                        </span>
                     </div>
                 </div>
 
@@ -280,8 +299,8 @@
                     </div>
                     <p class="leading-relaxed">
                         Dữ liệu được tính từ các buổi đã chốt của lớp này (mỗi buổi tính 1 đơn vị). Bạn cần duy trì tỷ
-                        lệ tham gia từ <strong class="text-slate-800">80% trở lên</strong> để đảm bảo kiến thức và đủ
-                        điều kiện tham dự kỳ thi cuối kỳ.
+                        lệ tham gia từ <strong class="text-slate-800">{{ $minAttendanceLabel }}% trở lên</strong> để đảm
+                        bảo kiến thức và đủ điều kiện tham dự kỳ thi cuối kỳ.
                     </p>
                 </div>
             </div>

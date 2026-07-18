@@ -4,11 +4,14 @@ namespace App\Livewire\Lecturer;
 
 use App\Models\CourseClass;
 use Illuminate\Contracts\View\View;
+use Illuminate\Foundation\Auth\Access\AuthorizesRequests;
 use Illuminate\Validation\Rule;
 use Livewire\Component;
 
 class ClassSettings extends Component
 {
+    use AuthorizesRequests;
+
     // Model lưu trữ thông tin của lớp học hiện tại đang được chỉnh sửa
     public CourseClass $courseClass;
 
@@ -24,11 +27,17 @@ class ClassSettings extends Component
     // Mô tả chi tiết về lớp học
     public string $description = '';
 
-    // Ngưỡng thời gian đi muộn (phút)
-    public int $lateThreshold = 15;
-
-    // Tổng số buổi dự kiến của môn học (dùng để tính quỹ vắng 20% và tiến độ).
+    // Tổng số buổi dự kiến của môn học (dùng để tính quỹ vắng và tiến độ).
     public int $totalSessions = 15;
+
+    // Quỹ vắng cho phép, tính theo % tổng số buổi. Ngưỡng cấm thi = 100 - giá trị này.
+    public float $absenceLimitPercent = 20;
+
+    // Cảnh báo sớm hơn ngưỡng cấm thi bao nhiêu % chuyên cần.
+    public float $warningMarginPercent = 5;
+
+    // Còn bao nhiêu buổi trong quỹ vắng thì gửi thông báo "sắp vượt ngưỡng".
+    public int $nearAbsenceSessions = 2;
 
     // Có trừ điểm chuyên cần khi vắng có phép hay không (giữ nguyên cờ cũ hoặc đồng bộ với attendanceRules)
     public bool $deductExcusedAbsence = false;
@@ -58,13 +67,10 @@ class ClassSettings extends Component
 
     public function mount(CourseClass $courseClass): void
     {
-        // Cài đặt lớp (đổi cấu hình, xóa lớp, quản lý đồng chủ) chỉ dành cho CHỦ CHÍNH.
-        // Đồng chủ vẫn quản lý được điểm danh/học viên/đơn nghỉ ở các trang khác, nhưng không đụng cấu hình lớp.
-        abort_unless(
-            $courseClass->isPrimaryOwner(auth()->id()),
-            403,
-            'Chỉ chủ chính của lớp mới được chỉnh sửa cài đặt.'
-        );
+        // Chủ chính và đồng chủ đều mở được trang này. Quyền trên từng thao tác do
+        // CourseClassPolicy quyết định — mỗi action bên dưới tự authorize, KHÔNG dựa
+        // vào lá chắn ở mount(), vì mỗi method Livewire là một endpoint gọi được trực tiếp.
+        $this->authorize('view', $courseClass);
 
         $this->courseClass = $courseClass;
 
@@ -72,23 +78,32 @@ class ClassSettings extends Component
         $this->classCode = $courseClass->class_code ?? $courseClass->join_key;
         $this->join_key = $courseClass->join_key;
         $this->description = $courseClass->description ?? '';
-        $this->lateThreshold = $courseClass->late_threshold ?? 15;
         $this->totalSessions = $courseClass->total_sessions ?? 15;
         $this->deductExcusedAbsence = (bool) $courseClass->deduct_excused_absence;
         $this->attendanceRules = $courseClass->getAttendanceRules();
+
+        $thresholds = $courseClass->getAttendanceThresholds();
+        $this->absenceLimitPercent = $thresholds['absence_limit_percent'];
+        $this->warningMarginPercent = $thresholds['warning_percent'] - $thresholds['min_attendance_percent'];
+        $this->nearAbsenceSessions = $thresholds['near_absence_sessions'];
+
         $this->requireApproval = $courseClass->require_approval;
         $this->status = $courseClass->status;
     }
 
     public function save()
     {
+        $this->authorize('update', $this->courseClass);
+
         $validated = $this->validate([
             'name' => ['required', 'string', 'max:255'],
             'classCode' => ['nullable', 'string', 'max:50'],
             'join_key' => ['required', 'string', 'max:20', Rule::unique('classes', 'join_key')->ignore($this->courseClass->id)],
             'description' => ['nullable', 'string', 'max:5000'],
-            'lateThreshold' => ['required', 'integer', 'min:0', 'max:300'],
             'totalSessions' => ['required', 'integer', 'min:1', 'max:200'],
+            'absenceLimitPercent' => ['required', 'numeric', 'min:0', 'max:100'],
+            'warningMarginPercent' => ['required', 'numeric', 'min:0', 'max:100'],
+            'nearAbsenceSessions' => ['required', 'integer', 'min:0', 'max:50'],
             'attendanceRules' => ['required', 'array'],
             'attendanceRules.late' => ['required', 'numeric', 'min:0', 'max:10'],
             'attendanceRules.absent' => ['required', 'numeric', 'min:0', 'max:10'],
@@ -102,6 +117,13 @@ class ClassSettings extends Component
             'totalSessions.required' => 'Vui lòng nhập tổng số buổi dự kiến.',
             'totalSessions.min' => 'Tổng số buổi dự kiến phải từ 1 trở lên.',
             'totalSessions.max' => 'Tổng số buổi dự kiến tối đa là 200.',
+            'absenceLimitPercent.required' => 'Vui lòng nhập ngưỡng vắng cho phép.',
+            'absenceLimitPercent.min' => 'Ngưỡng vắng cho phép không được nhỏ hơn 0%.',
+            'absenceLimitPercent.max' => 'Ngưỡng vắng cho phép tối đa là 100%.',
+            'warningMarginPercent.required' => 'Vui lòng nhập biên cảnh báo.',
+            'warningMarginPercent.max' => 'Biên cảnh báo tối đa là 100%.',
+            'nearAbsenceSessions.required' => 'Vui lòng nhập số buổi còn lại để cảnh báo.',
+            'nearAbsenceSessions.max' => 'Số buổi cảnh báo tối đa là 50.',
             'attendanceRules.late.required' => 'Vui lòng nhập điểm trừ khi đi muộn.',
             'attendanceRules.absent.required' => 'Vui lòng nhập điểm trừ khi vắng.',
             'attendanceRules.excused.required' => 'Vui lòng nhập điểm trừ khi vắng có phép.',
@@ -116,8 +138,10 @@ class ClassSettings extends Component
             'class_code' => $validated['classCode'] ?: strtoupper($validated['join_key']),
             'join_key' => strtoupper($validated['join_key']),
             'description' => $validated['description'] ?: null,
-            'late_threshold' => $validated['lateThreshold'],
             'total_sessions' => $validated['totalSessions'],
+            'absence_limit_percent' => $validated['absenceLimitPercent'],
+            'warning_margin_percent' => $validated['warningMarginPercent'],
+            'near_absence_sessions' => $validated['nearAbsenceSessions'],
             'deduct_late' => (float) $validated['attendanceRules']['late'],
             'deduct_absent' => (float) $validated['attendanceRules']['absent'],
             'deduct_excused' => $deductExcused,
@@ -132,6 +156,8 @@ class ClassSettings extends Component
 
     public function regenerateCode(): void
     {
+        $this->authorize('update', $this->courseClass);
+
         $this->join_key = CourseClass::generateUniqueCode('', $this->courseClass->id);
     }
 
@@ -139,6 +165,8 @@ class ClassSettings extends Component
 
     public function confirmDelete(): void
     {
+        $this->authorize('delete', $this->courseClass);
+
         $this->isConfirmingDelete = true;
     }
 
@@ -149,6 +177,8 @@ class ClassSettings extends Component
 
     public function deleteClass(): void
     {
+        $this->authorize('delete', $this->courseClass);
+
         if (! $this->isConfirmingDelete) {
             return;
         }
@@ -163,7 +193,7 @@ class ClassSettings extends Component
     public function addCoOwner(): void
     {
         // Chỉ chủ chính được thêm đồng chủ.
-        abort_unless($this->courseClass->isPrimaryOwner(auth()->id()), 403);
+        $this->authorize('manageCoOwners', $this->courseClass);
 
         $this->validate([
             'coOwnerEmail' => ['required', 'email'],
@@ -231,7 +261,7 @@ class ClassSettings extends Component
 
     public function removeCoOwner(int $userId): void
     {
-        abort_unless($this->courseClass->isPrimaryOwner(auth()->id()), 403);
+        $this->authorize('manageCoOwners', $this->courseClass);
 
         $this->courseClass->coOwners()->detach($userId);
 
@@ -242,7 +272,10 @@ class ClassSettings extends Component
     {
         $coOwners = $this->courseClass->coOwners()->get();
 
-        return view('livewire.lecturer.class-settings', compact('coOwners'))
+        // Đồng chủ cần biết ai là chủ chính để liên hệ khi cần thao tác ngoài quyền của mình.
+        $primaryOwner = $this->courseClass->owner;
+
+        return view('livewire.lecturer.class-settings', compact('coOwners', 'primaryOwner'))
             ->layout('layouts.user', ['title' => 'Cài đặt · ' . $this->courseClass->name]);
     }
 }

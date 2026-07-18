@@ -30,7 +30,7 @@ class QrAttendanceCreate extends Component
     public int $durationMinutes = 15;
 
     // Bán kính cho phép sinh viên điểm danh bằng GPS (tính bằng mét)
-    public int $gpsRadius = 10;
+    public int $gpsRadius = 30;
 
     // Thời gian làm mới mã QR (tính bằng giây)
     public int $qrRefreshRate = 10;
@@ -140,20 +140,20 @@ class QrAttendanceCreate extends Component
             $this->durationMinutes = $config['durationMinutes'] ?? 15;
             $this->qrRefreshRate = $config['qrRefreshRate'] ?? 10;
             $this->deviceCheck = $config['deviceCheck'] ?? true;
-            $this->gpsRadius = $config['gpsRadius'] ?? 10;
+            $this->gpsRadius = $config['gpsRadius'] ?? 30;
         }
 
         if ($selectedClass && $selectedClass->gps_latitude !== null) {
             $this->gpsEnabled = true;
             $this->gpsLatitude = (float) $selectedClass->gps_latitude;
             $this->gpsLongitude = (float) $selectedClass->gps_longitude;
-            $this->gpsRadius = (int) ($selectedClass->gps_radius ?? 10);
+            $this->gpsRadius = (int) ($selectedClass->gps_radius ?? 30);
         } elseif (! $config) {
             // Mặc định BẬT xác minh GPS cho phiên QR — toạ độ sẽ được trình duyệt
             // giảng viên tự lấy khi bật (blade $watch('gpsEnabled') → getCurrentPosition);
             // nếu bị từ chối quyền vị trí thì tự tắt lại.
             $this->gpsEnabled = true;
-            $this->gpsRadius = 10;
+            $this->gpsRadius = 30;
             $this->gpsLatitude = null;
             $this->gpsLongitude = null;
         }

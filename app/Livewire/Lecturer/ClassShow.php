@@ -532,23 +532,41 @@ class ClassShow extends Component
             return;
         }
 
-        if (! $member->user_id) {
-            $this->dispatch('toast', message: 'Sinh viên chưa liên kết tài khoản nên không thể nhận thông báo.', type: 'error');
+        // SV chưa liên kết tài khoản vẫn nhận được qua email trong hồ sơ lớp.
+        if (! $member->user_id && blank($member->email)) {
+            $this->dispatch('toast', message: 'Sinh viên chưa liên kết tài khoản và hồ sơ không có email nên không gửi được.', type: 'error');
 
             return;
         }
 
-        $sent = app(\App\Services\NotificationService::class)->sendManualAbsenceWarning(
-            (int) $member->user_id,
+        $sent = app(\App\Services\NotificationService::class)->sendAbsenceWarningToMember(
+            $member,
             $this->class,
             (int) ($stats['attendance_percent'] ?? 0),
         );
 
         $this->dispatch(
             'toast',
-            message: $sent ? 'Đã gửi cảnh báo chuyên cần cho sinh viên.' : 'Sinh viên đã có cảnh báo chưa đọc.',
+            message: $this->notifyResultMessage($member, $sent, 'cảnh báo chuyên cần'),
             type: $sent ? 'success' : 'info',
         );
+    }
+
+    /**
+     * Câu thông báo cho giảng viên, nói đúng thứ vừa xảy ra: SV chưa liên kết chỉ
+     * nhận được mail, còn SV đã liên kết thì nhận cả trong app / mail / Telegram.
+     */
+    private function notifyResultMessage(\App\Models\ClassMember $member, bool $sent, string $what): string
+    {
+        if (! $sent) {
+            return $member->user_id
+                ? 'Sinh viên đã có ' . $what . ' chưa đọc.'
+                : 'Không gửi được email ' . $what . ' cho sinh viên. Kiểm tra lại địa chỉ email trong hồ sơ.';
+        }
+
+        return $member->user_id
+            ? 'Đã gửi ' . $what . ' cho sinh viên.'
+            : 'Đã gửi ' . $what . ' qua email ' . $member->email . ' (sinh viên chưa liên kết tài khoản).';
     }
 
     /**
@@ -568,21 +586,21 @@ class ClassShow extends Component
             return;
         }
 
-        if (! $member->user_id) {
-            $this->dispatch('toast', message: 'Sinh viên chưa liên kết tài khoản nên không thể nhận thông báo.', type: 'error');
+        if (! $member->user_id && blank($member->email)) {
+            $this->dispatch('toast', message: 'Sinh viên chưa liên kết tài khoản và hồ sơ không có email nên không gửi được.', type: 'error');
 
             return;
         }
 
-        $sent = app(\App\Services\NotificationService::class)->sendExamBanNotice(
-            (int) $member->user_id,
+        $sent = app(\App\Services\NotificationService::class)->sendExamBanToMember(
+            $member,
             $this->class,
             (int) ($stats['attendance_percent'] ?? 0),
         );
 
         $this->dispatch(
             'toast',
-            message: $sent ? 'Đã gửi thông báo cấm thi cho sinh viên.' : 'Sinh viên đã có thông báo cấm thi chưa đọc.',
+            message: $this->notifyResultMessage($member, $sent, 'thông báo cấm thi'),
             type: $sent ? 'success' : 'info',
         );
     }

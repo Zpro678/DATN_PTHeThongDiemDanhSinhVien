@@ -14,7 +14,6 @@ return new class extends Migration
             $table->string('join_key', 50)->unique(); // Mã lớp SV nhập để vào lớp.
             $table->string('name');
             $table->text('description')->nullable();
-            $table->integer('late_threshold')->default(15); // Số phút trễ tối đa để tính đi muộn.
             $table->boolean('deduct_excused_absence')->default(false); // Có trừ chuyên cần khi vắng có phép.
             $table->boolean('require_approval')->default(false);
             $table->string('status', 50)->default('active');

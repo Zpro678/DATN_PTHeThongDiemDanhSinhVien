@@ -225,11 +225,19 @@ class StudentIndex extends Component
         })->findOrFail($requestId);
 
         // Yêu cầu vào lớp gắn với tài khoản; tìm thành viên theo user_id.
-        $member = ClassMember::where('class_id', $request->class_id)
+        // withTrashed(): sinh viên từng bị xoá khỏi lớp vẫn còn bản ghi (soft delete) và
+        // unique(class_id, user_id) không tính deleted_at — phải KHÔI PHỤC bản ghi cũ,
+        // vừa tránh lỗi trùng khoá vừa giữ lại toàn bộ lịch sử điểm danh của em đó.
+        $member = ClassMember::withTrashed()
+            ->where('class_id', $request->class_id)
             ->where('user_id', $request->user_id)
             ->first();
 
         if ($member) {
+            if ($member->trashed()) {
+                $member->restore();
+            }
+
             $member->update(['status' => ClassMember::STATUS_ACTIVE, 'status_changed_at' => now()]);
         } else {
             $maxStudents = app(SubscriptionService::class)->maxStudentsPerClass(auth()->user());
@@ -344,11 +352,44 @@ class StudentIndex extends Component
             $user = \App\Models\User::where('email', $validated['newEmail'])->first();
         }
 
-        $member = ClassMember::create([
-            'class_id' => $courseClass->id,
-            'user_id' => $user ? $user->id : null,
-            'status' => ClassMember::STATUS_ACTIVE,
-        ]);
+        // Nếu em này từng bị xoá khỏi lớp thì khôi phục bản ghi cũ thay vì tạo mới:
+        // tránh vỡ unique(class_id, user_id) và giữ nguyên lịch sử điểm danh đã có.
+        // Chỉ tra khi có căn cứ định danh (tài khoản hoặc email) — không có thì luôn tạo mới,
+        // nếu không mệnh đề orWhere rỗng sẽ khớp nhầm một thành viên bất kỳ trong lớp.
+        $member = null;
+
+        if ($user || $validated['newEmail']) {
+            $member = ClassMember::withTrashed()
+                ->where('class_id', $courseClass->id)
+                ->where(function ($query) use ($user, $validated) {
+                    if ($user) {
+                        $query->orWhere('user_id', $user->id);
+                    }
+
+                    if ($validated['newEmail']) {
+                        $query->orWhereHas('profile', fn ($p) => $p->where('email', $validated['newEmail']));
+                    }
+                })
+                ->first();
+        }
+
+        if ($member) {
+            if ($member->trashed()) {
+                $member->restore();
+            }
+
+            $member->update([
+                'user_id' => $user?->id ?? $member->user_id,
+                'status' => ClassMember::STATUS_ACTIVE,
+                'status_changed_at' => null,
+            ]);
+        } else {
+            $member = ClassMember::create([
+                'class_id' => $courseClass->id,
+                'user_id' => $user ? $user->id : null,
+                'status' => ClassMember::STATUS_ACTIVE,
+            ]);
+        }
 
         $member->syncProfile([
             'full_name' => $validated['newName'],

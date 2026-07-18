@@ -1,4 +1,4 @@
-<div x-data="{ showImportModal: false, showShareModal: false, showJoinQrZoom: false, showBan: false, banConfirm: { open: false, id: null, name: '' } }"
+<div x-data="{ showImportModal: false, showShareModal: false, showJoinQrZoom: false, showBan: false, banConfirm: { open: false, id: null, name: '' }, removeConfirm: { open: false, id: null, name: '' }, removeAllConfirm: false }"
     x-init="window.listenRealtime && window.listenRealtime(@js($this->realtimeChannel()), () => $wire.$refresh(), 300)"
     class="w-full space-y-6 px-6 py-6 pb-24 sm:px-10 lg:px-16 animate-in fade-in slide-in-from-bottom-4 duration-500">
 
@@ -204,9 +204,8 @@
                 @endif
             </a>
             @if($studentsCount > 0)
-            <button type="button" 
-                wire:confirm="Bạn có chắc chắn muốn xóa TOÀN BỘ sinh viên khỏi lớp học này? Hành động này sẽ chuyển trạng thái của tất cả thành 'đã xóa'." 
-                wire:click="removeAllStudents" 
+            <button type="button"
+                @click="removeAllConfirm = true"
                 class="inline-flex items-center gap-1.5 rounded-lg border border-rose-200 bg-rose-50 px-3 py-1.5 text-sm font-bold text-rose-600 transition-colors hover:bg-rose-100">
                 <x-user.icon name="trash-2" :size="16" />
                 Xóa tất cả
@@ -292,7 +291,7 @@
                             <th scope="col" class="w-[26%] pl-6 pr-4 py-4">Email</th>
                             <th scope="col" class="w-[13%] px-4 py-4 text-center">Liên kết</th>
                             <th scope="col" class="w-[10%] px-4 py-4 text-center">Chuyên cần</th>
-                            <th scope="col" class="w-[13%] px-4 py-4 text-center">Hành động</th>
+                            <th scope="col" class="w-[13%] px-4 py-4 text-right">Hành động</th>
                         </tr>
                     </thead>
                     <tbody class="divide-y divide-slate-100 transition-all duration-200" wire:loading.class="opacity-40 pointer-events-none blur-[1px]">
@@ -358,52 +357,50 @@
                                         'bg-green-50 text-green-600'  => !$isBanned && !$isWarning,
                                     ])>{{ $rate }}%</span>
                                 </td>
-                                <td class="px-4 py-4 text-center">
-                                    <div class="flex items-center justify-center gap-2">
-                                        @if($isBanned || $isWarning)
+                                <td class="px-4 py-4">
+                                    {{-- justify-end: thùng rác luôn ghim mép phải nên thẳng hàng ở mọi dòng,
+                                         dù dòng đó có thêm dấu "—" / nút Cấm thi / Gửi cảnh báo hay không. --}}
+                                    <div class="flex items-center justify-end gap-2">
+                                        {{-- Vượt ngưỡng -> Cấm thi; mới sắp vượt -> Gửi cảnh báo.
+                                             SV chưa liên kết tài khoản VẪN gửi được qua email trong hồ sơ lớp
+                                             (chỉ mất kênh trong-app và Telegram), nên vẫn hiện nút — miễn là có
+                                             email để gửi. Không có email thì không hiện gì, cột LIÊN KẾT bên
+                                             cạnh đã nói rõ tình trạng rồi. --}}
+                                        @if(($isBanned || $isWarning) && ($student->user_id || filled($student->email)))
                                             {{-- Ẩn/hiện theo công tắc chung "Hiển thị sinh viên cấm thi" ở đầu bảng (mặc định ẩn). --}}
                                             <span x-show="!showBan" class="text-slate-300">—</span>
                                             <span x-show="showBan" x-cloak>
-                                                    @if($isBanned)
-                                                        @if($student->user_id)
-                                                            <button
-                                                                type="button"
-                                                                @click="banConfirm = { open: true, id: {{ $student->id }}, name: @js($student->full_name) }"
-                                                                wire:loading.attr="disabled"
-                                                                wire:target="sendExamBan"
-                                                                class="inline-flex items-center gap-1.5 rounded-lg bg-red-600 px-3 py-1.5 text-xs font-bold text-white transition-colors hover:bg-red-700 disabled:opacity-60"
-                                                            >
-                                                                <x-user.icon name="alert-triangle" :size="14" />
-                                                                Cấm thi
-                                                            </button>
-                                                        @else
-                                                            <span class="text-xs font-medium text-slate-400" title="Chưa liên kết tài khoản">Chưa liên kết</span>
-                                                        @endif
-                                                    @elseif($isWarning)
-                                                        @if($student->user_id)
-                                                            <button
-                                                                type="button"
-                                                                wire:click="sendAttendanceWarning({{ $student->id }})"
-                                                                wire:loading.attr="disabled"
-                                                                wire:target="sendAttendanceWarning"
-                                                                class="inline-flex items-center gap-1.5 rounded-lg border border-amber-300 bg-amber-50 px-3 py-1.5 text-xs font-bold text-amber-700 transition-colors hover:bg-amber-100 disabled:opacity-60"
-                                                            >
-                                                                <x-user.icon name="bell" :size="14" />
-                                                                Gửi cảnh báo
-                                                            </button>
-                                                        @else
-                                                            <span class="text-xs font-medium text-slate-400" title="Chưa liên kết tài khoản">Chưa liên kết</span>
-                                                        @endif
-                                                    @endif
+                                                @if($isBanned)
+                                                    <button
+                                                        type="button"
+                                                        @click="banConfirm = { open: true, id: {{ $student->id }}, name: @js($student->displayName) }"
+                                                        wire:loading.attr="disabled"
+                                                        wire:target="sendExamBan"
+                                                        class="inline-flex items-center gap-1.5 rounded-lg bg-red-600 px-3 py-1.5 text-xs font-bold text-white transition-colors hover:bg-red-700 disabled:opacity-60"
+                                                    >
+                                                        <x-user.icon name="alert-triangle" :size="14" />
+                                                        Cấm thi
+                                                    </button>
+                                                @else
+                                                    <button
+                                                        type="button"
+                                                        wire:click="sendAttendanceWarning({{ $student->id }})"
+                                                        wire:loading.attr="disabled"
+                                                        wire:target="sendAttendanceWarning"
+                                                        class="inline-flex items-center gap-1.5 rounded-lg border border-amber-300 bg-amber-50 px-3 py-1.5 text-xs font-bold text-amber-700 transition-colors hover:bg-amber-100 disabled:opacity-60"
+                                                    >
+                                                        <x-user.icon name="bell" :size="14" />
+                                                        Gửi cảnh báo
+                                                    </button>
+                                                @endif
                                             </span>
                                         @endif
 
                                         <button
                                             type="button"
-                                            wire:confirm="Bạn có chắc chắn muốn xóa sinh viên {{ $student->displayName }} khỏi lớp?"
-                                            wire:click="removeStudent({{ $student->id }})"
+                                            @click="removeConfirm = { open: true, id: {{ $student->id }}, name: @js($student->displayName) }"
                                             title="Xóa sinh viên"
-                                            class="inline-flex h-7 w-7 items-center justify-center rounded-lg hover:bg-rose-100 text-slate-400 hover:text-rose-600 transition-colors"
+                                            class="inline-flex h-7 w-7 shrink-0 items-center justify-center rounded-lg hover:bg-rose-100 text-slate-400 hover:text-rose-600 transition-colors"
                                         >
                                             <x-user.icon name="trash-2" :size="16" />
                                         </button>
@@ -732,6 +729,108 @@
                     >
                         <x-user.icon name="alert-triangle" :size="16" />
                         Cấm thi
+                    </button>
+                </div>
+            </div>
+        </div>
+    </template>
+
+    {{-- Modal xác nhận XÓA 1 HỌC VIÊN (thay confirm() mặc định của trình duyệt) --}}
+    <template x-teleport="body">
+        <div
+            x-show="removeConfirm.open"
+            x-cloak
+            @keydown.escape.window="removeConfirm.open = false"
+            class="fixed inset-0 z-[120] flex items-center justify-center p-4"
+        >
+            <div
+                x-show="removeConfirm.open"
+                x-transition.opacity
+                @click="removeConfirm.open = false"
+                class="absolute inset-0 bg-slate-900/50 backdrop-blur-sm"
+            ></div>
+
+            <div
+                x-show="removeConfirm.open"
+                x-transition.scale.origin.center
+                class="relative w-full max-w-[420px] overflow-hidden rounded-[24px] bg-white shadow-2xl"
+            >
+                <div class="p-6 text-center">
+                    <div class="mx-auto flex h-14 w-14 items-center justify-center rounded-full bg-rose-50 text-rose-600">
+                        <x-user.icon name="trash-2" :size="28" />
+                    </div>
+                    <h3 class="mt-4 text-[19px] font-bold text-slate-800">Xóa học viên khỏi lớp</h3>
+                    <p class="mt-2 text-[14px] leading-relaxed text-slate-500">
+                        Xóa <span class="font-bold text-slate-700" x-text="removeConfirm.name"></span> khỏi lớp học này?
+                        Dữ liệu điểm danh đã ghi nhận của học viên sẽ không còn được tính.
+                    </p>
+                </div>
+                <div class="flex gap-3 bg-slate-50 px-6 py-4">
+                    <button
+                        type="button"
+                        @click="removeConfirm.open = false"
+                        class="flex-1 rounded-full border border-slate-200 bg-white px-5 py-2.5 text-sm font-semibold text-slate-600 transition-colors hover:bg-slate-100"
+                    >
+                        Huỷ
+                    </button>
+                    <button
+                        type="button"
+                        @click="$wire.removeStudent(removeConfirm.id); removeConfirm.open = false"
+                        class="flex-1 inline-flex items-center justify-center gap-1.5 rounded-full bg-rose-600 px-5 py-2.5 text-sm font-bold text-white transition-colors hover:bg-rose-700"
+                    >
+                        <x-user.icon name="trash-2" :size="16" />
+                        Xóa học viên
+                    </button>
+                </div>
+            </div>
+        </div>
+    </template>
+
+    {{-- Modal xác nhận XÓA TOÀN BỘ HỌC VIÊN --}}
+    <template x-teleport="body">
+        <div
+            x-show="removeAllConfirm"
+            x-cloak
+            @keydown.escape.window="removeAllConfirm = false"
+            class="fixed inset-0 z-[120] flex items-center justify-center p-4"
+        >
+            <div
+                x-show="removeAllConfirm"
+                x-transition.opacity
+                @click="removeAllConfirm = false"
+                class="absolute inset-0 bg-slate-900/50 backdrop-blur-sm"
+            ></div>
+
+            <div
+                x-show="removeAllConfirm"
+                x-transition.scale.origin.center
+                class="relative w-full max-w-[440px] overflow-hidden rounded-[24px] bg-white shadow-2xl"
+            >
+                <div class="p-6 text-center">
+                    <div class="mx-auto flex h-14 w-14 items-center justify-center rounded-full bg-rose-50 text-rose-600">
+                        <x-user.icon name="alert-triangle" :size="28" />
+                    </div>
+                    <h3 class="mt-4 text-[19px] font-bold text-slate-800">Xóa toàn bộ học viên</h3>
+                    <p class="mt-2 text-[14px] leading-relaxed text-slate-500">
+                        Xóa tất cả <span class="font-bold text-rose-600">{{ $studentsCount }}</span> học viên khỏi lớp học này?
+                        Toàn bộ sẽ chuyển sang trạng thái "đã xóa" và dữ liệu điểm danh của họ sẽ không còn được tính.
+                    </p>
+                </div>
+                <div class="flex gap-3 bg-slate-50 px-6 py-4">
+                    <button
+                        type="button"
+                        @click="removeAllConfirm = false"
+                        class="flex-1 rounded-full border border-slate-200 bg-white px-5 py-2.5 text-sm font-semibold text-slate-600 transition-colors hover:bg-slate-100"
+                    >
+                        Huỷ
+                    </button>
+                    <button
+                        type="button"
+                        @click="$wire.removeAllStudents(); removeAllConfirm = false"
+                        class="flex-1 inline-flex items-center justify-center gap-1.5 rounded-full bg-rose-600 px-5 py-2.5 text-sm font-bold text-white transition-colors hover:bg-rose-700"
+                    >
+                        <x-user.icon name="trash-2" :size="16" />
+                        Xóa tất cả
                     </button>
                 </div>
             </div>

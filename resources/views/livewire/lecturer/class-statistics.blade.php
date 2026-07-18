@@ -1,13 +1,19 @@
 <div class="flex-1 overflow-y-auto space-y-6 px-6 py-6 pb-24 sm:px-10 lg:px-16 animate-in fade-in slide-in-from-bottom-4 duration-500">
     {{-- Summary cards --}}
     @php
+        // Ngưỡng cấu hình của lớp — không dùng mốc 80/85 cứng nữa.
+        $thresholds = $class->getAttendanceThresholds();
+        $minAttendance = $thresholds['min_attendance_percent'];
+        $warnAttendance = $thresholds['warning_percent'];
+        $absenceLimitLabel = \App\Services\AttendanceCalculator::formatPercent($thresholds['absence_limit_percent']);
+
         $cards = [
             ['label' => 'Tổng học viên',    'value' => $totalStudents,                             'sub' => 'đang hoạt động',                    'icon' => 'users',         'color' => 'text-tertiary',  'bg' => 'bg-tertiary/10'],
             ['label' => 'Buổi đã chốt',     'value' => "{$closedCount}/{$totalSessions}",          'sub' => 'buổi đã chốt sổ',                   'icon' => 'calendar-check','color' => 'text-secondary', 'bg' => 'bg-secondary/10'],
             ['label' => 'Tiến độ buổi học', 'value' => "{$studiedSessions}/{$plannedSessions}",      'sub' => 'buổi đã học / kế hoạch',            'icon' => 'book-open',     'color' => 'text-primary',   'bg' => 'bg-primary/10'],
-            ['label' => 'CC trung bình',    'value' => "{$avgAttendance}%",                        'sub' => 'chuyên cần toàn lớp',               'icon' => 'bar-chart-2',   'color' => ($avgAttendance < 80 ? 'text-error' : ($avgAttendance < 85 ? 'text-amber-500' : 'text-tertiary')), 'bg' => ($avgAttendance < 80 ? 'bg-error/10' : ($avgAttendance < 85 ? 'bg-amber-500/10' : 'bg-tertiary/10'))],
+            ['label' => 'CC trung bình',    'value' => "{$avgAttendance}%",                        'sub' => 'chuyên cần toàn lớp',               'icon' => 'bar-chart-2',   'color' => ($avgAttendance < $minAttendance ? 'text-error' : ($avgAttendance < $warnAttendance ? 'text-amber-500' : 'text-tertiary')), 'bg' => ($avgAttendance < $minAttendance ? 'bg-error/10' : ($avgAttendance < $warnAttendance ? 'bg-amber-500/10' : 'bg-tertiary/10'))],
             ['label' => 'Cần chú ý',        'value' => $bannedCount + $warningCount,               'sub' => "{$bannedCount} cấm thi · {$warningCount} cảnh báo", 'icon' => 'alert-triangle','color' => ($bannedCount > 0 ? 'text-error' : ($warningCount > 0 ? 'text-amber-500' : 'text-tertiary')), 'bg' => ($bannedCount > 0 ? 'bg-error/10' : ($warningCount > 0 ? 'bg-amber-500/10' : 'bg-tertiary/10'))],
-            ['label' => 'Phép vắng / SV',   'value' => $allowedAbsent,                            'sub' => 'buổi được phép vắng (20%)',         'icon' => 'shield',        'color' => 'text-primary',   'bg' => 'bg-primary/10'],
+            ['label' => 'Phép vắng / SV',   'value' => $allowedAbsent,                            'sub' => "buổi được phép vắng ({$absenceLimitLabel}%)",         'icon' => 'shield',        'color' => 'text-primary',   'bg' => 'bg-primary/10'],
         ];
     @endphp
     <div class="grid grid-cols-2 gap-4 md:grid-cols-3 lg:grid-cols-6">

@@ -66,12 +66,8 @@ class DashboardStatisticService
             ->toArray();
     }
 
-    private function getUnexcusedAbsenceWarnings($classIds, float $nearMarginPercent = 5): array
+    private function getUnexcusedAbsenceWarnings($classIds): array
     {
-        // Ngưỡng vắng tối đa theo AttendanceCalculator (20% tổng tiết kế hoạch).
-        $absenceLimitRatio   = AttendanceCalculator::ABSENCE_LIMIT_RATIO;        // 0.20
-        $warningLimitRatio   = max(0.0, $absenceLimitRatio - $nearMarginPercent / 100); // 0.15
-
         $members = ClassMember::query()
             ->join('classes', 'class_members.class_id', '=', 'classes.id')
             ->leftJoin('class_member_profiles', 'class_member_profiles.class_member_id', '=', 'class_members.id')
@@ -88,6 +84,9 @@ class DashboardStatisticService
                 'classes.deduct_late as deduct_late',
                 'classes.deduct_absent as deduct_absent',
                 'classes.deduct_excused as deduct_excused',
+                'classes.absence_limit_percent as absence_limit_percent',
+                'classes.warning_margin_percent as warning_margin_percent',
+                'classes.near_absence_sessions as near_absence_sessions',
             ]);
 
         if ($members->isEmpty()) {
@@ -106,20 +105,30 @@ class DashboardStatisticService
             ->groupBy('class_member_id');
 
         $warningStudents = $members
-            ->map(function ($student) use ($rowsByMember, $absenceLimitRatio, $warningLimitRatio) {
+            ->map(function ($student) use ($rowsByMember) {
                 $counts = AttendanceCalculator::consolidateByMeeting($rowsByMember->get($student->id, collect()));
 
-                // Số buổi cơ sở = lớn nhất giữa dự kiến và số buổi đã diễn ra (quy tắc quỹ vắng 20%).
+                // Số buổi cơ sở = lớn nhất giữa dự kiến và số buổi đã diễn ra (quy tắc quỹ vắng).
                 $plannedSessions  = AttendanceCalculator::baseSessions((int) $student->planned_sessions, (int) $counts['total']);
                 $absentSessions   = $counts['absent'];
                 $lateSessions     = $counts['late'];
                 $excusedSessions  = $counts['excused'];
-                $rules            = (new \App\Models\CourseClass([
+                // Dựng lại model lớp từ các cột đã select để dùng chung nguồn cấu hình.
+                $courseClass      = new \App\Models\CourseClass([
                     'deduct_late' => $student->deduct_late,
                     'deduct_absent' => $student->deduct_absent,
                     'deduct_excused' => $student->deduct_excused,
                     'deduct_excused_absence' => (bool) $student->deduct_excused_absence,
-                ]))->getAttendanceRules();
+                    'absence_limit_percent' => $student->absence_limit_percent,
+                    'warning_margin_percent' => $student->warning_margin_percent,
+                    'near_absence_sessions' => $student->near_absence_sessions,
+                ]);
+                $rules            = $courseClass->getAttendanceRules();
+
+                // Quỹ vắng và biên cảnh báo lấy theo cấu hình của chính lớp đó.
+                $absenceLimitRatio = $courseClass->getAbsenceLimitRatio();
+                $warningMargin     = (float) ($student->warning_margin_percent ?? AttendanceCalculator::DEFAULT_WARNING_MARGIN_PERCENT);
+                $warningLimitRatio = max(0.0, $absenceLimitRatio - max(0.0, $warningMargin) / 100);
 
                 $counted         = AttendanceCalculator::countedSessions($plannedSessions, $excusedSessions, $rules);
                 $effectiveAbsent = AttendanceCalculator::effectiveAbsence($counts, $rules); // Vắng quy đổi theo quy tắc tổng kết.

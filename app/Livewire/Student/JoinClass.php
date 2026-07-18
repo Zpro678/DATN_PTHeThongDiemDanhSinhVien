@@ -99,12 +99,22 @@ class JoinClass extends Component
             return $this->redirectRoute('lecturer.classes.show', ['ma_user' => $userId, 'courseClass' => $courseClass->id], navigate: true);
         }
 
-        $existingMember = ClassMember::with('profile')
+        // withTrashed(): học viên bị giảng viên xoá khỏi lớp chỉ bị SOFT DELETE, nhưng ràng buộc
+        // unique(class_id, user_id) KHÔNG tính deleted_at. Nếu chỉ tìm bản ghi chưa xoá thì lần
+        // tham gia lại sẽ INSERT mới và vỡ unique (lỗi 1062). Tìm cả bản ghi đã xoá để KHÔI PHỤC,
+        // nhờ đó toàn bộ lịch sử điểm danh/đơn nghỉ cũ (gắn theo class_member_id) hiện lại như cũ.
+        $existingMember = ClassMember::withTrashed()
+            ->with('profile')
             ->where('class_id', $courseClass->id)
             ->where(function ($query) use ($userId, $userEmail) {
                 $query->where('user_id', $userId)
                     ->orWhereHas('profile', fn ($profile) => $profile->where('email', $userEmail));
             })->first();
+
+        // Đã từng bị xoá/thôi học -> quay lại lớp bằng cách khôi phục chính bản ghi cũ.
+        if ($existingMember && ($existingMember->trashed() || $existingMember->status !== ClassMember::STATUS_ACTIVE)) {
+            return $this->rejoinExistingMember($existingMember, $courseClass, $userId, $userEmail);
+        }
 
         if ($existingMember) {
             if (is_null($existingMember->user_id)) {
@@ -242,6 +252,102 @@ class JoinClass extends Component
         session()->flash('status', 'Yêu cầu tham gia đã được gửi và đang chờ giảng viên xác nhận!');
 
         $this->reset(['class_code', 'confirmingClass']);
+    }
+
+    /**
+     * QUAY LẠI LỚP: khôi phục bản ghi thành viên cũ thay vì tạo bản ghi mới.
+     *
+     * Giữ nguyên class_member_id nên mọi dữ liệu cũ (attendance_records, meeting_summaries,
+     * leave_requests, hồ sơ MSSV...) tự động hiện lại đúng như trước khi bị xoá.
+     *
+     * Vẫn phải qua ĐÚNG các cổng như tham gia mới: lớp cần duyệt thì phải chờ duyệt lại,
+     * và lớp đã đầy thì không cho khôi phục.
+     */
+    private function rejoinExistingMember(ClassMember $member, CourseClass $courseClass, int $userId, ?string $userEmail)
+    {
+        // Lớp yêu cầu duyệt: không tự khôi phục — giảng viên đã chủ động loại học viên này ra,
+        // nên phải để họ duyệt lại (ClassJoinRequest sẽ khôi phục ở bước duyệt).
+        if ($courseClass->require_approval) {
+            $existingRequest = \App\Models\ClassJoinRequest::where('class_id', $courseClass->id)
+                ->where('user_id', $userId)
+                ->whereIn('status', [\App\Models\ClassJoinRequest::STATUS_PENDING, 'pending'])
+                ->first();
+
+            if (! $existingRequest) {
+                \App\Models\ClassJoinRequest::create([
+                    'class_id' => $courseClass->id,
+                    'user_id' => $userId,
+                    'status' => \App\Models\ClassJoinRequest::STATUS_PENDING,
+                ]);
+
+                $this->notifyClassManagers($courseClass, new \App\Notifications\ClassJoinRequestReceived($courseClass, Auth::user()));
+            }
+
+            session()->flash('status', 'Yêu cầu quay lại lớp đã được gửi và đang chờ giảng viên xác nhận!');
+            $this->reset(['class_code', 'confirmingClass']);
+            $this->showModal = false;
+
+            return;
+        }
+
+        $lock = \Illuminate\Support\Facades\Cache::lock('class-join:' . $courseClass->id, 10);
+
+        try {
+            if (! $lock->block(5)) {
+                $this->dispatch('toast', message: 'Hệ thống đang bận xử lý yêu cầu tham gia, vui lòng thử lại.', type: 'error');
+                return;
+            }
+
+            // Khôi phục cũng làm tăng sĩ số nên phải đếm trong khóa như lúc tạo mới.
+            if ($courseClass->owner) {
+                $maxStudents = app(\App\Services\SubscriptionService::class)->maxStudentsPerClass($courseClass->owner);
+                $activeCount = ClassMember::where('class_id', $courseClass->id)
+                    ->where('status', ClassMember::STATUS_ACTIVE)
+                    ->count();
+
+                if ($maxStudents > 0 && $activeCount >= $maxStudents) {
+                    $this->confirmingClass = null;
+                    $this->addError('class_code', "Lớp đã đạt giới hạn {$maxStudents} học viên nên bạn không thể tham gia lúc này. Vui lòng liên hệ giảng viên.");
+                    $this->dispatch('toast', message: 'Lớp đã đủ số lượng học viên, bạn không thể tham gia.', type: 'error');
+                    return;
+                }
+            }
+
+            if ($member->trashed()) {
+                $member->restore();
+            }
+
+            $member->update([
+                // Bản ghi cũ có thể do giảng viên nhập tay (user_id null) -> gắn tài khoản vào luôn.
+                'user_id' => $member->user_id ?? $userId,
+                'status' => ClassMember::STATUS_ACTIVE,
+                'status_changed_at' => null,
+            ]);
+        } finally {
+            $lock->release();
+        }
+
+        $member->syncProfile([
+            'full_name' => $this->full_name,
+            'email' => $userEmail,
+        ]);
+
+        Auth::user()->notify(new \App\Notifications\ClassJoinedNotification($courseClass));
+        $this->notifyClassManagers($courseClass, new \App\Notifications\ClassMemberJoined($courseClass, Auth::user()));
+        \App\Events\StudentJoinedClass::dispatch((string) $courseClass->id);
+
+        app(AuditLogService::class)->log('class_joined', [
+            'class_id'   => $courseClass->id,
+            'table_name' => 'class_members',
+            'row_id'     => $member->id,
+            'new_values' => ['class_name' => $courseClass->name, 'join_key' => $courseClass->join_key, 'rejoined' => true],
+        ]);
+
+        session()->flash('status', 'Bạn đã quay lại lớp học, dữ liệu điểm danh trước đây được giữ nguyên!');
+        $this->reset(['class_code', 'confirmingClass']);
+        $this->dispatch('class-joined');
+
+        return $this->redirectRoute('student.classes.show', ['ma_user' => $userId, 'courseClass' => $courseClass->id], navigate: true);
     }
 
     /**

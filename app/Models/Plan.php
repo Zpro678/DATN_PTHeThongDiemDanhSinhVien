@@ -24,6 +24,12 @@ class Plan extends Model
     // hiển thị "Không giới hạn" thay vì con số thô cho người dùng.
     public const UNLIMITED_THRESHOLD = 9999;
 
+    // Hạn mức mặc định khi gói CHƯA có bản ghi plan_configs. Xảy ra với gói FREE
+    // ảo do SubscriptionService::planFor() dựng cho người dùng chưa đăng ký, và
+    // cũng chặn dữ liệu lỗi (gói thật thiếu config) rơi về 0 => khoá sạch tính năng.
+    public const DEFAULT_MAX_CLASSES = 2;
+    public const DEFAULT_MAX_STUDENTS_PER_CLASS = 50;
+
     /**
      * Nhãn hiển thị cho một giới hạn số (null hoặc >= ngưỡng => "Không giới hạn").
      */
@@ -78,12 +84,14 @@ class Plan extends Model
 
     protected function maxClasses(): Attribute
     {
-        return Attribute::get(fn () => $this->config?->max_classes);
+        return Attribute::get(fn () => $this->config?->max_classes ?? self::DEFAULT_MAX_CLASSES);
     }
 
     protected function maxStudentsPerClass(): Attribute
     {
-        return Attribute::get(fn () => $this->config?->max_students_per_class);
+        return Attribute::get(
+            fn () => $this->config?->max_students_per_class ?? self::DEFAULT_MAX_STUDENTS_PER_CLASS
+        );
     }
 
 
@@ -98,8 +106,8 @@ class Plan extends Model
             // Giới hạn do admin cấu hình ở plan_configs — hiển thị đầu danh sách
             // để người dùng thấy ngay số lớp & số học viên/lớp mỗi gói cho phép.
             $list = [
-                self::limitLabel($this->config?->max_classes, 'Không giới hạn số lớp học', 'Tối đa ', ' lớp học'),
-                self::limitLabel($this->config?->max_students_per_class, 'Không giới hạn học viên / lớp', 'Tối đa ', ' học viên / lớp'),
+                self::limitLabel($this->max_classes, 'Không giới hạn số lớp học', 'Tối đa ', ' lớp học'),
+                self::limitLabel($this->max_students_per_class, 'Không giới hạn học viên / lớp', 'Tối đa ', ' học viên / lớp'),
                 'Điểm danh bằng QR Code / Link',
                 'Quản lý chuyên cần & cảnh báo',
                 'Xác thực vị trí GPS',

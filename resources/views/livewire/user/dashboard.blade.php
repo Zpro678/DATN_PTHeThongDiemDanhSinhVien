@@ -431,8 +431,8 @@
                                 $isEnded = $class['status_label'] === 'Đã kết thúc';
                                 $attendancePct = $class['attendance'];
                                 
-                                $isBanned = $attendancePct < \App\Services\AttendanceCalculator::MIN_ATTENDANCE_PERCENT;
-                                $isWarning = ! $isBanned && $attendancePct < 85;
+                                $isBanned = $attendancePct < ($class['min_attendance_percent'] ?? \App\Services\AttendanceCalculator::MIN_ATTENDANCE_PERCENT);
+                                $isWarning = ! $isBanned && $attendancePct < ($class['warning_percent'] ?? \App\Services\AttendanceCalculator::WARNING_PERCENT);
 
                                 if ($isEnded) {
                                     $barClass = 'bg-on-surface-variant'; $textClass = 'text-on-surface-variant';

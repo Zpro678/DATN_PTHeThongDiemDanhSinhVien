@@ -132,10 +132,16 @@
                     ['late' => $late, 'absent' => $absent, 'excused' => $excused],
                 );
 
-                $allowedAbsent = \App\Services\AttendanceCalculator::allowedAbsentSessions($plannedSessions);
+                // Ngưỡng lấy theo cấu hình của từng lớp thay vì hằng số chung.
+                $thresholds = $class->getAttendanceThresholds();
 
-                $isBanned  = $plannedSessions > 0 && ($absent > $allowedAbsent || $attendancePct < \App\Services\AttendanceCalculator::MIN_ATTENDANCE_PERCENT);
-                $isWarning = ! $isBanned && $attendancePct < 85;
+                $allowedAbsent = \App\Services\AttendanceCalculator::allowedAbsentSessions(
+                    $plannedSessions,
+                    $thresholds['absence_limit_percent']
+                );
+
+                $isBanned  = $plannedSessions > 0 && ($absent > $allowedAbsent || $attendancePct < $thresholds['min_attendance_percent']);
+                $isWarning = ! $isBanned && $attendancePct < $thresholds['warning_percent'];
 
                 if ($isEnded || $isArchived) {
                     $barClass = 'bg-on-surface-variant'; $textClass = 'text-on-surface-variant';

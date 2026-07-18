@@ -4,6 +4,7 @@ namespace App\Services;
 
 use App\Models\AttendanceRecord;
 use App\Models\ClassMember;
+use App\Models\CourseClass;
 use App\Models\LeaveRequest;
 use Illuminate\Support\Carbon;
 use Illuminate\Support\Facades\DB;
@@ -36,7 +37,9 @@ class StudentsService
         // Mỗi ClassMember là quan hệ của học viên với một lớp học cụ thể.
         $members = ClassMember::query()
             ->with([
-                'courseClass:id,join_key,name,total_sessions,deduct_excused_absence,deduct_late,deduct_absent,deduct_excused',
+                // Phải nạp cả các cột ngưỡng: getAttendanceThresholds() đọc trực tiếp từ model,
+                // thiếu cột thì Eloquent trả null và ngưỡng âm thầm rơi về mặc định 20%/80%.
+                'courseClass:id,join_key,name,total_sessions,deduct_excused_absence,deduct_late,deduct_absent,deduct_excused,absence_limit_percent,warning_margin_percent,near_absence_sessions',
                 'profile',
                 'attendanceRecords' => fn ($query) => $query
                     // Chỉ tính các bản ghi thuộc buổi điểm danh đã chốt.
@@ -104,7 +107,9 @@ class StudentsService
         // % tính trên số buổi cơ sở = max(dự kiến, đã diễn ra) để nhất quán với quỹ vắng.
         $plannedSessions = AttendanceCalculator::baseSessions((int) ($courseClass->total_sessions ?? 0), $totalSessions);
 
-        $allowedAbsentSessions = AttendanceCalculator::allowedAbsentSessions($plannedSessions);
+        $thresholds = $courseClass->getAttendanceThresholds();
+        $minAttendanceLabel = AttendanceCalculator::formatPercent($thresholds['min_attendance_percent']);
+        $allowedAbsentSessions = AttendanceCalculator::allowedAbsentSessions($plannedSessions, $thresholds['absence_limit_percent']);
         $effectiveAbsentSessions = AttendanceCalculator::effectiveAbsence($counts, $rules);
         $effectiveAbsentLabel = rtrim(rtrim(number_format($effectiveAbsentSessions, 1), '0'), '.');
         $attendancePercent = AttendanceCalculator::percentOfPlanned(
@@ -124,8 +129,9 @@ class StudentsService
         $warnings = [];
 
         if ($totalSessions > 0) {
-            // Dưới 80% -> nguy cơ cấm thi (danger). 80–85% -> cảnh báo chuyên cần (warning).
-            if ($attendancePercent < AttendanceCalculator::MIN_ATTENDANCE_PERCENT) {
+            // Dưới ngưỡng tối thiểu -> nguy cơ cấm thi (danger).
+            // Trong khoảng [tối thiểu, cảnh báo) -> cảnh báo chuyên cần (warning).
+            if ($attendancePercent < $thresholds['min_attendance_percent']) {
                 $warnings[] = [
                     'type' => 'danger',
                     'icon' => 'alert-triangle',
@@ -138,12 +144,12 @@ class StudentsService
                     'params' => ['classFilter' => $courseClass->id],
                     'action_label' => 'Xem lịch sử',
                 ];
-            } elseif ($attendancePercent < AttendanceCalculator::WARNING_PERCENT) {
+            } elseif ($attendancePercent < $thresholds['warning_percent']) {
                 $warnings[] = [
                     'type' => 'warning',
                     'icon' => 'alert-triangle',
                     'title' => 'Cảnh báo chuyên cần',
-                    'message' => "Lớp {$classLabel}. Chuyên cần còn {$attendancePercent}%, đã vắng quy đổi {$effectiveAbsentLabel}/{$allowedAbsentSessions} buổi. Sắp chạm ngưỡng cấm thi 20%.",
+                    'message' => "Lớp {$classLabel}. Chuyên cần còn {$attendancePercent}%, đã vắng quy đổi {$effectiveAbsentLabel}/{$allowedAbsentSessions} buổi. Sắp chạm ngưỡng cấm thi (chuyên cần tối thiểu {$minAttendanceLabel}%).",
                     'date' => $date,
                     'sort_date' => $sortDate,
                     'route' => 'student.attendance.history',
@@ -274,8 +280,11 @@ class StudentsService
      *
      * @return array{label: string, statusClass: string, bar: string, color: string}
      */
-    private function studentAttendanceStyle(int $attendancePercent, int $studiedSessions): array
+    private function studentAttendanceStyle(int $attendancePercent, int $studiedSessions, ?CourseClass $courseClass = null): array
     {
+        // Mốc màu bám theo ngưỡng cấu hình của lớp, không còn cố định 80/85.
+        $thresholds = ($courseClass ?? new CourseClass())->getAttendanceThresholds();
+
         if ($studiedSessions <= 0) {
             return [
                 'label' => 'Chưa có dữ liệu',
@@ -285,7 +294,7 @@ class StudentsService
             ];
         }
 
-        if ($attendancePercent < 80) {
+        if ($attendancePercent < $thresholds['min_attendance_percent']) {
             return [
                 'label' => 'Cảnh báo',
                 'statusClass' => 'bg-error/10 text-error',
@@ -294,7 +303,7 @@ class StudentsService
             ];
         }
 
-        if ($attendancePercent < 85) {
+        if ($attendancePercent < $thresholds['warning_percent']) {
             return [
                 'label' => 'Cảnh báo nhẹ',
                 'statusClass' => 'bg-[#F59E0B]/10 text-[#F59E0B]',
@@ -351,7 +360,7 @@ class StudentsService
 
         $members = ClassMember::query()
             ->with([
-                'courseClass:id,owner_user_id,join_key,name,status,total_sessions,deduct_excused_absence,deduct_late,deduct_absent,deduct_excused',
+                'courseClass:id,owner_user_id,join_key,name,status,total_sessions,deduct_excused_absence,deduct_late,deduct_absent,deduct_excused,absence_limit_percent,warning_margin_percent,near_absence_sessions',
                 'courseClass.owner:id,name',
                 'profile',
             ])
@@ -429,8 +438,13 @@ class StudentsService
             $projectedAttended += AttendanceCalculator::attendedWeight($counted, $row->counts, $rules);
             $absentSessions += (int) $row->absent_sessions;
 
+            // Ngưỡng cấm thi lấy theo cấu hình của chính lớp đó (mỗi lớp có thể khác nhau).
+            $minAttendance = $courseClass
+                ? $courseClass->getMinAttendancePercent()
+                : AttendanceCalculator::MIN_ATTENDANCE_PERCENT;
+
             if ((int) $row->total_sessions > 0
-                && AttendanceCalculator::percentOfPlanned($planned, $row->counts, $rules) < AttendanceCalculator::MIN_ATTENDANCE_PERCENT) {
+                && AttendanceCalculator::percentOfPlanned($planned, $row->counts, $rules) < $minAttendance) {
                 $warningCount++;
             }
         }
@@ -465,7 +479,7 @@ class StudentsService
                     $rules
                 );
 
-                $style = $this->studentAttendanceStyle($attendancePercent, $studiedSessions);
+                $style = $this->studentAttendanceStyle($attendancePercent, $studiedSessions, $courseClass);
                 $hasAttendanceData = $studiedSessions > 0;
 
                 return [

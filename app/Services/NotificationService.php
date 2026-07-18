@@ -3,15 +3,19 @@
 namespace App\Services;
 
 use App\Models\ClassMeeting;
+use App\Models\ClassMember;
 use App\Models\ClassSession;
 use App\Models\CourseClass;
 use App\Models\Notification;
 use App\Models\User;
 use App\Notifications\AttendanceResultNotification;
 use App\Notifications\GenericNotification;
+use App\Notifications\PlainMailNotification;
 use Illuminate\Pagination\LengthAwarePaginator;
 use Illuminate\Support\Carbon;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Facades\Notification as NotificationFacade;
 use Illuminate\Support\Str;
 
 /**
@@ -470,12 +474,6 @@ class NotificationService
      * TẠO THÔNG BÁO (ghi vào bảng notifications)
      * ==================================================================== */
 
-    /** Tỉ lệ số tiết được phép vắng trên tổng số tiết của lớp (20%). */
-    private const ABSENCE_LIMIT_RATIO = 0.2;
-
-    /** Còn lại tối đa bao nhiêu tiết trong quỹ vắng thì coi là "sắp vượt ngưỡng". */
-    private const NEAR_ABSENCE_LESSONS = 2;
-
     /**
      * Ghi một bản ghi thông báo cho người dùng (bảng notifications chuẩn của Laravel).
      *
@@ -688,25 +686,26 @@ class NotificationService
             ->groupBy('user_id');
 
         $rules = $class->getAttendanceRules();
+        $thresholds = $class->getAttendanceThresholds();
         foreach ($rowsByUser as $userId => $userRows) {
             $userId = (int) $userId;
             $counts = AttendanceCalculator::consolidateByMeeting($userRows, $rules);
             $excused = $counts['excused'];
 
-            // Quỹ vắng 20% tính trên số buổi cơ sở của từng SV = max(dự kiến, đã diễn ra).
+            // Quỹ vắng tính trên số buổi cơ sở của từng SV = max(dự kiến, đã diễn ra).
             $baseSessions = AttendanceCalculator::baseSessions($plannedSessions, (int) $counts['total']);
             if ($baseSessions <= 0) {
                 continue;
             }
 
-            $allowed = AttendanceCalculator::allowedAbsentSessions($baseSessions);
+            $allowed = AttendanceCalculator::allowedAbsentSessions($baseSessions, $thresholds['absence_limit_percent']);
             $effectiveAbsent = (int) AttendanceCalculator::effectiveAbsence($counts, $rules);
             $remaining = $allowed - $effectiveAbsent;
             $url = route('student.classes.show', ['ma_user' => $userId, 'courseClass' => $class->id]);
 
-            // Cảnh báo vắng: bắn khi SẮP chạm quỹ (còn ≤ NEAR_ABSENCE_LESSONS buổi) HOẶC khi ĐÃ VƯỢT
+            // Cảnh báo vắng: bắn khi SẮP chạm quỹ (còn ≤ số buổi cảnh báo do lớp cấu hình) HOẶC khi ĐÃ VƯỢT
             // quỹ (remaining < 0). Chỉ gửi cảnh báo nếu sinh viên THỰC SỰ đã bị trừ chuyên cần (effectiveAbsent > 0).
-            if ($effectiveAbsent > 0 && $remaining <= self::NEAR_ABSENCE_LESSONS
+            if ($effectiveAbsent > 0 && $remaining <= $thresholds['near_absence_sessions']
                 && ! $this->hasUnreadLike($userId, 'App\\Notifications\\AbsenceWarning', $class->id)) {
                 if ($remaining > 0) {
                     $title = 'Sắp vượt ngưỡng vắng';
@@ -759,7 +758,7 @@ class NotificationService
 
     /**
      * Gửi một thông báo gộp cho chủ lớp (người đang thao tác điểm danh): tổng số
-     * sinh viên đang ở mức cảnh báo chuyên cần — tức "sắp vượt ngưỡng vắng 20%".
+     * sinh viên đang ở mức cảnh báo chuyên cần — tức "sắp vượt quỹ vắng của lớp".
      *
      * Số đếm dùng đúng nguồn `is_warning` của LectureManageStudentService để khớp
      * chính xác với nhóm dòng tô vàng khi bấm vào và lọc ở trang chi tiết lớp.
@@ -794,6 +793,10 @@ class NotificationService
             return;
         }
 
+        $absenceLimitLabel = AttendanceCalculator::formatPercent(
+            $class->getAttendanceThresholds()['absence_limit_percent']
+        );
+
         foreach ($managers as $manager) {
             if ($this->hasUnreadLike($manager->id, 'App\\Notifications\\ClassAbsenceWarning', $class->id)) {
                 continue;
@@ -809,7 +812,7 @@ class NotificationService
                 $manager->id,
                 'App\\Notifications\\ClassAbsenceWarning',
                 'Cảnh báo chuyên cần lớp',
-                "Lớp {$class->name}: có {$warningCount} sinh viên sắp vượt ngưỡng vắng 20%. Bấm để xem danh sách.",
+                "Lớp {$class->name}: có {$warningCount} sinh viên sắp vượt ngưỡng vắng {$absenceLimitLabel}%. Bấm để xem danh sách.",
                 $url,
                 'warning',
                 ['class_id' => $class->id, 'warning_count' => $warningCount],
@@ -840,7 +843,11 @@ class NotificationService
             $url,
             'warning',
             ['class_id' => $class->id, 'manual' => true],
-            ['mail'],
+            // Ép cả mail lẫn telegram: hai tùy chọn này MẶC ĐỊNH TẮT
+            // (User::defaultNotificationPreferences), không ép thì SV đã liên kết
+            // Telegram vẫn không nhận được gì. via() vẫn tự bỏ qua kênh nào thiếu
+            // email / chat id nên không sợ gửi hụt.
+            ['mail', 'telegram'],
         );
 
         return true;
@@ -859,19 +866,105 @@ class NotificationService
         }
 
         $url = route('student.classes.show', ['ma_user' => $studentUserId, 'courseClass' => $class->id]);
+        $absenceLimitLabel = AttendanceCalculator::formatPercent(
+            $class->getAttendanceThresholds()['absence_limit_percent']
+        );
 
         $this->push(
             $studentUserId,
             'App\\Notifications\\ExamBanned',
             'Cấm thi',
-            "Lớp {$class->name}: bạn đã bị cấm thi do tỷ lệ chuyên cần chỉ còn {$attendancePercent}% (vắng vượt ngưỡng 20%). Vui lòng liên hệ giảng viên.",
+            "Lớp {$class->name}: bạn đã bị cấm thi do tỷ lệ chuyên cần chỉ còn {$attendancePercent}% (vắng vượt ngưỡng {$absenceLimitLabel}%). Vui lòng liên hệ giảng viên.",
             $url,
             'danger',
             ['class_id' => $class->id],
-            ['mail'],
+            ['mail', 'telegram'],
         );
 
         return true;
+    }
+
+    /**
+     * Gửi mail tới một địa chỉ email TRẦN (người nhận chưa có tài khoản).
+     *
+     * Bọc try/catch vì mail đi ĐỒNG BỘ qua SMTP: địa chỉ hỏng hoặc SMTP lỗi sẽ ném
+     * exception và làm sập nguyên request Livewire của giảng viên. Thà báo "gửi
+     * không thành công" còn hơn văng lỗi 500.
+     *
+     * @return bool true nếu đã bàn giao cho SMTP thành công.
+     */
+    public function mailToAddress(string $email, string $title, string $body): bool
+    {
+        if (! filter_var($email, FILTER_VALIDATE_EMAIL)) {
+            return false;
+        }
+
+        try {
+            NotificationFacade::route('mail', $email)
+                ->notify(new PlainMailNotification($title, $body));
+
+            return true;
+        } catch (\Throwable $e) {
+            Log::error('Gửi mail tới địa chỉ trần thất bại ('.$email.'): '.$e->getMessage());
+
+            return false;
+        }
+    }
+
+    /**
+     * Cảnh báo chuyên cần cho MỘT THÀNH VIÊN LỚP, tự chọn đường gửi:
+     *  - Đã liên kết tài khoản -> thông báo trong app + mail + Telegram (nếu có Chat ID).
+     *  - Chưa liên kết        -> CHỈ gửi mail tới email trong hồ sơ lớp.
+     *
+     * Telegram KHÔNG khả dụng cho SV chưa liên kết: telegram_chat_id nằm trên bảng
+     * users, không có tài khoản thì không có Chat ID để gửi tới.
+     *
+     * @return bool true nếu vừa gửi; false nếu trùng thông báo chưa đọc / thiếu email / SMTP lỗi.
+     */
+    public function sendAbsenceWarningToMember(ClassMember $member, CourseClass $class, int $attendancePercent): bool
+    {
+        if ($member->user_id) {
+            return $this->sendManualAbsenceWarning((int) $member->user_id, $class, $attendancePercent);
+        }
+
+        $email = $member->email;
+
+        if (blank($email)) {
+            return false;
+        }
+
+        return $this->mailToAddress(
+            (string) $email,
+            'Cảnh báo chuyên cần',
+            "Lớp {$class->name}: Giảng viên nhắc nhở bạn vì tỷ lệ có mặt hiện tại của bạn là {$attendancePercent}%. Hãy chú ý đi học đầy đủ để không bị cấm thi.",
+        );
+    }
+
+    /**
+     * Thông báo cấm thi cho MỘT THÀNH VIÊN LỚP — cùng quy tắc định tuyến như
+     * sendAbsenceWarningToMember().
+     */
+    public function sendExamBanToMember(ClassMember $member, CourseClass $class, int $attendancePercent): bool
+    {
+        if ($member->user_id) {
+            return $this->sendExamBanNotice((int) $member->user_id, $class, $attendancePercent);
+        }
+
+        $email = $member->email;
+
+        if (blank($email)) {
+            return false;
+        }
+
+        $absenceLimitLabel = AttendanceCalculator::formatPercent(
+            $class->getAttendanceThresholds()['absence_limit_percent']
+        );
+
+        return $this->mailToAddress(
+            (string) $email,
+            'Cấm thi',
+            "Lớp {$class->name}: bạn đã bị cấm thi do tỷ lệ chuyên cần chỉ còn {$attendancePercent}% (vắng vượt ngưỡng {$absenceLimitLabel}%). Vui lòng liên hệ giảng viên.",
+        );
     }
 
     /**
@@ -1094,7 +1187,10 @@ class NotificationService
             return;
         }
 
-        $allowed = AttendanceCalculator::allowedAbsentSessions($baseSessions);
+        $allowed = AttendanceCalculator::allowedAbsentSessions(
+            $baseSessions,
+            $class->getAttendanceThresholds()['absence_limit_percent']
+        );
         $userId = (int) $leaveRequest->classMember->user_id;
 
         if ($excused > $allowed) {

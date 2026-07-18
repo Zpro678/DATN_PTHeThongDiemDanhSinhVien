@@ -3,6 +3,7 @@
 namespace App\Services;
 
 use App\Models\Plan;
+use App\Models\PlanConfig;
 use App\Models\Subscription;
 use App\Models\User;
 use Carbon\Carbon;
@@ -139,18 +140,30 @@ class SubscriptionService
 
     /**
      * Lấy gói hiện tại của người dùng; luôn trả về một Plan để gọi an toàn.
+     *
+     * Khi CSDL chưa có gói FREE, dựng một Plan ảo (chưa lưu). Các hạn mức nằm ở
+     * quan hệ config (bảng plan_configs) chứ không phải cột của plans, nên phải
+     * gắn kèm PlanConfig — nếu không, accessor max_classes/max_students_per_class
+     * trả null và mọi giới hạn bị ép về 0 (chặn sạch giảng viên chưa có gói).
      */
     public function planFor(User $user): Plan
     {
-        return $user->currentPlan() ?? new Plan([
-            'plan_tier'              => 'FREE',
-            'name'                   => 'Miễn phí',
-            'max_classes'            => 2,
-            'max_students_per_class' => 50,
-            'max_gps_radius'         => 50,
-            'can_export_excel'       => false,
-            'api_access'             => false,
+        if ($plan = $user->currentPlan()) {
+            return $plan;
+        }
+
+        $fallback = new Plan([
+            'plan_tier' => Plan::TIER_FREE,
+            'name'      => 'Miễn phí',
         ]);
+
+        $fallback->setRelation('config', new PlanConfig([
+            'max_classes'            => Plan::DEFAULT_MAX_CLASSES,
+            'max_students_per_class' => Plan::DEFAULT_MAX_STUDENTS_PER_CLASS,
+            'can_export_excel'       => false,
+        ]));
+
+        return $fallback;
     }
 
     /**
@@ -159,14 +172,6 @@ class SubscriptionService
     public function canExportExcel(User $user): bool
     {
         return (bool) $this->planFor($user)->can_export_excel;
-    }
-
-    /**
-     * Quyền truy cập API (gói Cao cấp).
-     */
-    public function hasApiAccess(User $user): bool
-    {
-        return (bool) $this->planFor($user)->api_access;
     }
 
     /**
@@ -217,14 +222,6 @@ class SubscriptionService
     public function maxStudentsPerClass(User $user): int
     {
         return (int) $this->planFor($user)->max_students_per_class;
-    }
-
-    /**
-     * Bán kính định vị GPS tối đa (m) theo gói.
-     */
-    public function maxGpsRadius(User $user): int
-    {
-        return (int) $this->planFor($user)->max_gps_radius;
     }
 
     // =========================================================================

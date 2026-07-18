@@ -71,15 +71,100 @@ class CoOwnerTest extends TestCase
         $this->assertSame(0, $class->coOwners()->count());
     }
 
-    public function test_co_owner_cannot_open_class_settings_page(): void
+    public function test_co_owner_can_open_and_save_class_settings(): void
     {
         $owner = User::factory()->create();
         $coOwner = User::factory()->create();
         $class = $this->classFor($owner);
         $class->coOwners()->attach($coOwner->id, ['role' => 'co_owner', 'accepted_at' => now()]);
 
-        // Cài đặt lớp là quyền của CHỦ CHÍNH: đồng chủ mở phải bị 403.
+        // Đồng chủ mở được trang cài đặt và sửa được cấu hình lớp.
         Livewire::actingAs($coOwner)->test(ClassSettings::class, ['courseClass' => $class])
+            ->assertOk()
+            ->assertSee('Bạn đang xem với vai trò')
+            ->assertDontSee('Thêm đồng chủ theo email')
+            ->assertDontSee('Xóa lớp học')
+            ->set('name', 'Tên do đồng chủ đổi')
+            ->call('save')
+            ->assertHasNoErrors();
+
+        $this->assertSame('Tên do đồng chủ đổi', $class->fresh()->name);
+    }
+
+    public function test_primary_owner_sees_co_owner_and_delete_controls(): void
+    {
+        $owner = User::factory()->create();
+        $class = $this->classFor($owner);
+
+        Livewire::actingAs($owner)->test(ClassSettings::class, ['courseClass' => $class])
+            ->assertOk()
+            ->assertSee('Thêm đồng chủ theo email')
+            ->assertSee('Xóa lớp học')
+            ->assertDontSee('Bạn đang xem với vai trò');
+    }
+
+    public function test_outsider_cannot_open_class_settings_page(): void
+    {
+        $owner = User::factory()->create();
+        $outsider = User::factory()->create();
+        $class = $this->classFor($owner);
+
+        Livewire::actingAs($outsider)->test(ClassSettings::class, ['courseClass' => $class])
             ->assertForbidden();
+    }
+
+    public function test_co_owner_cannot_add_or_remove_co_owners(): void
+    {
+        $owner = User::factory()->create();
+        $coOwner = User::factory()->create();
+        $someone = User::factory()->create();
+        $class = $this->classFor($owner);
+        $class->coOwners()->attach($coOwner->id, ['role' => 'co_owner', 'accepted_at' => now()]);
+
+        // Ẩn nút trong blade là chưa đủ — method Livewire gọi thẳng được, phải chặn ở server.
+        Livewire::actingAs($coOwner)->test(ClassSettings::class, ['courseClass' => $class])
+            ->set('coOwnerEmail', $someone->email)
+            ->call('addCoOwner')
+            ->assertForbidden();
+
+        Livewire::actingAs($coOwner)->test(ClassSettings::class, ['courseClass' => $class])
+            ->call('removeCoOwner', $coOwner->id)
+            ->assertForbidden();
+
+        // Danh sách đồng chủ không đổi: vẫn đúng 1 người.
+        $this->assertSame(1, $class->coOwners()->count());
+    }
+
+    public function test_co_owner_cannot_delete_class(): void
+    {
+        $owner = User::factory()->create();
+        $coOwner = User::factory()->create();
+        $class = $this->classFor($owner);
+        $class->coOwners()->attach($coOwner->id, ['role' => 'co_owner', 'accepted_at' => now()]);
+
+        Livewire::actingAs($coOwner)->test(ClassSettings::class, ['courseClass' => $class])
+            ->call('confirmDelete')
+            ->assertForbidden();
+
+        Livewire::actingAs($coOwner)->test(ClassSettings::class, ['courseClass' => $class])
+            ->call('deleteClass')
+            ->assertForbidden();
+
+        // fresh() bỏ qua global scope nên vẫn trả về bản ghi đã soft-delete —
+        // phải dùng assertNotSoftDeleted mới bắt được lỗi thật.
+        $this->assertNotSoftDeleted($class);
+    }
+
+    public function test_primary_owner_still_manages_co_owners_and_deletes_class(): void
+    {
+        $owner = User::factory()->create();
+        $class = $this->classFor($owner);
+
+        Livewire::actingAs($owner)->test(ClassSettings::class, ['courseClass' => $class])
+            ->call('confirmDelete')
+            ->assertOk()
+            ->call('deleteClass');
+
+        $this->assertSoftDeleted($class);
     }
 }

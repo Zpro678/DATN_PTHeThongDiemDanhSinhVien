@@ -41,9 +41,11 @@ class CreateClass extends Component
     public string $description = '';
 
     // Ngưỡng thời gian đi muộn (phút)
-    public int $lateThreshold = 15;
 
-    // Tổng số buổi dự kiến của môn học (dùng để tính quỹ vắng 20% và tiến độ).
+    // Quỹ vắng cho phép, tính theo % tổng số buổi. Ngưỡng cấm thi = 100 - giá trị này.
+    public float $absenceLimitPercent = 20;
+
+    // Tổng số buổi dự kiến của môn học (dùng để tính quỹ vắng và tiến độ).
     public int $totalSessions = 15;
 
     // Cấu hình bảng điểm trừ chuyên cần
@@ -101,8 +103,8 @@ class CreateClass extends Component
             'name' => ['required', 'string', 'max:255'],
             'classCode' => ['nullable', 'string', 'max:50'],
             'description' => ['nullable', 'string', 'max:5000'],
-            'lateThreshold' => ['required', 'integer', 'min:0', 'max:300'],
             'totalSessions' => ['required', 'integer', 'min:1', 'max:200'],
+            'absenceLimitPercent' => ['required', 'numeric', 'min:0', 'max:100'],
             'attendanceRules' => ['required', 'array'],
             'attendanceRules.late' => ['required', 'numeric', 'min:0', 'max:10'],
             'attendanceRules.absent' => ['required', 'numeric', 'min:0', 'max:10'],
@@ -116,6 +118,9 @@ class CreateClass extends Component
             'totalSessions.required' => 'Vui lòng nhập tổng số buổi dự kiến.',
             'totalSessions.min' => 'Tổng số buổi dự kiến phải từ 1 trở lên.',
             'totalSessions.max' => 'Tổng số buổi dự kiến tối đa là 200.',
+            'absenceLimitPercent.required' => 'Vui lòng nhập ngưỡng vắng cho phép.',
+            'absenceLimitPercent.min' => 'Ngưỡng vắng cho phép không được nhỏ hơn 0%.',
+            'absenceLimitPercent.max' => 'Ngưỡng vắng cho phép tối đa là 100%.',
             'importFile.extensions' => 'File danh sách phải có định dạng .xlsx, .xls hoặc .csv.',
             'importFile.max' => 'File danh sách tối đa 5MB.',
         ]);
@@ -128,12 +133,12 @@ class CreateClass extends Component
             'join_key' => $code,
             'class_code' => $this->classCode ?: $code, // fallback sang join_key nếu không nhập
             'description' => $this->description ?: null,
-            'late_threshold' => $this->lateThreshold,
             'deduct_late' => (float) ($this->attendanceRules['late'] ?? 0.5),
             'deduct_absent' => (float) ($this->attendanceRules['absent'] ?? 1.0),
             'deduct_excused' => (float) ($this->attendanceRules['excused'] ?? 0.0),
             'deduct_excused_absence' => ((float) ($this->attendanceRules['excused'] ?? 0)) > 0,
             'total_sessions' => $this->totalSessions,
+            'absence_limit_percent' => $this->absenceLimitPercent,
             'require_approval' => $this->requireApproval,
             'status' => 'active',
         ]);

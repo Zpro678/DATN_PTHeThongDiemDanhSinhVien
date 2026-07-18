@@ -41,14 +41,30 @@ class AttendanceCalculator
     //  HẰNG SỐ CẤU HÌNH
     // -------------------------------------------------------------------
 
-    /** MIN_ATTENDANCE_PERCENT: dưới ngưỡng % này (80%) -> nguy cơ CẤM THI. */
-    public const MIN_ATTENDANCE_PERCENT = 80;
+    /**
+     * MẶC ĐỊNH TOÀN HỆ THỐNG — chỉ dùng khi lớp chưa cấu hình ngưỡng riêng.
+     *
+     * Ngưỡng thật của một lớp lấy qua CourseClass::getAttendanceThresholds(); các hằng số
+     * dưới đây là giá trị rơi về (lớp cũ, hoặc chỗ không có đối tượng lớp trong tay).
+     */
 
-    /** WARNING_PERCENT: dưới ngưỡng % này (85%) nhưng chưa cấm -> CẢNH BÁO chuyên cần. */
-    public const WARNING_PERCENT = 85;
+    /** DEFAULT_ABSENCE_LIMIT_PERCENT: quỹ vắng mặc định = 20% tổng số buổi. */
+    public const DEFAULT_ABSENCE_LIMIT_PERCENT = 20.0;
 
-    /** ABSENCE_LIMIT_RATIO: quỹ vắng tối đa = 20% tổng số buổi dự kiến của lớp. */
-    public const ABSENCE_LIMIT_RATIO = 0.2;
+    /** DEFAULT_WARNING_MARGIN_PERCENT: cảnh báo sớm hơn ngưỡng cấm thi 5%. */
+    public const DEFAULT_WARNING_MARGIN_PERCENT = 5.0;
+
+    /** DEFAULT_NEAR_ABSENCE_SESSIONS: còn ≤ 2 buổi trong quỹ vắng -> "sắp vượt ngưỡng". */
+    public const DEFAULT_NEAR_ABSENCE_SESSIONS = 2;
+
+    /** MIN_ATTENDANCE_PERCENT: dưới ngưỡng % này -> nguy cơ CẤM THI (mặc định 80%). */
+    public const MIN_ATTENDANCE_PERCENT = 100 - self::DEFAULT_ABSENCE_LIMIT_PERCENT;
+
+    /** WARNING_PERCENT: dưới ngưỡng % này nhưng chưa cấm -> CẢNH BÁO chuyên cần (mặc định 85%). */
+    public const WARNING_PERCENT = self::MIN_ATTENDANCE_PERCENT + self::DEFAULT_WARNING_MARGIN_PERCENT;
+
+    /** ABSENCE_LIMIT_RATIO: quỹ vắng mặc định dưới dạng tỉ lệ (0.2). */
+    public const ABSENCE_LIMIT_RATIO = self::DEFAULT_ABSENCE_LIMIT_PERCENT / 100;
 
     /** PRESENTISH: các trạng thái PHIÊN được coi là "đã có mặt" khi nhị phân hoá (-> bit 1). */
     private const PRESENTISH = ['present', 'late', 'excused'];
@@ -293,14 +309,29 @@ class AttendanceCalculator
     }
 
     /**
-     * allowedAbsentSessions(): số buổi được phép vắng = floor(20% × số buổi cơ sở).
+     * allowedAbsentSessions(): số buổi được phép vắng = floor(quỹ vắng % × số buổi cơ sở).
      *
      * Truyền vào KẾT QUẢ của baseSessions() để đảm bảo quỹ vắng luôn tính trên
      * tổng số buổi lớn nhất (dự kiến hoặc đã diễn ra).
+     *
+     * @param  int         $plannedSessions  Số buổi cơ sở (kết quả baseSessions()).
+     * @param  float|null  $absenceLimitPercent  Quỹ vắng của lớp; null -> mặc định hệ thống.
      */
-    public static function allowedAbsentSessions(int $plannedSessions): int
+    public static function allowedAbsentSessions(int $plannedSessions, ?float $absenceLimitPercent = null): int
     {
-        return (int) floor($plannedSessions * self::ABSENCE_LIMIT_RATIO);
+        $percent = $absenceLimitPercent ?? self::DEFAULT_ABSENCE_LIMIT_PERCENT;
+        $percent = max(0.0, min(100.0, $percent));
+
+        return (int) floor($plannedSessions * $percent / 100);
+    }
+
+    /**
+     * formatPercent(): hiển thị ngưỡng % gọn gàng trong câu chữ (20 chứ không phải 20.00,
+     * nhưng vẫn giữ phần lẻ khi giảng viên cấu hình 12.5%).
+     */
+    public static function formatPercent(float $percent): string
+    {
+        return rtrim(rtrim(number_format($percent, 2, '.', ''), '0'), '.');
     }
 
     /**

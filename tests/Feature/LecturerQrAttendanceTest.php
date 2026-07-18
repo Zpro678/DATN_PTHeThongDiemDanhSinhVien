@@ -230,11 +230,9 @@ class LecturerQrAttendanceTest extends TestCase
         $this->travelTo($base);
 
         $owner = User::factory()->create();
-        // Ngưỡng đi muộn của lớp = 5 phút — dù quét trễ hơn ngưỡng, PHIÊN QR vẫn chỉ ghi 'present'
-        // (đi muộn để dành cho tổng kết buổi), nên ngưỡng này KHÔNG còn tác động lúc quét.
+        // Dù quét trễ, PHIÊN QR vẫn chỉ ghi 'present' (đi muộn để dành cho tổng kết buổi).
         $courseClass = CourseClass::factory()->create([
             'owner_user_id' => $owner->id,
-            'late_threshold' => 5,
         ]);
         // Buổi được tạo tại $base (mốc "mở phiên đầu tiên").
         $meeting = ClassMeeting::factory()->create([
