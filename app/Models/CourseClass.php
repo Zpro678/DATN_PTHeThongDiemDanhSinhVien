@@ -242,4 +242,26 @@ class CourseClass extends Model
 
         return $managers->unique('id')->filter();
     }
+
+    /**
+     * Sinh mã lớp (class_code) duy nhất toàn cục.
+     *
+     * @param  string  $prefixHint  Gợi ý tiền tố (vd mã môn); mặc định LHP.
+     * @return string Mã lớp duy nhất đã được kiểm tra.
+     */
+    public static function generateUniqueClassCode(string $prefixHint = 'LHP'): string
+    {
+        $subPart = strtoupper(substr(preg_replace('/[^A-Za-z0-9]/', '', $prefixHint), 0, 3));
+        $prefix = ($subPart ?: 'LHP');
+
+        $attempts = 0;
+        do {
+            $suffix = str_pad((string) random_int(0, 9999), 4, '0', STR_PAD_LEFT);
+            $code = $prefix.$suffix;
+            $exists = self::withTrashed()->where('class_code', $code)->exists();
+            $attempts++;
+        } while ($exists && $attempts < 20);
+
+        return $code;
+    }
 }

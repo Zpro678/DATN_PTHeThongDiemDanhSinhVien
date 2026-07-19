@@ -29,6 +29,9 @@ class ManagedClasses extends Component
     // ID lớp đang chờ xác nhận kết thúc
     public ?string $confirmingEndClassId = null;
 
+    // ID lớp đang chờ xác nhận xóa vĩnh viễn
+    public ?string $confirmingDeleteClassId = null;
+
     public function confirmEndClass(string $classId): void
     {
         $this->confirmingEndClassId = $classId;
@@ -61,6 +64,8 @@ class ManagedClasses extends Component
             $query->where('status', 'active');
         } elseif ($this->statusFilter === 'Đã kết thúc') {
             $query->where('status', 'ended');
+        } elseif ($this->statusFilter === 'Đã lưu trữ') {
+            $query->where('status', 'archived');
         }
 
         if (trim($this->search) !== '') {
@@ -89,6 +94,43 @@ class ManagedClasses extends Component
         }
 
         $this->confirmingEndClassId = null;
+    }
+
+    public function restoreClass(string $classId): void
+    {
+        $class = CourseClass::where('id', $classId)
+            ->where('owner_user_id', auth()->id())
+            ->firstOrFail();
+
+        $class->update(['status' => 'active']);
+
+        $this->dispatch('toast', message: 'Đã khôi phục lớp học thành công.', type: 'success');
+    }
+
+    public function confirmDeleteClass(string $classId): void
+    {
+        $class = CourseClass::where('id', $classId)
+            ->where('owner_user_id', auth()->id())
+            ->firstOrFail();
+
+        $this->confirmingDeleteClassId = $classId;
+    }
+
+    public function cancelDeleteClass(): void
+    {
+        $this->confirmingDeleteClassId = null;
+    }
+
+    public function deleteClass(string $classId): void
+    {
+        $class = CourseClass::where('id', $classId)
+            ->where('owner_user_id', auth()->id())
+            ->firstOrFail();
+
+        $class->delete();
+
+        $this->confirmingDeleteClassId = null;
+        $this->dispatch('toast', message: 'Đã xóa lớp học vĩnh viễn.', type: 'success');
     }
 
     public function openImport(): void

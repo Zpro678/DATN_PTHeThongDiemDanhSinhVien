@@ -131,7 +131,7 @@ class CreateClass extends Component
             'owner_user_id' => auth()->id(),
             'name' => $this->name,
             'join_key' => $code,
-            'class_code' => $this->classCode ?: $code, // fallback sang join_key nếu không nhập
+            'class_code' => $this->classCode ?: CourseClass::generateUniqueClassCode('LHP'), // tự động tạo mã dạng LHPxxxx nếu để trống (khác mã tham gia)
             'description' => $this->description ?: null,
             'deduct_late' => (float) ($this->attendanceRules['late'] ?? 0.5),
             'deduct_absent' => (float) ($this->attendanceRules['absent'] ?? 1.0),

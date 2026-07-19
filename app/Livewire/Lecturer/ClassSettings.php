@@ -183,8 +183,8 @@ class ClassSettings extends Component
             return;
         }
 
-        $this->courseClass->delete();
-        session()->flash('status', 'Đã xóa lớp học thành công.');
+        $this->courseClass->update(['status' => 'archived']);
+        session()->flash('status', 'Đã chuyển lớp học vào Lưu trữ thành công.');
         $this->redirectRoute('managed-classes');
     }
 

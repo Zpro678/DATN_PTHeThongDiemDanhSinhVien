@@ -142,7 +142,7 @@ class SingleClassWithStudentsImport implements ToCollection
             'owner_user_id' => $this->authUserId,
             'name' => $className,
             'join_key' => $code,
-            'class_code' => $classCode ?: $code,
+            'class_code' => $classCode ?: CourseClass::generateUniqueClassCode($className ?: 'LHP'),
             'description' => $description ?: null,
             'deduct_late' => $deductLate,
             'deduct_absent' => $deductAbsent,

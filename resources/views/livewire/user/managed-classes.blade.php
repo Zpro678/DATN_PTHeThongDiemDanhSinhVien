@@ -1,5 +1,5 @@
 @php
-    $statuses = ['Đang hoạt động', 'Đã kết thúc'];
+    $statuses = ['Đang hoạt động', 'Đã kết thúc', 'Đã lưu trữ'];
 
     // Thông tin gói cước để nhắc giới hạn lớp ngay tại nơi tạo lớp (Concept 1).
     $mcPlan = Auth::user()?->currentPlan();
@@ -222,7 +222,25 @@
                                 <x-user.icon name="shield" :size="10" class="mr-1" /> Chủ lớp
                             </span>
                         </div>
-                        <span class="text-[11px] font-medium text-slate-700">Mã lớp: <span class="font-bold">{{ $class->class_code ?? $class->join_key }}</span></span>
+                        <div class="flex flex-col items-end gap-1 text-[11px] font-medium text-slate-700">
+                            <span>Mã lớp: <span class="font-bold text-slate-800">{{ $class->class_code ?? '---' }}</span></span>
+                            <div x-data="{ copied: false }" class="flex items-center gap-1">
+                                <span>Mã tham gia: <span class="font-bold text-primary select-all">{{ $class->join_key }}</span></span>
+                                <button
+                                    type="button"
+                                    title="Sao chép mã tham gia"
+                                    class="inline-flex h-4 w-4 items-center justify-center rounded text-slate-400 hover:bg-slate-100 hover:text-slate-600 transition-colors"
+                                    x-on:click.stop="navigator.clipboard.writeText('{{ $class->join_key }}'); copied = true; setTimeout(() => copied = false, 1500)"
+                                >
+                                    <template x-if="!copied">
+                                        <x-user.icon name="copy" :size="10" />
+                                    </template>
+                                    <template x-if="copied">
+                                        <x-user.icon name="check" :size="10" class="text-emerald-500" />
+                                    </template>
+                                </button>
+                            </div>
+                        </div>
                     </div>
 
                     <div class="flex gap-8 mb-3">
@@ -287,20 +305,23 @@
                         </a>
                     @endforeach
 
-                    @if (! $isArchived)
-                        <div class="relative z-20" x-data="{ open: false }">
-                            <button type="button" x-on:click.stop="open = ! open" class="rounded-lg p-2 text-on-surface-variant transition-colors hover:bg-surface-container">
-                                <x-user.icon name="more-vertical" :size="18" />
-                            </button>
-                            <div x-cloak x-show="open" x-on:click.outside="open = false" class="absolute right-0 bottom-full z-50 mb-1 w-44 overflow-hidden rounded-lg border border-outline-variant bg-white py-1 shadow-lg">
+                    <div class="relative z-20" x-data="{ open: false }">
+                        <button type="button" x-on:click.stop="open = ! open" class="rounded-lg p-2 text-on-surface-variant transition-colors hover:bg-surface-container">
+                            <x-user.icon name="more-vertical" :size="18" />
+                        </button>
+                        <div x-cloak x-show="open" x-on:click.outside="open = false" class="absolute right-0 bottom-full z-50 mb-1 w-44 overflow-hidden rounded-lg border border-outline-variant bg-white py-1 shadow-lg">
+                            @if ($isArchived)
+                                <button type="button" wire:click.stop.prevent="restoreClass('{{ $class->id }}')" class="block w-full px-4 py-2 text-left text-sm text-primary hover:bg-primary/10">Khôi phục lớp</button>
+                                <button type="button" wire:click.stop.prevent="confirmDeleteClass('{{ $class->id }}')" class="block w-full px-4 py-2 text-left text-sm text-error hover:bg-error/10">Xóa vĩnh viễn</button>
+                            @else
                                 <a href="{{ route('lecturer.classes.show', $class->id) }}" wire:navigate class="block px-4 py-2 text-sm text-on-surface hover:bg-surface-container">Xem lớp học</a>
+                                <a href="{{ route('lecturer.classes.settings', $class->id) }}" wire:navigate class="block px-4 py-2 text-sm text-on-surface hover:bg-surface-container">Cài đặt lớp</a>
                                 @if (! $isEnded)
-                                    <a href="{{ route('lecturer.classes.settings', $class->id) }}" wire:navigate class="block px-4 py-2 text-sm text-on-surface hover:bg-surface-container">Cài đặt lớp</a>
                                     <button type="button" wire:click.stop.prevent="confirmEndClass('{{ $class->id }}')" class="block w-full px-4 py-2 text-left text-sm text-error hover:bg-error/10">Kết thúc lớp</button>
                                 @endif
-                            </div>
+                            @endif
                         </div>
-                    @endif
+                    </div>
                 </div>
             </article>
         @empty
@@ -331,6 +352,31 @@
                     <div class="mt-6 flex justify-end gap-3">
                         <button type="button" wire:click="cancelEndClass" class="rounded-lg border border-outline-variant px-5 py-2.5 text-sm font-semibold text-on-surface-variant transition-colors hover:bg-surface-container">Hủy bỏ</button>
                         <button type="button" wire:click="endClass('{{ $confirmingEndClassId }}')" class="rounded-lg bg-amber-500 px-5 py-2.5 text-sm font-semibold text-white transition-colors hover:bg-amber-600">Kết thúc lớp</button>
+                    </div>
+                </div>
+            </div>
+        </template>
+    @endif
+
+    @if ($confirmingDeleteClassId)
+        <template x-teleport="body">
+            <div class="fixed inset-0 z-[110] flex items-center justify-center bg-on-background/40 p-4 backdrop-blur-sm"
+                 x-data
+                 x-transition:enter="transition ease-out duration-200" x-transition:enter-start="opacity-0" x-transition:enter-end="opacity-100"
+                 x-transition:leave="transition ease-in duration-150" x-transition:leave-start="opacity-100" x-transition:leave-end="opacity-0">
+                <div class="w-full max-w-md rounded-xl border border-outline-variant bg-white p-6 shadow-2xl"
+                     x-transition:enter="transition ease-out duration-200" x-transition:enter-start="opacity-0 scale-95 translate-y-4" x-transition:enter-end="opacity-100 scale-100 translate-y-0"
+                     x-transition:leave="transition ease-in duration-150" x-transition:leave-start="opacity-100 scale-100 translate-y-0" x-transition:leave-end="opacity-0 scale-95 translate-y-4">
+                    <div class="mb-4 flex items-center gap-3">
+                        <div class="grid h-10 w-10 shrink-0 place-items-center rounded-full bg-red-100">
+                            <x-user.icon name="alert-triangle" :size="20" class="text-red-600" />
+                        </div>
+                        <h3 class="text-lg font-bold text-on-surface">Xác nhận xóa lớp học</h3>
+                    </div>
+                    <p class="text-sm text-on-surface-variant">Bạn có chắc chắn muốn xóa lớp học này vĩnh viễn không? Hành động này không thể hoàn tác và tất cả dữ liệu liên quan sẽ bị xóa.</p>
+                    <div class="mt-6 flex justify-end gap-3">
+                        <button type="button" wire:click="cancelDeleteClass" class="rounded-lg border border-outline-variant px-5 py-2.5 text-sm font-semibold text-on-surface-variant transition-colors hover:bg-surface-container">Hủy bỏ</button>
+                        <button type="button" wire:click="deleteClass('{{ $confirmingDeleteClassId }}')" class="rounded-lg bg-red-600 px-5 py-2.5 text-sm font-semibold text-white transition-colors hover:bg-red-700">Xóa lớp</button>
                     </div>
                 </div>
             </div>
@@ -397,12 +443,59 @@
                             </div>
                         </div>
 
-                        <div class="text-xs text-on-surface-variant flex items-center justify-between">
-                            <span>Hãy dùng đúng định dạng file mẫu nhiều sheet (Phương án 1)</span>
-                            <button type="button" wire:click="downloadTemplate" class="font-bold text-primary hover:underline flex items-center gap-1">
-                                <x-user.icon name="download" :size="12" /> Tải file mẫu tại đây
-                            </button>
+                        {{-- Thanh tiện ích tải/sao chép bản mẫu cấu hình --}}
+                        <div x-data="{
+                            copied: false,
+                            copyTemplate() {
+                                const plainText = '⚙ CẤU HÌNH LỚP HỌC\t\t\t\nTên lớp *\tLớp mẫu\t\t\nMã lớp *\tWEB-2026-N01\t\t\nMô tả\tLớp học phần web cơ bản.\t\t\nTổng số buổi học dự kiến *\t15\t\t\nNgưỡng vắng cho phép (%)\t20\t\t\nCấu hình điểm trừ (bỏ trống = không trừ)\tĐi muộn\tVắng không phép\tVắng có phép\nĐiểm trừ tương ứng\t0.5\t1\t0\nYêu cầu duyệt tham gia (1 = Có, 0 = Không)\t0\t\t\n★ Các trường có dấu (*) là bắt buộc. Mã lớp phải là duy nhất.\t\t\t';
+                                const html = this.$refs.clipboardHtml.innerHTML;
+                                const clipItem = new ClipboardItem({
+                                    'text/html': new Blob([html], { type: 'text/html' }),
+                                    'text/plain': new Blob([plainText], { type: 'text/plain' })
+                                });
+                                navigator.clipboard.write([clipItem]);
+                                this.copied = true;
+                                setTimeout(() => this.copied = false, 2000);
+                            }
+                        }" class="flex flex-wrap items-center justify-between gap-3 rounded-xl border border-slate-100 bg-slate-50/50 px-4 py-3 shadow-sm">
+                            
+                            {{-- HTML ẩn dùng cho clipboard - không hiển thị ra màn hình --}}
+                            <template x-ref="clipboardHtml">
+                                <table border="1" style="border-collapse:collapse;font-family:Calibri;font-size:10pt">
+                                    <tr style="background-color:#1E3A5F;color:#FFFFFF"><td colspan="4" style="padding:6px 10px;font-weight:bold;font-size:11pt">⚙ CẤU HÌNH LỚP HỌC</td></tr>
+                                    <tr style="background-color:#EEF4FF"><td style="font-weight:bold;padding:4px 10px;color:#2D3748">Tên lớp *</td><td colspan="3" style="text-align:center;padding:4px 8px;color:#1A56DB;font-weight:bold">Lớp mẫu</td></tr>
+                                    <tr style="background-color:#EEF4FF"><td style="font-weight:bold;padding:4px 10px;color:#2D3748">Mã lớp *</td><td colspan="3" style="text-align:center;padding:4px 8px">WEB-2026-N01</td></tr>
+                                    <tr style="background-color:#EEF4FF"><td style="font-weight:bold;padding:4px 10px;color:#2D3748">Mô tả</td><td colspan="3" style="text-align:center;padding:4px 8px">Lớp học phần web cơ bản.</td></tr>
+                                    <tr style="background-color:#EEF4FF"><td style="font-weight:bold;padding:4px 10px;color:#2D3748">Tổng số buổi học dự kiến *</td><td colspan="3" style="text-align:center;padding:4px 8px;font-weight:bold">15</td></tr>
+                                    <tr style="background-color:#EEF4FF"><td style="font-weight:bold;padding:4px 10px;color:#2D3748">Ngưỡng vắng cho phép (%)</td><td colspan="3" style="text-align:center;padding:4px 8px;font-weight:bold;color:#B45309">20</td></tr>
+                                    <tr style="background-color:#FEF3C7"><td style="font-weight:bold;padding:4px 10px;color:#92400E">Cấu hình điểm trừ (bỏ trống = không trừ)</td><td style="font-weight:bold;text-align:center;padding:4px 8px;color:#92400E">Đi muộn</td><td style="font-weight:bold;text-align:center;padding:4px 8px;color:#92400E">Vắng không phép</td><td style="font-weight:bold;text-align:center;padding:4px 8px;color:#92400E">Vắng có phép</td></tr>
+                                    <tr style="background-color:#FFFFF3CD"><td style="font-weight:bold;padding:4px 10px;color:#2D3748">Điểm trừ tương ứng</td><td style="text-align:center;padding:4px 8px;font-weight:bold;color:#B45309">0.5</td><td style="text-align:center;padding:4px 8px;font-weight:bold;color:#B45309">1</td><td style="text-align:center;padding:4px 8px;font-weight:bold">0</td></tr>
+                                    <tr style="background-color:#ECFDF5"><td style="font-weight:bold;padding:4px 10px;color:#2D3748">Yêu cầu duyệt tham gia (1 = Có, 0 = Không)</td><td colspan="3" style="text-align:center;padding:4px 8px;font-weight:bold">0</td></tr>
+                                    <tr style="background-color:#FFFBEB"><td colspan="4" style="padding:4px 10px;font-style:italic;font-size:9pt;color:#92400E">★ Các trường có dấu (*) là bắt buộc. Mã lớp phải là duy nhất.</td></tr>
+                                </table>
+                            </template>
+
+                            <div class="flex items-center gap-2">
+                                <span class="grid h-7 w-7 place-items-center rounded-lg bg-primary/10 text-primary">
+                                    <x-user.icon name="file-spreadsheet" :size="16" />
+                                </span>
+                                <span class="text-xs font-semibold text-slate-600">Bạn chưa có file mẫu cấu hình?</span>
+                            </div>
+                            <div class="flex items-center gap-2">
+                                <button type="button" x-on:click.prevent="copyTemplate()" class="inline-flex items-center gap-1.5 rounded-lg border border-emerald-200 bg-emerald-50 px-3 py-1.5 text-xs font-bold text-emerald-700 transition-all hover:bg-emerald-100 hover:border-emerald-300 hover:shadow-sm">
+                                    <template x-if="!copied">
+                                        <span class="flex items-center gap-1"><x-user.icon name="copy" :size="12" /> Sao chép bản mẫu</span>
+                                    </template>
+                                    <template x-if="copied">
+                                        <span class="flex items-center gap-1 text-emerald-600"><x-user.icon name="check" :size="12" /> Đã sao chép!</span>
+                                    </template>
+                                </button>
+                                <button type="button" wire:click="downloadTemplate" class="inline-flex items-center gap-1.5 rounded-lg border border-primary/20 bg-primary/5 px-3 py-1.5 text-xs font-bold text-primary transition-all hover:bg-primary/10 hover:border-primary/30 hover:shadow-sm">
+                                    <x-user.icon name="download" :size="12" /> Tải file mẫu .xlsx
+                                </button>
+                            </div>
                         </div>
+
 
                         {{-- Danh sách lỗi chi tiết nếu có --}}
                         @if (!empty($importErrors))

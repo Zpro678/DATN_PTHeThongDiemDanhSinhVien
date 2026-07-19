@@ -431,7 +431,7 @@
                         </div>
                         <h3 class="text-lg font-bold text-on-surface">Xác nhận xóa lớp học</h3>
                     </div>
-                    <p class="text-sm text-on-surface-variant">Bạn có chắc chắn muốn xóa lớp học này không? Mọi thông tin điểm danh có thể sẽ bị vô hiệu hóa.</p>
+                    <p class="text-sm text-on-surface-variant">Bạn có chắc chắn muốn xóa lớp học này không? Lớp học sẽ được chuyển vào mục <strong>Lưu trữ</strong>, bạn có thể khôi phục hoặc xóa vĩnh viễn sau.</p>
                     <div class="mt-6 flex justify-end gap-3">
                         <button type="button" wire:click="closeDeleteConfirm"
                             class="rounded-xl border border-outline-variant/30 px-5 py-2.5 text-sm font-bold text-on-surface-variant hover:bg-surface-container-low transition-colors">Hủy</button>

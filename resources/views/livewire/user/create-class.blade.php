@@ -47,7 +47,7 @@
                         <label class="space-y-2 sm:col-span-2">
                             <span class="block text-sm font-semibold text-on-surface">Mã lớp <span class="ml-1.5 rounded-full bg-surface-container px-2 py-0.5 text-[11px] font-bold text-on-surface-variant">(Tùy chọn)</span></span>
                             <input wire:model.live.debounce.300ms="classCode" type="text" placeholder="VD: CS101, WEB-2026-01" class="h-12 w-full rounded-xl border border-outline-variant/40 bg-white px-4 text-sm font-semibold text-on-surface outline-none transition-all placeholder:text-on-surface-variant/50 hover:border-outline-variant focus:border-primary focus:ring-2 focus:ring-primary/20" maxlength="50">
-                            <p class="text-xs text-on-surface-variant">Mã nhận diện lớp học theo mã môn học / học phần của trường. Nếu để trống sẽ dùng mã tham gia lớp.</p>
+                            <p class="text-xs text-on-surface-variant">Mã nhận diện lớp học theo mã môn học / học phần của trường. Nếu để trống sẽ tự động tạo mã nhận diện riêng (khác với mã tham gia lớp).</p>
                             @error('classCode') <span class="block text-xs font-medium text-error">{{ $message }}</span> @enderror
                         </label>
 

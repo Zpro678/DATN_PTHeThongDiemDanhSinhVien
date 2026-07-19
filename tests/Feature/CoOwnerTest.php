@@ -165,6 +165,7 @@ class CoOwnerTest extends TestCase
             ->assertOk()
             ->call('deleteClass');
 
-        $this->assertSoftDeleted($class);
+        $class->refresh();
+        $this->assertEquals('archived', $class->status);
     }
 }
