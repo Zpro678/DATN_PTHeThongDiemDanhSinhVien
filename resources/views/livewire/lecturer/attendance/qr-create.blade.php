@@ -265,21 +265,15 @@
                     </div>
                     <div>
                         <label class="mb-2 block text-sm font-bold text-slate-600">Bán kính GPS (m)</label>
-                        <div class="flex items-center gap-3">
-                            <div class="relative w-32 shrink-0">
-                                <input type="number" wire:model="gpsRadius" readonly class="w-full cursor-default rounded-xl border-2 border-blue-500 bg-blue-50 py-2.5 pl-4 pr-12 text-sm font-bold text-blue-700 outline-none transition" />
-                                <span class="absolute right-4 top-1/2 -translate-y-1/2 text-sm font-bold text-blue-700">mét</span>
-                            </div>
-                            <div class="flex flex-1 gap-2">
-                                @foreach ([50, 70, 100] as $r)
-                                    <button type="button" wire:click="$set('gpsRadius', {{ $r }})" class="flex-1 whitespace-nowrap rounded-xl border-2 px-3 py-2.5 text-xs font-bold transition-all {{ $gpsRadius == $r ? 'border-blue-500 bg-blue-50 text-blue-700' : 'border-slate-100 bg-white text-slate-600 hover:bg-slate-50 hover:border-blue-300' }}">
-                                        {{ $r }}m
-                                    </button>
-                                @endforeach
-                            </div>
+                        <div class="relative">
+                            {{-- Nhập tay: 10m - 2500m (khớp rule ở QrAttendanceCreate::rules()). --}}
+                            <input type="number" wire:model="gpsRadius" min="10" max="2500" step="5" inputmode="numeric" class="w-full rounded-xl border-2 border-blue-500 bg-blue-50 py-2.5 pl-4 pr-12 text-sm font-bold text-blue-700 outline-none transition focus:border-blue-600 focus:bg-white" />
+                            <span class="absolute right-4 top-1/2 -translate-y-1/2 text-sm font-bold text-blue-700">mét</span>
                         </div>
                         @error('gpsRadius')
                             <span class="mt-2 block text-sm font-medium text-red-600">{{ $message }}</span>
+                        @else
+                            <span class="mt-2 block text-xs font-medium text-slate-500">Tối thiểu 10m, tối đa 2500m.</span>
                         @enderror
                         @error('gpsLatitude')
                             <span class="mt-2 block text-sm font-medium text-red-600">{{ $message }}</span>

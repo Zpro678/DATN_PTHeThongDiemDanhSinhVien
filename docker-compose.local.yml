@@ -33,7 +33,7 @@ services:
       - "3306:3306"
 
     volumes:
-      - mysql_data_local:/var/lib/mysql
+      - mysql_model_data:/var/lib/mysql
 
     healthcheck:
       test: ["CMD", "mysqladmin", "ping", "-h", "localhost", "-uroot", "-p${MYSQL_ROOT_PASSWORD:-root}"]
@@ -50,7 +50,7 @@ services:
       - "6379:6379"
 
     volumes:
-      - redis_data_local:/data
+      - redis_data:/data
 
     healthcheck:
       test: ["CMD", "redis-cli", "ping"]
@@ -90,5 +90,7 @@ services:
       - "8025:8025"   # Giao diện web
 
 volumes:
-  mysql_data_local:
-  redis_data_local:
+  # Dùng ĐÚNG tên volume đã có sẵn từ trước (quan-ly-diem-danh_mysql_model_data,
+  # ~216MB dữ liệu dev). Đổi tên volume = MySQL khởi tạo lại rỗng, tưởng mất data.
+  mysql_model_data:
+  redis_data:

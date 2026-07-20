@@ -418,7 +418,8 @@
                             
                             <div x-show="gpsEnabled" x-collapse>
                                 <label class="mb-2 block text-sm font-bold text-slate-700">Bán kính cho phép (mét)</label>
-                                <input type="number" x-model.number="gpsRadius" class="w-full rounded-xl border-2 border-slate-200 bg-white px-4 py-3 text-sm font-semibold text-slate-900 shadow-sm outline-none transition-all duration-200 focus:border-blue-500 focus:ring-4 focus:ring-blue-500/10 focus:shadow-md focus:shadow-blue-500/5" />
+                                {{-- min/max khớp rule ở QuickAttendanceModal::rules(): 10m - 2500m --}}
+                                <input type="number" x-model.number="gpsRadius" min="10" max="2500" step="5" inputmode="numeric" class="w-full rounded-xl border-2 border-slate-200 bg-white px-4 py-3 text-sm font-semibold text-slate-900 shadow-sm outline-none transition-all duration-200 focus:border-blue-500 focus:ring-4 focus:ring-blue-500/10 focus:shadow-md focus:shadow-blue-500/5" />
                                 @error('gpsRadius') <span class="mt-1.5 block text-xs font-semibold text-red-500">{{ $message }}</span> @enderror
                                 @error('gpsLatitude') <span class="mt-1.5 block text-xs font-semibold text-red-500">{{ $message }}</span> @enderror
                             </div>

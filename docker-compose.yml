@@ -69,7 +69,7 @@ services:
       - "3306"
 
     volumes:
-      - mysql_data:/var/lib/mysql
+      - mysql_model_data:/var/lib/mysql
 
     healthcheck:
       test: ["CMD", "mysqladmin", "ping", "-h", "localhost", "-uroot", "-p${MYSQL_ROOT_PASSWORD}"]
@@ -206,7 +206,7 @@ networks:
     driver: bridge
 
 volumes:
-  mysql_data:
+  mysql_model_data:
   redis_data:
   app_storage:
   app_public:
