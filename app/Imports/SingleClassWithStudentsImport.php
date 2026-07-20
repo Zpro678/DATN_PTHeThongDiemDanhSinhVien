@@ -72,30 +72,39 @@ class SingleClassWithStudentsImport implements ToCollection
         $deductExcused = 0.0;
         $requireApproval = false;
 
-        // 2. Phân tích các dòng cấu hình lớp học (tất cả các dòng TRƯỚC dòng tiêu đề)
-        for ($index = 0; $index < $headerRowIndex; $index++) {
-            $row = $rows->get($index);
-            if (!$row) continue;
+        // 2. Phân tích các dòng cấu hình lớp học (quét qua mọi ô của mọi dòng, ngoại trừ dòng tiêu đề)
+        foreach ($rows as $index => $row) {
+            if ($index === $headerRowIndex) {
+                continue;
+            }
 
-            $colA = mb_strtolower(trim((string)($row[0] ?? '')));
-            $colB = trim((string)($row[1] ?? ''));
+            $rowArray = $row instanceof Collection ? $row->toArray() : (array) $row;
+            foreach ($rowArray as $colIndex => $cellValue) {
+                $cellStr = mb_strtolower(trim((string) $cellValue));
+                if (empty($cellStr)) {
+                    continue;
+                }
 
-            if (str_contains($colA, 'tên lớp')) {
-                $className = $colB;
-            } elseif (str_contains($colA, 'mã lớp')) {
-                $classCode = $colB;
-            } elseif (str_contains($colA, 'mô tả')) {
-                $description = $colB;
-            } elseif (str_contains($colA, 'tổng số buổi')) {
-                $totalSessions = is_numeric($colB) ? (int)$colB : 15;
-            } elseif (str_contains($colA, 'ngưỡng vắng')) {
-                $absenceLimitPercent = is_numeric($colB) ? (float)$colB : 20.0;
-            } elseif (str_contains($colA, 'điểm trừ tương ứng') || str_contains($colA, 'điểm trừ')) {
-                $deductLate = is_numeric($row[1] ?? null) ? (float)$row[1] : 0.5;
-                $deductAbsent = is_numeric($row[2] ?? null) ? (float)$row[2] : 1.0;
-                $deductExcused = is_numeric($row[3] ?? null) ? (float)$row[3] : 0.0;
-            } elseif (str_contains($colA, 'yêu cầu duyệt')) {
-                $requireApproval = ($colB === '1' || mb_strtolower($colB) === 'có');
+                if (str_contains($cellStr, 'tên lớp')) {
+                    $className = trim((string)($rowArray[$colIndex + 1] ?? ''));
+                } elseif (str_contains($cellStr, 'mã lớp')) {
+                    $classCode = trim((string)($rowArray[$colIndex + 1] ?? ''));
+                } elseif (str_contains($cellStr, 'mô tả')) {
+                    $description = trim((string)($rowArray[$colIndex + 1] ?? ''));
+                } elseif (str_contains($cellStr, 'tổng số buổi')) {
+                    $val = trim((string)($rowArray[$colIndex + 1] ?? ''));
+                    $totalSessions = is_numeric($val) ? (int)$val : 15;
+                } elseif (str_contains($cellStr, 'ngưỡng vắng')) {
+                    $val = trim((string)($rowArray[$colIndex + 1] ?? ''));
+                    $absenceLimitPercent = is_numeric($val) ? (float)$val : 20.0;
+                } elseif (str_contains($cellStr, 'điểm trừ tương ứng') || str_contains($cellStr, 'điểm trừ')) {
+                    $deductLate = is_numeric($rowArray[$colIndex + 1] ?? null) ? (float)$rowArray[$colIndex + 1] : 0.5;
+                    $deductAbsent = is_numeric($rowArray[$colIndex + 2] ?? null) ? (float)$rowArray[$colIndex + 2] : 1.0;
+                    $deductExcused = is_numeric($rowArray[$colIndex + 3] ?? null) ? (float)$rowArray[$colIndex + 3] : 0.0;
+                } elseif (str_contains($cellStr, 'yêu cầu duyệt')) {
+                    $val = trim((string)($rowArray[$colIndex + 1] ?? ''));
+                    $requireApproval = ($val === '1' || mb_strtolower($val) === 'có');
+                }
             }
         }
 
@@ -136,7 +145,28 @@ class SingleClassWithStudentsImport implements ToCollection
             return;
         }
 
-        // 5. Tạo lớp học
+        // 5. Đếm số lượng cột ngày học thực tế để tự động điều chỉnh tổng số buổi học dự kiến nếu cần
+        $dateHeadersCount = 0;
+        if ($headerRow) {
+            foreach ($headerRow as $colIndex => $colValue) {
+                if ($colIndex === $nameColIndex || $colIndex === $emailColIndex) {
+                    continue;
+                }
+                $colValueLower = mb_strtolower(trim((string) $colValue));
+                if (str_contains($colValueLower, 'mã') || str_contains($colValueLower, 'mssv') || str_contains($colValueLower, 'ms') || str_contains($colValueLower, 'stt')) {
+                    continue;
+                }
+                $colValue = trim((string) $colValue);
+                if (empty($colValue)) continue;
+
+                $dateStr = $this->parseDate($colValue);
+                if ($dateStr) {
+                    $dateHeadersCount++;
+                }
+            }
+        }
+
+        // Tạo lớp học
         $code = CourseClass::generateUniqueCode($classCode ?: 'CLS');
         $courseClass = CourseClass::create([
             'owner_user_id' => $this->authUserId,
@@ -148,7 +178,7 @@ class SingleClassWithStudentsImport implements ToCollection
             'deduct_absent' => $deductAbsent,
             'deduct_excused' => $deductExcused,
             'deduct_excused_absence' => $deductExcused > 0,
-            'total_sessions' => $totalSessions,
+            'total_sessions' => max($totalSessions, $dateHeadersCount),
             'absence_limit_percent' => $absenceLimitPercent,
             'require_approval' => $requireApproval,
             'status' => 'active',
@@ -235,6 +265,30 @@ class SingleClassWithStudentsImport implements ToCollection
                 }
             }
             if (!$hasData) continue;
+
+            // Bỏ qua các dòng cấu hình lớp học (nếu có bất kỳ ô nào chứa từ khóa cấu hình)
+            $isConfigRow = false;
+            foreach ($row as $cell) {
+                $cellStr = mb_strtolower(trim((string)$cell));
+                if (
+                    str_contains($cellStr, 'tên lớp') ||
+                    str_contains($cellStr, 'mã lớp') ||
+                    str_contains($cellStr, 'mô tả') ||
+                    str_contains($cellStr, 'tổng số buổi') ||
+                    str_contains($cellStr, 'ngưỡng vắng') ||
+                    str_contains($cellStr, 'điểm trừ') ||
+                    str_contains($cellStr, 'yêu cầu duyệt') ||
+                    str_contains($cellStr, 'cấu hình lớp') ||
+                    str_contains($cellStr, 'cấu hình điểm trừ') ||
+                    str_contains($cellStr, 'các trường có dấu')
+                ) {
+                    $isConfigRow = true;
+                    break;
+                }
+            }
+            if ($isConfigRow) {
+                continue;
+            }
 
             $fullName = trim((string) ($row[$nameColIndex] ?? ''));
             $email = trim((string) ($row[$emailColIndex] ?? ''));

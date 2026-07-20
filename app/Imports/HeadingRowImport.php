@@ -19,6 +19,7 @@ class HeadingRowImport implements ToCollection, WithLimit, WithMultipleSheets
     public int $nameColIndex = -1;
     public int $headerRowNumber = -1;
     public array $errors = [];
+    public array $warnings = [];
 
     public function __construct(string $classId)
     {
@@ -37,7 +38,7 @@ class HeadingRowImport implements ToCollection, WithLimit, WithMultipleSheets
 
     public function limit(): int
     {
-        return 10; // Đọc tối đa 10 dòng đầu tiên để tìm header
+        return 30; // Đọc tối đa 30 dòng đầu tiên để tìm header
     }
 
     public function collection(Collection $rows)
@@ -109,7 +110,7 @@ class HeadingRowImport implements ToCollection, WithLimit, WithMultipleSheets
                 $nth = $dateSeenCounts[$dateStr];
 
                 if ($nth > 1) {
-                    $this->errors[] = "[Cảnh báo] Cột {$colName} ('{$colValue}') bị trùng ngày. Đã tạo tự động buổi học lặp lại.";
+                    $this->warnings[] = "Cột {$colName} ('{$colValue}') bị trùng ngày. Đã tạo tự động buổi học lặp lại.";
                 }
 
                 $meetingsOnDate = ClassMeeting::where('class_id', $this->classId)
@@ -154,7 +155,7 @@ class HeadingRowImport implements ToCollection, WithLimit, WithMultipleSheets
                                    || in_array($lowerVal, ['c', 'm', 'v', 'p', 'cp', 'tc']);
                 
                 if (!$isSummaryColumn) {
-                    $this->errors[] = "Cột {$colName} ('{$colValue}') bị bỏ qua vì không đúng định dạng ngày tháng.";
+                    $this->warnings[] = "Cột {$colName} ('{$colValue}') được bỏ qua vì không phải định dạng ngày học hoặc cột tổng kết.";
                 }
             }
         }
