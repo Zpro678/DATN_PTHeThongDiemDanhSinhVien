@@ -354,3 +354,67 @@ Hiển thị: trang Tổng kết/Lưới lớp/Chi tiết HV hiện **đủ 6 nh
 | Nghi giả lập GPS/VPN | `computeFakeGpsScore()` | `fraud_score` → `suspected_mock` | Điểm ≥2 → cờ đỏ "Sai GPS" + ghi chú GV (yêu cầu SV tắt VPN). |
 | Di chuyển bất khả thi | `detectImpossibleTravel()` | `impossible_travel` | >300km/h giữa 2 lần điểm danh → gắn cờ nghi vấn. |
 | Nhật ký quét | `logCheckInScan()` | `check_in_scans` | Bản ghi bất biến để dựng lịch sử thiết bị xuyên phiên. |
+
+---
+
+## 12. Giới hạn của cờ "ngoài bán kính" — ĐÃ BIẾT, CHƯA SỬA
+
+> Ghi nhận ngày 20/07/2026 sau khi kiểm chứng thực tế bằng điện thoại. **Chưa thay đổi
+> code** — mục này để người bảo trì hiểu vì sao kết quả trông "sai" và cân nhắc trước
+> khi chỉnh ngưỡng.
+
+### 12.1. Công thức thực tế
+
+`AttendanceCheckIn::checkIn()` (dòng ~288-294) trừ trọn biên độ sai số trước khi phán:
+
+```php
+$accuracyMargin    = (float) ($gpsAccuracy ?? 0);   // KHÔNG chặn trần
+$effectiveDistance = max(0.0, $distanceMeters - $accuracyMargin);
+if ($effectiveDistance > $this->session->gps_radius) { /* cờ vàng */ }
+```
+
+Rút gọn, điều kiện gắn cờ là:
+
+```
+khoảng cách thô  >  gps_radius + accuracy
+```
+
+`accuracy` do **trình duyệt sinh viên gửi lên**, server chỉ từ chối khi > 150m
+(`GpsValidationService.php:61`).
+
+### 12.2. Hai hiện tượng đã quan sát được
+
+| Bán kính | Accuracy | Ngưỡng gắn cờ thực tế | Hiện tượng |
+|---|---|---|---|
+| 10m | ~15m | > 25m | Đứng CẠNH máy quét vẫn dính cờ (đo được 49m, vượt 24m) |
+| 30m | ~20m | > 50m | Đi xa 30m KHÔNG dính cờ |
+
+Cả hai đều đúng theo code, không phải bug.
+
+### 12.3. Vì sao không có ngưỡng nào đúng
+
+GPS điện thoại dân dụng sai số 10–30m ngoài trời và 30–100m trong nhà. Yêu cầu phân
+biệt "ngồi trong lớp" với "đứng cách 30m" nằm **dưới ngưỡng phân giải của phép đo**.
+Mọi lựa chọn chỉ là chọn chịu loại lỗi nào:
+
+- Siết chặt (bán kính nhỏ / bỏ trừ sai số) → báo oan sinh viên ngồi trong lớp
+- Nới lỏng (bán kính lớn / trừ trọn sai số) → lọt người đứng ngoài vài chục mét
+
+Bán kính khuyến nghị: **tối thiểu 30m, thực tế nên 50m**. Dưới 30m gần như chắc chắn
+báo oan hàng loạt.
+
+### 12.4. Lỗ hổng bảo mật kèm theo (chưa vá)
+
+`$accuracyMargin` lấy trọn giá trị client gửi, không chặn trần. Người sửa request có
+thể khai `accuracy = 149` (ngay dưới ngưỡng từ chối 150) để được cộng 149m vùng an
+toàn — ngồi cách lớp 170m vẫn không bị gắn cờ.
+
+Hướng vá khi cần: chặn trần margin (`min($accuracy, 25)`), và/hoặc thêm cờ mức nhẹ
+"cần rà soát" cho vùng `gps_radius < khoảng cách thô <= gps_radius + accuracy` để chủ
+lớp thấy được ca ranh giới mà không kết luận vi phạm.
+
+### 12.5. Ghi chú hiển thị
+
+Thông báo cho sinh viên in `$distanceMeters` **thô** ("cách lớp 49m") nhưng số mét vượt
+lại tính trên `$effectiveDistance`, nên hai con số trông không khớp nhau. Ghi chú gửi
+chủ lớp (dòng ~306) có kèm "đã trừ sai số ±Xm", phía sinh viên thì không.
