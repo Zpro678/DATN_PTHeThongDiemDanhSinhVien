@@ -7,7 +7,7 @@ if not exist "%DOCKER_CONFIG%" mkdir "%DOCKER_CONFIG%"
 
 echo Stopping Docker...
 
-docker compose down
+docker compose -f docker-compose.local.yml down
 
 taskkill /F /IM node.exe
 taskkill /F /IM php.exe

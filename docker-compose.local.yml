@@ -1,0 +1,94 @@
+# =============================================================================
+#  DOCKER COMPOSE — MÔI TRƯỜNG LOCAL (máy dev)
+#
+#  Docker CHỈ dựng hạ tầng: MySQL + Redis + phpMyAdmin (+ Mailpit để xem email).
+#  Còn PHP, Vite, queue, scheduler, socket.io thì chạy TRỰC TIẾP trên máy để
+#  sửa code là thấy ngay (hot reload), debug bằng Xdebug/dd() dễ hơn.
+#
+#  Dùng:  cp .env.local.example .env
+#         docker compose -f docker-compose.local.yml up -d
+#         start-dev.bat        (Windows — bật Laravel/Vite/queue/socket)
+#
+#  Cổng mở ra host:
+#    3306  MySQL        | 6379  Redis
+#    8080  phpMyAdmin   | 8025  Mailpit (giao diện xem mail)
+# =============================================================================
+
+services:
+  mysql:
+    image: mysql:8.4
+    container_name: attendia_mysql_local
+    restart: unless-stopped
+
+    environment:
+      MYSQL_ROOT_PASSWORD: ${MYSQL_ROOT_PASSWORD:-root}
+      MYSQL_DATABASE: ${DB_DATABASE:-db_quan_ly_diem_danh_v2}
+
+    command:
+      - --character-set-server=utf8mb4
+      - --collation-server=utf8mb4_unicode_ci
+
+    # Mở ra host để php artisan / TablePlus / DBeaver trên máy kết nối được.
+    ports:
+      - "3306:3306"
+
+    volumes:
+      - mysql_data_local:/var/lib/mysql
+
+    healthcheck:
+      test: ["CMD", "mysqladmin", "ping", "-h", "localhost", "-uroot", "-p${MYSQL_ROOT_PASSWORD:-root}"]
+      interval: 10s
+      timeout: 10s
+      retries: 10
+
+  redis:
+    image: redis:7-alpine
+    container_name: attendia_redis_local
+    restart: unless-stopped
+
+    ports:
+      - "6379:6379"
+
+    volumes:
+      - redis_data_local:/data
+
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  phpmyadmin:
+    image: phpmyadmin:5-apache
+    container_name: attendia_phpmyadmin_local
+    restart: unless-stopped
+
+    depends_on:
+      mysql:
+        condition: service_healthy
+
+    environment:
+      PMA_HOST: mysql
+      PMA_PORT: 3306
+      PMA_USER: root
+      PMA_PASSWORD: ${MYSQL_ROOT_PASSWORD:-root}
+      UPLOAD_LIMIT: 128M
+
+    ports:
+      - "8080:80"
+
+  # Bắt toàn bộ email hệ thống gửi đi (cảnh báo chuyên cần, kết quả import)
+  # để xem trên giao diện web, KHÔNG gửi ra ngoài thật.
+  # Cấu hình .env: MAIL_MAILER=smtp, MAIL_HOST=127.0.0.1, MAIL_PORT=1025
+  mailpit:
+    image: axllent/mailpit:latest
+    container_name: attendia_mailpit_local
+    restart: unless-stopped
+
+    ports:
+      - "1025:1025"   # SMTP
+      - "8025:8025"   # Giao diện web
+
+volumes:
+  mysql_data_local:
+  redis_data_local:

@@ -9,8 +9,9 @@ echo ==================================
 echo STARTING DATN SERVICES
 echo ==================================
 
-REM Docker
-docker compose up -d
+REM Docker - CHI dung stack LOCAL (mysql/redis/phpmyadmin/mailpit).
+REM docker-compose.yml la cau hinh PRODUCTION (full stack + Caddy), KHONG dung o day.
+docker compose -f docker-compose.local.yml up -d
 if errorlevel 1 (
     echo.
     echo Docker services could not start. Make sure Docker Desktop is running.
@@ -29,7 +30,7 @@ if errorlevel 1 (
         exit /b 1
     )
 
-    docker compose up -d
+    docker compose -f docker-compose.local.yml up -d
     if errorlevel 1 (
         echo Docker services could not restart.
         pause
@@ -44,7 +45,7 @@ if errorlevel 1 (
     )
 )
 
-docker exec attendance_mysql mysql -uroot -proot -e "CREATE DATABASE IF NOT EXISTS db_quan_ly_diem_danh_v2 CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;"
+docker exec attendia_mysql_local mysql -uroot -proot -e "CREATE DATABASE IF NOT EXISTS db_quan_ly_diem_danh_v2 CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;"
 if errorlevel 1 (
     echo Could not ensure the MySQL database exists.
     pause

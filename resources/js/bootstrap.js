@@ -9,5 +9,7 @@ import io from 'socket.io-client';
 window.io = io;
 window.Echo = new Echo({
     broadcaster: 'socket.io',
-    host: window.location.origin,
+    // Xem ghi chú ở resources/js/notifications-realtime.js: local cần trỏ thẳng
+    // sang cổng 3000, production đi cùng origin qua Caddy.
+    host: import.meta.env.VITE_SOCKET_URL || window.location.origin,
 });

@@ -1,8 +1,25 @@
+# =============================================================================
+#  DOCKER COMPOSE — MÔI TRƯỜNG PRODUCTION (VPS)
+#
+#  Chạy TOÀN BỘ hệ thống trong Docker: PHP-FPM (+queue+scheduler), MySQL, Redis,
+#  Socket.IO, Caddy (HTTPS tự động), phpMyAdmin (chỉ mở nội bộ).
+#
+#  Dùng:  cp .env.production.example .env   (rồi điền giá trị thật)
+#         docker compose up -d --build
+#
+#  ⚠️ File này KHÔNG dùng cho máy dev. Local hãy dùng docker-compose.local.yml:
+#         docker compose -f docker-compose.local.yml up -d
+# =============================================================================
+
 services:
+  # ---------------------------------------------------------------------------
+  # Ứng dụng Laravel (php-fpm + queue worker + scheduler qua supervisor)
+  # ---------------------------------------------------------------------------
   app:
     build:
       context: .
       dockerfile: Dockerfile
+    image: attendia-app:latest
     container_name: attendia_app
     restart: unless-stopped
     working_dir: /var/www/html
@@ -10,21 +27,31 @@ services:
     env_file:
       - .env
 
+    # KHÔNG mount toàn bộ source: sẽ đè mất vendor/ và public/build đã build
+    # trong image. Chỉ mount phần cần ghi hoặc cần đổi mà không phải build lại.
     volumes:
-      - ./:/var/www/html
+      - ./.env:/var/www/html/.env:ro
+      # storage/ (log, cache, file upload) và public/ được đưa vào named volume:
+      # lần chạy đầu Docker tự copy nội dung từ image ra volume, sau đó dữ liệu
+      # tồn tại qua các lần deploy. Caddy mount lại app_public để phục vụ file tĩnh.
+      - app_storage:/var/www/html/storage
+      - app_public:/var/www/html/public
 
     depends_on:
       mysql:
         condition: service_healthy
       redis:
-        condition: service_started
+        condition: service_healthy
 
     networks:
       - attendia
 
+  # ---------------------------------------------------------------------------
+  # MySQL
+  # ---------------------------------------------------------------------------
   mysql:
     image: mysql:8.4
-    container_name: attendance_mysql
+    container_name: attendia_mysql
     restart: unless-stopped
 
     environment:
@@ -33,23 +60,19 @@ services:
       MYSQL_USER: ${DB_USERNAME}
       MYSQL_PASSWORD: ${DB_PASSWORD}
 
+    command:
+      - --character-set-server=utf8mb4
+      - --collation-server=utf8mb4_unicode_ci
+
+    # Không map ra host: chỉ các container trong network mới truy cập được.
     expose:
       - "3306"
 
     volumes:
-      - mysql_model_data:/var/lib/mysql
+      - mysql_data:/var/lib/mysql
 
     healthcheck:
-      test:
-        [
-          "CMD",
-          "mysqladmin",
-          "ping",
-          "-h",
-          "localhost",
-          "-uroot",
-          "-p${MYSQL_ROOT_PASSWORD}"
-        ]
+      test: ["CMD", "mysqladmin", "ping", "-h", "localhost", "-uroot", "-p${MYSQL_ROOT_PASSWORD}"]
       interval: 10s
       timeout: 10s
       retries: 10
@@ -57,9 +80,12 @@ services:
     networks:
       - attendia
 
+  # ---------------------------------------------------------------------------
+  # Redis — cache, session, queue VÀ broadcast realtime
+  # ---------------------------------------------------------------------------
   redis:
     image: redis:7-alpine
-    container_name: attendance_redis
+    container_name: attendia_redis
     restart: unless-stopped
 
     command:
@@ -73,12 +99,89 @@ services:
     volumes:
       - redis_data:/data
 
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
     networks:
       - attendia
 
+  # ---------------------------------------------------------------------------
+  # Socket.IO — cầu nối Redis pub/sub -> websocket cho client
+  # ---------------------------------------------------------------------------
+  socketio:
+    image: node:20-alpine
+    container_name: attendia_socketio
+    restart: unless-stopped
+    working_dir: /app
+
+    environment:
+      REDIS_HOST: redis
+      REDIS_PORT: 6379
+      SOCKET_PORT: 3000
+      SOCKET_CORS_ORIGIN: ${SOCKET_CORS_ORIGIN:-*}
+
+    # Chỉ cần server.cjs + 2 package, không mount cả dự án.
+    volumes:
+      - ./server.cjs:/app/server.cjs:ro
+      - socketio_node_modules:/app/node_modules
+
+    command: >
+      sh -c "
+      [ -d node_modules/socket.io ] || npm install --no-save socket.io@4 ioredis@5 &&
+      node server.cjs
+      "
+
+    expose:
+      - "3000"
+
+    depends_on:
+      redis:
+        condition: service_healthy
+
+    networks:
+      - attendia
+
+  # ---------------------------------------------------------------------------
+  # Caddy — reverse proxy + HTTPS tự động
+  #   Cần biến APP_DOMAIN trong .env (vd: APP_DOMAIN=diemdanh.example.com)
+  # ---------------------------------------------------------------------------
+  caddy:
+    image: caddy:2
+    container_name: attendia_caddy
+    restart: unless-stopped
+
+    environment:
+      APP_DOMAIN: ${APP_DOMAIN}
+
+    ports:
+      - "80:80"
+      - "443:443"
+
+    volumes:
+      - ./docker/caddy/Caddyfile:/etc/caddy/Caddyfile:ro
+      # Caddy cần đọc file tĩnh trong public/ -> lấy từ image app qua volume chung
+      - app_public:/var/www/html/public:ro
+      - caddy_data:/data
+      - caddy_config:/config
+      - caddy_logs:/var/log/caddy
+
+    depends_on:
+      - app
+      - socketio
+
+    networks:
+      - attendia
+
+  # ---------------------------------------------------------------------------
+  # phpMyAdmin — CHỈ truy cập được từ chính VPS (qua SSH tunnel)
+  #   ssh -L 8080:127.0.0.1:8080 user@vps   rồi mở http://localhost:8080
+  # ---------------------------------------------------------------------------
   phpmyadmin:
     image: phpmyadmin:5-apache
-    container_name: attendance_phpmyadmin
+    container_name: attendia_phpmyadmin
     restart: unless-stopped
 
     depends_on:
@@ -92,58 +195,8 @@ services:
       PMA_PASSWORD: ${MYSQL_ROOT_PASSWORD}
       UPLOAD_LIMIT: 128M
 
-    # Chỉ cho phép truy cập từ chính VPS
     ports:
       - "127.0.0.1:8080:80"
-
-    networks:
-      - attendia
-
-  socketio:
-    image: node:20-alpine
-    container_name: attendia_socketio
-    restart: unless-stopped
-
-    working_dir: /app
-
-    volumes:
-      - ./:/app
-      - socketio_node_modules:/app/node_modules
-
-    command: >
-      sh -c "
-      if [ ! -d node_modules ]; then npm install; fi &&
-      node server.cjs
-      "
-
-    expose:
-      - "3000"
-
-    depends_on:
-      redis:
-        condition: service_started
-
-    networks:
-      - attendia
-
-  caddy:
-    image: caddy:2
-    container_name: attendia_caddy
-    restart: unless-stopped
-
-    ports:
-      - "80:80"
-      - "443:443"
-
-    volumes:
-      - ./docker/caddy/Caddyfile:/etc/caddy/Caddyfile
-      - ./:/var/www/html
-      - caddy_data:/data
-      - caddy_config:/config
-
-    depends_on:
-      - app
-      - socketio
 
     networks:
       - attendia
@@ -153,8 +206,11 @@ networks:
     driver: bridge
 
 volumes:
-  mysql_model_data:
+  mysql_data:
   redis_data:
+  app_storage:
+  app_public:
   socketio_node_modules:
   caddy_data:
   caddy_config:
+  caddy_logs:

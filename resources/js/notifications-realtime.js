@@ -15,9 +15,19 @@ let socket = null;
 // while avoiding duplicates for the exact same function text during wire:navigate re-mounts.
 const channelHandlers = new Map();
 
+/**
+ * URL của server realtime.
+ *
+ * - Production: để trống VITE_SOCKET_URL -> dùng chính origin của web, Caddy
+ *   proxy /socket.io sang container socketio. Không lộ cổng 3000 ra ngoài.
+ * - Local: web chạy :8000 còn server.cjs chạy :3000 (php artisan serve không
+ *   proxy được), nên phải đặt VITE_SOCKET_URL=http://127.0.0.1:3000 trong .env.
+ */
+const SOCKET_URL = import.meta.env.VITE_SOCKET_URL || window.location.origin;
+
 function getSocket() {
     if (!socket) {
-        socket = io(window.location.origin, {
+        socket = io(SOCKET_URL, {
             path: '/socket.io',
             transports: ['websocket', 'polling'],
         });

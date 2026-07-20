@@ -1,0 +1,52 @@
+# =============================================================================
+#  Caddy — reverse proxy PRODUCTION.
+#  - Tự động xin & gia hạn chứng chỉ HTTPS (Let's Encrypt).
+#  - Phục vụ file tĩnh trong public/, đẩy PHP sang container `app` (php-fpm:9000).
+#  - Proxy /socket.io sang container `socketio` (Node) để realtime chạy CÙNG
+#    origin với web -> client không cần cấu hình thêm URL nào.
+#
+#  ĐỔI `{$APP_DOMAIN}` bằng domain thật qua biến môi trường APP_DOMAIN trong .env
+#  (ví dụ: APP_DOMAIN=diemdanh.example.com). Muốn chạy thử không HTTPS thì thay
+#  dòng đầu bằng  :80
+# =============================================================================
+
+{$APP_DOMAIN} {
+	root * /var/www/html/public
+
+	encode zstd gzip
+
+	# --- Realtime: websocket + long-polling của socket.io ---
+	handle /socket.io/* {
+		reverse_proxy socketio:3000
+	}
+
+	# --- PHP ---
+	php_fastcgi app:9000 {
+		# Giữ đúng scheme https khi Laravel sinh URL (thanh toán, QR, email)
+		env HTTPS on
+	}
+
+	file_server
+
+	# --- Bảo mật cơ bản ---
+	header {
+		Strict-Transport-Security "max-age=31536000; includeSubDomains"
+		X-Content-Type-Options "nosniff"
+		X-Frame-Options "SAMEORIGIN"
+		Referrer-Policy "strict-origin-when-cross-origin"
+		-Server
+	}
+
+	# Chặn truy cập file nhạy cảm nếu bị đặt nhầm trong public/
+	@forbidden {
+		path /.env* /.git/* /storage/* /vendor/*
+	}
+	respond @forbidden 404
+
+	log {
+		output file /var/log/caddy/access.log {
+			roll_size 20MiB
+			roll_keep 10
+		}
+	}
+}
