@@ -198,6 +198,12 @@ class CreateClass extends Component
                     return;
                 }
 
+                // Cập nhật tổng số buổi dự kiến nếu số buổi học thực tế vượt quá cấu hình hiện tại
+                $actualMeetingsCount = $courseClass->meetings()->count();
+                if ($actualMeetingsCount > $courseClass->total_sessions) {
+                    $courseClass->update(['total_sessions' => $actualMeetingsCount]);
+                }
+
                 $meetingHeaders = array_unique($headingImport->meetingHeaders);
 
                 // Bước 2: Tạo Bus::batch và StartImportJob
@@ -230,6 +236,16 @@ class CreateClass extends Component
                 })
                 ->name('Import Students')
                 ->dispatch();
+
+                // Ghi nhận các cảnh báo (warnings) từ HeadingRowImport vào DB dưới dạng ImportError không chặn
+                if (!empty($headingImport->warnings)) {
+                    foreach ($headingImport->warnings as $warning) {
+                        \App\Models\ImportError::create([
+                            'import_token' => $batch->id,
+                            'error_message' => $warning,
+                        ]);
+                    }
+                }
 
                 session()->flash('status', "Tạo lớp học thành công. Đang tiến hành xử lý ngầm file danh sách sinh viên.");
                 $this->redirectRoute('lecturer.classes.show', ['courseClass' => $courseClass->id, 'importToken' => $batch->id], navigate: true);
