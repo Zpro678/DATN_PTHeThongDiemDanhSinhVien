@@ -54,11 +54,11 @@ class DemoSeeder extends Seeder
         $owner   = $this->user('minhhieut947@gmail.com', 'Trần Minh Hiếu', User::ROLE_USER);   // Chủ lớp
         $coOwner = $this->user('thaobee2407@gmail.com', 'Trần Thị Thu Thảo', User::ROLE_USER);  // Đồng chủ
 
-        // 7 sinh viên có tài khoản: [email, họ tên].
+        // 7 sinh viên có tài khoản: [email
         $studentInfo = [
-            ['0306231156@caothang.edu.vn', 'Nguyễn Tuấn Khanh'],
-            ['0306231120@caothang.edu.vn', 'Lê Hoàng Nam'],
-            ['0306231114@caothang.edu.vn', 'Phạm Thị Mai'],
+            ['0306231156@caothang.edu.vn', 'Trần Thị Thu Thảo'],
+            ['0306231120@caothang.edu.vn', 'Lê Khôi'],
+            ['0306231114@caothang.edu.vn', 'Tuấn Khanh'],
             ['0306231108@caothang.edu.vn', 'Võ Minh Quân'],
             ['minhtranz6789@gmail.com',    'Trần Gia Bảo'],
             ['minhtranz9867@gmail.com',    'Đỗ Thanh Tùng'],
