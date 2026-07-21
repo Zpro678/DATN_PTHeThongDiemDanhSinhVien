@@ -86,10 +86,7 @@ class GpsValidationService
         }
 
         $distance = 0;
-        // Nếu buổi học yêu cầu định vị GPS: chỉ TÍNH khoảng cách để bước check-in quyết định.
-        // NGHIỆP VỤ MỚI: ở NGOÀI bán kính KHÔNG còn chặn điểm danh tại đây nữa — vẫn cấp check_token
-        // để sinh viên được ghi nhận CÓ MẶT. Phần "quá xa" sẽ được GẮN CỜ VÀNG + BÁO CHỦ LỚP (kèm số
-        // mét vượt) ở bước checkIn (xem App\Livewire\Student\AttendanceCheckIn::checkIn). Bước này chỉ
+            // mét vượt) ở bước checkIn (xem App\Livewire\Student\AttendanceCheckIn::checkIn). Bước này chỉ
         // còn xác thực toạ độ hợp lệ (token, độ chính xác) và chấm nghi vấn fake GPS.
         if ($session->gps_latitude && $session->gps_longitude) {
             $distance = $this->calculateDistance($lat, $lng, $session->gps_latitude, $session->gps_longitude);
@@ -110,12 +107,20 @@ class GpsValidationService
             'expires_at' => now()->addMinutes(2), // Check token chỉ có hiệu lực trong 2 phút
         ]);
 
-        // Cảnh báo mềm gửi về client để YÊU CẦU sinh viên tắt VPN/proxy trước khi điểm danh
-        // (vị trí mạng bị che khiến hệ thống không xác thực được). Nếu sinh viên vẫn cố điểm danh,
-        // bước check-in sẽ ĐÁNH DẤU bản ghi + ghi lý do vào ghi chú cho giảng viên rà soát.
+        // Cảnh báo mềm gửi về client để YÊU CẦU sinh viên tự khắc phục TRƯỚC khi điểm danh.
+        // Nếu sinh viên vẫn cố điểm danh, bước check-in sẽ ĐÁNH DẤU bản ghi + ghi lý do vào
+        // ghi chú cho giảng viên rà soát.
+        //
+        // Hai loại loại trừ nhau để client chỉ hiện MỘT hộp thoại:
+        //   'vpn'  — vị trí mạng bị che giấu (thường là vô tình, chỉ cần tắt VPN là xong).
+        //   'mock' — điểm nghi vấn vượt ngưỡng vì tín hiệu khác (nghi app giả lập vị trí).
+        // Nhánh VPN xét trước vì nó cộng 3 điểm nên gần như luôn kéo score vượt ngưỡng —
+        // không tách thì người bật VPN sẽ bị báo nhầm là dùng app giả lập vị trí.
         $warnings = [];
         if (! empty($fraud['vpn'])) {
             $warnings[] = 'vpn';
+        } elseif ($fraud['score'] >= self::FAKE_GPS_SUSPICION_THRESHOLD) {
+            $warnings[] = 'mock';
         }
 
         return [
@@ -190,7 +195,7 @@ class GpsValidationService
         $reasons = [];
         $isVpn = false;
 
-        // (1) Độ chính xác quá đẹp — app fake thường gán cứng ~0/1m. Tín hiệu MẠNH: một mình đủ nghi.
+        
         if ($accuracy <= self::IMPLAUSIBLE_ACCURACY_METERS) {
             $score += 2;
             $reasons[] = 'độ chính xác bất thường (' . round($accuracy, 2) . 'm)';

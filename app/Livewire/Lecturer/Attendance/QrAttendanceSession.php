@@ -363,10 +363,11 @@ class QrAttendanceSession extends Component
         $records = $session->attendanceRecords()
             ->whereHas('classMember')
             ->with('classMember.user')
-            // Lọc "cùng 1 máy" theo device_id; "Sai GPS" (out_of_radius) theo CỜ gps_fraud_flag vì
-            // các bản ghi này nay có status = 'present' (vẫn điểm danh) chứ không còn 'invalid'.
+            // Lọc "cùng 1 máy" theo device_id; "ngoài bán kính" tính lại theo khoảng cách đã lưu
+            // (scope outOfRadius) chứ không theo cờ — cột gps_fraud_flag chỉ giữ được MỘT cờ nên
+            // trùng thiết bị sẽ đè mất out_of_radius khi một học viên dính cả hai lỗi.
             ->when($this->statusFilter === 'same_device', fn (Builder $q) => $q->whereIn('device_id', $sharedDeviceIds ?: ['__none__']))
-            ->when($this->statusFilter === 'out_of_radius', fn (Builder $q) => $q->where('gps_fraud_flag', 'out_of_radius'))
+            ->when($this->statusFilter === 'out_of_radius', fn (Builder $q) => $q->outOfRadius($session->gps_radius))
             ->when(
                 ! in_array($this->statusFilter, ['all', 'same_device', 'out_of_radius'], true),
                 fn (Builder $q) => $q->where('status', $this->statusFilter),
@@ -410,6 +411,13 @@ class QrAttendanceSession extends Component
             ->whereNotNull('gps_fraud_flag')
             ->groupBy('gps_fraud_flag')
             ->pluck('aggregate', 'gps_fraud_flag');
+
+        // Đếm lại "ngoài bán kính" theo khoảng cách thay vì theo cờ: học viên vừa trùng thiết bị
+        // vừa ở ngoài bán kính chỉ mang cờ 'device_duplicate' nên nhóm theo cờ sẽ đếm thiếu.
+        $fraudStats->put('out_of_radius', $session->attendanceRecords()
+            ->whereHas('classMember')
+            ->outOfRadius($session->gps_radius)
+            ->count());
 
         $summary = [
             'present' => (int) ($stats['present'] ?? 0),

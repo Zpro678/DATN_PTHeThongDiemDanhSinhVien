@@ -619,12 +619,12 @@ class ClassShow extends Component
 
     public function downloadFullTemplate()
     {
-        return Excel::download(new \App\Exports\ImportTemplateExport(), 'Danh_sach_hoc_vien_mau_day_du.xlsx');
+        return Excel::download(new \App\Exports\ImportTemplateFullSheet(), 'Danh_sach_hoc_vien_mau_day_du.xlsx');
     }
 
     public function downloadBasicTemplate()
     {
-        return Excel::download(new \App\Exports\ImportTemplateExport(), 'Danh_sach_hoc_vien_mau_co_ban.xlsx');
+        return Excel::download(new \App\Exports\ImportTemplateBasicSheet(), 'Danh_sach_hoc_vien_mau_co_ban.xlsx');
     }
 
     public function processImport(): void
@@ -678,6 +678,12 @@ class ClassShow extends Component
                 return;
             }
 
+            // Cập nhật tổng số buổi dự kiến nếu số buổi học thực tế vượt quá cấu hình hiện tại
+            $actualMeetingsCount = $this->class->meetings()->count();
+            if ($actualMeetingsCount > $this->class->total_sessions) {
+                $this->class->update(['total_sessions' => $actualMeetingsCount]);
+            }
+
             $meetingHeaders = array_unique($headingImport->meetingHeaders);
 
             // Bước 2: Tạo Bus::batch và StartImportJob
@@ -712,6 +718,16 @@ class ClassShow extends Component
             ->dispatch();
 
             $this->importToken = $batch->id;
+
+            // Ghi nhận các cảnh báo (warnings) từ HeadingRowImport vào DB dưới dạng ImportError không chặn
+            if (!empty($headingImport->warnings)) {
+                foreach ($headingImport->warnings as $warning) {
+                    \App\Models\ImportError::create([
+                        'import_token' => $batch->id,
+                        'error_message' => $warning,
+                    ]);
+                }
+            }
 
             // Đóng popup để người dùng rảnh tay, hiện thanh tiến trình chạy ngầm
             $this->isImporting = false;

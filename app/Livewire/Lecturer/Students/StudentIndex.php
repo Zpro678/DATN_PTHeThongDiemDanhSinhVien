@@ -480,6 +480,12 @@ class StudentIndex extends Component
                 return;
             }
 
+            // Cập nhật tổng số buổi dự kiến nếu số buổi học thực tế vượt quá cấu hình hiện tại
+            $actualMeetingsCount = $courseClass->meetings()->count();
+            if ($actualMeetingsCount > $courseClass->total_sessions) {
+                $courseClass->update(['total_sessions' => $actualMeetingsCount]);
+            }
+
             $meetingHeaders = array_unique($headingImport->meetingHeaders);
 
             // Bước 2: Tạo Bus::batch và StartImportJob
@@ -514,6 +520,16 @@ class StudentIndex extends Component
             ->dispatch();
 
             $this->importToken = $batch->id;
+
+            // Ghi nhận các cảnh báo (warnings) từ HeadingRowImport vào DB dưới dạng ImportError không chặn
+            if (!empty($headingImport->warnings)) {
+                foreach ($headingImport->warnings as $warning) {
+                    \App\Models\ImportError::create([
+                        'import_token' => $batch->id,
+                        'error_message' => $warning,
+                    ]);
+                }
+            }
         } catch (\Exception $e) {
             if (isset($storedRelativePath)) {
                 \Illuminate\Support\Facades\Storage::disk('local')->delete($storedRelativePath);

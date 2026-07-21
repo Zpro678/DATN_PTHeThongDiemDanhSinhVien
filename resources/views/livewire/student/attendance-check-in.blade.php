@@ -273,17 +273,28 @@
                                             // Phát hiện VPN/proxy: YÊU CẦU sinh viên tắt trước. Cho họ CƠ HỘI huỷ để tắt VPN
                                             // rồi thử lại (tránh phạt oan người có mặt thật). Nếu vẫn cố tiếp tục, bản ghi sẽ
                                             // bị đánh dấu 'Sai GPS' kèm lý do ở phía server để giảng viên rà soát.
-                                            if (Array.isArray(verifyData.warnings) && verifyData.warnings.includes('vpn')) {
-                                                const proceed = confirm(
+                                            const warnings = Array.isArray(verifyData.warnings) ? verifyData.warnings : [];
+                                            let warningMessage = null;
+
+                                            if (warnings.includes('vpn')) {
+                                                warningMessage =
                                                     '⚠️ Hệ thống phát hiện bạn đang dùng VPN/proxy khiến vị trí mạng bị che giấu.\n\n' +
                                                     'Vui lòng TẮT VPN/proxy rồi bấm điểm danh lại.\n\n' +
                                                     'Nếu bạn vẫn tiếp tục, điểm danh sẽ bị ĐÁNH DẤU \'Sai GPS\' để giảng viên rà soát.\n\n' +
-                                                    'Bấm Cancel để tắt VPN và thử lại, hoặc OK để vẫn điểm danh.'
-                                                );
-                                                if (!proceed) {
-                                                    this.isCheckingIn = false;
-                                                    return;
-                                                }
+                                                    'Bấm Cancel để tắt VPN và thử lại, hoặc OK để vẫn điểm danh.';
+                                            } else if (warnings.includes('mock')) {
+                                                // KHÔNG liệt kê tín hiệu nào đã kích hoạt cảnh báo: nói ra là chỉ đường cho
+                                                // người cố tình chỉnh lại thông số cho qua mặt lần sau.
+                                                warningMessage =
+                                                    '⚠️ Tín hiệu vị trí của bạn có dấu hiệu bất thường, nghi do ứng dụng giả lập vị trí (Fake GPS).\n\n' +
+                                                    'Vui lòng TẮT ứng dụng giả lập vị trí, bật lại GPS thật rồi bấm điểm danh lại.\n\n' +
+                                                    'Nếu bạn vẫn tiếp tục, điểm danh sẽ bị ĐÁNH DẤU \'Sai GPS\' để giảng viên rà soát.\n\n' +
+                                                    'Bấm Cancel để tắt ứng dụng và thử lại, hoặc OK để vẫn điểm danh.';
+                                            }
+
+                                            if (warningMessage !== null && !confirm(warningMessage)) {
+                                                this.isCheckingIn = false;
+                                                return;
                                             }
 
                                             $wire.checkIn(verifyData.check_token, this.getDeviceId())

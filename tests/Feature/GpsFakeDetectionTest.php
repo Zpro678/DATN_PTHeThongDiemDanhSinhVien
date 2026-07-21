@@ -411,4 +411,78 @@ class GpsFakeDetectionTest extends TestCase
 
         $this->travelBack();
     }
+
+    public function test_verify_returns_mock_warning_when_score_over_threshold(): void
+    {
+        // accuracy quá đẹp (<=1m) -> đủ ngưỡng nghi giả lập -> client phải nhận cảnh báo "mock"
+        // để hiện hộp thoại yêu cầu TẮT app giả lập vị trí trước khi điểm danh.
+        [$session, $member] = $this->makeSessionAndMember();
+        $verification = $this->service()->issueVerificationToken($session, $member, "127.0.0.1");
+
+        $result = $this->service()->verifyLocation(
+            $verification->token, 10.762622, 106.660172, 0.5, "127.0.0.1", ["altitude" => 5.0]
+        );
+
+        $this->assertTrue($result["success"]);
+        $this->assertContains("mock", $result["warnings"]);
+        $this->assertNotContains("vpn", $result["warnings"]);
+    }
+
+    public function test_verify_returns_vpn_warning_not_mock_when_behind_proxy(): void
+    {
+        // VPN cộng 3 điểm nên score cũng vượt ngưỡng. Phải trả ĐÚNG "vpn", không kèm "mock",
+        // nếu không sinh viên bật VPN sẽ bị báo nhầm là dùng app giả lập vị trí.
+        config(["attendance.gps_ip_check" => true]);
+        Http::fake(["ip-api.com/*" => Http::response([
+            "status" => "success", "lat" => 10.762622, "lon" => 106.660172,
+            "proxy" => true, "hosting" => false, "mobile" => false,
+        ], 200)]);
+
+        [$session, $member] = $this->makeSessionAndMember();
+        $verification = $this->service()->issueVerificationToken($session, $member, "8.8.8.8");
+
+        $result = $this->service()->verifyLocation(
+            $verification->token, 10.762622, 106.660172, 20.0, "8.8.8.8", ["altitude" => 5.0]
+        );
+
+        $this->assertContains("vpn", $result["warnings"]);
+        $this->assertNotContains("mock", $result["warnings"]);
+    }
+
+    public function test_verify_returns_no_warning_for_normal_signal(): void
+    {
+        // Tín hiệu bình thường -> không hộp thoại nào, điểm danh trôi thẳng.
+        [$session, $member] = $this->makeSessionAndMember();
+        $verification = $this->service()->issueVerificationToken($session, $member, "127.0.0.1");
+
+        $result = $this->service()->verifyLocation(
+            $verification->token, 10.762622, 106.660172, 12.0, "127.0.0.1",
+            ["altitude" => 5.0, "samples" => [["lat" => 10.762622, "lng" => 106.660172], ["lat" => 10.762700, "lng" => 106.660200]]]
+        );
+
+        $this->assertTrue($result["success"]);
+        $this->assertSame([], $result["warnings"]);
+    }
+
+    /** @return array{0: ClassSession, 1: ClassMember} */
+    private function makeSessionAndMember(): array
+    {
+        $owner = User::factory()->create();
+        $courseClass = CourseClass::factory()->create(["owner_user_id" => $owner->id]);
+        $meeting = ClassMeeting::factory()->create([
+            "class_id" => $courseClass->id, "user_Created" => $owner->id,
+            "date" => now()->toDateString(), "start_time" => "00:00:00", "end_time" => "23:59:00", "status" => "active",
+        ]);
+        $session = ClassSession::factory()->create([
+            "class_id" => $courseClass->id, "meeting_id" => $meeting->id, "created_by" => $owner->id,
+            "date" => now()->toDateString(), "status" => "active",
+            "gps_latitude" => 10.762622, "gps_longitude" => 106.660172, "gps_radius" => 500,
+        ]);
+        $student = User::factory()->create();
+        $member = ClassMember::create([
+            "class_id" => $courseClass->id, "user_id" => $student->id, "status" => ClassMember::STATUS_ACTIVE,
+        ]);
+
+        return [$session, $member];
+    }
 }
