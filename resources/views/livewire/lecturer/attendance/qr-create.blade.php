@@ -81,7 +81,11 @@
                         this.gpsEnabled = false;
                         this.gpsLatitude = null;
                         this.gpsLongitude = null;
-                    }
+                    },
+                    // Trước đây KHÔNG truyền tuỳ chọn -> mặc định enableHighAccuracy:false, tức tâm
+                    // lớp lấy bằng WiFi/cell (sai số hàng chục mét). Tâm lệch bao nhiêu thì khoảng
+                    // cách đo được của CẢ LỚP lệch theo bấy nhiêu, nên ở đây phải ưu tiên chính xác.
+                    { enableHighAccuracy: true, timeout: 20000, maximumAge: 3000 }
                 );
             } else {
                 alert('Trình duyệt của bạn không hỗ trợ định vị.');

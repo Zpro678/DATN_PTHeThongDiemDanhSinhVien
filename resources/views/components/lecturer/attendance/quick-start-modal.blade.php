@@ -71,7 +71,10 @@
                         console.warn('[GPS][Giảng viên] Không lấy được toạ độ tâm lớp', { code: error?.code, message: error?.message });
                         reject(error);
                     },
-                    { enableHighAccuracy: true, timeout: 10000, maximumAge: 0 }
+                    // 10s không đủ cho máy khởi động lạnh (lâu không dùng GPS thì bắt vệ tinh
+                    // mất 30-60s) -> nới lên 20s. maximumAge nhỏ để tận dụng bản đọc vừa xong
+                    // nếu có, thay vì bắt đo lại từ đầu.
+                    { enableHighAccuracy: true, timeout: 20000, maximumAge: 3000 }
                 );
             });
         },

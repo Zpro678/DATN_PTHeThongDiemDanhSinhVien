@@ -176,19 +176,72 @@
                                 return id;
                             }
                         },
-                        collectPositions(count = 3, gapMs = 800) {
-                            // Lấy nhiều mẫu vị trí cách nhau ~1s: GPS thật luôn 'rung', fake thường đứng yên.
-                            const getOne = () => new Promise((resolve, reject) =>
-                                navigator.geolocation.getCurrentPosition(resolve, reject, { enableHighAccuracy: true, timeout: 10000, maximumAge: 0 })
-                            );
-                            return (async () => {
-                                const positions = [];
-                                for (let i = 0; i < count; i++) {
-                                    positions.push(await getOne());
-                                    if (i < count - 1) await new Promise(r => setTimeout(r, gapMs));
+                        collectPositions({ collectMs = 2500, hardMs = 20000, targetSamples = 3, minGapMs = 700 } = {}) {
+                            // Gom mẫu bằng watchPosition: chip GPS chỉ khởi động MỘT lần rồi bắn liên tục.
+                            // Cách cũ gọi getCurrentPosition 3 lần liên tiếp khiến máy phải bắt vệ tinh lại
+                            // từ đầu mỗi lần (mỗi lần chờ tới 10s -> tổng ~31s), và chỉ cần 1 lần quá giờ là
+                            // vứt luôn những mẫu đã lấy được.
+                            //
+                            //  - minGapMs: hai mẫu nhận liên tiếp phải cách nhau đủ lâu, nếu không thì
+                            //    'độ rung' của GPS thật không kịp thể hiện -> server dễ chấm nhầm là toạ độ
+                            //    đứng yên (dấu hiệu fake GPS) cho sinh viên có mặt thật.
+                            //  - collectMs: tính từ MẪU ĐẦU TIÊN, chỉ nán lại chừng đó để gom thêm mẫu.
+                            //    Máy chậm trả mẫu đầu ở giây 12 thì chốt ở ~14.5s, không bắt sinh viên
+                            //    ngồi chờ hết hạn cứng.
+                            //  - hardMs: chỉ là hạn CHÓT khi chưa có mẫu nào (máy khởi động lạnh,
+                            //    lâu không dùng GPS thì bắt vệ tinh mất 30-60s).
+                            //  - Thu được bao nhiêu mẫu dùng bấy nhiêu; server chỉ cần >= 2 mẫu để chấm
+                            //    'đứng yên', ít hơn thì bỏ qua tín hiệu đó chứ không lỗi. Chỉ báo lỗi khi
+                            //    KHÔNG có mẫu nào.
+                            return new Promise((resolve, reject) => {
+                                if (!navigator.geolocation) {
+                                    reject(new Error('unsupported'));
+                                    return;
                                 }
-                                return positions;
-                            })();
+
+                                const samples = [];
+                                let lastAcceptedAt = 0;
+                                let watchId = null;
+                                let collectTimer = null;
+                                let hardTimer = null;
+                                let settled = false;
+                                let lastError = null;
+
+                                const finish = () => {
+                                    if (settled) return;
+                                    settled = true;
+                                    if (watchId !== null) navigator.geolocation.clearWatch(watchId);
+                                    clearTimeout(collectTimer);
+                                    clearTimeout(hardTimer);
+                                    if (samples.length > 0) resolve(samples);
+                                    else reject(lastError || { code: 3 });
+                                };
+
+                                watchId = navigator.geolocation.watchPosition(
+                                    (position) => {
+                                        const now = Date.now();
+                                        if (samples.length > 0 && now - lastAcceptedAt < minGapMs) return;
+                                        lastAcceptedAt = now;
+                                        samples.push(position);
+
+                                        // Mẫu đầu tiên về -> mở cửa sổ gom thêm, hết cửa sổ là chốt.
+                                        if (samples.length === 1) {
+                                            collectTimer = setTimeout(finish, collectMs);
+                                        }
+
+                                        if (samples.length >= targetSamples) finish();
+                                    },
+                                    (error) => {
+                                        lastError = error;
+                                        // Bị từ chối quyền thì chờ thêm cũng vô ích -> dừng ngay.
+                                        if (error && error.code === 1) finish();
+                                    },
+                                    { enableHighAccuracy: true, timeout: hardMs, maximumAge: 3000 }
+                                );
+
+                                // Hạn chót tuyệt đối: chưa có mẫu nào thì tới đây mới báo lỗi.
+                                hardTimer = setTimeout(finish, hardMs);
+                            });
                         },
                         async performCheckIn() {
                             if (this.isCheckingIn) return;
@@ -232,7 +285,7 @@
 
                                         let samples;
                                         try {
-                                            samples = await this.collectPositions(3, 800);
+                                            samples = await this.collectPositions();
                                         } catch (error) {
                                             let msg = 'Không thể lấy vị trí. Vui lòng bật vị trí (GPS) và cấp quyền cho trình duyệt.';
                                             if (error && error.code === 1) msg = 'Bạn đã từ chối cấp quyền vị trí cho trình duyệt.';
