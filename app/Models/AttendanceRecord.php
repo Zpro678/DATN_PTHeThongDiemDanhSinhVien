@@ -44,19 +44,6 @@ class AttendanceRecord extends Model
     }
 
     /**
-     * Khoảng cách tới tâm lớp SAU KHI trừ biên độ sai số GPS — đúng công thức mà
-     * AttendanceCheckIn::checkIn dùng để phán "ngoài bán kính". Null khi buổi không đo GPS.
-     */
-    public function effectiveDistanceMeters(): ?float
-    {
-        if ($this->distance_meters === null) {
-            return null;
-        }
-
-        return max(0.0, (float) $this->distance_meters - (float) ($this->gps_accuracy_meters ?? 0));
-    }
-
-    /**
      * Bản ghi này có ở NGOÀI bán kính cho phép không.
      *
      * Không thể chỉ dựa vào cột gps_fraud_flag: cột đó chỉ chứa MỘT cờ, và 'device_duplicate'
@@ -65,40 +52,49 @@ class AttendanceRecord extends Model
      */
     public function isOutOfRadius(?int $radiusMeters): bool
     {
-        if ($this->gps_fraud_flag === 'out_of_radius') {
+        if ($this->metersOutsideRadius($radiusMeters) !== null) {
             return true;
         }
 
-        $effective = $this->effectiveDistanceMeters();
-
-        return $radiusMeters !== null && $effective !== null && $effective > $radiusMeters;
+        // Dữ liệu cũ không còn khoảng cách để tính lại -> đành tin vào cờ đã lưu.
+        return $this->distance_meters === null && $this->gps_fraud_flag === 'out_of_radius';
     }
 
-    /** Số mét vượt ra ngoài bán kính (đã trừ sai số), null nếu không ở ngoài bán kính. */
+    /**
+     * Số mét vượt ra ngoài bán kính (đã trừ sai số + biên nhiễu), null nếu vẫn trong bán kính.
+     * Tính lại qua GpsValidationService để khớp đúng công thức lúc điểm danh.
+     */
     public function metersOutsideRadius(?int $radiusMeters): ?int
     {
-        $effective = $this->effectiveDistanceMeters();
-
-        if ($radiusMeters === null || $effective === null || ! $this->isOutOfRadius($radiusMeters)) {
-            return null;
-        }
-
-        return max(0, (int) round($effective - $radiusMeters));
+        return \App\Services\GpsValidationService::metersOutsideRadius(
+            $this->distance_meters === null ? null : (float) $this->distance_meters,
+            $this->gps_accuracy_meters === null ? null : (float) $this->gps_accuracy_meters,
+            $radiusMeters,
+        );
     }
 
     /**
      * Lọc các bản ghi ngoài bán kính — bản dùng cho TRUY VẤN của điều kiện ở isOutOfRadius().
-     * Giữ hai vế đồng bộ với nhau khi sửa.
+     * Giữ hai vế đồng bộ với nhau khi sửa (kể cả biên nhiễu OUT_OF_RADIUS_GRACE_METERS).
      */
     public function scopeOutOfRadius(Builder $query, ?int $radiusMeters): Builder
     {
-        return $query->where(function (Builder $q) use ($radiusMeters): void {
-            $q->where('gps_fraud_flag', 'out_of_radius');
+        // Ngưỡng phải bind bằng SỐ NGUYÊN: driver bind float dưới dạng CHUỖI, mà SQLite so sánh
+        // số với chuỗi thì số LUÔN nhỏ hơn -> điều kiện không bao giờ đúng (đếm ra 0). Làm tròn LÊN
+        // để truy vấn không bao giờ lọc rộng hơn phép tính trong PHP.
+        $threshold = $radiusMeters === null
+            ? null
+            : (int) ceil($radiusMeters + \App\Services\GpsValidationService::OUT_OF_RADIUS_GRACE_METERS);
 
-            if ($radiusMeters !== null) {
+        return $query->where(function (Builder $q) use ($threshold): void {
+            $q->where(fn (Builder $inner) => $inner
+                ->whereNull('distance_meters')
+                ->where('gps_fraud_flag', 'out_of_radius'));
+
+            if ($threshold !== null) {
                 $q->orWhere(fn (Builder $inner) => $inner
                     ->whereNotNull('distance_meters')
-                    ->whereRaw('distance_meters - COALESCE(gps_accuracy_meters, 0) > ?', [$radiusMeters]));
+                    ->whereRaw('distance_meters - COALESCE(gps_accuracy_meters, 0) > ?', [$threshold]));
             }
         });
     }

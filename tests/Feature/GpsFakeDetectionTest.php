@@ -205,7 +205,19 @@ class GpsFakeDetectionTest extends TestCase
         $this->travelBack();
     }
 
-    public function test_forcing_checkin_with_vpn_marks_sai_gps_note(): void
+    public function test_hair_width_excess_is_not_reported_as_out_of_radius(): void
+    {
+        // Bán kính 50m, cách lớp ~75m, sai số ±25m -> khoảng cách hiệu dụng ~50m, tức SÁT MÉP.
+        // Trước đây bị gắn cờ với số mét vượt làm tròn thành 0 ("vượt 0m" — vô nghĩa với sinh viên);
+        // nay biên nhiễu nuốt phần dư này nên coi như vẫn ở TRONG bán kính.
+        $this->assertNull(GpsValidationService::metersOutsideRadius(75.0, 25.0, 50));
+        $this->assertNull(GpsValidationService::metersOutsideRadius(80.0, 25.0, 50));
+
+        // Ra xa thật thì vẫn báo, và số mét vượt luôn > 0.
+        $this->assertSame(30, GpsValidationService::metersOutsideRadius(105.0, 25.0, 50));
+    }
+
+    public function test_vpn_checkin_is_blocked_and_nothing_is_recorded(): void
     {
         $base = Carbon::create(2026, 7, 5, 8, 0, 0);
         $this->travelTo($base);
@@ -230,7 +242,8 @@ class GpsFakeDetectionTest extends TestCase
             'class_session_id' => $session->id, 'class_member_id' => $member->id, 'status' => 'pending', 'check_in_time' => null,
         ]);
 
-        // Ở TRONG bán kính (toạ độ trùng lớp) nhưng bước /gps/verify đã chấm nghi vấn do VPN/proxy.
+        // Ở TRONG bán kính (toạ độ trùng lớp) nhưng vé xác thực mang dấu VPN/proxy (vé cũ cấp trước
+        // khi bật chặn) -> bước check-in phải TỪ CHỐI, không được lưu bất cứ thứ gì.
         GpsVerification::create([
             'session_id' => $session->id, 'member_id' => $member->id,
             'token' => 'VPNT1', 'check_token' => 'VPNC1',
@@ -241,18 +254,51 @@ class GpsFakeDetectionTest extends TestCase
 
         Livewire::actingAs($student)->test(AttendanceCheckIn::class, ['token' => 'VPN-CUR'])
             ->call('checkIn', 'VPNC1', 'DEV-VPN-0001')
-            ->assertSet('isSuccess', true)
-            ->assertSet('isSuspectedFake', true)
-            ->assertSee('sai GPS');
+            ->assertSet('isSuccess', false)
+            ->assertSet('isGpsError', true)
+            // Sinh viên được báo rõ: bị từ chối, chưa ghi nhận, hãy tắt VPN rồi thử lại.
+            ->assertSee('TỪ CHỐI')
+            ->assertSee('VPN/proxy');
 
         $record->refresh();
-        $this->assertSame('present', $record->status);
-        $this->assertSame('suspected_mock', $record->gps_fraud_flag);
-        // Ghi chú cho giảng viên: có tiền tố "Sai GPS" + lý do chi tiết (VPN/proxy).
-        $this->assertStringContainsString('Sai GPS', (string) $record->note);
-        $this->assertStringContainsString('VPN', (string) $record->note);
+        $this->assertSame('pending', $record->status, 'Dùng VPN thì KHÔNG được ghi nhận có mặt.');
+        $this->assertNull($record->check_in_time);
+        $this->assertNull($record->gps_fraud_flag);
+
+        // Vẫn để lại dấu vết ở nhật ký quét để giảng viên rà soát lần thử bị chặn.
+        $this->assertDatabaseHas('check_in_scans', [
+            'class_session_id' => $session->id,
+            'is_valid' => false,
+            'fail_reason' => 'vpn_blocked',
+        ]);
 
         $this->travelBack();
+    }
+
+    public function test_verify_blocks_and_issues_no_check_token_when_behind_vpn(): void
+    {
+        // Chặn ngay từ bước xác minh vị trí: không cấp check_token -> bước check-in không thể lưu.
+        config(['attendance.gps_ip_check' => true]);
+        Http::fake(['ip-api.com/*' => Http::response([
+            'status' => 'success', 'lat' => 10.762622, 'lon' => 106.660172,
+            'proxy' => true, 'hosting' => false, 'mobile' => false,
+        ], 200)]);
+
+        [$session, $member] = $this->makeSessionAndMember();
+        $verification = $this->service()->issueVerificationToken($session, $member, '8.8.8.8');
+
+        $result = $this->service()->verifyLocation(
+            $verification->token, 10.762622, 106.660172, 20.0, '8.8.8.8', ['altitude' => 5.0]
+        );
+
+        $this->assertFalse($result['success']);
+        $this->assertSame('vpn', $result['blocked']);
+        $this->assertNull($result['check_token']);
+        $this->assertStringContainsString('VPN/proxy', $result['error']);
+
+        $verification->refresh();
+        $this->assertNull($verification->check_token, 'Không được cấp check_token khi đang dùng VPN.');
+        $this->assertStringContainsString('VPN/proxy', (string) $verification->fraud_reasons);
     }
 
     public function test_device_duplicate_note_names_both_students(): void
@@ -426,27 +472,6 @@ class GpsFakeDetectionTest extends TestCase
         $this->assertTrue($result["success"]);
         $this->assertContains("mock", $result["warnings"]);
         $this->assertNotContains("vpn", $result["warnings"]);
-    }
-
-    public function test_verify_returns_vpn_warning_not_mock_when_behind_proxy(): void
-    {
-        // VPN cộng 3 điểm nên score cũng vượt ngưỡng. Phải trả ĐÚNG "vpn", không kèm "mock",
-        // nếu không sinh viên bật VPN sẽ bị báo nhầm là dùng app giả lập vị trí.
-        config(["attendance.gps_ip_check" => true]);
-        Http::fake(["ip-api.com/*" => Http::response([
-            "status" => "success", "lat" => 10.762622, "lon" => 106.660172,
-            "proxy" => true, "hosting" => false, "mobile" => false,
-        ], 200)]);
-
-        [$session, $member] = $this->makeSessionAndMember();
-        $verification = $this->service()->issueVerificationToken($session, $member, "8.8.8.8");
-
-        $result = $this->service()->verifyLocation(
-            $verification->token, 10.762622, 106.660172, 20.0, "8.8.8.8", ["altitude" => 5.0]
-        );
-
-        $this->assertContains("vpn", $result["warnings"]);
-        $this->assertNotContains("mock", $result["warnings"]);
     }
 
     public function test_verify_returns_no_warning_for_normal_signal(): void

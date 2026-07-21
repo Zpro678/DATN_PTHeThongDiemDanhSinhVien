@@ -263,6 +263,21 @@
                                             });
                                             const verifyData = await verifyResp.json();
                                             if (!verifyData.success) {
+                                                // VPN/proxy: điểm danh bị CHẶN HẲN (server không cấp check_token nên
+                                                // không có gì được lưu). Báo đúng lý do + cách khắc phục cho sinh viên,
+                                                // KHÔNG gọi checkIn để tránh hiện thông báo lỗi GPS chung chung.
+                                                if (verifyData.blocked === 'vpn') {
+                                                    alert(
+                                                        '🚫 ĐIỂM DANH BỊ TỪ CHỐI\n\n' +
+                                                        'Hệ thống phát hiện bạn đang dùng VPN/proxy khiến vị trí mạng bị che giấu.\n\n' +
+                                                        'Kết quả điểm danh CHƯA được ghi nhận.\n\n' +
+                                                        'Vui lòng TẮT VPN/proxy rồi bấm điểm danh lại.'
+                                                    );
+                                                    await $wire.blockedByVpn(this.getDeviceId());
+                                                    this.isCheckingIn = false;
+                                                    return;
+                                                }
+
                                                 alert('Xác thực tọa độ GPS không thành công: ' + verifyData.error);
                                                 // Gửi checkIn không token để kích hoạt thông báo lỗi của Livewire
                                                 await $wire.checkIn(null, this.getDeviceId());
@@ -270,19 +285,13 @@
                                                 return;
                                             }
 
-                                            // Phát hiện VPN/proxy: YÊU CẦU sinh viên tắt trước. Cho họ CƠ HỘI huỷ để tắt VPN
-                                            // rồi thử lại (tránh phạt oan người có mặt thật). Nếu vẫn cố tiếp tục, bản ghi sẽ
-                                            // bị đánh dấu 'Sai GPS' kèm lý do ở phía server để giảng viên rà soát.
+                                            // Cảnh báo MỀM còn lại: nghi app giả lập vị trí. Cho họ CƠ HỘI huỷ để tắt app
+                                            // rồi thử lại (tránh phạt oan người có mặt thật). Nếu vẫn cố tiếp tục, bản ghi
+                                            // sẽ bị đánh dấu 'Sai GPS' kèm lý do ở phía server để giảng viên rà soát.
                                             const warnings = Array.isArray(verifyData.warnings) ? verifyData.warnings : [];
                                             let warningMessage = null;
 
-                                            if (warnings.includes('vpn')) {
-                                                warningMessage =
-                                                    '⚠️ Hệ thống phát hiện bạn đang dùng VPN/proxy khiến vị trí mạng bị che giấu.\n\n' +
-                                                    'Vui lòng TẮT VPN/proxy rồi bấm điểm danh lại.\n\n' +
-                                                    'Nếu bạn vẫn tiếp tục, điểm danh sẽ bị ĐÁNH DẤU \'Sai GPS\' để giảng viên rà soát.\n\n' +
-                                                    'Bấm Cancel để tắt VPN và thử lại, hoặc OK để vẫn điểm danh.';
-                                            } else if (warnings.includes('mock')) {
+                                            if (warnings.includes('mock')) {
                                                 // KHÔNG liệt kê tín hiệu nào đã kích hoạt cảnh báo: nói ra là chỉ đường cho
                                                 // người cố tình chỉnh lại thông số cho qua mặt lần sau.
                                                 warningMessage =

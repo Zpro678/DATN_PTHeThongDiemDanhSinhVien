@@ -272,6 +272,21 @@ class AttendanceCheckIn extends Component
                 return;
             }
 
+            // CHẶN CỨNG VPN/proxy: /gps/verify đã từ chối cấp check_token cho các lần dùng VPN, đây
+            // là lớp chặn thứ hai cho vé cũ (cấp trước khi bật chặn) hoặc dữ liệu bị can thiệp.
+            // Chặn = KHÔNG lưu gì vào bản ghi điểm danh, chỉ ghi nhật ký quét để giảng viên thấy.
+            if (str_contains((string) $verification->fraud_reasons, \App\Services\GpsValidationService::VPN_REASON_MARKER)) {
+                $this->blockCheckIn(
+                    \App\Services\GpsValidationService::VPN_BLOCK_MESSAGE,
+                    'vpn_blocked',
+                    $ipAddress,
+                    $deviceFingerprint,
+                    $persistentDeviceId,
+                );
+
+                return;
+            }
+
             $distanceMeters = $service->calculateDistance(
                 $verification->lat,
                 $verification->lng,
@@ -282,17 +297,19 @@ class AttendanceCheckIn extends Component
             $gpsLatRecorded = $verification->lat;
             $gpsLngRecorded = $verification->lng;
 
-            // Trừ BIÊN ĐỘ SAI SỐ GPS trước khi phán "ngoài bán kính": trình duyệt báo accuracy tới
-            // 150m nên đứng ĐÚNG chỗ vẫn có thể đo lệch vài chục mét (đây là nguyên nhân "ở gần mà
-            // báo xa"). Chỉ gắn cờ khi CHẮC CHẮN ở ngoài kể cả đã cho hưởng trọn sai số đo được.
+            // Trừ BIÊN ĐỘ SAI SỐ GPS (và thêm biên nhiễu) trước khi phán "ngoài bán kính": trình duyệt
+            // báo accuracy tới 150m nên đứng ĐÚNG chỗ vẫn có thể đo lệch vài chục mét (đây là nguyên
+            // nhân "ở gần mà báo xa"). Chỉ gắn cờ khi CHẮC CHẮN ở ngoài kể cả đã cho hưởng trọn sai số.
             $accuracyMargin = (float) ($gpsAccuracy ?? 0);
-            $effectiveDistance = max(0.0, $distanceMeters - $accuracyMargin);
+            $metersOutside = \App\Services\GpsValidationService::metersOutsideRadius(
+                $distanceMeters,
+                $accuracyMargin,
+                (int) $this->session->gps_radius,
+            );
 
-            if ($effectiveDistance > $this->session->gps_radius) {
-                // NGHIỆP VỤ MỚI: ngoài bán kính VẪN cho điểm danh (không chặn). Chỉ GẮN CỜ VÀNG
+            if ($metersOutside !== null) {
+                // NGHIỆP VỤ: ngoài bán kính VẪN cho điểm danh (không chặn). Chỉ GẮN CỜ VÀNG
                 // 'out_of_radius' và BÁO CHỦ LỚP kèm số mét vượt ra ngoài để chủ lớp rà soát.
-                $metersOutside = (int) round($effectiveDistance - $this->session->gps_radius);
-
                 // Ghi lại để hiện CẢNH BÁO VÀNG cho chính sinh viên ở màn hình kết quả.
                 $this->isOutOfRadius = true;
                 $this->outOfRadiusDistance = (int) round($distanceMeters);
@@ -303,8 +320,9 @@ class AttendanceCheckIn extends Component
                     $gpsFraudFlag = 'out_of_radius';
                 }
 
-                $fraudNotes[] = 'Ngoài bán kính cho phép: cách lớp ' . round($distanceMeters) . 'm (vượt '
-                    . $metersOutside . 'm, đã trừ sai số ±' . round($accuracyMargin) . 'm).';
+                $fraudNotes[] = 'Ngoài bán kính cho phép (' . (int) $this->session->gps_radius . 'm): cách lớp '
+                    . round($distanceMeters) . 'm, vượt ' . $metersOutside . 'm (đã trừ sai số ±'
+                    . round($accuracyMargin) . 'm).';
 
                 // Báo CHỦ LỚP (mức warning = vàng). Mỗi SV chỉ điểm danh thành công một lần nên không spam.
                 $this->record->loadMissing('classMember');
@@ -420,8 +438,9 @@ class AttendanceCheckIn extends Component
         if ($this->isOutOfRadius) {
             // Vẫn ghi nhận có mặt, nhưng CẢNH BÁO cho sinh viên rằng họ điểm danh ngoài bán kính
             // (kèm số mét vượt). Không flash "success" xanh để màn hình hiện thẻ cảnh báo vàng.
-            $this->statusMessage = 'Đã ghi nhận điểm danh, nhưng bạn đang ở NGOÀI bán kính cho phép: cách lớp '
-                . $this->outOfRadiusDistance . 'm (vượt ' . $this->metersOutside . 'm). Chủ lớp đã được thông báo để rà soát.';
+            $this->statusMessage = 'Đã ghi nhận điểm danh, nhưng bạn đang ở NGOÀI bán kính cho phép ('
+                . (int) $this->session->gps_radius . 'm): cách lớp ' . $this->outOfRadiusDistance . 'm, vượt '
+                . $this->metersOutside . 'm. Chủ lớp đã được thông báo để rà soát.';
         } elseif ($this->isSuspectedFake) {
             // Vẫn ghi nhận có mặt, nhưng hệ thống thấy tín hiệu GPS bất thường (VPN/proxy hoặc nghi
             // giả lập vị trí). Bản ghi đã bị đánh dấu "Sai GPS" -> hiện thẻ cảnh báo đỏ, yêu cầu tắt.
@@ -442,6 +461,49 @@ class AttendanceCheckIn extends Component
         } catch (\Throwable $e) {
             report($e);
         }
+    }
+
+    /**
+     * TỪ CHỐI lần điểm danh này: KHÔNG đụng vào bản ghi (giữ nguyên 'pending' = chưa điểm danh),
+     * chỉ hiện cảnh báo đỏ cho sinh viên và ghi một dòng nhật ký quét hỏng để giảng viên rà soát.
+     *
+     * Dùng cho các vi phạm CHẶN CỨNG (hiện tại: VPN/proxy) — khác với các cờ MỀM vốn vẫn ghi
+     * có mặt rồi đánh dấu cho giảng viên xem lại.
+     */
+    private function blockCheckIn(string $message, string $failReason, string $ip, string $deviceFingerprint, ?string $deviceId): void
+    {
+        $this->isSuccess = false;
+        $this->isGpsError = true;
+        $this->statusMessage = $message;
+
+        $this->logCheckInScan(
+            isValid: false,
+            failReason: $failReason,
+            ip: $ip,
+            deviceFingerprint: $deviceFingerprint,
+            deviceId: $deviceId,
+        );
+    }
+
+    /**
+     * Điểm danh bị TỪ CHỐI vì phát hiện VPN/proxy ngay ở bước xác minh vị trí (/gps/verify chưa
+     * cấp check_token nên checkIn không chạy). Client gọi vào đây để màn hình hiện đúng lý do
+     * thay vì thông báo lỗi GPS chung chung.
+     */
+    public function blockedByVpn(?string $deviceId = null): void
+    {
+        if (!$this->session || !$this->record) {
+            return;
+        }
+
+        $ipAddress = request()->ip();
+        $this->blockCheckIn(
+            \App\Services\GpsValidationService::VPN_BLOCK_MESSAGE,
+            'vpn_blocked',
+            $ipAddress,
+            md5($ipAddress . request()->userAgent()),
+            $this->sanitizeDeviceId($deviceId),
+        );
     }
 
     /**

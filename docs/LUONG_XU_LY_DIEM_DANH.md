@@ -199,8 +199,10 @@ Bước 2  client lấy 3 mẫu GPS cách ~0.8s (GPS thật 'rung', fake đứng
             · calculateDistance() tới lớp (Haversine)  ← KHÔNG chặn "quá xa" ở bước này
             · computeFakeGpsScore(): accuracy≤1m(+2), toạ độ tĩnh/thiếu độ cao(+1 yếu),
                                      VPN/proxy(+3), lệch IP↔GPS>150km(+3)
+            · VPN/proxy → CHẶN: không cấp check_token, trả {success:false, blocked:'vpn'}
+              → SV nhận thông báo TỪ CHỐI + yêu cầu tắt VPN; KHÔNG có gì được lưu.
             · cấp check_token(64), lưu lat/lng/accuracy/fraud_score, expires_at=+2'
-            · trả warnings (vd 'vpn' → client hỏi tắt VPN trước khi tiếp)
+            · trả warnings (còn lại 'mock' → client hỏi tắt app giả lập trước khi tiếp)
 
 Bước 3  $wire.checkIn(check_token, deviceId)
 ```
@@ -214,9 +216,11 @@ Bước 3  $wire.checkIn(check_token, deviceId)
      → cờ 'device_duplicate' (đỏ) cho CẢ 2 record + ghi chú + báo chủ lớp.
 5. Xác minh GPS (nếu phiên có toạ độ):
      · consumeCheckToken(): khớp check_token, đúng phiên, chưa dùng, chưa hết → ĐÁNH DẤU is_used=true.
+     · vé mang dấu VPN/proxy (vé cũ) → CHẶN: giữ record 'pending', chỉ ghi check_in_scans
+       {is_valid:false, fail_reason:'vpn_blocked'} + thẻ đỏ "TỪ CHỐI" cho SV.
      · effectiveDistance = distance − accuracy (trừ sai số đo, tránh "gần mà báo xa").
-     · effectiveDistance > gps_radius:  VẪN 'present' + cờ VÀNG 'out_of_radius' + số mét vượt
-                                        + báo chủ lớp + thẻ cảnh báo vàng cho SV.
+     · effectiveDistance > gps_radius + 5m (biên nhiễu):  VẪN 'present' + cờ VÀNG 'out_of_radius'
+                                        + số mét vượt (luôn > 0) + báo chủ lớp + thẻ vàng cho SV.
      · detectImpossibleTravel(): so lần điểm danh trước cùng người > 300km/h → 'impossible_travel'.
      · fraud_score ≥ 2 (THRESHOLD): cờ 'suspected_mock' + thẻ ĐỎ "Sai GPS" cho SV + ghi chú GV.
 6. record.update({status, check_in_time, distance, gps_*, gps_fraud_flag, device_id, note ghép lý do}).
@@ -230,8 +234,9 @@ Bước 3  $wire.checkIn(check_token, deviceId)
 
 **Kết quả hiển thị cho SV** (`attendance-check-in.blade.php`):
 - Xanh: "Điểm danh thành công!"
-- Vàng (`out_of_radius`): đã ghi có mặt nhưng ngoài bán kính (kèm số mét vượt).
-- Đỏ (`suspected_mock`): đã ghi có mặt nhưng tín hiệu GPS bất thường → yêu cầu tắt VPN/định vị giả.
+- Vàng (`out_of_radius`): đã ghi có mặt nhưng ngoài bán kính (kèm bán kính + số mét vượt).
+- Đỏ (`suspected_mock`): đã ghi có mặt nhưng tín hiệu GPS bất thường → yêu cầu tắt app định vị giả.
+- Đỏ (VPN/proxy): điểm danh bị **TỪ CHỐI**, KHÔNG ghi nhận → yêu cầu tắt VPN rồi thử lại.
 - Xanh (quét lại): "Bạn đã điểm danh cho phiên này rồi."
 
 **Ghi nhớ:** SV không quét → record giữ `pending` → khi chốt/tổng kết QR coi như VẮNG.
@@ -351,43 +356,45 @@ Hiển thị: trang Tổng kết/Lưới lớp/Chi tiết HV hiện **đủ 6 nh
 | Trùng thiết bị | `checkIn()` (device_check) | `device_id` → `device_duplicate` | 1 máy điểm danh cho ≥2 SV/phiên → cờ đỏ + báo chủ lớp. |
 | Máy điểm danh hộ | `escalateProxyDevice()` | `device_id` | 1 máy điểm danh ≥3 SV/lớp (xuyên buổi) → báo chủ lớp. |
 | Ngoài bán kính | `checkIn()` | `out_of_radius` | VẪN có mặt + cờ vàng + số mét vượt + báo chủ lớp. |
-| Nghi giả lập GPS/VPN | `computeFakeGpsScore()` | `fraud_score` → `suspected_mock` | Điểm ≥2 → cờ đỏ "Sai GPS" + ghi chú GV (yêu cầu SV tắt VPN). |
+| VPN/proxy | `verifyLocation()` (+ chốt lại ở `checkIn()`) | `check_in_scans.fail_reason='vpn_blocked'` | **CHẶN**: không cấp `check_token` → không lưu điểm danh, SV bị báo TỪ CHỐI. |
+| Nghi giả lập GPS | `computeFakeGpsScore()` | `fraud_score` → `suspected_mock` | Điểm ≥2 → cờ đỏ "Sai GPS" + ghi chú GV (yêu cầu SV tắt app giả lập). |
 | Di chuyển bất khả thi | `detectImpossibleTravel()` | `impossible_travel` | >300km/h giữa 2 lần điểm danh → gắn cờ nghi vấn. |
 | Nhật ký quét | `logCheckInScan()` | `check_in_scans` | Bản ghi bất biến để dựng lịch sử thiết bị xuyên phiên. |
 
 ---
 
-## 12. Giới hạn của cờ "ngoài bán kính" — ĐÃ BIẾT, CHƯA SỬA
+## 12. Giới hạn của cờ "ngoài bán kính"
 
-> Ghi nhận ngày 20/07/2026 sau khi kiểm chứng thực tế bằng điện thoại. **Chưa thay đổi
-> code** — mục này để người bảo trì hiểu vì sao kết quả trông "sai" và cân nhắc trước
-> khi chỉnh ngưỡng.
+> Ghi nhận ngày 20/07/2026 sau khi kiểm chứng thực tế bằng điện thoại; cập nhật
+> 21/07/2026 khi thêm biên nhiễu. Mục này để người bảo trì hiểu vì sao kết quả trông
+> "sai" và cân nhắc trước khi chỉnh ngưỡng.
 
 ### 12.1. Công thức thực tế
 
-`AttendanceCheckIn::checkIn()` (dòng ~288-294) trừ trọn biên độ sai số trước khi phán:
+Phép "ngoài bán kính" nằm ở MỘT chỗ duy nhất — `GpsValidationService::metersOutsideRadius()`
+— để lúc điểm danh và lúc hiển thị/thống kê cho giảng viên không lệch nhau:
 
 ```php
-$accuracyMargin    = (float) ($gpsAccuracy ?? 0);   // KHÔNG chặn trần
-$effectiveDistance = max(0.0, $distanceMeters - $accuracyMargin);
-if ($effectiveDistance > $this->session->gps_radius) { /* cờ vàng */ }
+$effective = max(0.0, $distanceMeters - $accuracyMeters);   // accuracy KHÔNG chặn trần
+$excess    = $effective - $radiusMeters;
+return $excess > self::OUT_OF_RADIUS_GRACE_METERS ? (int) round($excess) : null;  // grace = 5m
 ```
 
 Rút gọn, điều kiện gắn cờ là:
 
 ```
-khoảng cách thô  >  gps_radius + accuracy
+khoảng cách thô  >  gps_radius + accuracy + 5m
 ```
 
-`accuracy` do **trình duyệt sinh viên gửi lên**, server chỉ từ chối khi > 150m
-(`GpsValidationService.php:61`).
+`accuracy` do **trình duyệt sinh viên gửi lên**, server chỉ từ chối khi > 150m.
+Biên nhiễu 5m để phần dư sát mép không biến thành cảnh báo "vượt 0m" (xem 12.5).
 
 ### 12.2. Hai hiện tượng đã quan sát được
 
 | Bán kính | Accuracy | Ngưỡng gắn cờ thực tế | Hiện tượng |
 |---|---|---|---|
-| 10m | ~15m | > 25m | Đứng CẠNH máy quét vẫn dính cờ (đo được 49m, vượt 24m) |
-| 30m | ~20m | > 50m | Đi xa 30m KHÔNG dính cờ |
+| 10m | ~15m | > 30m | Đứng CẠNH máy quét vẫn dính cờ (đo được 49m, vượt 24m) |
+| 30m | ~20m | > 55m | Đi xa 30m KHÔNG dính cờ |
 
 Cả hai đều đúng theo code, không phải bug.
 
@@ -413,8 +420,13 @@ Hướng vá khi cần: chặn trần margin (`min($accuracy, 25)`), và/hoặc 
 "cần rà soát" cho vùng `gps_radius < khoảng cách thô <= gps_radius + accuracy` để chủ
 lớp thấy được ca ranh giới mà không kết luận vi phạm.
 
-### 12.5. Ghi chú hiển thị
+### 12.5. Ghi chú hiển thị — ĐÃ SỬA 21/07/2026
 
-Thông báo cho sinh viên in `$distanceMeters` **thô** ("cách lớp 49m") nhưng số mét vượt
-lại tính trên `$effectiveDistance`, nên hai con số trông không khớp nhau. Ghi chú gửi
-chủ lớp (dòng ~306) có kèm "đã trừ sai số ±Xm", phía sinh viên thì không.
+Thông báo in `$distanceMeters` **thô** ("cách lớp 75m") còn số mét vượt tính trên
+`$effectiveDistance`, nên hai con số trông không khớp. Trước đây câu chữ không nêu bán
+kính nên "cách lớp 75m (vượt 0m)" bị đọc nhầm thành "bán kính 75m", và ca sát mép
+(75m − 25m sai số = 50.4m với bán kính 50m) còn cho ra "vượt 0m" vô nghĩa.
+
+Nay: (1) biên nhiễu 5m ở 12.1 loại hẳn ca "vượt 0m" — số mét vượt luôn ≥ 5;
+(2) cả thông báo cho SV lẫn ghi chú cho GV đều nêu rõ bán kính:
+`Ngoài bán kính cho phép (50m): cách lớp 75m, vượt 12m (đã trừ sai số ±25m).`

@@ -11,6 +11,43 @@ use Illuminate\Support\Str;
 
 class GpsValidationService
 {
+    /**
+     * Chuỗi nhận dạng lý do VPN/proxy nằm trong fraud_reasons. Bước check-in dò lại chuỗi này
+     * để chặn thêm một lần nữa (phòng vé cũ cấp trước khi bật chặn, hoặc dữ liệu bị can thiệp).
+     */
+    public const VPN_REASON_MARKER = 'VPN/proxy';
+
+    /** Thông báo hiển thị cho sinh viên khi điểm danh bị TỪ CHỐI vì dùng VPN/proxy. */
+    public const VPN_BLOCK_MESSAGE = 'Điểm danh bị TỪ CHỐI: hệ thống phát hiện bạn đang dùng VPN/proxy '
+        . 'nên không thể xác minh vị trí thật. Kết quả điểm danh CHƯA được ghi nhận. '
+        . 'Vui lòng TẮT VPN/proxy rồi điểm danh lại.';
+
+    /**
+     * Biên nhiễu (mét) cộng THÊM sau khi đã trừ sai số GPS, trước khi kết luận "ngoài bán kính".
+     *
+     * Khoảng cách được tính từ hai điểm mà bản thân mỗi điểm đều có sai số, nên ngay cả khi đã
+     * trừ trọn accuracy do trình duyệt báo vẫn còn dư vài mét nhiễu. Không có biên này thì người
+     * đứng SÁT MÉP bị gắn cờ với số mét vượt làm tròn thành 0 — cảnh báo "vượt 0m" vô nghĩa.
+     */
+    public const OUT_OF_RADIUS_GRACE_METERS = 5.0;
+
+    /**
+     * Số mét THỰC SỰ vượt ra ngoài bán kính cho phép; null khi vẫn ở trong bán kính (hoặc thiếu
+     * dữ liệu để kết luận). Đây là bản dùng chung DUY NHẤT của phép "ngoài bán kính" — cả lúc
+     * điểm danh lẫn lúc hiển thị/thống kê cho giảng viên đều gọi vào đây để không lệch nhau.
+     */
+    public static function metersOutsideRadius(?float $distanceMeters, ?float $accuracyMeters, ?int $radiusMeters): ?int
+    {
+        if ($distanceMeters === null || $radiusMeters === null) {
+            return null;
+        }
+
+        $effective = max(0.0, $distanceMeters - (float) ($accuracyMeters ?? 0));
+        $excess = $effective - $radiusMeters;
+
+        return $excess > self::OUT_OF_RADIUS_GRACE_METERS ? (int) round($excess) : null;
+    }
+
     // Tạo GPS verification token (1 lần dùng, hết hạn sau 5 phút)
     public function issueVerificationToken(ClassSession $session, ClassMember $member, string $ip): GpsVerification
     {
@@ -94,6 +131,38 @@ class GpsValidationService
 
         // Chấm điểm nghi vấn fake GPS (đa tín hiệu) và lưu để bước check-in đọc lại.
         $fraud = $this->computeFakeGpsScore($lat, $lng, $accuracy, $signals, $ip);
+        $fraudReasons = $fraud['reasons'] !== [] ? implode('; ', $fraud['reasons']) : null;
+
+        // VPN/PROXY = CHẶN CỨNG. Khi vị trí mạng bị che giấu thì không còn cách nào đối chiếu
+        // toạ độ trình duyệt với thực tế, nên KHÔNG cấp check_token: bước check-in bắt buộc phải
+        // có check_token mới ghi được bản ghi, vì vậy điểm danh chắc chắn KHÔNG được lưu.
+        // Vẫn ghi lại lý do vào bản xác thực để giảng viên/nhật ký rà soát được lần thử này.
+        if (! empty($fraud['vpn'])) {
+            $verification->update([
+                'lat' => $lat,
+                'lng' => $lng,
+                'accuracy' => $accuracy,
+                'fraud_score' => $fraud['score'],
+                'fraud_reasons' => $fraudReasons,
+            ]);
+
+            \Illuminate\Support\Facades\Log::warning('Attendance check-in blocked', [
+                'session_id' => $verification->session_id,
+                'member_id' => $verification->member_id,
+                'reason' => 'vpn_proxy',
+                'ip' => $ip,
+            ]);
+
+            return [
+                'success' => false,
+                'check_token' => null,
+                'error' => self::VPN_BLOCK_MESSAGE,
+                'distance' => null,
+                'blocked' => 'vpn',
+                'fraud_score' => $fraud['score'],
+                'warnings' => ['vpn'],
+            ];
+        }
 
         // Cập nhật thông tin định vị thành công
         $checkToken = Str::random(64);
@@ -103,23 +172,15 @@ class GpsValidationService
             'lng' => $lng,
             'accuracy' => $accuracy,
             'fraud_score' => $fraud['score'],
-            'fraud_reasons' => $fraud['reasons'] !== [] ? implode('; ', $fraud['reasons']) : null,
+            'fraud_reasons' => $fraudReasons,
             'expires_at' => now()->addMinutes(2), // Check token chỉ có hiệu lực trong 2 phút
         ]);
 
-        // Cảnh báo mềm gửi về client để YÊU CẦU sinh viên tự khắc phục TRƯỚC khi điểm danh.
+        // Cảnh báo MỀM gửi về client để YÊU CẦU sinh viên tự khắc phục TRƯỚC khi điểm danh.
         // Nếu sinh viên vẫn cố điểm danh, bước check-in sẽ ĐÁNH DẤU bản ghi + ghi lý do vào
-        // ghi chú cho giảng viên rà soát.
-        //
-        // Hai loại loại trừ nhau để client chỉ hiện MỘT hộp thoại:
-        //   'vpn'  — vị trí mạng bị che giấu (thường là vô tình, chỉ cần tắt VPN là xong).
-        //   'mock' — điểm nghi vấn vượt ngưỡng vì tín hiệu khác (nghi app giả lập vị trí).
-        // Nhánh VPN xét trước vì nó cộng 3 điểm nên gần như luôn kéo score vượt ngưỡng —
-        // không tách thì người bật VPN sẽ bị báo nhầm là dùng app giả lập vị trí.
+        // ghi chú cho giảng viên rà soát. (VPN/proxy KHÔNG nằm ở đây nữa — nó bị chặn hẳn ở trên.)
         $warnings = [];
-        if (! empty($fraud['vpn'])) {
-            $warnings[] = 'vpn';
-        } elseif ($fraud['score'] >= self::FAKE_GPS_SUSPICION_THRESHOLD) {
+        if ($fraud['score'] >= self::FAKE_GPS_SUSPICION_THRESHOLD) {
             $warnings[] = 'mock';
         }
 
