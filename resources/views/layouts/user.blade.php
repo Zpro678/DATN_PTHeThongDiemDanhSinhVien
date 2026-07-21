@@ -57,7 +57,7 @@
         return false;
     };
 
-    $dashboardActive = $matchesActive('dashboard');
+    $dashboardActive = $matchesActive('user.dashboard');
     $warningsActive = $matchesActive('student.warnings');
     $transactionActive = $matchesActive('transaction-history');
     $teachGroupActive = $menuActive($teachItems);
@@ -66,7 +66,7 @@
     // Cấu trúc đầy đủ cho drawer mobile.
     $navSections = [
         ['label' => null, 'items' => [
-            ['label' => 'Tổng quan', 'icon' => 'layout-dashboard', 'route' => 'dashboard', 'active' => 'dashboard'],
+            ['label' => 'Tổng quan', 'icon' => 'layout-dashboard', 'route' => 'user.dashboard', 'active' => 'user.dashboard', 'params' => ['ma_user' => request()->route('ma_user') ?? auth()->id()]],
         ]],
         ['label' => 'Giảng dạy', 'items' => $teachItems],
         ['label' => 'Học tập', 'items' => $learnItems],
@@ -78,7 +78,7 @@
     ];
 
     $mobileItems = [
-        ['label' => 'Tổng quan', 'icon' => 'home', 'route' => 'dashboard', 'active' => 'dashboard'],
+        ['label' => 'Tổng quan', 'icon' => 'home', 'route' => 'user.dashboard', 'active' => 'user.dashboard', 'params' => ['ma_user' => request()->route('ma_user') ?? auth()->id()]],
         ['label' => 'Giảng dạy', 'icon' => 'shield', 'route' => 'managed-classes', 'active' => ['managed-classes', 'lecturer.*', 'create-class']],
         ['label' => 'Học tập', 'icon' => 'graduation-cap', 'route' => 'joined-classes', 'active' => ['joined-classes', 'student.*']],
     ];
@@ -500,7 +500,7 @@
                     <nav x-data="{ openActions: false }" class="pb-safe fixed inset-x-0 bottom-0 z-40 grid h-16 grid-cols-5 border-t border-outline-variant bg-white/95 backdrop-blur-lg md:hidden">
                         @foreach (array_slice($mobileItems, 0, 2) as $mi)
                             @php $isActive = $matchesActive($mi['active']); @endphp
-                            <a href="{{ route($mi['route']) }}" wire:navigate @class([
+                            <a href="{{ $getRouteUrl($mi) }}" wire:navigate @class([
                                 'flex flex-col items-center justify-center gap-1 text-[10px] font-medium transition-colors',
                                 'text-primary' => $isActive,
                                 'text-on-surface-variant' => ! $isActive,
@@ -544,7 +544,7 @@
 
                         @foreach (array_slice($mobileItems, 2) as $mi)
                             @php $isActive = $matchesActive($mi['active']); @endphp
-                            <a href="{{ route($mi['route']) }}" wire:navigate @class([
+                            <a href="{{ $getRouteUrl($mi) }}" wire:navigate @class([
                                 'flex flex-col items-center justify-center gap-1 text-[10px] font-medium transition-colors',
                                 'text-primary' => $isActive,
                                 'text-on-surface-variant' => ! $isActive,
