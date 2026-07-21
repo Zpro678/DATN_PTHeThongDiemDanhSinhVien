@@ -190,14 +190,14 @@ Route::middleware(['auth', 'verified', 'user.route'])->group(function () {
     });
 
     Route::get('/student/join-class', function (Request $request) {
-        return redirect()->route('dashboard', [
+        return redirect()->route('user.dashboard', [
             'ma_user' => auth()->id(),
             'join_code' => $request->query('code')
         ]);
     })->name('student.join-class.query');
 
     Route::get('/join/{class_code}', function (string $class_code) {
-        return redirect()->route('dashboard', [
+        return redirect()->route('user.dashboard', [
             'ma_user' => auth()->id(),
             'join_code' => $class_code
         ]);
