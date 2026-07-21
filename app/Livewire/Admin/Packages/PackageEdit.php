@@ -2,6 +2,7 @@
 
 namespace App\Livewire\Admin\Packages;
 
+use App\Livewire\Concerns\DeniesAccess;
 use App\Models\Plan;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Str;
@@ -11,6 +12,8 @@ use Livewire\Component;
 
 class PackageEdit extends Component
 {
+    use DeniesAccess;
+
     public Plan $package;
     
     public $plan_tier = '';
@@ -31,8 +34,11 @@ class PackageEdit extends Component
 
     public function mount(Plan $package)
     {
-        abort_unless(Auth::user()?->isAdmin(), 403);
-        
+        if (! Auth::user()?->isAdmin()) {
+            $this->denyAccess('user.dashboard', 'Bạn không có quyền truy cập khu vực quản trị.');
+            return;
+        }
+
         $this->package = $package;
         
         $currentTier = strtoupper($package->plan_tier);

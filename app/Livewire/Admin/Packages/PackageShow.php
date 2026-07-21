@@ -2,6 +2,7 @@
 
 namespace App\Livewire\Admin\Packages;
 
+use App\Livewire\Concerns\DeniesAccess;
 use App\Models\Plan;
 use Illuminate\Support\Facades\Auth;
 use Livewire\Attributes\Layout;
@@ -10,13 +11,16 @@ use Livewire\WithPagination;
 
 class PackageShow extends Component
 {
-    use WithPagination;
+    use DeniesAccess, WithPagination;
 
     public Plan $package;
 
     public function mount(Plan $package)
     {
-        abort_unless(Auth::user()?->isAdmin(), 403);
+        if (! Auth::user()?->isAdmin()) {
+            $this->denyAccess('user.dashboard', 'Bạn không có quyền truy cập khu vực quản trị.');
+            return;
+        }
         $this->package = $package;
     }
 

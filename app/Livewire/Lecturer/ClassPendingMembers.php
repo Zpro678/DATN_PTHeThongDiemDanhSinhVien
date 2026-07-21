@@ -2,6 +2,7 @@
 
 namespace App\Livewire\Lecturer;
 
+use App\Livewire\Concerns\DeniesAccess;
 use App\Models\CourseClass;
 use App\Models\ClassJoinRequest;
 use App\Models\ClassMember;
@@ -9,6 +10,8 @@ use Livewire\Component;
 
 class ClassPendingMembers extends Component
 {
+    use DeniesAccess;
+
     public CourseClass $courseClass;
     public string $search = '';
 
@@ -19,11 +22,12 @@ class ClassPendingMembers extends Component
 
     public function mount(CourseClass $courseClass)
     {
-        $this->courseClass = $courseClass;
-
-        if (! $this->courseClass->isManagedBy(auth()->id())) {
-            abort(403);
+        if (! $courseClass->isManagedBy(auth()->id())) {
+            $this->denyAccess('managed-classes', 'Bạn không có quyền quản lý lớp học này.');
+            return;
         }
+
+        $this->courseClass = $courseClass;
 
         // Lấy ID mới nhất lúc khởi tạo
         $this->lastRequestId = \App\Models\ClassJoinRequest::where('class_id', $this->courseClass->id)

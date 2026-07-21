@@ -4,6 +4,7 @@ namespace App\Livewire\Lecturer;
 
 use App\Exports\StudentsExport;
 use App\Imports\StudentsImport;
+use App\Livewire\Concerns\DeniesAccess;
 use App\Models\CourseClass;
 use App\Models\LeaveRequest;
 use App\Services\LectureManageStudentService;
@@ -19,7 +20,7 @@ use SimpleSoftwareIO\QrCode\Facades\QrCode;
 
 class ClassShow extends Component
 {
-    use WithFileUploads, WithPagination, WithoutUrlPagination;
+    use DeniesAccess, WithFileUploads, WithPagination, WithoutUrlPagination;
 
     // Đối tượng chứa thông tin chi tiết của lớp học hiện tại
     public CourseClass $class;
@@ -204,11 +205,10 @@ class ClassShow extends Component
     public function mount(CourseClass $courseClass): void
     {
         // Kiểm tra quyền — chỉ chủ lớp mới được xem
-        abort_unless(
-            $courseClass->isManagedBy(auth()->id()),
-            403,
-            'Bạn không có quyền xem lớp học này.'
-        );
+        if (! $courseClass->isManagedBy(auth()->id())) {
+            $this->denyAccess('managed-classes', 'Bạn không có quyền xem lớp học này.');
+            return;
+        }
 
         $this->class = $courseClass->load([
             'owner',

@@ -2,6 +2,7 @@
 
 namespace App\Livewire\Admin\Users;
 
+use App\Livewire\Concerns\DeniesAccess;
 use App\Models\User;
 use Illuminate\Support\Facades\Auth;
 use Livewire\Attributes\Layout;
@@ -9,14 +10,19 @@ use Livewire\Component;
 
 class UserShow extends Component
 {
+    use DeniesAccess;
+
     public User $user;
     public $recentClasses = [];
     public $recentLogs = [];
 
     public function mount(User $user)
     {
-        abort_unless(Auth::user()?->isAdmin(), 403);
-        
+        if (! Auth::user()?->isAdmin()) {
+            $this->denyAccess('user.dashboard', 'Bạn không có quyền truy cập khu vực quản trị.');
+            return;
+        }
+
         $user->loadCount(['ownedClasses', 'joinedClasses', 'subscriptions', 'classJoinRequests']);
         $this->user = $user;
         

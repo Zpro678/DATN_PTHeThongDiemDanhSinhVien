@@ -2,6 +2,7 @@
 
 namespace App\Livewire\Admin\Transactions;
 
+use App\Livewire\Concerns\DeniesAccess;
 use App\Models\Transaction;
 use Illuminate\Contracts\View\View;
 use Illuminate\Support\Facades\Auth;
@@ -10,7 +11,7 @@ use Livewire\WithPagination;
 
 class TransactionIndex extends Component
 {
-    use WithPagination;
+    use DeniesAccess, WithPagination;
 
     public string $search = '';
     public string $statusFilter = 'all';
@@ -20,7 +21,9 @@ class TransactionIndex extends Component
 
     public function mount(): void
     {
-        abort_unless(Auth::user()?->isAdmin(), 403);
+        if (! Auth::user()?->isAdmin()) {
+            $this->denyAccess('user.dashboard', 'Bạn không có quyền truy cập khu vực quản trị.');
+        }
     }
 
     public function updatingSearch(): void

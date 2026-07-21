@@ -2,6 +2,7 @@
 
 namespace App\Livewire\Lecturer\Attendance;
 
+use App\Livewire\Concerns\DeniesAccess;
 use App\Models\AttendanceRecord;
 use App\Models\ClassMeeting;
 use Illuminate\Contracts\View\View;
@@ -10,15 +11,18 @@ use Livewire\Component;
 
 class MeetingSessions extends Component
 {
+    use DeniesAccess;
+
     public ClassMeeting $meeting;
 
     public function mount(ClassMeeting $meeting): void
     {
-        $this->meeting = $meeting->load('courseClass');
-
-        if (! $this->meeting->courseClass->isManagedBy(auth()->id())) {
-            abort(403);
+        if (! $meeting->loadMissing('courseClass')->courseClass->isManagedBy(auth()->id())) {
+            $this->denyAccess('lecturer.attendance.index', 'Bạn không có quyền xem buổi điểm danh này.');
+            return;
         }
+
+        $this->meeting = $meeting;
 
         // Hết giờ kết thúc thì tự động chốt buổi.
         $this->meeting->closeIfExpired();

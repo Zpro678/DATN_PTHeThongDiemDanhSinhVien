@@ -58,8 +58,10 @@ class QrAttendanceCreate extends Component
         $this->meetingId = request()->query('meeting');
 
         if ($this->meetingId) {
+            // Không tìm thấy / không có quyền -> 404, không tiết lộ buổi đó có tồn tại hay
+            // không cho người ngoài lớp — xem CoOwnerAttendanceCreateAccessTest.
             $meeting = ClassMeeting::query()->with('courseClass')->findOrFail($this->meetingId);
-            abort_unless($meeting->courseClass->isManagedBy(auth()->id()), 403);
+            abort_unless($meeting->courseClass->isManagedBy(auth()->id()), 404);
 
             $this->classId = (string) $meeting->class_id;
             $this->loadConfigForClass($this->classId);
@@ -70,8 +72,10 @@ class QrAttendanceCreate extends Component
             $this->startTime = $meeting->start_time ? \Carbon\Carbon::parse($meeting->start_time)->format('H:i') : '07:00';
             $this->endTime = $meeting->end_time ? \Carbon\Carbon::parse($meeting->end_time)->format('H:i') : '09:30';
         } elseif ($this->editSessionId) {
-            $session = ClassSession::query()->with('meeting')->findOrFail($this->editSessionId);
-            abort_unless($session->created_by === auth()->id(), 403);
+            // Xét quyền theo "ai QUẢN LÝ lớp" như nhánh $meetingId ở trên (isManagedBy), không
+            // theo created_by — nếu không thì ĐỒNG CHỦ LỚP bị chặn khỏi phiên do chủ chính tạo.
+            // Không tìm thấy / không có quyền -> 404, cùng cơ chế với nhánh $meetingId ở trên.
+            $session = $this->ownedSession($this->editSessionId)->loadMissing('meeting');
 
             $this->classId = (string) $session->class_id;
             $this->meetingName = $session->meeting ? $session->meeting->name : '';
@@ -93,8 +97,7 @@ class QrAttendanceCreate extends Component
             }
 
         } elseif ($this->cloneSessionId) {
-            $session = ClassSession::query()->with('meeting')->findOrFail($this->cloneSessionId);
-            abort_unless($session->created_by === auth()->id(), 403);
+            $session = $this->ownedSession($this->cloneSessionId)->loadMissing('meeting');
 
             $this->classId = (string) $session->class_id;
             
@@ -250,8 +253,8 @@ class QrAttendanceCreate extends Component
 
         // ===== Chỉnh sửa thiết lập phiên QR hiện có =====
         if ($this->editSessionId) {
-            $session = ClassSession::query()->findOrFail($this->editSessionId);
-            abort_unless($session->created_by === auth()->id(), 403);
+            // Bước LƯU cũng phải xét quyền như bước mở form (đồng chủ được sửa phiên của lớp).
+            $session = $this->ownedSession($this->editSessionId);
 
             $meetingFields = [
                 'name' => $validated['meetingName'],

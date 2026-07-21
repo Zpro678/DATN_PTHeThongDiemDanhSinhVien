@@ -2,6 +2,7 @@
 
 namespace App\Livewire\Admin\Logs;
 
+use App\Livewire\Concerns\DeniesAccess;
 use App\Models\AuditLog;
 use Illuminate\Support\Facades\Auth;
 use Livewire\Attributes\Layout;
@@ -10,7 +11,7 @@ use Livewire\WithPagination;
 
 class LogIndex extends Component
 {
-    use WithPagination;
+    use DeniesAccess, WithPagination;
 
     public $search = '';
     public $selectedDate = '';
@@ -20,8 +21,11 @@ class LogIndex extends Component
 
     public function mount()
     {
-        abort_unless(Auth::user()?->isAdmin(), 403);
-        
+        if (! Auth::user()?->isAdmin()) {
+            $this->denyAccess('user.dashboard', 'Bạn không có quyền truy cập khu vực quản trị.');
+            return;
+        }
+
         $this->selectedDate = now()->format('Y-m-d');
     }
 

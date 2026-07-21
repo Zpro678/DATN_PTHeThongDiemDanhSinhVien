@@ -2,6 +2,7 @@
 
 namespace App\Livewire\Admin\Users;
 
+use App\Livewire\Concerns\DeniesAccess;
 use App\Models\User;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Hash;
@@ -11,7 +12,7 @@ use Livewire\WithFileUploads;
 
 class UserCreate extends Component
 {
-    use WithFileUploads;
+    use DeniesAccess, WithFileUploads;
 
     public $name = '';
     public $email = '';
@@ -33,7 +34,9 @@ class UserCreate extends Component
 
     public function mount()
     {
-        abort_unless(Auth::user()?->isAdmin(), 403);
+        if (! Auth::user()?->isAdmin()) {
+            $this->denyAccess('user.dashboard', 'Bạn không có quyền truy cập khu vực quản trị.');
+        }
     }
 
     public function save()

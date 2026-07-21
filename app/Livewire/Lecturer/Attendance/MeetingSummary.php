@@ -3,6 +3,7 @@
 namespace App\Livewire\Lecturer\Attendance;
 
 use App\Exports\MeetingSummaryExport;
+use App\Livewire\Concerns\DeniesAccess;
 use App\Models\ClassMeeting;
 use App\Models\MeetingSummary as MeetingSummaryModel;
 use App\Services\AttendanceCalculator;
@@ -15,6 +16,8 @@ use Maatwebsite\Excel\Facades\Excel;
 
 class MeetingSummary extends Component
 {
+    use DeniesAccess;
+
     public ClassMeeting $meeting;
 
     /** @var array<int, string> Trạng thái tổng kết tạm theo class_member_id. */
@@ -29,7 +32,10 @@ class MeetingSummary extends Component
     public function mount(ClassMeeting $meeting): void
     {
         $meeting->load('courseClass');
-        abort_unless($meeting->courseClass->isManagedBy(auth()->id()), 403);
+        if (! $meeting->courseClass->isManagedBy(auth()->id())) {
+            $this->denyAccess('lecturer.attendance.index', 'Bạn không có quyền xem tổng kết buổi điểm danh này.');
+            return;
+        }
 
         // Hết giờ thì chốt buổi; sau đó dựng/đồng bộ bảng tổng kết từ các phiên.
         $meeting->closeIfExpired();

@@ -2,6 +2,7 @@
 
 namespace App\Livewire\Student;
 
+use App\Livewire\Concerns\DeniesAccess;
 use App\Models\CourseClass;
 use App\Models\ClassMember;
 use App\Services\StatisticalService;
@@ -10,6 +11,8 @@ use Livewire\Component;
 
 class ClassShow extends Component
 {
+    use DeniesAccess;
+
     public CourseClass $class;
 
     public array $attendanceDetail = [];
@@ -18,19 +21,20 @@ class ClassShow extends Component
 
     public function mount(CourseClass $courseClass): void
     {
-        abort_unless(
-            $courseClass->members()
-                ->where('user_id', auth()->id())
-                ->where('status', ClassMember::STATUS_ACTIVE)
-                ->exists(),
-            403,
-        );
+        $isActiveMember = $courseClass->members()
+            ->where('user_id', auth()->id())
+            ->where('status', ClassMember::STATUS_ACTIVE)
+            ->exists();
 
-        abort_if(
-            $courseClass->status === 'archived',
-            403,
-            'Lớp học này đã bị lưu trữ do giới hạn gói cước.'
-        );
+        if (! $isActiveMember) {
+            $this->denyAccess('joined-classes', 'Bạn không có quyền xem lớp học này.');
+            return;
+        }
+
+        if ($courseClass->status === 'archived') {
+            $this->denyAccess('joined-classes', 'Lớp học này đã bị lưu trữ do giới hạn gói cước.');
+            return;
+        }
 
         $this->class = $courseClass->load(['owner','coOwners']);
         $this->fromAttendanceStats = request()->query('from') === 'attendance-stats';

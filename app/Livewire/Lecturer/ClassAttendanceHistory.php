@@ -3,6 +3,7 @@
 namespace App\Livewire\Lecturer;
 
 use App\Exports\ClassAttendanceHistoryExport;
+use App\Livewire\Concerns\DeniesAccess;
 use App\Models\ClassSession;
 use App\Models\CourseClass;
 use App\Services\ClassAttendanceHistoryReport;
@@ -17,6 +18,8 @@ use Throwable;
 
 class ClassAttendanceHistory extends Component
 {
+    use DeniesAccess;
+
     #[Url(as: 'group')]
     public ?string $initialGroupKey = null;
 
@@ -24,11 +27,12 @@ class ClassAttendanceHistory extends Component
 
     public function mount(CourseClass $courseClass)
     {
-        $this->courseClass = $courseClass;
-
-        if (! $this->courseClass->isManagedBy(auth()->id())) {
-            abort(403);
+        if (! $courseClass->isManagedBy(auth()->id())) {
+            $this->denyAccess('managed-classes', 'Bạn không có quyền xem lịch sử điểm danh của lớp này.');
+            return;
         }
+
+        $this->courseClass = $courseClass;
     }
 
     public function realtimeChannel(): string

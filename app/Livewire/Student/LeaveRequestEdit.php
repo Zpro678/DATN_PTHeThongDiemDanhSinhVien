@@ -2,6 +2,7 @@
 
 namespace App\Livewire\Student;
 
+use App\Livewire\Concerns\DeniesAccess;
 use App\Models\ClassMember;
 use App\Models\ClassMeeting;
 use App\Models\CourseClass;
@@ -14,7 +15,7 @@ use Livewire\WithFileUploads;
 
 class LeaveRequestEdit extends Component
 {
-    use WithFileUploads;
+    use DeniesAccess, WithFileUploads;
 
     public LeaveRequest $leaveRequest;
 
@@ -30,8 +31,16 @@ class LeaveRequestEdit extends Component
 
     public function mount(LeaveRequest $leaveRequest)
     {
-        abort_unless($leaveRequest->status === 'pending', 403, 'Chỉ có thể sửa đơn đang chờ duyệt');
-        abort_unless($leaveRequest->classMember->user_id === auth()->id(), 403);
+        // Xét quyền sở hữu TRƯỚC rồi mới xét trạng thái, để không lộ thông tin đơn của người khác.
+        if ($leaveRequest->classMember->user_id !== auth()->id()) {
+            $this->denyAccess('student.leave-requests.history', 'Bạn không có quyền sửa đơn xin nghỉ này.');
+            return;
+        }
+
+        if ($leaveRequest->status !== 'pending') {
+            $this->denyAccess('student.leave-requests.history', 'Chỉ có thể sửa đơn đang chờ duyệt.');
+            return;
+        }
 
         $this->leaveRequest = $leaveRequest;
         $this->class_id = $leaveRequest->classMember->class_id;
