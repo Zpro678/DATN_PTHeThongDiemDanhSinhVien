@@ -59,9 +59,6 @@ Route::get('/maintenance', function () {
     return view('maintenance');
 })->name('maintenance');
 
-Route::get('/dashboard', function () {
-    return view('dashboard');
-})->middleware(['auth', 'verified'])->name('dashboard');
 
 // Google OAuth Routes
 Route::get('/auth/google', [GoogleController::class, 'redirect'])->name('google.login');
