@@ -17,7 +17,7 @@ class BlockedUserMiddlewareTest extends TestCase
             'email_verified_at' => now(),
         ]);
 
-        $this->actingAs($user)->get('/dashboard')->assertOk();
+        $this->actingAs($user)->get(route('user.dashboard', ['ma_user' => $user->id]))->assertOk();
     }
 
     public function test_blocked_user_is_logged_out_on_next_request(): void
@@ -32,7 +32,7 @@ class BlockedUserMiddlewareTest extends TestCase
         // Admin khóa tài khoản trong khi phiên vẫn đang hoạt động.
         $user->update(['status' => 'blocked']);
 
-        $response = $this->get('/dashboard');
+        $response = $this->get(route('user.dashboard', ['ma_user' => $user->id]));
 
         $response->assertRedirect(route('login'));
         $this->assertGuest();

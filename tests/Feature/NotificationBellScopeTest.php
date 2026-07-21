@@ -35,7 +35,7 @@ class NotificationBellScopeTest extends TestCase
         $svc->push($b->id, 'App\Notifications\Test', 'ThongBaoCuaB', 'B');
 
         URL::defaults(['ma_user' => $a->id]);
-        $res = $this->actingAs($a)->get(route('dashboard'));
+        $res = $this->actingAs($a)->get(route('user.dashboard', ['ma_user' => $a->id]));
         $res->assertOk();
         $res->assertSee('ThongBaoCuaA');
         $res->assertDontSee('ThongBaoCuaB');

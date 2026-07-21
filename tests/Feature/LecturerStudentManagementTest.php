@@ -129,7 +129,7 @@ class LecturerStudentManagementTest extends TestCase
     {
         $owner = User::factory()->create();
 
-        $this->actingAs($owner)->get(route('dashboard'))
+        $this->actingAs($owner)->get(route('user.dashboard', ['ma_user' => $owner->id]))
             ->assertOk()
             ->assertSee(route('lecturer.students.index'), false)
             ->assertSee(route('lecturer.leave-requests.index'), false);
@@ -160,7 +160,7 @@ class LecturerStudentManagementTest extends TestCase
         $owner = User::factory()->create();
         CourseClass::factory()->create(['owner_user_id' => $owner->id]);
 
-        $this->actingAs($owner)->get(route('dashboard'))
+        $this->actingAs($owner)->get(route('user.dashboard', ['ma_user' => $owner->id]))
             ->assertOk()
             ->assertSee('Không gian Chủ lớp')
             ->assertSee('Lớp tôi quản lý');

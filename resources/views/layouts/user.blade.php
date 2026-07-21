@@ -137,7 +137,7 @@
                             </button>
                         </div>
 
-                        <a href="{{ route('dashboard') }}" wire:navigate class="flex min-w-0 shrink-0 items-center gap-2.5">
+                        <a href="{{ route('user.dashboard', ['ma_user' => request()->route('ma_user') ?? auth()->id()]) }}" wire:navigate class="flex min-w-0 shrink-0 items-center gap-2.5">
                             @if(!empty($app_logo_path))
                                 <img src="{{ asset('storage/' . $app_logo_path) }}" alt="{{ config('app.name') }}" class="h-9 w-9 shrink-0 rounded-xl drop-shadow-[0_2px_4px_rgba(15,23,42,0.22)] object-cover">
                             @else
@@ -267,7 +267,7 @@
             >
                     <nav class="scrollbar-custom flex-1 space-y-2 overflow-y-auto overflow-x-hidden px-3 py-5">
                         {{-- Tổng quan --}}
-                        <a href="{{ route('dashboard') }}" wire:navigate title="Tổng quan"
+                        <a href="{{ route('user.dashboard', ['ma_user' => request()->route('ma_user') ?? auth()->id()]) }}" wire:navigate title="Tổng quan"
                             :class="sidebarCollapsed ? 'justify-center px-0' : ''"
                             @class([
                                 'flex items-center gap-3 rounded-lg px-3 py-3 text-[17px] font-medium transition-colors',

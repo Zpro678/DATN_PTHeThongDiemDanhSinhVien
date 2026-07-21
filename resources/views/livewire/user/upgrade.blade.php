@@ -7,14 +7,14 @@
 
     {{-- Header --}}
     <header class="relative flex items-center justify-between border-b border-outline-variant/20 bg-white/80 px-6 py-4 backdrop-blur-sm sm:px-10">
-        <a href="{{ route('dashboard') }}" wire:navigate class="flex items-center gap-2.5 text-on-surface transition-colors hover:text-primary">
+        <a href="{{ route('user.dashboard', ['ma_user' => request()->route('ma_user') ?? auth()->id()]) }}" wire:navigate class="flex items-center gap-2.5 text-on-surface transition-colors hover:text-primary">
             <div class="flex h-8 w-8 items-center justify-center rounded-xl bg-primary/10 text-primary">
                 <x-user.icon name="zap" :size="16" />
             </div>
             <span class="text-sm font-bold tracking-tight">{{ config('app.name', 'Attendia Tech') }}</span>
         </a>
 
-        <a href="{{ url()->previous() !== url()->current() ? url()->previous() : route('dashboard') }}"
+        <a href="{{ url()->previous() !== url()->current() ? url()->previous() : route('user.dashboard', ['ma_user' => request()->route('ma_user') ?? auth()->id()]) }}"
             wire:navigate
             class="flex h-9 w-9 items-center justify-center rounded-full border border-outline-variant/30 bg-white text-on-surface-variant shadow-sm transition-all hover:border-outline-variant hover:text-on-surface">
             <x-user.icon name="x" :size="18" />

@@ -49,7 +49,7 @@ Route::get('/', function () {
         if ($user->isAdmin()) {
             return redirect()->route('admin.dashboard', ['ma_user' => $user->id]);
         }
-        return redirect()->route('dashboard', ['ma_user' => $user->id]);
+        return redirect()->route('user.dashboard', ['ma_user' => $user->id]);
     }
     
     return view('welcome');
@@ -128,7 +128,7 @@ Route::middleware(['auth', 'verified', 'user.route'])->group(function () {
         Route::get('/activity-log', UserActivityLog::class)->name('activity-log');
 
         Route::get('/transaction-history', TransactionHistory::class)->name('transaction-history');
-        Route::get('/dashboard', UserDashboard::class)->name('dashboard');
+        Route::get('/dashboard', UserDashboard::class)->name('user.dashboard');
         Route::get('/classes', UserClasses::class)->name('classes');
         Route::get('/managed-classes', ManagedClasses::class)->name('managed-classes');
         Route::get('/joined-classes', JoinedClasses::class)->name('joined-classes');
