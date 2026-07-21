@@ -23,7 +23,7 @@ class VerifyEmailController extends Controller
 
         if ($user->hasVerifiedEmail()) {
             if (auth()->check() && auth()->id() === $user->id) {
-                return redirect()->intended(route('dashboard', absolute: false).'?verified=1');
+                return redirect()->intended(route('user.dashboard', ['ma_user' => $user->id], absolute: false).'?verified=1');
             }
             return redirect()->route('login')->with('status', 'Email đã được xác thực thành công! Bạn có thể tiếp tục ở thiết bị cũ hoặc đăng nhập tại đây.');
         }
@@ -33,7 +33,7 @@ class VerifyEmailController extends Controller
         }
 
         if (auth()->check() && auth()->id() === $user->id) {
-            return redirect()->intended(route('dashboard', absolute: false).'?verified=1');
+            return redirect()->intended(route('user.dashboard', ['ma_user' => $user->id], absolute: false).'?verified=1');
         }
 
         return redirect()->route('login')->with('status', 'Email đã được xác thực thành công! Bạn có thể tiếp tục ở thiết bị cũ hoặc đăng nhập tại đây.');

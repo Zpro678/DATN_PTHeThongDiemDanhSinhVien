@@ -63,10 +63,10 @@ class AuthenticatedSessionController extends Controller
         }
 
         // Fix: If a normal user's intended URL is an admin route (because they used it previously), redirect them to their user dashboard instead to avoid 403.
-        $intended = session()->pull('url.intended', route('dashboard', ['ma_user' => $request->user()->id], absolute: false));
+        $intended = session()->pull('url.intended', route('user.dashboard', ['ma_user' => $request->user()->id], absolute: false));
         
         if (str_contains($intended, '/admin/')) {
-            return redirect()->route('dashboard', ['ma_user' => $request->user()->id])
+            return redirect()->route('user.dashboard', ['ma_user' => $request->user()->id])
                 ->with('success', 'Đăng nhập thành công!');
         }
 

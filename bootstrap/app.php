@@ -50,7 +50,7 @@ return Application::configure(basePath: dirname(__DIR__))
             if (auth()->check() && auth()->user()->isAdmin()) {
                 return route('admin.dashboard', ['ma_user' => auth()->id()]);
             }
-            return route('dashboard', ['ma_user' => auth()->id()]);
+            return route('user.dashboard', ['ma_user' => auth()->id()]);
         });
 
         // MoMo gọi POST server-to-server, không có CSRF token -> phải loại trừ.

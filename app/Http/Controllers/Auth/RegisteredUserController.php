@@ -57,6 +57,6 @@ class RegisteredUserController extends Controller
 
         Auth::login($user);
 
-        return redirect(route('dashboard', ['ma_user' => $user->id], absolute: false));
+        return redirect(route('user.dashboard', ['ma_user' => $user->id], absolute: false));
     }
 }

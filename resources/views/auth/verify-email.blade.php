@@ -75,7 +75,7 @@
             .then(response => response.json())
             .then(data => {
                 if (data.verified) {
-                    window.location.href = "{{ route('dashboard', absolute: false) }}?verified=1";
+                    window.location.href = "{{ route('user.dashboard', ['ma_user' => auth()->id()], absolute: false) }}?verified=1";
                 }
             })
             .catch(error => console.error('Error checking verification:', error));

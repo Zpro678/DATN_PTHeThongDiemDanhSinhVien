@@ -373,7 +373,7 @@
             @else
                 <div class="mt-6 text-center">
                     @auth
-                        <a href="{{ route('dashboard', ['ma_user' => auth()->id()]) }}" class="inline-flex w-full items-center justify-center gap-2 rounded-2xl bg-slate-900 px-6 py-4 font-black text-white shadow-xl shadow-slate-900/20 transition hover:bg-slate-800 hover:-translate-y-0.5">
+                        <a href="{{ route('user.dashboard', ['ma_user' => auth()->id()]) }}" class="inline-flex w-full items-center justify-center gap-2 rounded-2xl bg-slate-900 px-6 py-4 font-black text-white shadow-xl shadow-slate-900/20 transition hover:bg-slate-800 hover:-translate-y-0.5">
                             Về trang chủ
                             <x-user.icon name="arrow-right" :size="18" />
                         </a>

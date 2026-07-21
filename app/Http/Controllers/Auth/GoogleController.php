@@ -105,6 +105,6 @@ class GoogleController extends Controller
             return redirect()->route('admin.dashboard', ['ma_user' => $user->id]);
         }
 
-        return redirect()->intended(route('dashboard', ['ma_user' => $user->id], absolute: false));
+        return redirect()->intended(route('user.dashboard', ['ma_user' => $user->id], absolute: false));
     }
 }
