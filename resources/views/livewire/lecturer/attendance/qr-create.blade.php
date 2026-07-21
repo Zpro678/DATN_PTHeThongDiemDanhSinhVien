@@ -61,9 +61,22 @@
                     (position) => {
                         this.gpsLatitude = position.coords.latitude;
                         this.gpsLongitude = position.coords.longitude;
+
+                        // Log TÂM LỚP để đối chiếu với toạ độ sinh viên ở trang phiên (F12).
+                        // In cả accuracy: sai số của chính điểm tâm này cộng dồn vào khoảng cách
+                        // đo được của mọi sinh viên -> tâm lệch 30m là cả lớp lệch 30m.
+                        console.log('%c[GPS][Giảng viên] Tâm lớp (trang Thiết lập)', 'color:#2563eb;font-weight:bold', {
+                            lat: position.coords.latitude,
+                            lng: position.coords.longitude,
+                            accuracy_m: position.coords.accuracy,
+                            altitude: position.coords.altitude,
+                            ban_kinh_dang_dat_m: this.$wire?.get('gpsRadius') ?? null,
+                            luc: new Date().toLocaleTimeString('vi-VN'),
+                            google_maps: 'https://maps.google.com/?q=' + position.coords.latitude + ',' + position.coords.longitude,
+                        });
                     },
                     (error) => {
-                        console.warn('Cannot get location', error);
+                        console.warn('[GPS][Giảng viên] Không lấy được toạ độ tâm lớp', { code: error?.code, message: error?.message });
                         alert('Không thể lấy tọa độ GPS. Vui lòng cấp quyền vị trí cho trình duyệt.');
                         this.gpsEnabled = false;
                         this.gpsLatitude = null;

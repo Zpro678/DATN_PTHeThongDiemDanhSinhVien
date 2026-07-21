@@ -57,9 +57,29 @@
                 return m + 'p ' + s + 's';
             }
             return s + 's';
+        },
+
+        // Đã in ra console những lần quét nào rồi (theo id bản ghi) — trang này refresh liên tục
+        // (xoay mã QR mỗi vài giây + realtime), không nhớ thì mỗi nhịp lại in lại cả danh sách.
+        loggedScanIds: new Set(),
+        logGpsScans(scans) {
+            const fresh = (scans || []).filter((scan) => ! this.loggedScanIds.has(scan.id));
+            if (fresh.length === 0) return;
+
+            fresh.forEach((scan) => {
+                this.loggedScanIds.add(scan.id);
+                // Ngoài bán kính -> in màu vàng cho dễ nhặt giữa dòng log.
+                const style = scan.vuot_m !== null ? 'color:#d97706;font-weight:bold' : 'color:#059669;font-weight:bold';
+                console.log('%c[GPS][Sinh viên] ' + scan.ten + ' đã quét lúc ' + scan.luc, style, scan);
+            });
         }
     }"
-    x-init="setInterval(() => tick(), 1000); window.listenRealtime && window.listenRealtime(@js($this->realtimeChannel()), () => $wire.$refresh(), 400)"
+    x-init="setInterval(() => tick(), 1000);
+        window.listenRealtime && window.listenRealtime(@js($this->realtimeChannel()), () => $wire.$refresh(), 400);
+        logGpsScans(@js($gpsScanLog))"
+    {{-- Lần tải đầu log qua x-init ở trên; các lần sau nghe sự kiện component dispatch mỗi lần
+    render (x-init không chạy lại sau khi Livewire morph DOM). --}}
+    x-on:gps-scan-log.window="logGpsScans($event.detail.scans)"
 >
     <!-- Header -->
     <div class="flex flex-col gap-4 md:flex-row md:items-center md:justify-between border-b border-slate-100 pb-5">

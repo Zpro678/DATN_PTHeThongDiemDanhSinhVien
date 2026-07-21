@@ -193,6 +193,35 @@ class QrSessionFraudFlagsDisplayTest extends TestCase
         $this->assertSame('Vừa Xa Vừa Chung Máy', $filtered->first()->classMember->full_name);
     }
 
+    /**
+     * Toạ độ mỗi lần quét phải được đẩy xuống trang để console F12 của giảng viên in ra.
+     * Dispatch (không chỉ truyền qua view) vì x-init KHÔNG chạy lại sau mỗi lần Livewire morph —
+     * thiếu dispatch thì người quét SAU khi mở trang sẽ không bao giờ hiện trong console.
+     */
+    public function test_gps_scan_log_is_pushed_to_the_console(): void
+    {
+        $this->addRecord('Người Quét', [
+            'gps_latitude_recorded' => 10.0007, 'gps_longitude_recorded' => 106.0,
+            'gps_accuracy_meters' => 12, 'distance_meters' => 78,
+        ]);
+        // Chưa quét (không có toạ độ) thì không có gì để log.
+        $this->addRecord('Chưa Quét', ['status' => 'pending', 'check_in_time' => null]);
+
+        $component = Livewire::actingAs($this->owner)
+            ->test(QrAttendanceSession::class, ['session' => $this->session->id])
+            ->assertOk()
+            ->assertDispatched('gps-scan-log');
+
+        $log = $component->viewData('gpsScanLog');
+        $this->assertCount(1, $log);
+        $this->assertSame('Người Quét', $log[0]['ten']);
+        $this->assertSame(10.0007, $log[0]['lat']);
+        $this->assertSame(30, $log[0]['ban_kinh_m']);
+        // Khoảng cách hiệu dụng = thô − sai số: đúng con số hệ thống dùng để phán ngoài bán kính.
+        $this->assertSame(66.0, $log[0]['khoang_cach_hieu_dung_m']);
+        $this->assertSame(36, $log[0]['vuot_m']);
+    }
+
     /** Trong bán kính sau khi trừ sai số -> không được gắn nhãn ngoài bán kính. */
     public function test_accuracy_margin_keeps_nearby_student_inside_radius(): void
     {

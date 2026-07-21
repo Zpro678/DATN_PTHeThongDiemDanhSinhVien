@@ -394,6 +394,12 @@ class QrAttendanceSession extends Component
             $this->draftStatuses[$record->id] = $record->status;
         }
 
+        // Toạ độ từng lần quét, bơm xuống console F12 của trang phiên để đối chiếu với tâm lớp.
+        // Vừa truyền cho view (lần tải đầu) vừa dispatch (các lần morph sau — x-init KHÔNG chạy
+        // lại khi Livewire refresh nên chỉ dựa vào view thì người quét sau sẽ không bao giờ hiện).
+        $gpsScanLog = $this->gpsScanLog($session);
+        $this->dispatch('gps-scan-log', scans: $gpsScanLog);
+
         // Số SV thuộc nhóm dùng chung máy (cho chip bộ lọc).
         $sameDeviceCount = $sharedDeviceIds === []
             ? 0
@@ -438,8 +444,48 @@ class QrAttendanceSession extends Component
 
         $canExportExcel = app(SubscriptionService::class)->canExportExcel(auth()->user()); // Quyền xuất Excel theo gói (Pro trở lên).
 
-        return view('livewire.lecturer.attendance.qr-session', compact('session', 'records', 'attendanceLink', 'summary', 'fraudStats', 'qrSvg', 'qrCells', 'canExportExcel', 'sameDeviceCount', 'sharedDeviceIds', 'sharedDeviceNames'))
+        return view('livewire.lecturer.attendance.qr-session', compact('session', 'records', 'attendanceLink', 'summary', 'fraudStats', 'qrSvg', 'qrCells', 'canExportExcel', 'sameDeviceCount', 'sharedDeviceIds', 'sharedDeviceNames', 'gpsScanLog'))
             ->layout('layouts.user', ['title' => 'Điểm danh QR']);
+    }
+
+    /**
+     * Toạ độ của TỪNG lần quét trong phiên, để trang phiên in ra console F12 cho giảng viên
+     * đối chiếu với tâm lớp. Truy vấn RIÊNG, KHÔNG theo bộ lọc/tìm kiếm đang bật — bật lọc mà
+     * vẫn phải thấy đủ người vừa quét thì log mới dùng để soi được.
+     *
+     * @return array<int, array<string, mixed>>
+     */
+    private function gpsScanLog(\App\Models\ClassSession $session): array
+    {
+        return $session->attendanceRecords()
+            ->whereHas('classMember')
+            ->with('classMember.profile', 'classMember.user')
+            ->whereNotNull('check_in_time')
+            ->whereNotNull('gps_latitude_recorded')
+            ->orderBy('check_in_time')
+            ->get()
+            ->map(function (AttendanceRecord $record) use ($session): array {
+                $distance = $record->distance_meters === null ? null : (float) $record->distance_meters;
+                $accuracy = $record->gps_accuracy_meters === null ? null : (float) $record->gps_accuracy_meters;
+
+                return [
+                    'id' => $record->id,
+                    'ten' => $record->classMember->full_name ?? 'Không xác định',
+                    'lat' => (float) $record->gps_latitude_recorded,
+                    'lng' => (float) $record->gps_longitude_recorded,
+                    'accuracy_m' => $accuracy,
+                    'khoang_cach_m' => $distance === null ? null : round($distance, 1),
+                    // Đúng con số hệ thống dùng để phán "ngoài bán kính" (đã trừ sai số đo).
+                    'khoang_cach_hieu_dung_m' => $distance === null ? null : round(max(0.0, $distance - (float) ($accuracy ?? 0)), 1),
+                    'ban_kinh_m' => $session->gps_radius === null ? null : (int) $session->gps_radius,
+                    'vuot_m' => $record->metersOutsideRadius($session->gps_radius),
+                    'co' => $record->gps_fraud_flag,
+                    'luc' => $record->check_in_time?->format('H:i:s'),
+                    'google_maps' => 'https://maps.google.com/?q='.$record->gps_latitude_recorded.','.$record->gps_longitude_recorded,
+                ];
+            })
+            ->values()
+            ->all();
     }
 
     private function ensureSessionIsOpen(): void

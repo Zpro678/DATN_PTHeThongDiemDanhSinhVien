@@ -50,10 +50,25 @@
                         this.wire.set('gpsLatitude', position.coords.latitude);
                         this.wire.set('gpsLongitude', position.coords.longitude);
                         this.isRequestingGps = false;
+
+                        // Log TÂM LỚP để đối chiếu với toạ độ sinh viên ở trang phiên (F12).
+                        // accuracy là sai số của CHÍNH điểm tâm này — tâm lệch bao nhiêu thì
+                        // khoảng cách đo được của cả lớp lệch theo bấy nhiêu.
+                        console.log('%c[GPS][Giảng viên] Tâm lớp (modal Bắt đầu nhanh)', 'color:#2563eb;font-weight:bold', {
+                            lat: position.coords.latitude,
+                            lng: position.coords.longitude,
+                            accuracy_m: position.coords.accuracy,
+                            altitude: position.coords.altitude,
+                            ban_kinh_dang_dat_m: this.gpsRadius ?? null,
+                            luc: new Date().toLocaleTimeString('vi-VN'),
+                            google_maps: 'https://maps.google.com/?q=' + position.coords.latitude + ',' + position.coords.longitude,
+                        });
+
                         resolve(position);
                     },
                     (error) => {
                         this.isRequestingGps = false;
+                        console.warn('[GPS][Giảng viên] Không lấy được toạ độ tâm lớp', { code: error?.code, message: error?.message });
                         reject(error);
                     },
                     { enableHighAccuracy: true, timeout: 10000, maximumAge: 0 }
