@@ -158,4 +158,58 @@ class QrSessionFraudFlagsDisplayTest extends TestCase
             ->assertSee('Ngoài bán kính +50m')
             ->assertSee('Trùng thiết bị với Bạn Cùng Máy');
     }
+
+    /**
+     * Trạng thái mà AttendanceCheckIn::checkIn thật sự tạo ra khi một học viên dính CẢ HAI lỗi:
+     * cột gps_fraud_flag chỉ giữ được 'device_duplicate' (gắn trước, nặng hơn) nên 'out_of_radius'
+     * KHÔNG có trong cờ. Bảng và thẻ đếm vẫn phải nêu đủ cả hai.
+     */
+    public function test_out_of_radius_still_shown_when_device_duplicate_takes_the_flag(): void
+    {
+        // Cách tâm 95m, sai số 10m -> hiệu dụng 85m, bán kính 30m -> vượt 55m.
+        $this->addRecord('Vừa Xa Vừa Chung Máy', [
+            'device_id' => 'DEVICE-DUP',
+            'gps_fraud_flag' => 'device_duplicate',
+            'distance_meters' => 95,
+            'gps_accuracy_meters' => 10,
+        ]);
+        $this->addRecord('Bạn Cùng Máy', ['device_id' => 'DEVICE-DUP', 'distance_meters' => null]);
+
+        $component = Livewire::actingAs($this->owner)
+            ->test(QrAttendanceSession::class, ['session' => $this->session->id])
+            ->assertOk()
+            ->assertSee('Trùng thiết bị với Bạn Cùng Máy')
+            ->assertSee('Ngoài bán kính +55m');
+
+        // Thẻ thống kê phải đếm được người này (trước đây ra 0 vì nhóm theo cờ).
+        $this->assertSame(1, (int) $component->viewData('fraudStats')['out_of_radius']);
+
+        // Bấm vào thẻ để lọc cũng phải tìm ra đúng người đó (và chỉ mình người đó).
+        $filtered = $component->call('setStatusFilter', 'out_of_radius')
+            ->assertSee('Vừa Xa Vừa Chung Máy')
+            ->viewData('records');
+
+        $this->assertCount(1, $filtered);
+        $this->assertSame('Vừa Xa Vừa Chung Máy', $filtered->first()->classMember->full_name);
+    }
+
+    /** Trong bán kính sau khi trừ sai số -> không được gắn nhãn ngoài bán kính. */
+    public function test_accuracy_margin_keeps_nearby_student_inside_radius(): void
+    {
+        // Cách tâm 100m nhưng sai số đo tới 90m -> hiệu dụng 10m < bán kính 30m.
+        $this->addRecord('Đo Lệch Nhưng Ở Gần', [
+            'device_id' => 'DEVICE-NEAR',
+            'distance_meters' => 100,
+            'gps_accuracy_meters' => 90,
+        ]);
+
+        $component = Livewire::actingAs($this->owner)
+            ->test(QrAttendanceSession::class, ['session' => $this->session->id])
+            ->assertOk()
+            // Nhãn "Ngoài bán kính" của thẻ thống kê luôn có; chỉ dòng cảnh báo kèm số mét
+            // dưới tên học viên mới là thứ không được xuất hiện.
+            ->assertDontSee('Ngoài bán kính +');
+
+        $this->assertSame(0, (int) $component->viewData('fraudStats')['out_of_radius']);
+    }
 }

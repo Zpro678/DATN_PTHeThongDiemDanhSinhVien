@@ -83,10 +83,12 @@
 
                         // Điểm danh NGOÀI bán kính GPS: vẫn được ghi nhận, chỉ nêu ở khối cảnh báo
                         // bên cột Ghi chú (trước đây tô nền vàng cả dòng — chói và che các cột khác).
-                        $isOutOfRadius = $record->gps_fraud_flag === 'out_of_radius';
-                        $metersOutside = ($isOutOfRadius && $record->distance_meters !== null && ($session->gps_radius ?? null))
-                            ? max(0, (int) round($record->distance_meters - $session->gps_radius))
-                            : null;
+                        // Tính lại từ khoảng cách đã lưu chứ KHÔNG đọc cột gps_fraud_flag: cột đó chỉ
+                        // giữ được một cờ nên khi học viên vừa trùng máy vừa ở xa, 'device_duplicate'
+                        // đè mất 'out_of_radius' và dòng cảnh báo khoảng cách sẽ biến mất.
+                        $radiusLimit = $session->gps_radius ?? null;
+                        $isOutOfRadius = $record->isOutOfRadius($radiusLimit);
+                        $metersOutside = $record->metersOutsideRadius($radiusLimit);
 
                         // TRÙNG THIẾT BỊ: nhiều học viên cùng điểm danh trên một máy (nghi điểm danh hộ).
                         $sharedIds = $sharedDeviceIds ?? [];
