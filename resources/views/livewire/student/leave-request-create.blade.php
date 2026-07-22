@@ -21,7 +21,7 @@
                     {{-- Alert Box --}}
                     <div class="flex items-start gap-3 rounded-xl bg-[#f8fbff] border border-blue-50/80 p-5 text-[17px] leading-relaxed text-slate-600">
                         <x-user.icon name="info" class="mt-0.5 shrink-0 text-primary" :size="20" />
-                        <p><strong>Lưu ý:</strong> Hệ thống tiếp nhận đơn xin phép cho cả các buổi học <strong>đã diễn ra</strong> và <strong>sắp diễn ra</strong>. Vui lòng tải lên minh chứng rõ nét (giấy khám bệnh, đơn xin phép có chữ ký...) để được duyệt nhanh nhất.</p>
+                        <p><strong>Lưu ý:</strong> Hệ thống tiếp nhận đơn xin phép cho cả các buổi học <strong>đã diễn ra</strong> và <strong>đang diễn ra</strong>. Vui lòng tải lên minh chứng rõ nét (giấy khám bệnh, đơn xin phép có chữ ký...) để được duyệt nhanh nhất.</p>
                     </div>
 
                     {{-- Dropdowns Grid --}}
