@@ -10,6 +10,7 @@ use App\Models\ClassMember;
 use App\Models\ClassSession;
 use App\Models\CourseClass;
 use App\Models\LeaveRequest;
+use App\Models\MeetingSummary;
 use App\Models\Plan;
 use App\Models\Subscription;
 use App\Models\Transaction;
@@ -178,7 +179,8 @@ class DemoSeeder extends Seeder
         }
 
         // ---------------------------------------------------------------
-        // 5) 7 BUỔI đã chốt (mỗi buổi 1 phiên), tổng dự kiến 15 buổi.
+        // 5) 7 BUỔI đã chốt (mỗi buổi 1 phiên) — buổi 1 cách đây 7 tuần, buổi 7 cách đây 1 tuần.
+        //    Buổi 8 (hôm nay, 3 phiên) được dựng riêng ở mục 5b. Tổng dự kiến 15 buổi.
         //    Ma trận trạng thái dựng sẵn để có SV cấm thi + SV cảnh báo.
         // ---------------------------------------------------------------
         // Chỉ số thành viên có tài khoản: 0..6. (7..9 là hồ sơ, mặc định present.)
@@ -199,11 +201,13 @@ class DemoSeeder extends Seeder
 
         $meetings = [];
         foreach (range(1, 7) as $b) {
+            $daysAgo = (8 - $b) * 7; // buổi 7 -> 1 tuần trước (buổi 8 mới là hôm nay).
+
             $meeting = ClassMeeting::create([
                 'class_id' => $webClass->id,
                 'user_Created' => $owner->id,
                 'name' => "Buổi $b",
-                'date' => now()->subDays((7 - $b) * 7)->toDateString(),
+                'date' => now()->subDays($daysAgo)->toDateString(),
                 'start_time' => '07:00:00',
                 'end_time' => '09:30:00',
                 'status' => 'closed',
@@ -219,7 +223,7 @@ class DemoSeeder extends Seeder
                 'start_time' => $meeting->start_time,
                 'end_time' => $meeting->end_time,
                 'qr_token' => (string) Str::uuid(),
-                'token_expires_at' => now()->subDays((7 - $b) * 7),
+                'token_expires_at' => now()->subDays($daysAgo),
                 'status' => 'closed',
             ]);
 
@@ -232,7 +236,7 @@ class DemoSeeder extends Seeder
                     'status' => $status,
                     'is_account' => $member->user_id !== null,
                     'check_in_time' => in_array($status, ['present', 'late'], true)
-                        ? now()->subDays((7 - $b) * 7)
+                        ? now()->subDays($daysAgo)
                         : null,
                     'note' => $status === $E ? 'Đơn xin nghỉ đã được duyệt.' : null,
                 ]);
@@ -243,28 +247,111 @@ class DemoSeeder extends Seeder
         }
 
         // ---------------------------------------------------------------
+        // 5b) BUỔI 8 (hôm nay) — 3 PHIÊN, dựng riêng để demo trang "Tổng kết".
+        //
+        //  Quy tắc gộp phiên -> buổi (AttendanceCalculator::consolidateStatuses):
+        //    - có phiên "vắng có phép"                 -> Có phép
+        //    - phiên CUỐI vắng                         -> Vắng   (bỏ về giữa chừng)
+        //    - phiên cuối có mặt, phiên ĐẦU vắng       -> Đi muộn (vào trễ)
+        //    - có phiên bị đánh dấu đi muộn            -> Đi muộn
+        //    - còn lại                                 -> Có mặt (vắng phiên GIỮA vẫn tính có mặt)
+        //
+        //  Ma trận dưới đây phủ đủ 5 tình huống trên để trình bày trên 1 màn hình.
+        // ---------------------------------------------------------------
+        $summaryMeeting = ClassMeeting::create([
+            'class_id' => $webClass->id,
+            'user_Created' => $owner->id,
+            'name' => 'Buổi 8',
+            'date' => now()->toDateString(),
+            'start_time' => '07:00:00',
+            'end_time' => '09:30:00',
+            'status' => 'closed',
+        ]);
+        $meetings[8] = $summaryMeeting;
+
+        // 3 phiên trong buổi: QR đầu giờ -> điểm danh thủ công giữa giờ -> QR cuối giờ.
+        $sessionSpecs = [
+            ['name' => 'Lần 1 — QR đầu giờ', 'qr' => true, 'start' => '07:00:00', 'end' => '07:15:00'],
+            ['name' => 'Lần 2 — Thủ công giữa giờ', 'qr' => false, 'start' => '08:15:00', 'end' => '08:30:00'],
+            ['name' => 'Lần 3 — QR cuối giờ', 'qr' => true, 'start' => '09:15:00', 'end' => '09:30:00'],
+        ];
+
+        // Hàng = chỉ số thành viên, cột = phiên (Lần 1/2/3).
+        $sessionMatrix = [
+            //                L1  L2  L3      -> TỔNG KẾT
+            0 => [$P, $P, $P], // Có mặt   — giữ nguyên ~73% của SV cấm thi.
+            1 => [$P, $P, $P], // Có mặt   — giữ nguyên ~83% của SV cảnh báo.
+            2 => [$A, $P, $P], // Đi muộn  — vắng phiên đầu, vào trễ.
+            3 => [$P, $P, $A], // Vắng     — có mặt đầu giờ nhưng bỏ về, phiên cuối vắng.
+            4 => [$P, $L, $P], // Đi muộn  — giảng viên đánh dấu muộn ở phiên giữa.
+            5 => [$E, $E, $E], // Có phép  — đơn xin nghỉ đã duyệt.
+            6 => [$P, $A, $P], // Có mặt   — chỉ hụt phiên giữa, đầu & cuối đều có.
+            7 => [$A, $A, $A], // Vắng     — vắng cả buổi.
+            // 8, 9 (hồ sơ-only) -> mặc định có mặt cả 3 phiên.
+        ];
+
+        foreach ($sessionSpecs as $i => $spec) {
+            $session = ClassSession::create([
+                'meeting_id' => $summaryMeeting->id,
+                'class_id' => $webClass->id,
+                'created_by' => $owner->id,
+                'name' => $spec['name'],
+                'date' => $summaryMeeting->date,
+                'start_time' => $spec['start'],
+                'end_time' => $spec['end'],
+                'qr_token' => $spec['qr'] ? (string) Str::uuid() : null,
+                'token_expires_at' => $spec['qr'] ? now()->setTimeFromTimeString($spec['end']) : null,
+                'status' => 'closed',
+            ]);
+
+            foreach ($members as $idx => $member) {
+                $status = $sessionMatrix[$idx][$i] ?? $P; // hồ sơ-only -> present.
+
+                AttendanceRecord::create([
+                    'class_session_id' => $session->id,
+                    'class_member_id' => $member->id,
+                    'status' => $status,
+                    'is_account' => $member->user_id !== null,
+                    'check_in_time' => in_array($status, ['present', 'late'], true)
+                        ? now()->setTimeFromTimeString($spec['start'])->addMinutes($status === $L ? 12 : 3)
+                        : null,
+                    'note' => $status === $E ? 'Đơn xin nghỉ đã được duyệt.' : null,
+                ]);
+            }
+        }
+
+        AttendanceCalculator::syncSummaries($summaryMeeting);
+
+        // ---------------------------------------------------------------
         // 6) Tổng hợp chuyên cần theo lớp (bảng attendance_summaries — dashboard admin).
         // ---------------------------------------------------------------
+        // Đơn vị chuyên cần là BUỔI, nên đếm theo trạng thái TỔNG KẾT của từng buổi
+        // (meeting_summaries) thay vì đếm từng record — buổi 8 có 3 phiên vẫn chỉ tính 1.
+        $meetingIds = collect($meetings)->pluck('id')->all();
+
         foreach ($members as $member) {
-            $records = AttendanceRecord::whereHas('classSession', fn ($q) => $q->where('class_id', $webClass->id))
+            $counts = MeetingSummary::query()
+                ->whereIn('meeting_id', $meetingIds)
                 ->where('class_member_id', $member->id)
-                ->get();
-            $absent = $records->where('status', 'absent')->count();
+                ->pluck('status')
+                ->countBy();
+
+            $absent = $counts->get('absent', 0);
 
             AttendanceSummary::create([
                 'class_id' => $webClass->id,
                 'class_member_id' => $member->id,
-                'total_present' => $records->where('status', 'present')->count(),
-                'total_late' => $records->where('status', 'late')->count(),
+                'total_present' => $counts->get('present', 0),
+                'total_late' => $counts->get('late', 0),
                 'total_absent' => $absent,
-                'total_excused' => $records->where('status', 'excused')->count(),
+                'total_excused' => $counts->get('excused', 0),
                 'is_banned_from_exam' => $absent > (int) floor($webClass->total_sessions * 0.2),
                 'updated_at' => now(),
             ]);
         }
 
         // ---------------------------------------------------------------
-        // 7) ĐƠN XIN NGHỈ: 1 đã duyệt (m3, buổi 4) + 1 đang chờ (m0 — SV cấm thi).
+        // 7) ĐƠN XIN NGHỈ: 2 đã duyệt (m3 buổi 4, m5 buổi 8) + 1 đang chờ (m0 — SV cấm thi).
         // ---------------------------------------------------------------
         LeaveRequest::create([
             'class_member_id' => $members[3]->id,
@@ -273,6 +360,15 @@ class DemoSeeder extends Seeder
             'status' => 'approved',
             'reviewed_by' => $owner->id,
             'reviewed_at' => now()->subDays(20),
+        ]);
+        // Đơn này là lý do m5 hiện "Có phép" ở buổi 8 (cả 3 phiên đều vắng có phép).
+        LeaveRequest::create([
+            'class_member_id' => $members[5]->id,
+            'class_meeting_id' => $meetings[8]->id,
+            'reason' => 'Đi thi chứng chỉ tiếng Anh, có giấy báo dự thi.',
+            'status' => 'approved',
+            'reviewed_by' => $owner->id,
+            'reviewed_at' => now()->subDay(),
         ]);
         LeaveRequest::create([
             'class_member_id' => $members[0]->id,
@@ -305,6 +401,7 @@ class DemoSeeder extends Seeder
         $this->command->info('ĐỒNG CHỦ  : '.$coOwner->email);
         $this->command->info('SV CẤM THI: '.$studentUsers[0]->email.' (~73%)');
         $this->command->info('SV CẢNH BÁO: '.$studentUsers[1]->email.' (~83%)');
+        $this->command->info('DEMO TỔNG KẾT: lớp Web -> Buổi 8 (hôm nay) có 3 phiên, đủ 5 tình huống gộp.');
     }
 
     /**

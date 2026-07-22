@@ -129,7 +129,7 @@ class GpsValidationService
             $distance = $this->calculateDistance($lat, $lng, $session->gps_latitude, $session->gps_longitude);
         }
 
-        // Chấm điểm nghi vấn fake GPS (đa tín hiệu) và lưu để bước check-in đọc lại.
+        // Chấm điểm nghi vấn fake GPS và lưu để bước check-in đọc lại.
         $fraud = $this->computeFakeGpsScore($lat, $lng, $accuracy, $signals, $ip);
         $fraudReasons = $fraud['reasons'] !== [] ? implode('; ', $fraud['reasons']) : null;
 
@@ -214,17 +214,10 @@ class GpsValidationService
     // Ngưỡng dưới của độ chính xác GPS được coi là "bất thường".
     // GPS điện thoại qua trình duyệt gần như không bao giờ đạt độ chính xác dưới 1m;
     // các app Fake GPS lại thường gán cứng accuracy = 0/1. Đây là tín hiệu 1-lần-đọc
-    // đáng tin nhất để suy đoán mock location (thay cho heuristic "accuracy là số
-    // nguyên" cũ — vốn báo nhầm rất nhiều vì thiết bị thật thường trả accuracy nguyên).
     public const IMPLAUSIBLE_ACCURACY_METERS = 1.0;
 
     /**
-     * Suy đoán vị trí bị giả lập (mock/fake GPS) từ một lần đọc.
-     *
-     * Trình duyệt KHÔNG cho biết cờ "mock provider" của Android (chỉ app native mới
-     * đọc được), nên ở phía server ta chỉ có thể suy đoán từ giá trị bất thường về
-     * mặt vật lý. Ở đây dùng độ chính xác quá nhỏ để coi là đáng ngờ.
-     *
+    
      * Trả về câu mô tả lý do nếu nghi ngờ, hoặc null nếu bình thường.
      * Lưu ý: hàm chỉ GẮN CỜ để giảng viên rà soát, KHÔNG tự chặn điểm danh —
      * tránh khóa nhầm sinh viên thật khi thiết bị vô tình báo accuracy nhỏ.
@@ -266,7 +259,6 @@ class GpsValidationService
         // với iPhone trong nhà — CŨNG cho toạ độ trùng khít qua các lần đọc và thường THIẾU độ cao.
         // Đây KHÔNG phải bằng chứng giả lập. Vì vậy hai tín hiệu này gộp lại chỉ tính TỐI ĐA 1 điểm
         // và KHÔNG tự vượt ngưỡng (=2); chúng chỉ CỘNG THÊM khi đã có tín hiệu mạnh (độ chính xác
-        // bất thường / VPN / lệch IP↔GPS) để tránh dán nhãn "Sai GPS" oan cho sinh viên có mặt thật.
         $weakScore = 0;
 
         // (2) Toạ độ đứng yên tuyệt đối qua nhiều mẫu.

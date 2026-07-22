@@ -22,16 +22,34 @@
 
 | Lớp | Mã tham gia (join key) | Trạng thái dữ liệu |
 |---|---|---|
-| Lập trình Web | `WEB2026` | Đầy đủ: 10 thành viên (7 có TK + 3 chỉ hồ sơ), 7 buổi đã chốt, có SV cấm thi/cảnh báo |
+| Lập trình Web | `WEB2026` | Đầy đủ: 10 thành viên (7 có TK + 3 chỉ hồ sơ), 8 buổi đã chốt, có SV cấm thi/cảnh báo |
 | Cơ sở dữ liệu | `DB2026` | Trống — dùng để demo tạo lớp / import sinh viên |
 | Công nghệ phần mềm | `SE2026` | Bật duyệt thành viên — có **2 yêu cầu vào lớp đang chờ** |
 
 ## Dữ liệu kèm theo (lớp Lập trình Web)
 
-- **7 buổi** đã chốt (mỗi buổi 1 phiên), tổng dự kiến **15 buổi**.
-- **Đơn xin nghỉ:** 1 đã duyệt (SV Võ Minh Quân, buổi 4 → *có phép*) + 1 đang chờ (SV Nguyễn Tuấn Khanh).
+- **8 buổi** đã chốt, tổng dự kiến **15 buổi**:
+  - **Buổi 1–7** (mỗi tuần 1 buổi, buổi 7 cách đây 1 tuần): mỗi buổi **1 phiên**.
+  - **Buổi 8** (**hôm nay**): **3 phiên** — *QR đầu giờ → thủ công giữa giờ → QR cuối giờ*. Dựng riêng để demo trang **Tổng kết buổi**, phủ đủ 5 tình huống gộp phiên → buổi (xem bảng dưới).
+- **Đơn xin nghỉ:** 2 đã duyệt (buổi 4 → *có phép*; buổi 8 → *có phép*) + 1 đang chờ (SV cấm thi).
 - **Yêu cầu vào lớp:** 2 đang chờ duyệt ở lớp `SE2026`.
 - **Đồng chủ:** Trần Thị Thu Thảo đã được thêm vào lớp Web.
+
+### Buổi 8 — kịch bản demo "Tổng kết" (1 buổi / 3 phiên)
+
+Vào **lớp Lập trình Web → Điểm danh → Buổi 8 → Tổng kết**. Bảng có 3 cột *Lần 1/2/3* + cột *Tổng kết*:
+
+| Lần 1 (QR) | Lần 2 (thủ công) | Lần 3 (QR) | Tổng kết | Quy tắc minh hoạ |
+|---|---|---|---|---|
+| Có mặt | Có mặt | Có mặt | **Có mặt** | dự đủ buổi |
+| **Vắng** | Có mặt | Có mặt | **Đi muộn** | vắng phiên **đầu** → vào trễ |
+| Có mặt | Có mặt | **Vắng** | **Vắng** | vắng phiên **cuối** → bỏ về giữa chừng |
+| Có mặt | **Muộn** | Có mặt | **Đi muộn** | có phiên bị đánh dấu muộn |
+| Có mặt | **Vắng** | Có mặt | **Có mặt** | hụt phiên **giữa** vẫn tính có mặt |
+| Có phép | Có phép | Có phép | **Có phép** | có đơn nghỉ đã duyệt |
+| Vắng | Vắng | Vắng | **Vắng** | vắng cả buổi |
+
+> Chốt lại: chuyên cần tính theo **BUỔI**, không theo phiên — buổi 8 có 3 phiên vẫn chỉ chiếm **1** đơn vị trong % chuyên cần. Nút **"Tính lại"** dựng lại cột Tổng kết từ các phiên; sửa tay 1 dòng rồi **Lưu** để demo cờ *"Đã sửa (gốc: …)"* + thông báo gửi học viên.
 
 ## Gợi ý demo theo module
 
